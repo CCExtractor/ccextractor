@@ -2,16 +2,6 @@ name: Build CCExtractor on Linux
 
 on:
   push:
-    paths:
-    - '.github/workflows/build_linux.yml'
-    - '**.c'
-    - '**.h'
-    - '**Makefile**'
-    - 'linux/**'
-    - 'package_creators/**'
-    - 'src/rust/**'
-    tags-ignore: # ignore push via new tag
-    - '*.*'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -26,80 +16,4 @@ jobs:
   build_shell:
     runs-on: ubuntu-latest
     steps:
-    - name: Install tesseract
-      run: sudo apt-get install libtesseract-dev
     - uses: actions/checkout@v3
-    - name: build
-      run: ./build
-      working-directory: ./linux
-    - name: Display version information
-      run: ./ccextractor --version
-      working-directory: ./linux
-    - name: Prepare artifacts
-      run: mkdir ./linux/artifacts
-    - name: Copy release artifact
-      run: cp ./linux/ccextractor ./linux/artifacts/
-    - uses: actions/upload-artifact@v2
-      with:
-        name: CCExtractor Linux build
-        path: ./linux/artifacts
-  build_autoconf:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: run autogen
-      run: ./autogen.sh
-      working-directory: ./linux
-    - name: configure
-      run: ./configure --enable-debug
-      working-directory: ./linux
-    - name: make
-      run: make
-      working-directory: ./linux
-    - name: Display version information
-      run: ./ccextractor --version
-      working-directory: ./linux
-  cmake:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: cmake
-      run: mkdir build && cd build && cmake ../src
-    - name: build
-      run: make -j$(nproc)
-      working-directory: build
-    - name: Display version information
-      run: ./build/ccextractor --version
-  cmake_ocr_hardsubx:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: dependencies
-      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
-    - name: cmake
-      run: mkdir build && cd build && cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
-    - name: build
-      run: make -j$(nproc)
-      working-directory: build
-    - name: Display version information
-      run: ./build/ccextractor --version
-  build_rust:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: cache 
-        uses: actions/cache@v2
-        with:
-          path: |
-            src/rust/.cargo/registry
-            src/rust/.cargo/git
-            src/rust/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.56.0
-          override: true
-      - name: build
-        run: cargo build 
-        working-directory: ./src/rust
