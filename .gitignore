@@ -8,7 +8,6 @@ tests/**/*.gcno
 # Ignore CVS related files
 .CVS
 CVS
-
 ####
 # Linux  Ignored binary and build folder
 *.o
