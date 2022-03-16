@@ -9,7 +9,6 @@ tests/**/*.gcno
 .CVS
 CVS
 
-
 ####
 # Linux  Ignored binary and build folder
 *.o
