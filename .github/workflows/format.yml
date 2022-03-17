@@ -1,13 +1,6 @@
 name: Format sourcecode
 on:
   push:
-    paths:
-    - '.github/workflows/format.yml'
-    - 'src/**.c'
-    - 'src/**.h'
-    - 'src/rust/**'
-    tags-ignore: # ignore push via new tag
-    - '*.*'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -31,7 +24,7 @@ jobs:
         working-directory: ./src/rust
     steps:
       - uses: actions/checkout@v3
-      - name: cache 
+      - name: cache
         uses: actions/cache@v2
         with:
           path: |
