@@ -1,7 +1,6 @@
 name: Build CCExtractor on Linux
 
 on:
-  push:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
