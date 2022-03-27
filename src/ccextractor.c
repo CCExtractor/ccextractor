@@ -66,15 +66,6 @@ int api_start(struct ccx_s_options api_options)
 			fatal(EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n", errno);
 	}
 
-#ifdef ENABLE_HARDSUBX
-	if (api_options.hardsubx)
-	{
-		// Perform burned in subtitle extraction
-		hardsubx(&api_options);
-		return 0;
-	}
-#endif
-
 #ifdef WITH_LIBCURL
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -202,6 +193,14 @@ int api_start(struct ccx_s_options api_options)
 				if (api_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint("\rAnalyzing data in general mode\n");
+#ifdef ENABLE_HARDSUBX
+				if (api_options.hardsubx)
+				{
+					// Perform burned in subtitle extraction
+					hardsubx(&api_options, ctx);
+					return 0;
+				}
+#endif
 				tmp = general_loop(ctx);
 				if (!ret)
 					ret = tmp;

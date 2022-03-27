@@ -10,7 +10,7 @@
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
-int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
+int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
 	// Get the required media attributes and initialize structures
 	av_register_all();
@@ -101,6 +101,10 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	if (ctx->tickertext)
 		hardsubx_process_frames_tickertext(ctx, enc_ctx);
+	else if (ctx->hardsubx_and_common)
+	{
+		process_hardsubx_linear_frames_and_normal_subs(ctx, enc_ctx, ctx_normal);
+	}
 	else
 		hardsubx_process_frames_linear(ctx, enc_ctx);
 
@@ -290,6 +294,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->conf_thresh = options->hardsubx_conf_thresh;
 	ctx->hue = options->hardsubx_hue;
 	ctx->lum_thresh = options->hardsubx_lum_thresh;
+	ctx->hardsubx_and_common = options->hardsubx_and_common;
 
 	//Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
@@ -312,7 +317,7 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	freep(ctx);
 }
 
-void hardsubx(struct ccx_s_options *options)
+void hardsubx(struct ccx_s_options *options, struct lib_ccx_ctx *ctx_normal)
 {
 	// This is similar to the 'main' function in ccextractor.c, but for hard subs
 	mprint("HardsubX (Hard Subtitle Extractor) - Burned-in subtitle extraction subsystem\n");
@@ -329,7 +334,7 @@ void hardsubx(struct ccx_s_options *options)
 	// Data processing loop
 	time_t start, end;
 	time(&start);
-	hardsubx_process_data(ctx);
+	hardsubx_process_data(ctx, ctx_normal);
 
 	// Show statistics (time taken, frames processed, mode etc)
 	time(&end);

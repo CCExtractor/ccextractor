@@ -439,7 +439,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 			if (got_frame && frame_number % 25 == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-				if (fabsf(diff) < 1000 * ctx->min_sub_duration) //If the minimum duration of a subtitle line is exceeded, process packet
+				if (fabsf(diff) < 1000 * ctx->min_sub_duration) // If the minimum duration of a subtitle line is exceeded, process packet
 					continue;
 
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
@@ -540,6 +540,275 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 		add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
 		encode_sub(enc_ctx, ctx->dec_sub);
 		prev_sub_encoded = 1;
+	}
+	activity_progress(100, cur_sec / 60, cur_sec % 60);
+}
+
+void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *hard_ctx, struct encoder_ctx *enc_ctx, struct lib_ccx_ctx *ctx)
+{
+	// variables for cc extraction
+	struct lib_cc_decode *dec_ctx = NULL;
+	enum ccx_stream_mode_enum stream_mode;
+	struct demuxer_data *datalist = NULL;
+	struct demuxer_data *data_node = NULL;
+	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d);
+	int ret;
+	int caps = 0;
+
+	uint64_t min_pts = UINT64_MAX;
+
+	// variables for burnt-in subtitle extraction
+	int prev_sub_encoded_hard = 1; // Previous seen burnt-in subtitle encoded or not
+	int got_frame;
+	int dist = 0;
+	int cur_sec = 0, total_sec, progress;
+	int frame_number = 0;
+	int64_t prev_begin_time_hard = 0, prev_end_time_hard = 0; // Begin and end time of previous seen burnt-in subtitle
+	int64_t prev_packet_pts_hard = 0;
+	char *subtitle_text_hard = NULL;      // Subtitle text of current frame (burnt_in)
+	char *prev_subtitle_text_hard = NULL; // Previously seen burnt-in subtitle text
+
+	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
+
+	if (stream_mode == CCX_SM_TRANSPORT && ctx->write_format == CCX_OF_NULL)
+		ctx->multiprogram = 1;
+
+	switch (stream_mode)
+	{
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			get_more_data = &general_get_more_data;
+			break;
+		case CCX_SM_TRANSPORT:
+			get_more_data = &ts_get_more_data;
+			break;
+		case CCX_SM_PROGRAM:
+			get_more_data = &ps_get_more_data;
+			break;
+		case CCX_SM_ASF:
+			get_more_data = &asf_get_more_data;
+			break;
+		case CCX_SM_WTV:
+			get_more_data = &wtv_get_more_data;
+			break;
+			// case CCX_SM_GXF:
+			// 	get_more_data = &ccx_gxf_get_more_data;
+			// 	break;
+#ifdef ENABLE_FFMPEG
+		case CCX_SM_FFMPEG:
+			get_more_data = &ffmpeg_get_more_data;
+			break;
+#endif
+		// case CCX_SM_MXF:
+		// 	get_more_data = ccx_mxf_getmoredata;
+		// 	// The MXFContext might have already been initialized if the
+		// 	// stream type was autodetected
+		// 	if (ctx->demux_ctx->private_data == NULL)
+		// 	{
+		// 		ctx->demux_ctx->private_data = ccx_gxf_init(ctx->demux_ctx);
+		// 	}
+		// 	break;
+		default:
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
+	}
+	end_of_file = 0;
+	int status = 0;
+
+	int last_cc_encoded = 0;
+
+	while (true)
+	{
+
+		if (status < 0 && end_of_file == 1)
+		{
+			// status <= 0 implies either something is wrong or eof
+			break;
+		}
+		if ((!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE) && ret != CCX_EINVAL)
+		{
+			position_sanity_check(ctx->demux_ctx);
+			ret = get_more_data(ctx, &datalist);
+			if (ret == CCX_EOF)
+			{
+				end_of_file = 1;
+			}
+
+			if (datalist)
+			{
+				position_sanity_check(ctx->demux_ctx);
+
+				if (!ctx->multiprogram)
+				{
+
+					if (dec_ctx == NULL || hard_ctx->dec_sub->start_time >= (dec_ctx->dec_sub).start_time || status < 0)
+					{
+						int ret = process_non_multiprogram_general_loop(ctx,
+												&datalist,
+												&data_node,
+												&dec_ctx,
+												&enc_ctx,
+												&min_pts,
+												ret,
+												&caps);
+					}
+				}
+				if (ctx->live_stream)
+				{
+					int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+					int th = cur_sec / 10;
+					if (ctx->last_reported_progress != th)
+					{
+						activity_progress(-1, cur_sec / 60, cur_sec % 60);
+						ctx->last_reported_progress = th;
+					}
+				}
+				else
+				{
+					if (ctx->total_inputsize > 255) // Less than 255 leads to division by zero below.
+					{
+						int progress = (int)((((ctx->total_past + ctx->demux_ctx->past) >> 8) * 100) / (ctx->total_inputsize >> 8));
+						if (ctx->last_reported_progress != progress)
+						{
+							LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
+							if (!t && ctx->demux_ctx->global_timestamp_inited)
+								t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+							int cur_sec = (int)(t / 1000);
+							activity_progress(progress, cur_sec / 60, cur_sec % 60);
+							ctx->last_reported_progress = progress;
+						}
+					}
+				}
+
+				// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
+				segment_output_file(ctx, dec_ctx);
+
+				if (ccx_options.send_to_srv)
+					net_check_conn();
+			}
+		}
+		if (end_of_file && !last_cc_encoded)
+		{
+			// the last closed caption needs to be encoded separately
+			// if EOF file has been hit for cc
+			// then encode one last time
+			enc_ctx = update_encoder_list(ctx);
+			flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+			encode_sub(enc_ctx, &dec_ctx->dec_sub);
+			last_cc_encoded = 1;
+		}
+		if (hard_ctx->dec_sub->start_time <= (dec_ctx->dec_sub).start_time || end_of_file == 1)
+		{
+			status = av_read_frame(hard_ctx->format_ctx, &hard_ctx->packet);
+
+			if (status >= 0 && hard_ctx->packet.stream_index == hard_ctx->video_stream_id)
+			{
+				frame_number++;
+
+				avcodec_decode_video2(hard_ctx->codec_ctx,
+						      hard_ctx->frame,
+						      &got_frame,
+						      &hard_ctx->packet);
+
+				if (got_frame && frame_number % 25 == 0)
+				{
+					float diff = (float)convert_pts_to_ms(hard_ctx->packet.pts - prev_packet_pts_hard,
+									      hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+
+					if (fabsf(diff) >= 1000 * hard_ctx->min_sub_duration)
+					{
+
+						// sws_scale is used to convert the pixel format to RGB24 from all other cases
+						sws_scale(
+						    hard_ctx->sws_ctx,
+						    (uint8_t const *const *)hard_ctx->frame->data,
+						    hard_ctx->frame->linesize,
+						    0,
+						    hard_ctx->codec_ctx->height,
+						    hard_ctx->rgb_frame->data,
+						    hard_ctx->rgb_frame->linesize);
+
+						if (hard_ctx->subcolor == HARDSUBX_COLOR_WHITE)
+						{
+							subtitle_text_hard = _process_frame_white_basic(hard_ctx,
+													hard_ctx->rgb_frame,
+													hard_ctx->codec_ctx->width,
+													hard_ctx->codec_ctx->height,
+													frame_number);
+						}
+						else
+						{
+							subtitle_text_hard = _process_frame_color_basic(hard_ctx,
+													hard_ctx->rgb_frame,
+													hard_ctx->codec_ctx->width,
+													hard_ctx->codec_ctx->height,
+													frame_number);
+						}
+
+						_display_frame(hard_ctx, hard_ctx->rgb_frame, hard_ctx->codec_ctx->width, hard_ctx->codec_ctx->height, frame_number);
+						cur_sec = (int)convert_pts_to_s(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+						total_sec = (int)convert_pts_to_s(hard_ctx->format_ctx->duration, AV_TIME_BASE_Q);
+						progress = (cur_sec * 100) / total_sec;
+						activity_progress(progress, cur_sec / 60, cur_sec % 60);
+						// progress on burnt-in extraction
+						if ((!subtitle_text_hard && !prev_subtitle_text_hard) || (subtitle_text_hard && !strlen(subtitle_text_hard) && !prev_subtitle_text_hard))
+						{
+							prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+						}
+
+						if (subtitle_text_hard)
+						{
+							char *double_enter = strstr(subtitle_text_hard, "\n\n");
+							if (double_enter != NULL)
+								*(double_enter) = '\0';
+						}
+
+						if (!prev_sub_encoded_hard && prev_subtitle_text_hard)
+						{
+							if (subtitle_text_hard)
+							{
+								dist = edit_distance(subtitle_text_hard, prev_subtitle_text_hard, (int)strlen(subtitle_text_hard), (int)strlen(prev_subtitle_text_hard));
+								if (dist < (0.2 * MIN(strlen(subtitle_text_hard), strlen(prev_subtitle_text_hard))))
+								{
+									dist = -1;
+									subtitle_text_hard = NULL;
+									prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+								}
+							}
+							if (dist != -1)
+							{
+								add_cc_sub_text(hard_ctx->dec_sub, prev_subtitle_text_hard, prev_begin_time_hard, prev_end_time_hard, "", "BURN", CCX_ENC_UTF_8);
+								encode_sub(enc_ctx, hard_ctx->dec_sub);
+								prev_begin_time_hard = prev_end_time_hard + 1;
+								prev_subtitle_text_hard = NULL;
+								prev_sub_encoded_hard = 1;
+								prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+								if (subtitle_text_hard)
+								{
+									prev_subtitle_text_hard = strdup(subtitle_text_hard);
+									prev_sub_encoded_hard = 0;
+								}
+							}
+							dist = 0;
+						}
+
+						if (!prev_subtitle_text_hard && subtitle_text_hard)
+						{
+							prev_begin_time_hard = prev_end_time_hard + 1;
+							prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+							prev_subtitle_text_hard = strdup(subtitle_text_hard);
+							prev_sub_encoded_hard = 0;
+						}
+						prev_packet_pts_hard = hard_ctx->packet.pts;
+					}
+				}
+			}
+			av_packet_unref(&hard_ctx->packet);
+		}
+	}
+	if (!prev_sub_encoded_hard)
+	{
+		add_cc_sub_text(hard_ctx->dec_sub, prev_subtitle_text_hard, prev_begin_time_hard, prev_end_time_hard, "", "BURN", CCX_ENC_UTF_8);
+		encode_sub(enc_ctx, hard_ctx->dec_sub);
+		prev_sub_encoded_hard = 1;
 	}
 	activity_progress(100, cur_sec / 60, cur_sec % 60);
 }

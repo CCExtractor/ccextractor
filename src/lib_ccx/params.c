@@ -983,6 +983,8 @@ void print_usage(void)
 	mprint("                     Recommended values are in the range 80 to 100.\n");
 	mprint("                     The default value is 95\n");
 	mprint("\n");
+	mprint("		-hcc	   : This option will be used if the file should have both\n");
+	mprint("					 closed captions and burned in subtitles\n");
 	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
@@ -1273,6 +1275,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (opt->hardsubx == 1)
 		{
+			if (strcmp(argv[i], "-hcc") == 0)
+			{
+				//if extraction of both burned in and non burned in subs
+				opt->hardsubx_and_common = 1;
+				continue;
+			}
 			if (strcmp(argv[i], "-ocr_mode") == 0)
 			{
 				if (i < argc - 1)
