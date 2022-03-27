@@ -4,7 +4,7 @@
 #include "ocr.h"
 #include "utility.h"
 
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
@@ -108,7 +108,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	else
 		hardsubx_process_frames_linear(ctx, enc_ctx);
 
-	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
+	dinit_encoder(&enc_ctx, 0); // TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
@@ -273,8 +273,8 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract");
 	}
 
-	//Initialize attributes common to lib_ccx context
-	ctx->basefilename = get_basename(options->output_filename); //TODO: Check validity, add stdin, network
+	// Initialize attributes common to lib_ccx context
+	ctx->basefilename = get_basename(options->output_filename); // TODO: Check validity, add stdin, network
 	ctx->current_file = -1;
 	ctx->inputfile = options->inputfile;
 	ctx->num_input_files = options->num_input_files;
@@ -283,7 +283,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->subs_delay = options->subs_delay;
 	ctx->cc_to_stdout = options->cc_to_stdout;
 
-	//Initialize subtitle text parameters
+	// Initialize subtitle text parameters
 	ctx->tickertext = options->tickertext;
 	ctx->cur_conf = 0.0;
 	ctx->prev_conf = 0.0;
@@ -296,7 +296,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->lum_thresh = options->hardsubx_lum_thresh;
 	ctx->hardsubx_and_common = options->hardsubx_and_common;
 
-	//Initialize subtitle structure memory
+	// Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
 	memset(ctx->dec_sub, 0, sizeof(struct cc_subtitle));
 
@@ -312,7 +312,7 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	TessBaseAPIEnd(lctx->tess_handle);
 	TessBaseAPIDelete(lctx->tess_handle);
 
-	//Free subtitle
+	// Free subtitle
 	freep(lctx->dec_sub);
 	freep(ctx);
 }

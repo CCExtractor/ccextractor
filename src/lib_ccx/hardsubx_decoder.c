@@ -2,7 +2,7 @@
 #include "utility.h"
 
 #ifdef ENABLE_HARDSUBX
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
@@ -13,7 +13,7 @@
 
 char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
-	//printf("frame : %04d\n", index);
+	// printf("frame : %04d\n", index);
 	PIX *im;
 	PIX *gray_im;
 	PIX *sobel_edge_im;
@@ -46,7 +46,7 @@ char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 		}
 	}
 
-	//Handle the edge image
+	// Handle the edge image
 	gray_im = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
 	sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
 	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 11);
@@ -164,7 +164,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 			pixGetPixel(pixd, j, i, &p2);
 			// pixGetPixel(hue_im,j,i,&p3);
 			pixGetPixel(edge_im_2, j, i, &p4);
-			if (p1 == 0 && p2 == 0 && p4 > 0) //if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
+			if (p1 == 0 && p2 == 0 && p4 > 0) // if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
 			}
@@ -270,7 +270,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 			pixGetPixel(pixd, j, i, &p2);
 			// pixGetPixel(hue_im,j,i,&p3);
 			pixGetPixel(edge_im_2, j, i, &p4);
-			if (p1 == 0 && p2 == 0 && p4 > 0) //if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
+			if (p1 == 0 && p2 == 0 && p4 > 0) // if(p4>0&&p1==0)//if(p2==0&&p1==0&&p3>0)
 			{
 				pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
 			}
@@ -328,7 +328,7 @@ char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 		}
 	}
 
-	//Handle the edge image
+	// Handle the edge image
 	gray_im = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
 	sobel_edge_im = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES);
 	dilate_gray_im = pixDilateGray(sobel_edge_im, 21, 11);
@@ -381,7 +381,7 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 		if (ctx->packet.stream_index == ctx->video_stream_id)
 		{
 			frame_number++;
-			//Decode the video stream packet
+			// Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 			if (got_frame && frame_number % 1000 == 0)
 			{
@@ -433,7 +433,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 		{
 			frame_number++;
 
-			//Decode the video stream packet
+			// Decode the video stream packet
 			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
 
 			if (got_frame && frame_number % 25 == 0)

@@ -39,7 +39,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (!*ppdata)
 			return -1;
 		data = *ppdata;
-		//TODO Set to dummy, find and set actual value
+		// TODO Set to dummy, find and set actual value
 		data->program_number = 1;
 		data->stream_pid = 1;
 		data->codec = CCX_CODEC_ATSC_CC;
@@ -151,14 +151,14 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				result = 1;
 				continue;
 			}
-			//PES Header
-			//Private Stream 1 (non MPEG audio , subpictures)
+			// PES Header
+			// Private Stream 1 (non MPEG audio , subpictures)
 			else if (nextheader[3] == 0xBD)
 			{
 				uint16_t packetlength = (nextheader[4] << 8) | nextheader[5];
 				int ret, datalen;
-				//TODO: read PES Header extension , skipped for now
-				// read_video_pes_header() might do
+				// TODO: read PES Header extension , skipped for now
+				//  read_video_pes_header() might do
 				buffered_skip(ctx->demux_ctx, 2);
 				ctx->demux_ctx->past += 2;
 				ret = buffered_read(ctx->demux_ctx, nextheader + 6, 1); // PES header data length (extension)
@@ -171,7 +171,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				buffered_skip(ctx->demux_ctx, (int)nextheader[6]);
 				ctx->demux_ctx->past += (int)nextheader[6];
 
-				//Substream ID
+				// Substream ID
 				ret = buffered_read(ctx->demux_ctx, nextheader + 7, 1);
 				ctx->demux_ctx->past += 1;
 				if (ret != 1)
@@ -198,7 +198,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					{
 						payload_read += (int)result;
 					}
-					//FIXME: Temporary bypass
+					// FIXME: Temporary bypass
 					data->bufferdatatype = CCX_DVD_SUBTITLE;
 
 					data->len = result;
@@ -209,7 +209,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				else
 				{
 					data->bufferdatatype = CCX_PES;
-					//Non Subtitle packet
+					// Non Subtitle packet
 					buffered_skip(ctx->demux_ctx, datalen);
 					ctx->demux_ctx->past += datalen;
 					// fake a result value as something was skipped
@@ -272,7 +272,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				vpesnum++;
 				dbg_print(CCX_DMT_VERBOSE, "PES video packet #%u\n", vpesnum);
 
-				//peslen is unsigned since loop would have already broken if it was negative
+				// peslen is unsigned since loop would have already broken if it was negative
 				int want = (int)((BUFSIZE - data->len) > peslen ? peslen : (BUFSIZE - data->len));
 
 				if (want != peslen)
@@ -332,7 +332,7 @@ int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 		if (!*data)
 			return -1;
 		ptr = *data;
-		//Dummy program numbers
+		// Dummy program numbers
 		ptr->program_number = 1;
 		ptr->stream_pid = 0x100;
 		ptr->codec = CCX_CODEC_ATSC_CC;
@@ -550,7 +550,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			dec_sub->got_output = 0;
 		}
 
-		//int ccblocks = cb_field1;
+		// int ccblocks = cb_field1;
 		add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
 		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
@@ -664,7 +664,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
-		//telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
+		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
 		if (enc_ctx)
 		{
 			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
@@ -821,8 +821,8 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 			ctx->segment_counter++;
 			if (enc_ctx)
 			{
-				//list_del(&enc_ctx->list);
-				//dinit_encoder(&enc_ctx, t);
+				// list_del(&enc_ctx->list);
+				// dinit_encoder(&enc_ctx, t);
 				const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 				sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
 				reset_output_ctx(enc_ctx, &ccx_options.enc_cfg);
@@ -1093,11 +1093,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
-				dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+				dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
 
-				if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL) //if we didn't set the min_pts of the program
+				if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL) // if we didn't set the min_pts of the program
 				{
-					int p_index = 0; //program index
+					int p_index = 0; // program index
 					for (int i = 0; i < ctx->demux_ctx->nb_program; i++)
 					{
 						if (dec_ctx->program_number == ctx->demux_ctx->pinfo[i].program_number)
@@ -1107,18 +1107,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 						}
 					}
 
-					if (dec_ctx->codec == CCX_CODEC_TELETEXT) //even if there's no sub data, we still need to set the min_pts
+					if (dec_ctx->codec == CCX_CODEC_TELETEXT) // even if there's no sub data, we still need to set the min_pts
 					{
-						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) //Teletext is synced with subtitle packet PTS
+						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) // Teletext is synced with subtitle packet PTS
 						{
-							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; //it means we got the first pts for private stream 1
+							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; // it means we got the first pts for private stream 1
 							set_current_pts(dec_ctx->timing, min_pts);
 							set_fts(dec_ctx->timing);
 						}
 					}
-					if (dec_ctx->codec == CCX_CODEC_DVB) //DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
+					if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 					{
-						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) //it means we got the first pts for audio
+						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
 						{
 							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
 							set_current_pts(dec_ctx->timing, min_pts);
@@ -1268,7 +1268,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
-	dec_ctx->dtvcc->encoder = (void *)enc_ctx; //WARN: otherwise cea-708 will not work
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;

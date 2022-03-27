@@ -142,7 +142,7 @@ int api_start(struct ccx_s_options api_options)
 		mprint("[share] launching translate service\n");
 		ccx_share_launch_translator(api_options.translate_langs, api_options.translate_key);
 	}
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 	ret = 0;
 	while (switch_to_next_file(ctx, 0))
 	{
@@ -150,7 +150,7 @@ int api_start(struct ccx_s_options api_options)
 #ifdef ENABLE_SHARING
 		if (api_options.sharing_enabled)
 			ccx_share_start(ctx->basefilename);
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
@@ -315,7 +315,7 @@ int api_start(struct ccx_s_options api_options)
 				ccx_share_stream_done(ctx->basefilename);
 				ccx_share_stop();
 			}
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 			if (dec_ctx->total_pulldownframes)
 				mprint("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",
