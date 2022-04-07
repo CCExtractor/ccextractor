@@ -1,7 +1,7 @@
 //! TV screen to be displayed
 //!
 //! TV screen contains the captions to be displayed.
-//! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received  
+//! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received
 
 #[cfg(unix)]
 use std::os::unix::prelude::IntoRawFd;
@@ -128,6 +128,7 @@ impl dtvcc_tv_screen {
             ccx_output_format::CCX_OF_SRT => self.write_srt(writer),
             ccx_output_format::CCX_OF_SAMI => self.write_sami(writer),
             ccx_output_format::CCX_OF_TRANSCRIPT => self.write_transcript(writer),
+            ccx_output_format::CCX_OF_SCC => self.write_scc(writer),
             _ => {
                 self.write_debug();
                 Err("Unsupported write format".to_owned())
@@ -304,6 +305,62 @@ impl dtvcc_tv_screen {
             }
         }
         Ok(())
+    }
+
+
+    pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
+
+        fn adjust_odd_parity(value: u8) -> u8{
+            let mut ones = 0;
+            for j in 0..7 {
+                if value & (1 << j) != 0 {
+                    ones += 1;
+                }
+            }
+            if ones % 2 == 0 { 0b10000000 | value  } else {value}
+        }
+        if self.is_screen_empty(writer) {
+            return Ok(());
+        }
+
+        if self.time_ms_show + writer.subs_delay < 0 {
+            return Ok(());
+        }
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                let time_show = get_time_str(self.time_ms_show);
+                let time_hide = get_time_str(self.time_ms_hide);
+
+                debug!("{} {}", time_show, time_hide);
+
+                let (first, last) = self.get_write_interval(row_index);
+                debug!("First: {}, Last: {}", first, last);
+
+                let mut buf = String::new();
+                // {rollup} {unknown} {row15 col0 white}
+                buf.push_str("9426 94ad 9470");
+                let mut bytes_written = 0;
+                for i in 0..last + 1 {
+                    if bytes_written % 2 == 0 {
+                        buf.push_str(" ");
+                    }
+                    let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
+                    buf = format!("{}{:x}", buf, adjusted_val);
+                    bytes_written += 1;
+                    // debug!(" value {:x} {} ",adjusted_val, (adjusted_val) as char);
+                }
+                // add 0x80 as filler if number of bytes is not even
+                if bytes_written % 2 == 1 {
+                    buf.push_str("80");
+                }
+                buf.push_str("\r\n");
+
+                debug!("{}", buf);
+                writer.write_to_file(buf.as_bytes())?;
+            }
+        }
+        return Ok(());
     }
 
     /// Write captions in SAMI format
