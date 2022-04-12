@@ -81,6 +81,7 @@ int set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
 char *print_mstime_static(LLONG mstime);
+size_t print_scc_time(LLONG mstime, char *buf);
 size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf);
 void print_debug_timing(struct ccx_common_timing_ctx *ctx);
 int gop_accepted(struct gop_time_code* g);

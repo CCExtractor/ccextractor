@@ -320,6 +320,50 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
 
+unsigned char adjust_odd_parity(const unsigned char value)
+{
+    unsigned int i, ones = 0;
+    for(i = 0; i < 8; i++ ) {
+        if ((value & (1 << i)) != 0) {
+            ones += 1;
+        }
+    }
+    if (ones % 2 == 0) {
+        // make the number of ones always odd
+        return value | 0b10000000;
+    }
+    return value;
+}
+
+void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder) {
+    dtvcc_tv_screen *tv = decoder->tv;
+
+    char *buf = (char *) encoder -> buffer;
+    print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
+    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
+    for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++) {
+        if(!dtvcc_is_row_empty(tv,i)) {
+            sprintf(buf+strlen(buf),"9426 94ad 9470 ");
+            int first, last, bytes_written = 0;
+            dtvcc_get_write_interval(tv, i, &first, &last);
+            for (int j = first; j <= last; j++) {
+                sprintf(buf + strlen(buf),"%x",adjust_odd_parity(tv->chars[i][j].sym));
+                if (bytes_written % 2 == 1) {
+                    sprintf(buf +strlen(buf), " ");
+                }
+                bytes_written += 1;
+            }
+            //filler 0x80 if the number of bytes written are not even
+            if (bytes_written % 2 == 1) {
+                sprintf(buf +strlen(buf), "80");
+            }
+            sprintf(buf + strlen(buf), "\r\n\n");
+            write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
+        }
+    }
+    printf("%s\n", buf);
+}
+
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	char *buf = (char *)encoder->buffer;
@@ -382,6 +426,10 @@ void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struc
 		case CCX_OF_SAMI:
 			dtvcc_write_sami(writer, decoder, encoder);
 			break;
+        case CCX_OF_SCC:
+            dtvcc_write_debug(decoder->tv);
+            dtvcc_write_scc(writer, decoder, encoder);
+            break;
 		case CCX_OF_MCC:
 			printf("REALLY BAD... [%s:%d]\n", __FILE__, __LINE__);
 			break;
