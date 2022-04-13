@@ -338,12 +338,18 @@ unsigned char adjust_odd_parity(const unsigned char value)
 void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder) {
     dtvcc_tv_screen *tv = decoder->tv;
 
+    if (dtvcc_is_screen_empty(tv, encoder))
+        return;
+
+    if (tv->time_ms_show + encoder->subs_delay < 0)
+        return;
+
     char *buf = (char *) encoder -> buffer;
     print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
-    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
     for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++) {
         if(!dtvcc_is_row_empty(tv,i)) {
-            sprintf(buf+strlen(buf),"9426 94ad 9470 ");
+            // {clear buffer} {pop on caption} {row15 column1}
+            sprintf(buf+strlen(buf),"94ae 9420 9470 ");
             int first, last, bytes_written = 0;
             dtvcc_get_write_interval(tv, i, &first, &last);
             for (int j = first; j <= last; j++) {
@@ -357,11 +363,17 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
             if (bytes_written % 2 == 1) {
                 sprintf(buf +strlen(buf), "80");
             }
-            sprintf(buf + strlen(buf), "\r\n\n");
-            write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
+
         }
     }
-    printf("%s\n", buf);
+    sprintf(buf +strlen(buf), "\n\n");
+    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
+    // when hiding substract a frame
+    // 1 frame = 34 ms
+    print_scc_time(tv->time_ms_hide + encoder->subs_delay - 34, buf);
+    // clear caption command
+    sprintf(buf +strlen(buf), "942c 942c \n\n");
+    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
 }
 
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
