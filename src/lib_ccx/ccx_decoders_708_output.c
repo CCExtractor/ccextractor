@@ -335,6 +335,16 @@ unsigned char adjust_odd_parity(const unsigned char value)
     return value;
 }
 
+void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+{
+    char *buf = (char *)encoder->buffer;
+    // 18 characters long + 2 new lines
+    memset(buf, 0, 20);
+    sprintf(buf, "Scenarist_SCC V1.0\n\n");
+
+    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+}
+
 void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder) {
     dtvcc_tv_screen *tv = decoder->tv;
 
@@ -345,11 +355,16 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
         return;
 
     char *buf = (char *) encoder -> buffer;
+    if (tv->cc_count == 2) {
+        dtvcc_write_scc_header(tv, encoder);
+    }
     print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
+
+    // {clear buffer} {pop on caption} {row15 column1}
+    sprintf(buf+strlen(buf),"94ae 9420 9470 ");
+
     for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++) {
         if(!dtvcc_is_row_empty(tv,i)) {
-            // {clear buffer} {pop on caption} {row15 column1}
-            sprintf(buf+strlen(buf),"94ae 9420 9470 ");
             int first, last, bytes_written = 0;
             dtvcc_get_write_interval(tv, i, &first, &last);
             for (int j = first; j <= last; j++) {
@@ -359,16 +374,17 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
                 }
                 bytes_written += 1;
             }
-            //filler 0x80 if the number of bytes written are not even
+            // if byte pair are not even then make it even by adding 0x80 as padding
             if (bytes_written % 2 == 1) {
-                sprintf(buf +strlen(buf), "80");
+                sprintf(buf +strlen(buf), "80 ");
+            }else {
+                sprintf(buf +strlen(buf), " ");
             }
-
         }
     }
     sprintf(buf +strlen(buf), "\n\n");
     write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
-    // when hiding substract a frame
+    // when hiding subtract a frame
     // 1 frame = 34 ms
     print_scc_time(tv->time_ms_hide + encoder->subs_delay - 34, buf);
     // clear caption command
@@ -439,7 +455,6 @@ void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struc
 			dtvcc_write_sami(writer, decoder, encoder);
 			break;
         case CCX_OF_SCC:
-            dtvcc_write_debug(decoder->tv);
             dtvcc_write_scc(writer, decoder, encoder);
             break;
 		case CCX_OF_MCC:

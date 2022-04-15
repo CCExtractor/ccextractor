@@ -10,7 +10,7 @@ use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
 use super::output::{color_to_hex, write_char, Writer};
-use super::timing::get_time_str;
+use super::timing::{get_time_str,get_scc_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
@@ -308,8 +308,8 @@ impl dtvcc_tv_screen {
     }
 
 
+    /// Write captions in SCC format
     pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
-
         fn adjust_odd_parity(value: u8) -> u8{
             let mut ones = 0;
             for j in 0..7 {
@@ -327,19 +327,20 @@ impl dtvcc_tv_screen {
             return Ok(());
         }
 
+        let mut buf = String::new();
+        let time_show = get_scc_time_str(self.time_ms_show);
+        let time_end = get_scc_time_str(self.time_ms_hide);
+
+        buf.push_str(&time_show);
+        // {clear buffer} {start pop on} {row15 col0 white}
+        buf.push_str(" 94ae 9420 9470");
+
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
-                let time_show = get_time_str(self.time_ms_show);
-                let time_hide = get_time_str(self.time_ms_hide);
-
-                debug!("{} {}", time_show, time_hide);
-
+                debug!("{}", time_show);
                 let (first, last) = self.get_write_interval(row_index);
                 debug!("First: {}, Last: {}", first, last);
 
-                let mut buf = String::new();
-                // {rollup} {unknown} {row15 col0 white}
-                buf.push_str("9426 94ad 9470");
                 let mut bytes_written = 0;
                 for i in 0..last + 1 {
                     if bytes_written % 2 == 0 {
@@ -348,18 +349,18 @@ impl dtvcc_tv_screen {
                     let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
                     buf = format!("{}{:x}", buf, adjusted_val);
                     bytes_written += 1;
-                    // debug!(" value {:x} {} ",adjusted_val, (adjusted_val) as char);
                 }
-                // add 0x80 as filler if number of bytes is not even
+                // add 0x80 padding and form byte pair if the last byte pair is not form
                 if bytes_written % 2 == 1 {
                     buf.push_str("80");
                 }
-                buf.push_str("\r\n");
-
-                debug!("{}", buf);
-                writer.write_to_file(buf.as_bytes())?;
             }
         }
+        buf.push_str("\n\n");
+        writer.write_to_file(buf.as_bytes())?;
+        // clear screen
+        buf = format!("{} 942c 942c \n\n",time_end);
+        writer.write_to_file(buf.as_bytes())?;
         return Ok(());
     }
 
