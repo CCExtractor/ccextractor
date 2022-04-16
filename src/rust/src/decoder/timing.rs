@@ -53,6 +53,6 @@ pub fn get_scc_time_str(time: LLONG) -> String {
     let hh = time / 1000 / 60 / 60;
     let mm = time / 1000 / 60 - 60 * hh;
     let ss = time / 1000 - 60 * (mm + 60 * hh);
-    let frame = ((time - 1000 * (ss + 60 * (mm + 60 * hh))) as f32 * 29.97/1000.00) as u8;
+    let frame = ((time - 1000 * (ss + 60 * (mm + 60 * hh))) as f32 * 29.97 / 1000.00) as u8;
     format!("{:02}:{:02}:{:02}:{:02}", hh, mm, ss, frame)
 }

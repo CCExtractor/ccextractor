@@ -10,7 +10,7 @@ use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
 use super::output::{color_to_hex, write_char, Writer};
-use super::timing::{get_time_str,get_scc_time_str};
+use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
@@ -307,17 +307,20 @@ impl dtvcc_tv_screen {
         Ok(())
     }
 
-
     /// Write captions in SCC format
     pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
-        fn adjust_odd_parity(value: u8) -> u8{
+        fn adjust_odd_parity(value: u8) -> u8 {
             let mut ones = 0;
             for j in 0..7 {
                 if value & (1 << j) != 0 {
                     ones += 1;
                 }
             }
-            if ones % 2 == 0 { 0b10000000 | value  } else {value}
+            if ones % 2 == 0 {
+                0b10000000 | value
+            } else {
+                value
+            }
         }
         if self.is_screen_empty(writer) {
             return Ok(());
@@ -359,7 +362,7 @@ impl dtvcc_tv_screen {
         buf.push_str("\n\n");
         writer.write_to_file(buf.as_bytes())?;
         // clear screen
-        buf = format!("{} 942c 942c \n\n",time_end);
+        buf = format!("{} 942c 942c \n\n", time_end);
         writer.write_to_file(buf.as_bytes())?;
         return Ok(());
     }

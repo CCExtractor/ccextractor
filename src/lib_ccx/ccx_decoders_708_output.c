@@ -279,10 +279,10 @@ void dtvcc_write_transcript(dtvcc_writer_ctx *writer, dtvcc_service_decoder *dec
 						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)
-				sprintf(buf + strlen(buf), "CC1|"); //always CC1 because CEA-708 is field-independent
+				sprintf(buf + strlen(buf), "CC1|"); // always CC1 because CEA-708 is field-independent
 
 			if (encoder->transcript_settings->showMode)
-				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
+				sprintf(buf + strlen(buf), "POP|"); // TODO caption mode(pop, rollup, etc.)
 
 			const size_t buf_len = strlen(buf);
 			if (buf_len != 0)
@@ -322,74 +322,86 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 
 unsigned char adjust_odd_parity(const unsigned char value)
 {
-    unsigned int i, ones = 0;
-    for(i = 0; i < 8; i++ ) {
-        if ((value & (1 << i)) != 0) {
-            ones += 1;
-        }
-    }
-    if (ones % 2 == 0) {
-        // make the number of ones always odd
-        return value | 0b10000000;
-    }
-    return value;
+	unsigned int i, ones = 0;
+	for (i = 0; i < 8; i++)
+	{
+		if ((value & (1 << i)) != 0)
+		{
+			ones += 1;
+		}
+	}
+	if (ones % 2 == 0)
+	{
+		// make the number of ones always odd
+		return value | 0b10000000;
+	}
+	return value;
 }
 
 void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
-    char *buf = (char *)encoder->buffer;
-    // 18 characters long + 2 new lines
-    memset(buf, 0, 20);
-    sprintf(buf, "Scenarist_SCC V1.0\n\n");
+	char *buf = (char *)encoder->buffer;
+	// 18 characters long + 2 new lines
+	memset(buf, 0, 20);
+	sprintf(buf, "Scenarist_SCC V1.0\n\n");
 
-    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
-void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder) {
-    dtvcc_tv_screen *tv = decoder->tv;
+void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
+{
+	dtvcc_tv_screen *tv = decoder->tv;
 
-    if (dtvcc_is_screen_empty(tv, encoder))
-        return;
+	if (dtvcc_is_screen_empty(tv, encoder))
+		return;
 
-    if (tv->time_ms_show + encoder->subs_delay < 0)
-        return;
+	if (tv->time_ms_show + encoder->subs_delay < 0)
+		return;
 
-    char *buf = (char *) encoder -> buffer;
-    if (tv->cc_count == 2) {
-        dtvcc_write_scc_header(tv, encoder);
-    }
-    print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
+	char *buf = (char *)encoder->buffer;
+	if (tv->cc_count == 2)
+	{
+		dtvcc_write_scc_header(tv, encoder);
+	}
+	print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
 
-    // {clear buffer} {pop on caption} {row15 column1}
-    sprintf(buf+strlen(buf),"94ae 9420 9470 ");
+	// {clear buffer} {pop on caption} {row15 column1}
+	sprintf(buf + strlen(buf), "94ae 9420 9470 ");
 
-    for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++) {
-        if(!dtvcc_is_row_empty(tv,i)) {
-            int first, last, bytes_written = 0;
-            dtvcc_get_write_interval(tv, i, &first, &last);
-            for (int j = first; j <= last; j++) {
-                sprintf(buf + strlen(buf),"%x",adjust_odd_parity(tv->chars[i][j].sym));
-                if (bytes_written % 2 == 1) {
-                    sprintf(buf +strlen(buf), " ");
-                }
-                bytes_written += 1;
-            }
-            // if byte pair are not even then make it even by adding 0x80 as padding
-            if (bytes_written % 2 == 1) {
-                sprintf(buf +strlen(buf), "80 ");
-            }else {
-                sprintf(buf +strlen(buf), " ");
-            }
-        }
-    }
-    sprintf(buf +strlen(buf), "\n\n");
-    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
-    // when hiding subtract a frame
-    // 1 frame = 34 ms
-    print_scc_time(tv->time_ms_hide + encoder->subs_delay - 34, buf);
-    // clear caption command
-    sprintf(buf +strlen(buf), "942c 942c \n\n");
-    write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,buf,strlen(buf));
+	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!dtvcc_is_row_empty(tv, i))
+		{
+			int first, last, bytes_written = 0;
+			dtvcc_get_write_interval(tv, i, &first, &last);
+			for (int j = first; j <= last; j++)
+			{
+				sprintf(buf + strlen(buf), "%x", adjust_odd_parity(tv->chars[i][j].sym));
+				if (bytes_written % 2 == 1)
+				{
+					sprintf(buf + strlen(buf), " ");
+				}
+				bytes_written += 1;
+			}
+			// if byte pair are not even then make it even by adding 0x80 as padding
+			if (bytes_written % 2 == 1)
+			{
+				sprintf(buf + strlen(buf), "80 ");
+			}
+			else
+			{
+				sprintf(buf + strlen(buf), " ");
+			}
+		}
+	}
+	sprintf(buf + strlen(buf), "\n\n");
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	// when hiding subtract a frame
+	// 1 frame = 34 ms
+	print_scc_time(tv->time_ms_hide + encoder->subs_delay - 34, buf);
+	// clear caption command
+	sprintf(buf + strlen(buf), "942c 942c \n\n");
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
@@ -454,9 +466,9 @@ void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struc
 		case CCX_OF_SAMI:
 			dtvcc_write_sami(writer, decoder, encoder);
 			break;
-        case CCX_OF_SCC:
-            dtvcc_write_scc(writer, decoder, encoder);
-            break;
+		case CCX_OF_SCC:
+			dtvcc_write_scc(writer, decoder, encoder);
+			break;
 		case CCX_OF_MCC:
 			printf("REALLY BAD... [%s:%d]\n", __FILE__, __LINE__);
 			break;
@@ -541,7 +553,7 @@ void dtvcc_writer_cleanup(dtvcc_writer_ctx *writer)
 	free(writer->filename);
 	if (writer->cd == (iconv_t)-1)
 	{
-		//TODO nothing to do here
+		// TODO nothing to do here
 	}
 	else
 		iconv_close(writer->cd);
@@ -556,7 +568,7 @@ void dtvcc_writer_output(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decode
 	if (!writer->filename && writer->fd < 0)
 		return;
 
-	if (writer->filename && writer->fd < 0) //first request to write
+	if (writer->filename && writer->fd < 0) // first request to write
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 							  "dtvcc_writer_output: creating %s\n",
