@@ -347,7 +347,7 @@ impl dtvcc_tv_screen {
                 let mut bytes_written = 0;
                 for i in 0..last + 1 {
                     if bytes_written % 2 == 0 {
-                        buf.push_str(" ");
+                        buf.push(' ');
                     }
                     let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
                     buf = format!("{}{:x}", buf, adjusted_val);
@@ -364,7 +364,7 @@ impl dtvcc_tv_screen {
         // clear screen
         buf = format!("{} 942c 942c \n\n", time_end);
         writer.write_to_file(buf.as_bytes())?;
-        return Ok(());
+        Ok(())
     }
 
     /// Write captions in SAMI format
