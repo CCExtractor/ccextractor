@@ -1,10 +1,10 @@
 Name: ccextractor
-Version: 0.88
+Version: 0.94
 Release: 1
 Summary: A closed captions and teletext subtitles extractor for video streams.
 Group: Applications/Internet
 License: GPL
-URL: http://ccextractor.org/
+URL: https://ccextractor.org/
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 

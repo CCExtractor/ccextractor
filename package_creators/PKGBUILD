@@ -1,22 +1,21 @@
 pkgname=ccextractor
-pkgver=0.93
+pkgver=0.94
 pkgrel=1
 pkgdesc="A closed captions and teletext subtitles extractor for video streams."
 arch=('i686' 'x86_64')
-url="http://www.ccextractor.org"
+url="https://www.ccextractor.org"
 license=('GPL')
-depends=('gcc-libs' 'tesseract')
+depends=('gcc-libs' 'tesseract' 'leptonica' 'ffmpeg' 'rust' 'clang')
 source=(
-   $pkgname-$pkgver.tar.gz
+   https://github.com/CCExtractor/ccextractor/releases/download/v$pkgver/ccextractor_minimal.tar.gz
 )
 
 build() {
-  cd "$srcdir/$pkgname-$pkgver"
-  CC=gcc ./configure --enable-ocr --prefix="$pkgdir/usr/local"
-  make -j4
+  cd "$srcdir/$pkgname/linux"
+  ./build_hardsubx
 }
 
 package() {
-  cd "$srcdir/$pkgname-$pkgver"
-  make install
+  cd "$srcdir/$pkgname/linux"
+  install -Dm755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
 }

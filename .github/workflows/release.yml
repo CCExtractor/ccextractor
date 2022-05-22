@@ -10,15 +10,32 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v3
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
       shell: bash
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
-    - name: build Release
-      run: msbuild ccextractor.sln /p:Configuration=Release-Full
+    - name: Install llvm and clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+        platform: x86
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: 1.56.0
+        override: true
+        target: i686-pc-windows-msvc
+    - name: Install Win 10 SDK
+      uses: ilammy/msvc-dev-cmd@v1
+    - name: build Release-Full
+      env:
+        LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
+        LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
+        CARGO_TARGET_DIR: "..\\..\\windows"
+        BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
       working-directory: ./windows
     - name: Copy files to directory for installer
       run: mkdir installer; cp ./Release-Full/ccextractorwinfull.exe ./installer; cp ./Release-Full/*.dll ./installer
@@ -53,7 +70,7 @@ jobs:
   create_linux_package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
         with:
           path: ./ccextractor
       - name: Create .tar.gz without git and windows folders

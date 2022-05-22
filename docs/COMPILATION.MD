@@ -17,7 +17,7 @@ git clone https://github.com/CCExtractor/ccextractor.git
 Debian:
 
 ```bash
-sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr tesseract-ocr-dev libleptonica-dev clang libclang-dev
+sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
 RHEL:
@@ -27,7 +27,7 @@ yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel lep
 ```
 Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust
 
-**Note:** On Ubuntu Version 18.04 (Bionic) and (probably) later, install `libtesseract-dev` rather than `tesseract-ocr-dev`, which does not exist anymore.
+**Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
 **Note:** On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source
 
@@ -94,22 +94,9 @@ sudo make install
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
 
-### Compiling with GUI:
+### Compiling with GUI
 
-To build CCExtractor with a GUI, you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui
-make
-
-# make build systemwide
-sudo make install
-```
-
-Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## macOS
 
@@ -178,22 +165,7 @@ make
 
 #### Compiling with GUI:
 
-To use CCExtractor with a gui you will additionally need to install GLEW and GLFW. You can do that by installing it via homebrew using:
-
-```bash
-brew install glfw
-brew install glew
-```
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui #OR .configure --with-gui --without-rust
-make
-```
-
-Once set up, you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## Windows
 Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 

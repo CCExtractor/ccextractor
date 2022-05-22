@@ -48,14 +48,6 @@ int api_start(struct ccx_s_options api_options)
 #if defined(ENABLE_OCR) && defined(_WIN32)
 	setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
-#ifdef ENABLE_HARDSUBX
-	if (api_options.hardsubx)
-	{
-		// Perform burned in subtitle extraction
-		hardsubx(&api_options);
-		return 0;
-	}
-#endif
 
 	// Initialize CCExtractor libraries
 	ctx = init_libraries(&api_options);
@@ -73,6 +65,15 @@ int api_start(struct ccx_s_options api_options)
 		else
 			fatal(EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n", errno);
 	}
+
+#ifdef ENABLE_HARDSUBX
+	if (api_options.hardsubx)
+	{
+		// Perform burned in subtitle extraction
+		hardsubx(&api_options);
+		return 0;
+	}
+#endif
 
 #ifdef WITH_LIBCURL
 	curl_global_init(CURL_GLOBAL_ALL);

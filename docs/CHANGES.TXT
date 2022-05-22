@@ -1,8 +1,17 @@
-0.94
+0.95 (to be released)
+-----------------
+- Fix: crash in Rust decoder on ATSC1.0 TS Files (#1407)
+- Removed the --with-gui flag for linux/configure and mac/configure (use the Flutter GUI instead)
+- Fix: segmentation fault in using hardsubx
+
+0.94 (2021-12-14)
 -----------------
 - BOM is no longer enabled by default on windows platforms
 - CEA-708: Rust decoder is now default instead of C decoder
 - CEA-708 subs are now extracted by default
+- New: Add check for Minimum supported rust version (MSRV) (#1387) 
+- Fix: Fix CEA-708 Carriage Return command implementation
+- Fix: Fix bug with startat/endat parameter (#1396)
 - Fix: Mac Build processes (#1390)
 - Fix: Fix bug with negative delay parameter (#1365)
 
