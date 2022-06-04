@@ -2,13 +2,6 @@ name: Build CCExtractor on Windows
 
 on:
   push:
-    paths:
-      - ".github/workflows/build_windows.yml"
-      - "**.c"
-      - "**.h"
-      - "windows/**"
-    tags-ignore: # ignore push via new tag
-      - "*.*"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
