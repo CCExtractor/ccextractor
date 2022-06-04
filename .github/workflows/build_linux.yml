@@ -3,15 +3,6 @@ name: Build CCExtractor on Linux
 on:
   push:
   pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-    - '.github/workflows/build_linux.yml'
-    - '**.c'
-    - '**.h'
-    - '**Makefile**'
-    - 'linux/**'
-    - 'package_creators/**'
-    - 'src/rust/**'
 jobs:
   build_shell:
     runs-on: ubuntu-latest
