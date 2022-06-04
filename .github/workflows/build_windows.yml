@@ -44,7 +44,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwin.exe --version
         working-directory: ./windows/x64/Release
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows Non-OCR Release build
           path: |
@@ -76,7 +76,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwin.exe --version
         working-directory: ./windows/x64/Debug
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows Non-OCR Debug build
           path: |
@@ -113,7 +113,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/Release-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows OCR and HardSubX Release build
           path: |
@@ -149,7 +149,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/Debug-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v2
         with:
           name: CCExtractor Windows OCR and HardSubX Debug build
           path: |
