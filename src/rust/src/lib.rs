@@ -14,6 +14,7 @@ pub mod bindings {
 }
 pub mod decoder;
 pub mod utils;
+pub mod hardsubx;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
