@@ -16,6 +16,8 @@
 #define min_f(a, b, c) (fminf(a, fminf(b, c)))
 #define max_f(a, b, c) (fmaxf(a, fmaxf(b, c)))
 
+#ifdef DISABLE_RUST
+
 void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 {
 	//Conversion into HSV color space to get Hue
@@ -65,6 +67,8 @@ void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 	*S = (unsigned char)(s * 255); // dst_s : 0-255
 	*V = (unsigned char)(v * 255); // dst_v : 0-255
 }
+
+#endif
 
 void rgb_to_lab(float R, float G, float B, float *L, float *a, float *b)
 {
