@@ -1,7 +1,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_HARDSUBX
+#if defined(ENABLE_HARDSUBX) && defined(DISABLE_RUST)
 //TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -16,7 +16,6 @@
 #define min_f(a, b, c) (fminf(a, fminf(b, c)))
 #define max_f(a, b, c) (fmaxf(a, fmaxf(b, c)))
 
-#ifdef DISABLE_RUST
 
 void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 {
@@ -68,7 +67,6 @@ void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 	*V = (unsigned char)(v * 255); // dst_v : 0-255
 }
 
-#endif
 
 void rgb_to_lab(float R, float G, float B, float *L, float *a, float *b)
 {
