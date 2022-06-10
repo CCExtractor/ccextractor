@@ -37,29 +37,26 @@ pub extern "C" fn rgb_to_hsv(
     let max: f32 = max_f!(r, g, b);
     let min: f32 = min_f!(r, g, b);
 
-    let mut h: f32;
-    let s: f32;
     let v: f32 = max;
 
-    if max == 0.0 || max == min {
-        s = 0.0;
-        h = 0.0;
-    }
+    let mut h = {
+        if max == min {
+            0.0
+        } else if max == r {
+            60.0 * ((g - b) / (max - min))
+        } else if max == g {
+            60.0 * ((g - b) / (max - min) + 120.0)
+        } else {
+            60.0 * ((g - b) / (max - min) + 240.0)
+        }
+    };
 
-    else {
-        s = (max - min) / max;
-
-        if max == r
-        {
-            h = 60.0 * ((g - b) / (max - min)) + 0.0;
+    let s = {
+        match max {
+            x if x == 0.0 => 0.0,
+            _ => (max - min) / max
         }
-        else if max == g {
-            h = 60.0 * ((b - r) / (max - min)) + 120.0;
-        }
-        else {
-            h = 60.0 * ((r - g) / (max - min)) + 240.0;
-        }
-    }
+    };
 
     if h < 0.0
     {
