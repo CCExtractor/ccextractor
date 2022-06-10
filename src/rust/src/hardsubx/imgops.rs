@@ -1,29 +1,3 @@
-use fast_math;
-
-macro_rules! max_f {
-    ($a: ident, $b: ident, $c:ident) =>{
-        f32::max($a, f32::max($b, $c))
-    };
-}
-
-macro_rules! min_f {
-    ($a: ident, $b: ident, $c:ident) =>{
-        f32::min($a, f32::min($b, $c))
-    };
-}
-
-macro_rules! BLACK {
-    () => {
-        20.0
-    };
-}
-
-macro_rules! YELLOW {
-    () => {
-        70.0
-    };
-}
-
 
 #[no_mangle]
 pub extern "C" fn rgb_to_hsv(
@@ -34,8 +8,8 @@ pub extern "C" fn rgb_to_hsv(
     let r: f32 = R / 255.0;
     let g: f32 = G / 255.0;
     let b: f32 = B / 255.0;
-    let max: f32 = max_f!(r, g, b);
-    let min: f32 = min_f!(r, g, b);
+    let max: f32 = f32::max(r, f32::max(g, b));
+    let min: f32 = f32::min(r, f32::min(g, b));
 
     let v: f32 = max;
 
