@@ -15,8 +15,8 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 pub extern "C" fn rgb_to_lab(R: f32, G: f32, B: f32, L: &mut f32, a: &mut f32, b: &mut f32) {
     let rgb = Srgb::new(R, G, B);
 
+    // This declaration sets the white-point as per the D65 standard
     let lab_rep = Lab::<palette::white_point::D65, f32>::from_color(rgb);
-    // The above declaration sets the white-point as per the D65 standard
 
     *L = lab_rep.l;
     *a = lab_rep.a;
