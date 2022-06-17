@@ -8,6 +8,7 @@ fn main() {
         .header("wrapper.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
+        .clang_arg("-DENABLE_HARDSUBX")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     for type_name in ALLOWLIST_TYPES {
@@ -41,6 +42,9 @@ const ALLOWLIST_FUNCTIONS: &[&str] = &[
     "get_fts",
     "printdata",
     "writercwtdata",
+    "edit_distance",
+    "convert_pts_to_.*",
+    "av_rescale_q"
 ];
-const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", "AVRational"];
 const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
