@@ -83,6 +83,29 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  cmake_ocr_release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: dependencies
+      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
+    - name: cmake
+      run: mkdir build && cd build && cmake ../src/ -DWITH_OCR=ON -DCMAKE_BUILD_TYPE=Release
+    - name: build
+      run: make
+      working-directory: build
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: build
+    - name: Prepare artifacts
+      run: mkdir ./linux/artifacts
+    - name: Copy release artifact
+      run: cp build/ccextractor ./linux/artifacts/
+    - uses: actions/upload-artifact@v3
+      with:
+        name: CCExtractor Linux OCR and Release build
+        path: ./linux/artifacts
   build_rust:
     runs-on: ubuntu-latest
     steps:
