@@ -2,27 +2,33 @@
 //     bindings::*
 // };
 
+#[cfg(feature = "hardsubx_ocr")]
 use ffmpeg_sys_next::*;
 use std::cmp;
 use std::ffi;
 
+#[cfg(feature = "hardsubx_ocr")]
 const AV_TIME_BASE: i32 = 1000000;
+#[cfg(feature = "hardsubx_ocr")]
 const AV_TIME_BASE_Q: AVRational = AVRational {
     num: 1,
     den: AV_TIME_BASE,
 };
 
 #[no_mangle]
+#[cfg(feature = "hardsubx_ocr")]
 pub extern "C" fn convert_pts_to_ns(pts: i64, time_base: AVRational) -> i64 {
     unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) }
 }
 
 #[no_mangle]
+#[cfg(feature = "hardsubx_ocr")]
 pub extern "C" fn convert_pts_to_ms(pts: i64, time_base: AVRational) -> i64 {
     unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000 }
 }
 
 #[no_mangle]
+#[cfg(feature = "hardsubx_ocr")]
 pub extern "C" fn convert_pts_to_s(pts: i64, time_base: AVRational) -> i64 {
     unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000000 }
 }
