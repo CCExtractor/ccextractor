@@ -21,4 +21,4 @@ ffmpeg-sys-next = { version = "5.0.1", optional = true }
 bindgen = "0.58.1"
 
 [features]
-hardsubx_ocr = ["dep:ffmpeg-sys-next"]
+hardsubx_ocr = ["ffmpeg-sys-next"]
