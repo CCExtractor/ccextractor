@@ -19,7 +19,17 @@ fn main() {
         builder = builder.allowlist_function(fn_name);
     }
 
+    #[cfg(feature = "hardsubx_ocr")]
+    for fn_name in ALLOWLIST_FUNCTIONS_OCR_HARDSUBX {
+        builder = builder.allowlist_function(fn_name);
+    }
+
     for rust_enum in RUSTIFIED_ENUMS {
+        builder = builder.rustified_enum(rust_enum);
+    }
+
+    #[cfg(feature = "hardsubx_ocr")]
+    for rust_enum in ALLOWEDLIST_TYPES_OCR_HARDSUBX {
         builder = builder.rustified_enum(rust_enum);
     }
 
@@ -42,9 +52,15 @@ const ALLOWLIST_FUNCTIONS: &[&str] = &[
     "get_fts",
     "printdata",
     "writercwtdata",
-    "edit_distance",
-    "convert_pts_to_.*",
-    "av_rescale_q"
 ];
-const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", "AVRational"];
+
+#[cfg(feature = "hardsubx_ocr")]
+const ALLOWLIST_FUNCTIONS_OCR_HARDSUBX: &[&str] =
+    &["edit_distance", "convert_pts_to_.*", "av_rescale_q"];
+
+const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+
+#[cfg(feature = "hardsubx_ocr")]
+const ALLOWEDLIST_TYPES_OCR_HARDSUBX: &[&str] = &["AVRational"];
+
 const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
