@@ -5,11 +5,17 @@ fn main() {
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .header("wrapper.h")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .clang_arg("-DENABLE_HARDSUBX")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+        .header("wrapper.h");
+
+    // enable hardsubx if and only if the feature is on
+    #[cfg(feature = "hardsubx_ocr")]
+    {
+        builder = builder.clang_arg("-DENABLE_HARDSUBX");
+    }
+
+    // Tell cargo to invalidate the built crate whenever any of the
+    // included header files changed.
+    builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     for type_name in ALLOWLIST_TYPES {
         builder = builder.allowlist_type(type_name);
