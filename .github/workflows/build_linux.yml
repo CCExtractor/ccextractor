@@ -75,7 +75,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: dependencies
-      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
+      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev yasm
     - name: cmake
       run: mkdir build && cd build && cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
