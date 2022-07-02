@@ -2,6 +2,22 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
+    let mut allowlist_functions = vec![
+        ".*(?i)_?dtvcc_.*",
+        "get_visible_.*",
+        "get_fts",
+        "printdata",
+        "writercwtdata",
+    ];
+
+    #[cfg(feature = "hardsubx_ocr")]
+    allowlist_functions.extend_from_slice(&["edit_distance", "convert_pts_to_.*", "av_rescale_q"]);
+
+    let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+
+    #[cfg(feature = "hardsubx_ocr")]
+    allowlist_types.extend_from_slice(&["AVRational"]);
+
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
@@ -17,25 +33,15 @@ fn main() {
     // included header files changed.
     builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
-    for type_name in ALLOWLIST_TYPES {
+    for type_name in allowlist_types {
         builder = builder.allowlist_type(type_name);
     }
 
-    for fn_name in ALLOWLIST_FUNCTIONS {
-        builder = builder.allowlist_function(fn_name);
-    }
-
-    #[cfg(feature = "hardsubx_ocr")]
-    for fn_name in ALLOWLIST_FUNCTIONS_OCR_HARDSUBX {
+    for fn_name in allowlist_functions {
         builder = builder.allowlist_function(fn_name);
     }
 
     for rust_enum in RUSTIFIED_ENUMS {
-        builder = builder.rustified_enum(rust_enum);
-    }
-
-    #[cfg(feature = "hardsubx_ocr")]
-    for rust_enum in ALLOWEDLIST_TYPES_OCR_HARDSUBX {
         builder = builder.rustified_enum(rust_enum);
     }
 
@@ -51,22 +57,5 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
-
-const ALLOWLIST_FUNCTIONS: &[&str] = &[
-    ".*(?i)_?dtvcc_.*",
-    "get_visible_.*",
-    "get_fts",
-    "printdata",
-    "writercwtdata",
-];
-
-#[cfg(feature = "hardsubx_ocr")]
-const ALLOWLIST_FUNCTIONS_OCR_HARDSUBX: &[&str] =
-    &["edit_distance", "convert_pts_to_.*", "av_rescale_q"];
-
-const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
-
-#[cfg(feature = "hardsubx_ocr")]
-const ALLOWEDLIST_TYPES_OCR_HARDSUBX: &[&str] = &["AVRational"];
 
 const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
