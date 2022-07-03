@@ -37,7 +37,7 @@ fn _edit_distance_rec(
 ) -> i32 {
     // Recursive implementation with DP of Levenshtein distance
 
-    if dp_array.len() == 0 || dp_array[0].len() == 0 {
+    if dp_array.is_empty() || dp_array[0].is_empty() {
         // in case word1  or word2 has length 0
 
         cmp::max(i as i32, j as i32)
