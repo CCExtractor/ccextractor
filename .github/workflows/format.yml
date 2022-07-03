@@ -48,4 +48,4 @@ jobs:
       - name: rustfmt
         run: cargo fmt --all -- --check
       - name: clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy -- -D warnings --all-features
