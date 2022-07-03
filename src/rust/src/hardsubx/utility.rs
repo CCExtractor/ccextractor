@@ -1,7 +1,3 @@
-// use crate::{
-//     bindings::*
-// };
-
 #[cfg(feature = "hardsubx_ocr")]
 use ffmpeg_sys_next::*;
 use std::cmp;
