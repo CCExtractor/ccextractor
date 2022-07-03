@@ -60,8 +60,13 @@ fn _edit_distance_rec(
     }
 }
 
+/// # Safety
+///
+/// Function deals with C string pointers
+/// which might be null
+
 #[no_mangle]
-pub extern "C" fn edit_distance(
+pub unsafe extern "C" fn edit_distance(
     word1: *mut ::std::os::raw::c_char,
     word2: *mut ::std::os::raw::c_char,
     len1: ::std::os::raw::c_int,
@@ -71,10 +76,9 @@ pub extern "C" fn edit_distance(
 
     let word1_string: &ffi::CStr;
     let word2_string: &ffi::CStr;
-    unsafe {
-        word1_string = ffi::CStr::from_ptr(word1);
-        word2_string = ffi::CStr::from_ptr(word2);
-    }
+
+    word1_string = ffi::CStr::from_ptr(word1);
+    word2_string = ffi::CStr::from_ptr(word2);
 
     let len1 = len1 as usize;
     let len2 = len2 as usize;
