@@ -45,6 +45,8 @@ jobs:
           toolchain: 1.56.0
           override: true
           components: rustfmt, clippy
+      - name: install yasm
+        run: sudo apt install yasm
       - name: rustfmt
         run: cargo fmt --all -- --check
       - name: clippy
