@@ -1,7 +1,7 @@
 #[cfg(feature = "hardsubx_ocr")]
 use ffmpeg_sys_next::*;
-use std::cmp;
-use std::ffi;
+use std::os::raw::{c_char, c_int};
+use std::{cmp, ffi};
 
 const AV_TIME_BASE: i32 = 1000000;
 const AV_TIME_BASE_Q: AVRational = AVRational {
@@ -63,16 +63,15 @@ fn _edit_distance_rec(
 
 #[no_mangle]
 pub unsafe extern "C" fn edit_distance(
-    word1: *mut ::std::os::raw::c_char,
-    word2: *mut ::std::os::raw::c_char,
-    len1: ::std::os::raw::c_int,
-    len2: ::std::os::raw::c_int,
-) -> ::std::os::raw::c_int {
+    word1: *mut c_char,
+    word2: *mut c_char,
+    len1: c_int,
+    len2: c_int,
+) -> c_int {
     // The actual edit_distance function
 
     let word1_string: &ffi::CStr;
     let word2_string: &ffi::CStr;
-
     word1_string = ffi::CStr::from_ptr(word1);
     word2_string = ffi::CStr::from_ptr(word2);
 
@@ -87,5 +86,5 @@ pub unsafe extern "C" fn edit_distance(
         len1,
         len2,
         &mut dp_array,
-    ) as ::std::os::raw::c_int
+    ) as c_int
 }
