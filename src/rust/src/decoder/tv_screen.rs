@@ -330,13 +330,14 @@ impl dtvcc_tv_screen {
             return Ok(());
         }
 
+        self.write_scc_header(writer)?;
         let mut buf = String::new();
         let time_show = get_scc_time_str(self.time_ms_show);
         let time_end = get_scc_time_str(self.time_ms_hide);
 
         buf.push_str(&time_show);
         // {clear buffer} {start pop on} {row15 col0 white}
-        buf.push_str(" 94ae 9420 9470");
+        buf.push_str("\t94ae 9420 9470");
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
@@ -362,7 +363,7 @@ impl dtvcc_tv_screen {
         buf.push_str("\n\n");
         writer.write_to_file(buf.as_bytes())?;
         // clear screen
-        buf = format!("{} 942c 942c \n\n", time_end);
+        buf = format!("{}\t942c 942c \n\n", time_end);
         writer.write_to_file(buf.as_bytes())?;
         Ok(())
     }
@@ -401,6 +402,12 @@ impl dtvcc_tv_screen {
         Ok(())
     }
 
+    /// Writes the header according to the SCC format
+    pub fn write_scc_header(&self, writer: &mut Writer) -> Result<(), String> {
+        let buf = b"Scenarist_SCC V1.0\n\n";
+        writer.write_to_file(buf)?;
+        Ok(())
+    }
     /// Writes the header according to the SAMI format
     pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
         let buf = b"<sami>\r\n\
