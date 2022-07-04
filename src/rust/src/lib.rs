@@ -13,6 +13,7 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 pub mod decoder;
+pub mod hardsubx;
 pub mod utils;
 
 #[cfg(windows)]

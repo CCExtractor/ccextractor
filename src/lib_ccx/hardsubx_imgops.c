@@ -1,8 +1,8 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_HARDSUBX
-//TODO: Correct FFMpeg integration
+#if defined(ENABLE_HARDSUBX) && defined(DISABLE_RUST)
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
@@ -18,7 +18,7 @@
 
 void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 {
-	//Conversion into HSV color space to get Hue
+	// Conversion into HSV color space to get Hue
 	float r = R / 255.0f;
 	float g = G / 255.0f;
 	float b = B / 255.0f;
@@ -68,7 +68,7 @@ void rgb_to_hsv(float R, float G, float B, float *H, float *S, float *V)
 
 void rgb_to_lab(float R, float G, float B, float *L, float *a, float *b)
 {
-	//Conversion to the CIE-LAB color space to get the Luminance
+	// Conversion to the CIE-LAB color space to get the Luminance
 	float X, Y, Z, fX, fY, fZ;
 
 	X = 0.412453 * R + 0.357580 * G + 0.180423 * B;
