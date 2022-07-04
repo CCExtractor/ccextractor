@@ -70,10 +70,8 @@ pub unsafe extern "C" fn edit_distance(
 ) -> c_int {
     // The actual edit_distance function
 
-    let word1_string: &ffi::CStr;
-    let word2_string: &ffi::CStr;
-    word1_string = ffi::CStr::from_ptr(word1);
-    word2_string = ffi::CStr::from_ptr(word2);
+    let word1_string: &ffi::CStr = ffi::CStr::from_ptr(word1);
+    let word2_string: &ffi::CStr = ffi::CStr::from_ptr(word2);
 
     let len1 = len1 as usize;
     let len2 = len2 as usize;
