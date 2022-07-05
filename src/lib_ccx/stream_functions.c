@@ -482,8 +482,8 @@ int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocatio
 		    buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3])
 		{
 			mprint("Detected MP4 box with name: %s\n", ccx_stream_mp4_boxes[idx].boxType);
-			// If the box type is "moov", check if it contains a valid movie header 
-			if (idx == 2 && !( buffer[position + 12] == 'm' && buffer[position + 13] == 'v' && buffer[position + 14] == 'h' && buffer[position + 15] == 'd' )) {
+			// If the box type is "moov", check if it contains a valid movie header
+			if (idx == 2 && !(buffer[position + 12] == 'm' && buffer[position + 13] == 'v' && buffer[position + 14] == 'h' && buffer[position + 15] == 'd' )) {
 				continue;
 			} 
 			// Box name matches. Do crude validation of possible box size, and if valid, add points for "valid" box
