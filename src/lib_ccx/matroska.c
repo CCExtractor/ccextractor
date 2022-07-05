@@ -1112,7 +1112,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
 
-	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB) 
+	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
 	{
 		mprint("\nError: VOBSUB not supported");
 	}
@@ -1241,7 +1241,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_start);
 			free(timestamp_end);
 		}
-		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB) 
+		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
 		{
 			// TODO: Add support for VOBSUB
 		}
