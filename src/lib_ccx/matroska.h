@@ -172,7 +172,7 @@ char* matroska_track_text_subtitle_id_strings[] = {
 char* matroska_track_text_subtitle_id_extensions[] = {
         "srt", "ssa", "ass",
         "usf", "vtt", "bmp",
-        NULL, NULL  // Unknown
+        "idx", NULL  // Unknown
 };
 
 char* avc_codec_id = "V_MPEG4/ISO/AVC";
