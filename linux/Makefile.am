@@ -331,22 +331,6 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 
 ccextractor_LDADD=-lm -lpthread -ldl
 
-if WITH_RUST
-ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
-else
-ccextractor_CFLAGS += -DDISABLE_RUST
-ccextractor_CPPFLAGS += -DDISABLE_RUST
-endif
-
-if DEBUG_RELEASE
-CARGO_RELEASE_ARGS=
-else
-CARGO_RELEASE_ARGS=--release
-endif
-
-./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
-	cd ../src/rust && \
-	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(CARGO_RELEASE_ARGS);
 
 if SYS_IS_LINUX
 ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
@@ -361,6 +345,8 @@ if SYS_IS_64_BIT
 ccextractor_CFLAGS += -DGPAC_64_BITS
 endif
 
+HARDSUBX_FEATURE_RUST=
+
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
@@ -372,6 +358,7 @@ AV_LIB += ${libavformat_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
+HARDSUBX_FEATURE_RUST += --features "hardsubx_ocr"
 endif
 
 if OCR_IS_ENABLED
@@ -397,6 +384,23 @@ ccextractor_CPPFLAGS  += $(LEPT_CPPFLAG)
 ccextractor_LDADD += $(TESS_LIB)
 ccextractor_LDADD += $(LEPT_LIB)
 endif
+
+if WITH_RUST
+ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
+else
+ccextractor_CFLAGS += -DDISABLE_RUST
+ccextractor_CPPFLAGS += -DDISABLE_RUST
+endif
+
+if DEBUG_RELEASE
+CARGO_RELEASE_ARGS=
+else
+CARGO_RELEASE_ARGS=--release
+endif
+
+./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
+	cd ../src/rust && \
+	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
 
 EXTRA_DIST = ../src/thirdparty/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
 

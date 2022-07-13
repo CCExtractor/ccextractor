@@ -45,7 +45,9 @@ jobs:
           toolchain: 1.56.0
           override: true
           components: rustfmt, clippy
+      - name: dependencies
+        run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev yasm
       - name: rustfmt
         run: cargo fmt --all -- --check
       - name: clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
