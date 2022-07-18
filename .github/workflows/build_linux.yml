@@ -11,7 +11,7 @@ on:
     - 'package_creators/**'
     - 'src/rust/**'
     tags-ignore: # ignore push via new tag
-    - '*.*'
+    - 'v*.*'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
