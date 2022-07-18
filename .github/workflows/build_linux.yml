@@ -10,7 +10,7 @@ on:
     - 'linux/**'
     - 'package_creators/**'
     - 'src/rust/**'
-    tags-ignore: # ignore releases (that create a tag)
+    tags-ignore:
     - 'v*.*'
   pull_request:
     types: [opened, synchronize, reopened]
