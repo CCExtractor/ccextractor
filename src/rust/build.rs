@@ -41,6 +41,11 @@ const ALLOWLIST_FUNCTIONS: &[&str] = &[
     "get_fts",
     "printdata",
     "writercwtdata",
+    ".*_?608_?.*",
+    "process608",
+    "disCommand",
+    ".*_xds_?(.*)?",
+    "write_cc_buffer",
 ];
-const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", ".*_?608_.*", "lib_cc_decode", "ccx_common_logging_t"];
 const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
