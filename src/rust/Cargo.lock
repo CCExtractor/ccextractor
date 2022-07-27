@@ -131,6 +131,7 @@ dependencies = [
  "env_logger",
  "ffmpeg-sys-next",
  "iconv",
+ "leptonica-sys",
  "log",
  "palette",
  "tesseract-sys",
