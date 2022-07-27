@@ -11,6 +11,10 @@ extern LLONG ts_start_of_xds;
    This can be interesting if you just want to know what kind of data a file holds that has 608 packets. CCExtractor uses it
    for the report functionality.
  */
+
+#ifndef DISABLE_RUST
+	void rx_process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
+#endif
 struct ccx_decoder_608_report
 {
 	uint8_t xds : 1;
