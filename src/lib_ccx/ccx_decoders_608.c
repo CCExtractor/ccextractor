@@ -1100,9 +1100,6 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 /* If private data is NULL, then only XDS will be processed */
 int process608(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub)
 {
-#ifndef DISABLE_RUST
-	rx_process608(data, length, private_data, sub);
-#endif
 	struct ccx_decoder_608_report *report = NULL;
 	struct lib_cc_decode *dec_ctx = private_data;
 	struct ccx_decoder_608_context *context;
