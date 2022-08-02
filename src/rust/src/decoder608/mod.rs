@@ -205,7 +205,7 @@ pub extern "C" fn rx_process608(
                             {
                                 // We don't increase screenfuls_counter here
                                 // TODO: write_cc_buffer
-                                context.write_cc_buffer(sub);
+                                context.write_cc_buffer(unsafe{&mut *(sub as *mut cc_subtitle)});
                                 //TODO: get_visible_start
                                 context.current_visible_start_ms = unsafe {(*context.timing).get_visible_start(context.my_field as u8)};
                             }

@@ -48,4 +48,4 @@ const ALLOWLIST_FUNCTIONS: &[&str] = &[
     "write_cc_buffer",
 ];
 const ALLOWLIST_TYPES: &[&str] = &[".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", ".*_?608_.*", "lib_cc_decode", "ccx_common_logging_t","command_code",".*_xds_?(.*)?"];
-const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format",".*_?608_.*","font_bits","cc_modes","command_code"];
+const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format",".*_?608_.*","font_bits","cc_modes","command_code","subtype","subdatatype"];

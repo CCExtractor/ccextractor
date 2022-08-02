@@ -82,6 +82,7 @@ dependencies = [
  "bindgen",
  "env_logger",
  "iconv",
+ "libc",
  "log",
  "palette",
 ]
