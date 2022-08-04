@@ -11,7 +11,12 @@ fn main() {
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_functions.extend_from_slice(&["edit_distance", "convert_pts_to_.*", "av_rescale_q"]);
+    allowlist_functions.extend_from_slice(&[
+        "edit_distance",
+        "convert_pts_to_.*",
+        "av_rescale_q",
+        "mprint",
+    ]);
 
     let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
 
