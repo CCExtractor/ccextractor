@@ -202,3 +202,40 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
     // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
     return string_to_c_char(&text_out);
 }
+
+pub unsafe extern "C" fn get_ocr_text_letterwise(
+    ctx: *mut lib_hardsubx_ctx,
+    image: *mut PIX,
+) -> *mut ::std::os::raw::c_char {
+
+    let mut text_out: String = String::new();
+
+    TessBaseAPISetImage2((*ctx).tess_handle, image);
+
+    if TessBaseAPIRecognize((*ctx).tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0
+    {
+        warn!("Error in Tesseract recognition, skipping symbol\n");
+        return null::<c_char>() as *mut c_char;
+    }
+
+    let it: *mut TessResultIterator = TessBaseAPIGetIterator((*ctx).tess_handle);
+    let level: TessPageIteratorLevel = TessPageIteratorLevel_RIL_SYMBOL;
+
+    if it != null::<TessResultIterator>() as *mut TessResultIterator
+    {
+        loop {
+
+            let letter = _tess_string_helper(it, level);
+            text_out = format!("{}{}", text_out, letter);
+
+            if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
+                break;
+            }
+        }
+    }
+
+    TessResultIteratorDelete(it);
+
+    // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
+    return string_to_c_char(&text_out);
+}
