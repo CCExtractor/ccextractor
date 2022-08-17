@@ -119,13 +119,10 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
         return String::new();
     }
 
-    let ts_word = ffi::CStr::from_ptr(ts_word_ptr);
-    let ts_word_arr = ffi::CStr::to_bytes_with_nul(&ts_word);
-
-    let ts_word_string: String = match String::from_utf8(ts_word_arr.to_vec()) {
-        Ok(string_rep) => string_rep,
-        Err(error) => std::panic::panic_any(error),
-    };
+    let ts_word_string: String = ffi::CStr::from_ptr(ts_word_ptr)
+        .to_string_lossy()
+        .to_owned()
+        .to_string();
 
     TessDeleteText(ts_word_ptr);
     // clean up the memory
