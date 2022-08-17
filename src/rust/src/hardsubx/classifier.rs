@@ -113,26 +113,26 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
     // frees memory associated with tesseract string
     // takes and gives ownership of the string
 
-    let ts_word_ptr: *mut ::std::os::raw::c_char = TessResultIteratorGetUTF8Text(it, level);
+    let ts_ret_ptr: *mut ::std::os::raw::c_char = TessResultIteratorGetUTF8Text(it, level);
 
-    if ts_word_ptr == null::<c_char>() as *mut c_char {
+    if ts_ret_ptr == null::<c_char>() as *mut c_char {
         // this is required because trying to generate
         // CStr from null pointer will be a segmentation fault
         return String::new();
     }
 
-    let ts_word = ffi::CStr::from_ptr(ts_word_ptr);
-    let ts_word_arr = ffi::CStr::to_bytes_with_nul(&ts_word);
+    let ts_ret = ffi::CStr::from_ptr(ts_ret_ptr);
+    let ts_ret_arr = ffi::CStr::to_bytes_with_nul(&ts_ret);
 
-    let ts_word_string: String = match String::from_utf8(ts_word_arr.to_vec()) {
+    let ts_ret_string: String = match String::from_utf8(ts_ret_arr.to_vec()) {
         Ok(string_rep) => string_rep,
         Err(error) => std::panic::panic_any(error),
     };
 
-    TessDeleteText(ts_word_ptr);
+    TessDeleteText(ts_ret_ptr);
     // clean up the memory
 
-    ts_word_string
+    ts_ret_string
 }
 
 pub unsafe extern "C" fn get_ocr_text_wordwise(
