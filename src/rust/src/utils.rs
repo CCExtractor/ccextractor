@@ -1,5 +1,4 @@
 //! Some utility functions to deal with values from C bindings
-use crate::bindings::mprint;
 use std::ffi;
 
 /// Check if the value is true (Set to 1). Use only for values from C bindings
@@ -17,14 +16,4 @@ pub unsafe fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     let s = ffi::CString::new(a).unwrap();
 
     s.into_raw()
-}
-
-/// function to call mprint without memory leak
-pub unsafe fn mprint_mem_safe(a: &str) {
-    let mprint_str = string_to_c_char(a);
-
-    mprint(mprint_str);
-
-    // to deallocate memory properly
-    let _S = ffi::CString::from_raw(mprint_str);
 }
