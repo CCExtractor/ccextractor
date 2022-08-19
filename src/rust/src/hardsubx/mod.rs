@@ -7,6 +7,8 @@ use tesseract_sys::*;
 #[cfg(feature = "hardsubx_ocr")]
 use leptonica_sys::*;
 
+use crate::bindings::{cc_subtitle, ccx_output_format};
+
 pub mod imgops;
 pub mod utility;
 
