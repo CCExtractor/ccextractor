@@ -11,6 +11,7 @@ use crate::bindings::{cc_subtitle, ccx_output_format};
 
 pub mod imgops;
 pub mod utility;
+pub mod main;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -26,7 +27,7 @@ pub struct lib_hardsubx_ctx {
     pub system_start_time: i64,
     pub write_format: ccx_output_format,
     pub format_ctx: *mut AVFormatContext,
-    pub codec_ctx: *mut AVCodecContext,
+    pub codec_ctx: *mut AVCodecParameters,
     pub codec: *mut AVCodec,
     pub frame: *mut AVFrame,
     pub rgb_frame: *mut AVFrame,
