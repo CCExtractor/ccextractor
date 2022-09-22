@@ -15,18 +15,24 @@ fn main() {
         "edit_distance",
         "convert_pts_to_.*",
         "av_rescale_q",
-        "hardsubx_process_data",
+        "avcodec_alloc_context3",
+        "ccx_s_options",
+        "get_basename",
+        "get_file_extension",
+        "probe_tessdata_location",
+        "dinit_encoder"
     ]);
 
-    let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+    let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", "lib_ccx_ctx"];
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_types.extend_from_slice(&["AVRational", "cc_subtitle", "cc_subtitle,"]);
+    allowlist_types.extend_from_slice(&["AVRational", "AVInputFormat", "cc_subtitle", "ccx_s_options"]);
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .header("wrapper.h");
+        .header("wrapper.h")
+        .default_macro_constant_type(bindgen::MacroTypeVariation::Signed);
 
     // enable hardsubx if and only if the feature is on
     #[cfg(feature = "hardsubx_ocr")]

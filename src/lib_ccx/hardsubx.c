@@ -10,6 +10,7 @@
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
+#ifdef DISABLE_RUST
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
 	// Get the required media attributes and initialize structures
@@ -119,6 +120,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
+#endif
 
 void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx)
 {
