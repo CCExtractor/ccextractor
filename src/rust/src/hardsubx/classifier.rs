@@ -15,8 +15,8 @@ pub type subdatatype = ::std::os::raw::c_uint;
 pub type subtype = ::std::os::raw::c_uint;
 pub type ccx_encoding_type = ::std::os::raw::c_uint;
 
-use crate::utils::string_to_c_char;
 use crate::bindings::cc_subtitle;
+use crate::utils::string_to_c_char;
 
 use std::os::raw::c_char;
 
@@ -64,7 +64,7 @@ pub struct lib_hardsubx_ctx {
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut PIX,
-    threshold: std::os::raw::c_float
+    threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out: *mut ::std::os::raw::c_char;
 
@@ -80,13 +80,11 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
             warn!("Error getting text, skipping frame\n");
         }
 
-        if threshold > 0.0
-        {
+        if threshold > 0.0 {
             // non-zero conf, only then we'll make the call to check for confidence
             let conf = TessBaseAPIMeanTextConf((*ctx).tess_handle);
 
-            if (conf as std::os::raw::c_float) < threshold
-            {
+            if (conf as std::os::raw::c_float) < threshold {
                 text_out = null::<c_char>() as *mut c_char;
             } else {
                 (*ctx).cur_conf = conf as std::os::raw::c_float;
@@ -99,8 +97,7 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
 pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut PIX,
-) -> *mut ::std::os::raw::c_char
-{
+) -> *mut ::std::os::raw::c_char {
     // basically the get_oct_text_simple function without threshold
     // This function is being kept only for backwards compatibility reasons
 
@@ -111,18 +108,18 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
     // Function extracts string from tess iterator object
     // frees memory associated with tesseract string
     // takes and gives ownership of the string
-    
+
     let ts_ret_ptr: *mut ::std::os::raw::c_char = TessResultIteratorGetUTF8Text(it, level);
-    
+
     if ts_ret_ptr == null::<c_char>() as *mut c_char {
         // this is required because trying to generate
         // CStr from null pointer will be a segmentation fault
         return String::new();
     }
-    
+
     let ts_ret = ffi::CStr::from_ptr(ts_ret_ptr);
     let ts_ret_arr = ffi::CStr::to_bytes_with_nul(&ts_ret);
-    
+
     let ts_ret_string: String = match String::from_utf8(ts_ret_arr.to_vec()) {
         Ok(string_rep) => string_rep,
         Err(error) => std::panic::panic_any(error),
@@ -206,13 +203,11 @@ pub unsafe extern "C" fn get_ocr_text_letterwise(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut PIX,
 ) -> *mut ::std::os::raw::c_char {
-
     let mut text_out: String = String::new();
 
     TessBaseAPISetImage2((*ctx).tess_handle, image);
 
-    if TessBaseAPIRecognize((*ctx).tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0
-    {
+    if TessBaseAPIRecognize((*ctx).tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0 {
         warn!("Error in Tesseract recognition, skipping symbol\n");
         return null::<c_char>() as *mut c_char;
     }
@@ -220,10 +215,8 @@ pub unsafe extern "C" fn get_ocr_text_letterwise(
     let it: *mut TessResultIterator = TessBaseAPIGetIterator((*ctx).tess_handle);
     let level: TessPageIteratorLevel = TessPageIteratorLevel_RIL_SYMBOL;
 
-    if it != null::<TessResultIterator>() as *mut TessResultIterator
-    {
+    if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
-
             let letter = _tess_string_helper(it, level);
             text_out = format!("{}{}", text_out, letter);
 
