@@ -16,37 +16,11 @@ pub type subtype = ::std::os::raw::c_uint;
 pub type ccx_encoding_type = ::std::os::raw::c_uint;
 
 use crate::utils::string_to_c_char;
+use crate::bindings::cc_subtitle;
 
 use std::os::raw::c_char;
 
 use log::warn;
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct cc_subtitle {
-    #[doc = " A generic data which contain data according to decoder"]
-    #[doc = " @warn decoder cant output multiple types of data"]
-    pub data: *mut ::std::os::raw::c_void,
-    pub datatype: subdatatype,
-    #[doc = " number of data"]
-    pub nb_data: ::std::os::raw::c_uint,
-    #[doc = "  type of subtitle"]
-    pub type_: subtype,
-    #[doc = " Encoding type of Text, must be ignored in case of subtype as bitmap or cc_screen"]
-    pub enc_type: ccx_encoding_type,
-    pub start_time: i64,
-    pub end_time: i64,
-    pub flags: ::std::os::raw::c_int,
-    pub lang_index: ::std::os::raw::c_int,
-    #[doc = " flag to tell that decoder has given output"]
-    pub got_output: ::std::os::raw::c_int,
-    pub mode: [::std::os::raw::c_char; 5usize],
-    pub info: [::std::os::raw::c_char; 4usize],
-    #[doc = " Used for DVB end time in ms"]
-    pub time_out: ::std::os::raw::c_int,
-    pub next: *mut cc_subtitle,
-    pub prev: *mut cc_subtitle,
-}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
