@@ -199,9 +199,10 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
     return string_to_c_char(&text_out);
 }
 
-pub unsafe extern "C" fn get_ocr_text_letterwise(
+pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut PIX,
+    threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out: String = String::new();
 
@@ -215,10 +216,24 @@ pub unsafe extern "C" fn get_ocr_text_letterwise(
     let it: *mut TessResultIterator = TessBaseAPIGetIterator((*ctx).tess_handle);
     let level: TessPageIteratorLevel = TessPageIteratorLevel_RIL_SYMBOL;
 
+    let mut total_conf: std::os::raw::c_float = 0.0;
+    let mut num_characters: std::os::raw::c_int = 0;
+
     if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
             let letter = _tess_string_helper(it, level);
             text_out = format!("{}{}", text_out, letter);
+
+            if threshold > 0.0 {
+                // we don't even want to bother with this call if threshold is 0 or less
+                let conf: std::os::raw::c_float = TessResultIteratorConfidence(it, level);
+                if conf < threshold {
+                    continue;
+                }
+
+                total_conf = total_conf + conf;
+                num_characters = num_characters + 1;
+            }
 
             if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
                 break;
@@ -226,8 +241,20 @@ pub unsafe extern "C" fn get_ocr_text_letterwise(
         }
     }
 
+    if threshold > 0.0 {
+        // No confidence calculation has been done if threshold is 0 or less
+        (*ctx).cur_conf = total_conf / (num_characters as std::os::raw::c_float);
+    }
+
     TessResultIteratorDelete(it);
 
     // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
     return string_to_c_char(&text_out);
+}
+
+pub unsafe extern "C" fn get_ocr_text_letterwise(
+    ctx: *mut lib_hardsubx_ctx,
+    image: *mut PIX,
+) -> *mut ::std::os::raw::c_char {
+    get_ocr_text_letterwise_threshold(ctx, image, 0.0)
 }
