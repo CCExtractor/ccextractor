@@ -1,7 +1,4 @@
 #[cfg(feature = "hardsubx_ocr")]
-use ffmpeg_sys_next::*;
-
-#[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
 
 #[cfg(feature = "hardsubx_ocr")]
@@ -15,51 +12,12 @@ pub type subdatatype = ::std::os::raw::c_uint;
 pub type subtype = ::std::os::raw::c_uint;
 pub type ccx_encoding_type = ::std::os::raw::c_uint;
 
-use crate::bindings::cc_subtitle;
+use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
 
 use std::os::raw::c_char;
 
 use log::warn;
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct lib_hardsubx_ctx {
-    pub cc_to_stdout: ::std::os::raw::c_int,
-    pub subs_delay: i64,
-    pub last_displayed_subs_ms: i64,
-    pub basefilename: *mut ::std::os::raw::c_char,
-    pub extension: *const ::std::os::raw::c_char,
-    pub current_file: ::std::os::raw::c_int,
-    pub inputfile: *mut *mut ::std::os::raw::c_char,
-    pub num_input_files: ::std::os::raw::c_int,
-    pub system_start_time: i64,
-    pub write_format: ccx_output_format,
-    pub format_ctx: *mut AVFormatContext,
-    pub codec_ctx: *mut AVCodecContext,
-    pub codec: *mut AVCodec,
-    pub frame: *mut AVFrame,
-    pub rgb_frame: *mut AVFrame,
-    pub packet: AVPacket,
-    pub options_dict: *mut AVDictionary,
-    pub sws_ctx: *mut SwsContext,
-    pub rgb_buffer: *mut u8,
-    pub video_stream_id: ::std::os::raw::c_int,
-    pub im: *mut PIX,
-    pub tess_handle: *mut TessBaseAPI,
-    pub cur_conf: f32,
-    pub prev_conf: f32,
-    pub tickertext: ::std::os::raw::c_int,
-    pub hardsubx_and_common: ::std::os::raw::c_int,
-    pub dec_sub: *mut cc_subtitle,
-    pub ocr_mode: ::std::os::raw::c_int,
-    pub subcolor: ::std::os::raw::c_int,
-    pub min_sub_duration: f32,
-    pub detect_italics: ::std::os::raw::c_int,
-    pub conf_thresh: f32,
-    pub hue: f32,
-    pub lum_thresh: f32,
-}
 
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: *mut lib_hardsubx_ctx,

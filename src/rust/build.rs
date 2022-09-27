@@ -18,7 +18,13 @@ fn main() {
         "mprint",
     ]);
 
-    let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode", "cc_subtitle"];
+    let mut allowlist_types = vec![
+        ".*(?i)_?dtvcc_.*",
+        "encoder_ctx",
+        "lib_cc_decode",
+        "cc_subtitle",
+        "ccx_output_format",
+    ];
 
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational"]);
