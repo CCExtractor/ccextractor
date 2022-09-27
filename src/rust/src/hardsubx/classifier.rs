@@ -89,9 +89,10 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
     ts_ret_string
 }
 
-pub unsafe extern "C" fn get_ocr_text_wordwise(
+pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut PIX,
+    threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out = String::new();
 
@@ -106,10 +107,23 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
     let level: TessPageIteratorLevel = TessPageIteratorLevel_RIL_WORD;
 
     let mut prev_ital: bool = false;
+    let mut total_conf: std::os::raw::c_float = 0.0;
+    let mut num_words: std::os::raw::c_int = 0;
 
     if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
             let mut word = _tess_string_helper(it, level);
+
+            if threshold > 0.0 {
+                // we don't even want to check for confidence if threshold is 0 or less
+                let conf = TessResultIteratorConfidence(it, level);
+                if conf < threshold {
+                    continue;
+                }
+
+                total_conf = total_conf + conf;
+                num_words = num_words + 1;
+            }
 
             if word.len() == 0 {
                 continue;
@@ -151,10 +165,22 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
         }
     }
 
+    if threshold > 0.0 {
+        // any confidence calculation has happened if and only if threshold > 0
+        (*ctx).cur_conf = total_conf / (num_words as std::os::raw::c_float);
+    }
+
     TessResultIteratorDelete(it);
 
     // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
     return string_to_c_char(&text_out);
+}
+
+pub unsafe extern "C" fn get_ocr_text_wordwise(
+    ctx: *mut lib_hardsubx_ctx,
+    image: *mut PIX,
+) -> *mut ::std::os::raw::c_char {
+    get_ocr_text_wordwise_threshold(ctx, image, 0.0)
 }
 
 pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
