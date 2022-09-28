@@ -19,9 +19,10 @@ use std::os::raw::c_char;
 
 use log::warn;
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
     threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out: *mut ::std::os::raw::c_char;
@@ -52,9 +53,10 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     }
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
 ) -> *mut ::std::os::raw::c_char {
     // basically the get_oct_text_simple function without threshold
     // This function is being kept only for backwards compatibility reasons
@@ -89,9 +91,10 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
     ts_ret_string
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
     threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out = String::new();
@@ -176,16 +179,18 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     return string_to_c_char(&text_out);
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
 ) -> *mut ::std::os::raw::c_char {
     get_ocr_text_wordwise_threshold(ctx, image, 0.0)
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
     threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
     let mut text_out: String = String::new();
@@ -236,9 +241,10 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     return string_to_c_char(&text_out);
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise(
     ctx: *mut lib_hardsubx_ctx,
-    image: *mut PIX,
+    image: *mut Pix,
 ) -> *mut ::std::os::raw::c_char {
     get_ocr_text_letterwise_threshold(ctx, image, 0.0)
 }

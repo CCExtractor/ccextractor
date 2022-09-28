@@ -36,7 +36,7 @@ pub struct lib_hardsubx_ctx {
     pub sws_ctx: *mut SwsContext,
     pub rgb_buffer: *mut u8,
     pub video_stream_id: ::std::os::raw::c_int,
-    pub im: *mut PIX,
+    pub im: *mut Pix,
     pub tess_handle: *mut TessBaseAPI,
     pub cur_conf: f32,
     pub prev_conf: f32,
