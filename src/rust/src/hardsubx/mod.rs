@@ -11,6 +11,7 @@ use tesseract_sys::*;
 #[cfg(feature = "hardsubx_ocr")]
 use leptonica_sys::*;
 
+use crate::bindings;
 use crate::bindings::{cc_subtitle, ccx_output_format};
 
 #[repr(C)]
@@ -31,7 +32,7 @@ pub struct lib_hardsubx_ctx {
     pub codec: *mut AVCodec,
     pub frame: *mut AVFrame,
     pub rgb_frame: *mut AVFrame,
-    pub packet: AVPacket,
+    pub packet: bindings::AVPacket,
     pub options_dict: *mut AVDictionary,
     pub sws_ctx: *mut SwsContext,
     pub rgb_buffer: *mut u8,
