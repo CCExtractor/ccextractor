@@ -77,18 +77,14 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
         return String::new();
     }
 
-    let ts_ret = ffi::CStr::from_ptr(ts_ret_ptr);
-    let ts_ret_arr = ffi::CStr::to_bytes_with_nul(&ts_ret);
-
-    let ts_ret_string: String = match String::from_utf8(ts_ret_arr.to_vec()) {
-        Ok(string_rep) => string_rep,
-        Err(error) => std::panic::panic_any(error),
-    };
+    let ts_ret = ffi::CStr::from_ptr(ts_ret_ptr)
+        .to_string_lossy()
+        .into_owned();
 
     TessDeleteText(ts_ret_ptr);
     // clean up the memory
 
-    ts_ret_string
+    ts_ret
 }
 
 #[no_mangle]
