@@ -120,11 +120,11 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                     continue;
                 }
 
-                total_conf = total_conf + conf;
-                num_words = num_words + 1;
+                total_conf += conf;
+                num_words += 1;
             }
 
-            if word.len() == 0 {
+            if word.is_empty() {
                 continue;
             }
 
@@ -172,7 +172,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     TessResultIteratorDelete(it);
 
     // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
-    return string_to_c_char(&text_out);
+    string_to_c_char(&text_out)
 }
 
 #[no_mangle]
@@ -216,8 +216,8 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
                     continue;
                 }
 
-                total_conf = total_conf + conf;
-                num_characters = num_characters + 1;
+                total_conf += conf;
+                num_characters += 1;
             }
 
             if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
@@ -234,7 +234,7 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     TessResultIteratorDelete(it);
 
     // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
-    return string_to_c_char(&text_out);
+    string_to_c_char(&text_out)
 }
 
 #[no_mangle]
