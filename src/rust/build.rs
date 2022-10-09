@@ -27,7 +27,7 @@ fn main() {
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_types.extend_from_slice(&["AVRational", "AVPacket"]);
+    allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate

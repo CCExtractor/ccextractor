@@ -1,4 +1,5 @@
 pub mod classifier;
+pub mod decoder;
 pub mod imgops;
 pub mod utility;
 
