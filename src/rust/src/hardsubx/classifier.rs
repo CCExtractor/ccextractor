@@ -109,8 +109,22 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     let mut total_conf: std::os::raw::c_float = 0.0;
     let mut num_words: std::os::raw::c_int = 0;
 
+    let mut first_iter: bool = true;
+
     if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
+            if first_iter {
+                first_iter = false;
+            } else {
+                if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
+                    if (*ctx).detect_italics == 1 && prev_ital {
+                        // if there are italics words at the end
+                        text_out = format!("{}</i>", text_out);
+                    }
+                    break;
+                }
+            }
+
             let mut word = _tess_string_helper(it, level);
 
             if threshold > 0.0 {
@@ -153,14 +167,6 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
             }
 
             text_out = format!("{} {}", text_out, word);
-
-            if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
-                if (*ctx).detect_italics == 1 && prev_ital {
-                    // if there are italics words at the end
-                    text_out = format!("{}</i>", text_out);
-                }
-                break;
-            }
         }
     }
 
@@ -204,8 +210,18 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     let mut total_conf: std::os::raw::c_float = 0.0;
     let mut num_characters: std::os::raw::c_int = 0;
 
+    let mut first_iter: bool = false;
+
     if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
+            if first_iter {
+                first_iter = false;
+            } else {
+                if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
+                    break;
+                }
+            }
+
             let letter = _tess_string_helper(it, level);
             text_out = format!("{}{}", text_out, letter);
 
@@ -218,10 +234,6 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
 
                 total_conf += conf;
                 num_characters += 1;
-            }
-
-            if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
-                break;
             }
         }
     }
