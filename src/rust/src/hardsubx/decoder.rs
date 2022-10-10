@@ -162,6 +162,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
     string_to_c_char(&subtitle_text)
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn _process_frame_tickertext(
     ctx: *mut lib_hardsubx_ctx,
     frame: *mut AVFrame,

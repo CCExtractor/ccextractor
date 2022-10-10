@@ -296,6 +296,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&feat_im);
 }
 
+#ifdef DISABLE_RUST
 char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	PIX *im;
@@ -369,6 +370,7 @@ char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 
 	return subtitle_text;
 }
+#endif
 
 int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
