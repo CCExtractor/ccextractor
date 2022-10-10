@@ -5,16 +5,18 @@ use leptonica_sys::*;
 // use ffmpeg_sys_next::*;
 
 use std::eprintln;
+use std::format;
 use std::process::exit;
 
 #[cfg(feature = "hardsubx_ocr")]
 // use crate::bindings::{hardsubx_ocr_mode_HARDSUBX_OCRMODE_WORD};
 use crate::bindings::AVFrame;
 use crate::hardsubx::classifier::*;
-use crate::hardsubx::imgops::rgb_to_hsv;
+use crate::hardsubx::imgops::{rgb_to_hsv, rgb_to_lab};
 use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
 use std::convert::TryInto;
+use std::os::raw::c_char;
 use std::ptr::null;
 
 use std::ffi;
@@ -158,4 +160,84 @@ pub unsafe extern "C" fn _process_frame_color_basic(
     // This is a memory leak
     // the returned thing needs to be deallocated by caller
     string_to_c_char(&subtitle_text)
+}
+
+pub unsafe extern "C" fn _process_frame_tickertext(
+    ctx: *mut lib_hardsubx_ctx,
+    frame: *mut AVFrame,
+    width: ::std::os::raw::c_int,
+    height: ::std::os::raw::c_int,
+    index: ::std::os::raw::c_int,
+) -> *mut ::std::os::raw::c_char {
+    let mut im: *mut Pix = pixCreate(width, height, 32);
+    let mut lum_im: *mut Pix = pixCreate(width, height, 32);
+    let frame_deref = *frame;
+
+    for i in ((92 * height) / 100)..height {
+        for j in 0..width {
+            let p: isize = (j * 3 + i * frame_deref.linesize[0]).try_into().unwrap();
+            let r: i32 = (*(frame_deref.data[0]).offset(p)).into();
+            let g: i32 = (*(frame_deref.data[0]).offset(p + 1)).into();
+            let b: i32 = (*(frame_deref.data[0]).offset(p + 2)).into();
+            pixSetRGBPixel(im, j, i, r, g, b);
+
+            let mut L: f32 = 0.0;
+            let mut A: f32 = 0.0;
+            let mut B: f32 = 0.0;
+
+            rgb_to_lab(r as f32, g as f32, b as f32, &mut L, &mut A, &mut B);
+
+            if L > (*ctx).lum_thresh {
+                pixSetRGBPixel(lum_im, j, i, 255, 255, 255);
+            } else {
+                pixSetRGBPixel(lum_im, j, i, 0, 0, 0);
+            }
+        }
+    }
+
+    let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
+    let mut sobel_edge_im: *mut Pix =
+        pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES.try_into().unwrap());
+    let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 11);
+    let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
+
+    let mut feat_im: *mut Pix = pixCreate(width, height, 32);
+
+    for i in (92 * (height / 100))..height {
+        for j in 0..width {
+            let mut p1: u32 = 0;
+            let mut p2: u32 = 0;
+
+            pixGetPixel(edge_im, j, i, &mut p1);
+            pixGetPixel(lum_im, j, i, &mut p2);
+
+            if p1 == 0 && p2 > 0 {
+                pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
+            } else {
+                pixSetRGBPixel(feat_im, j, i, 0, 0, 0);
+            }
+        }
+    }
+
+    let subtitle_text = get_ocr_text_simple_threshold(ctx, lum_im, 0.0);
+
+    let write_path: String = format!("./lum_im{}.jpg", index);
+    let write_path_c: *mut c_char = string_to_c_char(&write_path);
+    pixWrite(write_path_c, lum_im, IFF_JFIF_JPEG.try_into().unwrap());
+    let _dealloc = std::ffi::CString::from_raw(write_path_c); // for memory reasons
+
+    let write_path: String = format!("./im{}.jpg", index);
+    let write_path_c: *mut c_char = string_to_c_char(&write_path);
+    pixWrite(write_path_c, lum_im, IFF_JFIF_JPEG.try_into().unwrap());
+    let _dealloc = std::ffi::CString::from_raw(write_path_c); // for memory reasons
+
+    pixDestroy(&mut im as *mut *mut Pix);
+    pixDestroy(&mut gray_im as *mut *mut Pix);
+    pixDestroy(&mut sobel_edge_im as *mut *mut Pix);
+    pixDestroy(&mut dilate_gray_im as *mut *mut Pix);
+    pixDestroy(&mut edge_im as *mut *mut Pix);
+    pixDestroy(&mut lum_im as *mut *mut Pix);
+    pixDestroy(&mut feat_im as *mut *mut Pix);
+
+    subtitle_text
 }
