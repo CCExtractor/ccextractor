@@ -126,6 +126,9 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
             }
 
             let mut word = _tess_string_helper(it, level);
+            if word.is_empty() {
+                continue;
+            }
 
             if threshold > 0.0 {
                 // we don't even want to check for confidence if threshold is 0 or less
@@ -138,9 +141,6 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                 num_words += 1;
             }
 
-            if word.is_empty() {
-                continue;
-            }
 
             if (*ctx).detect_italics != 0 {
                 let mut italic: i32 = 0;
