@@ -109,7 +109,6 @@ char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	return subtitle_text;
 }
 
-
 char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	PIX *im;
