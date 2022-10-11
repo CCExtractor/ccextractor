@@ -12,6 +12,8 @@ pub fn is_false<T: Into<i32>>(val: T) -> bool {
 }
 
 /// function to convert Rust literals to C strings to be passed into functions
+/// # Safety
+/// The pointer returned has to be deallocated using from_raw() at some point
 pub unsafe fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     let s = ffi::CString::new(a).unwrap();
 
