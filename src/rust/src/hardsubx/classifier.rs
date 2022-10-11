@@ -19,6 +19,10 @@ use std::os::raw::c_char;
 
 use log::warn;
 
+/// # Safety
+/// The function accepts and dereferences a raw pointer
+/// The function also makes calls to functions whose safety is not guaranteed
+/// The function returns a raw pointer which is a string made in C
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -53,6 +57,10 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     }
 }
 
+/// # Safety
+/// The function accepts and dereferences a raw pointer
+/// The function also makes calls to functions whose safety is not guaranteed
+/// The function returns a raw pointer which is a string made in C
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: *mut lib_hardsubx_ctx,
@@ -64,11 +72,12 @@ pub unsafe extern "C" fn get_ocr_text_simple(
     get_ocr_text_simple_threshold(ctx, image, 0.0)
 }
 
+/// Function extracts string from tess iterator object
+/// frees memory associated with tesseract string
+/// takes and gives ownership of the string
+/// # Safety
+/// Function dereferences a raw pointer and makes calls to functions whose safety is not guaranteed
 unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIteratorLevel) -> String {
-    // Function extracts string from tess iterator object
-    // frees memory associated with tesseract string
-    // takes and gives ownership of the string
-
     let ts_ret_ptr: *mut ::std::os::raw::c_char = TessResultIteratorGetUTF8Text(it, level);
 
     if ts_ret_ptr == null::<c_char>() as *mut c_char {
@@ -87,6 +96,11 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
     ts_ret
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -174,10 +188,14 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
 
     TessResultIteratorDelete(it);
 
-    // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
     string_to_c_char(&text_out)
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise(
     ctx: *mut lib_hardsubx_ctx,
@@ -186,6 +204,11 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
     get_ocr_text_wordwise_threshold(ctx, image, 0.0)
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -240,10 +263,14 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
 
     TessResultIteratorDelete(it);
 
-    // TODO: this is a memory leak that can only be plugged when the caller functions have been ported
     string_to_c_char(&text_out)
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise(
     ctx: *mut lib_hardsubx_ctx,
