@@ -33,6 +33,9 @@ static HARDSUBX_OCRMODE_WORD: i32 = 1;
 //     HARDSUBX_OCRMODE_LETTER
 // };
 
+/// # Safety
+/// dereferences a raw pointer
+/// calls functions that are not necessarily safe
 pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut Pix) -> String {
     // function that calls the classifier functions
     match (*ctx).ocr_mode {
@@ -68,6 +71,11 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
     }
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_white_basic(
     ctx: *mut lib_hardsubx_ctx,
@@ -140,11 +148,14 @@ pub unsafe extern "C" fn _process_frame_white_basic(
     pixDestroy(&mut lum_im as *mut *mut Pix);
     pixDestroy(&mut feat_im as *mut *mut Pix);
 
-    // This is a memory leak
-    // the returned thing needs to be deallocated by caller
     string_to_c_char(&subtitle_text)
 }
 
+/// # Safety
+/// The function dereferences a raw pointer
+/// The function also calls other functions whose safety is not guaranteed
+/// The function returns a raw pointer of a String created in Rust
+/// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_color_basic(
     ctx: *mut lib_hardsubx_ctx,
@@ -237,7 +248,10 @@ pub unsafe extern "C" fn _process_frame_color_basic(
     // the returned thing needs to be deallocated by caller
     string_to_c_char(&subtitle_text)
 }
-
+/// # Safety
+/// The function accepts and dereferences a raw pointer
+/// The function also makes calls to functions whose safety is not guaranteed
+/// The function returns a raw pointer which is a string made in C
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_tickertext(
     ctx: *mut lib_hardsubx_ctx,
