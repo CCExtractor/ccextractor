@@ -115,14 +115,12 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
         loop {
             if first_iter {
                 first_iter = false;
-            } else {
-                if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
-                    if (*ctx).detect_italics == 1 && prev_ital {
-                        // if there are italics words at the end
-                        text_out = format!("{}</i>", text_out);
-                    }
-                    break;
+            } else if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
+                if (*ctx).detect_italics == 1 && prev_ital {
+                    // if there are italics words at the end
+                    text_out = format!("{}</i>", text_out);
                 }
+                break;
             }
 
             let mut word = _tess_string_helper(it, level);
@@ -140,7 +138,6 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                 total_conf += conf;
                 num_words += 1;
             }
-
 
             if (*ctx).detect_italics != 0 {
                 let mut italic: i32 = 0;
@@ -216,10 +213,8 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
         loop {
             if first_iter {
                 first_iter = false;
-            } else {
-                if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
-                    break;
-                }
+            } else if TessPageIteratorNext(it as *mut TessPageIterator, level) == 0 {
+                break;
             }
 
             let letter = _tess_string_helper(it, level);
