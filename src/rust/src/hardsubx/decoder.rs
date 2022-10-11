@@ -16,10 +16,9 @@ use crate::hardsubx::imgops::{rgb_to_hsv, rgb_to_lab};
 use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
 use std::convert::TryInto;
+use std::ffi;
 use std::os::raw::c_char;
 use std::ptr::null;
-
-use std::ffi;
 
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
@@ -67,6 +66,83 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
             // "".to_string()
         }
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn _process_frame_white_basic(
+    ctx: *mut lib_hardsubx_ctx,
+    frame: *mut AVFrame,
+    width: ::std::os::raw::c_int,
+    height: ::std::os::raw::c_int,
+    _index: ::std::os::raw::c_int,
+) -> *mut ::std::os::raw::c_char {
+    let mut im: *mut Pix = pixCreate(width, height, 32);
+    let mut lum_im: *mut Pix = pixCreate(width, height, 32);
+    let frame_deref = *frame;
+
+    for i in (3 * height / 4)..height {
+        for j in 0..width {
+            let p: isize = (j * 3 + i * frame_deref.linesize[0]).try_into().unwrap();
+            let r: i32 = (*(frame_deref.data[0]).offset(p)).into();
+            let g: i32 = (*(frame_deref.data[0]).offset(p + 1)).into();
+            let b: i32 = (*(frame_deref.data[0]).offset(p + 2)).into();
+            pixSetRGBPixel(im, j, i, r, g, b);
+
+            let mut L: f32 = 0.0;
+            let mut A: f32 = 0.0;
+            let mut B: f32 = 0.0;
+
+            rgb_to_lab(r as f32, g as f32, b as f32, &mut L, &mut A, &mut B);
+
+            if L > (*ctx).lum_thresh {
+                pixSetRGBPixel(lum_im, j, i, 255, 255, 255);
+            } else {
+                pixSetRGBPixel(lum_im, j, i, 0, 0, 0);
+            }
+        }
+    }
+
+    let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
+    let mut sobel_edge_im: *mut Pix =
+        pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES.try_into().unwrap());
+    let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 1);
+    let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
+
+    let mut feat_im: *mut Pix = pixCreate(width, height, 32);
+
+    for i in (3 * (height / 4))..height {
+        for j in 0..width {
+            let mut p1: u32 = 0;
+            let mut p2: u32 = 0;
+
+            pixGetPixel(edge_im, j, i, &mut p1);
+            pixGetPixel(lum_im, j, i, &mut p2);
+
+            if p1 == 0 && p2 > 0 {
+                pixSetRGBPixel(feat_im, j, i, 255, 255, 255);
+            } else {
+                pixSetRGBPixel(feat_im, j, i, 0, 0, 0);
+            }
+        }
+    }
+
+    if (*ctx).detect_italics != 0 {
+        (*ctx).ocr_mode = HARDSUBX_OCRMODE_WORD;
+    }
+
+    let subtitle_text = dispatch_classifier_functions(ctx, feat_im);
+
+    pixDestroy(&mut im as *mut *mut Pix);
+    pixDestroy(&mut gray_im as *mut *mut Pix);
+    pixDestroy(&mut sobel_edge_im as *mut *mut Pix);
+    pixDestroy(&mut dilate_gray_im as *mut *mut Pix);
+    pixDestroy(&mut edge_im as *mut *mut Pix);
+    pixDestroy(&mut lum_im as *mut *mut Pix);
+    pixDestroy(&mut feat_im as *mut *mut Pix);
+
+    // This is a memory leak
+    // the returned thing needs to be deallocated by caller
+    string_to_c_char(&subtitle_text)
 }
 
 #[no_mangle]
