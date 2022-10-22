@@ -4,9 +4,13 @@ use leptonica_sys::*;
 // #[cfg(feature = "hardsubx_ocr")]
 // use ffmpeg_sys_next::*;
 
+use std::convert::TryInto;
 use std::eprintln;
+use std::ffi;
 use std::format;
+use std::os::raw::c_char;
 use std::process::exit;
+use std::ptr::null;
 
 #[cfg(feature = "hardsubx_ocr")]
 // use crate::bindings::{hardsubx_ocr_mode_HARDSUBX_OCRMODE_WORD};
@@ -15,10 +19,6 @@ use crate::hardsubx::classifier::*;
 use crate::hardsubx::imgops::{rgb_to_hsv, rgb_to_lab};
 use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
-use std::convert::TryInto;
-use std::ffi;
-use std::os::raw::c_char;
-use std::ptr::null;
 
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
@@ -64,7 +64,7 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
         }
 
         _ => {
-            eprintln!("Invalid OCR MOde");
+            eprintln!("Invalid OCR Mode");
             exit(EXIT_MALFORMED_PARAMETER);
             // "".to_string()
         }
