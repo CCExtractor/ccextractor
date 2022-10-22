@@ -23,6 +23,7 @@ use log::warn;
 /// The function accepts and dereferences a raw pointer
 /// The function also makes calls to functions whose safety is not guaranteed
 /// The function returns a raw pointer which is a string made in C
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -57,17 +58,18 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     }
 }
 
+/// basically the get_oct_text_simple function without threshold
+/// This function is being kept only for backwards compatibility reasons
 /// # Safety
 /// The function accepts and dereferences a raw pointer
 /// The function also makes calls to functions whose safety is not guaranteed
 /// The function returns a raw pointer which is a string made in C
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut Pix,
 ) -> *mut ::std::os::raw::c_char {
-    // basically the get_oct_text_simple function without threshold
-    // This function is being kept only for backwards compatibility reasons
 
     get_ocr_text_simple_threshold(ctx, image, 0.0)
 }
@@ -101,6 +103,7 @@ unsafe fn _tess_string_helper(it: *mut TessResultIterator, level: TessPageIterat
 /// The function also calls other functions whose safety is not guaranteed
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -196,6 +199,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
 /// The function also calls other functions whose safety is not guaranteed
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_wordwise(
     ctx: *mut lib_hardsubx_ctx,
@@ -209,6 +213,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise(
 /// The function also calls other functions whose safety is not guaranteed
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     ctx: *mut lib_hardsubx_ctx,
@@ -271,6 +276,7 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
 /// The function also calls other functions whose safety is not guaranteed
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
+/// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_letterwise(
     ctx: *mut lib_hardsubx_ctx,
