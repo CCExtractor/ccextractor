@@ -70,7 +70,6 @@ pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: *mut lib_hardsubx_ctx,
     image: *mut Pix,
 ) -> *mut ::std::os::raw::c_char {
-
     get_ocr_text_simple_threshold(ctx, image, 0.0)
 }
 
