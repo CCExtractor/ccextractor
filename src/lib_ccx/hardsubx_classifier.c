@@ -1,8 +1,8 @@
 #include "lib_ccx.h"
 #include "utility.h"
 
-#ifdef ENABLE_HARDSUBX
-//TODO: Correct FFMpeg integration
+#if defined(ENABLE_HARDSUBX) && defined(DISABLE_RUST)
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>

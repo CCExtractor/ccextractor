@@ -11,6 +11,7 @@
 #include <tesseract/capi.h>
 #include "hardsubx.h"
 
+#ifdef DISABLE_RUST
 char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	// printf("frame : %04d\n", index);
@@ -77,21 +78,21 @@ char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	{
 		case HARDSUBX_OCRMODE_WORD:
 			if (ctx->conf_thresh > 0)
-				subtitle_text = get_ocr_text_wordwise_threshold(ctx, lum_im, ctx->conf_thresh);
+				subtitle_text = get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
 			else
-				subtitle_text = get_ocr_text_wordwise(ctx, lum_im);
+				subtitle_text = get_ocr_text_wordwise(ctx, feat_im);
 			break;
 		case HARDSUBX_OCRMODE_LETTER:
 			if (ctx->conf_thresh > 0)
-				subtitle_text = get_ocr_text_letterwise_threshold(ctx, lum_im, ctx->conf_thresh);
+				subtitle_text = get_ocr_text_letterwise_threshold(ctx, feat_im, ctx->conf_thresh);
 			else
-				subtitle_text = get_ocr_text_letterwise(ctx, lum_im);
+				subtitle_text = get_ocr_text_letterwise(ctx, feat_im);
 			break;
 		case HARDSUBX_OCRMODE_FRAME:
 			if (ctx->conf_thresh > 0)
-				subtitle_text = get_ocr_text_simple_threshold(ctx, lum_im, ctx->conf_thresh);
+				subtitle_text = get_ocr_text_simple_threshold(ctx, feat_im, ctx->conf_thresh);
 			else
-				subtitle_text = get_ocr_text_simple(ctx, lum_im);
+				subtitle_text = get_ocr_text_simple(ctx, feat_im);
 			break;
 		default:
 			fatal(EXIT_MALFORMED_PARAMETER, "Invalid OCR Mode");
@@ -214,6 +215,7 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 
 	return subtitle_text;
 }
+#endif
 
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp)
 {
@@ -294,6 +296,7 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 	pixDestroy(&feat_im);
 }
 
+#ifdef DISABLE_RUST
 char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)
 {
 	PIX *im;
@@ -367,6 +370,7 @@ char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 
 	return subtitle_text;
 }
+#endif
 
 int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {

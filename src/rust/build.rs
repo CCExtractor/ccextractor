@@ -11,12 +11,23 @@ fn main() {
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_functions.extend_from_slice(&["edit_distance", "convert_pts_to_.*", "av_rescale_q"]);
+    allowlist_functions.extend_from_slice(&[
+        "edit_distance",
+        "convert_pts_to_.*",
+        "av_rescale_q",
+        "mprint",
+    ]);
 
-    let mut allowlist_types = vec![".*(?i)_?dtvcc_.*", "encoder_ctx", "lib_cc_decode"];
+    let mut allowlist_types = vec![
+        ".*(?i)_?dtvcc_.*",
+        "encoder_ctx",
+        "lib_cc_decode",
+        "cc_subtitle",
+        "ccx_output_format",
+    ];
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_types.extend_from_slice(&["AVRational"]);
+    allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
