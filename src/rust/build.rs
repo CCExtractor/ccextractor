@@ -21,7 +21,7 @@ fn main() {
         "activity_progress",
         "avcodec_decode_video2",
         "probe_tessdata_location",
-        "get_file_extension"
+        "get_file_extension",
     ]);
 
     let mut allowlist_types = vec![
@@ -30,7 +30,7 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
-        "ccx_s_options"
+        "ccx_s_options",
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
