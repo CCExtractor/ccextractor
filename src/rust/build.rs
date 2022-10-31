@@ -16,6 +16,12 @@ fn main() {
         "convert_pts_to_.*",
         "av_rescale_q",
         "mprint",
+        "av_packet_unref",
+        "av_read_frame",
+        "activity_progress",
+        "avcodec_decode_video2",
+        "probe_tessdata_location",
+        "get_file_extension"
     ]);
 
     let mut allowlist_types = vec![
@@ -24,6 +30,7 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
+        "ccx_s_options"
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
