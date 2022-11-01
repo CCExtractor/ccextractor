@@ -17,14 +17,14 @@ use crate::bindings::{
     cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location,
 };
 use crate::utils::string_to_c_char;
+use std::boxed::Box;
 use std::convert::TryInto;
 use std::ffi;
+use std::matches;
 use std::os::raw::c_char;
 use std::process;
 use std::ptr::null;
 use std::vec::Vec;
-
-use std::boxed::Box;
 
 // definitions taken from ccx_common_common.h
 static EXIT_NOT_ENOUGH_MEMORY: i32 = 500;
@@ -254,10 +254,8 @@ impl<'a> HardsubxContext<'a> {
                 if ccx_options.ocr_oem < 0 {
                     ccx_options.ocr_oem = 1;
                 }
-            } else {
-                if ccx_options.ocr_oem < 0 {
-                    ccx_options.ocr_oem = 0;
-                }
+            } else if ccx_options.ocr_oem < 0 {
+                ccx_options.ocr_oem = 0;
             }
 
             let tessdata_path_cstr = string_to_c_char(&tess_data_str);
@@ -314,11 +312,7 @@ impl<'a> HardsubxContext<'a> {
             write_format: (*options).write_format,
             subs_delay: (*options).subs_delay,
             cc_to_stdout: (*options).cc_to_stdout,
-
-            tickertext: match (*options).tickertext {
-                0 => false,
-                _ => true,
-            },
+            tickertext: !matches!((*options).tickertext, 0),
             cur_conf: 0.0,
             prev_conf: 0.0,
             ocr_mode: {
@@ -334,19 +328,13 @@ impl<'a> HardsubxContext<'a> {
             subcolor: (*options).hardsubx_subcolor,
 
             min_sub_duration: (*options).hardsubx_min_sub_duration,
-            detect_italics: match (*options).hardsubx_detect_italics {
-                0 => false,
-                _ => true,
-            },
+            detect_italics: !matches!((*options).hardsubx_detect_italics, 0),
 
             conf_thresh: (*options).hardsubx_conf_thresh,
             hue: (*options).hardsubx_hue,
 
             lum_thresh: (*options).hardsubx_lum_thresh,
-            hardsubx_and_common: match (*options).hardsubx_and_common {
-                0 => false,
-                _ => true,
-            },
+            hardsubx_and_common: !matches!((*options).hardsubx_and_common, 0),
             ..Default::default()
         }
     }
