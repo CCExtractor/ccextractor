@@ -94,22 +94,9 @@ sudo make install
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
 
-### Compiling with GUI:
+### Compiling with GUI
 
-To build CCExtractor with a GUI, you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui
-make
-
-# make build systemwide
-sudo make install
-```
-
-Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## macOS
 
@@ -178,22 +165,7 @@ make
 
 #### Compiling with GUI:
 
-To use CCExtractor with a gui you will additionally need to install GLEW and GLFW. You can do that by installing it via homebrew using:
-
-```bash
-brew install glfw
-brew install glew
-```
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui #OR .configure --with-gui --without-rust
-make
-```
-
-Once set up, you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## Windows
 Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 

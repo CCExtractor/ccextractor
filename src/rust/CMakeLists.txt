@@ -1,8 +1,16 @@
+if (WITH_OCR AND WITH_HARDSUBX)
+    set(FEATURE_ARG "\"hardsubx_ocr\"")
+    set(FEATURE_FLAG "--features")
+else ()
+    set(FEATURE_ARG "")
+    set(FEATURE_FLAG "")
+endif ()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CARGO_CMD cargo build)
+    set(CARGO_CMD cargo build ${FEATURE_FLAG} ${FEATURE_ARG})
     set(TARGET_DIR "debug")
 else ()
-    set(CARGO_CMD cargo build --release)
+    set(CARGO_CMD cargo build ${FEATURE_FLAG} ${FEATURE_ARG} --release)
     set(TARGET_DIR "release")
 endif ()
 

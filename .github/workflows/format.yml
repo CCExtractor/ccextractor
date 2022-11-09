@@ -19,7 +19,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: Format code
         run: |
           find src/ -type f -not -path "src/thirdparty/*" -not -path "src/lib_ccx/zvbi/*" -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
@@ -30,9 +30,9 @@ jobs:
       run:
         working-directory: ./src/rust
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: cache 
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             src/rust/.cargo/registry
@@ -42,10 +42,12 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.56.0
           override: true
           components: rustfmt, clippy
+      - name: dependencies
+        run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev yasm
       - name: rustfmt
         run: cargo fmt --all -- --check
       - name: clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features -- -D warnings

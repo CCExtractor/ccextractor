@@ -13,6 +13,8 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 pub mod decoder;
+#[cfg(feature = "hardsubx_ocr")]
+pub mod hardsubx;
 pub mod utils;
 
 #[cfg(windows)]

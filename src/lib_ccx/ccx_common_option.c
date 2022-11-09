@@ -85,6 +85,7 @@ void init_options(struct ccx_s_options *options)
 	options->hardsubx_conf_thresh = 0.0;
 	options->hardsubx_hue = 0.0;
 	options->hardsubx_lum_thresh = 95.0;
+	options->hardsubx_and_common = 0;
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator = ',';

@@ -140,3 +140,13 @@ mac/CMakeCache.txt
 
 # Bazel
 bazel*
+
+#Intellij IDEs
+.idea/
+
+# Rust build and MakeFiles (and CMake files)
+src/rust/CMakeFiles/
+src/rust/CMakeCache.txt
+src/rust/Makefile
+src/rust/cmake_install.cmake
+src/rust/target/

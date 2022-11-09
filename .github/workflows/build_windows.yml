@@ -6,10 +6,10 @@ on:
 
 jobs:
   build_non_ocr_release:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -31,17 +31,17 @@ jobs:
       - name: Display version information
         run: ./ccextractorwin.exe --version
         working-directory: ./windows/x64/Release
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows Non-OCR Release build
           path: |
             ./windows/x64/Release/ccextractorwin.exe
             ./windows/x64/Release/*.dll
   build_non_ocr_debug:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -63,7 +63,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwin.exe --version
         working-directory: ./windows/x64/Debug
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows Non-OCR Debug build
           path: |
@@ -71,10 +71,10 @@ jobs:
             ./windows/x64/Debug/ccextractorwin.pdb
             ./windows/x64/Debug/*.dll
   build_ocr_hardsubx_release:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -100,17 +100,17 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/Release-Full
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows OCR and HardSubX Release build
           path: |
             ./windows/Release-Full/ccextractorwinfull.exe
             ./windows/Release-Full/*.dll
   build_ocr_hardsubx_debug:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Install llvm and clang
@@ -136,7 +136,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/Debug-Full
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows OCR and HardSubX Debug build
           path: |

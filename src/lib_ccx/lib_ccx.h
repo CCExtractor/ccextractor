@@ -313,4 +313,13 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx);
 struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct cap_info* cinfo);
 struct encoder_ctx * update_encoder_list(struct lib_ccx_ctx *ctx);
 struct encoder_ctx *get_encoder_by_pn(struct lib_ccx_ctx *ctx, int pn);
+int process_non_multiprogram_general_loop(struct lib_ccx_ctx* ctx, 
+											struct demuxer_data **datalist,
+											struct demuxer_data **data_node,
+											struct lib_cc_decode **dec_ctx,
+											struct encoder_ctx **enc_ctx,
+											uint64_t *min_pts,
+											int ret,
+											int *caps);
+void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
 #endif

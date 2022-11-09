@@ -331,22 +331,6 @@ ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/th
 
 ccextractor_LDADD=-lm -lpthread -ldl
 
-if WITH_RUST
-ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
-else
-ccextractor_CFLAGS += -DDISABLE_RUST
-ccextractor_CPPFLAGS += -DDISABLE_RUST
-endif
-
-if DEBUG_RELEASE
-CARGO_RELEASE_ARGS=
-else
-CARGO_RELEASE_ARGS=--release
-endif
-
-./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
-	cd ../src/rust && \
-	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(CARGO_RELEASE_ARGS);
 
 if SYS_IS_LINUX
 ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
@@ -361,6 +345,8 @@ if SYS_IS_64_BIT
 ccextractor_CFLAGS += -DGPAC_64_BITS
 endif
 
+HARDSUBX_FEATURE_RUST=
+
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
@@ -372,6 +358,7 @@ AV_LIB += ${libavformat_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
+HARDSUBX_FEATURE_RUST += --features "hardsubx_ocr"
 endif
 
 if OCR_IS_ENABLED
@@ -398,64 +385,22 @@ ccextractor_LDADD += $(TESS_LIB)
 ccextractor_LDADD += $(LEPT_LIB)
 endif
 
+if WITH_RUST
+ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
+else
+ccextractor_CFLAGS += -DDISABLE_RUST
+ccextractor_CPPFLAGS += -DDISABLE_RUST
+endif
+
+if DEBUG_RELEASE
+CARGO_RELEASE_ARGS=
+else
+CARGO_RELEASE_ARGS=--release
+endif
+
+./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
+	cd ../src/rust && \
+	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
+
 EXTRA_DIST = ../src/thirdparty/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
-
-#For GUI
-if BUILD_WITH_GUI
-bin_PROGRAMS += ccextractorGUI
-
-ccextractorGUI_SOURCES = \
-				../src/GUI/ccextractorGUI.c \
-				../src/GUI/ccextractorGUI.h \
-				../src/GUI/activity.c \
-				../src/GUI/activity.h \
-				../src/GUI/terminal.c \
-				../src/GUI/preview.c \
-				../src/GUI/preview.h \
-				../src/GUI/ccx_cli_thread.c \
-				../src/GUI/ccx_cli_thread.h \
-				../src/GUI/command_builder.c \
-				../src/GUI/command_builder.h \
-				../src/GUI/save_load_data.c \
-				../src/GUI/save_load_data.h \
-				../src/GUI/file_browser.c \
-				../src/GUI/file_browser.h \
-				../src/GUI/popups.c \
-				../src/GUI/popups.h \
-				../src/GUI/tabs.c \
-				../src/GUI/tabs.h \
-				../src/GUI/stb_image.h \
-				../src/GUI/nuklear_lib/nuklear.h \
-				../src/GUI/nuklear_lib/nuklear_glfw_gl2.h
-
-ccextractorGUI_CFLAGS = -std=gnu99
-
-
-ccextractorGUI_LDADD = ${glfw3_LIBS}
-
-
-if SYS_IS_LINUX
-ccextractorGUI_CFLAGS += -s -O3 -DUNIX
-ccextractorGUI_CFLAGS += ${glew_CFLAGS}
-ccextractorGUI_LDADD += ${glew_LIBS}
-ccextractorGUI_LDADD += -lX11 -lXinerama -lXcursor -lXi -lXrandr -lXxf86vm -lm -ldl -lpthread
-endif
-
-if SYS_IS_MAC
-ccextractorGUI_CFLAGS += -O3 -DUNIX
-ccextractorGUI_CFLAGS += ${glew_CFLAGS}
-ccextractorGUI_LDADD += ${glew_LIBS}
-ccextractorGUI_LDFLAGS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
-ccextractorGUI_LDADD += -lglfw  -lm -L/usr/local/lib -lpthread
-endif
-
-if HARDSUBX_IS_ENABLED
-if OCR_IS_ENABLED
-ccextractorGUI_CFLAGS += -DENABLE_OCR
-endif
-endif
-
-EXTRA_DIST += ../icon/ ../fonts/
-
-endif
 
