@@ -20,6 +20,13 @@ use crate::hardsubx::imgops::{rgb_to_hsv, rgb_to_lab};
 use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
 
+use super::AVPacket;
+use super::HardsubxContext;
+use super::hardsubx_ocr_mode;
+use super::utility::convert_pts_to_ms;
+
+use std::num;
+
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
 // TODO: turn into an enum definition when the hardsubx context is rewritten
@@ -36,16 +43,16 @@ static HARDSUBX_OCRMODE_WORD: i32 = 1;
 /// # Safety
 /// dereferences a raw pointer
 /// calls functions that are not necessarily safe
-pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut Pix) -> String {
+pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut Pix) -> String {
     // function that calls the classifier functions
-    match (*ctx).ocr_mode {
-        0 => {
+    match ctx.ocr_mode {
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME => {
             let ret_char_arr = get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh);
             ffi::CStr::from_ptr(ret_char_arr)
                 .to_string_lossy()
                 .into_owned()
         }
-        1 => {
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
             let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
             let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
             match text_out_result {
@@ -54,7 +61,7 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
             }
         }
 
-        2 => {
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
             let ret_char_arr = get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh);
             let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
             match text_out_result {
@@ -78,7 +85,7 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_white_basic(
-    ctx: *mut lib_hardsubx_ctx,
+    ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
@@ -102,7 +109,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
 
             rgb_to_lab(r as f32, g as f32, b as f32, &mut L, &mut A, &mut B);
 
-            if L > (*ctx).lum_thresh {
+            if L > ctx.lum_thresh {
                 pixSetRGBPixel(lum_im, j, i, 255, 255, 255);
             } else {
                 pixSetRGBPixel(lum_im, j, i, 0, 0, 0);
@@ -134,8 +141,8 @@ pub unsafe extern "C" fn _process_frame_white_basic(
         }
     }
 
-    if (*ctx).detect_italics != 0 {
-        (*ctx).ocr_mode = HARDSUBX_OCRMODE_WORD;
+    if ctx.detect_italics {
+        ctx.ocr_mode = hardsubx_ocr_mode::HARDSUBX_OCRMODE_WORD;
     }
 
     let subtitle_text = dispatch_classifier_functions(ctx, feat_im);
@@ -158,7 +165,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_color_basic(
-    ctx: *mut lib_hardsubx_ctx,
+    ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
@@ -182,7 +189,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
 
             rgb_to_hsv(r as f32, g as f32, b as f32, &mut H, &mut S, &mut V);
 
-            if ((H - (*ctx).hue).abs()) < 20.0 {
+            if ((H - ctx.hue).abs()) < 20.0 {
                 pixSetRGBPixel(hue_im, j, i, r, g, b);
             }
         }
@@ -227,8 +234,8 @@ pub unsafe extern "C" fn _process_frame_color_basic(
         }
     }
 
-    if (*ctx).detect_italics != 0 {
-        (*ctx).ocr_mode = HARDSUBX_OCRMODE_WORD;
+    if ctx.detect_italics {
+        ctx.ocr_mode = hardsubx_ocr_mode::HARDSUBX_OCRMODE_WORD;
     }
 
     let subtitle_text = dispatch_classifier_functions(ctx, feat_im);
@@ -254,7 +261,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
 /// The function returns a raw pointer which is a string made in C
 #[no_mangle]
 pub unsafe extern "C" fn _process_frame_tickertext(
-    ctx: *mut lib_hardsubx_ctx,
+    ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
@@ -278,7 +285,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
 
             rgb_to_lab(r as f32, g as f32, b as f32, &mut L, &mut A, &mut B);
 
-            if L > (*ctx).lum_thresh {
+            if L > ctx.lum_thresh {
                 pixSetRGBPixel(lum_im, j, i, 255, 255, 255);
             } else {
                 pixSetRGBPixel(lum_im, j, i, 0, 0, 0);
