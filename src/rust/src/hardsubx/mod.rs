@@ -37,6 +37,18 @@ extern "C" {
     pub static mut ccx_options: ccx_s_options;
 }
 
+pub enum hardsubx_color_type
+{
+	HARDSUBX_COLOR_WHITE,
+	HARDSUBX_COLOR_YELLOW,
+	HARDSUBX_COLOR_GREEN,
+	HARDSUBX_COLOR_CYAN,
+	HARDSUBX_COLOR_BLUE,
+	HARDSUBX_COLOR_MAGENTA,
+	HARDSUBX_COLOR_RED,
+	HARDSUBX_COLOR_CUSTOM,
+}
+
 pub enum hardsubx_ocr_mode {
     HARDSUBX_OCRMODE_FRAME,
     HARDSUBX_OCRMODE_WORD,
@@ -161,7 +173,7 @@ pub struct HardsubxContext {
 
     pub dec_sub: Box<cc_subtitle>,
     pub ocr_mode: hardsubx_ocr_mode,
-    pub subcolor: i32,
+    pub subcolor: hardsubx_color_type,
 
     pub min_sub_duration: f32,
     pub detect_italics: bool,
@@ -221,7 +233,7 @@ impl Default for HardsubxContext {
                 Box::new(tmp)
             },
             ocr_mode: hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME,
-            subcolor: 0,
+            subcolor: hardsubx_color_type::HARDSUBX_COLOR_WHITE,
 
             min_sub_duration: 0.0,
             detect_italics: false,
@@ -365,7 +377,17 @@ impl HardsubxContext {
                 }
             },
 
-            subcolor: (*options).hardsubx_subcolor,
+            subcolor: match (*options).hardsubx_subcolor{
+                0 => hardsubx_color_type::HARDSUBX_COLOR_WHITE,
+                1 => hardsubx_color_type::HARDSUBX_COLOR_YELLOW,
+                2 => hardsubx_color_type::HARDSUBX_COLOR_GREEN,
+                3 => hardsubx_color_type::HARDSUBX_COLOR_CYAN,
+                4 => hardsubx_color_type::HARDSUBX_COLOR_BLUE,
+                5 => hardsubx_color_type::HARDSUBX_COLOR_MAGENTA,
+                6 => hardsubx_color_type::HARDSUBX_COLOR_RED,
+                7 => hardsubx_color_type::HARDSUBX_COLOR_CUSTOM,
+                _ => hardsubx_color_type::HARDSUBX_COLOR_WHITE // white is default
+            },
 
             min_sub_duration: (*options).hardsubx_min_sub_duration,
             detect_italics: !matches!((*options).hardsubx_detect_italics, 0),
