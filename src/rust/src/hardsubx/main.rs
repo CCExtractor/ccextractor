@@ -19,7 +19,8 @@ use std::os::raw::{c_void, c_int, c_uint};
 use std::process;
 use std::ptr;
 use std::ptr::null;
-
+#[cfg(feature = "hardsubx_ocr")]
+use tesseract_sys::*;
 use super::HardsubxContext;
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
@@ -189,8 +190,18 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut 
     avcodec_free_context(&mut codec_ctx as *mut *mut AVCodecContext);
 }
 
+
+pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext)
+{
+
+    // Free OCR related stuff
+    TessBaseAPIEnd(ctx.tess_handle);
+    TessBaseAPIDelete(ctx.tess_handle);
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn hardsubx(options: *mut ccx_s_options, ctx_normal: *mut lib_ccx_ctx) {
     let mut ctx = HardsubxContext::new(options);
     hardsubx_process_data(&mut ctx, ctx_normal);
+    _dinit_hardsubx(&mut ctx);
 }
