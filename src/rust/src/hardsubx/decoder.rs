@@ -47,27 +47,15 @@ pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut 
     // function that calls the classifier functions
     match ctx.ocr_mode {
         hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME => {
-            let ret_char_arr = get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh);
-            ffi::CStr::from_ptr(ret_char_arr)
-                .to_string_lossy()
-                .into_owned()
-        }
-        hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
-            let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
-            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
-            match text_out_result {
-                Ok(T) => T,
-                Err(_E) => "".to_string(),
-            }
+            get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
         hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
-            let ret_char_arr = get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh);
-            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
-            match text_out_result {
-                Ok(T) => T,
-                Err(_E) => "".to_string(),
-            }
+            get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh)
+        }
+
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
+            get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
         _ => {
@@ -90,7 +78,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
     _index: ::std::os::raw::c_int,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut im: *mut Pix = pixCreate(width, height, 32);
     let mut lum_im: *mut Pix = pixCreate(width, height, 32);
     let frame_deref = *frame;
@@ -155,7 +143,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
     pixDestroy(&mut lum_im as *mut *mut Pix);
     pixDestroy(&mut feat_im as *mut *mut Pix);
 
-    string_to_c_char(&subtitle_text)
+    subtitle_text
 }
 
 /// # Safety
@@ -170,7 +158,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
     _index: ::std::os::raw::c_int,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut im: *mut Pix = pixCreate(width, height, 32);
     let mut hue_im: *mut Pix = pixCreate(width, height, 32);
     let frame_deref = *frame;
@@ -253,7 +241,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
 
     // This is a memory leak
     // the returned thing needs to be deallocated by caller
-    string_to_c_char(&subtitle_text)
+    subtitle_text
 }
 /// # Safety
 /// The function accepts and dereferences a raw pointer
@@ -266,7 +254,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
     index: ::std::os::raw::c_int,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut im: *mut Pix = pixCreate(width, height, 32);
     let mut lum_im: *mut Pix = pixCreate(width, height, 32);
     let frame_deref = *frame;

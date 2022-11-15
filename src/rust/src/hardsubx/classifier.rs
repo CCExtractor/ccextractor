@@ -4,7 +4,7 @@ use tesseract_sys::*;
 #[cfg(feature = "hardsubx_ocr")]
 use leptonica_sys::*;
 
-use std::ffi;
+use std::ffi::{self, CString};
 use std::ptr::null;
 
 pub type ccx_output_format = ::std::os::raw::c_uint;
@@ -31,14 +31,14 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
     threshold: std::os::raw::c_float,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut text_out: *mut ::std::os::raw::c_char;
 
     TessBaseAPISetImage2(ctx.tess_handle, image);
 
     if TessBaseAPIRecognize(ctx.tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0 {
         warn!("Error in Tesseract recognition, skipping frame\n");
-        null::<c_char>() as *mut c_char
+        String::new()
     } else {
         text_out = TessBaseAPIGetUTF8Text(ctx.tess_handle);
 
@@ -56,7 +56,8 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
                 ctx.cur_conf = conf as std::os::raw::c_float;
             }
         }
-        text_out
+
+        ffi::CStr::from_ptr(text_out).to_string_lossy().into_owned()
     }
 }
 
@@ -71,7 +72,7 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
 pub unsafe extern "C" fn get_ocr_text_simple(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     get_ocr_text_simple_threshold(ctx, image, 0.0)
 }
 
@@ -110,14 +111,14 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
     threshold: std::os::raw::c_float,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut text_out = String::new();
 
     TessBaseAPISetImage2(ctx.tess_handle, image);
 
     if TessBaseAPIRecognize(ctx.tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0 {
         warn!("Error in Tesseract recognition, skipping word\n");
-        return null::<c_char>() as *mut c_char;
+        return String::new();
     }
 
     let it: *mut TessResultIterator = TessBaseAPIGetIterator(ctx.tess_handle);
@@ -192,7 +193,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
 
     TessResultIteratorDelete(it);
 
-    string_to_c_char(&text_out)
+    text_out
 }
 
 /// # Safety
@@ -205,7 +206,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
 pub unsafe extern "C" fn get_ocr_text_wordwise(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     get_ocr_text_wordwise_threshold(ctx, image, 0.0)
 }
 
@@ -220,14 +221,14 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
     threshold: std::os::raw::c_float,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     let mut text_out: String = String::new();
 
     TessBaseAPISetImage2(ctx.tess_handle, image);
 
     if TessBaseAPIRecognize(ctx.tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0 {
         warn!("Error in Tesseract recognition, skipping symbol\n");
-        return null::<c_char>() as *mut c_char;
+        return String::new();
     }
 
     let it: *mut TessResultIterator = TessBaseAPIGetIterator(ctx.tess_handle);
@@ -269,7 +270,7 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
 
     TessResultIteratorDelete(it);
 
-    string_to_c_char(&text_out)
+    text_out
 }
 
 /// # Safety
@@ -282,6 +283,6 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
 pub unsafe extern "C" fn get_ocr_text_letterwise(
     ctx: &mut HardsubxContext,
     image: *mut Pix,
-) -> *mut ::std::os::raw::c_char {
+) -> String {
     get_ocr_text_letterwise_threshold(ctx, image, 0.0)
 }
