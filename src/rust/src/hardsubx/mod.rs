@@ -26,10 +26,12 @@ use std::os::raw::c_char;
 use std::process;
 use std::ptr::null;
 use std::vec::Vec;
+use std::os::raw::{c_void, c_int, c_uint};
+
 
 // definitions taken from ccx_common_common.h
 static EXIT_NOT_ENOUGH_MEMORY: i32 = 500;
-// static EXIT_READ_ERROR: i32 = 8;
+static EXIT_READ_ERROR: i32 = 8;
 
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
@@ -40,6 +42,24 @@ pub enum hardsubx_ocr_mode {
     HARDSUBX_OCRMODE_WORD,
     HARDSUBX_OCRMODE_LETTER,
 }
+
+// because of an error in documentation of ffmpeg_sys_next
+#[repr(C)]
+pub struct AVPacket {
+    pub buf: *mut AVBufferRef,
+    pub pts: i64,
+    pub dts: i64,
+    pub data: *mut u8,
+    pub size: c_int,
+    pub stream_index: c_int,
+    pub flags: c_int,
+    pub side_data: *mut AVPacketSideData,
+    pub side_data_elems: c_int,
+    pub duration: i64,
+    pub pos: i64,
+    pub convergence_duration: i64,
+}
+
 
 impl Default for cc_subtitle {
     fn default() -> Self {
@@ -102,7 +122,7 @@ pub struct lib_hardsubx_ctx {
     pub lum_thresh: f32,
 }
 
-pub struct HardsubxContext<'a> {
+pub struct HardsubxContext {
     pub cc_to_stdout: i32,
     pub subs_delay: i64,
     pub last_displayed_subs_ms: i64,
@@ -113,25 +133,25 @@ pub struct HardsubxContext<'a> {
     pub num_input_files: i32,
     pub system_start_time: i64,
     pub write_format: ccx_output_format,
-    pub format_ctx: Option<&'a mut AVFormatContext>,
+    pub format_ctx: *mut AVFormatContext,
 
-    pub codec_par: Option<&'a mut AVCodecParameters>,
+    pub codec_par: *mut AVCodecParameters,
     // Codec context will be generated from the code parameters
-    pub codec_ctx: Option<&'a mut AVCodecContext>,
+    pub codec_ctx: *mut AVCodecContext,
 
-    pub codec: Option<&'a mut AVCodec>,
-    pub frame: Option<&'a mut AVFrame>,
-    pub rgb_frame: Option<&'a mut AVFrame>,
+    pub codec: *mut AVCodec,
+    pub frame: *mut AVFrame,
+    pub rgb_frame: *mut AVFrame,
 
-    pub packet: Option<AVPacket>,
+    pub packet: AVPacket,
 
-    pub options_dict: Option<&'a mut AVDictionary>,
-    pub sws_ctx: Option<&'a mut SwsContext>,
-    pub rgb_buffer: Option<&'a mut u8>,
+    pub options_dict: *mut AVDictionary,
+    pub sws_ctx: *mut SwsContext,
+    pub rgb_buffer: *mut u8,
 
     pub video_stream_id: i32,
     pub im: *mut Pix,
-    pub tess_handle: Option<&'a mut TessBaseAPI>,
+    pub tess_handle: *mut TessBaseAPI,
 
     pub cur_conf: f32,
     pub prev_conf: f32,
@@ -151,7 +171,7 @@ pub struct HardsubxContext<'a> {
     pub lum_thresh: f32,
 }
 
-impl Default for HardsubxContext<'_> {
+impl Default for HardsubxContext {
     fn default() -> Self {
         Self {
             cc_to_stdout: 0,
@@ -164,19 +184,32 @@ impl Default for HardsubxContext<'_> {
             num_input_files: 0,
             system_start_time: -1,
             write_format: ccx_output_format::CCX_OF_RAW,
-            format_ctx: None,
-            codec_par: None,
-            codec_ctx: None,
-            codec: None,
-            frame: None,
-            rgb_frame: None,
-            packet: None,
-            options_dict: None,
-            sws_ctx: None,
-            rgb_buffer: None,
+            format_ctx: null::<AVFormatContext>() as *mut AVFormatContext,
+            codec_par: null::<AVCodecParameters>() as *mut AVCodecParameters,
+            codec_ctx: null::<AVCodecContext>() as *mut AVCodecContext,
+            codec: null::<AVCodec>() as *mut AVCodec,
+            frame: null::<AVFrame>() as *mut AVFrame,
+            rgb_frame: null::<AVFrame>() as *mut AVFrame,
+            packet: AVPacket{
+                buf: null::<AVBufferRef>() as *mut AVBufferRef,
+                pts: 0,
+                dts: 0,
+                data: null::<u8>() as *mut u8,
+                size: 0,
+                stream_index: 0,
+                flags: 0,
+                side_data: null::<AVPacketSideData>() as *mut AVPacketSideData,
+                side_data_elems: 0,
+                duration: 0,
+                pos: 0,
+                convergence_duration: 0
+            },
+            options_dict: null::<AVDictionary>() as *mut AVDictionary,
+            sws_ctx: null::<SwsContext>() as *mut SwsContext,
+            rgb_buffer: null::<u8>() as *mut u8,
             video_stream_id: 0,
             im: null::<Pix>() as *mut Pix,
-            tess_handle: None,
+            tess_handle: null::<TessBaseAPI>() as *mut TessBaseAPI,
             cur_conf: 0.0,
             prev_conf: 0.0,
 
@@ -200,7 +233,7 @@ impl Default for HardsubxContext<'_> {
     }
 }
 
-impl<'a> HardsubxContext<'a> {
+impl HardsubxContext {
     pub unsafe fn new(options: *mut ccx_s_options) -> Self {
         let tess_handle = &mut (*TessBaseAPICreate()) as &mut TessBaseAPI;
 
@@ -290,7 +323,7 @@ impl<'a> HardsubxContext<'a> {
         ffi::CString::from_raw(lang_cstr); //deallocate
                                            // function to be used for only converting the C struct to rust
         Self {
-            tess_handle: Some(tess_handle),
+            tess_handle: tess_handle,
             basefilename: {
                 if (*options).output_filename == null::<c_char>() as *mut c_char {
                     "".to_string()
