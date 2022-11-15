@@ -1,6 +1,7 @@
 pub mod classifier;
 pub mod decoder;
 pub mod imgops;
+pub mod main;
 pub mod utility;
 
 #[cfg(feature = "hardsubx_ocr")]
@@ -263,7 +264,7 @@ impl<'a> HardsubxContext<'a> {
                 tess_handle,
                 tessdata_path_cstr,
                 lang_cstr,
-                (*options).ocr_oem.try_into().unwrap(),
+                ccx_options.ocr_oem.try_into().unwrap(),
                 null::<*mut u8>() as *mut *mut i8,
                 0,
                 &mut pars_vec,
@@ -290,9 +291,15 @@ impl<'a> HardsubxContext<'a> {
                                            // function to be used for only converting the C struct to rust
         Self {
             tess_handle: Some(tess_handle),
-            basefilename: ffi::CStr::from_ptr((*options).output_filename)
-                .to_string_lossy()
-                .into_owned(),
+            basefilename: {
+                if (*options).output_filename == null::<c_char>() as *mut c_char {
+                    "".to_string()
+                } else {
+                    ffi::CStr::from_ptr((*options).output_filename)
+                        .to_string_lossy()
+                        .into_owned()
+                }
+            },
             current_file: -1,
             inputfile: {
                 let mut vec_inputfile: Vec<String> = Vec::new();
