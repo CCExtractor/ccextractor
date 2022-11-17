@@ -15,7 +15,7 @@ use leptonica_sys::*;
 
 use crate::bindings;
 use crate::bindings::{
-    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location,
+    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location, encoder_ctx
 };
 use crate::utils::string_to_c_char;
 use std::boxed::Box;
@@ -32,6 +32,10 @@ use std::os::raw::{c_void, c_int, c_uint};
 // definitions taken from ccx_common_common.h
 static EXIT_NOT_ENOUGH_MEMORY: i32 = 500;
 static EXIT_READ_ERROR: i32 = 8;
+static CCX_ENC_UNICODE: u32 = 0;
+static CCX_ENC_LATIN_1: u32 = 1;
+static CCX_ENC_UTF_8: u32   = 2;
+static CCX_ENC_ASCII: u32   = 3;
 
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
@@ -53,23 +57,6 @@ pub enum hardsubx_ocr_mode {
     HARDSUBX_OCRMODE_FRAME,
     HARDSUBX_OCRMODE_WORD,
     HARDSUBX_OCRMODE_LETTER,
-}
-
-// because of an error in documentation of ffmpeg_sys_next
-#[repr(C)]
-pub struct AVPacket {
-    pub buf: *mut AVBufferRef,
-    pub pts: i64,
-    pub dts: i64,
-    pub data: *mut u8,
-    pub size: c_int,
-    pub stream_index: c_int,
-    pub flags: c_int,
-    pub side_data: *mut AVPacketSideData,
-    pub side_data_elems: c_int,
-    pub duration: i64,
-    pub pos: i64,
-    pub convergence_duration: i64,
 }
 
 
@@ -214,7 +201,10 @@ impl Default for HardsubxContext {
                 side_data_elems: 0,
                 duration: 0,
                 pos: 0,
-                convergence_duration: 0
+                opaque: null::<c_void>() as *mut c_void,
+                opaque_ref: null::<AVBufferRef>() as *mut AVBufferRef,
+                time_base: AV_TIME_BASE_Q,
+                // convergence_duration: 0
             },
             options_dict: null::<AVDictionary>() as *mut AVDictionary,
             sws_ctx: null::<SwsContext>() as *mut SwsContext,
