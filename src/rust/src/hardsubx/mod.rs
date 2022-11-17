@@ -15,7 +15,7 @@ use leptonica_sys::*;
 
 use crate::bindings;
 use crate::bindings::{
-    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location
+    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location,
 };
 use crate::utils::string_to_c_char;
 use std::boxed::Box;
@@ -23,16 +23,14 @@ use std::convert::TryInto;
 use std::ffi;
 use std::matches;
 use std::os::raw::c_char;
+use std::os::raw::c_void;
 use std::process;
 use std::ptr::null;
 use std::vec::Vec;
-use std::os::raw::c_void;
-
 
 // definitions taken from ccx_common_common.h
 static EXIT_NOT_ENOUGH_MEMORY: i32 = 500;
 static EXIT_READ_ERROR: i32 = 8;
-
 
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
@@ -40,16 +38,15 @@ extern "C" {
     pub static mut ccx_options: ccx_s_options;
 }
 
-pub enum hardsubx_color_type
-{
-	HARDSUBX_COLOR_WHITE,
-	HARDSUBX_COLOR_YELLOW,
-	HARDSUBX_COLOR_GREEN,
-	HARDSUBX_COLOR_CYAN,
-	HARDSUBX_COLOR_BLUE,
-	HARDSUBX_COLOR_MAGENTA,
-	HARDSUBX_COLOR_RED,
-	HARDSUBX_COLOR_CUSTOM,
+pub enum hardsubx_color_type {
+    HARDSUBX_COLOR_WHITE,
+    HARDSUBX_COLOR_YELLOW,
+    HARDSUBX_COLOR_GREEN,
+    HARDSUBX_COLOR_CYAN,
+    HARDSUBX_COLOR_BLUE,
+    HARDSUBX_COLOR_MAGENTA,
+    HARDSUBX_COLOR_RED,
+    HARDSUBX_COLOR_CUSTOM,
 }
 
 pub enum hardsubx_ocr_mode {
@@ -57,7 +54,6 @@ pub enum hardsubx_ocr_mode {
     HARDSUBX_OCRMODE_WORD,
     HARDSUBX_OCRMODE_LETTER,
 }
-
 
 impl Default for cc_subtitle {
     fn default() -> Self {
@@ -188,7 +184,7 @@ impl Default for HardsubxContext {
             codec: null::<AVCodec>() as *mut AVCodec,
             frame: null::<AVFrame>() as *mut AVFrame,
             rgb_frame: null::<AVFrame>() as *mut AVFrame,
-            packet: AVPacket{
+            packet: AVPacket {
                 buf: null::<AVBufferRef>() as *mut AVBufferRef,
                 pts: 0,
                 dts: 0,
@@ -364,7 +360,7 @@ impl HardsubxContext {
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME
                 } else if (*options).hardsubx_ocr_mode == 1 {
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_WORD
-                } else if (*options).hardsubx_ocr_mode == 2{
+                } else if (*options).hardsubx_ocr_mode == 2 {
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER
                 } else {
                     eprintln!("Invalid OCR Mode");
@@ -372,7 +368,7 @@ impl HardsubxContext {
                 }
             },
 
-            subcolor: match (*options).hardsubx_subcolor{
+            subcolor: match (*options).hardsubx_subcolor {
                 0 => hardsubx_color_type::HARDSUBX_COLOR_WHITE,
                 1 => hardsubx_color_type::HARDSUBX_COLOR_YELLOW,
                 2 => hardsubx_color_type::HARDSUBX_COLOR_GREEN,
@@ -381,7 +377,7 @@ impl HardsubxContext {
                 5 => hardsubx_color_type::HARDSUBX_COLOR_MAGENTA,
                 6 => hardsubx_color_type::HARDSUBX_COLOR_RED,
                 7 => hardsubx_color_type::HARDSUBX_COLOR_CUSTOM,
-                _ => hardsubx_color_type::HARDSUBX_COLOR_WHITE // white is default
+                _ => hardsubx_color_type::HARDSUBX_COLOR_WHITE, // white is default
             },
 
             min_sub_duration: (*options).hardsubx_min_sub_duration,

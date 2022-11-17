@@ -1,3 +1,5 @@
+use super::decoder::hardsubx_process_frames_linear;
+use super::HardsubxContext;
 #[cfg(feature = "hardsubx_ocr")]
 use crate::bindings::{
     ccx_s_options, dinit_encoder, encoder_cfg, encoder_ctx, init_encoder, lib_ccx_ctx,
@@ -18,19 +20,16 @@ use std::process;
 use std::ptr::null;
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
-use super::HardsubxContext;
-use super::decoder::hardsubx_process_frames_linear;
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
 }
-
-
 
 /// # Safety
 /// Dereferences a raw pointer (datamember of the object ctx)
 /// calls potentially unsafe C functions
 pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut lib_ccx_ctx) {
-    let mut format_ctx_tmp: *mut AVFormatContext = null::<AVFormatContext>() as *mut AVFormatContext;
+    let mut format_ctx_tmp: *mut AVFormatContext =
+        null::<AVFormatContext>() as *mut AVFormatContext;
     let file_name = string_to_c_char(&ctx.inputfile[0]);
     if avformat_open_input(
         &mut format_ctx_tmp as *mut *mut AVFormatContext,
@@ -56,23 +55,14 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
         process::exit(EXIT_READ_ERROR);
     }
 
-    av_dump_format(
-        format_ctx_tmp as *mut AVFormatContext,
-        0,
-        file_name,
-        0,
-    );
+    av_dump_format(format_ctx_tmp as *mut AVFormatContext, 0, file_name, 0);
 
     ffi::CString::from_raw(file_name); //deallocation
 
     ctx.video_stream_id = -1;
 
     for i in 0..format_ctx_ref.nb_streams {
-        if (*(**format_ctx_ref
-            .streams
-            .offset(i.try_into().unwrap()))
-        .codecpar)
-            .codec_type
+        if (*(**format_ctx_ref.streams.offset(i.try_into().unwrap())).codecpar).codec_type
             == AVMEDIA_TYPE_VIDEO
         {
             ctx.video_stream_id = i as i32;
@@ -88,11 +78,9 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
 
     let mut codec_ctx: *mut AVCodecContext = avcodec_alloc_context3(null::<AVCodec>());
 
-    let codec_par_ptr: *mut AVCodecParameters = (*(*format_ctx_ref.streams)
-        .offset(ctx.video_stream_id.try_into().unwrap()))
-    .codecpar;
+    let codec_par_ptr: *mut AVCodecParameters =
+        (*(*format_ctx_ref.streams).offset(ctx.video_stream_id.try_into().unwrap())).codecpar;
     let codec_par_ref: &mut AVCodecParameters = &mut (*codec_par_ptr);
-
 
     let status =
         avcodec_parameters_to_context(codec_ctx, codec_par_ref as *const AVCodecParameters);
@@ -114,8 +102,7 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
         ctx.codec = codec_ptr;
     }
 
-    if avcodec_open2(ctx.codec_ctx, ctx.codec, &mut ctx.options_dict) < 0
-    {
+    if avcodec_open2(ctx.codec_ctx, ctx.codec, &mut ctx.options_dict) < 0 {
         eprintln!("Error opening input codec!\n");
         process::exit(EXIT_READ_ERROR);
     }
@@ -198,9 +185,7 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
 
 /// # Safety
 /// calls potentially unsafe C functions
-pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext)
-{
-
+pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext) {
     // Free OCR related stuff
     TessBaseAPIEnd(ctx.tess_handle);
     TessBaseAPIDelete(ctx.tess_handle);

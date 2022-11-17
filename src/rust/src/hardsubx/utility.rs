@@ -87,11 +87,7 @@ pub unsafe extern "C" fn edit_distance(
     ) as c_int
 }
 
-pub fn edit_distance_string(
-    word1: &str,
-    word2: &str,
-) -> i32 {
-
+pub fn edit_distance_string(word1: &str, word2: &str) -> i32 {
     let len1 = word1.chars().count();
     let len2 = word2.chars().count();
 

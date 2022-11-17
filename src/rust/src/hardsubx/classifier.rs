@@ -12,7 +12,6 @@ pub type subdatatype = ::std::os::raw::c_uint;
 pub type subtype = ::std::os::raw::c_uint;
 pub type ccx_encoding_type = ::std::os::raw::c_uint;
 
-
 use std::os::raw::c_char;
 
 use log::warn;
@@ -57,8 +56,6 @@ pub unsafe fn get_ocr_text_simple_threshold(
         ffi::CStr::from_ptr(text_out).to_string_lossy().into_owned()
     }
 }
-
-
 
 /// Function extracts string from tess iterator object
 /// frees memory associated with tesseract string
@@ -178,8 +175,6 @@ pub unsafe fn get_ocr_text_wordwise_threshold(
     text_out
 }
 
-
-
 /// # Safety
 /// The function dereferences a raw pointer
 /// The function also calls other functions whose safety is not guaranteed
@@ -240,5 +235,3 @@ pub unsafe fn get_ocr_text_letterwise_threshold(
 
     text_out
 }
-
-

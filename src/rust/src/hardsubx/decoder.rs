@@ -27,9 +27,6 @@ use crate::ccx_encoding_type::*;
 
 use std::cmp;
 
-
-
-
 /// # Safety
 /// dereferences a raw pointer
 /// calls functions that are not necessarily safe
@@ -47,7 +44,6 @@ pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut 
         hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME => {
             get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh)
         }
-
     }
 }
 
@@ -547,7 +543,6 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
         (cur_sec % 60).try_into().unwrap(),
     );
 }
-
 
 /// # Safety
 /// dereferences a raw pointer

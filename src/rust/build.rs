@@ -25,7 +25,7 @@ fn main() {
         "init_encoder",
         "dinit_encoder",
         "encode_sub",
-        "add_cc_sub_text"
+        "add_cc_sub_text",
     ]);
 
     let mut allowlist_types = vec![
@@ -36,7 +36,7 @@ fn main() {
         "ccx_output_format",
         "ccx_s_options",
         "lib_ccx_ctx",
-        "encoder_ctx"
+        "encoder_ctx",
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
