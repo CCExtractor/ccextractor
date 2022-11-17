@@ -15,7 +15,7 @@ use leptonica_sys::*;
 
 use crate::bindings;
 use crate::bindings::{
-    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location, encoder_ctx
+    cc_subtitle, ccx_output_format, ccx_s_options, get_file_extension, probe_tessdata_location
 };
 use crate::utils::string_to_c_char;
 use std::boxed::Box;
@@ -26,7 +26,7 @@ use std::os::raw::c_char;
 use std::process;
 use std::ptr::null;
 use std::vec::Vec;
-use std::os::raw::{c_void, c_int, c_uint};
+use std::os::raw::c_void;
 
 
 // definitions taken from ccx_common_common.h
@@ -36,6 +36,8 @@ static CCX_ENC_UNICODE: u32 = 0;
 static CCX_ENC_LATIN_1: u32 = 1;
 static CCX_ENC_UTF_8: u32   = 2;
 static CCX_ENC_ASCII: u32   = 3;
+
+static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
@@ -362,8 +364,11 @@ impl HardsubxContext {
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME
                 } else if (*options).hardsubx_ocr_mode == 1 {
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_WORD
-                } else {
+                } else if (*options).hardsubx_ocr_mode == 2{
                     hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER
+                } else {
+                    eprintln!("Invalid OCR Mode");
+                    process::exit(EXIT_MALFORMED_PARAMETER);
                 }
             },
 

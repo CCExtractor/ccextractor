@@ -11,7 +11,6 @@ use ffmpeg_sys_next::AVMediaType::AVMEDIA_TYPE_VIDEO;
 use ffmpeg_sys_next::AVPixelFormat::*;
 #[cfg(feature = "hardsubx_ocr")]
 use ffmpeg_sys_next::*;
-use palette::encoding::pixel::RawPixel;
 use std::convert::TryInto;
 use std::ffi;
 use std::os::raw::c_void;

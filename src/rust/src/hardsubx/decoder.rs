@@ -7,11 +7,9 @@ use leptonica_sys::*;
 // use ffmpeg_sys_next::*;
 
 use std::convert::TryInto;
-use std::eprintln;
 use std::ffi;
 use std::format;
 use std::os::raw::c_char;
-use std::process::exit;
 use std::ptr::null;
 
 use crate::bindings::{activity_progress, add_cc_sub_text, cc_subtitle, encode_sub, encoder_ctx};
@@ -29,7 +27,7 @@ use super::CCX_ENC_UTF_8;
 
 use std::cmp;
 
-static EXIT_MALFORMED_PARAMETER: i32 = 7;
+
 
 // TODO: turn into an enum definition when the hardsubx context is rewritten
 // static HARDSUBX_OCRMODE_FRAME: i32 = 0;
@@ -60,11 +58,6 @@ pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut 
             get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
-        _ => {
-            eprintln!("Invalid OCR Mode");
-            exit(EXIT_MALFORMED_PARAMETER);
-            // String::new()
-        }
     }
 }
 
