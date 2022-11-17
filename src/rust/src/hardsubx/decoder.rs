@@ -566,3 +566,89 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
         (cur_sec % 60).try_into().unwrap(),
     );
 }
+
+pub unsafe fn hardsubx_process_frames_tickertext(
+    ctx: &mut HardsubxContext,
+    enc_ctx: *mut encoder_ctx,
+) {
+    let mut got_frame: bool = false;
+
+    let mut cur_sec: i64 = 0;
+    let mut total_sec: i64 = 0;
+    let mut progress: i64 = 0;
+
+    let mut frame_number = 0;
+
+    let mut ticker_text = String::new();
+
+    while (av_read_frame(ctx.format_ctx, &mut ctx.packet) >= 0) {
+        if ctx.packet.stream_index == ctx.video_stream_id {
+            frame_number += 1;
+
+            let mut status = avcodec_send_packet(ctx.codec_ctx, &mut ctx.packet as *mut AVPacket);
+            // status = avcodec_receive_frame(ctx.codec_ctx, ctx.frame);
+
+            if status >= 0 || status == AVERROR(EAGAIN) || status == AVERROR_EOF {
+                if status >= 0 {
+                    ctx.packet.size = 0;
+                }
+
+                status = avcodec_receive_frame(ctx.codec_ctx, ctx.frame);
+
+                if status == 0 {
+                    got_frame = true;
+                }
+            }
+
+            if got_frame && frame_number % 1000 == 0 {
+                sws_scale(
+                    ctx.sws_ctx,
+                    (*ctx.frame).data.as_ptr() as *const *const u8,
+                    (*ctx.frame).linesize.as_mut_ptr(),
+                    0,
+                    (*ctx.codec_ctx).height,
+                    (*ctx.rgb_frame).data.as_ptr() as *const *mut u8,
+                    (*ctx.rgb_frame).linesize.as_mut_ptr(),
+                );
+
+                ticker_text = _process_frame_tickertext(
+                    ctx,
+                    ctx.rgb_frame,
+                    (*ctx.codec_ctx).width,
+                    (*ctx.codec_ctx).height,
+                    frame_number,
+                );
+                println!("frame_number: {}", frame_number);
+
+                if !ticker_text.is_empty() {
+                    println!("{}", ticker_text);
+                }
+
+                cur_sec = convert_pts_to_ms(
+                    ctx.packet.pts,
+                    (**(*ctx.format_ctx)
+                        .streams
+                        .offset(ctx.video_stream_id.try_into().unwrap()))
+                    .time_base,
+                );
+
+                total_sec = convert_pts_to_s((*ctx.format_ctx).duration, AV_TIME_BASE_Q);
+                progress = (cur_sec * 100) / total_sec;
+
+                activity_progress(
+                    progress.try_into().unwrap(),
+                    (cur_sec / 60).try_into().unwrap(),
+                    (cur_sec % 60).try_into().unwrap(),
+                );
+            }
+        }
+
+        av_packet_unref(&mut ctx.packet);
+    }
+
+    activity_progress(
+        100,
+        (cur_sec / 60).try_into().unwrap(),
+        (cur_sec % 60).try_into().unwrap(),
+    );
+}
