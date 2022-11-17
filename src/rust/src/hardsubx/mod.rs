@@ -32,10 +32,7 @@ use std::os::raw::c_void;
 // definitions taken from ccx_common_common.h
 static EXIT_NOT_ENOUGH_MEMORY: i32 = 500;
 static EXIT_READ_ERROR: i32 = 8;
-static CCX_ENC_UNICODE: u32 = 0;
-static CCX_ENC_LATIN_1: u32 = 1;
-static CCX_ENC_UTF_8: u32   = 2;
-static CCX_ENC_ASCII: u32   = 3;
+
 
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
@@ -238,6 +235,9 @@ impl Default for HardsubxContext {
 }
 
 impl HardsubxContext {
+    /// # Safety
+    /// dereferences a raw pointer
+    /// Calls C functions and sends them raw pointers, their safety is not guaranteed
     pub unsafe fn new(options: *mut ccx_s_options) -> Self {
         let tess_handle = &mut (*TessBaseAPICreate()) as &mut TessBaseAPI;
 
@@ -256,7 +256,7 @@ impl HardsubxContext {
         let tessdata_path = {
             let path = probe_tessdata_location(lang_cstr);
 
-            if path == (null::<c_char>() as *mut c_char) && lang != "eng".to_string() {
+            if path == (null::<c_char>() as *mut c_char) && lang != *"eng" {
                 let eng_cstr = string_to_c_char("eng");
                 let tmp = probe_tessdata_location(eng_cstr);
                 ffi::CString::from_raw(eng_cstr); // deallocation
@@ -327,7 +327,7 @@ impl HardsubxContext {
         ffi::CString::from_raw(lang_cstr); //deallocate
                                            // function to be used for only converting the C struct to rust
         Self {
-            tess_handle: tess_handle,
+            tess_handle,
             basefilename: {
                 if (*options).output_filename == null::<c_char>() as *mut c_char {
                     "".to_string()

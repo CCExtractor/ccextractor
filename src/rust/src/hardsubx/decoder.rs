@@ -23,7 +23,7 @@ use super::hardsubx_color_type;
 use super::hardsubx_ocr_mode;
 use super::utility::*;
 use super::HardsubxContext;
-use super::CCX_ENC_UTF_8;
+use crate::ccx_encoding_type::*;
 
 use std::cmp;
 
@@ -313,13 +313,16 @@ pub unsafe fn _process_frame_tickertext(
     subtitle_text
 }
 
+/// # Safety
+/// dereferences a raw pointer
+/// calls potentially unsafe C functions
 pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx: *mut encoder_ctx) {
     let mut prev_sub_encoded: bool = true;
     let mut got_frame = 0;
     let mut dist = 0;
     let mut cur_sec = 0;
-    let mut total_sec = 0;
-    let mut progress = 0;
+    let mut total_sec;
+    let mut progress;
 
     let mut frame_number = 0;
 
@@ -328,7 +331,7 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
 
     let mut prev_packet_pts: i64 = 0;
 
-    let mut subtitle_text: String = String::new();
+    let mut subtitle_text = String::new();
     let mut prev_subtitle_text: String = String::new();
 
     while av_read_frame(ctx.format_ctx, &mut ctx.packet as *mut AVPacket) >= 0 {
@@ -418,11 +421,9 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
 
                 if !subtitle_text.is_empty() {
                     let double_enter = subtitle_text.find("\n\n");
-                    match double_enter {
-                        Some(T) => {
-                            subtitle_text = subtitle_text[0..T].to_string();
-                        }
-                        _ => {}
+
+                    if let Some(T) = double_enter {
+                        subtitle_text = subtitle_text[0..T].to_string();
                     }
                 }
 
@@ -460,7 +461,7 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
                             prev_begin_time,
                             empty_chr,
                             mode_chr,
-                            CCX_ENC_UTF_8,
+                            CCX_ENC_UTF_8 as u32,
                         );
 
                         encode_sub(enc_ctx, &mut *ctx.dec_sub);
@@ -469,7 +470,7 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
                         subtitle_text = ffi::CString::from_raw(sub_text_chr)
                             .to_string_lossy()
                             .into_owned();
-                        prev_subtitle_text = ffi::CString::from_raw(prev_text_chr)
+                        ffi::CString::from_raw(prev_text_chr)
                             .to_string_lossy()
                             .into_owned();
                         ffi::CString::from_raw(empty_chr);
@@ -524,21 +525,20 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
             prev_begin_time,
             empty_chr,
             mode_chr,
-            CCX_ENC_UTF_8,
+            CCX_ENC_UTF_8 as u32,
         );
 
         // Deallocation
-        subtitle_text = ffi::CString::from_raw(sub_text_chr)
+        ffi::CString::from_raw(sub_text_chr)
             .to_string_lossy()
             .into_owned();
-        prev_subtitle_text = ffi::CString::from_raw(prev_text_chr)
+        ffi::CString::from_raw(prev_text_chr)
             .to_string_lossy()
             .into_owned();
         ffi::CString::from_raw(empty_chr);
         ffi::CString::from_raw(mode_chr);
 
         encode_sub(enc_ctx, &mut *ctx.dec_sub as *mut cc_subtitle);
-        prev_sub_encoded = true;
     }
 
     activity_progress(
@@ -548,6 +548,10 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
     );
 }
 
+
+/// # Safety
+/// dereferences a raw pointer
+/// calls potentially unsafe C functions
 pub unsafe fn hardsubx_process_frames_tickertext(
     ctx: &mut HardsubxContext,
     _enc_ctx: *mut encoder_ctx,
@@ -555,13 +559,12 @@ pub unsafe fn hardsubx_process_frames_tickertext(
     let mut got_frame: bool = false;
 
     let mut cur_sec: i64 = 0;
-    let mut total_sec: i64 = 0;
-    let mut progress: i64 = 0;
+    let mut total_sec: i64;
+    let mut progress: i64;
 
     let mut frame_number = 0;
 
-    let mut ticker_text = String::new();
-
+    let mut ticker_text;
     while av_read_frame(ctx.format_ctx, &mut ctx.packet) >= 0 {
         if ctx.packet.stream_index == ctx.video_stream_id {
             frame_number += 1;

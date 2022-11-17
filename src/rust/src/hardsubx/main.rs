@@ -26,7 +26,9 @@ extern "C" {
 
 
 
-
+/// # Safety
+/// Dereferences a raw pointer (datamember of the object ctx)
+/// calls potentially unsafe C functions
 pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut lib_ccx_ctx) {
     let mut format_ctx_tmp: *mut AVFormatContext = null::<AVFormatContext>() as *mut AVFormatContext;
     let file_name = string_to_c_char(&ctx.inputfile[0]);
@@ -194,7 +196,8 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
     avcodec_free_context(&mut codec_ctx as *mut *mut AVCodecContext);
 }
 
-
+/// # Safety
+/// calls potentially unsafe C functions
 pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext)
 {
 
@@ -203,6 +206,8 @@ pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext)
     TessBaseAPIDelete(ctx.tess_handle);
 }
 
+/// # Safety
+/// Dereferences a raw pointer (datamember of the object ctx)
 #[no_mangle]
 pub unsafe extern "C" fn hardsubx(options: *mut ccx_s_options, ctx_normal: *mut lib_ccx_ctx) {
     let mut ctx = HardsubxContext::new(options);
