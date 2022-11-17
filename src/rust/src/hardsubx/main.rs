@@ -22,6 +22,7 @@ use std::ptr::null;
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
 use super::HardsubxContext;
+use super::decoder::hardsubx_process_frames_linear;
 extern "C" {
     pub static mut ccx_options: ccx_s_options;
 }
@@ -114,6 +115,12 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut 
         ctx.codec = codec_ptr;
     }
 
+    if avcodec_open2(ctx.codec_ctx, ctx.codec, &mut ctx.options_dict) < 0
+    {
+        eprintln!("Error opening input codec!\n");
+        process::exit(EXIT_READ_ERROR);
+    }
+
     let mut frame_ptr = av_frame_alloc();
     let mut rgb_frame_ptr = av_frame_alloc();
 
@@ -165,11 +172,11 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut 
 
     println!("Beginning burned-in subtitle detection...\n");
 
-    // if ctx.tickertext {
-    //     hardsubx_process_frames_tickertext(ctx, enc_ctx);
-    // } else {
-    //     hardsubx_process_frames_linear(ctx, enc_ctx);
-    // }
+    if ctx.tickertext {
+        // hardsubx_process_frames_tickertext(&mut ctx, enc_ctx_ptr);
+    } else {
+        hardsubx_process_frames_linear(ctx, enc_ctx_ptr);
+    }
 
     dinit_encoder(&mut enc_ctx_ptr as *mut *mut encoder_ctx, 0);
 
