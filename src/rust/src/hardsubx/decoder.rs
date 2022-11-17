@@ -29,16 +29,6 @@ use std::cmp;
 
 
 
-// TODO: turn into an enum definition when the hardsubx context is rewritten
-// static HARDSUBX_OCRMODE_FRAME: i32 = 0;
-static HARDSUBX_OCRMODE_WORD: i32 = 1;
-// static HARDSUBX_OCRMODE_LETTER: i32 = 2;
-
-// enum hardsubx_ocr_mode {
-//     HARDSUBX_OCRMODE_FRAME,
-//     HARDSUBX_OCRMODE_WORD,
-//     HARDSUBX_OCRMODE_LETTER
-// };
 
 /// # Safety
 /// dereferences a raw pointer
