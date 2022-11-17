@@ -86,3 +86,20 @@ pub unsafe extern "C" fn edit_distance(
         &mut dp_array,
     ) as c_int
 }
+
+pub fn edit_distance_string(
+    word1: &String,
+    word2: &String,
+) -> i32 {
+
+    let len1 = word1.chars().count();
+    let len2 = word2.chars().count();
+
+    // kinda assuming ASCII
+    let word1_chararray = word1.as_bytes();
+    let word2_chararray = word2.as_bytes();
+
+    let mut dp_array = vec![vec![-1; len2 + 1]; len1 + 1];
+
+    _edit_distance_rec(word1_chararray, word2_chararray, len1, len2, &mut dp_array)
+}
