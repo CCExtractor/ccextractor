@@ -10,6 +10,7 @@
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
+#ifdef DISABLE_RUST
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
 	// Get the required media attributes and initialize structures
@@ -119,7 +120,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	avcodec_close(ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
-
+#endif
 void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx)
 {
 	// Print the relevant passed parameters onto the screen
@@ -317,6 +318,7 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	freep(ctx);
 }
 
+#ifdef DISABLE_RUST
 void hardsubx(struct ccx_s_options *options, struct lib_ccx_ctx *ctx_normal)
 {
 	// This is similar to the 'main' function in ccextractor.c, but for hard subs
@@ -344,5 +346,5 @@ void hardsubx(struct ccx_s_options *options, struct lib_ccx_ctx *ctx_normal)
 	// Free all allocated memory for the data structures
 	_dinit_hardsubx(&ctx);
 }
-
+#endif
 #endif
