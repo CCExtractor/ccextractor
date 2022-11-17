@@ -76,7 +76,7 @@ pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut 
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
-pub unsafe extern "C" fn _process_frame_white_basic(
+pub unsafe fn _process_frame_white_basic(
     ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
@@ -156,7 +156,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
 /// The function returns a raw pointer of a String created in Rust
 /// This has to be deallocated at some point using from_raw() lest it be a memory leak
 #[no_mangle]
-pub unsafe extern "C" fn _process_frame_color_basic(
+pub unsafe fn _process_frame_color_basic(
     ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
@@ -252,7 +252,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
 /// The function also makes calls to functions whose safety is not guaranteed
 /// The function returns a raw pointer which is a string made in C
 #[no_mangle]
-pub unsafe extern "C" fn _process_frame_tickertext(
+pub unsafe fn _process_frame_tickertext(
     ctx: &mut HardsubxContext,
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
@@ -569,7 +569,7 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
 
 pub unsafe fn hardsubx_process_frames_tickertext(
     ctx: &mut HardsubxContext,
-    enc_ctx: *mut encoder_ctx,
+    _enc_ctx: *mut encoder_ctx,
 ) {
     let mut got_frame: bool = false;
 

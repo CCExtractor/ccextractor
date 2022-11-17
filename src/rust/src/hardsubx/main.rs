@@ -30,7 +30,7 @@ extern "C" {
 
 
 
-pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut lib_ccx_ctx) {
+pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut lib_ccx_ctx) {
     let mut format_ctx_tmp: *mut AVFormatContext = null::<AVFormatContext>() as *mut AVFormatContext;
     let file_name = string_to_c_char(&ctx.inputfile[0]);
     if avformat_open_input(
@@ -92,7 +92,7 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut 
     let codec_par_ptr: *mut AVCodecParameters = (*(*format_ctx_ref.streams)
         .offset(ctx.video_stream_id.try_into().unwrap()))
     .codecpar;
-    let codec_par_ref: &mut AVCodecParameters = unsafe { &mut (*codec_par_ptr) };
+    let codec_par_ref: &mut AVCodecParameters = &mut (*codec_par_ptr);
 
 
     let status =
