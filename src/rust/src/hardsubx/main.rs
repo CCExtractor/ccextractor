@@ -18,6 +18,8 @@ use std::ffi;
 use std::os::raw::c_void;
 use std::process;
 use std::ptr::null;
+use std::time::{Duration, Instant};
+
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
 extern "C" {
@@ -195,7 +197,14 @@ pub unsafe fn _dinit_hardsubx(ctx: &mut HardsubxContext) {
 /// Dereferences a raw pointer (datamember of the object ctx)
 #[no_mangle]
 pub unsafe extern "C" fn hardsubx(options: *mut ccx_s_options, ctx_normal: *mut lib_ccx_ctx) {
+    println!("HardsubX (Hard Subtitle Extractor) - Burned-in subtitle extraction subsystem\n");
+
     let mut ctx = HardsubxContext::new(options);
+
+    let start = Instant::now();
     hardsubx_process_data(&mut ctx, ctx_normal);
+    let duration: Duration = start.elapsed();
+
+    println!("Processing time = {:?}", duration);
     _dinit_hardsubx(&mut ctx);
 }
