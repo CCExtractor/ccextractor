@@ -4,7 +4,7 @@ use tesseract_sys::*;
 #[cfg(feature = "hardsubx_ocr")]
 use leptonica_sys::*;
 
-use std::ffi::{self, CString};
+use std::ffi;
 use std::ptr::null;
 
 pub type ccx_output_format = ::std::os::raw::c_uint;
@@ -12,8 +12,6 @@ pub type subdatatype = ::std::os::raw::c_uint;
 pub type subtype = ::std::os::raw::c_uint;
 pub type ccx_encoding_type = ::std::os::raw::c_uint;
 
-use crate::hardsubx::lib_hardsubx_ctx;
-use crate::utils::string_to_c_char;
 
 use std::os::raw::c_char;
 

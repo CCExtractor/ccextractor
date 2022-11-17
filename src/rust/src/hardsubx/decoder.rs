@@ -10,7 +10,6 @@ use std::convert::TryInto;
 use std::eprintln;
 use std::ffi;
 use std::format;
-use std::io::empty;
 use std::os::raw::c_char;
 use std::process::exit;
 use std::ptr::null;
@@ -20,7 +19,6 @@ use crate::bindings::{activity_progress, add_cc_sub_text, cc_subtitle, encode_su
 // use crate::bindings::{hardsubx_ocr_mode_HARDSUBX_OCRMODE_WORD};
 use crate::hardsubx::classifier::*;
 use crate::hardsubx::imgops::{rgb_to_hsv, rgb_to_lab};
-use crate::hardsubx::lib_hardsubx_ctx;
 use crate::utils::string_to_c_char;
 
 use super::hardsubx_color_type;
@@ -29,7 +27,7 @@ use super::utility::*;
 use super::HardsubxContext;
 use super::CCX_ENC_UTF_8;
 
-use std::{cmp, num};
+use std::cmp;
 
 static EXIT_MALFORMED_PARAMETER: i32 = 7;
 
@@ -50,7 +48,7 @@ static HARDSUBX_OCRMODE_WORD: i32 = 1;
 pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut Pix) -> String {
     // function that calls the classifier functions
     match ctx.ocr_mode {
-        hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME => {
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_WORD => {
             get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
@@ -58,7 +56,7 @@ pub unsafe fn dispatch_classifier_functions(ctx: &mut HardsubxContext, im: *mut 
             get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
-        hardsubx_ocr_mode::HARDSUBX_OCRMODE_LETTER => {
+        hardsubx_ocr_mode::HARDSUBX_OCRMODE_FRAME => {
             get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh)
         }
 
@@ -351,7 +349,7 @@ pub unsafe fn hardsubx_process_frames_linear(ctx: &mut HardsubxContext, enc_ctx:
     let mut prev_subtitle_text: String = String::new();
 
     while av_read_frame(ctx.format_ctx, &mut ctx.packet as *mut AVPacket) >= 0 {
-        if (ctx.packet.stream_index == ctx.video_stream_id) {
+        if ctx.packet.stream_index == ctx.video_stream_id {
             frame_number += 1;
 
             let mut status = avcodec_send_packet(ctx.codec_ctx, &mut ctx.packet as *mut AVPacket);
@@ -581,7 +579,7 @@ pub unsafe fn hardsubx_process_frames_tickertext(
 
     let mut ticker_text = String::new();
 
-    while (av_read_frame(ctx.format_ctx, &mut ctx.packet) >= 0) {
+    while av_read_frame(ctx.format_ctx, &mut ctx.packet) >= 0 {
         if ctx.packet.stream_index == ctx.video_stream_id {
             frame_number += 1;
 

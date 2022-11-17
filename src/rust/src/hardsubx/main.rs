@@ -3,7 +3,7 @@ use crate::bindings::{
     ccx_s_options, dinit_encoder, encoder_cfg, encoder_ctx, init_encoder, lib_ccx_ctx,
 };
 #[cfg(feature = "hardsubx_ocr")]
-use crate::hardsubx::{lib_hardsubx_ctx, EXIT_NOT_ENOUGH_MEMORY, EXIT_READ_ERROR};
+use crate::hardsubx::{EXIT_NOT_ENOUGH_MEMORY, EXIT_READ_ERROR};
 use crate::utils::string_to_c_char;
 #[cfg(feature = "hardsubx_ocr")]
 use ffmpeg_sys_next::AVMediaType::AVMEDIA_TYPE_VIDEO;
@@ -14,10 +14,8 @@ use ffmpeg_sys_next::*;
 use palette::encoding::pixel::RawPixel;
 use std::convert::TryInto;
 use std::ffi;
-use std::format;
-use std::os::raw::{c_void, c_int, c_uint};
+use std::os::raw::c_void;
 use std::process;
-use std::ptr;
 use std::ptr::null;
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
@@ -34,7 +32,7 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
     let mut format_ctx_tmp: *mut AVFormatContext = null::<AVFormatContext>() as *mut AVFormatContext;
     let file_name = string_to_c_char(&ctx.inputfile[0]);
     if avformat_open_input(
-        (&mut format_ctx_tmp as *mut *mut AVFormatContext),
+        &mut format_ctx_tmp as *mut *mut AVFormatContext,
         file_name,
         null::<AVInputFormat>() as *const AVInputFormat,
         null::<AVDictionary>() as *mut *mut AVDictionary,
