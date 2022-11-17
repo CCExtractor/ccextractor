@@ -28,6 +28,15 @@ use utils::is_true;
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
 
+pub enum ccx_encoding_type
+{
+	CCX_ENC_UNICODE = 0,
+	CCX_ENC_LATIN_1 = 1,
+	CCX_ENC_UTF_8   = 2,
+	CCX_ENC_ASCII   = 3
+}
+
+
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
