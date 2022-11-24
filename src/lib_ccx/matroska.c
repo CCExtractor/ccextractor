@@ -1099,15 +1099,24 @@ char *ass_ssa_sentence_erase_read_order(char *text)
 
 void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-	char *filename = generate_filename_from_track(mkv_ctx, track);
-	mprint("\nOutput file: %s", filename);
+	char *filename;
 	int desc;
+
+	if (mkv_ctx->ctx->cc_to_stdout == CCX_TRUE)
+	{
+		desc = 1; // file descriptor of stdout
+	}
+	else
+	{
+		filename = generate_filename_from_track(mkv_ctx, track);
+		mprint("\nOutput file: %s", filename);
 #ifdef WIN32
-	desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
+		desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
 #else
-	desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IWUSR | S_IRUSR);
+		desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IWUSR | S_IRUSR);
 #endif
-	free(filename);
+		free(filename);
+	}
 
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
