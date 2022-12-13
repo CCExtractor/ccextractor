@@ -214,8 +214,8 @@ void write_webvtt_header(struct encoder_ctx *context)
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
-		// If the user has not disabled X-TIMESTAMP-MAP
-		if (!ccx_options.no_timestamp_map)
+		// If the user has enabled X-TIMESTAMP-MAP
+		if (ccx_options.timestamp_map)
 		{
 			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
 				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
