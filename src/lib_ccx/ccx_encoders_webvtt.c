@@ -207,7 +207,7 @@ void write_webvtt_header(struct encoder_ctx *context)
 	if (context->wrote_webvtt_header) // Already done
 		return;
 
-	if (context->timing != NULL && context->timing->sync_pts2fts_set)
+	if (ccx_options.timestamp_map && context->timing != NULL && context->timing->sync_pts2fts_set)
 	{
 		char header_string[200];
 		int used;
@@ -215,18 +215,24 @@ void write_webvtt_header(struct encoder_ctx *context)
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
 		// If the user has enabled X-TIMESTAMP-MAP
-		if (ccx_options.timestamp_map)
+		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
+			context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
+			ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+
+		used = encode_line(context, context->buffer, (unsigned char *)header_string);
+		write_wrapped(context->out->fh, context->buffer, used);
+	}
+	else
+	{
+		// Must have another newline if X-TIMESTAMP-MAP is not used
+		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
-			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
-				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+			write_wrapped(context->out->fh, "\n", 1);
 		}
 		else
 		{
-			sprintf(header_string, ccx_options.enc_cfg.line_terminator_lf ? "\n" : "\r\n");
+			write_wrapped(context->out->fh, "\r\n", 2);
 		}
-		used = encode_line(context, context->buffer, (unsigned char *)header_string);
-		write_wrapped(context->out->fh, context->buffer, used);
 	}
 
 	if (ccx_options.webvtt_create_css)
