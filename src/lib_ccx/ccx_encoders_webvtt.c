@@ -221,6 +221,10 @@ void write_webvtt_header(struct encoder_ctx *context)
 				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
 				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 		}
+		else
+		{
+			sprintf(header_string, ccx_options.enc_cfg.line_terminator_lf ? "\n" : "\r\n");
+		}
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write_wrapped(context->out->fh, context->buffer, used);
 	}

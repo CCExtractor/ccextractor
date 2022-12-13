@@ -5,6 +5,7 @@
 - Fix: segmentation fault in using hardsubx
 - New: Add function (and command) that extracts closed caption subtitles as well as burnt-in subtitles from a file in a single pass. (As proposed in issue 726)
 - Refactored: the `general_loop` function has some code moved to a new function
+- Fix: WebVTT X-TIMESTAMP-MAP placement (#1463)
 
 
 0.94 (2021-12-14)
