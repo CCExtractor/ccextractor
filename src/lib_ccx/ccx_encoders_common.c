@@ -962,7 +962,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->srt_counter = 0;
 	ctx->cea_708_counter = 0;
 	ctx->wrote_webvtt_header = 0;
-	ctx->no_timestamp_map = opt->no_timestamp_map;
 	ctx->wrote_ccd_channel_header = false;
 
 	ctx->program_number = opt->program_number;

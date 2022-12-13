@@ -37,7 +37,6 @@ struct encoder_cfg
 	int force_flush;                     // Force flush on content write
 	int append_mode;                     // Append mode for output files
 	int ucla;                            // 1 if -UCLA used, 0 if not
-	int no_timestamp_map;				 // 1 if timestamps disabled for WebVTT
 
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
