@@ -11,8 +11,8 @@
  *
  */
 /**
-  * @file dvbsub.c
-  */
+ * @file dvbsub.c
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1371,7 +1371,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	version = ((*buf) >> 4) & 15;
 	page_state = ((*buf++) >> 2) & 3;
 
-	//if version same mean we are already updated
+	// if version same mean we are already updated
 	if (ctx->version == version)
 	{
 		return;
@@ -1682,10 +1682,10 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
 	if (!enc_ctx)
 		return;
-	if (enc_ctx->write_previous) //this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
+	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
 		enc_ctx->prev->last_string = NULL;									    // Reset last recognized sub text
-		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the end time of the previous sub the current pts
+		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); // we set the end time of the previous sub the current pts
 		if (sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
 		{
 			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
@@ -1702,12 +1702,12 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		}
 		if (timeok)
 		{
-			encode_sub(enc_ctx->prev, sub->prev); //we encode it
+			encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
 			enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
 			enc_ctx->prev->last_string = NULL;
 
-			enc_ctx->srt_counter = enc_ctx->prev->srt_counter; //for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+			enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 			enc_ctx->prev_start = enc_ctx->prev->prev_start;
 			sub->prev->got_output = 0;
 			if (enc_ctx->write_format == CCX_OF_WEBVTT)
@@ -1734,10 +1734,10 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	sub->time_out = ctx->time_out;
 	sub->prev = NULL;
 	sub->prev = copy_subtitle(sub);
-	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); //we set the start time of the previous sub the current pts
+	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); // we set the start time of the previous sub the current pts
 
-	write_dvb_sub(dec_ctx->prev, sub->prev); //we write the current dvb sub to update decoder context
-	enc_ctx->write_previous = 1;		 //we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
+	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 #ifdef ENABLE_OCR
 	if (sub->prev)
 	{
@@ -1804,7 +1804,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id || ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
-			//debug traces
+			// debug traces
 			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
@@ -1840,7 +1840,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					dvbsub_parse_display_definition_segment(ctx, p,
 										segment_length);
 					break;
-				case DVBSUB_DISPLAY_SEGMENT: //when we get a display segment, we save the current page
+				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
 					got_segment |= 16;

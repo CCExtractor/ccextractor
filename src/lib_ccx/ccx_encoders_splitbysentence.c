@@ -29,7 +29,7 @@
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 //---------------------------
 // BEGIN of #BUG639
@@ -44,7 +44,7 @@ typedef struct
 	unsigned char *buffer; /// Storage for sentence-split buffer
 	size_t handled_len;    /// The length of the string in the SBS-buffer, already handled, but preserved for DUP-detection.
 
-	//ccx_sbs_utf8_character *sbs_newblock;
+	// ccx_sbs_utf8_character *sbs_newblock;
 	LLONG time_from; // Used by the split-by-sentence code to know when the current block starts...
 	LLONG time_trim; // ... and ends
 	size_t capacity;
@@ -69,7 +69,7 @@ void sbs_reset_context()
 	}
 }
 
-//void init_encoder_sbs(struct encoder_ctx * ctx, const int splitbysentence);
+// void init_encoder_sbs(struct encoder_ctx * ctx, const int splitbysentence);
 sbs_context_t *sbs_init_context()
 {
 
@@ -414,7 +414,7 @@ void sbs_strcpy_without_dup(const unsigned char *str, sbs_context_t *context)
 		// remove dup from buffer
 		// we will use an appropriate part from the new string
 
-		//context->buffer[sbs_len-intersect_len] = 0;
+		// context->buffer[sbs_len-intersect_len] = 0;
 
 		LOG_DEBUG("SBS: sbs_strcpy_without_dup: cut buffer by insert point\n");
 		*buffer_insert_point = 0;

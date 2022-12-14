@@ -323,11 +323,11 @@ end:
 	return ret;
 }
 /**
-* alpha value 255 means completely opaque
-* alpha value 0   means completely transparent
-* r g b all 0 means black
-* r g b all 255 means white
-*/
+ * alpha value 255 means completely opaque
+ * alpha value 0   means completely transparent
+ * r g b all 0 means black
+ * r g b all 255 means white
+ */
 int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut,
 		    uint8_t depth)
 {
@@ -565,9 +565,9 @@ void draw_to_buffer(struct pixel_t *target, int target_width, FT_Bitmap bitmap, 
 			p.g = (unsigned char)(((color >> (8 * 1)) & 0xff) * (shade_factor / 255.0));
 			p.b = (unsigned char)(((color >> (8 * 0)) & 0xff) * (shade_factor / 255.0));
 
-			//mprint("Red: %d\n", p.r);
-			//mprint("Green: %d\n", p.g);
-			//mprint("Blue: %d\n", p.b);
+			// mprint("Red: %d\n", p.r);
+			// mprint("Green: %d\n", p.g);
+			// mprint("Blue: %d\n", p.b);
 
 			target[(x_pos + x) + (y_pos + y) * target_width] = p;
 		}
@@ -748,7 +748,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 	}
 	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
-	//str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
+	// str = "<font color=\"#66CDAA\"> __ This should be aquamarine </font> Regular <i> Italics font</i> <font color=\"#00ff00\">This should be green.</font> <u> Underlining __ testing </u> Regular text. Even more text. Random text. More text."; // Test string
 	char *tmp = strdup(str);
 
 	if (!tmp)
@@ -814,7 +814,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 			color_value[6] = 0; // For null termination of string
 			color = (int)strtol(color_value, NULL, 16);
 
-			//mprint("Color: 0x%x\n", color);
+			// mprint("Color: 0x%x\n", color);
 			token = strtok(NULL, "<>");
 			continue;
 		}
@@ -825,7 +825,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 			color = prev_color;
 			continue;
 		}
-		//mprint("%s\n", token);
+		// mprint("%s\n", token);
 
 		FT_GlyphSlot slot = face->glyph;
 		;
@@ -894,7 +894,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 
 					// Calculates how wide a character is
 					int glyph_width = slot->advance.x >> 6;
-					//mprint("Glyph Width: %d\n", glyph_width);
+					// mprint("Glyph Width: %d\n", glyph_width);
 
 					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
 					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
@@ -911,7 +911,7 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 					// Calculates how wide a character is
 					int glyph_width = (slot->advance.x >> 6);
 
-					//mprint("Glyph Width: %d\n", glyph_width);
+					// mprint("Glyph Width: %d\n", glyph_width);
 					int underline_thickness = fu_to_ypixels(face, face->underline_thickness);
 					underline_text(buffer, canvas_width, cursor_x, cursor_y - pixel_offset, glyph_width, underline_thickness, color);
 				}
@@ -1034,11 +1034,11 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 
 	if (!spupng_export_string2png(sp, string, sp->fppng))
 	{
-		//free(string_utf32);
+		// free(string_utf32);
 		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot write %s: %s\n",
 		      sp->pngfile, strerror(errno));
 	}
-	//free(string_utf32);
+	// free(string_utf32);
 	fclose(sp->fppng);
 	write_sputag_open(sp, start_time, end_time);
 	write_spucomment(sp, string);

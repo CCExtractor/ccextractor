@@ -64,7 +64,7 @@ typedef struct MXFLocalTAGS
 	int length;
 } MXFLocalTAGS;
 
-//S337 table 4 says 14 bytes can determine partition pack type
+// S337 table 4 says 14 bytes can determine partition pack type
 static const uint8_t mxf_header_partition_pack_key[] = {0x06, 0x0e, 0x2b, 0x34, 0x02, 0x05, 0x01, 0x01, 0x0d, 0x01, 0x02, 0x01, 0x01, 0x02};
 static const uint8_t mxf_essence_element_key[] = {0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01};
 static const uint8_t mxf_klv_key[] = {0x06, 0x0e, 0x2b, 0x34};
@@ -98,7 +98,7 @@ enum MXFLocalTag
 void update_tid_lut(struct MXFContext *ctx, uint32_t track_id, uint8_t *track_number, struct ccx_rational edit_rate)
 {
 	int i;
-	//Update essence element key if we have track Id of caption
+	// Update essence element key if we have track Id of caption
 	if (ctx->cap_track_id == track_id)
 	{
 		memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
@@ -310,7 +310,7 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 	len++;
 	data->tb = framerate_rationals[ret >> 4];
 
-	//skip flag and hdr_seq_cntr
+	// skip flag and hdr_seq_cntr
 	buffered_skip(demux, 3);
 	demux->past += 3;
 	len += 3;
@@ -419,7 +419,7 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 
 		ret = mxf_read_cdp_data(demux, cdp_size, data);
 		len += ret;
-		//len += (3 + count + 4);
+		// len += (3 + count + 4);
 	}
 
 error:

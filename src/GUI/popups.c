@@ -83,7 +83,7 @@ void draw_network_popup(struct nk_context *ctx, struct network_popup *network_se
 		nk_label(ctx, network_attr[5], NK_TEXT_LEFT);
 		nk_edit_string(ctx, NK_EDIT_SIMPLE, text_buffer[5], &text_len[5], 50, nk_filter_default);*/
 
-		//OK Button
+		// OK Button
 		nk_layout_row(ctx, NK_DYNAMIC, 27, 3, save_ok_ratio);
 		nk_spacing(ctx, 1);
 		if (nk_button_label(ctx, "Save"))

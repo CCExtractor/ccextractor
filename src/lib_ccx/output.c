@@ -229,9 +229,9 @@ void writercwtdata(struct lib_cc_decode *ctx, const unsigned char *data, struct 
 
 		// New FTS, write data header
 		// RCWT data header (10 bytes):
-		//byte(s)   value   description
-		//0-7       FTS     int64_t number with current FTS
-		//8-9       blocks  Number of 3 byte data blocks with the same FTS that are
+		// byte(s)   value   description
+		// 0-7       FTS     int64_t number with current FTS
+		// 8-9       blocks  Number of 3 byte data blocks with the same FTS that are
 		//                  following this header
 		memcpy(cbheader, &prevfts, 8);
 		memcpy(cbheader + 8, &cbcount, 2);

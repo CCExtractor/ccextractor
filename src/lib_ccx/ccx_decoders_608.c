@@ -10,7 +10,7 @@ static const int rowdata[] = {11, -1, 1, 2, 3, 4, 12, 13, 14, 15, 5, 6, 7, 8, 9,
 // Relationship between the first PAC byte and the row number
 int in_xds_mode = 0;
 
-//unsigned char str[2048]; // Another generic general purpose buffer
+// unsigned char str[2048]; // Another generic general purpose buffer
 
 const unsigned char pac2_attribs[][3] = // Color, font, ident
     {
@@ -263,7 +263,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 		    font_text[context->font]);
 		// Mid-row codes should put a non-transparent space at the current position
 		// and advance the cursor
-		//so use write_char
+		// so use write_char
 		write_char(0x20, context);
 	}
 }
@@ -836,8 +836,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			break;
 		case COM_RESUMEDIRECTCAPTIONING:
 			context->mode = MODE_PAINTON;
-			//ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
-			//ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
+			// ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
+			// ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
 			break;
 		default:
 			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "\rNot yet implemented.\n");
@@ -1029,20 +1029,20 @@ int check_channel(unsigned char c1, ccx_decoder_608_context *context)
 }
 
 /* Handle Command, special char or attribute and also check for
-* channel changes.
-* Returns 1 if something was written to screen, 0 otherwise */
+ * channel changes.
+ * Returns 1 if something was written to screen, 0 otherwise */
 int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int wrote_to_screen = 0;
 
 	/* Full channel changes are only allowed for "GLOBAL CODES",
-	* "OTHER POSITIONING CODES", "BACKGROUND COLOR CODES",
-	* "MID-ROW CODES".
-	* "PREAMBLE ACCESS CODES", "BACKGROUND COLOR CODES" and
-	* SPECIAL/SPECIAL CHARACTERS allow only switching
-	* between 1&3 or 2&4. */
+	 * "OTHER POSITIONING CODES", "BACKGROUND COLOR CODES",
+	 * "MID-ROW CODES".
+	 * "PREAMBLE ACCESS CODES", "BACKGROUND COLOR CODES" and
+	 * SPECIAL/SPECIAL CHARACTERS allow only switching
+	 * between 1&3 or 2&4. */
 	context->new_channel = check_channel(hi, context);
-	//if (wb->data608->channel!=cc_channel)
+	// if (wb->data608->channel!=cc_channel)
 	//	continue;
 
 	if (hi >= 0x18 && hi <= 0x1f)
@@ -1244,9 +1244,9 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 			if (!context->textprinted && context->channel == context->my_channel)
 			{ // Current FTS information after the characters are shown
 				ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Current FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, context->my_field)));
-				//printf("  N:%u", unsigned(fts_now) );
-				//printf("  G:%u", unsigned(fts_global) );
-				//printf("  F:%d %d %d %d\n",
+				// printf("  N:%u", unsigned(fts_now) );
+				// printf("  G:%u", unsigned(fts_global) );
+				// printf("  F:%d %d %d %d\n",
 				//	   current_field, cb_field1, cb_field2, cb_708 );
 			}
 

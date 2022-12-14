@@ -24,7 +24,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 
 	// Do something
 	dec_ctx->stat_numuserheaders++;
-	//header+=4;
+	// header+=4;
 
 	unsigned char *ud_header = next_bytes(ustream, 4);
 	if (ustream->error || ustream->bitsleft <= 0)
@@ -200,8 +200,8 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 	}
 	// ReplayTV 4000/5000 caption header - parsing information
 	// derived from CCExtract.bdl
-	else if ((ud_header[0] == 0xbb	   //ReplayTV 4000
-		  || ud_header[0] == 0x99) //ReplayTV 5000
+	else if ((ud_header[0] == 0xbb	   // ReplayTV 4000
+		  || ud_header[0] == 0x99) // ReplayTV 5000
 		 && ud_header[1] == 0x02)
 	{
 		unsigned char data[3];
@@ -471,8 +471,8 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 		uint16_t line_nb;
 		uint8_t line_type;
 		uint8_t field = 1;
-		read_bytes(ustream, 4); //skip header code
-		read_bytes(ustream, 2); //skip data length
+		read_bytes(ustream, 4); // skip header code
+		read_bytes(ustream, 2); // skip data length
 		line_nb = read_bits(ustream, 16);
 		line_type = read_u8(ustream);
 		field = (line_type & 0x03);

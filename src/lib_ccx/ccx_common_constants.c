@@ -1,13 +1,13 @@
 #include "ccx_common_constants.h"
 
 // RCWT header (11 bytes):
-//byte(s)   value   description (All values below are hex numbers, not
+// byte(s)   value   description (All values below are hex numbers, not
 //                  actual numbers or values
-//0-2       CCCCED  magic number, for Closed Caption CC Extractor Data
-//3         CC      Creating program.  Legal values: CC = CC Extractor
-//4-5       0050    Program version number
-//6-7       0001    File format version
-//8-10      000000  Padding, required  :-)
+// 0-2       CCCCED  magic number, for Closed Caption CC Extractor Data
+// 3         CC      Creating program.  Legal values: CC = CC Extractor
+// 4-5       0050    Program version number
+// 6-7       0001    File format version
+// 8-10      000000  Padding, required  :-)
 unsigned char rcwt_header[11] = {0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0};
 
 const unsigned char BROADCAST_HEADER[] = {0xff, 0xff, 0xff, 0xff};
@@ -122,7 +122,7 @@ enum
  */
 const char *language[NB_LANGUAGE] =
     {
-	/*0*/ "und", //Undefined
+	/*0*/ "und", // Undefined
 	/*1*/ "eng",
 	/*2*/ "afr",
 	/*3*/ "amh",

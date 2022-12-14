@@ -127,7 +127,7 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI)
 	{
 		// Found SEI (used for subtitles)
-		//set_fts(ctx->timing); // FIXME - check this!!!
+		// set_fts(ctx->timing); // FIXME - check this!!!
 		sei_rbsp(dec_ctx->avc_ctx, NAL_start + 1, NAL_stop);
 	}
 	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET)
@@ -266,16 +266,16 @@ int EBSPtoRBSP(unsigned char *streamBuffer, int end_bytepos, int begin_bytepos)
 	j = begin_bytepos;
 
 	for (i = begin_bytepos; i < end_bytepos; ++i)
-	{ //starting from begin_bytepos to avoid header information
-		//in NAL unit, 0x000000, 0x000001 or 0x000002 shall not occur at any byte-aligned position
+	{ // starting from begin_bytepos to avoid header information
+		// in NAL unit, 0x000000, 0x000001 or 0x000002 shall not occur at any byte-aligned position
 		if (count == ZEROBYTES_SHORTSTARTCODE && streamBuffer[i] < 0x03)
 			return -1;
 		if (count == ZEROBYTES_SHORTSTARTCODE && streamBuffer[i] == 0x03)
 		{
-			//check the 4th byte after 0x000003, except when cabac_zero_word is used, in which case the last three bytes of this NAL unit must be 0x000003
+			// check the 4th byte after 0x000003, except when cabac_zero_word is used, in which case the last three bytes of this NAL unit must be 0x000003
 			if ((i < end_bytepos - 1) && (streamBuffer[i + 1] > 0x03))
 				return -1;
-			//if cabac_zero_word is used, the final byte of this NAL unit(0x03) is discarded, and the last two bytes of RBSP must be 0x0000
+			// if cabac_zero_word is used, the final byte of this NAL unit(0x03) is discarded, and the last two bytes of RBSP must be 0x0000
 			if (i == end_bytepos - 1)
 				return j;
 
@@ -301,7 +301,7 @@ u32 avc_remove_emulation_bytes(const unsigned char *buffer_src, unsigned char *b
 unsigned char *remove_03emu(unsigned char *from, unsigned char *to)
 {
 	int num = to - from;
-	int newsize = EBSPtoRBSP(from, num, 0); //TODO: Do something if newsize == -1 (broken NAL)
+	int newsize = EBSPtoRBSP(from, num, 0); // TODO: Do something if newsize == -1 (broken NAL)
 	if (newsize == -1)
 		return NULL;
 	return from + newsize;
@@ -582,7 +582,7 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 			// Copy new cc data into cc_data - replace command below.
 			copy_ccdata_to_buffer(ctx, (char *)cc_tmp_data, local_cc_count);
 
-			//dump(tbuf,user_data_len-1,0);
+			// dump(tbuf,user_data_len-1,0);
 			break;
 		default:
 			mprint("Not a supported user data SEI\n");
@@ -833,8 +833,8 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		if (tmp)
 		{
 			dvprint("nal_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
-			//printf("Boom nal_hrd\n");
-			// exit(1);
+			// printf("Boom nal_hrd\n");
+			//  exit(1);
 			ctx->num_nal_hrd++;
 			return;
 		}
@@ -862,7 +862,7 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		// it was not set in the testfile.  Ignore the rest here, it's
 		// currently not needed.
 	}
-	//exit(1);
+	// exit(1);
 }
 
 /**
@@ -924,7 +924,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	{
 		tmp = read_exp_golomb_unsigned(&q1);
 		dvprint("idr_pic_id=            % 4lld (%#llX)\n", tmp, tmp);
-		//TODO
+		// TODO
 	}
 	if (dec_ctx->avc_ctx->pic_order_cnt_type == 0)
 	{
@@ -936,7 +936,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
 	}
 
-	//Ignore slice with same pic order or pts
+	// Ignore slice with same pic order or pts
 	if (ccx_options.usepicorder)
 	{
 		if (dec_ctx->avc_ctx->last_pic_order_cnt_lsb == pic_order_cnt_lsb)

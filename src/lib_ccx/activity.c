@@ -16,7 +16,7 @@ void activity_progress(int percentage, int cur_min, int cur_sec)
 			mprint("Streaming |  %02d:%02d\r", cur_min, cur_sec);
 		else
 			mprint("%3d%%  |  %02d:%02d\r", percentage, cur_min, cur_sec);
-		if (ccx_options.pes_header_to_stdout || ccx_options.debug_mask & CCX_DMT_DVB) //For PES Header dumping and DVB debug traces
+		if (ccx_options.pes_header_to_stdout || ccx_options.debug_mask & CCX_DMT_DVB) // For PES Header dumping and DVB debug traces
 		{
 			mprint("\n");
 		}

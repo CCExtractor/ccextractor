@@ -140,31 +140,31 @@ enum isdb_tmd
 typedef uint32_t rgba;
 static rgba Default_clut[128] =
     {
-	//0-7
+	// 0-7
 	RGBA(0, 0, 0, 255), RGBA(255, 0, 0, 255), RGBA(0, 255, 0, 255), RGBA(255, 255, 0, 255),
 	RGBA(0, 0, 255, 255), RGBA(255, 0, 255, 255), RGBA(0, 255, 255, 255), RGBA(255, 255, 255, 255),
-	//8-15
+	// 8-15
 	RGBA(0, 0, 0, 0), RGBA(170, 0, 0, 255), RGBA(0, 170, 0, 255), RGBA(170, 170, 0, 255),
 	RGBA(0, 0, 170, 255), RGBA(170, 0, 170, 255), RGBA(0, 170, 170, 255), RGBA(170, 170, 170, 255),
-	//16-23
+	// 16-23
 	RGBA(0, 0, 85, 255), RGBA(0, 85, 0, 255), RGBA(0, 85, 85, 255), RGBA(0, 85, 170, 255),
 	RGBA(0, 85, 255, 255), RGBA(0, 170, 85, 255), RGBA(0, 170, 255, 255), RGBA(0, 255, 85, 255),
-	//24-31
+	// 24-31
 	RGBA(0, 255, 170, 255), RGBA(85, 0, 0, 255), RGBA(85, 0, 85, 255), RGBA(85, 0, 170, 255),
 	RGBA(85, 0, 255, 255), RGBA(85, 85, 0, 255), RGBA(85, 85, 85, 255), RGBA(85, 85, 170, 255),
-	//32-39
+	// 32-39
 	RGBA(85, 85, 255, 255), RGBA(85, 170, 0, 255), RGBA(85, 170, 85, 255), RGBA(85, 170, 170, 255),
 	RGBA(85, 170, 255, 255), RGBA(85, 255, 0, 255), RGBA(85, 255, 85, 255), RGBA(85, 255, 170, 255),
-	//40-47
+	// 40-47
 	RGBA(85, 255, 255, 255), RGBA(170, 0, 85, 255), RGBA(170, 0, 255, 255), RGBA(170, 85, 0, 255),
 	RGBA(170, 85, 85, 255), RGBA(170, 85, 170, 255), RGBA(170, 85, 255, 255), RGBA(170, 170, 85, 255),
-	//48-55
+	// 48-55
 	RGBA(170, 170, 255, 255), RGBA(170, 255, 0, 255), RGBA(170, 255, 85, 255), RGBA(170, 255, 170, 255),
 	RGBA(170, 255, 255, 255), RGBA(255, 0, 85, 255), RGBA(255, 0, 170, 255), RGBA(255, 85, 0, 255),
-	//56-63
+	// 56-63
 	RGBA(255, 85, 85, 255), RGBA(255, 85, 170, 255), RGBA(255, 85, 255, 255), RGBA(255, 170, 0, 255),
 	RGBA(255, 170, 85, 255), RGBA(255, 170, 170, 255), RGBA(255, 170, 255, 255), RGBA(255, 255, 85, 255),
-	//64
+	// 64
 	RGBA(255, 255, 170, 255),
 	// 65-127 are calculated later.
 };
@@ -181,7 +181,7 @@ struct ISDBText
 	size_t used;
 	struct ISDBPos pos;
 	size_t txt_tail; // tail of the text, excluding trailing control sequences.
-	//Time Stamp when first string is received
+	// Time Stamp when first string is received
 	uint64_t timestamp;
 	int refcount;
 	struct list_head list;
@@ -232,9 +232,9 @@ typedef struct
 	 * colour near to foreground colour is half foreground colour and colour near to
 	 * background colour is half background colour.
 	 */
-	//Half foreground color
+	// Half foreground color
 	uint32_t hfg_color;
-	//Half background color
+	// Half background color
 	uint32_t hbg_color;
 	uint32_t mat_color;
 	uint32_t raster_color;
@@ -251,7 +251,7 @@ typedef struct
 	/**
 	 * List of string for each row there
 	 * TODO test with vertical string
-		 */
+	 */
 	struct list_head text_list_head;
 	/**
 	 * Keep second list to confirm that string does not get repeated
@@ -260,7 +260,7 @@ typedef struct
 	 * For Second Pass
 	 */
 	struct list_head buffered_text;
-	ISDBSubState current_state; //modified default_state[lang_tag]
+	ISDBSubState current_state; // modified default_state[lang_tag]
 	enum isdb_tmd tmd;
 	int nb_lang;
 	struct
@@ -378,7 +378,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 	struct ISDBText *text = NULL;
 	// Current Line Position
 	int cur_lpos;
-	//Space taken by character
+	// Space taken by character
 	int csp;
 
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
@@ -396,7 +396,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 
 	list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
 	{
-		//Text Line Position
+		// Text Line Position
 		int text_lpos;
 		if (IS_HORIZONTAL_LAYOUT(ls->format))
 			text_lpos = text->pos.x;
@@ -410,7 +410,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		else if (text_lpos > cur_lpos)
 		{
 			struct ISDBText *text1 = NULL;
-			//Allocate Text here so that list is always sorted
+			// Allocate Text here so that list is always sorted
 			text1 = allocate_text_node(ls);
 			text1->pos.x = ls->cursor_pos.x;
 			text1->pos.y = ls->cursor_pos.y;
@@ -427,7 +427,7 @@ static int append_char(ISDBSubContext *ctx, const char ch)
 		list_add_tail(&text->list, &ctx->text_list_head);
 	}
 
-	//Check position of character and if moving backward then clean text
+	// Check position of character and if moving backward then clean text
 	if (IS_HORIZONTAL_LAYOUT(ls->format))
 	{
 		if (ls->cursor_pos.y < text->pos.y)
@@ -483,14 +483,14 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 	struct ISDBText *sb_text = NULL;
 	struct ISDBText *sb_temp = NULL;
 
-	//TO keep track we don't over flow in buffer from user
+	// TO keep track we don't over flow in buffer from user
 	int index = 0;
 
 	if (ctx->cfg_no_rollup || (ctx->cfg_no_rollup == ctx->current_state.rollup_mode))
 	// Abhinav95: Forcing -noru to perform deduplication even if stream doesn't honor it
 	{
 		/* Currently unused */
-		//struct ISDBText *wtrepeat_text = NULL;
+		// struct ISDBText *wtrepeat_text = NULL;
 		if (list_empty(&ctx->buffered_text))
 		{
 			list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
@@ -506,7 +506,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			return 0;
 		}
 
-		//Update Secondary Buffer for new entry in primary buffer
+		// Update Secondary Buffer for new entry in primary buffer
 		list_for_each_entry(text, &ctx->text_list_head, list, struct ISDBText)
 		{
 			int found = CCX_FALSE;
@@ -515,7 +515,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 				if (ccx_strstr_ignorespace(text->buf, sb_text->buf))
 				{
 					found = CCX_TRUE;
-					//See if complete string is there if not update that string
+					// See if complete string is there if not update that string
 					if (!ccx_strstr_ignorespace(sb_text->buf, text->buf))
 					{
 						reserve_buf(sb_text, text->used);
@@ -535,7 +535,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			}
 		}
 
-		//Flush Secondary Buffer if text not in primary buffer
+		// Flush Secondary Buffer if text not in primary buffer
 		list_for_each_entry_safe(sb_text, sb_temp, &ctx->buffered_text, list, struct ISDBText)
 		{
 			int found = CCX_FALSE;
@@ -560,7 +560,7 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 					list_del(&sb_text->list);
 					free(sb_text->buf);
 					free(sb_text);
-					//delete entry from SB here
+					// delete entry from SB here
 				}
 			}
 		}
@@ -605,13 +605,13 @@ static void set_writing_format(ISDBSubContext *ctx, uint8_t *arg)
 		switch (*arg & 0x0f)
 		{
 			case 0:
-				//ctx->font_size = SMALL_FONT_SIZE;
+				// ctx->font_size = SMALL_FONT_SIZE;
 				break;
 			case 1:
-				//ctx->font_size = MIDDLE_FONT_SIZE;
+				// ctx->font_size = MIDDLE_FONT_SIZE;
 				break;
 			case 2:
-				//ctx->font_size = STANDARD_FONT_SIZE;
+				// ctx->font_size = STANDARD_FONT_SIZE;
 			default:
 				break;
 		}
@@ -716,7 +716,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
-	//Copy buf in arg
+	// Copy buf in arg
 	for (i = 0; *buf != 0x20; i++)
 	{
 		if (i >= (sizeof(arg)) + 1)
@@ -835,7 +835,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 				/* BEL Control code used when calling attention (alarm or signal) */
 			case 0x7:
-				//TODO add bell character here
+				// TODO add bell character here
 				isdb_command_log("Command: BEL\n");
 				break;
 
@@ -1178,7 +1178,7 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * This 36-bit field indicates offset time to add to the playback time when the
 		 * clock control mode is in offset time mode. Offset time is coded in the
 		 * order of hour, minute, second and millisecond, using nine 4-bit binary
-				 * coded decimals (BCD).
+		 * coded decimals (BCD).
 		 *
 		 * +-----------+-----------+---------+--------------+
 		 * |  hour     |   minute  |   sec   |  millisecond |
@@ -1389,7 +1389,7 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 		return -1;
 	buf += group_size;
 
-	//TODO check CRC
+	// TODO check CRC
 	buf += 2;
 
 	return buf - buf_pivot;

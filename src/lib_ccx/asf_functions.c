@@ -509,14 +509,14 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (asf_data_container.StreamProperties.CaptionStreamNumber > 0 && (asf_data_container.StreamProperties.CaptionStreamStyle == 1 ||
 										    (asf_data_container.StreamProperties.CaptionStreamStyle == 2 && ccx_options.wtvconvertfix)))
 		{
-			//if (debug_parse)
+			// if (debug_parse)
 			mprint("\nNTSC captions in stream #%d\n\n", asf_data_container.StreamProperties.CaptionStreamNumber);
 			data->bufferdatatype = CCX_RAW;
 			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.CaptionStreamNumber;
 		}
 		else if (asf_data_container.StreamProperties.CaptionStreamNumber > 0 && asf_data_container.StreamProperties.CaptionStreamStyle == 2)
 		{
-			//if (debug_parse)
+			// if (debug_parse)
 			mprint("\nATSC captions (probably) in stream #%d - Decode the video stream #%d instead\n\n",
 			       asf_data_container.StreamProperties.CaptionStreamNumber, asf_data_container.StreamProperties.VideoStreamNumber);
 			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.VideoStreamNumber;
@@ -524,7 +524,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		else
 		{
 			asf_data_container.StreamProperties.DecodeStreamNumber = asf_data_container.StreamProperties.VideoStreamNumber;
-			//if (debug_parse)
+			// if (debug_parse)
 			mprint("\nAssume CC info in video stream #%d (No caption stream found)\n\n",
 			       asf_data_container.StreamProperties.DecodeStreamNumber);
 		}
@@ -768,7 +768,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				// Parse Replicated data
 				unsigned char *replicate_position = asf_data_container.parsebuf;
 				int media_object_size = 0;
-				int presentation_time_millis = 0; //Payload ms time stamp
+				int presentation_time_millis = 0; // Payload ms time stamp
 				int extsize = 0;
 				// int32_t dwVersion = 0;
 				// int32_t unknown = 0;
@@ -797,7 +797,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 						extsize = asf_data_container.PayloadExtSize[asf_data_container.PayloadStreamNumber][i];
 					}
 					replicate_position += extsize;
-					//printf("%2d. Ext. System - size: %d\n", i, extsize);
+					// printf("%2d. Ext. System - size: %d\n", i, extsize);
 				}
 				if (asf_data_container.PayloadExtPTSEntry[asf_data_container.PayloadStreamNumber] > 0)
 				{
@@ -806,7 +806,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					rtStart = *((int64_t *)(replicate_position + 8));
 					rtEnd = *((int64_t *)(replicate_position + 16));
 
-					//printf("dwVersion: %d    unknown: 0x%04X\n", dwVersion, unknown);
+					// printf("dwVersion: %d    unknown: 0x%04X\n", dwVersion, unknown);
 				}
 
 				// Avoid problems with unset PTS times
@@ -1029,7 +1029,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		ctx->demux_ctx->past += result;
 		// Don not set end_of_file (although it is true) as this would
 		// produce an premature end error.
-		//end_of_file=1;
+		// end_of_file=1;
 
 		// parsebuf is freed automatically when the program closes.
 	}

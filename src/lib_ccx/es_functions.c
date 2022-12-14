@@ -342,7 +342,7 @@ static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 	sequence_ext(ctx, esstream);
 	// FIXME: if sequence extension is missing this is not MPEG-2,
 	// or broken.  Set bitstream error.
-	//extension_and_user_data(esstream);
+	// extension_and_user_data(esstream);
 
 	if (esstream->error)
 		return 0;
@@ -515,7 +515,7 @@ static int read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_
 	unsigned char *gop_info_start = esstream->pos;
 
 	gop_header(enc_ctx, dec_ctx, esstream, sub);
-	//extension_and_user_data(esstream);
+	// extension_and_user_data(esstream);
 
 	if (esstream->error)
 		return 0;

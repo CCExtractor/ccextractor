@@ -202,7 +202,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 		return CCX_EOF;
 	}
 
-	//Next read just enough to get the location of the root directory
+	// Next read just enough to get the location of the root directory
 	uint32_t filelen;
 	uint32_t root_dir;
 	memcpy(&filelen, parsebuf + 0x30, 4);
@@ -210,7 +210,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 	memcpy(&root_dir, parsebuf + 0x38, 4);
 	dbg_print(CCX_DMT_PARSE, "root_dir: %x\n", root_dir);
 
-	//Seek to start of the root dir. Typically 0x1100
+	// Seek to start of the root dir. Typically 0x1100
 	result = buffered_skip(ctx, (root_dir * WTV_CHUNK_SIZE) - 0x42);
 	ctx->past += (root_dir * WTV_CHUNK_SIZE) - 0x42;
 
@@ -265,7 +265,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 			ctx->past += len - 32;
 			// Read a unicode string
 			uint32_t text_len;
-			memcpy(&text_len, parsebuf, 4); //text_len is number of unicode chars, not bytes.
+			memcpy(&text_len, parsebuf, 4); // text_len is number of unicode chars, not bytes.
 			dbg_print(CCX_DMT_PARSE, "text_len: %x\n", text_len);
 			char *string;
 			string = (char *)malloc(text_len + 1); // alloc for ascii
@@ -317,7 +317,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct demuxer_data *data)
 {
 	static int video_streams[32];
-	static int alt_stream; //Stream to use for timestamps if the cc stream has broken timestamps
+	static int alt_stream; // Stream to use for timestamps if the cc stream has broken timestamps
 	static int use_alt_stream = 0;
 	static int num_streams = 0;
 	int64_t result;
@@ -373,7 +373,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			free(parsebuf);
 			free(cb->buffer);
 			cb->buffer = NULL;
-			//return one more byte so the final percentage is shown correctly
+			// return one more byte so the final percentage is shown correctly
 			*(data->buffer + data->len) = 0x00;
 			data->len++;
 			return CCX_EOF;
@@ -387,7 +387,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 			static unsigned char stream_type[16];
-			memcpy(&stream_type, cb->buffer + 0xc, 16); //Read the stream type GUID
+			memcpy(&stream_type, cb->buffer + 0xc, 16); // Read the stream type GUID
 			const void *stream_guid;
 			if (ccx_options.wtvmpeg2)
 				stream_guid = WTV_STREAM_VIDEO; // We want mpeg2 data if the user set -wtvmpeg2
@@ -442,7 +442,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			frames_since_ref_time++;
 			set_fts(dec_ctx->timing);
 			if (pad > 0)
-			{ //Make sure we skip any padding too, since we are returning here
+			{ // Make sure we skip any padding too, since we are returning here
 				skip_sized_buffer(ctx->demux_ctx, cb, pad);
 			}
 			return bytesread;
@@ -469,7 +469,7 @@ int wtv_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (!*ppdata)
 			return -1;
 		data = *ppdata;
-		//TODO Set to dummy, find and set actual value
+		// TODO Set to dummy, find and set actual value
 		data->program_number = 1;
 		data->stream_pid = 1;
 		data->codec = CCX_CODEC_ATSC_CC;

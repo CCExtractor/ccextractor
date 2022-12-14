@@ -320,7 +320,7 @@ int64_t read_exp_golomb(struct bitstream *bstr)
 	res = read_exp_golomb_unsigned(bstr);
 
 	// The following function might truncate when res+1 overflows
-	//res = (res+1)/2 * (res % 2 ? 1 : -1);
+	// res = (res+1)/2 * (res % 2 ? 1 : -1);
 	// Use this:
 	res = (res / 2 + (res % 2 ? 1 : 0)) * (res % 2 ? 1 : -1);
 

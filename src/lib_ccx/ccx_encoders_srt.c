@@ -284,6 +284,6 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 
 	// fprintf (wb->fh, context->encoded_crlf);
 	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-	//printf("$ = %s\n",context->encoded_crlf);
+	// printf("$ = %s\n",context->encoded_crlf);
 	return wrote_something;
 }

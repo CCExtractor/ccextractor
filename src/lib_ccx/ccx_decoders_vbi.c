@@ -76,13 +76,13 @@ int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buff
 	len -= 720;
 
 	n_lines = vbi_raw_decode(&dec_ctx->vbi_decoder->zvbi_decoder, buffer, sliced);
-	//n_lines = vbi3_raw_decoder_decode (&dec_ctx->vbi_decoder->zvbi_decoder, sliced, 2, buffer);
+	// n_lines = vbi3_raw_decoder_decode (&dec_ctx->vbi_decoder->zvbi_decoder, sliced, 2, buffer);
 	if (n_lines > 0)
 	{
 		for (i = 0; i < n_lines; ++i)
 		{
 			int index = 0;
-			//for(index = 0; index < 56; index += 2)
+			// for(index = 0; index < 56; index += 2)
 			{
 				unsigned char data[3];
 				if (field == 1)

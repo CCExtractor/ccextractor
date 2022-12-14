@@ -17,10 +17,10 @@
 struct DVD_Ctx
 {
 	unsigned char *buffer; // Buffer to store packet data
-	size_t len;	       //length of buffer required
-	int pos;	       //position in the buffer
-	uint16_t size_spu;     //total size of spu packet
-	uint16_t size_data;    //size of data in the packet, offset to control packet
+	size_t len;	       // length of buffer required
+	int pos;	       // position in the buffer
+	uint16_t size_spu;     // total size of spu packet
+	uint16_t size_data;    // size of data in the packet, offset to control packet
 	struct ctrl_seq *ctrl;
 	int append;
 	unsigned char *bitmap;
@@ -222,7 +222,7 @@ void decode_packet(struct DVD_Ctx *ctx)
 					// dbg_print(CCX_DMT_VERBOSE, "col: %x col: %x col: %x col: %x\n", control->color[0], control->color[1], control->color[2], control->color[3]);
 					ctx->pos += 2;
 					break;
-				case 0x04: //SET_CONTR
+				case 0x04: // SET_CONTR
 					control->alpha[3] = (buff[ctx->pos] & 0xf0) >> 4;
 					control->alpha[2] = buff[ctx->pos] & 0x0f;
 					control->alpha[1] = (buff[ctx->pos + 1] & 0xf0) >> 4;
@@ -230,16 +230,16 @@ void decode_packet(struct DVD_Ctx *ctx)
 					// dbg_print(CCX_DMT_VERBOSE, "alp: %d alp: %d alp: %d alp: %d\n", control->alpha[0], control->alpha[1], control->alpha[2], control->alpha[3]);
 					ctx->pos += 2;
 					break;
-				case 0x05:										    //SET_DAREA
-					control->coord[0] = ((buff[ctx->pos] << 8) | (buff[ctx->pos + 1] & 0xf0)) >> 4;	    //starting x coordinate
-					control->coord[1] = ((buff[ctx->pos + 1] & 0x0f) << 8) | buff[ctx->pos + 2];	    //ending x coordinate
-					control->coord[2] = ((buff[ctx->pos + 3] << 8) | (buff[ctx->pos + 4] & 0xf0)) >> 4; //starting y coordinate
-					control->coord[3] = ((buff[ctx->pos + 4] & 0x0f) << 8) | buff[ctx->pos + 5];	    //ending y coordinate
+				case 0x05:										    // SET_DAREA
+					control->coord[0] = ((buff[ctx->pos] << 8) | (buff[ctx->pos + 1] & 0xf0)) >> 4;	    // starting x coordinate
+					control->coord[1] = ((buff[ctx->pos + 1] & 0x0f) << 8) | buff[ctx->pos + 2];	    // ending x coordinate
+					control->coord[2] = ((buff[ctx->pos + 3] << 8) | (buff[ctx->pos + 4] & 0xf0)) >> 4; // starting y coordinate
+					control->coord[3] = ((buff[ctx->pos + 4] & 0x0f) << 8) | buff[ctx->pos + 5];	    // ending y coordinate
 					// dbg_print(CCX_DMT_VERBOSE, "cord: %d cord: %d cord: %d cord: %d\n", control->coord[0], control->coord[1], control->coord[2], control->coord[3]);
 					ctx->pos += 6;
 					//(x2-x1+1)*(y2-y1+1)
 					break;
-				case 0x06: //SET_DSPXA - Pixel address
+				case 0x06: // SET_DSPXA - Pixel address
 					control->pixoffset[0] = (buff[ctx->pos] << 8) | buff[ctx->pos + 1];
 					control->pixoffset[1] = (buff[ctx->pos + 2] << 8) | buff[ctx->pos + 3];
 					// dbg_print(CCX_DMT_VERBOSE, "off1: %d off2 %d\n", control->pixoffset[0], control->pixoffset[1]);
