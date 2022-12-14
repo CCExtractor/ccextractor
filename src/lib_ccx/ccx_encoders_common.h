@@ -89,8 +89,6 @@ struct encoder_ctx
 	int force_flush;
 	/* Keep track of whether -UCLA used */
 	int ucla;
-	/* Disable timestamps for WebVTT */
-	int no_timestamp_map;
 
 	struct ccx_common_timing_ctx *timing; /* Some encoders need access to PTS, such as WebVTT */
 

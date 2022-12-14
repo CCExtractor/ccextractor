@@ -568,7 +568,7 @@ void print_usage(void)
 	mprint("                       less or equal than the max allowed..\n");
 	mprint("-anvid --analyzevideo  Analyze the video stream even if it's not used for\n");
 	mprint("                       subtitles. This allows to provide video information.\n");
-	mprint("  --no-timestamp-map   Use this flag to disable the X-TIMESTAMP-MAP header for WebVTT\n");
+	mprint("  --timestamp-map      Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)\n");
 	mprint("Levenshtein distance:\n\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
@@ -1528,9 +1528,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--no-timestamp-map") == 0 || strcmp(argv[i], "-ntm") == 0)
+		if (strcmp(argv[i], "--timestamp-map") == 0 || strcmp(argv[i], "-tm") == 0)
 		{
-			opt->no_timestamp_map = 1;
+			opt->timestamp_map = 1;
 			continue;
 		}
 

@@ -37,7 +37,6 @@ struct encoder_cfg
 	int force_flush;                     // Force flush on content write
 	int append_mode;                     // Append mode for output files
 	int ucla;                            // 1 if -UCLA used, 0 if not
-	int no_timestamp_map;				 // 1 if timestamps disabled for WebVTT
 
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -118,7 +117,7 @@ struct ccx_s_options // Options from user parameters
                                          >0 -> Live stream with a timeout of this value in seconds */
 	char *filter_profanity_file;         // Extra profanity word file
 	int messages_target;              // 0 = nowhere (quiet), 1=stdout, 2=stderr
-	int no_timestamp_map;             // 1 for no timestamps for WebVTT, 0 for the timestamp header
+	int timestamp_map;                // If 1, add WebVTT X-TIMESTAMP-MAP header
 	/* Levenshtein's parameters, for string comparison */
 	int dolevdist;					  // 0 => don't attempt to correct typos with this algorithm
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
