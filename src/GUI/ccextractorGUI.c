@@ -105,7 +105,7 @@ void drop_callback(GLFWwindow *window, int count, const char **paths)
 }
 
 /*Rectangle to hold file names*/
-//void draw_file_rectangle_widget(struct nk_context *ctx, struct nk_font *font)
+// void draw_file_rectangle_widget(struct nk_context *ctx, struct nk_font *font)
 //{
 //	struct nk_command_buffer *canvas;
 //	struct nk_input *input = &ctx->input;
@@ -132,10 +132,10 @@ void drop_callback(GLFWwindow *window, int count, const char **paths)
 //		}
 //	}
 //
-//}
+// }
 
 /*Rectangle to hold extraction info*/
-//void draw_info_rectangle_widget(struct nk_context *ctx, struct nk_font *font)
+// void draw_info_rectangle_widget(struct nk_context *ctx, struct nk_font *font)
 //{
 //	struct nk_command_buffer *canvas;
 //	struct nk_input *input = &ctx->input;
@@ -157,18 +157,18 @@ void drop_callback(GLFWwindow *window, int count, const char **paths)
 //	nk_draw_text(canvas, space, "Output Path: Default", 20, &font->handle, nk_rgb(88, 81, 96), nk_rgb(0, 0, 0));
 //	space.y = space.y + 20;
 //	nk_draw_text(canvas, space, "Hardsubs Extraction: Yes", 24, &font->handle, nk_rgb(88, 81, 96), nk_rgb(0, 0, 0));
-//}
+// }
 
 int main(void)
 {
 
-	//Platform
+	// Platform
 	static GLFWwindow *win;
 	struct nk_context *ctx;
 	int screenWidth, screenHeight;
-	//int winWidth, winHeight;
+	// int winWidth, winHeight;
 
-	//GLFW
+	// GLFW
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
 	{
@@ -188,7 +188,7 @@ int main(void)
 		exit(1);
 	}
 
-	//GUI
+	// GUI
 
 	struct file_browser browser;
 	static const struct file_browser reset_browser;
@@ -203,7 +203,7 @@ int main(void)
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(ctx, &droid->handle);
 
-	//CHECKBOX VALUES
+	// CHECKBOX VALUES
 	static int show_terminal_check = nk_false;
 	static int show_preview_check = nk_false;
 	static int show_activity_check = nk_false;
@@ -273,21 +273,21 @@ int main(void)
 			fclose(saveFile);
 			break;
 		}
-		//Input
+		// Input
 		glfwPollEvents();
 		nk_glfw3_new_frame();
 
-		//Popups
+		// Popups
 		static int show_progress_details = nk_false;
 		static int show_about_ccx = nk_false;
 		static int show_getting_started = nk_false;
 
-		//GUI
+		// GUI
 		if (nk_begin(ctx, "CCExtractor", nk_rect(0, 0, WIDTH_mainPanelAndWindow, HEIGHT_mainPanelandWindow),
 			     NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BACKGROUND))
 		{
 
-			//MENUBAR
+			// MENUBAR
 			nk_menubar_begin(ctx);
 			nk_layout_row_begin(ctx, NK_STATIC, 30, 3);
 			nk_layout_row_push(ctx, 80);
@@ -332,23 +332,23 @@ int main(void)
 				nk_menu_end(ctx);
 			}
 
-			//Network Settings
+			// Network Settings
 			if (network_settings.show_network_settings)
 				draw_network_popup(ctx, &network_settings);
 
-			//About CCExtractor Popup
+			// About CCExtractor Popup
 			if (show_about_ccx)
 				draw_about_ccx_popup(ctx, &show_about_ccx, &droid_big->handle, &droid_head->handle);
 
-			//Getting Started
+			// Getting Started
 			if (show_getting_started)
 				draw_getting_started_popup(ctx, &show_getting_started);
 
-			//Color Popup
+			// Color Popup
 			if (output.color_popup)
 				draw_color_popup(ctx, &output);
 
-			//File Browser as Popup
+			// File Browser as Popup
 			if (main_settings.scaleWindowForFileBrowser)
 			{
 				int width = 0, height = 0;
@@ -358,11 +358,11 @@ int main(void)
 				file_browser_run(&browser, ctx, &main_settings, &output, &debug, &hd_homerun);
 			}
 
-			//Thread popop when file can't be read
+			// Thread popop when file can't be read
 			if (main_settings.threadPopup)
 				draw_thread_popup(ctx, &main_settings.threadPopup);
 
-			//Thread popup for hd_homerun thread
+			// Thread popup for hd_homerun thread
 			if (hd_homerun.threadPopup)
 				draw_thread_popup(ctx, &hd_homerun.threadPopup);
 
@@ -463,25 +463,25 @@ int main(void)
 					nk_style_pop_vec2(ctx);
 			}
 
-			//ADVANCED MODE FLAG
+			// ADVANCED MODE FLAG
 			static const float ratio_adv_mode[] = {0.75f, 0.22f, .03f};
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 3, ratio_adv_mode);
 			nk_spacing(ctx, 1);
 			nk_checkbox_label(ctx, "Advanced Mode", &advanced_mode_check);
 
-			//RADIO BUTTON 1
+			// RADIO BUTTON 1
 			static const float ratio_button[] = {.10f, .90f};
 			static const float check_extension_ratio[] = {.10f, .53f, .12f, .15f, .10f};
-			//static int op = FILES;
+			// static int op = FILES;
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 2, ratio_button);
 			nk_spacing(ctx, 1);
 			if (nk_option_label(ctx, "Extract from files below:", main_settings.port_or_files == FILES))
 			{
-				//op = FILES;
+				// op = FILES;
 				main_settings.port_or_files = FILES;
 			}
 
-			//CHECKBOX FOR FILE TYPES
+			// CHECKBOX FOR FILE TYPES
 			static int add_remove_button = nk_false;
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 5, check_extension_ratio);
 			nk_spacing(ctx, 1);
@@ -525,7 +525,7 @@ int main(void)
 				}
 			}
 
-			//RECTANGLE-FILES
+			// RECTANGLE-FILES
 			static const float ratio_rect_files[] = {0.10f, 0.80f};
 			nk_layout_row(ctx, NK_DYNAMIC, 180, 2, ratio_rect_files);
 			nk_spacing(ctx, 1);
@@ -559,19 +559,19 @@ int main(void)
 				nk_group_end(ctx);
 			}
 
-			//RadioButton 2 along with combobox
+			// RadioButton 2 along with combobox
 			static const float ratio_port[] = {0.10f, 0.20f, 0.20f, 0.20f, 0.20f, 0.10f};
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 6, ratio_port);
 			nk_spacing(ctx, 1);
 			if (nk_option_label(ctx, "Extract from", main_settings.port_or_files == PORT))
 			{
-				//op = PORT;
+				// op = PORT;
 				main_settings.port_or_files = PORT;
 			}
 			main_settings.port_select = nk_combo(ctx, main_settings.port_type, 2, main_settings.port_select, 20, nk_vec2(85, 100));
 			nk_label(ctx, " stream, on port:", NK_TEXT_LEFT);
 
-			//RADDIO BUTTON 2, TEXTEDIT FOR ENTERING PORT NUMBER
+			// RADDIO BUTTON 2, TEXTEDIT FOR ENTERING PORT NUMBER
 
 			static int len;
 			static char buffer[10];
@@ -579,11 +579,11 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
 
-			//Extraction Information
+			// Extraction Information
 			nk_layout_row_dynamic(ctx, 10, 1);
 			nk_text(ctx, "Extraction Info:", 16, NK_TEXT_CENTERED);
 
-			//RECTANGLE-INFO
+			// RECTANGLE-INFO
 			static const float ratio_rect_info[] = {0.10f, 0.80f, 0.10f};
 			nk_layout_row(ctx, NK_DYNAMIC, 75, 2, ratio_rect_info);
 			nk_spacing(ctx, 1);
@@ -608,14 +608,14 @@ int main(void)
 
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
-			//PROGRESSBAR
+			// PROGRESSBAR
 			static const float ratio_progress[] = {0.10f, 0.03f, 0.57f, 0.03f, 0.17f, 0.10f};
 			nk_layout_row(ctx, NK_DYNAMIC, 20, 6, ratio_progress);
 			nk_spacing(ctx, 1);
 			nk_spacing(ctx, 1);
 			nk_progress(ctx, &main_settings.progress_cursor, 101, nk_false);
 
-			//Extract Button
+			// Extract Button
 			nk_spacing(ctx, 1);
 			if (nk_button_label(ctx, "Extract"))
 			{
@@ -626,7 +626,7 @@ int main(void)
 			nk_layout_space_begin(ctx, NK_STATIC, 10, 1);
 			nk_layout_space_end(ctx);
 
-			//PROGRESS_DETAILS_BUTTON
+			// PROGRESS_DETAILS_BUTTON
 			if (!show_activity_check)
 			{
 				nk_layout_row_dynamic(ctx, 20, 3);
@@ -638,11 +638,11 @@ int main(void)
 				nk_spacing(ctx, 1);
 			}
 
-			//PROGRESS_DETAILS_POPUP
+			// PROGRESS_DETAILS_POPUP
 			if (show_progress_details)
 				draw_progress_details_popup(ctx, &show_progress_details, &main_settings);
 
-			//build command string
+			// build command string
 			command_builder(&command, &main_settings, &network_settings, &input, &advanced_input, &output, &decoders, &credits, &debug, &burned_subs);
 		}
 		nk_end(ctx);
@@ -735,9 +735,9 @@ int main(void)
 		glViewport(0, 0, screenWidth, screenHeight);
 		glClear(GL_COLOR_BUFFER_BIT);
 		/* IMPORTANT: `nk_glfw_render` modifies some global OpenGL state
-		* with blending, scissor, face culling and depth test and defaults everything
-		* back into a default state. Make sure to either save and restore or
-		* reset your own state after drawing rendering the UI. */
+		 * with blending, scissor, face culling and depth test and defaults everything
+		 * back into a default state. Make sure to either save and restore or
+		 * reset your own state after drawing rendering the UI. */
 		nk_glfw3_render(NK_ANTI_ALIASING_ON);
 		glfwSwapBuffers(win);
 	}
@@ -757,7 +757,7 @@ int main(void)
 	glDeleteTextures(1, (const GLuint *)&media.icons.movie_file.handle.id);
 
 	file_browser_free(&browser);
-	//free(main_settings.filenames);
+	// free(main_settings.filenames);
 
 	nk_glfw3_shutdown();
 	glfwTerminate();
@@ -786,7 +786,7 @@ char *truncate_path_string(char *filePath)
 	char *file_path = strdup(filePath);
 	int i, j, z, slash_length, fileNameTruncated_index, copycount, prefix_length;
 	char file_name[PATH_LENGTH], *ptr_slash, fileNameTruncated[NAME_LENGTH];
-	//strcpy(filePath[i], paths[i]);
+	// strcpy(filePath[i], paths[i]);
 	if (strlen(filePath) >= PATH_LENGTH - 1)
 	{
 #ifdef _WIN32
@@ -847,10 +847,10 @@ char *truncate_path_string(char *filePath)
 
 void remove_path_entry(struct main_tab *main_settings, int indexToRemove)
 {
-	//printf("Beginning processing. Array is currently: ");
-	//for (int i = 0; i < arraySize; ++i)
+	// printf("Beginning processing. Array is currently: ");
+	// for (int i = 0; i < arraySize; ++i)
 	//	printf("%d ", (*array)[i]);
-	//printf("\n");
+	// printf("\n");
 
 	char **temp = (char **)calloc(main_settings->filename_count, sizeof(char *)); // allocate an array with a size 1 less than the current one
 

@@ -81,7 +81,7 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
 		write_wrapped(context->out->fh, el, u);
-		//write (wb->fh, encoded_br, encoded_br_length);
+		// write (wb->fh, encoded_br, encoded_br_length);
 
 		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		begin += strlen((const char *)begin) + 1;
@@ -104,7 +104,7 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap *rect;
-	//char timeline[128];
+	// char timeline[128];
 	int i, len = 0;
 
 	if (sub->nb_data == 0)
@@ -201,7 +201,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			{
 				int unicode = 0;
 				get_char_in_unicode((unsigned char *)&unicode, data->characters[row][column]);
-				//if (COL_TRANSPARENT != data->colors[row][column])
+				// if (COL_TRANSPARENT != data->colors[row][column])
 				if (unicode != 0x20)
 				{
 					if (firstcol < 0)
@@ -236,7 +236,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				get_decoder_line_encoded(context, context->subline, row, data);
 
-				char *final = malloc(strlen((const char *)(context->subline)) + 1000); //Being overly generous? :P
+				char *final = malloc(strlen((const char *)(context->subline)) + 1000); // Being overly generous? :P
 				char *temp = malloc(strlen((const char *)(context->subline)) + 1000);
 				*final = 0;
 				*temp = 0;
@@ -258,7 +258,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				*/
 
-				//Now, searching for first occurrence of <i> OR <u> OR <b>
+				// Now, searching for first occurrence of <i> OR <u> OR <b>
 
 				char *start = strstr((const char *)(context->subline), "<i>");
 				if (start == NULL)
@@ -268,15 +268,15 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					if (start == NULL)
 					{
 						start = strstr((const char *)(context->subline), "<u>");
-						style = 3; //underline
+						style = 3; // underline
 					}
 					else
-						style = 2; //bold
+						style = 2; // bold
 				}
 				else
-					style = 1; //italics
+					style = 1; // italics
 
-				if (start != NULL) //subtitle has style associated with it, will need formatting.
+				if (start != NULL) // subtitle has style associated with it, will need formatting.
 				{
 					char *end_tag;
 					if (style == 1)
@@ -292,11 +292,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 						end_tag = "</u>";
 					}
 
-					char *end = strstr((const char *)(context->subline), end_tag); //occurrence of closing tag (</i> OR </b> OR </u>)
+					char *end = strstr((const char *)(context->subline), end_tag); // occurrence of closing tag (</i> OR </b> OR </u>)
 
 					if (end == NULL)
 					{
-						//Incorrect styling, writing as it is
+						// Incorrect styling, writing as it is
 						strcpy(final, (const char *)(context->subline));
 					}
 					else
@@ -306,13 +306,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 						strncat(final, (const char *)(context->subline), start_index); // copying content before opening tag e.g. <i>
 
-						strcat(final, "<span>"); //adding <span> : replacement of <i>
+						strcat(final, "<span>"); // adding <span> : replacement of <i>
 
-						//The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
+						// The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
 
-						strncat(temp, (const char *)(context->subline) + start_index + 3, end_index - start_index - 3); //the content in italics
+						strncat(temp, (const char *)(context->subline) + start_index + 3, end_index - start_index - 3); // the content in italics
 
-						strcat(final, temp); //attaching to final sentence.
+						strcat(final, temp); // attaching to final sentence.
 
 						if (style == 1)
 							strcpy(temp, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
@@ -325,21 +325,21 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 						strcat(final, temp); // adding appropriate style tag.
 
-						sprintf(temp, "%s", (const char *)(context->subline) + end_index + 4); //finding remaining sentence.
+						sprintf(temp, "%s", (const char *)(context->subline) + end_index + 4); // finding remaining sentence.
 
-						strcat(final, temp); //adding remaining sentence.
+						strcat(final, temp); // adding remaining sentence.
 					}
 				}
-				else //No style or Font Color
+				else // No style or Font Color
 				{
 
-					start = strstr((const char *)(context->subline), "<font color"); //spec : <font color="#xxxxxx"> cc </font>
-					if (start != NULL)						 //font color attribute is present
+					start = strstr((const char *)(context->subline), "<font color"); // spec : <font color="#xxxxxx"> cc </font>
+					if (start != NULL)						 // font color attribute is present
 					{
 						char *end = strstr((const char *)(context->subline), "</font>");
 						if (end == NULL)
 						{
-							//Incorrect styling, writing as it is
+							// Incorrect styling, writing as it is
 							strcpy(final, (const char *)(context->subline));
 						}
 
@@ -350,33 +350,33 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 							strncat(final, (const char *)(context->subline), start_index); // copying content before opening tag e.g. <font ..>
 
-							strcat(final, "<span>"); //adding <span> : replacement of <font ..>
+							strcat(final, "<span>"); // adding <span> : replacement of <font ..>
 
-							char *temp_pointer = strchr((const char *)(context->subline), '#'); //locating color code
+							char *temp_pointer = strchr((const char *)(context->subline), '#'); // locating color code
 
 							char color_code[7];
-							strncpy(color_code, temp_pointer + 1, 6); //obtained color code
+							strncpy(color_code, temp_pointer + 1, 6); // obtained color code
 							color_code[6] = '\0';
 
-							temp_pointer = strchr((const char *)(context->subline), '>'); //The content is in between <font ..> and </font>
+							temp_pointer = strchr((const char *)(context->subline), '>'); // The content is in between <font ..> and </font>
 
 							strncat(temp, temp_pointer + 1, end_index - (temp_pointer - (char *)(context->subline) + 1));
 
-							strcat(final, temp); //attaching to final sentence.
+							strcat(final, temp); // attaching to final sentence.
 
 							sprintf(temp, "<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>", color_code);
 
-							strcat(final, temp); //adding font color tag
+							strcat(final, temp); // adding font color tag
 
-							sprintf(temp, "%s", (const char *)(context->subline) + end_index + 7); //finding remaining sentence.
+							sprintf(temp, "%s", (const char *)(context->subline) + end_index + 7); // finding remaining sentence.
 
-							strcat(final, temp); //adding remaining sentence
+							strcat(final, temp); // adding remaining sentence
 						}
 					}
 
 					else
 					{
-						//NO styling, writing as it is
+						// NO styling, writing as it is
 						strcpy(final, (const char *)(context->subline));
 					}
 				}
@@ -399,7 +399,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
 				used = encode_line(context, context->buffer, (unsigned char *)str);
-				//write (wb->fh, enc_buffer,enc_buffer_used);
+				// write (wb->fh, enc_buffer,enc_buffer_used);
 
 				freep(&final);
 				freep(&temp);

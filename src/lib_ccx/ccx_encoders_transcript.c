@@ -11,7 +11,7 @@
 
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
@@ -126,8 +126,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 		}
 		if (context->sentence_cap)
 		{
-			//TODO capitalize (context, line_number,data);
-			//TODO correct_case_with_dictionary(line_number, data);
+			// TODO capitalize (context, line_number,data);
+			// TODO correct_case_with_dictionary(line_number, data);
 		}
 
 		if (start_time == -1)
@@ -191,7 +191,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				if (!context->ucla || !strcmp(sub->mode, "TLT"))
 					fdprintf(context->out->fh, sub->info);
 				else if (context->in_fileformat == 1)
-					//TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
+					// TODO, data->my_field == 1 ? data->channel : data->channel + 2); // Data from field 2 is CC3 or 4
 					fdprintf(context->out->fh, "CC?|");
 			}
 			if (context->transcript_settings->showMode)
@@ -230,7 +230,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	return ret;
 }
 
-//TODO Convert CC line to TEXT format and remove this function
+// TODO Convert CC line to TEXT format and remove this function
 void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;

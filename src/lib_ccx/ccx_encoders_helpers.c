@@ -174,7 +174,7 @@ int clever_capitalize(struct encoder_ctx *context, unsigned char *line, unsigned
 	// CFS: Tried doing to clever (see below) but some channels do all uppercase except for
 	// notes for deaf people (such as "(narrator)" which messes things up.
 	// First find out if we actually need to do it, don't mess with lines that come OK
-	//int doit = is_all_caps(context, line_num, data);
+	// int doit = is_all_caps(context, line_num, data);
 	int doit = 1;
 
 	for (int i = 0; i < length; i++)
@@ -459,16 +459,16 @@ void correct_spelling_and_censor_words(struct encoder_ctx *context, unsigned cha
 }
 
 /**
-* @param base points to the start of the array
-* @param nb   number of element in array
-* @param size size of each element
-* @param compar Comparison function, which is called with three argument
-*               that point to the objects being compared and arg.
-*		compare Function should return an integer less than, equal to,
-*		or greater than zero if p1 is found, respectively, to be less than,
-*		to match, or be greater than p2.
-* @param arg argument passed as it is, to compare function
-*/
+ * @param base points to the start of the array
+ * @param nb   number of element in array
+ * @param size size of each element
+ * @param compar Comparison function, which is called with three argument
+ *               that point to the objects being compared and arg.
+ *		compare Function should return an integer less than, equal to,
+ *		or greater than zero if p1 is found, respectively, to be less than,
+ *		to match, or be greater than p2.
+ * @param arg argument passed as it is, to compare function
+ */
 void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, const void *p2, void *arg), void *arg)
 {
 	unsigned char *lbase = (unsigned char *)base;

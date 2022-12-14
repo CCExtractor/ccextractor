@@ -104,7 +104,7 @@ dtvcc_pen_attribs dtvcc_default_pen_attribs =
 dtvcc_window_attribs dtvcc_predefined_window_styles[] =
     {
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // Dummy, unused (position 0 doesn't use the table)
-	{				   //1 - NTSC Style PopUp Captions
+	{				   // 1 - NTSC Style PopUp Captions
 	 DTVCC_WINDOW_JUSTIFY_LEFT,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -116,7 +116,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_SOLID,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//2 - PopUp Captions w/o Black Background
+	{// 2 - PopUp Captions w/o Black Background
 	 DTVCC_WINDOW_JUSTIFY_LEFT,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -128,7 +128,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_TRANSPARENT,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//3 - NTSC Style Centered PopUp Captions
+	{// 3 - NTSC Style Centered PopUp Captions
 	 DTVCC_WINDOW_JUSTIFY_CENTER,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -140,7 +140,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_SOLID,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//4 - NTSC Style RollUp Captions
+	{// 4 - NTSC Style RollUp Captions
 	 DTVCC_WINDOW_JUSTIFY_LEFT,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -152,7 +152,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_SOLID,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//5 - RollUp Captions w/o Black Background
+	{// 5 - RollUp Captions w/o Black Background
 	 DTVCC_WINDOW_JUSTIFY_LEFT,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -164,7 +164,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_TRANSPARENT,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//6 - NTSC Style Centered RollUp Captions
+	{// 6 - NTSC Style Centered RollUp Captions
 	 DTVCC_WINDOW_JUSTIFY_CENTER,
 	 DTVCC_WINDOW_PD_LEFT_RIGHT,
 	 DTVCC_WINDOW_SD_BOTTOM_TOP,
@@ -176,7 +176,7 @@ dtvcc_window_attribs dtvcc_predefined_window_styles[] =
 	 DTVCC_WINDOW_FO_SOLID,
 	 DTVCC_WINDOW_BORDER_NONE,
 	 0},
-	{//7 - Ticker tape
+	{// 7 - Ticker tape
 	 DTVCC_WINDOW_JUSTIFY_LEFT,
 	 DTVCC_WINDOW_PD_TOP_BOTTOM,
 	 DTVCC_WINDOW_SD_RIGHT_LEFT,
@@ -240,7 +240,7 @@ void dtvcc_window_clear_text(dtvcc_window *window)
 void dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_id)
 {
 	dtvcc_window_clear_text(&decoder->windows[window_id]);
-	//OPT fill window with a window fill color
+	// OPT fill window with a window fill color
 }
 
 void dtvcc_window_apply_style(dtvcc_window *window, dtvcc_window_attribs *style)
@@ -503,7 +503,7 @@ int dtvcc_is_window_overlapping(dtvcc_service_decoder *decoder, dtvcc_window *wi
 				{
 					flag = OVERLAPPING_WITH_HIGH_PRIORITY;
 				}
-				//priority is either higher or equals for *window , hence overlaps decoder->windows[i]
+				// priority is either higher or equals for *window , hence overlaps decoder->windows[i]
 			}
 		}
 	}
@@ -608,16 +608,16 @@ void dtvcc_window_copy_to_screen(dtvcc_service_decoder *decoder, dtvcc_window *w
 
 void dtvcc_screen_print(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder)
 {
-	//TODO use priorities to solve windows overlap (with a video sample, please)
-	//qsort(wnd, visible, sizeof(dtvcc_window *), dtvcc_compare_win_priorities);
+	// TODO use priorities to solve windows overlap (with a video sample, please)
+	// qsort(wnd, visible, sizeof(dtvcc_window *), dtvcc_compare_win_priorities);
 
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_screen_print\n");
 
 	dtvcc_screen_update_time_hide(decoder->tv, get_visible_end(dtvcc->timing, 3));
 
 #ifdef DTVCC_PRINT_DEBUG
-	//ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[CEA-708] TV dump:\n");
-	//dtvcc_write_debug(decoder->tv);
+	// ccx_common_logging.debug_ftn(CCX_DMT_GENERIC_NOTICES, "[CEA-708] TV dump:\n");
+	// dtvcc_write_debug(decoder->tv);
 #endif
 	decoder->cc_count++;
 	decoder->tv->cc_count++;
@@ -653,14 +653,14 @@ void dtvcc_process_ff(dtvcc_service_decoder *decoder)
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
 	window->pen_column = 0;
 	window->pen_row = 0;
-	//CEA-708-D doesn't say we have to clear neither window text nor text line,
-	//but it seems we have to clean the line
-	//dtvcc_window_clear_text(window);
+	// CEA-708-D doesn't say we have to clear neither window text nor text line,
+	// but it seems we have to clean the line
+	// dtvcc_window_clear_text(window);
 }
 
 void dtvcc_process_etx(dtvcc_service_decoder *decoder)
 {
-	//it can help decoders with screen output, but could it help us?
+	// it can help decoders with screen output, but could it help us?
 }
 
 void dtvcc_process_bs(dtvcc_service_decoder *decoder)
@@ -671,8 +671,8 @@ void dtvcc_process_bs(dtvcc_service_decoder *decoder)
 		return;
 	}
 
-	//it looks strange, but in some videos (rarely) we have a backspace command
-	//we just print one character over another
+	// it looks strange, but in some videos (rarely) we have a backspace command
+	// we just print one character over another
 	int cw = decoder->current_window;
 	dtvcc_window *window = &decoder->windows[cw];
 
@@ -1016,9 +1016,9 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	int anchor_vertical = data[2] & 0x7f;
 	int relative_pos = data[2] >> 7;
 	int anchor_horizontal = data[3];
-	int row_count = (data[4] & 0xf) + 1; //according to CEA-708-D
+	int row_count = (data[4] & 0xf) + 1; // according to CEA-708-D
 	int anchor_point = data[4] >> 4;
-	int col_count = (data[5] & 0x3f) + 1; //according to CEA-708-D
+	int col_count = (data[5] & 0x3f) + 1; // according to CEA-708-D
 	int pen_style = data[6] & 0x7;
 	int win_style = (data[6] >> 3) & 0x7;
 
@@ -1072,7 +1072,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 		pen_style = 1;
 	}
 
-	//Apply windows attribute presets
+	// Apply windows attribute presets
 	if (win_style > 0 && win_style < 8)
 	{
 		window->win_style = win_style;
@@ -1091,7 +1091,7 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 
 	if (pen_style > 0)
 	{
-		//TODO apply static pen_style preset
+		// TODO apply static pen_style preset
 		window->pen_style = pen_style;
 	}
 
@@ -1378,7 +1378,7 @@ void dtvcc_handle_DLC_DelayCancel(dtvcc_service_decoder *decoder)
 
 //-------------------------- CHARACTERS AND COMMANDS -------------------------
 
-void dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) //16-byte chars always have 2 bytes
+void dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data) // 16-byte chars always have 2 bytes
 {
 	if (decoder->current_window == -1)
 	{
@@ -1682,7 +1682,7 @@ void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
 				 unsigned char *data,
 				 int data_length)
 {
-	//dump(CCX_DMT_708, data, data_length, 0, 0);
+	// dump(CCX_DMT_708, data, data_length, 0, 0);
 
 	int i = 0;
 	while (i < data_length)
@@ -1704,7 +1704,7 @@ void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
 				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_service_block: "
 									  "There was a problem handling the data. Reseting service decoder\n");
 				// TODO: Not sure if a local reset is going to be helpful here.
-				//dtvcc_windows_reset(decoder);
+				// dtvcc_windows_reset(decoder);
 				return;
 			}
 		}
@@ -1742,10 +1742,10 @@ void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len)
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
 							  "Unexpected sequence number, it is [%d] but should be [%d]\n",
 					     seq, (dtvcc->last_sequence + 1) % 4);
-		//WARN: if we reset decoders here, buffer will not be written
-		//WARN: resetting decoders breaks some samples
-		//dtvcc_decoders_reset(dtvcc);
-		//return;
+		// WARN: if we reset decoders here, buffer will not be written
+		// WARN: resetting decoders breaks some samples
+		// dtvcc_decoders_reset(dtvcc);
+		// return;
 	}
 	dtvcc->last_sequence = seq;
 

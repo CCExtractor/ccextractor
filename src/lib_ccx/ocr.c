@@ -48,7 +48,7 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 	if (!dir_name)
 		return -1;
 
-	//Search for a tessdata folder in the specified directory
+	// Search for a tessdata folder in the specified directory
 	char *dirname = strdup(dir_name);
 	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + 1);
 	strcat(dirname, "tessdata/");
@@ -421,7 +421,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				memset(mcit, 0, copy->nb_colors * sizeof(uint32_t));
 
 				/* calculate histogram of image */
-				int firstpixel = copy->data[0]; //TODO: Verify this border pixel assumption holds
+				int firstpixel = copy->data[0]; // TODO: Verify this border pixel assumption holds
 				for (int i = y1; i <= y2; i++)
 				{
 					for (int j = x1; j <= x2; j++)
@@ -956,18 +956,18 @@ void add_ocrtext2str(char *dest, char *src, const unsigned char *crlf, unsigned 
 		dest++;
 	while (*src != '\0')
 	{
-		//checks if a line has actual content in it before adding it
+		// checks if a line has actual content in it before adding it
 		if (*src == '\n')
 		{
 			char_found = 0;
 			line_scan = src + 1;
-			//multiple blocks of newlines
+			// multiple blocks of newlines
 			while (*(line_scan) == '\n')
 			{
 				line_scan++;
 				src++;
 			}
-			//empty lines
+			// empty lines
 			while (*line_scan != '\n' && *line_scan != '\0')
 			{
 				if (*line_scan > 32)
@@ -991,8 +991,8 @@ void add_ocrtext2str(char *dest, char *src, const unsigned char *crlf, unsigned 
 	memcpy(dest, crlf, crlf_length);
 	dest[crlf_length] = 0;
 	/*
-	*dest++ = '\n';
-	*dest = '\0'; */
+	 *dest++ = '\n';
+	 *dest = '\0'; */
 }
 
 /**
@@ -1017,7 +1017,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 		return NULL;
 	else
 	{
-		str = malloc(len + 1 + 10); //Extra space for possible trailing '/n's at the end of tesseract UTF8 text
+		str = malloc(len + 1 + 10); // Extra space for possible trailing '/n's at the end of tesseract UTF8 text
 		if (!str)
 			return NULL;
 		*str = '\0';

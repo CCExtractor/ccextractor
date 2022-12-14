@@ -2,7 +2,7 @@
 #include "utility.h"
 
 #if defined(ENABLE_HARDSUBX) && defined(DISABLE_RUST)
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>

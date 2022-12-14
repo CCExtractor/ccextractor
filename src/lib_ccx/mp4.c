@@ -262,7 +262,7 @@ unsigned char *ccdp_find_data(unsigned char *ccdp_atom_content, unsigned int len
 	len -= 2;
 
 	unsigned int cdp_data_count = data[0];
-	unsigned int cdp_frame_rate = data[1] >> 4; //frequency could be calculated
+	unsigned int cdp_frame_rate = data[1] >> 4; // frequency could be calculated
 	if (cdp_data_count != len + 2)
 	{
 		dbg_print(CCX_DMT_PARSE, "mp4-708-cdp: unexpected data length %u %u\n", cdp_data_count, len + 2);
@@ -403,7 +403,7 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, cc_count);
 			}
 		}
-		else //subtype == GF_ISOM_SUBTYPE_C608
+		else // subtype == GF_ISOM_SUBTYPE_C608
 		{
 			if (is_ccdp)
 			{
@@ -579,7 +579,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 
 		switch (track_type)
 		{
-			case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_XDVB): //vide:xdvb
+			case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_XDVB): // vide:xdvb
 				if (cc_track_count && !cfg->mp4vidtrack)
 					continue;
 				// If there are multiple tracks, change fd for different tracks

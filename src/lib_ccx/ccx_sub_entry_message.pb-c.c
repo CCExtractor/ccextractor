@@ -151,4 +151,4 @@ const ProtobufCMessageDescriptor ccx_sub_entry_message__descriptor =
 	NULL, NULL, NULL /* reserved[123] */
 };
 
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING

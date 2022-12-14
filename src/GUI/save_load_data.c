@@ -18,7 +18,7 @@ void load_data(FILE *file,
 	int null_int, r, g, b;
 	char null_char[260];
 
-	//Read main_tab data
+	// Read main_tab data
 	fscanf(file, "port_or_files:%d\n", &main_settings->port_or_files);
 	fscanf(file, "port_num_len:%d\n", &main_settings->port_num_len);
 	if (main_settings->port_num_len > 0)
@@ -29,7 +29,7 @@ void load_data(FILE *file,
 	fscanf(file, "is_check_common_extension:%d\n", &main_settings->is_check_common_extension);
 	fscanf(file, "port_select:%d\n", &main_settings->port_select);
 
-	//Read input_tab data
+	// Read input_tab data
 	fscanf(file, "type_select:%d\n", &input->type_select);
 	fscanf(file, "is_split:%d\n", &input->is_split);
 	fscanf(file, "is_live_stream:%d\n", &input->is_live_stream);
@@ -75,7 +75,7 @@ void load_data(FILE *file,
 	fscanf(file, "screenful_limit_buffer:%[^\n]\n", input->screenful_limit_buffer);
 	fscanf(file, "clock_input:%d\n", &input->clock_input);
 
-	//Read advanced_input_tab data
+	// Read advanced_input_tab data
 	fscanf(file, "is_multiple_program:%d\n", &advanced_input->is_multiple_program);
 	fscanf(file, "multiple_program:%d\n", &advanced_input->multiple_program);
 	fscanf(file, "prog_number_len:%d\n", &advanced_input->prog_number_len);
@@ -93,7 +93,7 @@ void load_data(FILE *file,
 	fscanf(file, "is_process_mp4:%d\n", &advanced_input->is_process_mp4);
 	fscanf(file, "is_ignore_broadcast:%d\n", &advanced_input->is_ignore_broadcast);
 
-	//Read output_tab data
+	// Read output_tab data
 	fscanf(file, "type_select:%d\n", &output->type_select);
 	fscanf(file, "is_filename:%d\n", &output->is_filename);
 	fscanf(file, "filename_len:%d\n", &output->filename_len);
@@ -131,7 +131,7 @@ void load_data(FILE *file,
 	fscanf(file, "onetime_or_realtime:%d\n", &output->onetime_or_realtime);
 	fscanf(file, "roll_limit_select:%d\n", &output->roll_limit_select);
 
-	//Read decoders_tab data
+	// Read decoders_tab data
 	fscanf(file, "is_field1:%d\n", &decoders->is_field1);
 	fscanf(file, "is_field2:%d\n", &decoders->is_field2);
 	fscanf(file, "channel:%d\n", &decoders->channel);
@@ -154,7 +154,7 @@ void load_data(FILE *file,
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 
-	//Read credits tab data
+	// Read credits tab data
 	fscanf(file, "is_start_text:%d\n", &credits->is_start_text);
 
 	fscanf(file, "is_before:%d\n", &credits->is_before);
@@ -189,7 +189,7 @@ void load_data(FILE *file,
 	fscanf(file, "end_text_len:%d\n", &credits->end_text_len);
 	read_credits(file, credits);
 
-	//Read debug tab data
+	// Read debug tab data
 	fscanf(file, "is_elementary_stream:%d\n", &debug->is_elementary_stream);
 	fscanf(file, "elementary_stream_len:%d\n", &debug->elementary_stream_len);
 	if (debug->elementary_stream_len > 0)
@@ -212,7 +212,7 @@ void load_data(FILE *file,
 	fscanf(file, "is_scan_ccdata:%d\n", &debug->is_scan_ccdata);
 	fscanf(file, "is_output_levenshtein:%d\n", &debug->is_output_levenshtein);
 
-	//Read HD Homerun Tab data
+	// Read HD Homerun Tab data
 	fscanf(file, "location_len:%d\n", &hd_homerun->location_len);
 	if (hd_homerun->location_len > 0)
 		fscanf(file, "location:%[^\n]\n", hd_homerun->location);
@@ -244,7 +244,7 @@ void load_data(FILE *file,
 	else
 		fscanf(file, "%[^\n]\n", null_char);
 
-	//Read Burned Subs tab data
+	// Read Burned Subs tab data
 	fscanf(file, "is_burnded_subs:%d\n", &burned_subs->is_burned_subs);
 	fscanf(file, "color_type:%d\n", &burned_subs->color_type);
 	fscanf(file, "sub_color_select:%d\n", &burned_subs->subs_color_select);
@@ -265,7 +265,7 @@ void load_data(FILE *file,
 	fscanf(file, "confidence_threshold:%d\n", &burned_subs->confidence_threshold);
 	fscanf(file, "is_italic:%d\n", &burned_subs->is_italic);
 
-	//Read Network Settings data
+	// Read Network Settings data
 	fscanf(file, "udp_ipv4_len:%d\n", &network_settings->udp_ipv4_len);
 	if (network_settings->udp_ipv4_len > 0)
 		fscanf(file, "udp_ipv4:%[^\n]\n", network_settings->udp_ipv4);
@@ -304,7 +304,7 @@ void save_data(FILE *file,
 	       struct burned_subs_tab *burned_subs,
 	       struct network_popup *network_settings)
 {
-	//Write main_tab data
+	// Write main_tab data
 	fprintf(file, "port_or_files:%d\n", main_settings->port_or_files);
 	fprintf(file, "port_num_len:%d\n", main_settings->port_num_len);
 	fprintf(file, "port_num:%s\n", main_settings->port_num);
@@ -312,7 +312,7 @@ void save_data(FILE *file,
 	fprintf(file, "is_check_common_extension:%d\n", main_settings->is_check_common_extension);
 	fprintf(file, "port_select:%d\n", main_settings->port_select);
 
-	//Write input_tab data
+	// Write input_tab data
 	fprintf(file, "type_select:%d\n", input->type_select);
 	fprintf(file, "is_split:%d\n", input->is_split);
 	fprintf(file, "is_live_stream:%d\n", input->is_live_stream);
@@ -341,7 +341,7 @@ void save_data(FILE *file,
 	fprintf(file, "screenful_limit_buffer:%s\n", input->screenful_limit_buffer);
 	fprintf(file, "clock_input:%d\n", input->clock_input);
 
-	//Write advanced_input_tab data
+	// Write advanced_input_tab data
 	fprintf(file, "is_multiple_program:%d\n", advanced_input->is_multiple_program);
 	fprintf(file, "multiple_program:%d\n", advanced_input->multiple_program);
 	fprintf(file, "prog_number_len:%d\n", advanced_input->prog_number_len);
@@ -356,7 +356,7 @@ void save_data(FILE *file,
 	fprintf(file, "is_process_mp4:%d\n", advanced_input->is_process_mp4);
 	fprintf(file, "is_ignore_broadcast:%d\n", advanced_input->is_ignore_broadcast);
 
-	//Write output_tab data
+	// Write output_tab data
 	fprintf(file, "type_select:%d\n", output->type_select);
 	fprintf(file, "is_filename:%d\n", output->is_filename);
 	fprintf(file, "filename_len:%d\n", output->filename_len);
@@ -383,7 +383,7 @@ void save_data(FILE *file,
 	fprintf(file, "onetime_or_realtime:%d\n", output->onetime_or_realtime);
 	fprintf(file, "roll_limit_select:%d\n", output->roll_limit_select);
 
-	//Write decoders_tab data
+	// Write decoders_tab data
 	fprintf(file, "is_field1:%d\n", decoders->is_field1);
 	fprintf(file, "is_field2:%d\n", decoders->is_field2);
 	fprintf(file, "channel:%d\n", decoders->channel);
@@ -397,7 +397,7 @@ void save_data(FILE *file,
 	fprintf(file, "max_distance_len:%d\n", decoders->max_distance_len);
 	fprintf(file, "max_distance:%s\n", decoders->max_distance);
 
-	//Write credits tab data
+	// Write credits tab data
 	fprintf(file, "is_start_text:%d\n", credits->is_start_text);
 
 	fprintf(file, "is_before:%d\n", credits->is_before);
@@ -418,7 +418,7 @@ void save_data(FILE *file,
 	fprintf(file, "end_text_len:%d\n", credits->end_text_len);
 	write_credits(file, credits);
 
-	//Write debug tab data
+	// Write debug tab data
 	fprintf(file, "is_elementary_stream:%d\n", debug->is_elementary_stream);
 	fprintf(file, "elementary_stream_len:%d\n", debug->elementary_stream_len);
 	fprintf(file, "elementary_stream:%s\n", debug->elementary_stream);
@@ -438,7 +438,7 @@ void save_data(FILE *file,
 	fprintf(file, "is_scan_ccdata:%d\n", debug->is_scan_ccdata);
 	fprintf(file, "is_output_levenshtein:%d\n", debug->is_output_levenshtein);
 
-	//Write HD Homerun Tab data
+	// Write HD Homerun Tab data
 	fprintf(file, "location_len:%d\n", hd_homerun->location_len);
 	fprintf(file, "location:%s\n", hd_homerun->location);
 	fprintf(file, "tuner_len:%d\n", hd_homerun->tuner_len);
@@ -452,7 +452,7 @@ void save_data(FILE *file,
 	fprintf(file, "port_number_len:%d\n", hd_homerun->port_number_len);
 	fprintf(file, "port_number:%s\n", hd_homerun->port_number);
 
-	//Write Burned Subs tab data
+	// Write Burned Subs tab data
 	fprintf(file, "is_burnded_subs:%d\n", burned_subs->is_burned_subs);
 	fprintf(file, "color_type:%d\n", burned_subs->color_type);
 	fprintf(file, "sub_color_select:%d\n", burned_subs->subs_color_select);
@@ -467,7 +467,7 @@ void save_data(FILE *file,
 	fprintf(file, "confidence_threshold:%d\n", burned_subs->confidence_threshold);
 	fprintf(file, "is_italic:%d\n", burned_subs->is_italic);
 
-	//Write Network Settings popup data
+	// Write Network Settings popup data
 	if (network_settings->save_network_settings)
 	{
 		fprintf(file, "udp_ipv4_len:%d\n", network_settings->udp_ipv4_len);
@@ -485,9 +485,9 @@ void save_data(FILE *file,
 
 void write_credits(FILE *file, struct credits_tab *credits)
 {
-	//Number of newlines in end_text
+	// Number of newlines in end_text
 	static int newlines_end;
-	//Number of newlines in start_text
+	// Number of newlines in start_text
 	static int newlines_start;
 	int newline_char = 10; // '\n' is 10 in ascii encoding
 	for (int i = 0; i < credits->start_text_len; i++)
@@ -512,9 +512,9 @@ void write_credits(FILE *file, struct credits_tab *credits)
 
 void read_credits(FILE *file, struct credits_tab *credits)
 {
-	//Number of newlines in end_text
+	// Number of newlines in end_text
 	static int newlines_end;
-	//Number of newlines in start_text
+	// Number of newlines in start_text
 	static int newlines_start;
 	static char buffer[1000], null_char[260];
 	if (credits->start_text_len == 0)

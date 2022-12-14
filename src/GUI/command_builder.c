@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#endif //!NK_IMPLEMENTATION
+#endif //! NK_IMPLEMENTATION
 
 #include "ccextractorGUI.h"
 #include "tabs.h"
@@ -398,7 +398,7 @@ void command_builder(struct built_string *command,
 			strcat(buffer, " -detect_italics");
 	}
 
-	//Output
+	// Output
 	{
 		strcat(buffer, " -out=");
 		strcat(buffer, output->type[output->type_select]);

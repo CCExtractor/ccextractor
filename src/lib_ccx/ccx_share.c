@@ -83,10 +83,10 @@ void ccx_sub_entries_print(ccx_sub_entries *entries)
 	}
 }
 
-ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
+ccx_share_status ccx_share_start(const char *stream_name) // TODO add stream
 {
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
-	//TODO for multiple files we have to move creation to ccx_share_init
+	// TODO for multiple files we have to move creation to ccx_share_init
 	ccx_share_ctx.nn_sock = nn_socket(AF_SP, NN_PUB);
 	if (ccx_share_ctx.nn_sock < 0)
 	{
@@ -116,10 +116,10 @@ ccx_share_status ccx_share_start(const char *stream_name) //TODO add stream
 		fatal(EXIT_NOT_CLASSIFIED, "In ccx_share_start: can't nn_setsockopt()");
 	}
 
-	//TODO remove path from stream name to minimize traffic (/?)
+	// TODO remove path from stream name to minimize traffic (/?)
 	ccx_share_ctx.stream_name = strdup(stream_name ? stream_name : "unknown");
 
-	sleep(1); //We have to sleep a while, because it takes some time for subscribers to subscribe
+	sleep(1); // We have to sleep a while, because it takes some time for subscribers to subscribe
 	return CCX_SHARE_OK;
 }
 
@@ -143,7 +143,7 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 	for (unsigned int i = 0; i < entries.count; i++)
 	{
 		dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: _sending %u\n", i);
-		//TODO prevent sending empty messages
+		// TODO prevent sending empty messages
 		if (_ccx_share_send(entries.messages + i) != CCX_SHARE_OK)
 		{
 			dbg_print(CCX_DMT_SHARE, "[share] can't send message\n");
@@ -319,4 +319,4 @@ ccx_share_status ccx_share_launch_translator(char *langs, char *auth)
 	return CCX_SHARE_OK;
 }
 
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING

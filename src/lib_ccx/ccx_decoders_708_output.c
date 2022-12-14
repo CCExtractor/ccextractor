@@ -279,10 +279,10 @@ void dtvcc_write_transcript(dtvcc_writer_ctx *writer, dtvcc_service_decoder *dec
 						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
 
 			if (encoder->transcript_settings->showCC)
-				sprintf(buf + strlen(buf), "CC1|"); //always CC1 because CEA-708 is field-independent
+				sprintf(buf + strlen(buf), "CC1|"); // always CC1 because CEA-708 is field-independent
 
 			if (encoder->transcript_settings->showMode)
-				sprintf(buf + strlen(buf), "POP|"); //TODO caption mode(pop, rollup, etc.)
+				sprintf(buf + strlen(buf), "POP|"); // TODO caption mode(pop, rollup, etc.)
 
 			const size_t buf_len = strlen(buf);
 			if (buf_len != 0)
@@ -466,7 +466,7 @@ void dtvcc_writer_cleanup(dtvcc_writer_ctx *writer)
 	free(writer->filename);
 	if (writer->cd == (iconv_t)-1)
 	{
-		//TODO nothing to do here
+		// TODO nothing to do here
 	}
 	else
 		iconv_close(writer->cd);
@@ -481,7 +481,7 @@ void dtvcc_writer_output(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decode
 	if (!writer->filename && writer->fd < 0)
 		return;
 
-	if (writer->filename && writer->fd < 0) //first request to write
+	if (writer->filename && writer->fd < 0) // first request to write
 	{
 		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] "
 							  "dtvcc_writer_output: creating %s\n",

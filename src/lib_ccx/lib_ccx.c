@@ -157,7 +157,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->freport.data_from_708 = report_dtvcc;
 	ctx->dec_global_setting->settings_dtvcc->report = report_dtvcc;
 	ctx->mp4_cfg.mp4vidtrack = opt->mp4vidtrack;
-	//Initialize input files
+	// Initialize input files
 	ctx->inputfile = opt->inputfile;
 	ctx->num_input_files = opt->num_input_files;
 
@@ -215,7 +215,7 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		LLONG cfts;
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
-		//Test memory for teletext
+		// Test memory for teletext
 		else if (dec_ctx->codec == CCX_CODEC_TELETEXT)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		else if (dec_ctx->codec == CCX_CODEC_ISDB_CC)
@@ -281,7 +281,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In update_decoder_list: Not enough memory to init_cc_decode.\n");
 		list_add_tail(&(dec_ctx->list), &(ctx->dec_ctx_head));
 
-		//DVB related
+		// DVB related
 		dec_ctx->prev = NULL;
 		dec_ctx->dec_sub.prev = NULL;
 		if (dec_ctx->codec == CCX_CODEC_DVB)
@@ -335,7 +335,7 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 		list_add_tail(&(dec_ctx->list), &(ctx->dec_ctx_head));
 	}
 
-	//DVB related
+	// DVB related
 	dec_ctx->prev = NULL;
 	dec_ctx->dec_sub.prev = NULL;
 

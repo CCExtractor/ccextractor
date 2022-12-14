@@ -65,7 +65,7 @@ void init_options(struct ccx_s_options *options)
 	options->xmltvonlycurrent = 0;	  // 0 off 1 on
 	options->keep_output_closed = 0;  // By default just keep the file open.
 	options->force_flush = 0;	  // Don't flush whenever content is written.
-	options->append_mode = 0;	  //By default, files are overwritten.
+	options->append_mode = 0;	  // By default, files are overwritten.
 	options->ucla = 0;		  // By default, -UCLA not used
 	options->tickertext = 0;	  // By default, do not assume ticker style text
 	options->hardsubx = 0;		  // By default, don't try to extract hard subtitles
@@ -156,7 +156,7 @@ void init_options(struct ccx_s_options *options)
 	options->translate_enabled = 0;
 	options->translate_key = NULL;
 	options->translate_langs = NULL;
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 #ifdef WITH_LIBCURL
 	options->curlposturl = NULL;
 #endif

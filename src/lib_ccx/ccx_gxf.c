@@ -78,24 +78,24 @@ typedef enum
 	TRACK_FPS = 0x50,
 
 	/**
-	  * Lines per frame
-	  * 1 = 525
-	  * 2 = 625
-	  * 4 = 1080
-	  * 5 = Reserved
-	  * 6 = 720
-	  * -1 = Not applicable
-	  * -2 = Not available
-	  */
+	 * Lines per frame
+	 * 1 = 525
+	 * 2 = 625
+	 * 4 = 1080
+	 * 5 = Reserved
+	 * 6 = 720
+	 * -1 = Not applicable
+	 * -2 = Not available
+	 */
 	TRACK_LINES = 0x51,
 
 	/**
-	   * Fields per frame
-	   * 1 = Progressive
-	   * 2 = Interlaced
-	   * -1 = Not applicable
-	   * -2 = Not available
-	   */
+	 * Fields per frame
+	 * 1 = Progressive
+	 * 2 = Interlaced
+	 * -1 = Not applicable
+	 * -2 = Not available
+	 */
 	TRACK_FPF = 0x52,
 
 } GXFTrackTag;
@@ -132,7 +132,7 @@ typedef enum
 	/**
 	 * A video track encoded using SMPTE 314M or ISO/IEC 61834-2 DV
 	 * encoded at 25 Mb/s for 525/60i
-	*/
+	 */
 	TRACK_TYPE_DV_BASED_25MB_525 = 13,
 
 	/**
@@ -142,14 +142,14 @@ typedef enum
 	TRACK_TYPE_DV_BASED_25MB_625 = 14,
 
 	/**
-	  * A video track encoded using SMPTE 314M DV encoding at 50Mb/s
-	  * for 525/50i.
-	  */
+	 * A video track encoded using SMPTE 314M DV encoding at 50Mb/s
+	 * for 525/50i.
+	 */
 	TRACK_TYPE_DV_BASED_50MB_525 = 15,
 
 	/**
-	   * A video track encoded using SMPTE 314M DV encoding at 50Mb/s for 625/50i
-	   */
+	 * A video track encoded using SMPTE 314M DV encoding at 50Mb/s for 625/50i
+	 */
 	TRACK_TYPE_DV_BASED_50_MB_625 = 16,
 
 	/* An AC-3 audio track */
@@ -162,9 +162,9 @@ typedef enum
 	TRACK_TYPE_RESERVED = 19,
 
 	/**
-		* A video track encoded using ISO/IEC 13818-2 (MPEG-2) main profile at main
-		* level or high level, or 4:2:2 profile at main level or high level.
-		*/
+	 * A video track encoded using ISO/IEC 13818-2 (MPEG-2) main profile at main
+	 * level or high level, or 4:2:2 profile at main level or high level.
+	 */
 	TRACK_TYPE_MPEG2_HD = 20,
 
 	/* SMPTE 291M 10-bit type 2 component ancillary data. */
@@ -229,7 +229,7 @@ struct ccx_gxf_video_track
 	 * 2 = Interlaced
 	 * -1 = Not applicable
 	 * -2 = Not available
-	*/
+	 */
 	uint32_t field_per_frame;
 
 	enum mpeg_picture_coding p_code;
@@ -300,7 +300,7 @@ struct ccx_gxf
 
 	/**
 	 * The mark in field number shall represent the position on a playout
-		 *  time line of the first field to be played from a track.
+	 *  time line of the first field to be played from a track.
 	 */
 	int32_t mark_in;
 
@@ -626,8 +626,8 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 				}
 				ad_track->ad_format = auxi_info[2];
 				ad_track->nb_field = auxi_info[3];
-				ad_track->field_size = *((int16_t *)(auxi_info + 4));	     //RB16(auxi_info + 4);
-				ad_track->packet_size = *((int16_t *)(auxi_info + 6)) * 256; //RB16(auxi_info + 6);
+				ad_track->field_size = *((int16_t *)(auxi_info + 4));	     // RB16(auxi_info + 4);
+				ad_track->packet_size = *((int16_t *)(auxi_info + 6)) * 256; // RB16(auxi_info + 6);
 				debug("ad_format %d nb_field %d field_size %d packet_size %d track id %d\n",
 				      ad_track->ad_format, ad_track->nb_field, ad_track->field_size, ad_track->packet_size, ad_track->id);
 				break;
@@ -952,7 +952,7 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 				ctx->cdp[i] = dat & 0xFF;
 		}
 		parse_ad_cdp(ctx->cdp, ctx->cdp_len, data);
-		//TODO check checksum
+		// TODO check checksum
 	}
 	else if (((d_id & 0xff) == CLOSED_CAP_DID) && ((sd_id & 0xff) == CLOSED_C608_SDID))
 	{
@@ -1367,7 +1367,7 @@ static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *
 	GXFTrackType media_type;
 	struct ccx_gxf *ctx = demux->private_data;
 	struct ccx_gxf_ancillary_data_track *ad_track;
-	//struct ccx_gxf_video_track *vid_track;
+	// struct ccx_gxf_video_track *vid_track;
 	/**
 	 * The track number is a reference into the track description section of the map packets. It identifies the media
 	 * file to which the current media packet belongs. Track descriptions shall be considered as consecutive
@@ -1487,7 +1487,7 @@ static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *
 		{
 			goto end;
 		}
-		//vid_track = ctx->vid_track;
+		// vid_track = ctx->vid_track;
 		if (valid_time_field)
 		{
 			data->pts = time_field - ctx->first_field_nb;
@@ -1674,8 +1674,8 @@ int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			return -1;
 
 		data = *ppdata;
-		//TODO Set to dummy, find and set actual value
-		//Complex GXF do have multiple program
+		// TODO Set to dummy, find and set actual value
+		// Complex GXF do have multiple program
 		data->program_number = 1;
 		data->stream_pid = 1;
 		data->codec = CCX_CODEC_ATSC_CC;

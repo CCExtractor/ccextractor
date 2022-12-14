@@ -51,7 +51,7 @@ int _CRT_fmode = _O_BINARY;
 uint64_t last_pes_pts = 0; // PTS of last PES packet (debug purposes)
 static int de_ctr = 0;	   // a keeps count of packets with flag subtitle ON and data packets
 static const char *TTXT_COLOURS[8] = {
-    //black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
+    // black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
     "#000000", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"};
 
 // 1-byte alignment; just to be sure, this struct is being used for explicit type conversion
@@ -371,28 +371,28 @@ uint32_t unham_24_18(uint32_t a)
 {
 	uint8_t test = 0;
 
-	//Tests A-F correspond to bits 0-6 respectively in 'test'.
+	// Tests A-F correspond to bits 0-6 respectively in 'test'.
 	for (uint8_t i = 0; i < 23; i++)
 		test ^= ((a >> i) & 0x01) * (i + 33);
-	//Only parity bit is tested for bit 24
+	// Only parity bit is tested for bit 24
 	test ^= ((a >> 23) & 0x01) * 32;
 
 	if ((test & 0x1f) != 0x1f)
 	{
-		//Not all tests A-E correct
+		// Not all tests A-E correct
 		if ((test & 0x20) == 0x20)
 		{
-			//F correct: Double error
+			// F correct: Double error
 			return 0xffffffff;
 		}
-		//Test F incorrect: Single error
+		// Test F incorrect: Single error
 		a ^= 1 << (30 - test);
 	}
 
 	return (a & 0x000004) >> 2 | (a & 0x000070) >> 3 | (a & 0x007f00) >> 4 | (a & 0x7f0000) >> 5;
 }
 
-//Default G0 Character Set
+// Default G0 Character Set
 void set_g0_charset(uint32_t triplet)
 {
 	// ETS 300 706, Table 32
@@ -480,14 +480,14 @@ void telx_case_fix(struct TeletextCtx *context)
 	if (context->page_buffer_cur == NULL)
 		return;
 
-	//Capitalizing first letter of every sentence
+	// Capitalizing first letter of every sentence
 	int line_len = strlen(context->page_buffer_cur);
 	for (int i = 0; i < line_len; i++)
 	{
 		switch (context->page_buffer_cur[i])
 		{
 			case ' ':
-				//case 0x89: // This is a transparent space
+				// case 0x89: // This is a transparent space
 			case '-':
 				break;
 			case '.': // Fallthrough
@@ -910,8 +910,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		// Page number and control bits
 		page_number = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 		charset = ((unham_8_4(packet->data[7]) & 0x08) | (unham_8_4(packet->data[7]) & 0x04) | (unham_8_4(packet->data[7]) & 0x02)) >> 1;
-		//uint8_t flag_suppress_header = unham_8_4(packet->data[6]) & 0x01;
-		//uint8_t flag_inhibit_display = (unham_8_4(packet->data[6]) & 0x08) >> 3;
+		// uint8_t flag_suppress_header = unham_8_4(packet->data[6]) & 0x01;
+		// uint8_t flag_inhibit_display = (unham_8_4(packet->data[6]) & 0x08) >> 3;
 
 		// ETS 300 706, chapter 9.3.1.3:
 		// When set to '1' the service is designated to be in Serial mode and the transmission of a page is terminated
@@ -1285,7 +1285,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint16_t pes_packet_length;
 	uint8_t optional_pes_header_included = NO;
 	uint16_t optional_pes_header_length = 0;
-	//extension
+	// extension
 	uint8_t pes_scrambling_control;
 	uint8_t pes_priority;
 	uint8_t data_alignment_indicator;
@@ -1298,7 +1298,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint8_t aci_flag;
 	uint8_t pes_crc_flag;
 	uint8_t pes_ext_flag;
-	//extension
+	// extension
 	uint32_t t = 0;
 	uint16_t i;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
@@ -1424,10 +1424,10 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 
 		if (ccx_options.pes_header_to_stdout)
 		{
-			//printf("# Associated PTS: %d \n", pts);
+			// printf("# Associated PTS: %d \n", pts);
 			printf("# Associated PTS: %" PRId64 " # ", pts);
 			printf("Diff: %" PRIu64 "\n", pts - last_pes_pts);
-			//printf("Diff: %d # ", pts - last_pes_pts);
+			// printf("Diff: %d # ", pts - last_pes_pts);
 			last_pes_pts = pts;
 		}
 	}

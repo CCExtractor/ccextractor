@@ -63,7 +63,7 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 		if (validate_cc_data_pair(cc_data + j))
 			continue;
 		ret = do_cb(dec_ctx, cc_data + j, sub);
-		if (ret == 1) //1 means success here
+		if (ret == 1) // 1 means success here
 			ret = 0;
 	}
 	return ret;
@@ -178,10 +178,10 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				}
 				cb_field2++;
 				break;
-			case 2: //EIA-708
-				// DTVCC packet data
-				// Fall through
-			case 3: //EIA-708
+			case 2: // EIA-708
+				//  DTVCC packet data
+				//  Fall through
+			case 3: // EIA-708
 				dbg_print(CCX_DMT_CBRAW, "    ..   ..   DD\n");
 
 				// DTVCC packet start

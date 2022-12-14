@@ -443,9 +443,9 @@ typedef struct ccx_stream_mp4_box
 } ccx_stream_mp4_box;
 
 /* The box types below are taken from table 1 from ISO/IEC 14496-12_2012 (page 12 and further).
-* An asterisk (*) marks a mandatory box for a regular file.
-* Box types that are on the second level or deeper are omitted.
-*/
+ * An asterisk (*) marks a mandatory box for a regular file.
+ * Box types that are on the second level or deeper are omitted.
+ */
 ccx_stream_mp4_box ccx_stream_mp4_boxes[16] = {
     {"ftyp", 6}, // File type and compatibility*
     {"pdin", 1}, // Progressive download information

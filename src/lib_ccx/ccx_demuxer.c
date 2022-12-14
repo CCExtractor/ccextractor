@@ -296,7 +296,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	if (!ctx)
 		return NULL;
 
-	ctx->infd = -1; //Set to -1 to indicate no file is open.
+	ctx->infd = -1; // Set to -1 to indicate no file is open.
 	ctx->m2ts = cfg->m2ts;
 	ctx->auto_stream = cfg->auto_stream;
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;

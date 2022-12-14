@@ -10,7 +10,7 @@
 #include "ccextractor.h"
 #ifdef ENABLE_SHARING
 #include "ccx_share.h"
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 #ifdef WIN32
 int fsync(int fd)
@@ -31,7 +31,7 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.useColors = 1,
 	.isFinal = 0};
 
-//TODO sami header doesn't carry about CRLF/LF option
+// TODO sami header doesn't carry about CRLF/LF option
 static const char *sami_header = // TODO: Revise the <!-- comments
     "<SAMI>\n\
 <HEAD>\n\
@@ -484,7 +484,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			}
 			break;
 		case CCX_OF_SAMI: // This header brought to you by McPoodle's CCASDI
-			//fprintf_encoded (wb->fh, sami_header);
+			// fprintf_encoded (wb->fh, sami_header);
 			if (write_bom(ctx, out) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx, strlen(sami_header) * 3);
@@ -496,7 +496,7 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 			}
 			break;
 		case CCX_OF_SMPTETT: // This header brought to you by McPoodle's CCASDI
-			//fprintf_encoded (wb->fh, sami_header);
+			// fprintf_encoded (wb->fh, sami_header);
 			if (write_bom(ctx, out) < 0)
 				return -1;
 			REQUEST_BUFFER_CAPACITY(ctx, strlen(smptett_header) * 3);
@@ -637,7 +637,7 @@ int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx 
 	return wrote_something;
 }
 
-//Dummy Function for support DVB in simple xml
+// Dummy Function for support DVB in simple xml
 int write_cc_bitmap_as_simplexml(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;
@@ -1090,7 +1090,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 #ifdef ENABLE_SHARING
 	if (ccx_options.sharing_enabled)
 		ccx_share_send(sub);
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 	if (context->sbs_enabled)
 	{

@@ -9,8 +9,8 @@
 #include "iconv.h"
 #endif
 
-//Prints a string to a file pointer, escaping XML special chars
-//Works with UTF-8
+// Prints a string to a file pointer, escaping XML special chars
+// Works with UTF-8
 void EPG_fprintxml(FILE *f, char *string)
 {
 	char *p = string;
@@ -416,7 +416,7 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
 		}
 
-		if (ctx->demux_ctx->nb_program == 0) //Stream has no PMT, fall back to unordered events
+		if (ctx->demux_ctx->nb_program == 0) // Stream has no PMT, fall back to unordered events
 			for (j = 0; j < ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
 				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
 	}
@@ -452,7 +452,7 @@ void EPG_free_event(struct EPG_event *event)
 		free(event->categories);
 }
 
-//compare 2 events. Return false if they are different.
+// compare 2 events. Return false if they are different.
 int EPG_event_cmp(struct EPG_event *e1, struct EPG_event *e2)
 {
 	if (e1->id != e2->id || (strcmp(e1->start_time_string, e2->start_time_string) != 0) || (strcmp(e1->end_time_string, e2->end_time_string) != 0))
@@ -472,9 +472,9 @@ int EPG_add_event(struct lib_ccx_ctx *ctx, int32_t pmt_map, struct EPG_event *ev
 		if (ctx->eit_programs[pmt_map].epg_events[j].id == event->id)
 		{
 			if (EPG_event_cmp(event, &ctx->eit_programs[pmt_map].epg_events[j]))
-				return false; //event already in array, nothing to do
+				return false; // event already in array, nothing to do
 			else
-			{ //event with this id is already in the array but something has changed. Update it.
+			{ // event with this id is already in the array but something has changed. Update it.
 				event->count = ctx->eit_programs[pmt_map].epg_events[j].count;
 				EPG_free_event(&ctx->eit_programs[pmt_map].epg_events[j]);
 				memcpy(&ctx->eit_programs[pmt_map].epg_events[j], event, sizeof(struct EPG_event));
@@ -489,8 +489,8 @@ int EPG_add_event(struct lib_ccx_ctx *ctx, int32_t pmt_map, struct EPG_event *ev
 	return true;
 }
 
-//EN 300 468 V1.3.1 (1998-02)
-//6.2.4 Content descriptor
+// EN 300 468 V1.3.1 (1998-02)
+// 6.2.4 Content descriptor
 void EPG_decode_content_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
 	int i;
@@ -509,8 +509,8 @@ void EPG_decode_content_descriptor(uint8_t *offset, uint32_t descriptor_length, 
 	}
 }
 
-//EN 300 468 V1.3.1 (1998-02)
-//6.2.20 Parental rating description
+// EN 300 468 V1.3.1 (1998-02)
+// 6.2.20 Parental rating description
 void EPG_decode_parental_rating_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
 	int i;
@@ -569,7 +569,7 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	{
 		size--;
 		in++;
-		cd = iconv_open("UTF-8", "ISO8859-5"); //tested
+		cd = iconv_open("UTF-8", "ISO8859-5"); // tested
 	}
 	else if (in[0] == 0x02)
 	{
@@ -611,7 +611,7 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	{
 		size--;
 		in++;
-		cd = iconv_open("UTF-8", "ISO8859-12"); //This doesn't even exist?
+		cd = iconv_open("UTF-8", "ISO8859-12"); // This doesn't even exist?
 	}
 	else if (in[0] == 0x09)
 	{
@@ -629,7 +629,7 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	{
 		size--;
 		in++;
-		cd = iconv_open("UTF-8", "ISO8859-15"); //tested, german
+		cd = iconv_open("UTF-8", "ISO8859-15"); // tested, german
 	}
 	else if (in[0] == 0x10)
 	{
@@ -717,8 +717,8 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	return out;
 }
 
-//EN 300 468 V1.3.1 (1998-02)
-//6.2.27 Short event descriptor
+// EN 300 468 V1.3.1 (1998-02)
+// 6.2.27 Short event descriptor
 void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
 	uint8_t text_length;
@@ -746,8 +746,8 @@ void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_leng
 	event->text = EPG_DVB_decode_string(&offset[5 + event_name_length], text_length);
 }
 
-//EN 300 468 V1.3.1 (1998-02)
-//6.2.9 Extended event descriptor
+// EN 300 468 V1.3.1 (1998-02)
+// 6.2.9 Extended event descriptor
 void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
 	uint8_t descriptor_number = offset[0] >> 4;
@@ -774,7 +774,7 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 		return;
 	}
 
-	//TODO: can this leak memory with a malformed descriptor?
+	// TODO: can this leak memory with a malformed descriptor?
 	if (descriptor_number > 0)
 	{
 		if (offset[1] < 0x20)
@@ -893,7 +893,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 			pmt_map = i;
 	}
 
-	//Don't know how to store EPG until we know the programs. Ignore it.
+	// Don't know how to store EPG until we know the programs. Ignore it.
 	if (pmt_map == -1)
 		pmt_map = TS_PMT_MAP_SIZE;
 
@@ -923,7 +923,7 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 		EPG_ATSC_calc_time(event.end_time_string, start_time + length_in_seconds);
 
 		title_length = offset[9];
-		//XXX cant decode data more then size of payload
+		// XXX cant decode data more then size of payload
 		CHECK_OFFSET(11 + title_length);
 
 		EPG_ATSC_decode_multiple_string(&offset[10], title_length, &event);
@@ -975,7 +975,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 {
 
 	uint8_t table_id;
-	//uint8_t section_syntax_indicator = (0xf1&0x80)>>7;
+	// uint8_t section_syntax_indicator = (0xf1&0x80)>>7;
 	uint16_t section_length;
 	uint16_t service_id;
 	int32_t pmt_map = -1;
@@ -991,7 +991,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		return;
 
 	table_id = payload_start[0];
-	//section_syntax_indicator 	= (0xf1&0x80)>>7;
+	// section_syntax_indicator 	= (0xf1&0x80)>>7;
 	section_length = (payload_start[1] & 0x0F) << 8 | payload_start[2];
 	service_id = (payload_start[3] << 8) | payload_start[4];
 	section_number = payload_start[6];
@@ -1005,14 +1005,14 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 			pmt_map = i;
 	}
 
-	//For any service we don't have an PMT for (yet), store it in the special last array pos.
+	// For any service we don't have an PMT for (yet), store it in the special last array pos.
 	if (pmt_map == -1)
 		pmt_map = TS_PMT_MAP_SIZE;
 
 	if (events_length > size - 14)
 	{
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT packet size detected.\n");
-		//XXX hack to override segfault, we should concat packets instead
+		// XXX hack to override segfault, we should concat packets instead
 		return;
 	}
 
@@ -1030,15 +1030,15 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		event.live_output = false;
 		event.service_id = service_id;
 
-		//40 bits
+		// 40 bits
 		start_time = ((uint64_t)offset[16] << 32) | ((uint64_t)offset[17] << 24) | ((uint64_t)offset[18] << 16) | ((uint64_t)offset[19] << 8) | ((uint64_t)offset[20] << 0);
 		EPG_DVB_calc_start_time(&event, start_time);
-		//24 bits
+		// 24 bits
 		duration = (offset[21] << 16) | (offset[22] << 8) | (offset[23] << 0);
 		EPG_DVB_calc_end_time(&event, start_time, duration);
 		event.running_status = (offset[24] & 0xE0) >> 5;
 		event.free_ca_mode = (offset[24] & 0x10) >> 4;
-		//12 bits
+		// 12 bits
 		descriptors_loop_length = ((offset[24] & 0x0f) << 8) | offset[25];
 		descp = &offset[26];
 		if (descriptors_loop_length > remaining - 16)
@@ -1080,12 +1080,12 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	if ((ccx_options.xmltv == 1 || ccx_options.xmltv == 3) && ccx_options.xmltvoutputinterval == 0 && hasnew)
 		EPG_output(ctx);
 }
-//handle outputting to xml files
+// handle outputting to xml files
 void EPG_handle_output(struct lib_ccx_ctx *ctx)
 {
 	int cur_sec = (int)((ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp) / 1000);
 	if (ccx_options.xmltv == 1 || ccx_options.xmltv == 3)
-	{ //full output
+	{ // full output
 		if (ccx_options.xmltvoutputinterval != 0 && cur_sec > ctx->epg_last_output + ccx_options.xmltvliveinterval)
 		{
 			ctx->epg_last_output = cur_sec;
@@ -1093,7 +1093,7 @@ void EPG_handle_output(struct lib_ccx_ctx *ctx)
 		}
 	}
 	if (ccx_options.xmltv == 2 || ccx_options.xmltv == 3 || ccx_options.send_to_srv)
-	{ //live output
+	{ // live output
 		if (cur_sec > ctx->epg_last_live_output + ccx_options.xmltvliveinterval)
 		{
 			ctx->epg_last_live_output = cur_sec;
@@ -1105,14 +1105,14 @@ void EPG_handle_output(struct lib_ccx_ctx *ctx)
 	}
 }
 
-//determine table type and call the correct function to handle it
+// determine table type and call the correct function to handle it
 void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 {
 	uint8_t pointer_field = b[0];
 	uint8_t *payload_start;
 	uint8_t table_id;
 
-	//XXX hack, should accumulate data
+	// XXX hack, should accumulate data
 	if (pointer_field + 2 > size)
 	{
 		return;

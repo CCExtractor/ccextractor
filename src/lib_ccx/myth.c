@@ -380,7 +380,7 @@ redo:
 	header_state = 0xff;
 	size = MAX_SYNC_SIZE;
 	startcode = find_next_start_code(ctx, &size, &header_state);
-	//printf("startcode=%x pos=0x%Lx\n", startcode, url_ftell(&s->pb));
+	// printf("startcode=%x pos=0x%Lx\n", startcode, url_ftell(&s->pb));
 	if (startcode < 0)
 		return AVERROR_IO;
 	if (startcode == PACK_START_CODE)
@@ -762,17 +762,17 @@ goto skip; */
 		buffered_get_byte(ctx); // quant (2), freq(2), reserved(1), channels(3)
 		buffered_get_byte(ctx); // dynamic range control (0x80 = off)
 		len -= 3;
-		//freq = (b1 >> 4) & 3;
-		//st->codec->sample_rate = lpcm_freq_tab[freq];
-		//st->codec->channels = 1 + (b1 & 7);
-		//st->codec->bit_rate = st->codec->channels * st->codec->sample_rate * 2;
+		// freq = (b1 >> 4) & 3;
+		// st->codec->sample_rate = lpcm_freq_tab[freq];
+		// st->codec->channels = 1 + (b1 & 7);
+		// st->codec->bit_rate = st->codec->channels * st->codec->sample_rate * 2;
 	}
 	// av_new_packet(pkt, len);
 	/*
 	   printf ("Paquete de %lu bytes, codec_id=%d, type=%d\n",(unsigned long) len,
 	   codec_id, type);
 	   */
-	//get_buffer(fh, pkt->data, pkt->size);
+	// get_buffer(fh, pkt->data, pkt->size);
 	av.size = len;
 	av.data = (unsigned char *)realloc(av.data, av.size);
 	if (av.data == NULL)
@@ -827,7 +827,7 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 				mprint("\rDetected VBI data, disabling user-data packet analysis (not needed).\n");
 				has_vbi = 1;
 			}
-			//fts_now=LLONG((processed_ccblocks*1000)/29.97);
+			// fts_now=LLONG((processed_ccblocks*1000)/29.97);
 			ProcessVBIDataPacket(ctx, &dec_sub);
 		}
 		/* This needs a lot more testing */

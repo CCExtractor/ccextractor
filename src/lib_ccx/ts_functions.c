@@ -12,11 +12,11 @@
 #include <unistd.h>
 #endif
 
-#define RAI_MASK 0x40 //byte mask to check if RAI bit is set (random access indicator)
+#define RAI_MASK 0x40 // byte mask to check if RAI bit is set (random access indicator)
 
 unsigned char tspacket[188]; // Current packet
 
-//struct ts_payload payload;
+// struct ts_payload payload;
 
 static unsigned char *haup_capbuf = NULL;
 static long haup_capbufsize = 0;
@@ -63,7 +63,7 @@ char *get_buffer_type_str(struct cap_info *cinfo)
 }
 void pes_header_dump(uint8_t *buffer, long len)
 {
-	//Write the PES Header to console
+	// Write the PES Header to console
 	uint64_t pes_prefix;
 	uint8_t pes_stream_id;
 	uint16_t pes_packet_length;
@@ -105,17 +105,17 @@ void pes_header_dump(uint8_t *buffer, long len)
 
 	if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0 && len >= 14)
 	{
-		//get associated PTS as it exists
+		// get associated PTS as it exists
 		pts = (buffer[9] & 0x0e);
 		pts <<= 29;
 		pts |= (buffer[10] << 22);
 		pts |= ((buffer[11] & 0xfe) << 14);
 		pts |= (buffer[12] << 7);
 		pts |= ((buffer[13] & 0xfe) >> 1);
-		//printf("# Associated PTS: %d \n", pts);
+		// printf("# Associated PTS: %d \n", pts);
 		printf("# Associated PTS: %" PRId64 " # ", pts);
 		printf("Diff: %" PRIu64 "\n", pts - last_pts);
-		//printf("Diff: %d # ", pts - last_pts);
+		// printf("Diff: %d # ", pts - last_pts);
 		last_pts = pts;
 	}
 }
@@ -504,7 +504,7 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
-	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) //for teletext we have its own header dump
+	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) // for teletext we have its own header dump
 	{
 		pes_header_dump(cinfo->capbuf, pesheaderlen);
 	}
@@ -598,7 +598,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		return CCX_OK;
 	}
 
-	//Verify PES before copy to capbuf
+	// Verify PES before copy to capbuf
 	if (cinfo->capbuflen == 0)
 	{
 		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
@@ -652,7 +652,7 @@ uint64_t get_pts(uint8_t *buffer)
 
 		if (optional_pes_header_included == YES && optional_pes_header_length > 0 && (buffer[7] & 0x80) > 0)
 		{
-			//get associated PTS as it exists
+			// get associated PTS as it exists
 			pts = (buffer[9] & 0x0e);
 			pts <<= 29;
 			pts |= (buffer[10] << 22);
@@ -787,8 +787,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				break;
 		}
 
-		//PTS calculation
-		if (payload.pesstart) //if there is PES Header data in the payload and we didn't get the first pts of that stream
+		// PTS calculation
+		if (payload.pesstart) // if there is PES Header data in the payload and we didn't get the first pts of that stream
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
@@ -800,15 +800,15 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			if (pes_prefix == 0x000001)
 			{
 				pts = get_pts(payload.start);
-				//keep in mind we already checked if we have this stream id
-				//we find the index of the packet PID in the have_PIDs array
+				// keep in mind we already checked if we have this stream id
+				// we find the index of the packet PID in the have_PIDs array
 				int pid_index;
 				for (int i = 0; i < ctx->num_of_PIDs; i++)
 					if (payload.pid == ctx->have_PIDs[i])
 						pid_index = i;
 				ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
 				if (pts < ctx->min_pts[pid_index])
-					ctx->min_pts[pid_index] = pts; //and add its packet pts
+					ctx->min_pts[pid_index] = pts; // and add its packet pts
 			}
 		}
 
