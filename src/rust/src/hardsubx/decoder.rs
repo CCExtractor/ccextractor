@@ -720,7 +720,7 @@ pub unsafe fn process_hardsubx_linear_frames_and_normal_subs(
     let mut prev_begin_time_hard: i64 = 0;
     let mut prev_end_time_hard: i64 = 0;
     let mut prev_packet_pts_hard: i64 = 0;
-    let mut ret: i32;
+    let mut ret: i32 = 0;
 
     let mut subtitle_text_hard: String;
     let mut prev_subtitle_text_hard: String = String::new();
@@ -746,7 +746,7 @@ pub unsafe fn process_hardsubx_linear_frames_and_normal_subs(
             break;
         }
 
-        if terminate_asap == 0 && !end_of_file && is_decoder_processed_enough(ctx) == 0 {
+        if terminate_asap == 0 && !end_of_file && is_decoder_processed_enough(ctx) == 0 && ret != -102{
             position_sanity_check((*ctx).demux_ctx);
             ret = _get_more_data(ctx, &mut datalist, &stream_mode);
 
