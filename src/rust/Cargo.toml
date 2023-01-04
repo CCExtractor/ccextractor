@@ -18,6 +18,10 @@ palette = "0.6.0"
 ffmpeg-sys-next = { version = "5.0.1", optional = true, default-features = false, features = ["avcodec", "avformat", "swscale", "build"]}
 tesseract-sys = { version = "0.5.12", optional = true, default-features = false}
 leptonica-sys = { version = "0.4.1", optional = true, default-features = false}
+num = "0.4"
+num-derive = "0.3"
+num-traits = "0.2"
+
 
 [build-dependencies]
 bindgen = "0.58.1"
