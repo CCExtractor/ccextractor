@@ -4,6 +4,9 @@ use super::HardsubxContext;
 use crate::bindings::{
     ccx_s_options, dinit_encoder, encoder_cfg, encoder_ctx, init_encoder, lib_ccx_ctx,
 };
+use crate::hardsubx::decoder::hardsubx_process_frames_tickertext;
+use crate::hardsubx::decoder::process_hardsubx_linear_frames_and_normal_subs;
+
 #[cfg(feature = "hardsubx_ocr")]
 use crate::hardsubx::{EXIT_NOT_ENOUGH_MEMORY, EXIT_READ_ERROR};
 use crate::utils::string_to_c_char;
@@ -29,7 +32,7 @@ extern "C" {
 /// # Safety
 /// Dereferences a raw pointer (datamember of the object ctx)
 /// calls potentially unsafe C functions
-pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut lib_ccx_ctx) {
+pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, ctx_normal: *mut lib_ccx_ctx) {
     let mut format_ctx_tmp: *mut AVFormatContext =
         null::<AVFormatContext>() as *mut AVFormatContext;
     let file_name = string_to_c_char(&ctx.inputfile[0]);
@@ -161,7 +164,9 @@ pub unsafe fn hardsubx_process_data(ctx: &mut HardsubxContext, _ctx_normal: *mut
     println!("Beginning burned-in subtitle detection...\n");
 
     if ctx.tickertext {
-        // hardsubx_process_frames_tickertext(&mut ctx, enc_ctx_ptr);
+        hardsubx_process_frames_tickertext(ctx, enc_ctx_ptr);
+    } else if ctx.hardsubx_and_common {
+        process_hardsubx_linear_frames_and_normal_subs(ctx_normal, ctx, enc_ctx_ptr)
     } else {
         hardsubx_process_frames_linear(ctx, enc_ctx_ptr);
     }
