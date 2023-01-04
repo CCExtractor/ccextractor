@@ -746,7 +746,11 @@ pub unsafe fn process_hardsubx_linear_frames_and_normal_subs(
             break;
         }
 
-        if terminate_asap == 0 && !end_of_file && is_decoder_processed_enough(ctx) == 0 && ret != -102{
+        if terminate_asap == 0
+            && !end_of_file
+            && is_decoder_processed_enough(ctx) == 0
+            && ret != -102
+        {
             position_sanity_check((*ctx).demux_ctx);
             ret = _get_more_data(ctx, &mut datalist, &stream_mode);
 
@@ -755,22 +759,21 @@ pub unsafe fn process_hardsubx_linear_frames_and_normal_subs(
             if datalist != null::<demuxer_data>() as *mut demuxer_data {
                 position_sanity_check((*ctx).demux_ctx);
 
-                if (*ctx).multiprogram == 0 {
-                    if dec_ctx == null::<lib_cc_decode>() as *mut lib_cc_decode
-                        || hard_ctx.dec_sub.start_time >= (*dec_ctx).dec_sub.start_time
-                        || status < 0
-                    {
-                        process_non_multiprogram_general_loop(
-                            ctx,
-                            &mut datalist,
-                            &mut datanode,
-                            &mut dec_ctx,
-                            &mut enc_ctx,
-                            &mut min_pts,
-                            ret,
-                            &mut caps,
-                        );
-                    }
+                if (*ctx).multiprogram == 0
+                    && dec_ctx == null::<lib_cc_decode>() as *mut lib_cc_decode
+                    || hard_ctx.dec_sub.start_time >= (*dec_ctx).dec_sub.start_time
+                    || status < 0
+                {
+                    process_non_multiprogram_general_loop(
+                        ctx,
+                        &mut datalist,
+                        &mut datanode,
+                        &mut dec_ctx,
+                        &mut enc_ctx,
+                        &mut min_pts,
+                        ret,
+                        &mut caps,
+                    );
                 }
 
                 if (*ctx).live_stream != 0 {
