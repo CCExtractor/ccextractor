@@ -32,7 +32,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	ctx->video_stream_id = -1;
 	for (int i = 0; i < ctx->format_ctx->nb_streams; i++)
 	{
-		if (ctx->format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+		if (ctx->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
 			ctx->video_stream_id = i;
 			break;
@@ -43,7 +43,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		fatal(EXIT_READ_ERROR, "Video Stream not found!\n");
 	}
 
-	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codec;
+	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codecpar;
 	ctx->codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
 	if (ctx->codec == NULL)
 	{
