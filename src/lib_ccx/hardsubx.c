@@ -12,9 +12,6 @@
 
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
-	// Get the required media attributes and initialize structures
-	av_register_all();
-
 	if (avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL) != 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error reading input file!\n");
