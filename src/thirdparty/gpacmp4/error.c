@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2012
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -24,6 +24,7 @@
  */
 
 #include <gpac/tools.h>
+#include <gpac/thread.h>
 
 
 //ugly patch, we have a concurrence issue with gf_4cc_to_str, for now fixed by rolling buffers
@@ -35,31 +36,34 @@ GF_EXPORT
 const char *gf_4cc_to_str(u32 type)
 {
 	u32 ch, i;
-	Bool is_ok=GF_TRUE;
 	char *szTYPE = szTYPE_BUF[buf_4cc_idx];
 	char *name = (char *)szTYPE;
 	if (!type) return "00000000";
 	buf_4cc_idx++;
-	if (buf_4cc_idx==NB_4CC_BUF)
+	if (buf_4cc_idx>=NB_4CC_BUF)
 		buf_4cc_idx=0;
 
-	for (i = 0; i < 4; i++, name++) {
+	for (i = 0; i < 4; i++) {
 		ch = type >> (8 * (3-i) ) & 0xff;
 		if ( ch >= 0x20 && ch <= 0x7E ) {
 			*name = ch;
+			name++;
 		} else {
-			is_ok=GF_FALSE;
-			break;
+			sprintf(name, "%02X", ch);
+			name += 2;
 		}
 	}
-	if (is_ok) {
-		*name = 0;
-		return (const char *) szTYPE;
-	}
-	sprintf(szTYPE, "%02X%02X%02X%02X", (type>>24)&0xFF, (type>>16)&0xFF, (type>>8)&0xFF, (type)&0xFF);
+	*name = 0;
 	return (const char *) szTYPE;
 }
 
+GF_EXPORT
+u32 gf_4cc_parse(const char *val)
+{
+	if (val && strlen(val)==4) return GF_4CC(val[0], val[1], val[2], val[3]);
+	GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] Value is not a properly defined 4CC", val));
+	return 0;
+}
 
 static const char *szProg[] =
 {
@@ -88,24 +92,33 @@ static const char *szProg[] =
 
 static u64 prev_pos = (u64) -1;
 static u64 prev_pc = (u64) -1;
+extern char gf_prog_lf;
+
 static void gf_on_progress_std(const char *_title, u64 done, u64 total)
 {
 	Double prog;
 	u32 pos, pc;
 	const char *szT = _title ? (char *)_title : (char *) "";
-	prog = (double) done;
-	prog /= total;
+
+	if (total) {
+		prog = (double) done;
+		prog /= total;
+	} else {
+		prog = 0;
+	}
+
 	pos = MIN((u32) (20 * prog), 20);
 
-	if (pos>prev_pos) {
+	if (done != total && pos>prev_pos) {
 		prev_pos = 0;
 		prev_pc = 0;
 	}
 	pc = (u32) ( 100 * prog);
-	if ((pos!=prev_pos) || (pc!=prev_pc)) {
+
+	if ((done != total || prev_pos ) && ((pos!=prev_pos) || (pc!=prev_pc))) {
 		prev_pos = pos;
 		prev_pc = pc;
-		fprintf(stderr, "%s: |%s| (%02d/100)\r", szT, szProg[pos], pc);
+		fprintf(stderr, "%s: |%s| (%02d/100)%c", szT, szProg[pos], pc, gf_prog_lf);
 		fflush(stderr);
 	}
 	if (done==total) {
@@ -115,23 +128,28 @@ static void gf_on_progress_std(const char *_title, u64 done, u64 total)
 				fprintf(stderr, " ");
 				len--;
 			};
-			fprintf(stderr, "\r");
+			fprintf(stderr, "%c", gf_prog_lf);
 		}
 		prev_pos = 0;
 	}
 }
 
 static gf_on_progress_cbk prog_cbk = NULL;
-static void *user_cbk;
+static void *user_cbk = NULL;
+#if defined(GPAC_CONFIG_IOS) || defined(GPAC_CONFIG_ANDROID)
+static Bool gpac_no_color_logs = GF_TRUE;
+#else
 static Bool gpac_no_color_logs = GF_FALSE;
+#endif
 
 GF_EXPORT
 void gf_set_progress(const char *title, u64 done, u64 total)
 {
 	if (done>=total)
 		done=total;
-	if (prog_cbk) {
-		prog_cbk(user_cbk, title, done, total);
+	if (prog_cbk || user_cbk) {
+		if (prog_cbk)
+			prog_cbk(user_cbk, title, done, total);
 	}
 #ifndef _WIN32_WCE
 	else {
@@ -162,8 +180,6 @@ static struct log_tool_info {
 	{ GF_LOG_NETWORK, "network", GF_LOG_WARNING },
 	{ GF_LOG_HTTP, "http", GF_LOG_WARNING },
 	{ GF_LOG_RTP, "rtp", GF_LOG_WARNING },
-	{ GF_LOG_AUTHOR, "author", GF_LOG_WARNING },
-	{ GF_LOG_SYNC, "sync", GF_LOG_WARNING },
 	{ GF_LOG_CODEC, "codec", GF_LOG_WARNING },
 	{ GF_LOG_PARSER, "parser", GF_LOG_WARNING },
 	{ GF_LOG_MEDIA, "media", GF_LOG_WARNING },
@@ -171,10 +187,10 @@ static struct log_tool_info {
 	{ GF_LOG_SCRIPT, "script", GF_LOG_WARNING },
 	{ GF_LOG_INTERACT, "interact", GF_LOG_WARNING },
 	{ GF_LOG_COMPOSE, "compose", GF_LOG_WARNING },
+	{ GF_LOG_COMPTIME, "ctime", GF_LOG_WARNING },
 	{ GF_LOG_CACHE, "cache", GF_LOG_WARNING },
 	{ GF_LOG_MMIO, "mmio", GF_LOG_WARNING },
 	{ GF_LOG_RTI, "rti", GF_LOG_WARNING },
-	{ GF_LOG_SMIL, "smil", GF_LOG_WARNING },
 	{ GF_LOG_MEMORY, "mem", GF_LOG_WARNING },
 	{ GF_LOG_AUDIO, "audio", GF_LOG_WARNING },
 	{ GF_LOG_MODULE, "module", GF_LOG_WARNING },
@@ -183,7 +199,7 @@ static struct log_tool_info {
 	{ GF_LOG_DASH, "dash", GF_LOG_WARNING },
 	{ GF_LOG_FILTER, "filter", GF_LOG_WARNING },
 	{ GF_LOG_SCHEDULER, "sched", GF_LOG_WARNING },
-	{ GF_LOG_ATSC, "atsc", GF_LOG_WARNING },
+	{ GF_LOG_ROUTE, "route", GF_LOG_WARNING },
 	{ GF_LOG_CONSOLE, "console", GF_LOG_INFO },
 	{ GF_LOG_APP, "app", GF_LOG_INFO },
 };
@@ -381,7 +397,7 @@ char *gf_log_get_tools_levels()
 }
 
 
-#if defined(GPAC_CONFIG_WIN32)
+#if defined(GPAC_CONFIG_WIN32) || defined(WIN32)
 #include <windows.h>
 #include <wincon.h>
 static HANDLE console = NULL;
@@ -404,19 +420,20 @@ void gf_sys_set_console_code(FILE *std, GF_ConsoleCodes code)
 	if (gf_sys_is_test_mode() || gpac_no_color_logs)
 		return;
 	color_code = code & 0xFFFF;
-#if defined(GPAC_CONFIG_WIN32)
+#if defined(GPAC_CONFIG_WIN32) || defined(WIN32)
 	WORD attribs=0;
 	if (!is_mintty && (console == NULL)) {
 		CONSOLE_SCREEN_BUFFER_INFO console_info;
 		const char *shellv = getenv("SHELL");
 		if (shellv) {
 			is_mintty = GF_TRUE;
+			GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[Console] Detected MSys/MinGW/Cygwin TTY, will use VT for coloring\n"))
 		} else {
 			console = GetStdHandle(STD_ERROR_HANDLE);
-			assert(console != INVALID_HANDLE_VALUE);
 			if (console != INVALID_HANDLE_VALUE) {
 				GetConsoleScreenBufferInfo(console, &console_info);
 				console_attr_ori = console_info.wAttributes;
+				GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[Console] Detected Windows shell, will use SetConsoleTextAttribute for coloring\n"))
 			}
 		}
 	}
@@ -601,6 +618,7 @@ Bool gf_log_tool_level_on(GF_LOG_Tool log_tool, GF_LOG_Level log_level)
 	return GF_FALSE;
 }
 
+GF_EXPORT
 const char *gf_log_tool_name(GF_LOG_Tool log_tool)
 {
 	if (log_tool>=GF_LOG_TOOL_MAX) return "unknown";
@@ -627,22 +645,30 @@ u32 gf_log_get_tool_level(GF_LOG_Tool log_tool)
 FILE *gpac_log_file = NULL;
 Bool gpac_log_time_start = GF_FALSE;
 Bool gpac_log_utc_time = GF_FALSE;
+Bool last_log_is_lf = GF_TRUE;
 static u64 gpac_last_log_time=0;
 
-static void do_log_time(FILE *logs)
+static void do_log_time(FILE *logs, const char *fmt)
 {
-	if (gpac_log_time_start) {
-		u64 now = gf_sys_clock_high_res();
-		gf_fprintf(logs, "At "LLD" (diff %d) - ", now, (u32) (now - gpac_last_log_time) );
-		gpac_last_log_time = now;
+	if (!gpac_log_time_start && !gpac_log_utc_time) return;
+
+	if (last_log_is_lf) {
+		if (gpac_log_time_start) {
+			u64 now = gf_sys_clock_high_res();
+			gf_fprintf(logs, "At "LLD" (diff %d) - ", now, (u32) (now - gpac_last_log_time) );
+			gpac_last_log_time = now;
+		}
+		if (gpac_log_utc_time) {
+			u64 utc_clock = gf_net_get_utc() ;
+			time_t secs = utc_clock/1000;
+			struct tm t;
+			t = *gf_gmtime(&secs);
+			gf_fprintf(logs, "UTC %d-%02d-%02dT%02d:%02d:%02dZ (TS "LLU") - ", 1900+t.tm_year, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, utc_clock);
+		}
 	}
-	if (gpac_log_utc_time) {
-		u64 utc_clock = gf_net_get_utc() ;
-		time_t secs = utc_clock/1000;
-		struct tm t;
-		t = *gf_gmtime(&secs);
-		gf_fprintf(logs, "UTC %d-%02d-%02dT%02d:%02d:%02dZ (TS "LLU") - ", 1900+t.tm_year, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, utc_clock);
-	}
+	u32 flen = (u32) strlen(fmt);
+	if (flen && fmt[flen-1] == '\n') last_log_is_lf = GF_TRUE;
+	else last_log_is_lf = GF_FALSE;
 }
 
 int gf_fileio_printf(GF_FileIO *gfio, const char *format, va_list args);
@@ -650,7 +676,8 @@ int gf_fileio_printf(GF_FileIO *gfio, const char *format, va_list args);
 void default_log_callback(void *cbck, GF_LOG_Level level, GF_LOG_Tool tool, const char *fmt, va_list vlist)
 {
 	FILE *logs = gpac_log_file ? gpac_log_file : stderr;
-	do_log_time(logs);
+	if (tool != GF_LOG_APP)
+		do_log_time(logs, fmt);
 
 	if (gf_fileio_check(logs)) {
 		gf_fileio_printf((GF_FileIO *)logs, fmt, vlist);
@@ -683,15 +710,16 @@ void default_log_callback_color(void *cbck, GF_LOG_Level level, GF_LOG_Tool tool
 		gf_sys_set_console_code(stderr, GF_CONSOLE_WHITE);
 		break;
 	}
-	do_log_time(stderr);
+	if (tool != GF_LOG_APP)
+		do_log_time(stderr, fmt);
 
 	vfprintf(stderr, fmt, vlist);
 	gf_sys_set_console_code(stderr, GF_CONSOLE_RESET);
+	gf_fflush(stderr);
 }
 
 
 
-#include <gpac/thread.h>
 static void *user_log_cbk = NULL;
 gf_log_cbk log_cbk = default_log_callback_color;
 static Bool log_exit_on_error = GF_FALSE;
@@ -774,10 +802,22 @@ GF_EXPORT
 void gf_log_lt(GF_LOG_Level ll, GF_LOG_Tool lt)
 {
 }
+
+Bool log_exit_on_error=GF_FALSE;
 GF_EXPORT
 Bool gf_log_set_strict_error(Bool strict)
 {
-	return GF_FALSE;
+	Bool old = log_exit_on_error;
+	log_exit_on_error = strict;
+	return old;
+}
+
+GF_EXPORT
+void gf_log_check_error(GF_LOG_Level loglev, GF_LOG_Tool logtool)
+{
+	if (log_exit_on_error && (loglev==GF_LOG_ERROR) && (logtool != GF_LOG_MEMORY)) {
+		exit(1);
+	}
 }
 
 GF_EXPORT
@@ -858,7 +898,6 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_SCRIPT_ERROR:
 		return "Invalid Script";
 
-	/*MPEG-4 Errors */
 	case GF_BUFFER_TOO_SMALL:
 		return "Bad Buffer size (too small)";
 	case GF_NON_COMPLIANT_BITSTREAM:
@@ -866,9 +905,10 @@ const char *gf_error_to_string(GF_Err e)
 	case GF_FILTER_NOT_FOUND:
 		return "Filter not found for the desired type";
 
-	/*DMIF errors - local and control plane */
 	case GF_URL_ERROR:
 		return "Requested URL is not valid or cannot be found";
+	case GF_URL_REMOVED:
+		return "Requested URL is no longer available";
 
 	case GF_SERVICE_ERROR:
 		return "Internal Service Error";
@@ -886,9 +926,7 @@ const char *gf_error_to_string(GF_Err e)
 		return "Network Unreachable";
 
 	case GF_IP_NETWORK_EMPTY:
-		return "Network Timeout";
-	case GF_IP_SOCK_WOULD_BLOCK:
-		return "Socket Would Block";
+		return "Network Empty";
 	case GF_IP_CONNECTION_CLOSED:
 		return "Connection to server closed";
 	case GF_IP_UDP_TIMEOUT:
@@ -1095,6 +1133,9 @@ static const char *gf_disabled_features()
 #ifdef GPAC_USE_GLES2
 	                       "GPAC_USE_GLES2 "
 #endif
+#ifdef GPAC_DISABLE_ZLIB
+	                       "GPAC_DISABLE_ZLIB "
+#endif
 #ifdef GPAC_DISABLE_SVG
 	                       "GPAC_DISABLE_SVG "
 #endif
@@ -1170,8 +1211,8 @@ static const char *gf_disabled_features()
 #ifdef GPAC_DISABLE_STREAMING
 	                       "GPAC_DISABLE_STREAMING "
 #endif
-#ifdef GPAC_DISABLE_ATSC
-	                       "GPAC_DISABLE_ATSC "
+#ifdef GPAC_DISABLE_ROUTE
+	                       "GPAC_DISABLE_ROUTE "
 #endif
 
 	                       ;
@@ -1741,17 +1782,6 @@ const char *gf_lang_get_3cc(u32 idx)
 	return defined_languages[idx].three_char_code;
 }
 
-GF_EXPORT
-GF_Err gf_blob_get_data(const char *blob_url, u8 **out_data, u32 *out_size)
-{
-	GF_Blob *blob = NULL;
-	if (strncmp(blob_url, "gmem://", 7)) return GF_BAD_PARAM;
-	if (sscanf(blob_url, "gmem://%p", &blob) != 1) return GF_BAD_PARAM;
-	if (!blob) return GF_BAD_PARAM;
-	if (out_data) *out_data = blob->data;
-	if (out_size) *out_size = blob->size;
-	return GF_OK;
-}
 
 GF_EXPORT
 GF_Err gf_dynstrcat(char **str, const char *to_append, const char *sep)
@@ -1774,3 +1804,92 @@ GF_Err gf_dynstrcat(char **str, const char *to_append, const char *sep)
 	return GF_OK;
 }
 
+GF_EXPORT
+Bool gf_parse_lfrac(const char *value, GF_Fraction64 *frac)
+{
+	Float v;
+	u32 len, i;
+	Bool all_num=GF_TRUE;
+	char *sep;
+	if (!frac) return GF_FALSE;
+	frac->num = 0;
+	frac->den = 0;
+	if (!value) return GF_FALSE;
+
+	if (sscanf(value, LLD"/"LLU, &frac->num, &frac->den) == 2) {
+		return GF_TRUE;
+	}
+	if (sscanf(value, LLD"-"LLU, &frac->num, &frac->den) == 2) {
+		return GF_TRUE;
+	}
+	if (sscanf(value, "%g", &v) != 1) {
+		frac->num = 0;
+		frac->den = 0;
+		return GF_FALSE;
+	}
+	sep = strchr(value, '.');
+	if (!sep) sep = strchr(value, ',');
+	if (!sep) {
+		frac->num = atol(value);
+		frac->den = 1;
+		return GF_TRUE;
+	}
+
+	len = (u32) strlen(sep+1);
+	for (i=1; i<=len; i++) {
+		if ((sep[i]<'0') || (sep[i]>'9')) {
+			all_num = GF_FALSE;
+			break;
+		}
+	}
+	if (all_num) {
+		u32 div_trail_zero = 1;
+		sscanf(value, LLD"."LLU, &frac->num, &frac->den);
+
+		i=0;
+		frac->den = 1;
+		while (i<len) {
+			i++;
+			frac->den *= 10;
+		}
+		//trash trailing zero
+		i=len;
+		while (i>0) {
+			if (sep[i] != '0') {
+				break;
+			}
+			div_trail_zero *= 10;
+			i--;
+		}
+
+
+		frac->num *= frac->den / div_trail_zero;
+		frac->num += atoi(sep+1) / div_trail_zero;
+		frac->den /= div_trail_zero;
+
+		return GF_TRUE;
+	}
+
+	if (len <= 3) frac->den = 1000;
+	else if (len <= 6) frac->den = 1000000;
+	else frac->den = 1000000000;
+
+	frac->num = (u64)( (atof(value) * frac->den) + 0.5 );
+	return GF_TRUE;
+}
+
+GF_EXPORT
+Bool gf_parse_frac(const char *value, GF_Fraction *frac)
+{
+	GF_Fraction64 r;
+	Bool res;
+	if (!frac) return GF_FALSE;
+	res = gf_parse_lfrac(value, &r);
+	while ((r.num >= 0x80000000) && (r.den > 1000)) {
+		r.num /= 1000;
+		r.den /= 1000;
+	}
+	frac->num = (s32) r.num;
+	frac->den = (u32) r.den;
+	return res;
+}

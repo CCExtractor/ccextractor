@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2012
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -77,7 +77,10 @@ static void load_all_modules(GF_ModuleManager *mgr)
 	LOAD_PLUGIN(pulseaudio);
 #endif
 
+#ifndef GPAC_DISABLE_PLAYER
 	LOAD_PLUGIN(validator);
+#endif
+
 
 #ifdef GPAC_HAS_WAVEOUT
 	LOAD_PLUGIN(wave_out);
@@ -140,6 +143,53 @@ static void gf_modules_check_load()
 }
 
 
+void gf_modules_refresh_module_directories()
+{
+	char* directories;
+	char* tmp_dirs;
+	char * pch;
+	u32 i;
+	GF_ModuleManager *pm = gpac_modules_static;
+	if (!pm) return;
+
+	for (i=0; i<pm->num_dirs; i++) {
+		gf_free(pm->dirs[i]);
+	}
+	pm->num_dirs = 0;
+
+	//default module directory
+	directories = (char*)gf_opts_get_key("core", "module-dir");
+	if (directories) {
+		pm->dirs[0] = gf_strdup(directories);
+		pm->num_dirs = 1;
+	}
+
+	/* User-defined directories*/
+	directories = (char*)gf_opts_get_key("core", "mod-dirs");
+	if (! directories) {
+		if (!pm->num_dirs) {
+#ifndef GPAC_CONFIG_IOS
+			GF_LOG(GF_LOG_DEBUG, GF_LOG_CORE, ("Modules directories not found - check the \"module-dir\" key is set in the \"core\" section\n"));
+#endif
+		}
+		return;
+	}
+
+	tmp_dirs = directories;
+	pch = strtok (tmp_dirs,";");
+
+	while (pch != NULL) {
+		if (pm->num_dirs == MAX_MODULE_DIRS) {
+			GF_LOG(GF_LOG_WARNING, GF_LOG_CORE, ("Reach maximum number of module directories %d.\n", MAX_MODULE_DIRS));
+			break;
+		}
+		pm->dirs[pm->num_dirs] = gf_strdup(pch);
+		pm->num_dirs++;
+		pch = strtok (NULL, ";");
+	}
+}
+
+
 /*!
 \brief module manager construtcor
  *
@@ -152,8 +202,6 @@ static void gf_modules_check_load()
 void gf_modules_new(GF_Config *config)
 {
 	const char *opt;
-	u32 num_dirs = 0;
-
 	if (!config) return;
 	if (gpac_modules_static) return;
 
@@ -162,7 +210,7 @@ void gf_modules_new(GF_Config *config)
 	if (!gpac_modules_static) return;
 	gpac_modules_static->cfg = config;
 	gpac_modules_static->mutex = gf_mx_new("Module Manager");
-	gf_modules_get_module_directories( &num_dirs);
+	gf_modules_refresh_module_directories();
 
 	/* Initialize module list */
 	gpac_modules_static->plug_list = gf_list_new();
@@ -189,6 +237,14 @@ void gf_modules_new(GF_Config *config)
 		gf_opts_set_key("core", "version", gf_gpac_version());
 	}
 
+	gpac_modules_static->needs_load = GF_TRUE;
+}
+
+
+void gf_module_reload_dirs()
+{
+	if (!gpac_modules_static) return;
+	gf_modules_refresh_module_directories();
 	gpac_modules_static->needs_load = GF_TRUE;
 }
 
@@ -250,47 +306,6 @@ u32 gf_modules_count()
 	return gf_list_count(gpac_modules_static->plug_list);
 }
 
-GF_EXPORT
-const char **gf_modules_get_module_directories(u32* num_dirs)
-{
-	char* directories;
-	char* tmp_dirs;
-	char * pch;
-	GF_ModuleManager *pm = gpac_modules_static;
-	if (!pm) return NULL;
-	gf_modules_check_load();
-	if (pm->num_dirs > 0 ) {
-		*num_dirs = pm->num_dirs;
-		return pm->dirs;
-	}
-	if (!pm->cfg) return NULL;
-
-	/* Get directory from config file */
-	directories = (char*)gf_opts_get_key("core", "mod-dirs");
-	if (! directories) {
-#ifndef GPAC_CONFIG_IOS
-		GF_LOG(GF_LOG_DEBUG, GF_LOG_CORE, ("Modules directories not found - check the \"ModulesDirectory\" key is set in the \"Core\" section\n"));
-#endif
-		return NULL;
-	}
-
-	tmp_dirs = directories;
-	pch = strtok (tmp_dirs,";");
-
-	while (pch != NULL)
-	{
-		if (pm->num_dirs == MAX_MODULE_DIRS) {
-			GF_LOG(GF_LOG_WARNING, GF_LOG_CORE, ("Reach maximum number of module directories %d.\n", MAX_MODULE_DIRS));
-			break;
-		}
-
-		pm->dirs[pm->num_dirs] = gf_strdup(pch);
-		pm->num_dirs++;
-		pch = strtok (NULL, ";");
-	}
-	*num_dirs = pm->num_dirs;
-	return pm->dirs;
-}
 
 GF_EXPORT
 GF_BaseInterface *gf_modules_load(u32 whichplug, u32 InterfaceFamily)
@@ -328,8 +343,15 @@ GF_BaseInterface *gf_modules_load(u32 whichplug, u32 InterfaceFamily)
 		const char * ifce_str = gf_4cc_to_str(InterfaceFamily);
 		snprintf(szKey, 32, "%s:yes", ifce_str ? ifce_str : "(null)");
 		if (!strstr(opt, szKey)) {
-			gf_mx_v(pm->mutex);
-			return NULL;
+			//cleanup if version changed
+			szKey[3] = 0;
+			char *val = strstr(opt, szKey);
+			if (val && !strncmp(val+4, ":yes", 4)) {
+				gf_cfg_set_key(pm->cfg, "PluginsCache", inst->name, NULL);
+			} else {
+				gf_mx_v(pm->mutex);
+				return NULL;
+			}
 		}
 	}
 	if (!gf_modules_load_library(inst)) {
@@ -377,7 +399,7 @@ GF_BaseInterface *gf_modules_load(u32 whichplug, u32 InterfaceFamily)
 		if (!found) goto err_exit;
 	}
 
-	if (!inst->query_func || !inst->query_func(InterfaceFamily) ) goto err_exit;
+	if (!inst->load_func) goto err_exit;
 	ifce = (GF_BaseInterface *) inst->load_func(InterfaceFamily);
 	/*sanity check*/
 	if (!ifce) goto err_exit;

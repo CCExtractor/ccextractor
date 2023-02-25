@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -114,6 +114,16 @@ Encodes URL by replacing special characters with their % encodings.
 char *gf_url_percent_encode(const char *path);
 
 /*!
+\brief URL decoding
+
+Decodes URL by  % encodings with the  special characters they correspond to
+\param path encoded URL of the service
+\return decoded path name , or NULL if error
+ \note the returned string must be freed by user
+ */
+char *gf_url_percent_decode(const char *path);
+
+/*!
 \brief URL to file system
 
 Converts a local URL to a file system value. Removes all white spaces and similar
@@ -122,14 +132,27 @@ Converts a local URL to a file system value. Removes all white spaces and simila
 void gf_url_to_fs_path(char *url);
 
 /*!
+\brief check relative URL
+
+Checks if given URL is absolute or relative
+\param url url to check
+\return GF_TRUE if URL is relative
+ */
+Bool gf_url_is_relative(const char *url);
+
+/*!
 \brief get first after a filename/path
 
-Returns a pointer to the first colon at the end of a filename or URL, if any
+Returns a pointer to the first colon at the end of a filename or URL, if any.
+
+If assign_sep is specified, for example '=', the function will make sure that the colon is after the file extension if found and that '=' is not present between colon and file ext.
+This is used to parse 'a:b.mp4:c' (expected result ':c...' and not ':b...') vs 'a:b=c.mp4' ' (expected result ':b') 
+
 \param URL path or URL to inspect
+\param assign_sep value of assignment operand character. If 0, only checks for colon, otherwise chec that no assign sep or colon is present before file extension, if present
 \return position of first colon, or NULL
 */
-char* gf_url_colon_suffix(const char* URL);
-
+char* gf_url_colon_suffix(const char* URL, char assign_sep);
 
 /*!
 \brief Extract resource name from URL
@@ -141,14 +164,13 @@ Extracts the resource name from the URL
 const char *gf_url_get_resource_name(const char *url);
 
 /*!
-\brief Extract resource path from URL
+\brief Gets  resource path from URL
 
-Extracts the reource path from the URL
+Gets the resource path and name from the URL, stripping scheme, server ID, port...
 \param url input url
-\param res_path buffer for resulting path storage
-\return 1 if path was extracted, 0 if url is a single file name.
+\return the extracted path, or the original path if no scheme indication, or NULL of no path
  */
-Bool gf_url_get_resource_path(const char *url, char *res_path);
+const char *gf_url_get_path(const char *url);
 
 /*! @} */
 
@@ -422,6 +444,20 @@ Sends a buffer on the socket. The socket must be in a bound or connected mode
 \return error if any
  */
 GF_Err gf_sk_send(GF_Socket *sock, const u8 *buffer, u32 length);
+
+/*!
+\brief data emission
+
+Sends a buffer on the socket. The socket must be in a bound or connected mode. This function is usually needed for non-blocking sockets
+\param sock the socket object
+\param buffer the data buffer to send
+\param length the data length to send
+\param written set to number of written bytes - may be NULL
+\return error if any
+ */
+GF_Err gf_sk_send_ex(GF_Socket *sock, const u8 *buffer, u32 length, u32 *written);
+
+
 /*!
 \brief data reception
 
@@ -527,6 +563,25 @@ Performs multicast setup (BIND and JOIN) for the socket object
 \return error if any
  */
 GF_Err gf_sk_setup_multicast(GF_Socket *sock, const char *multi_ip_add, u16 multi_port, u32 TTL, Bool no_bind, char *local_interface_ip);
+
+/*!
+\brief source-specific multicast setup
+
+Performs multicast setup (BIND and JOIN) for the socket object using allowed and block sources
+\param sock the socket object
+\param multi_ip_add the multicast IP address
+\param multi_port the multicast port number
+\param TTL the multicast TTL (Time-To-Live)
+\param no_bind if sets, only join the multicast
+\param local_interface_ip the local interface IP address if desired. If NULL, the default interface will be used.
+\param src_ip_inc IP of sources to receive from
+\param nb_src_ip_inc number of sources to receive from
+\param src_ip_exc IP of sources to exclude
+\param nb_src_ip_exc number of sources to exclude
+\return error if any
+ */
+GF_Err gf_sk_setup_multicast_ex(GF_Socket *sock, const char *multi_ip_add, u16 multi_port, u32 TTL, Bool no_bind, char *local_interface_ip, const char **src_ip_inc, u32 nb_src_ip_inc, const char **src_ip_exc, u32 nb_src_ip_exc);
+
 /*!
  \brief multicast address test
 
@@ -535,31 +590,6 @@ Tests whether an IP address is a multicast one or not
 \return 1 if the address is a multicast one, 0 otherwise
  */
 u32 gf_sk_is_multicast_address(const char *multi_ip_add);
-
-/*!
-\brief send data with wait delay
-
-Sends data with a max wait delay. This is used for http / ftp sockets mainly. The socket must be connected.
-\param sock the socket object
-\param buffer the data buffer to send
-\param length the data length to send
-\param delay_sec the maximum delay in second to wait before aborting
-\return If the operation timed out, the function will return a GF_IP_SOCK_WOULD_BLOCK error.
- */
-GF_Err gf_sk_send_wait(GF_Socket *sock, const u8 *buffer, u32 length, u32 delay_sec);
-/* receive data with a max wait delay of Second - used for http / ftp sockets mainly*/
-/*!
-\brief receive data with wait delay
-
-Fetches data with a max wait delay. This is used for http / ftp sockets mainly. The socket must be connected.
-\param sock the socket object
-\param buffer the reception buffer where data is written
-\param length the allocated size of the reception buffer
-\param read the actual number of bytes received
-\param delay_sec the maximum delay in second to wait before aborting
-\return If the operation timed out, the function will return a GF_IP_SOCK_WOULD_BLOCK error.
- */
-GF_Err gf_sk_receive_wait(GF_Socket *sock, u8 *buffer, u32 length, u32 *read, u32 delay_sec);
 
 /*!
 \brief gets socket handle
@@ -594,6 +624,26 @@ Checks if connection has been closed by remote peer
  */
 GF_Err gf_sk_probe(GF_Socket *sock);
 
+
+/*! socket selection mode*/
+typedef enum
+{
+	/*! select for either read or write operations */
+	GF_SK_SELECT_BOTH=0,
+	/*! select for read operations */
+	GF_SK_SELECT_READ,
+	/*! select for write operations */
+	GF_SK_SELECT_WRITE,
+} GF_SockSelectMode;
+
+/*!
+Checks if socket can is ready for read or write
+\param sock the socket object
+\param mode the operation mode desired
+\return GF_OK if ready, GF_IP_NETWORK_EMPTY if not ready, otherwise error if any (GF_IP_CONNECTION_CLOSED if connection is closed)
+ */
+GF_Err gf_sk_select(GF_Socket *sock, GF_SockSelectMode mode);
+
 /*! @} */
 
 /*!
@@ -625,21 +675,10 @@ Unregisters a socket from a socket group
  */
 void gf_sk_group_unregister(GF_SockGroup *sg, GF_Socket *sk);
 
-/*! socket selection mode*/
-typedef enum
-{
-	/*! select for both read and write operations */
-	GF_SK_SELECT_BOTH=0,
-	/*! select for both read operations */
-	GF_SK_SELECT_READ,
-	/*! select for both write operations */
-	GF_SK_SELECT_WRITE,
-} GF_SockSelectMode;
-
 /*!
 Performs a select (wait) on the socket group
 \param sg socket group object
-\param wait_usec microseconds to wait (can be larger than one second)
+\param wait_usec microseconds to wait (must be less than one second)
 \param mode the operation mode desired
 \return error if any
  */

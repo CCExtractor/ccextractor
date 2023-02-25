@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -109,14 +109,28 @@ void gf_dm_del(GF_DownloadManager *dm);
 /*!
 \brief callback function for authentication
 
+This function is called back after user and password has been entered
+\param usr_cbk opaque user data passed by download manager
+\param usr_name the user name for the desired site, or NULL if the authentication was canceled
+\param password the password for the desired site and user, or NULL if the authentication was canceled
+\param store_info if TRUE, credentials will be stored in gpac config
+*/
+typedef void (*gf_dm_on_usr_pass)(void *usr_cbk, const char *usr_name, const char *password, Bool store_info);
+/*!
+\brief function for authentication
+
 The gf_dm_get_usr_pass type is the type for the callback of the \ref gf_dm_set_auth_callback function used for password retrieval
+
 \param usr_cbk opaque user data
+\param secure indicates if TLS is used
 \param site_url url of the site the user and password are requested for
 \param usr_name the user name for this site. The allocated space for this buffer is 50 bytes. \note this varaibale may already be formatted.
 \param password the password for this site and user. The allocated space for this buffer is 50 bytes.
-\return 0 if user didn't fill in the information which will result in an authentication failure, 1 otherwise.
+\param async_pass async function to call back when user and pass have been entered. If NULL, sync call will be performed
+\param async_udta async user data to pass back to the async function. If NULL, sync call will be performed
+\return GF_FALSE if user didn't fill in the information which will result in an authentication failure, GF_TRUE otherwise (info was filled if not async, or request was posted).
 */
-typedef Bool (*gf_dm_get_usr_pass)(void *usr_cbk, const char *site_url, char *usr_name, char *password);
+typedef Bool (*gf_dm_get_usr_pass)(void *usr_cbk, Bool secure, const char *site_url, char *usr_name, char *password, gf_dm_on_usr_pass async_pass, void *async_udta);
 
 /*!
 \brief password retrieval assignment
@@ -154,13 +168,18 @@ typedef enum
 	/*!signal that the session has been deconnected*/
 	GF_NETIO_DISCONNECTED,
 	/*!downloader session failed (error code set) or done/destroyed (no error code)*/
-	GF_NETIO_STATE_ERROR
+	GF_NETIO_STATE_ERROR,
+	/*!signal that a new session is being requested on that same connection (h2, h3)
+	This is only used for server sessions*/
+	GF_NETIO_REQUEST_SESSION,
+	/*! stream has been canceled by remote peer*/
+	GF_NETIO_CANCEL_STREAM,
 } GF_NetIOStatus;
 
 /*!session download flags*/
 typedef enum
 {
-	/*!session is not threaded, the user must explicitely fetch the data , either with the function gf_dm_sess_fetch_data
+	/*!session is not threaded, the user must explicitly fetch the data , either with the function gf_dm_sess_fetch_data
 	or the function gf_dm_sess_process- if the session is threaded, the user must call gf_dm_sess_process to start the session*/
 	GF_NETIO_SESSION_NOT_THREADED = 1,
 	/*! session data is cached or not */
@@ -174,6 +193,12 @@ typedef enum
 	GF_NETIO_SESSION_MEMORY_CACHE = 1<<4,
 	/*! do not delete files after download*/
 	GF_NETIO_SESSION_KEEP_CACHE = 1<<5,
+	/*! do not delete files after download of first resource (used for init segments)*/
+	GF_NETIO_SESSION_KEEP_FIRST_CACHE = 1<<6,
+	/*! session data is cached if content length is known */
+	GF_NETIO_SESSION_AUTO_CACHE = 1<<7,
+	/*! use non-blocking IOs*/
+	GF_NETIO_SESSION_NO_BLOCK = 1<<8,
 } GF_NetIOFlags;
 
 
@@ -380,11 +405,9 @@ Returns the original resource URL associated with the session
 \return the associated URL
  */
 const char *gf_dm_sess_get_resource_name(GF_DownloadSession *sess);
-
-#ifndef GPAC_DISABLE_CORE_TOOLS
 /*!
 Downloads a file over the network using a download manager
-\param dm The download manager to use, function will use all associated cache ressources
+\param dm The download manager to use, function will use all associated cache resources
 \param url The url to download
 \param filename The filename to download
 \param start_range start position of a byte range
@@ -406,8 +429,6 @@ This function is deprecated, please use gf_dm_wget_with_cache instead
 \return GF_OK if everything went fine, an error otherwise
  */
 GF_Err gf_dm_wget(const char *url, const char *filename, u64 start_range, u64 end_range, char **redirected_url);
-
-#endif /* GPAC_DISABLE_CORE_TOOLS */
 
 /*!
 Re-setup an existing, completed session to download a new URL. If same server/port/protocol is used, the same socket will be reused if the session has the GF_NETIO_SESSION_PERSISTENT flag set. This is only possible if the session is not threaded.
@@ -488,11 +509,12 @@ GF_Err gf_dm_sess_get_header_sizes_and_times(GF_DownloadSession *sess, u32 *req_
 
 Forces session to use memory storage for future downloads
 \param sess the current session
+\param force_cache_type if 1, cache will be kept even if session is reassigned. If 2, cache will ne kept for next resource downloaded, then no caching for subsequent resources (used for init segments)
  */
-void gf_dm_sess_force_memory_mode(GF_DownloadSession *sess);
+void gf_dm_sess_force_memory_mode(GF_DownloadSession *sess, u32 force_cache_type);
 
 /*!
-Registers a locacl cache provider (bypassing the http session), used when populating cache from input data (atsc for example)
+Registers a local cache provider (bypassing the http session), used when populating cache from input data (ROUTE for example)
 
 \param dm the download manager
 \param local_cache_url_provider_cbk callback function to the cache provider. The callback function shall return GF_TRUE if the requested URL is provided by this local cache
@@ -506,8 +528,7 @@ Adds a local entry in the cache
 
 \param dm the download manager
 \param szURL the URL this resource is caching
-\param data data of the resource
-\param size size of the resource
+\param blob blob object holding the data of the resource
 \param start_range start range of the data in the resource
 \param end_range start range of the data in the resource. If both start_range and end_range are 0, the data is the complete resource
 \param mime associated MIME type if any
@@ -515,7 +536,7 @@ Adds a local entry in the cache
 \param download_time_ms indicates the download time of the associated resource, if known, 0 otherwise.
 \return a cache entry structure
  */
-const DownloadedCacheEntry gf_dm_add_cache_entry(GF_DownloadManager *dm, const char *szURL, u8 *data, u64 size, u64 start_range, u64 end_range,  const char *mime, Bool clone_memory, u32 download_time_ms);
+DownloadedCacheEntry gf_dm_add_cache_entry(GF_DownloadManager *dm, const char *szURL, GF_Blob *blob, u64 start_range, u64 end_range,  const char *mime, Bool clone_memory, u32 download_time_ms);
 
 /*!
 Forces HTTP headers for a given cache entry
@@ -549,6 +570,56 @@ enum
 	/*! DELETE*/
 	GF_HTTP_DELETE
 };
+
+/*! User credential request state*/
+typedef enum
+{
+	//! no async request for this credential object
+	GF_CREDS_STATE_NONE=0,
+	//!  async request pending for this credential object (waiting for user input)
+	GF_CREDS_STATE_PENDING,
+	//! async request done for this credential object
+	GF_CREDS_STATE_DONE,
+} GF_CredentialRequestState;
+
+/*! user credential structure - all fields are setup by the credentials functions
+
+Credentials are currently handled indepentently from protocol scheme
+*/
+typedef struct
+{
+	/*! parent download manager where credentials are stored*/
+	const GF_DownloadManager *dm;
+	/*! site name*/
+	char site[1024];
+	/*! user name*/
+	char username[50];
+	/*! digest (only Basic for now, "Basic " not included in digest)*/
+	char digest[1024];
+	/*! indicate if the credentials are valid or not*/
+	Bool valid;
+	/*! indicate that the async state of the credential request*/
+	GF_CredentialRequestState req_state;
+} GF_UserCredentials;
+
+/*! Find credentials for given site and user
+ \param dm parent download manager
+ \param server_name sever name without protocol scheme - must not be NULL
+ \param user_name user name, can be NULL (will pick first credential for the site)
+ \return credential object or NULL if error
+*/
+GF_UserCredentials *gf_user_credentials_find_for_site(GF_DownloadManager *dm, const char *server_name, const char *user_name);
+
+/*! Register credentials for given site and user/pass
+ \param dm parent download manager
+ \param secure indicate if connection is over TLS
+ \param server_name sever name without protocol scheme - must not be NULL
+ \param username user name, must not be NULL
+ \param password user password, must not be NULL
+ \param valid indicates if credentials are valid (successfull authentication)
+ \return credential object or NULL if error
+*/
+GF_UserCredentials * gf_user_credentials_register(GF_DownloadManager * dm, Bool secure, const char * server_name, const char * username, const char * password, Bool valid);
 
 /*! @} */
 

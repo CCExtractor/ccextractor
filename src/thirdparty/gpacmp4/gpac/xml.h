@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -34,8 +34,6 @@ extern "C" {
 #include <gpac/list.h>
 #include <gpac/bitstream.h>
 
-#ifndef GPAC_DISABLE_CORE_TOOLS
-
 /*!
 \file <gpac/xml.h>
 \brief XML functions.
@@ -51,7 +49,7 @@ This section documents the XML functions (full doc parsing and SAX parsing) of t
 \ingroup xml_grp
 \defgroup dom_grp DOM Parsing
 \ingroup xml_grp
-\defgroup xmlb_grp XML Binary Formating
+\defgroup xmlb_grp XML Binary Formatting
 \ingroup xml_grp
 */
 
@@ -99,6 +97,8 @@ typedef struct _xml_node
 	GF_List *attributes;
 	/*! list of children nodes of the node, for XML node type only*/
 	GF_List *content;
+	/*! original pos in parent (used for DASH MPD)*/
+	u32 orig_pos;
 } GF_XMLNode;
 
 /*! @} */
@@ -295,13 +295,28 @@ u32 gf_xml_dom_get_root_nodes_count(GF_DOMParser *parser);
 */
 GF_XMLNode *gf_xml_dom_get_root_idx(GF_DOMParser *parser, u32 idx);
 
+/*! Gets the root node of the document and assign the parser root to NULL.
+\param parser the DOM parser to use
+\return the root element at the given index, or NULL if error. The element must be freed by the caller
+*/
+GF_XMLNode *gf_xml_dom_detach_root(GF_DOMParser *parser);
 
 /*! Serialize a node to a string
 \param node the node to flush
 \param content_only Whether to include or not the parent node
+\param no_escape if set, disable escape of XML reserved chars (<,>,",') in text nodes
 \return The resulting serialization. The string has to be freed with gf_free
  */
-char *gf_xml_dom_serialize(GF_XMLNode *node, Bool content_only);
+char *gf_xml_dom_serialize(GF_XMLNode *node, Bool content_only, Bool no_escape);
+
+
+/*! Serialize a root document node - same as \ref gf_xml_dom_serialize but insert \code <?xml version="1.0" encoding="UTF-8"?> \endcode at beginning
+\param node the node to flush
+\param content_only Whether to include or not the parent node
+\param no_escape if set, disable escape of XML reserved chars (<,>,",') in text nodes
+\return The resulting serialization. The string has to be freed with gf_free
+ */
+char *gf_xml_dom_serialize_root(GF_XMLNode *node, Bool content_only, Bool no_escape);
 
 /*! Get the root element -- the only top level element -- of the document.
 \param parser the DOM structure
@@ -324,23 +339,26 @@ GF_XMLAttribute *gf_xml_dom_create_attribute(const char* name, const char* value
  */
 GF_Err gf_xml_dom_append_child(GF_XMLNode *node, GF_XMLNode *child);
 
-/*!
-\brief Removes the node to the list of children of this node.
 
-Removes the node to the list of children of this node.
-\warning Doesn't free the memory of the removed children.
-
-\param node the GF_XMLNode node
-\param child the GF_XMLNode child to remove
-\return Error code if any, otherwise GF_OK
+/*! Create a node.
+\param ns the target namespace or NULL if none
+\param name the target name or NULL to create text node
+\return new node, NULL if error. 
  */
-GF_Err gf_xml_dom_rem_child(GF_XMLNode *node, GF_XMLNode *child);
-
+GF_XMLNode *gf_xml_dom_node_new(const char* ns, const char* name);
 /*! Destroys a node, its attributes and its children
 
 \param node the node to free
  */
 void gf_xml_dom_node_del(GF_XMLNode *node);
+
+/*! Reset  a node
+
+\param node the node to reset
+\param reset_attribs if GF_TRUE, reset all node attributes
+\param reset_children if GF_TRUE, reset all node children
+ */
+void gf_xml_dom_node_reset(GF_XMLNode *node, Bool reset_attribs, Bool reset_children);
 
 
 /*! Gets the element and check that the namespace is known ('xmlns'-only supported for now)
@@ -398,10 +416,11 @@ GF_Err gf_xml_parse_bit_sequence(GF_XMLNode *bsroot, const char *parent_url, u8 
 Parses XML bit sequence in an existing bitstream object. The syntax for the XML is the same as in \ref gf_xml_parse_bit_sequence
 \param bsroot the root node of XML document describing the bitstream to create
 \param parent_url URL of the parent document
+\param base_media URL of base media file if any, relative to parent url. May be NULL
 \param bs target bitstream to write the result into. The bitstream must be a dynamic write bitstream object
 \return error code or GF_OK
  */
-GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, GF_BitStream *bs);
+GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, const char *base_media, GF_BitStream *bs);
 
 
 /*! @} */
@@ -409,7 +428,5 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /*GPAC_DISABLE_CORE_TOOLS*/
 
 #endif		/*_XML_PARSER_H_*/
