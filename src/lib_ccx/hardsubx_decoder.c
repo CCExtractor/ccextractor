@@ -76,26 +76,26 @@ char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	// TESSERACT OCR FOR THE FRAME HERE
 	switch (ctx->ocr_mode)
 	{
-	case HARDSUBX_OCRMODE_WORD:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_wordwise(ctx, feat_im);
-		break;
-	case HARDSUBX_OCRMODE_LETTER:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_letterwise_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_letterwise(ctx, feat_im);
-		break;
-	case HARDSUBX_OCRMODE_FRAME:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_simple_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_simple(ctx, feat_im);
-		break;
-	default:
-		fatal(EXIT_MALFORMED_PARAMETER, "Invalid OCR Mode");
+		case HARDSUBX_OCRMODE_WORD:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_wordwise(ctx, feat_im);
+			break;
+		case HARDSUBX_OCRMODE_LETTER:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_letterwise_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_letterwise(ctx, feat_im);
+			break;
+		case HARDSUBX_OCRMODE_FRAME:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_simple_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_simple(ctx, feat_im);
+			break;
+		default:
+			fatal(EXIT_MALFORMED_PARAMETER, "Invalid OCR Mode");
 	}
 
 	pixDestroy(&im);
@@ -180,26 +180,26 @@ char *_process_frame_color_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, i
 	// TESSERACT OCR FOR THE FRAME HERE
 	switch (ctx->ocr_mode)
 	{
-	case HARDSUBX_OCRMODE_WORD:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_wordwise(ctx, feat_im);
-		break;
-	case HARDSUBX_OCRMODE_LETTER:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_letterwise_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_letterwise(ctx, feat_im);
-		break;
-	case HARDSUBX_OCRMODE_FRAME:
-		if (ctx->conf_thresh > 0)
-			subtitle_text = get_ocr_text_simple_threshold(ctx, feat_im, ctx->conf_thresh);
-		else
-			subtitle_text = get_ocr_text_simple(ctx, feat_im);
-		break;
-	default:
-		fatal(EXIT_MALFORMED_PARAMETER, "Invalid OCR Mode");
+		case HARDSUBX_OCRMODE_WORD:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_wordwise_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_wordwise(ctx, feat_im);
+			break;
+		case HARDSUBX_OCRMODE_LETTER:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_letterwise_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_letterwise(ctx, feat_im);
+			break;
+		case HARDSUBX_OCRMODE_FRAME:
+			if (ctx->conf_thresh > 0)
+				subtitle_text = get_ocr_text_simple_threshold(ctx, feat_im, ctx->conf_thresh);
+			else
+				subtitle_text = get_ocr_text_simple(ctx, feat_im);
+			break;
+		default:
+			fatal(EXIT_MALFORMED_PARAMETER, "Invalid OCR Mode");
 	}
 
 	pixDestroy(&im);
@@ -390,13 +390,13 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
-					ctx->sws_ctx,
-					(uint8_t const *const *)ctx->frame->data,
-					ctx->frame->linesize,
-					0,
-					ctx->codec_ctx->height,
-					ctx->rgb_frame->data,
-					ctx->rgb_frame->linesize);
+				    ctx->sws_ctx,
+				    (uint8_t const *const *)ctx->frame->data,
+				    ctx->frame->linesize,
+				    0,
+				    ctx->codec_ctx->height,
+				    ctx->rgb_frame->data,
+				    ctx->rgb_frame->linesize);
 
 				ticker_text = _process_frame_tickertext(ctx, ctx->rgb_frame, ctx->codec_ctx->width, ctx->codec_ctx->height, frame_number);
 				printf("frame_number: %d\n", frame_number);
@@ -426,7 +426,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 	int frame_number = 0;
 	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
 	int64_t prev_packet_pts = 0;
-	char *subtitle_text = NULL;		 // Subtitle text of current frame
+	char *subtitle_text = NULL;	 // Subtitle text of current frame
 	char *prev_subtitle_text = NULL; // Previously seen subtitle text
 
 	while (av_read_frame(ctx->format_ctx, &ctx->packet) >= 0)
@@ -445,13 +445,13 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
-					ctx->sws_ctx,
-					(uint8_t const *const *)ctx->frame->data,
-					ctx->frame->linesize,
-					0,
-					ctx->codec_ctx->height,
-					ctx->rgb_frame->data,
-					ctx->rgb_frame->linesize);
+				    ctx->sws_ctx,
+				    (uint8_t const *const *)ctx->frame->data,
+				    ctx->frame->linesize,
+				    0,
+				    ctx->codec_ctx->height,
+				    ctx->rgb_frame->data,
+				    ctx->rgb_frame->linesize);
 
 				// Send the frame to other functions for processing
 				if (ctx->subcolor == HARDSUBX_COLOR_WHITE)
@@ -565,7 +565,7 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 	int frame_number = 0;
 	int64_t prev_begin_time_hard = 0, prev_end_time_hard = 0; // Begin and end time of previous seen burnt-in subtitle
 	int64_t prev_packet_pts_hard = 0;
-	char *subtitle_text_hard = NULL;	  // Subtitle text of current frame (burnt_in)
+	char *subtitle_text_hard = NULL;      // Subtitle text of current frame (burnt_in)
 	char *prev_subtitle_text_hard = NULL; // Previously seen burnt-in subtitle text
 
 	stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
@@ -575,40 +575,40 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 
 	switch (stream_mode)
 	{
-	case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-		get_more_data = &general_get_more_data;
-		break;
-	case CCX_SM_TRANSPORT:
-		get_more_data = &ts_get_more_data;
-		break;
-	case CCX_SM_PROGRAM:
-		get_more_data = &ps_get_more_data;
-		break;
-	case CCX_SM_ASF:
-		get_more_data = &asf_get_more_data;
-		break;
-	case CCX_SM_WTV:
-		get_more_data = &wtv_get_more_data;
-		break;
-		// case CCX_SM_GXF:
-		// 	get_more_data = &ccx_gxf_get_more_data;
-		// 	break;
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			get_more_data = &general_get_more_data;
+			break;
+		case CCX_SM_TRANSPORT:
+			get_more_data = &ts_get_more_data;
+			break;
+		case CCX_SM_PROGRAM:
+			get_more_data = &ps_get_more_data;
+			break;
+		case CCX_SM_ASF:
+			get_more_data = &asf_get_more_data;
+			break;
+		case CCX_SM_WTV:
+			get_more_data = &wtv_get_more_data;
+			break;
+			// case CCX_SM_GXF:
+			// 	get_more_data = &ccx_gxf_get_more_data;
+			// 	break;
 #ifdef ENABLE_FFMPEG
-	case CCX_SM_FFMPEG:
-		get_more_data = &ffmpeg_get_more_data;
-		break;
+		case CCX_SM_FFMPEG:
+			get_more_data = &ffmpeg_get_more_data;
+			break;
 #endif
-	// case CCX_SM_MXF:
-	// 	get_more_data = ccx_mxf_getmoredata;
-	// 	// The MXFContext might have already been initialized if the
-	// 	// stream type was autodetected
-	// 	if (ctx->demux_ctx->private_data == NULL)
-	// 	{
-	// 		ctx->demux_ctx->private_data = ccx_gxf_init(ctx->demux_ctx);
-	// 	}
-	// 	break;
-	default:
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
+		// case CCX_SM_MXF:
+		// 	get_more_data = ccx_mxf_getmoredata;
+		// 	// The MXFContext might have already been initialized if the
+		// 	// stream type was autodetected
+		// 	if (ctx->demux_ctx->private_data == NULL)
+		// 	{
+		// 		ctx->demux_ctx->private_data = ccx_gxf_init(ctx->demux_ctx);
+		// 	}
+		// 	break;
+		default:
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "In general_loop: Impossible value for stream_mode");
 	}
 	end_of_file = 0;
 	int status = 0;
@@ -642,13 +642,13 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 					if (dec_ctx == NULL || hard_ctx->dec_sub->start_time >= (dec_ctx->dec_sub).start_time || status < 0)
 					{
 						int ret = process_non_multiprogram_general_loop(ctx,
-																		&datalist,
-																		&data_node,
-																		&dec_ctx,
-																		&enc_ctx,
-																		&min_pts,
-																		ret,
-																		&caps);
+												&datalist,
+												&data_node,
+												&dec_ctx,
+												&enc_ctx,
+												&min_pts,
+												ret,
+												&caps);
 					}
 				}
 				if (ctx->live_stream)
@@ -705,40 +705,40 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 
 				avcodec_send_packet(hard_ctx->codec_ctx, &hard_ctx->packet);
 				if (avcodec_receive_frame(hard_ctx->codec_ctx,
-										  hard_ctx->frame) == 0 &&
-					frame_number % 25 == 0)
+							  hard_ctx->frame) == 0 &&
+				    frame_number % 25 == 0)
 				{
 					float diff = (float)convert_pts_to_ms(hard_ctx->packet.pts - prev_packet_pts_hard,
-														  hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
+									      hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
 
 					if (fabsf(diff) >= 1000 * hard_ctx->min_sub_duration)
 					{
 
 						// sws_scale is used to convert the pixel format to RGB24 from all other cases
 						sws_scale(
-							hard_ctx->sws_ctx,
-							(uint8_t const *const *)hard_ctx->frame->data,
-							hard_ctx->frame->linesize,
-							0,
-							hard_ctx->codec_ctx->height,
-							hard_ctx->rgb_frame->data,
-							hard_ctx->rgb_frame->linesize);
+						    hard_ctx->sws_ctx,
+						    (uint8_t const *const *)hard_ctx->frame->data,
+						    hard_ctx->frame->linesize,
+						    0,
+						    hard_ctx->codec_ctx->height,
+						    hard_ctx->rgb_frame->data,
+						    hard_ctx->rgb_frame->linesize);
 
 						if (hard_ctx->subcolor == HARDSUBX_COLOR_WHITE)
 						{
 							subtitle_text_hard = _process_frame_white_basic(hard_ctx,
-																			hard_ctx->rgb_frame,
-																			hard_ctx->codec_ctx->width,
-																			hard_ctx->codec_ctx->height,
-																			frame_number);
+													hard_ctx->rgb_frame,
+													hard_ctx->codec_ctx->width,
+													hard_ctx->codec_ctx->height,
+													frame_number);
 						}
 						else
 						{
 							subtitle_text_hard = _process_frame_color_basic(hard_ctx,
-																			hard_ctx->rgb_frame,
-																			hard_ctx->codec_ctx->width,
-																			hard_ctx->codec_ctx->height,
-																			frame_number);
+													hard_ctx->rgb_frame,
+													hard_ctx->codec_ctx->width,
+													hard_ctx->codec_ctx->height,
+													frame_number);
 						}
 
 						_display_frame(hard_ctx, hard_ctx->rgb_frame, hard_ctx->codec_ctx->width, hard_ctx->codec_ctx->height, frame_number);
@@ -843,13 +843,13 @@ void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 						// printf("GOT FRAME: %d\n",ctx->packet.pts);
 						// sws_scale is used to convert the pixel format to RGB24 from all other cases
 						sws_scale(
-							ctx->sws_ctx,
-							(uint8_t const *const *)ctx->frame->data,
-							ctx->frame->linesize,
-							0,
-							ctx->codec_ctx->height,
-							ctx->rgb_frame->data,
-							ctx->rgb_frame->linesize);
+						    ctx->sws_ctx,
+						    (uint8_t const *const *)ctx->frame->data,
+						    ctx->frame->linesize,
+						    0,
+						    ctx->codec_ctx->height,
+						    ctx->rgb_frame->data,
+						    ctx->rgb_frame->linesize);
 						// Send the frame to other functions for processing
 						_display_frame(ctx, ctx->rgb_frame, ctx->codec_ctx->width, ctx->codec_ctx->height, seconds_time);
 						break;
