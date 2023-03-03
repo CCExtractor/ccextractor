@@ -36,7 +36,7 @@ impl dtvcc_service_decoder {
     ) {
         let mut i = 0;
         while i < block.len() {
-            let consumed = if block[i] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 as u8 {
+            let consumed = if block[i] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 {
                 let used = match block[i] {
                     0..=0x1F => self.handle_C0(&block[i..], encoder, timing, no_rollup),
                     0x20..=0x7F => self.handle_G0(&block[i..]),

@@ -485,24 +485,27 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ccx_rust.lib;UserEnv.lib;avcodec.lib;
-        avformat.lib;
-        avutil.lib;
-        swscale.lib;WS2_32.Lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;WS2_32.Lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>
-        $(ProjectDir)libs\lib\ffmpeg-lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\x86-windows\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avcodec-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avformat-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avutil-57.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swresample-4.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swscale-6.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -551,7 +554,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec_x32.lib;avformat_x32.lib;avutil_x32.lib;swscale_x32.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -564,11 +567,16 @@
       <Command>call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avcodec-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avformat-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avutil-57.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swresample-4.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swscale-6.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -578,7 +586,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;.\libs\lib\ffmpeg-lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;.\libs\lib\ffmpeg-lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)/installed/x64-windows/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_OCR;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -594,8 +602,12 @@
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>.\libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)/installed/x64-windows/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>call rustx86.bat</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
         xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
@@ -605,7 +617,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;.\libs\lib\ffmpeg-lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;.\libs\lib\ffmpeg-lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;$(VCPKG_ROOT)/installed/x86-windows/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -619,7 +631,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avcodec_x32.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avformat_x32.lib;$(ProjectDir)libs\lib\ffmpeg-lib\avutil_x32.lib;$(ProjectDir)libs\lib\ffmpeg-lib\swscale_x32.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.danbloomberg.leptonica-1.74.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.google.tesseract.tesseract-master.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.gif-5.1.4.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -628,11 +640,16 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avcodec-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avformat-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avutil-57.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swresample-4.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swscale-6.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>call pre-build.bat
@@ -662,7 +679,8 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(ProjectDir)libs\lib\ffmpeg-lib;$(VCPKG_ROOT)/installed/x64-windows/lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call rustx86.bat</Command>
@@ -700,17 +718,22 @@
       <Command>call pre-build.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avcodec-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avformat-57.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\avutil-55.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swresample-2.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\ffmpeg-lib\swscale-4.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avcodec-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avformat-59.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avutil-57.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swresample-4.dll"
+        "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swscale-6.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)/installed/x64-windows/include%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
