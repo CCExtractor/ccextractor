@@ -42,7 +42,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
           components: rustfmt, clippy
       - name: dependencies

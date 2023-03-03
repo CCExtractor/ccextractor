@@ -28,7 +28,7 @@ jobs:
         run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.57.0
+          toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
@@ -60,7 +60,7 @@ jobs:
         run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.57.0
+          toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
@@ -96,7 +96,7 @@ jobs:
           platform: x86
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.57.0
+          toolchain: stable
           override: true
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
@@ -144,7 +144,7 @@ jobs:
         run: cd vcpkg && vcpkg install leptonica:x86-windows-static-md
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.57.0
+          toolchain: stable
           override: true
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
