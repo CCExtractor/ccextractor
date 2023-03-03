@@ -90,15 +90,11 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x86
+        run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: Clone vcpkg
@@ -106,24 +102,24 @@ jobs:
       - name: Setup vcpkg
         run: cd vcpkg && bootstrap-vcpkg.bat && vcpkg integrate install
       - name: Install dependencies
-        run: cd vcpkg && vcpkg install leptonica:x86-windows-static-md
+        run: cd vcpkg && vcpkg install leptonica:x64-windows-static-md
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/Release-Full
+        working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows OCR and HardSubX Release build
           path: |
-            ./windows/Release-Full/ccextractorwinfull.exe
-            ./windows/Release-Full/*.dll
+            ./windows/x64/Release-Full/ccextractorwinfull.exe
+            ./windows/x64/Release-Full/*.dll
   build_ocr_hardsubx_debug:
     runs-on: windows-2019
     steps:
@@ -132,21 +128,17 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x86
+        run: choco install llvm
       - name: Clone vcpkg
         run: git clone --depth 1 --single-branch --recursive https://github.com/microsoft/vcpkg.git
       - name: Setup vcpkg
         run: cd vcpkg && bootstrap-vcpkg.bat && vcpkg integrate install
       - name: Install dependencies
-        run: cd vcpkg && vcpkg install leptonica:x86-windows-static-md
+        run: cd vcpkg && vcpkg install leptonica:x64-windows-static-md
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: build Debug-Full
@@ -155,7 +147,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=Win32
+        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
