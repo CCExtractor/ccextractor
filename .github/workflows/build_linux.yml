@@ -1,6 +1,7 @@
 name: Build CCExtractor on Linux
 
 on:
+  workflow_dispatch:
   push:
     paths:
     - '.github/workflows/build_linux.yml'
