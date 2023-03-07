@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2012
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -22,8 +22,6 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
-#ifndef GPAC_DISABLE_CORE_TOOLS
 
 #ifdef GPAC_CONFIG_ANDROID
 #include <jni.h>
@@ -172,6 +170,20 @@ void * RunThread(void *ptr)
 #endif
 	GF_Thread *t = (GF_Thread *)ptr;
 
+
+//not activated by default, not portable
+#if 0 && !defined(GPAC_DISABLE_LOG)
+	if (t->log_name) {
+#ifdef WIN32
+#elif defined(__DARWIN__) || defined(__APPLE__)
+		pthread_setname_np(t->log_name);
+#else
+		pthread_setname_np(t->threadH, t->log_name);
+#endif
+	}
+#endif
+
+
 	/* Signal the caller */
 	if (! t->_signal) goto exit;
 #ifdef GPAC_CONFIG_ANDROID
@@ -269,6 +281,7 @@ GF_Err gf_th_run(GF_Thread *t, u32 (*Run)(void *param), void *param)
 		t->status = GF_THREAD_STATUS_DEAD;
 		return GF_IO_ERR;
 	}
+
 
 	/*wait for the child function to call us - do NOT return before, otherwise the thread status would
 	be unknown*/
@@ -638,7 +651,7 @@ GF_EXPORT
 Bool gf_mx_try_lock(GF_Mutex *mx)
 {
 	u32 caller;
-	if (!mx) return GF_FALSE;
+	if (!mx) return GF_TRUE;
 	caller = gf_th_id();
 	if (caller == mx->Holder) {
 		mx->HolderCount += 1;
@@ -869,5 +882,3 @@ Bool gf_sema_wait_for(GF_Semaphore *sm, u32 TimeOut)
 
 #endif
 }
-
-#endif

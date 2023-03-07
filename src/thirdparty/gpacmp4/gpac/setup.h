@@ -169,6 +169,24 @@ typedef unsigned int size_t;
 
 #define snprintf _snprintf
 
+/*	the _USING_V110_SDK71_ macro will be defined when using
+	msvc toolsets like v140_xp, v141_xp, etc.
+*/
+
+#if ( (defined(WINVER) && WINVER <= 0x0502) || _USING_V110_SDK71_)
+#define GPAC_BUILD_FOR_WINXP
+#endif
+
+/*! minimum api versions to use for windows apis with mingw */
+#if (defined(__MINGW32__) || defined(__MINGW64__))
+#if (defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0601)
+#undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0601
+#endif
+#endif
+
 #endif	/*END WIN32 non win-ce*/
 /*end WIN32 config*/
 
@@ -180,7 +198,7 @@ typedef unsigned int size_t;
 /*! default path separator of the current platform*/
 #define GF_PATH_SEPARATOR	'\\'
 
-/*we must explicitely export our functions...*/
+/*we must explicitly export our functions...*/
 
 /*! macro for cross-platform signaling of exported function of libgpac*/
 #define GF_EXPORT EXPORT_C
@@ -432,12 +450,27 @@ typedef struct {
 
 #if (defined (WIN32) || defined (_WIN32_WCE)) && (defined(__MINGW32__) || !defined(__GNUC__))
 
-/*! macro for cross-platform suffix used for formating s64 integers in logs and printf routines*/
+#if defined(__MINGW32__)
+
+#ifdef __USE_MINGW_ANSI_STDIO
+#undef __USE_MINGW_ANSI_STDIO
+#endif
+#define __USE_MINGW_ANSI_STDIO 1
+
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
+#define LLD_SUF "lld"
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
+#define LLU_SUF "llu"
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
+#define LLX_SUF "llx"
+#else
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
 #define LLD_SUF "I64d"
-/*! macro for cross-platform suffix used for formating u64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
 #define LLU_SUF "I64u"
-/*! macro for cross-platform suffix used for formating u64 integers as hex in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
 #define LLX_SUF "I64x"
+#endif
 
 #ifdef _WIN64
 /*! macro for cross-platform casting a pointer to an integer*/
@@ -449,11 +482,11 @@ typedef struct {
 
 #elif defined (__SYMBIAN32__)
 
-/*! macro for cross-platform suffix used for formating s64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
 #define LLD_SUF "d"
-/*! macro for cross-platform suffix used for formating u64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
 #define LLU_SUF "u"
-/*! macro for cross-platform suffix used for formating u64 integers as hex in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
 #define LLX_SUF "x"
 
 /*! macro for cross-platform casting a pointer to an integer*/
@@ -462,11 +495,11 @@ typedef struct {
 /*seems that even though _LP64 is defined in OSX, %ll modifiers are still needed*/
 #elif defined(__DARWIN__) || defined(__APPLE__)
 
-/*! macro for cross-platform suffix used for formating s64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
 #define LLD_SUF "lld"
-/*! macro for cross-platform suffix used for formating u64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
 #define LLU_SUF "llu"
-/*! macro for cross-platform suffix used for formating u64 integers as hex in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
 #define LLX_SUF "llx"
 
 #ifdef __LP64__ /* Mac OS 64 bits */
@@ -479,11 +512,11 @@ typedef struct {
 
 #elif defined(_LP64) /*Unix 64 bits*/
 
-/*! macro for cross-platform suffix used for formating s64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
 #define LLD_SUF "ld"
-/*! macro for cross-platform suffix used for formating u64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
 #define LLU_SUF "lu"
-/*! macro for cross-platform suffix used for formating u64 integers as hex in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
 #define LLX_SUF "lx"
 
 /*! macro for cross-platform casting a pointer to an integer*/
@@ -491,11 +524,11 @@ typedef struct {
 
 #else /*Unix 32 bits*/
 
-/*! macro for cross-platform suffix used for formating s64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting s64 integers in logs and printf routines*/
 #define LLD_SUF "lld"
-/*! macro for cross-platform suffix used for formating u64 integers in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers in logs and printf routines*/
 #define LLU_SUF "llu"
-/*! macro for cross-platform suffix used for formating u64 integers as hex in logs and printf routines*/
+/*! macro for cross-platform suffix used for formatting u64 integers as hex in logs and printf routines*/
 #define LLX_SUF "llx"
 
 /*! macro for cross-platform casting a pointer to an integer*/
@@ -654,7 +687,7 @@ typedef struct {
 \brief Memory management
 
 GPAC can use its own memory tracker, depending on compilation option. It is recommended to use only the functions
-defined in this section to allocate and free memory whenever developping within the GPAC library.
+defined in this section to allocate and free memory whenever developing within the GPAC library.
 
 \warning these functions shall only be used after initializing the library using \ref gf_sys_init
 @{
@@ -687,33 +720,33 @@ u64 gf_memory_size(); /*gets memory allocated in bytes*/
 /*! free memory allocated with gpac
 \param ptr same as free()
 */
-#define gf_free free
+void gf_free(void *ptr);
 
 /*! allocates memory, shall be freed using \ref gf_free
 \param size same as malloc()
-\return adress of allocated block
+\return address of allocated block
 */
-#define gf_malloc malloc
+void* gf_malloc(size_t size);
 
 /*! allocates memory array, shall be freed using \ref gf_free
 \param num same as calloc()
 \param size_of same as calloc()
-\return adress of allocated block
+\return address of allocated block
 */
-#define gf_calloc calloc
+void* gf_calloc(size_t num, size_t size_of);
 
 /*! duplicates string, shall be freed using \ref gf_free
 \param str same as strdup()
 \return duplicated string
 */
-#define gf_strdup strdup
+char* gf_strdup(const char *str);
 
 /*! reallocates memory, shall be freed using \ref gf_free
 \param ptr same as realloc()
 \param size same as realloc()
-\return adress of reallocated block
+\return address of reallocated block
 */
-#define gf_realloc realloc
+void* gf_realloc(void *ptr, size_t size);
 
 #endif
 /*! @} */
@@ -721,6 +754,13 @@ u64 gf_memory_size(); /*gets memory allocated in bytes*/
 
 /*end GPAC memory tracking*/
 
+/*! copy source string to destination, ensuring 0-terminated string result
+\param dst  destination buffer
+\param src  source buffer
+\param dsize size of destination buffer
+\return same as strlcpy
+*/
+size_t gf_strlcpy(char *dst, const char *src, size_t dsize);
 
 #ifdef __cplusplus
 }

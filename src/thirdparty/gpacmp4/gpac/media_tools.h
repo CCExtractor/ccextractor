@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / Authoring Tools sub-project
@@ -86,12 +86,13 @@ GF_ESD *gf_media_map_item_esd(GF_ISOFile *mp4, u32 item_id);
  * Get RFC 6381 description for a given track.
 \param isom_file source ISOBMF file
 \param trackNumber track to check
+ \param sample_desc_index sample description index to check
 \param szCodec a pointer to an already allocated string of size RFC6381_CODEC_NAME_SIZE_MAX bytes.
 \param force_inband_xps force inband signaling of parameter sets.
 \param force_sbr forces using explicit signaling for SBR.
 \return error if any.
  */
-GF_Err gf_media_get_rfc_6381_codec_name(GF_ISOFile *isom_file, u32 trackNumber, char *szCodec, Bool force_inband_xps, Bool force_sbr);
+GF_Err gf_media_get_rfc_6381_codec_name(GF_ISOFile *isom_file, u32 trackNumber, u32 sample_desc_index, char *szCodec, Bool force_inband_xps, Bool force_sbr);
 #endif
 
 #ifndef GPAC_DISABLE_ISOM_WRITE
@@ -106,6 +107,21 @@ GF_Err gf_media_get_rfc_6381_codec_name(GF_ISOFile *isom_file, u32 trackNumber, 
 \return error if any
  */
 GF_Err gf_media_change_par(GF_ISOFile *isom_file, u32 trackNumber, s32 ar_num, s32 ar_den, Bool force_par, Bool rewrite_par);
+
+/*! Changes color property of the media (bitstream rewrite) - only AVC/H264 supported for now. See CICP for value types
+Negative values keep source settings for the corresponding flags.
+If source stream has no VUI info, create one and set corresponding flags to specified values.
+In this case, any other flags are set to preferred values (typically, flag=0 or value=undef).
+\param isom_file target ISOBMF file
+\param trackNumber target track
+\param fullrange fullrange flag
+\param video_format video format type
+\param color_primaries color primaries
+\param transfer transfer characteristics
+\param color_matrix olor matrix
+\return error if any
+*/
+GF_Err gf_media_change_color(GF_ISOFile *isom_file, u32 trackNumber, s32 fullrange, s32 video_format, s32 color_primaries, s32 transfer, s32 color_matrix);
 
 /*!
  *Removes all non rap samples (sync and other RAP sample group info) from the track.
@@ -122,6 +138,26 @@ GF_Err gf_media_remove_non_rap(GF_ISOFile *isom_file, u32 trackNumber, Bool non_
 \param trackNumber target track
  */
 void gf_media_update_bitrate(GF_ISOFile *isom_file, u32 trackNumber);
+
+
+/*! gets AV1 scalable layer byte offsets of a sample for a1lx box
+\param isom_file the target ISO file
+\param trackNumber the target track
+\param sample_number the target sample to query
+\param op_index AV1 operating point index to retrieve sizes for
+\param layer_size returned 3 layer sizes (4th is implied, see a1lx spec)
+\return error if any
+*/
+GF_Err gf_media_av1_layer_size_get(GF_ISOFile *isom_file, u32 trackNumber, u32 sample_number, u8 op_index, u32 layer_size[3]);
+
+
+/*! sets keys from name and value, as defined in MP4Box -h tags
+\param isom_file the target ISO file
+\param name the tag name
+\param value the tag value
+\return error if any
+*/
+GF_Err gf_media_isom_apply_qt_key(GF_ISOFile *isom_file, const char *name, const char *value);
 
 #endif
 
@@ -151,7 +187,7 @@ Default import FPS for video when no VUI/timing information is found
 	otherwise it is added with the requested ESID if non-0, otherwise the new trackID is stored in ESID
 	if use_data_ref is set, data is only referenced in the file
 	if duration is not 0, only the first duration seconds are imported
-	NOTE: if an ESD is specified, its decoderSpecificInfo is also updated
+	\note If an ESD is specified, its decoderSpecificInfo is also updated
 
 */
 
@@ -383,29 +419,49 @@ typedef struct __track_import
 	const char *filter_src_opts;
 	/*! any filter options to pass to sink*/
 	const char *filter_dst_opts;
-	/*! filter chain to insert before destination, formated as f1[:args]@@f2[:args] options to pass to sink*/
+	/*! filter chain to insert before destination, formatted as "f1[:args]@f2[:args]" options to pass to sink*/
 	const char *filter_chain;
+	Bool is_chain_old_syntax;
 
-
+	/*! force mode for the created  ISOBMFF sample entry*/
 	GF_AudioSampleEntryImportMode asemode;
 
-	Bool audio_roll_change;
-	s16 audio_roll;
-
+	/*! indicate to tag the imported media as an alpha channel stream*/
 	Bool is_alpha;
+	/*! keep AU delimiter in file if allowed by specification*/
 	Bool keep_audelim;
+	/*! import as NAL-based video using inband parameter sets*/
 	u32 xps_inband;
+	/*! flag for session stats and graph dumping*/
 	u32 print_stats_graph;
+	/*! target program ID of source MPEG-2 stream to import*/
 	u32 prog_id;
+
+	/*! target timescale to set*/
+	s32 moov_timescale;
+
+	/*! value for created track
+		0: let importer decide
+		0xFFFFFFFF: try to keep source ID
+		other value: trackk ID value
+	*/
+	u32 target_trackID;
 
 	/*magic number for identifying source, will be set to the destination track. Only the low 32 bits are used
 	the high 32 bits are updated by the importer as follows:
 		1<<33: if bit is set, source was an isobmff file
 	*/
 	u64 source_magic;
+	/*! the session in which to add the importer (for -new-fs option only). If null, the importer runs its own session right away*/
 	GF_FilterSession *run_in_session;
+	/*! muxer arguments when running multiple importers in one session*/
 	char *update_mux_args;
+	/*! muxer source ID argument when running multiple importers in one session*/
+	char *update_mux_sid;
+	/*! index of source importer when running multiple importers in one session*/
 	u32 track_index;
+	/*! target start time in source*/
+	Double start_time;
 } GF_MediaImporter;
 
 /*!
@@ -475,10 +531,11 @@ This section documents functions for manipulating AVC and HEVC tracks in ISOBMFF
 \param isom_file the target ISOBMF file
 \param trackNumber the target track
 \param profile the new profile to set
+\param compat profile compatibility flag for H264
 \param level the new level to set
 \return error if any
  */
-GF_Err gf_media_change_pl(GF_ISOFile *isom_file, u32 trackNumber, u32 profile, u32 level);
+GF_Err gf_media_change_pl(GF_ISOFile *isom_file, u32 trackNumber, u32 profile, u32 compat, u32 level);
 
 /*!
  Rewrite NAL-based samples (AVC/HEVC/...) samples if nalu size_length has to be changed
@@ -514,7 +571,7 @@ typedef enum
 	GF_LHVC_EXTRACTORS_ON,
 	/*! don't use extractors and keep base track inband/outofband param set signaling*/
 	GF_LHVC_EXTRACTORS_OFF,
-	/*! don't use extractors and force inband signaling in enhancement layer (for ATSC3)*/
+	/*! don't use extractors and force inband signaling in enhancement layer*/
 	GF_LHVC_EXTRACTORS_OFF_FORCE_INBAND
 } GF_LHVCExtractoreMode;
 
@@ -570,14 +627,14 @@ typedef struct
 {
 	/*! source file to be used*/
 	char *file_name;
-	/*! ID of the representation. If not set, assigned automatically*/
+	/*! ID of the representation, may be NULL (assigned by dasher)*/
 	char *representationID;
-	/*! ID of the period. If not set, assigned automatically*/
+	/*! ID of the period, may be NULL (assigned by dasher)*/
 	char *periodID;
-	/*! ID of the adaptation set. If not set, assigned automatically.*/
+	/*! ID of the adaptation set, may be 0 (assigned by dasher)*/
 	u32 asID;
 	/*! forced media duration.*/
-	Double media_duration;
+	GF_Fraction64 media_duration;
 	/*! number of base URLs in the baseURL structure*/
 	u32 nb_baseURL;
 	/*! list of baseURL to be used for this representation*/
@@ -607,9 +664,9 @@ typedef struct
 	/*! forces bandwidth in bits per seconds of the source media. If 0, computed from file */
 	u32 bandwidth;
 	/*! forced period duration (used when using empty periods or xlink periods without content)*/
-	Double period_duration;
+	GF_Fraction period_duration;
 	/*! forced dash target duration for this rep*/
-	Double dash_duration;
+	GF_Fraction dash_duration;
 	/*! sets default start number for this representation. if not set, assigned automatically */
 	u32 startNumber; 	//TODO: start number, template
 	/*! overrides template for this input*/
@@ -653,6 +710,8 @@ typedef enum
 	GF_DASH_PROFILE_AVC264_LIVE,
 	/*! industry profile DASH-IF ISOBMFF onDemand */
 	GF_DASH_PROFILE_AVC264_ONDEMAND,
+	/*! industry profile DASH-IF ISOBMFF low latency */
+	GF_DASH_PROFILE_DASHIF_LL,
 } GF_DashProfile;
 
 
@@ -668,12 +727,16 @@ typedef enum
 	GF_DASH_BSMODE_NONE,
 	/*! always inband parameter sets */
 	GF_DASH_BSMODE_INBAND,
+	/*! out of band parameter sets except PPS and APS, used for VVC */
+	GF_DASH_BSMODE_INBAND_PPS,
+	/*! both inband and out of band parameter sets */
+	GF_DASH_BSMODE_BOTH, //Romain
 	/*! attempts to merge parameter sets in a single sample entry */
 	GF_DASH_BSMODE_MERGED,
 	/*! parameter sets are in different sample entries */
 	GF_DASH_BSMODE_MULTIPLE_ENTRIES,
 	/*! forces GF_DASH_BSMODE_INBAND even if only one file is used*/
-	GF_DASH_BSMODE_SINGLE
+	GF_DASH_BSMODE_SINGLE,
 } GF_DashSwitchingMode;
 
 
@@ -714,7 +777,7 @@ typedef struct __gf_dash_segmenter GF_DASHSegmenter;
  Create a new DASH segmenter
 \param mpdName target MPD file name, cannot be changed
 \param profile target DASH profile, cannot be changed
-\param tmp_dir temp dir for file generation, OS NULL for default
+\param tmp_dir temp dir for file generation, if NULL uses libgpac default
 \param timescale timescale used to specif most of the dash timings. If 0, 1000 is used
 \param dasher_context_file config file used to store the context of the DASH segmenter. This allows destroying the segmenter and restarting it later on with the right DASH segquence numbers, MPD and and timing info
 \return the DASH segmenter object
@@ -815,7 +878,7 @@ GF_Err gf_dasher_set_switch_mode(GF_DASHSegmenter *dasher, GF_DashSwitchingMode 
 GF_Err gf_dasher_set_durations(GF_DASHSegmenter *dasher, Double default_segment_duration, Double default_fragment_duration, Double sub_duration);
 
 /*!
- Enables spliting at RAP boundaries
+ Enables splitting at RAP boundaries
 \param dasher the DASH segmenter object
 \param segments_start_with_rap segments will be split at RAP boundaries
 \param fragments_start_with_rap fragments will be split at RAP boundaries
@@ -900,7 +963,9 @@ typedef enum
 	//! PSSH box in moof and MPD
 	GF_DASH_PSSH_MOOF_MPD,
 	//! PSSH box in MPD only
-	GF_DASH_PSSH_MPD
+	GF_DASH_PSSH_MPD,
+	//! Drop PSSH info from mpd and init seg
+	GF_DASH_PSSH_NONE,
 } GF_DASHPSSHMode;
 
 /*!
@@ -989,6 +1054,15 @@ typedef enum
 */
 GF_Err gf_dasher_set_split_mode(GF_DASHSegmenter *dasher, GF_DASH_SplitMode split_mode);
 
+
+/*!
+ Enable/Disable last segment merging (disabled by default).
+ *	\param dasher the DASH segmenter object
+ *	\param merge_last_seg if true, last segment is merged into previous if duration less than half target dur
+ *	\return error code if any
+*/
+GF_Err gf_dasher_set_last_segment_merge(GF_DASHSegmenter *dasher, Bool merge_last_seg);
+
 /*!
  Sets m3u8 file name - if not set, no m3u8 output
 \param dasher the DASH segmenter object
@@ -1047,6 +1121,14 @@ void gf_dasher_set_start_date(GF_DASHSegmenter *dasher, const char *dash_utc_sta
 */
 GF_Err gf_dasher_print_session_info(GF_DASHSegmenter *dasher, u32 fs_print_flags);
 
+/*!
+ Keeps UTC creation and modification dates from sources, if any (default is no)
+\param dasher the DASH segmenter object
+\param keep_utc if GF_TRUE, keeps UTC times
+\return error if any
+*/
+GF_Err gf_dasher_keep_source_utc(GF_DASHSegmenter *dasher, Bool keep_utc);
+
 #ifndef GPAC_DISABLE_ISOM_FRAGMENTS
 /*!
  save file as fragmented movie
@@ -1088,12 +1170,12 @@ enum
 	GF_EXPORT_RAW_SAMPLES = (1<<1),
 	/*! NHNT format (any MPEG-4 media)*/
 	GF_EXPORT_NHNT = (1<<2),
-	/*! AVI (MPEG4 video and AVC tracks only)*/
-	GF_EXPORT_AVI = (1<<3),
+	/*! full remux of source file - equivalent to `gpac -i in_name:FID=1 reframer:FID=2:SID=1 -o out_name:SID=2` */
+	GF_EXPORT_REMUX = (1<<3),
 	/*! MP4 (all except OD)*/
 	GF_EXPORT_MP4 = (1<<4),
-	/*! AVI->RAW to dump video (trackID=1) or audio (trackID>=2)*/
-	GF_EXPORT_AVI_NATIVE = (1<<5),
+	/*! currently unused*/
+	GF_EXPORT_UNUSED = (1<<4),
 	/*! NHML format (any media)*/
 	GF_EXPORT_NHML = (1<<6),
 	/*! SAF format*/
@@ -1123,7 +1205,7 @@ enum
 	/*! Experimental Streaming Instructions */
 	GF_EXPORT_SIX = (1<<16),
 
-	/*! ony probes extraction format*/
+	/*! only probes extraction format*/
 	GF_EXPORT_PROBE_ONLY = (1<<30),
 	/*when set by user during export, will abort*/
 	GF_EXPORT_DO_ABORT = 0x80000000 //(1<<31)
@@ -1148,7 +1230,10 @@ typedef struct __track_exporter
 	char *in_name;
 	/*! optional FILE for output*/
 	FILE *dump_file;
+	/*! filter session dump flags*/
 	u32 print_stats_graph;
+	/*! track type: 0: none specified, 1: video, 2: audio, 3: text*/
+	u32 track_type;
 } GF_MediaExporter;
 
 /*!
@@ -1159,7 +1244,7 @@ typedef struct __track_exporter
 GF_Err gf_media_export(GF_MediaExporter *dump);
 
 #ifndef GPAC_DISABLE_VTT
-/*! dumps a webvtt tracl to a given file
+/*! dumps a webvtt track to a given file
 \param dumper media dumper object
 \param trackNumber the target track to dump
 \param merge if GF_TRUE, merge vtt cues while dumping them
@@ -1372,6 +1457,16 @@ GF_Err gf_saf_mux_for_time(GF_SAFMuxer *mux, u32 time_ms, Bool force_end_of_sess
 \param ts_inc output timestamp increment value
 */
 void gf_media_get_video_timing(Double fps, u32 *timescale, u32 *ts_inc);
+
+/*! gets dolby vision level
+ \param width width in pixels of video
+ \param height height in pixels of video
+ \param fps_num framerate numerator
+ \param fps_den framerate denominator
+ \param codecid GPAC codec ID
+ \return dv level
+*/
+u32 gf_dolby_vision_level(u32 width, u32 height, u64 fps_num, u64 fps_den, u32 codecid);
 
 #ifdef __cplusplus
 }

@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2005-2020
+ *			Copyright (c) Telecom ParisTech 2005-2022
  *			All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -26,8 +26,6 @@
 #include <gpac/xml.h>
 #include <gpac/utf.h>
 #include <gpac/network.h>
-
-#ifndef GPAC_DISABLE_CORE_TOOLS
 
 #ifndef GPAC_DISABLE_ZLIB
 /*since 0.2.2, we use zlib for xmt/x3d reading to handle gz files*/
@@ -63,7 +61,7 @@ static char *xml_translate_xml_string(char *str)
 			if (str[i+1]=='#') {
 				char szChar[20], *end;
 				u16 wchar[2];
-				u32 val;
+				u32 val, _len;
 				const unsigned short *srcp;
 				strncpy(szChar, str+i, 10);
 				szChar[10] = 0;
@@ -78,7 +76,9 @@ static char *xml_translate_xml_string(char *str)
 					sscanf(szChar, "&#%u;", &val);
 				wchar[0] = val;
 				srcp = wchar;
-				j += (u32) gf_utf8_wcstombs(&value[j], 20, &srcp);
+				_len = gf_utf8_wcstombs(&value[j], 20, &srcp);
+				if (_len == GF_UTF8_FAIL) _len = 0;
+				j += _len;
 			}
 			else if (!strnicmp(&str[i], "&amp;", sizeof(char)*5)) {
 				value[j] = '&';
@@ -635,13 +635,15 @@ static void xml_sax_skip_xml_proc(GF_SAXParser *parser)
 
 static void xml_sax_parse_entity(GF_SAXParser *parser)
 {
-	char szName[1024];
+	char szC[2];
+	char *ent_name=NULL;
 	u32 i = 0;
 	XML_Entity *ent = (XML_Entity *)gf_list_last(parser->entities);
 	char *skip_chars = " \t\n\r";
 	i=0;
 	if (ent && ent->value) ent = NULL;
 	if (ent) skip_chars = NULL;
+	szC[1]=0;
 
 	while (parser->current_pos+i < parser->line_size) {
 		u8 c = parser->buffer[parser->current_pos+i];
@@ -653,16 +655,20 @@ static void xml_sax_parse_entity(GF_SAXParser *parser)
 		if (!ent && (c=='%')) {
 			parser->current_pos+=i+1;
 			parser->sax_state = SAX_STATE_SKIP_DOCTYPE;
+			if (ent_name) gf_free(ent_name);
 			return;
 		}
 		else if (!ent && ((c=='\"') || (c=='\'')) ) {
-			szName[i] = 0;
 			GF_SAFEALLOC(ent, XML_Entity);
 			if (!ent) {
 				parser->sax_state = SAX_STATE_ALLOC_ERROR;
+				if (ent_name) gf_free(ent_name);
 				return;
 			}
-			ent->name = gf_strdup(szName);
+			if (!ent_name) gf_dynstrcat(&ent_name, "", NULL);
+
+			ent->name = ent_name;
+			ent_name=NULL;
 			ent->namelen = (u32) strlen(ent->name);
 			ent->sep = c;
 			parser->current_pos += 1+i;
@@ -672,6 +678,7 @@ static void xml_sax_parse_entity(GF_SAXParser *parser)
 			gf_list_add(parser->entities, ent);
 			skip_chars = NULL;
 		} else if (ent && c==ent->sep) {
+			if (ent_name) gf_free(ent_name);
 			xml_sax_store_text(parser, i);
 
 			ent->value = xml_get_current_text(parser);
@@ -683,12 +690,14 @@ static void xml_sax_parse_entity(GF_SAXParser *parser)
 			parser->sax_state = SAX_STATE_SKIP_DOCTYPE;
 			return;
 		} else if (!ent) {
-			szName[i] = c;
+			szC[0] = c;
+			gf_dynstrcat(&ent_name, szC, NULL);
 			i++;
 		} else {
 			i++;
 		}
 	}
+	if (ent_name) gf_free(ent_name);
 	xml_sax_store_text(parser, i);
 }
 
@@ -1074,10 +1083,10 @@ GF_Err gf_xml_sax_parse(GF_SAXParser *parser, const void *string)
 
 	if (parser->unicode_type>1) {
 		const u16 *sptr = (const u16 *)string;
-		u32 len = 2 * (u32) gf_utf8_wcslen(sptr);
+		u32 len = 2 * gf_utf8_wcslen(sptr);
 		utf_conv = (char *)gf_malloc(sizeof(char)*(len+1));
-		len = (u32) gf_utf8_wcstombs(utf_conv, len, &sptr);
-		if (len==(u32) -1) {
+		len = gf_utf8_wcstombs(utf_conv, len, &sptr);
+		if (len == GF_UTF8_FAIL) {
 			parser->sax_state = SAX_STATE_SYNTAX_ERROR;
 			gf_free(utf_conv);
 			return GF_CORRUPTED_DATA;
@@ -1226,7 +1235,7 @@ GF_Err gf_xml_sax_parse_file(GF_SAXParser *parser, const char *fileName, gf_xml_
 	if (!strncmp(fileName, "gmem://", 7)) {
 		u32 size;
 		u8 *xml_mem_address;
-		e = gf_blob_get_data(fileName, &xml_mem_address, &size);
+		e = gf_blob_get(fileName, &xml_mem_address, &size, NULL);
 		if (e) return e;
 
 		parser->file_size = size;
@@ -1239,12 +1248,12 @@ GF_Err gf_xml_sax_parse_file(GF_SAXParser *parser, const char *fileName, gf_xml_
 		parser->current_pos = 0;
 
 		e = gf_xml_sax_init(parser, szLine);
-		if (e) return e;
-
-
-		e = gf_xml_sax_parse(parser, xml_mem_address+4);
-		if (parser->on_progress) parser->on_progress(parser->sax_cbck, parser->file_pos, parser->file_size);
-
+        if (!e) {
+            e = gf_xml_sax_parse(parser, xml_mem_address+4);
+            if (parser->on_progress) parser->on_progress(parser->sax_cbck, parser->file_pos, parser->file_size);
+        }
+        gf_blob_release(fileName);
+        
 		parser->elt_start_pos = parser->elt_end_pos = 0;
 		parser->elt_name_start = parser->elt_name_end = 0;
 		parser->att_name_start = 0;
@@ -1619,10 +1628,10 @@ struct _tag_dom_parser
 
 
 GF_EXPORT
-void gf_xml_dom_node_del(GF_XMLNode *node)
+void gf_xml_dom_node_reset(GF_XMLNode *node, Bool reset_attribs, Bool reset_children)
 {
 	if (!node) return;
-	if (node->attributes) {
+	if (node->attributes && reset_attribs) {
 		while (gf_list_count(node->attributes)) {
 			GF_XMLAttribute *att = (GF_XMLAttribute *)gf_list_last(node->attributes);
 			gf_list_rem_last(node->attributes);
@@ -1630,16 +1639,24 @@ void gf_xml_dom_node_del(GF_XMLNode *node)
 			if (att->value) gf_free(att->value);
 			gf_free(att);
 		}
-		gf_list_del(node->attributes);
 	}
-	if (node->content) {
+
+	if (reset_children && node->content) {
 		while (gf_list_count(node->content)) {
 			GF_XMLNode *child = (GF_XMLNode *)gf_list_last(node->content);
 			gf_list_rem_last(node->content);
 			gf_xml_dom_node_del(child);
 		}
-		gf_list_del(node->content);
 	}
+}
+
+GF_EXPORT
+void gf_xml_dom_node_del(GF_XMLNode *node)
+{
+	if (!node) return;
+	gf_xml_dom_node_reset(node, GF_TRUE, GF_TRUE);
+	if (node->attributes) gf_list_del(node->attributes);
+	if (node->content) gf_list_del(node->content);
 	if (node->ns) gf_free(node->ns);
 	if (node->name) gf_free(node->name);
 	gf_free(node);
@@ -1783,14 +1800,17 @@ void gf_xml_dom_del(GF_DOMParser *parser)
 	gf_free(parser);
 }
 
-#if 0 //unused
+GF_EXPORT
 GF_XMLNode *gf_xml_dom_detach_root(GF_DOMParser *parser)
 {
-	GF_XMLNode *root = parser->root;
-	parser->root = NULL;
+	GF_XMLNode *root;
+	if (!parser)
+		return NULL;
+	root = parser->root;
+	gf_list_del_item(parser->root_nodes, root);
+	parser->root = gf_list_get(parser->root_nodes, 0);
 	return root;
 }
-#endif
 
 static void dom_on_progress(void *cbck, u64 done, u64 tot)
 {
@@ -1866,15 +1886,16 @@ GF_XMLNode *gf_xml_dom_get_root_idx(GF_DOMParser *parser, u32 idx)
 }
 
 
-static void gf_xml_dom_node_serialize(GF_XMLNode *node, Bool content_only, char **str, u32 *alloc_size, u32 *size)
+static void gf_xml_dom_node_serialize(GF_XMLNode *node, Bool content_only, Bool no_escape, char **str, u32 *alloc_size, u32 *size)
 {
 	u32 i, count, vlen;
 	char *name;
 
 #define SET_STRING(v)	\
 	vlen = (u32) strlen(v);	\
-	if (vlen+ (*size) >= (*alloc_size)) {	\
+	if (vlen + (*size) >= (*alloc_size)) {	\
 		(*alloc_size) += 1024;	\
+		if (vlen + (*size) >= (*alloc_size)) (*alloc_size) = vlen + (*size) + 1;\
 		(*str) = gf_realloc((*str), (*alloc_size));	\
 		(*str)[(*size)] = 0;	\
 	}	\
@@ -1891,7 +1912,39 @@ static void gf_xml_dom_node_serialize(GF_XMLNode *node, Bool content_only, char 
 		name = node->name;
 		if ((name[0]=='\r') && (name[1]=='\n'))
 			name++;
-		SET_STRING(name);
+
+		if (no_escape) {
+			SET_STRING(name);
+		} else {
+			u32 tlen;
+			char szChar[2];
+			szChar[1] = 0;
+			tlen = (u32) strlen(name);
+			for (i= 0; i<tlen; i++) {
+				switch (name[i]) {
+				case '&':
+					SET_STRING("&amp;");
+					break;
+				case '<':
+					SET_STRING("&lt;");
+					break;
+				case '>':
+					SET_STRING("&gt;");
+					break;
+				case '\'':
+					SET_STRING("&apos;");
+					break;
+				case '\"':
+					SET_STRING("&quot;");
+					break;
+
+				default:
+					szChar[0] = name[i];
+					SET_STRING(szChar);
+					break;
+				}
+			}
+		}
 		return;
 	}
 
@@ -1924,7 +1977,7 @@ static void gf_xml_dom_node_serialize(GF_XMLNode *node, Bool content_only, char 
 	count = gf_list_count(node->content);
 	for (i=0; i<count; i++) {
 		GF_XMLNode *child = (GF_XMLNode*)gf_list_get(node->content, i);
-		gf_xml_dom_node_serialize(child, GF_FALSE, str, alloc_size, size);
+		gf_xml_dom_node_serialize(child, GF_FALSE, GF_FALSE, str, alloc_size, size);
 	}
 	if (!content_only) {
 		SET_STRING("</");
@@ -1938,12 +1991,25 @@ static void gf_xml_dom_node_serialize(GF_XMLNode *node, Bool content_only, char 
 }
 
 GF_EXPORT
-char *gf_xml_dom_serialize(GF_XMLNode *node, Bool content_only)
+char *gf_xml_dom_serialize(GF_XMLNode *node, Bool content_only, Bool no_escape)
 {
 	u32 alloc_size = 0;
 	u32 size = 0;
 	char *str = NULL;
-	gf_xml_dom_node_serialize(node, content_only, &str, &alloc_size, &size);
+	gf_xml_dom_node_serialize(node, content_only, no_escape, &str, &alloc_size, &size);
+	return str;
+}
+
+GF_EXPORT
+char *gf_xml_dom_serialize_root(GF_XMLNode *node, Bool content_only, Bool no_escape)
+{
+	u32 alloc_size, size;
+	char *str = NULL;
+	gf_dynstrcat(&str, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", NULL);
+	if (!str) return NULL;
+
+	alloc_size = size = (u32) strlen(str) + 1;
+	gf_xml_dom_node_serialize(node, content_only, no_escape, &str, &alloc_size, &size);
 	return str;
 }
 
@@ -2000,6 +2066,17 @@ GF_Err gf_xml_dom_append_child(GF_XMLNode *node, GF_XMLNode *child) {
 	return gf_list_add(node->content, child);
 }
 
+#if 0
+/*!
+\brief Removes the node to the list of children of this node.
+
+Removes the node to the list of children of this node.
+\warning Doesn't free the memory of the removed children.
+
+\param node the GF_XMLNode node
+\param child the GF_XMLNode child to remove
+\return Error code if any, otherwise GF_OK
+ */
 GF_EXPORT
 GF_Err gf_xml_dom_rem_child(GF_XMLNode *node, GF_XMLNode *child) {
 	s32 idx;
@@ -2008,9 +2085,11 @@ GF_Err gf_xml_dom_rem_child(GF_XMLNode *node, GF_XMLNode *child) {
 	if (idx == -1) return GF_BAD_PARAM;
 	return gf_list_rem(node->content, idx);
 }
+#endif //unused
 
-#if 0
-GF_XMLNode* gf_xml_dom_node_new(const char* ns, const char* name) {
+
+GF_XMLNode *gf_xml_dom_node_new(const char* ns, const char* name)
+{
 	GF_XMLNode* node;
 	GF_SAFEALLOC(node, GF_XMLNode);
 	if (!node) return NULL;
@@ -2029,10 +2108,12 @@ GF_XMLNode* gf_xml_dom_node_new(const char* ns, const char* name) {
 			gf_free(node);
 			return NULL;
 		}
+		node->type = GF_XML_NODE_TYPE;
+	} else {
+		node->type = GF_XML_TEXT_TYPE;
 	}
 	return node;
 }
-#endif //unused
 
 #include <gpac/base_coding.h>
 
@@ -2044,11 +2125,14 @@ GF_XMLNode* gf_xml_dom_node_new(const char* ns, const char* name) {
 	}\
 
 
-GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, GF_BitStream *bs)
+GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, const char *base_media_file, GF_BitStream *bs_orig)
 {
 	u32 i, j;
+	GF_Err e = GF_OK;
 	GF_XMLNode *node;
 	GF_XMLAttribute *att;
+	GF_BitStream *bs = bs_orig;
+	u32 enc_base64 = 0;
 
 	i=0;
 	while ((node = (GF_XMLNode *) gf_list_enum(bsroot->content, &i))) {
@@ -2056,11 +2140,13 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 		u32 size = 0;
 		u64 offset = 0;
 		s64 value = 0;
+		Bool use_file = GF_FALSE;
 		bin128 word128;
 		Float val_float = 0;
 		Double val_double = 0;
 		Bool use_word128 = GF_FALSE;
 		Bool use_text = GF_FALSE;
+		Bool base64_prefix_bits = 0;
 		Bool big_endian = GF_TRUE;
 		Bool has_float = GF_FALSE;
 		Bool has_double = GF_FALSE;
@@ -2071,7 +2157,8 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 		if (node->type) continue;
 
 		if (stricmp(node->name, "BS") ) {
-			gf_xml_parse_bit_sequence_bs(node, parent_url, bs);
+			e = gf_xml_parse_bit_sequence_bs(node, parent_url, base_media_file, bs);
+			if (e) goto exit;
 			continue;
 		}
 
@@ -2089,20 +2176,23 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 				has_double = GF_TRUE;
 			} else if (!stricmp(att->name, "mediaOffset") || !stricmp(att->name, "dataOffset")) {
 				XML_SCAN_INT(LLU, offset);
+				use_file = GF_TRUE;
 			} else if (!stricmp(att->name, "dataLength")) {
 				XML_SCAN_INT("%u", size);
+				use_file = GF_TRUE;
 			} else if (!stricmp(att->name, "mediaFile") || !stricmp(att->name, "dataFile")) {
 				szFile = att->value;
+				use_file = GF_TRUE;
 			} else if (!stricmp(att->name, "text") || !stricmp(att->name, "string")) {
 				szString = att->value;
 			} else if (!stricmp(att->name, "fcc")) {
 				value = GF_4CC(att->value[0], att->value[1], att->value[2], att->value[3]);
 				nb_bits = 32;
 			} else if (!stricmp(att->name, "ID128")) {
-				GF_Err e = gf_bin128_parse(att->value, word128);
+				e = gf_bin128_parse(att->value, word128);
                 if (e != GF_OK) {
                     GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Cannot parse ID128\n"));
-                    return e;
+                    goto exit;
                 }
 				use_word128 = GF_TRUE;
 			} else if (!stricmp(att->name, "textmode")) {
@@ -2114,8 +2204,39 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 				if (!strnicmp(szData, "0x", 2)) szData += 2;
 			} else if (!stricmp(att->name, "endian") && !stricmp(att->value, "little")) {
 				big_endian = GF_FALSE;
+			} else if (!stricmp(att->name, "base64")) {
+				if (!stricmp(att->value, "yes") || !stricmp(att->value, "true") ) {
+					if (!enc_base64) enc_base64 = 1;
+				} else if (!stricmp(att->value, "start")) {
+					if (!enc_base64) enc_base64 = 2;
+				} else if (!stricmp(att->value, "end")) {
+					if (enc_base64==2) enc_base64 = 3;
+				} else {
+                    GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Invalid base64 attribute %s, expecting yes/no, start or end\n", att->value));
+                    e = GF_NON_COMPLIANT_BITSTREAM;
+                    goto exit;
+				}
+			} else if (!stricmp(att->name, "base64Prefix")) {
+				base64_prefix_bits = atoi(att->value);
+			} else if (!stricmp(att->name, "id")) {
+			} else {
+				GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Unkown attribute %s, ignoring\n", att->name));
 			}
 		}
+
+		if (enc_base64 && (enc_base64<3)) {
+			if (bs == bs_orig) {
+				bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
+				if (!bs) {
+					e = GF_OUT_OF_MEM;
+					goto exit;
+				}
+			}
+		}
+
+		if (use_file && !szFile)
+			szFile = base_media_file;
+
 		if (szString) {
 			u32 len = (u32) strlen(szString);
 			if (nb_bits)
@@ -2126,7 +2247,10 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 			u32 len = (u32) strlen(szBase64);
 			char *data = (char *) gf_malloc(sizeof(char)*len);
 			u32 ret;
-			if (!data ) return GF_OUT_OF_MEM;
+			if (!data) {
+				e = GF_OUT_OF_MEM;
+				goto exit;
+			}
 
 			ret = (u32) gf_base64_decode((char *)szBase64, len, data, len);
 			if ((s32) ret >=0) {
@@ -2135,13 +2259,17 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 			} else {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Error decoding base64 %s\n", att->value));
 				gf_free(data);
-				return GF_BAD_PARAM;
+				e = GF_BAD_PARAM;
+				goto exit;
 			}
 			gf_free(data);
 		} else if (szData) {
 			u32 len = (u32) strlen(szData);
 			char *data = (char *) gf_malloc(sizeof(char)*len/2);
-			if (!data) return GF_OUT_OF_MEM;
+			if (!data) {
+				e = GF_OUT_OF_MEM;
+				goto exit;
+			}
 
 			for (j=0; j<len; j+=2) {
 				u32 v;
@@ -2165,7 +2293,8 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 					gf_bs_write_u32_le(bs, (u32)value);
 				else {
 					GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Little-endian values can only be 16 or 32-bit\n"));
-					return GF_BAD_PARAM;
+					e = GF_BAD_PARAM;
+					goto exit;
 				}
 			}
 			else {
@@ -2186,7 +2315,8 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 
 			if (!_tmp) {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Error opening file %s\n", szFile));
-				return GF_URL_ERROR;
+				e = GF_URL_ERROR;
+				goto exit;
 			}
 
 			if (!size) {
@@ -2203,7 +2333,8 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 				read = (u32) gf_fread(block, bsize, _tmp);
 				if ((s32) read < 0) {
 					gf_fclose(_tmp);
-					return GF_IO_ERR;
+					e = GF_IO_ERR;
+					goto exit;
 				}
 
 				gf_bs_write_data(bs, block, read);
@@ -2213,8 +2344,53 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 		} else if (use_word128) {
 			gf_bs_write_data(bs, (char *)word128, 16);
 		}
+
+		if ((enc_base64==1) || (enc_base64==3)) {
+			u8 *bs_data;
+			u32 bs_data_size;
+			assert (bs != bs_orig);
+			gf_bs_get_content(bs, &bs_data, &bs_data_size);
+			gf_bs_del(bs);
+			enc_base64 = 0;
+			bs = bs_orig;
+			if (bs_data) {
+				u8 *bs_data_out;
+				u32 res = 2*bs_data_size + 3;
+				bs_data_out = gf_malloc(sizeof(char) * res);
+				if (!bs_data_out) {
+					e = GF_OUT_OF_MEM;
+					goto exit;
+				}
+				res = gf_base64_encode(bs_data, bs_data_size, bs_data_out, res);
+				bs_data_out[res] = 0;
+				if (base64_prefix_bits) {
+					if (base64_prefix_bits % 8) {
+						gf_bs_write_int(bs, res, base64_prefix_bits);
+					} else {
+						u32 nb_bytes = base64_prefix_bits/8;
+						if (!big_endian && (nb_bytes==8)) gf_bs_write_u64_le(bs, res);
+						else if (!big_endian && (nb_bytes==4)) gf_bs_write_u32_le(bs, res);
+						else if (!big_endian && (nb_bytes==2)) gf_bs_write_u16_le(bs, res);
+						else
+							gf_bs_write_int(bs, res, base64_prefix_bits);
+					}
+				}
+				gf_bs_write_data(bs, bs_data_out, res);
+				gf_free(bs_data);
+				gf_free(bs_data_out);
+			}
+		}
 	}
-	return GF_OK;
+
+exit:
+	if (bs != bs_orig) {
+		if (!e) {
+			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] base64 encoding context not closed\n"));
+			e = GF_NON_COMPLIANT_BITSTREAM;
+		}
+		gf_bs_del(bs);
+	}
+	return e;
 }
 
 GF_EXPORT
@@ -2223,7 +2399,7 @@ GF_Err gf_xml_parse_bit_sequence(GF_XMLNode *bsroot, const char *parent_url, u8 
 	GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
 	if (!bs) return GF_OUT_OF_MEM;
 
-	gf_xml_parse_bit_sequence_bs(bsroot, parent_url, bs);
+	gf_xml_parse_bit_sequence_bs(bsroot, parent_url, NULL, bs);
 
 	gf_bs_align(bs);
 	gf_bs_get_content(bs, data, data_size);
@@ -2306,5 +2482,3 @@ void gf_xml_dump_string(FILE* file, const char *before, const char *str, const c
 		gf_fprintf(file, "%s", after);
 	}
 }
-
-#endif /*GPAC_DISABLE_CORE_TOOLS*/

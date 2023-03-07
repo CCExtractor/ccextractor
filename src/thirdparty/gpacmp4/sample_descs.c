@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / ISO Media File Format sub-project
@@ -45,6 +45,8 @@ void gf_isom_sample_entry_predestroy(GF_SampleEntryBox *ptr)
 
 void gf_isom_sample_entry_init(GF_SampleEntryBox *ent)
 {
+	ent->internal_type = GF_ISOM_SAMPLE_ENTRY_GENERIC;
+//	ent->internal_type = GF_ISOM_SAMPLE_ENTRY_MP4S;
 }
 
 void gf_isom_video_sample_entry_init(GF_VisualSampleEntryBox *ent)
@@ -185,7 +187,6 @@ void gf_isom_audio_sample_entry_init(GF_AudioSampleEntryBox *ptr)
 {
 	gf_isom_sample_entry_init((GF_SampleEntryBox*)ptr);
 	ptr->internal_type = GF_ISOM_SAMPLE_ENTRY_AUDIO;
-
 	ptr->channel_count = 2;
 	ptr->bitspersample = 16;
 }
@@ -236,6 +237,8 @@ GF_Box *gf_isom_audio_sample_get_audio_codec_cfg_box(GF_AudioSampleEntryBox *ptr
 	case GF_ISOM_BOX_TYPE_MHA1:
 	case GF_ISOM_BOX_TYPE_MHA2:
 		return (GF_Box *)mpga->cfg_mha;
+	case GF_ISOM_BOX_TYPE_MLPA:
+		return (GF_Box *)mpga->cfg_mlp;
 	}
 	return NULL;
 }
@@ -311,10 +314,12 @@ GF_3GPConfig *gf_isom_3gp_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 
 	case GF_ISOM_SUBTYPE_3GP_EVRC:
 	case GF_ISOM_SUBTYPE_3GP_QCELP:
 	case GF_ISOM_SUBTYPE_3GP_SMV:
+		if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return NULL;
 		if (! ((GF_MPEGAudioSampleEntryBox*)entry)->cfg_3gpp) return NULL;
 		config = & ((GF_MPEGAudioSampleEntryBox*)entry)->cfg_3gpp->cfg;
 		break;
 	case GF_ISOM_SUBTYPE_3GP_H263:
+		if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_VIDEO) return NULL;
 		if (! ((GF_MPEGVisualSampleEntryBox*)entry)->cfg_3gpp) return NULL;
 		config = & ((GF_MPEGVisualSampleEntryBox*)entry)->cfg_3gpp->cfg;
 		break;
@@ -339,8 +344,9 @@ GF_AC3Config *gf_isom_ac3_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 
 	if (!trak || !StreamDescriptionIndex) return NULL;
 
 	entry = (GF_MPEGAudioSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
-	if (!entry || !entry->cfg_ac3) return NULL;
+	if (!entry) return NULL;
 	if (!entry->cfg_ac3) return NULL;
+	if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return NULL;
 	if ( (entry->cfg_ac3->type!=GF_ISOM_BOX_TYPE_DAC3) && (entry->cfg_ac3->type!=GF_ISOM_BOX_TYPE_DEC3) ) return NULL;
 
 	res = (GF_AC3Config*)gf_malloc(sizeof(GF_AC3Config));
@@ -361,6 +367,8 @@ GF_Err gf_isom_flac_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 Stream
 	if (!trak || !StreamDescriptionIndex) return GF_BAD_PARAM;
 
 	entry = (GF_MPEGAudioSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
+	if (!entry) return GF_BAD_PARAM;
+	if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return GF_BAD_PARAM;
 
 	type = entry->type;
 	if (type==GF_ISOM_BOX_TYPE_ENCA) {
@@ -377,23 +385,80 @@ GF_Err gf_isom_flac_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 Stream
 	return GF_OK;
 }
 
+GF_EXPORT
+GF_Err gf_isom_truehd_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 StreamDescriptionIndex, u32 *format_info, u32 *peak_data_rate)
+{
+	GF_TrackBox *trak;
+	GF_MPEGAudioSampleEntryBox *entry;
+	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !StreamDescriptionIndex) return GF_BAD_PARAM;
+
+	entry = (GF_MPEGAudioSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
+	if (!entry) return GF_BAD_PARAM;
+	if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return GF_BAD_PARAM;
+	if (entry->type != GF_ISOM_SUBTYPE_MLPA) return GF_BAD_PARAM;
+
+	if (!entry->cfg_mlp) return GF_ISOM_INVALID_FILE;
+	if (format_info) *format_info = entry->cfg_mlp->format_info;
+	if (peak_data_rate) *peak_data_rate = entry->cfg_mlp->peak_data_rate;
+	return GF_OK;
+}
 
 #ifndef GPAC_DISABLE_ISOM_WRITE
-GF_EXPORT
-GF_Err gf_isom_opus_config_new(GF_ISOFile *the_file, u32 trackNumber, GF_OpusSpecificBox *cfg, char *URLname, char *URNname, u32 *outDescriptionIndex)
+GF_Err gf_isom_truehd_config_new(GF_ISOFile *the_file, u32 trackNumber, char *URLname, char *URNname, u32 format, u32 peak_rate, u32 *outDescriptionIndex)
 {
 	GF_TrackBox *trak;
 	GF_Err e;
 	u32 dataRefIndex;
 	GF_MPEGAudioSampleEntryBox *entry;
 	GF_SampleDescriptionBox *stsd;
-	ptrdiff_t offset;
 
 	e = CanAccessMovie(the_file, GF_ISOM_OPEN_WRITE);
 	if (e) return e;
 
 	trak = gf_isom_get_track_from_file(the_file, trackNumber);
-	if (!trak || !trak->Media || !cfg) return GF_BAD_PARAM;
+	if (!trak || !trak->Media) return GF_BAD_PARAM;
+
+	//get or create the data ref
+	e = Media_FindDataRef(trak->Media->information->dataInformation->dref, URLname, URNname, &dataRefIndex);
+	if (e) return e;
+	if (!dataRefIndex) {
+		e = Media_CreateDataRef(the_file, trak->Media->information->dataInformation->dref, URLname, URNname, &dataRefIndex);
+		if (e) return e;
+	}
+	if (!the_file->keep_utc)
+		trak->Media->mediaHeader->modificationTime = gf_isom_get_mp4time();
+
+	stsd = trak->Media->information->sampleTable->SampleDescription;
+	//create a new entry
+	entry = (GF_MPEGAudioSampleEntryBox *)gf_isom_box_new_parent(&stsd->child_boxes, GF_ISOM_BOX_TYPE_MLPA);
+	if (!entry) return GF_OUT_OF_MEM;
+	entry->cfg_mlp = (GF_TrueHDConfigBox *)gf_isom_box_new_parent(&entry->child_boxes, GF_ISOM_BOX_TYPE_DMLP);
+	if (!entry->cfg_mlp) return GF_OUT_OF_MEM;
+	entry->cfg_mlp->format_info = format;
+	entry->cfg_mlp->peak_data_rate = (u16) peak_rate;
+	entry->dataReferenceIndex = dataRefIndex;
+	*outDescriptionIndex = gf_list_count(stsd->child_boxes);
+	return e;
+}
+#endif
+
+#ifndef GPAC_DISABLE_ISOM_WRITE
+GF_EXPORT
+GF_Err gf_isom_opus_config_new(GF_ISOFile *the_file, u32 trackNumber, GF_OpusConfig *cfg, char *URLname, char *URNname, u32 *outDescriptionIndex)
+{
+	GF_TrackBox *trak;
+	GF_Err e;
+	u32 dataRefIndex;
+	GF_MPEGAudioSampleEntryBox *entry;
+	GF_SampleDescriptionBox *stsd;
+
+	if (!cfg) return GF_BAD_PARAM;
+	e = CanAccessMovie(the_file, GF_ISOM_OPEN_WRITE);
+	if (e) return e;
+
+	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !trak->Media) return GF_BAD_PARAM;
 
 	//get or create the data ref
 	e = Media_FindDataRef(trak->Media->information->dataInformation->dref, URLname, URNname, &dataRefIndex);
@@ -411,9 +476,8 @@ GF_Err gf_isom_opus_config_new(GF_ISOFile *the_file, u32 trackNumber, GF_OpusSpe
 	if (!entry) return GF_OUT_OF_MEM;
 	entry->cfg_opus = (GF_OpusSpecificBox*)gf_isom_box_new_parent(&entry->child_boxes, GF_ISOM_BOX_TYPE_DOPS);
 	if (!entry->cfg_opus) return GF_OUT_OF_MEM;
-	//skip box header
-	offset = (ptrdiff_t)&cfg->version - (ptrdiff_t)cfg;
-	memcpy((char*)entry->cfg_opus + offset, (char*)cfg + offset, sizeof(GF_OpusSpecificBox) - (size_t)offset);
+	entry->cfg_opus->opcfg = *cfg;
+	entry->cfg_opus->opcfg.version = 0;
 
 	entry->dataReferenceIndex = dataRefIndex;
 	*outDescriptionIndex = gf_list_count(stsd->child_boxes);
@@ -421,8 +485,7 @@ GF_Err gf_isom_opus_config_new(GF_ISOFile *the_file, u32 trackNumber, GF_OpusSpe
 }
 #endif
 
-GF_EXPORT
-GF_Err gf_isom_opus_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 StreamDescriptionIndex, u8 **dsi, u32 *dsi_size)
+static GF_Err gf_isom_opus_config_get_internal(GF_ISOFile *the_file, u32 trackNumber, u32 StreamDescriptionIndex, u8 **dsi, u32 *dsi_size, GF_OpusConfig *ocfg)
 {
 	u32 type;
 	GF_TrackBox *trak;
@@ -430,9 +493,13 @@ GF_Err gf_isom_opus_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 Stream
 	trak = gf_isom_get_track_from_file(the_file, trackNumber);
 	if (dsi) *dsi = NULL;
 	if (dsi_size) *dsi_size = 0;
+	if (ocfg) memset(ocfg, 0, sizeof(GF_OpusConfig));
+
 	if (!trak || !StreamDescriptionIndex) return GF_BAD_PARAM;
 
 	entry = (GF_MPEGAudioSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
+	if (!entry) return GF_BAD_PARAM;
+	if (entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return GF_BAD_PARAM;
 
 	type = entry->type;
 	if (type==GF_ISOM_BOX_TYPE_ENCA) {
@@ -445,14 +512,26 @@ GF_Err gf_isom_opus_config_get(GF_ISOFile *the_file, u32 trackNumber, u32 Stream
 		return GF_BAD_PARAM;
 
 	if (dsi && dsi_size) {
-		GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
-		gf_isom_box_size((GF_Box *)entry->cfg_opus);
-		gf_isom_box_write((GF_Box *)entry->cfg_opus, bs);
-		gf_bs_get_content(bs, dsi, dsi_size);
-		gf_bs_del(bs);
+		gf_odf_opus_cfg_write(&entry->cfg_opus->opcfg, dsi, dsi_size);
 	}
+	if (ocfg)
+		*ocfg = entry->cfg_opus->opcfg;
 	return GF_OK;
 }
+
+GF_EXPORT
+GF_Err gf_isom_opus_config_get(GF_ISOFile *isom_file, u32 trackNumber, u32 sampleDescriptionIndex, u8 **dsi, u32 *dsi_size)
+{
+	return gf_isom_opus_config_get_internal(isom_file, trackNumber, sampleDescriptionIndex, dsi, dsi_size, NULL);
+}
+
+GF_EXPORT
+GF_Err gf_isom_opus_config_get_desc(GF_ISOFile *isom_file, u32 trackNumber, u32 sampleDescriptionIndex, GF_OpusConfig *opcfg)
+{
+	return gf_isom_opus_config_get_internal(isom_file, trackNumber, sampleDescriptionIndex, NULL, NULL, opcfg);
+
+}
+
 
 #ifndef GPAC_DISABLE_ISOM_WRITE
 
@@ -575,9 +654,11 @@ GF_Err gf_isom_3gp_config_update(GF_ISOFile *the_file, u32 trackNumber, GF_3GPCo
 	case GF_ISOM_SUBTYPE_3GP_EVRC:
 	case GF_ISOM_SUBTYPE_3GP_QCELP:
 	case GF_ISOM_SUBTYPE_3GP_SMV:
+		if (a_entry->internal_type != GF_ISOM_SAMPLE_ENTRY_AUDIO) return GF_ISOM_INVALID_FILE;
 		cfg = &a_entry->cfg_3gpp->cfg;
 		break;
 	case GF_ISOM_SUBTYPE_3GP_H263:
+		if (v_entry->internal_type != GF_ISOM_SAMPLE_ENTRY_VIDEO) return GF_ISOM_INVALID_FILE;
 		cfg = & v_entry->cfg_3gpp->cfg;
 		break;
 	default:
@@ -631,6 +712,35 @@ GF_Err gf_isom_ac3_config_new(GF_ISOFile *the_file, u32 trackNumber, GF_AC3Confi
 	e = gf_list_add(trak->Media->information->sampleTable->SampleDescription->child_boxes, entry);
 	*outDescriptionIndex = gf_list_count(trak->Media->information->sampleTable->SampleDescription->child_boxes);
 	return e;
+}
+
+GF_EXPORT
+GF_Err gf_isom_ac3_config_update(GF_ISOFile *the_file, u32 trackNumber, u32 sampleDescriptionIndex, GF_AC3Config *cfg)
+{
+	GF_TrackBox *trak;
+	GF_Err e;
+	GF_MPEGAudioSampleEntryBox *entry;
+
+	e = CanAccessMovie(the_file, GF_ISOM_OPEN_WRITE);
+	if (e) return e;
+
+	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !trak->Media || !cfg || !sampleDescriptionIndex) return GF_BAD_PARAM;
+
+	if (!the_file->keep_utc)
+		trak->Media->mediaHeader->modificationTime = gf_isom_get_mp4time();
+
+	entry = gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, sampleDescriptionIndex-1);
+	if (!entry) return GF_BAD_PARAM;
+	if (!entry->cfg_ac3) return GF_BAD_PARAM;
+
+	if (entry->cfg_ac3->cfg.is_ec3) {
+		if (!cfg->is_ec3) return GF_BAD_PARAM;
+	} else {
+		if (cfg->is_ec3) return GF_BAD_PARAM;
+	}
+	memcpy(&entry->cfg_ac3->cfg, cfg, sizeof(GF_AC3Config));
+	return GF_OK;
 }
 
 GF_EXPORT
@@ -1032,7 +1142,58 @@ GF_Err gf_isom_xml_subtitle_get_description(GF_ISOFile *the_file, u32 trackNumbe
 	return GF_OK;
 }
 
+
+GF_EXPORT
+const char *gf_isom_subtitle_get_mime(GF_ISOFile *the_file, u32 trackNumber, u32 StreamDescriptionIndex)
+{
+	GF_TrackBox *trak;
+	GF_TextConfigBox *mime;
+	GF_MetaDataSampleEntryBox *entry;
+	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !StreamDescriptionIndex) return NULL;
+
+	entry = (GF_MetaDataSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
+	if (!entry) return NULL;
+
+	mime = (GF_TextConfigBox *) gf_isom_box_find_child(entry->child_boxes, GF_ISOM_BOX_TYPE_MIME);
+	if (!mime) return NULL;
+	return mime->config;
+}
+
+
 #ifndef GPAC_DISABLE_ISOM_WRITE
+
+GF_EXPORT
+GF_Err gf_isom_subtitle_set_mime(GF_ISOFile *the_file, u32 trackNumber, u32 StreamDescriptionIndex, const char *codec_params)
+{
+	GF_TrackBox *trak;
+	GF_Err e;
+	GF_TextConfigBox *mime;
+	GF_MetaDataSampleEntryBox *entry;
+
+	e = CanAccessMovie(the_file, GF_ISOM_OPEN_WRITE);
+	if (e) return e;
+
+	trak = gf_isom_get_track_from_file(the_file, trackNumber);
+	if (!trak || !StreamDescriptionIndex) return GF_BAD_PARAM;
+
+	entry = (GF_MetaDataSampleEntryBox *)gf_list_get(trak->Media->information->sampleTable->SampleDescription->child_boxes, StreamDescriptionIndex-1);
+	if (!entry) return GF_BAD_PARAM;
+
+	mime = (GF_TextConfigBox *) gf_isom_box_find_child(entry->child_boxes, GF_ISOM_BOX_TYPE_MIME);
+	if (!mime) {
+		if (!codec_params) return GF_OK;
+		mime = (GF_TextConfigBox *) gf_isom_box_new_parent(&entry->child_boxes, GF_ISOM_BOX_TYPE_MIME);
+		if (!mime) return GF_OUT_OF_MEM;
+	}
+	if (!codec_params) {
+		gf_isom_box_del_parent(&entry->child_boxes, (GF_Box *)mime);
+		return GF_OK;
+	}
+	if (mime->config) gf_free(mime->config);
+	mime->config = gf_strdup(codec_params);
+	return GF_OK;
+}
 
 GF_EXPORT
 GF_Err gf_isom_new_xml_subtitle_description(GF_ISOFile  *movie, u32 trackNumber,
@@ -1062,7 +1223,7 @@ GF_Err gf_isom_new_xml_subtitle_description(GF_ISOFile  *movie, u32 trackNumber,
 	}
 
 	if (!xmlnamespace) {
-		GF_LOG(GF_LOG_WARNING, GF_LOG_PARSER, ("XML (Subtitle, Metadata or Text) SampleEntry: namespace is mandatory. Abort.\n"));
+		GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("XML (Subtitle, Metadata or Text) SampleEntry: namespace is mandatory. Abort.\n"));
 		return GF_BAD_PARAM;
 	}
 
@@ -1158,12 +1319,12 @@ GF_Err gf_isom_new_stxt_description(GF_ISOFile *movie, u32 trackNumber, u32 type
 	case GF_ISOM_SUBTYPE_METT:
 		break;
 	default:
-		GF_LOG(GF_LOG_ERROR, GF_LOG_PARSER, ("SampleEntry shall be either Metadata, Subtitle or SimpleText. Abort.\n"));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("SampleEntry shall be either Metadata, Subtitle or SimpleText. Abort.\n"));
 		return GF_BAD_PARAM;
 	}
 
 	if (!mime) {
-		GF_LOG(GF_LOG_WARNING, GF_LOG_PARSER, ("Text (Metadata, Subtitle or SimpleText) SampleEntry: mime is mandatory. Using text/plain.\n"));
+		GF_LOG(GF_LOG_INFO, GF_LOG_CONTAINER, ("Text (Metadata, Subtitle or SimpleText) missing mime, using text/plain.\n"));
 		mime = "text/plain";
 	}
 
@@ -1485,6 +1646,7 @@ GF_Err gf_isom_tmcd_config_new(GF_ISOFile *the_file, u32 trackNumber, u32 fps_nu
 	u32 dataRefIndex;
 	GF_Box *tmcd;
 	GF_GenericMediaHeaderInfoBox *gmin;
+	GF_TimeCodeMediaInformationBox *tcmi;
 	GF_TimeCodeSampleEntryBox *entry;
 
 	e = CanAccessMovie(the_file, GF_ISOM_OPEN_WRITE);
@@ -1509,14 +1671,15 @@ GF_Err gf_isom_tmcd_config_new(GF_ISOFile *the_file, u32 trackNumber, u32 fps_nu
 		if (!gmin) return GF_OUT_OF_MEM;
 	}
 
-	tmcd = gf_isom_box_find_child(trak->Media->information->InfoHeader->child_boxes, GF_ISOM_BOX_TYPE_GMHD);
+	tmcd = gf_isom_box_find_child(trak->Media->information->InfoHeader->child_boxes, GF_QT_BOX_TYPE_TMCD);
 	if (!tmcd) {
-		GF_TimeCodeMediaInformationBox *tcmi;
 		//default container box, use GMHD to create it
 		tmcd = gf_isom_box_new_parent(&trak->Media->information->InfoHeader->child_boxes, GF_ISOM_BOX_TYPE_GMHD);
 		if (!tmcd) return GF_OUT_OF_MEM;
 		tmcd->type = GF_QT_BOX_TYPE_TMCD;
-
+	}
+	tcmi = (GF_TimeCodeMediaInformationBox *) gf_isom_box_find_child(tmcd->child_boxes, GF_QT_BOX_TYPE_TCMI);
+	if (!tcmi) {
 		tcmi = (GF_TimeCodeMediaInformationBox *) gf_isom_box_new_parent(&tmcd->child_boxes, GF_QT_BOX_TYPE_TCMI);
 		if (!tcmi) return GF_OUT_OF_MEM;
 	}
@@ -1536,6 +1699,71 @@ GF_Err gf_isom_tmcd_config_new(GF_ISOFile *the_file, u32 trackNumber, u32 fps_nu
 	*outDescriptionIndex = gf_list_count(trak->Media->information->sampleTable->SampleDescription->child_boxes);
 	return e;
 }
+
+GF_Err gf_isom_new_mpha_description(GF_ISOFile *movie, u32 trackNumber, const char *URLname, const char *URNname, u32 *outDescriptionIndex, u8 *dsi, u32 dsi_size, u32 mha_subtype)
+{
+	GF_TrackBox *trak;
+	GF_Err e;
+	u32 dataRefIndex;
+	GF_MPEGAudioSampleEntryBox *mpa;
+
+	e = CanAccessMovie(movie, GF_ISOM_OPEN_WRITE);
+	if (e) return e;
+
+	trak = gf_isom_get_track_from_file(movie, trackNumber);
+	if (!trak || !trak->Media) return GF_BAD_PARAM;
+
+	switch (trak->Media->handler->handlerType) {
+	case GF_ISOM_MEDIA_AUDIO:
+		break;
+	default:
+		return GF_BAD_PARAM;
+	}
+	switch (mha_subtype) {
+	case GF_ISOM_BOX_TYPE_MHA1:
+	case GF_ISOM_BOX_TYPE_MHA2:
+		if (!dsi || (dsi_size<6)) return GF_BAD_PARAM;
+		break;
+	case GF_ISOM_BOX_TYPE_MHM1:
+	case GF_ISOM_BOX_TYPE_MHM2:
+		if (dsi_size && (dsi_size<6)) return GF_BAD_PARAM;
+		break;
+	default:
+		return GF_BAD_PARAM;
+	}
+
+	//get or create the data ref
+	e = Media_FindDataRef(trak->Media->information->dataInformation->dref, (char *)URLname, (char *)URNname, &dataRefIndex);
+	if (e) return e;
+	if (!dataRefIndex) {
+		e = Media_CreateDataRef(movie, trak->Media->information->dataInformation->dref, (char *)URLname, (char *)URNname, &dataRefIndex);
+		if (e) return e;
+	}
+	if (!movie->keep_utc)
+		trak->Media->mediaHeader->modificationTime = gf_isom_get_mp4time();
+
+	mpa = (GF_MPEGAudioSampleEntryBox *) gf_isom_box_new(mha_subtype);
+	if (!mpa) return GF_OUT_OF_MEM;
+	mpa->dataReferenceIndex = dataRefIndex;
+	gf_list_add(trak->Media->information->sampleTable->SampleDescription->child_boxes, mpa);
+	if (outDescriptionIndex) *outDescriptionIndex = gf_list_count(trak->Media->information->sampleTable->SampleDescription->child_boxes);
+
+	if (dsi) {
+		mpa->cfg_mha = (GF_MHAConfigBox *) gf_isom_box_new_parent(&mpa->child_boxes, GF_ISOM_BOX_TYPE_MHAC);
+		if (!mpa->cfg_mha) return GF_OUT_OF_MEM;
+		mpa->cfg_mha->configuration_version = dsi[0];
+		mpa->cfg_mha->mha_pl_indication = dsi[1];
+		mpa->cfg_mha->reference_channel_layout = dsi[2];
+		mpa->cfg_mha->mha_config_size = dsi[3];
+		mpa->cfg_mha->mha_config_size <<= 8;
+		mpa->cfg_mha->mha_config_size |= dsi[4];
+		mpa->cfg_mha->mha_config = gf_malloc(sizeof(u8) * mpa->cfg_mha->mha_config_size);
+		if (!mpa->cfg_mha->mha_config) return GF_OUT_OF_MEM;
+		memcpy(mpa->cfg_mha->mha_config, dsi+5, dsi_size-5);
+	}
+	return GF_OK;
+}
+
 #endif	/*GPAC_DISABLE_ISOM_WRITE*/
 
 GF_EXPORT
@@ -1579,53 +1807,6 @@ GF_Err gf_isom_get_pcm_config(GF_ISOFile *movie, u32 trackNumber, u32 descriptio
 	return GF_OK;
 }
 
-GF_Err gf_isom_ac3_config_parse_bs(GF_BitStream *bs, Bool is_ec3, GF_AC3Config *cfg)
-{
-	if (!cfg || !bs) return GF_BAD_PARAM;
-	memset(cfg, 0, sizeof(GF_AC3Config));
-	cfg->is_ec3 = is_ec3;
-	if (is_ec3) {
-		u32 j;
-		cfg->is_ec3 = 1;
-		cfg->brcode = gf_bs_read_int(bs, 13);
-		cfg->nb_streams = 1 + gf_bs_read_int(bs, 3);
-		for (j=0; j<cfg->nb_streams; j++) {
-			cfg->streams[j].fscod = gf_bs_read_int(bs, 2);
-			cfg->streams[j].bsid = gf_bs_read_int(bs, 5);
-			gf_bs_read_int(bs, 1);
-			cfg->streams[j].asvc = gf_bs_read_int(bs, 1);
-			cfg->streams[j].bsmod = gf_bs_read_int(bs, 3);
-			cfg->streams[j].acmod = gf_bs_read_int(bs, 3);
-			cfg->streams[j].lfon = gf_bs_read_int(bs, 1);
-			gf_bs_read_int(bs, 3);
-			cfg->streams[j].nb_dep_sub = gf_bs_read_int(bs, 4);
-			if (cfg->streams[j].nb_dep_sub) {
-				cfg->streams[j].chan_loc = gf_bs_read_int(bs, 9);
-			} else {
-				gf_bs_read_int(bs, 1);
-			}
-		}
-	} else {
-		cfg->nb_streams = 1;
-		cfg->streams[0].fscod = gf_bs_read_int(bs, 2);
-		cfg->streams[0].bsid = gf_bs_read_int(bs, 5);
-		cfg->streams[0].bsmod = gf_bs_read_int(bs, 3);
-		cfg->streams[0].acmod = gf_bs_read_int(bs, 3);
-		cfg->streams[0].lfon = gf_bs_read_int(bs, 1);
-		cfg->brcode = gf_bs_read_int(bs, 5);
-		gf_bs_read_int(bs, 5);
-	}
-	return GF_OK;
-}
-GF_Err gf_isom_ac3_config_parse(u8 *dsi, u32 dsi_len, Bool is_ec3, GF_AC3Config *cfg)
-{
-	GF_BitStream *bs;
-	GF_Err e;
-	if (!cfg || !dsi) return GF_BAD_PARAM;
-	bs = gf_bs_new(dsi, dsi_len, GF_BITSTREAM_READ);
-	e = gf_isom_ac3_config_parse_bs(bs, is_ec3, cfg);
-	gf_bs_del(bs);
-	return e;
-}
+
 
 #endif /*GPAC_DISABLE_ISOM*/

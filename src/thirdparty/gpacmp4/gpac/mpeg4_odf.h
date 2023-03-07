@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / MPEG-4 Object Descriptor sub-project
@@ -155,7 +155,7 @@ typedef struct
 
 
 /*!	default descriptor.
-	NOTE: The decoderSpecificInfo is used as a default desc with tag 0x05 */
+	\note The decoderSpecificInfo is used as a default desc with tag 0x05 */
 typedef struct
 {
 	BASE_DESCRIPTOR
@@ -183,7 +183,7 @@ typedef struct
 	GF_List *extensionDescriptors;
 	/*MPEG-2 (or other service mux formats) service ID*/
 	u32 ServiceID;
-	/*for ATSC, instructs client to keep OD alive even though URL string is set*/
+	/*for ROUTE, instructs client to keep OD alive even though URL string is set*/
 	Bool RedirectOnly;
 	/*set to true for fake remote ODs in BT/XMT (remote ODs created for OD with ESD with MuxInfo)*/
 	Bool fake_remote;
@@ -205,7 +205,7 @@ typedef struct
 	GF_List *extensionDescriptors;
 	/*MPEG-2 (or other service mux formats) service ID*/
 	u16 ServiceID;
-	/*for ATSC, instructs client to keep OD alive even though URL string is set*/
+	/*for ROUTE, instructs client to keep OD alive even though URL string is set*/
 	Bool RedirectOnly;
 	/*set to true for fake remote ODs in BT/XMT (remote ODs created for OD with ESD with MuxInfo)*/
 	Bool fake_remote;
@@ -235,7 +235,7 @@ typedef struct
 
 	/*MPEG-2 (or other service mux formats) service ID*/
 	u32 ServiceID;
-	/*for ATSC, instructs client to keep OD alive even though URL string is set*/
+	/*for ROUTE, instructs client to keep OD alive even though URL string is set*/
 	Bool RedirectOnly;
 	/*set to true for fake remote ODs in BT/XMT (remote ODs created for OD with ESD with MuxInfo)*/
 	Bool fake_remote;
@@ -425,10 +425,16 @@ typedef struct __tag_bifs_config
 /*! flags for text style*/
 enum
 {
+	/*! normal*/
 	GF_TXT_STYLE_NORMAL = 0,
+	/*! bold*/
 	GF_TXT_STYLE_BOLD = 1,
-	GF_TXT_STYLE_ITALIC = 2,
-	GF_TXT_STYLE_UNDERLINED = 4
+	/*! italic*/
+	GF_TXT_STYLE_ITALIC = 1<<1,
+	/*! underlined*/
+	GF_TXT_STYLE_UNDERLINED = 1<<2,
+	/*! strikethrough - not 3GPP/QT defined, GPAC only*/
+	GF_TXT_STYLE_STRIKETHROUGH = 1<<3,
 };
 
 /*! text style record*/
@@ -849,7 +855,7 @@ typedef struct {
 } GF_ContentCreatorInfo;
 
 /*! Content Creator Name GF_Descriptor
-NOTE: the desctructor will delete all the items in the list
+\note The desctructor will delete all the items in the list
 (GF_ContentCreatorInfo items) */
 typedef struct {
 	BASE_DESCRIPTOR
@@ -915,15 +921,21 @@ typedef struct {
 	u8 profileLevelIndicationIndex;
 } GF_PL_IDX;
 
-/*! used for storing AVC sequenceParameterSetNALUnit and pictureParameterSetNALUnit*/
+/*! used for storing NALU-based parameter set in AVC/HEVC/VVC configuration record*/
 typedef struct
 {
+	/*! size of nal*/
 	u16 size;
+	/*! nal data*/
 	u8 *data;
-	/* used of AVC/SVC detection */
+	/*! ID of param set, used by some importers but not written in file*/
 	s32 id;
+	/*! CRC of nal, used by some importers but not written in file*/
 	u32 crc;
-} GF_AVCConfigSlot;
+} GF_NALUFFParam;
+
+/*! pre v1.1 naming of NALU config record*/
+typedef GF_NALUFFParam GF_AVCConfigSlot;
 
 /*! AVC config record - not a real MPEG-4 descriptor
 */
@@ -959,7 +971,10 @@ typedef struct
 	u8 type;
 	u8 array_completeness;
 	GF_List *nalus;
-} GF_HEVCParamArray;
+} GF_NALUFFParamArray;
+
+/*! pre v1.1 naming of NALU param array*/
+typedef GF_NALUFFParamArray GF_HEVCParamArray;
 
 /*! HEVC config record - not a real MPEG-4 descriptor*/
 typedef struct
@@ -1001,6 +1016,41 @@ typedef struct
 	Bool write_annex_b;
 
 } GF_HEVCConfig;
+
+
+
+/*! VVC config record - not a real MPEG-4 descriptor*/
+typedef struct
+{
+	u8 general_profile_idc;
+	u8 general_tier_flag;
+	u8 general_sub_profile_idc;
+	u8 num_constraint_info;
+	u8 *general_constraint_info;
+	u8 general_level_idc;
+
+	u8 ptl_sublayer_present_mask;
+	u8 sublayer_level_idc[8];
+
+	u8 chroma_format;
+	u8 bit_depth;
+	u16 avgFrameRate;
+	u8 constantFrameRate;
+	u8 numTemporalLayers;
+	u16 maxPictureWidth, maxPictureHeight;
+
+	Bool ptl_present, ptl_frame_only_constraint, ptl_multilayer_enabled;
+	u8 num_sub_profiles;
+	u32 *sub_profiles_idc;
+
+	u16 ols_idx;
+	u8 nal_unit_size;
+
+	GF_List *param_array;
+
+	Bool write_annex_b;
+} GF_VVCConfig;
+
 
 /*! used for storing AV1 OBUs*/
 typedef struct
@@ -1056,7 +1106,7 @@ typedef struct
 	int RefFrameHeight[VP9_NUM_REF_FRAMES];
 } GF_VPConfig;
 
-/*! DolbyVision config dvcC */
+/*! DolbyVision config dvcC/dvvC */
 typedef struct {
 	u8 dv_version_major;
 	u8 dv_version_minor;
@@ -1065,7 +1115,12 @@ typedef struct {
 	Bool rpu_present_flag;
 	Bool el_present_flag;
 	Bool bl_present_flag;
-	//const unsigned int (32)[5] reserved = 0;
+	u8 dv_bl_signal_compatibility_id; //4 bits
+	//const unsigned int (28) reserved = 0;
+	//const unsigned int (32)[4] reserved = 0;
+
+	//internal, force dvhe or dvh1 signaling
+	u8 force_dv;
 } GF_DOVIDecoderConfigurationRecord;
 
 /*! Media Segment Descriptor used for Media Control Extensions*/
@@ -1284,7 +1339,7 @@ GF_BIFSConfig *gf_odf_get_bifs_config(GF_DefaultDescriptor *dsi, u32 codecid);
 \return error if any
  */
 GF_Err gf_odf_get_laser_config(GF_DefaultDescriptor *dsi, GF_LASERConfig *cfg);
-/*! sepcial function for authoring - convert DSI to TextConfig
+/*! special function for authoring - convert DSI to TextConfig
 \param data TEXT decoder config block
 \param data_len TEXT decoder config block size
 \param codecid TEXT codecid/object type indication
@@ -1380,6 +1435,42 @@ GF_HEVCConfig *gf_odf_hevc_cfg_read_bs(GF_BitStream *bs, Bool is_lhvc);
 GF_HEVCConfig *gf_odf_hevc_cfg_read(u8 *dsi, u32 dsi_size, Bool is_lhvc);
 
 
+/*! VVC config constructor
+\return the created VVC config*/
+GF_VVCConfig *gf_odf_vvc_cfg_new();
+
+/*! VVC config destructor
+\param cfg the VVC config to destroy*/
+void gf_odf_vvc_cfg_del(GF_VVCConfig *cfg);
+
+/*! writes GF_VVCConfig as MPEG-4 DSI in a bitstream object
+\param cfg the VVC config to encode
+\param bs output bitstream object in which the config is written
+\return error if any
+ */
+GF_Err gf_odf_vvc_cfg_write_bs(GF_VVCConfig *cfg, GF_BitStream *bs);
+
+/*! writes GF_VVCConfig as MPEG-4 DSI
+\param cfg the VVC config to encode
+\param outData encoded dsi buffer - it is the caller responsability to free this
+\param outSize  encoded dsi buffer size
+\return error if any
+ */
+GF_Err gf_odf_vvc_cfg_write(GF_VVCConfig *cfg, u8 **outData, u32 *outSize);
+
+/*! gets GF_VVCConfig from bitstream MPEG-4 DSI
+\param bs bitstream containing the encoded VVC decoder specific info
+\return the decoded VVC config
+ */
+GF_VVCConfig *gf_odf_vvc_cfg_read_bs(GF_BitStream *bs);
+
+/*! gets GF_VVCConfig from MPEG-4 DSI
+\param dsi encoded VVC decoder specific info
+\param dsi_size encoded VVC decoder specific info size
+\return the decoded VVC config
+ */
+GF_VVCConfig *gf_odf_vvc_cfg_read(u8 *dsi, u32 dsi_size);
+
 /*! AV1 config constructor
 \return the created AV1 config*/
 GF_AV1Config *gf_odf_av1_cfg_new();
@@ -1473,6 +1564,148 @@ GF_Err gf_odf_dovi_cfg_write_bs(GF_DOVIDecoderConfigurationRecord *cfg, GF_BitSt
 /*! destroys a DolbyVision config
 \param cfg the DolbyVision config to destroy*/
 void gf_odf_dovi_cfg_del(GF_DOVIDecoderConfigurationRecord *cfg);
+
+
+/*! AC-3 and E-AC3 stream info */
+typedef struct __ec3_stream
+{
+	/*! AC3 fs code*/
+	u8 fscod;
+	/*! AC3 bsid code*/
+	u8 bsid;
+	/*! AC3 bs mode*/
+	u8 bsmod;
+	/*! AC3 ac mode*/
+	u8 acmod;
+	/*! LF on*/
+	u8 lfon;
+	/*! asvc mode, only for EC3*/
+	u8 asvc;
+	/*! number of channels, including lfe and surround channels */
+	u8 channels;
+	/*! number of surround channels */
+	u8 surround_channels;
+	/*! number of dependent substreams, only for EC3*/
+	u8 nb_dep_sub;
+	/*! channel locations for dependent substreams, only for EC3*/
+	u16 chan_loc;
+} GF_AC3StreamInfo;
+
+/*! AC3 config record  - see dolby specs ETSI TS 102 366 */
+typedef struct __ac3_config
+{
+	/*! streams info - for AC3, always the first*/
+	GF_AC3StreamInfo streams[8];
+	/*! number of independent streams :
+		1 for AC3
+		max 8 for EC3
+	*/
+	u8 nb_streams;
+	/*! indicates if frame is ec3*/
+	u8 is_ec3;
+	/*! if AC3 this is the bitrate code
+	,	 otherwise cumulated data rate of EAC3 streams in kbps
+	*/
+	u16 brcode;
+	/*! sample rate - all additional streams shall have the same sample rate as first independent stream in EC3*/
+	u32 sample_rate;
+	/*! size of the complete frame*/
+	u32 framesize;
+	/*! atmos EC3 flag*/
+	u8 atmos_ec3_ext;
+	/*! atmos complexity index*/
+	u8 complexity_index_type;
+} GF_AC3Config;
+
+
+/*! writes Dolby AC3/EAC3 config to buffer
+\param cfg the Dolby AC3 config to write
+\param bs the bitstream object in which to write the config
+\return error if any
+*/
+GF_Err gf_odf_ac3_cfg_write_bs(GF_AC3Config *cfg, GF_BitStream *bs);
+/*! writes Dolby AC3/EAC3 config to buffer
+\param cfg the Dolby AC3 config to write
+\param data set to created output buffer, must be freed by caller
+\param size set to created output buffer size
+\return error if any
+*/
+GF_Err gf_odf_ac3_cfg_write(GF_AC3Config *cfg, u8 **data, u32 *size);
+
+
+/*! parses an AC3/EC3 sample description
+\param dsi the encoded config
+\param dsi_len the encoded config size
+\param is_ec3 indicates that the encoded config is for an EC3 track
+\param cfg the AC3/EC3 config to fill
+\return Error if any
+*/
+GF_Err gf_odf_ac3_config_parse(u8 *dsi, u32 dsi_len, Bool is_ec3, GF_AC3Config *cfg);
+
+/*! parses an AC3/EC3 sample description from bitstream
+\param bs the bitstream object
+\param is_ec3 indicates that the encoded config is for an EC3 track
+\param cfg the AC3/EC3 config to fill
+\return Error if any
+*/
+GF_Err gf_odf_ac3_config_parse_bs(GF_BitStream *bs, Bool is_ec3, GF_AC3Config *cfg);
+
+
+
+/*! Opus decoder config*/
+typedef struct
+{
+	//! version (should be 1)
+	u8 version;
+	//!same value as the *Output Channel Count* field in the identification header defined in Ogg Opus [3]
+	u8 OutputChannelCount;
+	//!The value of the PreSkip field shall be at least 80 milliseconds' worth of PCM samples even when removing any number of Opus samples which may or may not contain the priming samples. The PreSkip field is not used for discarding the priming samples at the whole playback at all since it is informative only, and that task falls on the Edit List Box.
+	u16 PreSkip;
+	//! The InputSampleRate field shall be set to the same value as the *Input Sample Rate* field in the identification header defined in Ogg Opus
+	u32 InputSampleRate;
+	//! The OutputGain field shall be set to the same value as the *Output Gain* field in the identification header define in Ogg Opus [3]. Note that the value is stored as 8.8 fixed-point.
+	s16 OutputGain;
+	//! The ChannelMappingFamily field shall be set to the same value as the *Channel Mapping Family* field in the identification header defined in Ogg Opus [3]. Note that the value 255 may be used for an alternative to map channels by ISO Base Media native mapping. The details are described in 4.5.1.
+	u8 ChannelMappingFamily;
+
+	//! The StreamCount field shall be set to the same value as the *Stream Count* field in the identification header defined in Ogg Opus [3].
+	u8 StreamCount;
+	//! The CoupledCount field shall be set to the same value as the *Coupled Count* field in the identification header defined in Ogg Opus [3].
+	u8 CoupledCount;
+	//! The ChannelMapping field shall be set to the same octet string as *Channel Mapping* field in the identi- fication header defined in Ogg Opus [3].
+	u8 ChannelMapping[255];
+} GF_OpusConfig;
+
+
+/*! writes Opus  config to buffer
+\param cfg the Opus config to write
+\param bs the bitstream object in which to write the config
+\return error if any
+*/
+GF_Err gf_odf_opus_cfg_write_bs(GF_OpusConfig *cfg, GF_BitStream *bs);
+
+/*! writes Opus config to buffer
+\param cfg the Opus config to write
+\param data set to created output buffer, must be freed by caller
+\param size set to created output buffer size
+\return error if any
+*/
+GF_Err gf_odf_opus_cfg_write(GF_OpusConfig *cfg, u8 **data, u32 *size);
+
+/*! parses an Opus sample description
+\param dsi the encoded config
+\param dsi_len the encoded config size
+\param cfg the Opus config to fill
+\return Error if any
+*/
+GF_Err gf_odf_opus_cfg_parse(u8 *dsi, u32 dsi_len, GF_OpusConfig *cfg);
+
+/*! parses an Opus sample description from bitstream
+\param bs the bitstream object
+\param cfg the Opus config to fill
+\return Error if any
+*/
+GF_Err gf_odf_opus_cfg_parse_bs(GF_BitStream *bs, GF_OpusConfig *cfg);
 
 /*! destroy the descriptors in a list but not the list
 \param descList descriptor list to destroy

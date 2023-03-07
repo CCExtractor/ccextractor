@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2020
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -67,7 +67,7 @@ Macro transforming its input name into a string
 \brief 4CC Formatting
 \hideinitializer
 
-Macro formating a 4-character code (or 4CC) "abcd" as 0xAABBCCDD
+Macro formatting a 4-character code (or 4CC) "abcd" as 0xAABBCCDD
 */
 #ifndef GF_4CC
 #define GF_4CC(a,b,c,d) ((((u32)a)<<24)|(((u32)b)<<16)|(((u32)c)<<8)|((u32)d))
@@ -81,6 +81,12 @@ Macro formating a 4-character code (or 4CC) "abcd" as 0xAABBCCDD
 \return a printable form of the code
 */
 const char *gf_4cc_to_str(u32 type);
+
+/*! converts a 4CC string to its 32 bits value
+\param val  four character string
+\return code value or 0 if error
+*/
+u32 gf_4cc_parse(const char *val);
 
 /*! @} */
 
@@ -131,7 +137,7 @@ typedef enum
 	GF_SCRIPT_ERROR							= -8,
 	/*! Buffer is too small to contain decoded data. Decoders shall use this error whenever they need to resize their output memory buffers*/
 	GF_BUFFER_TOO_SMALL						= -9,
-	/*! Bitstream is not compliant to the specfication it refers to*/
+	/*! The bitstream is not compliant to the specfication it refers to*/
 	GF_NON_COMPLIANT_BITSTREAM				= -10,
 	/*! No filter could be found to handle the desired media type*/
 	GF_FILTER_NOT_FOUND						= -11,
@@ -143,6 +149,9 @@ typedef enum
 	GF_REMOTE_SERVICE_ERROR					= -14,
 	/*! The desired stream could not be found in the service*/
 	GF_STREAM_NOT_FOUND						= -15,
+    /*! The URL no longer exists*/
+    GF_URL_REMOVED                          = -16,
+
 	/*! The IsoMedia file is not a valid one*/
 	GF_ISOM_INVALID_FILE					= -20,
 	/*! The IsoMedia file is not complete. Either the file is being downloaded, or it has been truncated*/
@@ -173,8 +182,7 @@ typedef enum
 	GF_IP_CONNECTION_CLOSED					= -43,
 	/*! The network operation has failed because no data is available*/
 	GF_IP_NETWORK_EMPTY						= -44,
-	/*! The network operation has been discarded because it would be a blocking one*/
-	GF_IP_SOCK_WOULD_BLOCK					= -45,
+
 	/*! UDP connection did not receive any data at all. Signaled by client services to reconfigure network if possible*/
 	GF_IP_UDP_TIMEOUT						= -46,
 
@@ -218,9 +226,9 @@ const char *gf_error_to_string(GF_Err e);
 Macro allocating memory and zero-ing it
 */
 #define GF_SAFEALLOC(__ptr, __struct) {\
-		__ptr = (__struct *) gf_malloc(sizeof(__struct));\
+		(__ptr) = (__struct *) gf_malloc(sizeof(__struct));\
 		if (__ptr) {\
-			memset((void *) __ptr, 0, sizeof(__struct));\
+			memset((void *) (__ptr), 0, sizeof(__struct));\
 		}\
 	}
 
@@ -231,9 +239,9 @@ Macro allocating memory and zero-ing it
 Macro allocating memory for n structures and zero-ing it
 */
 #define GF_SAFE_ALLOC_N(__ptr, __n, __struct) {\
-		__ptr = (__struct *) gf_malloc( __n * sizeof(__struct));\
+		(__ptr) = (__struct *) gf_malloc( __n * sizeof(__struct));\
 		if (__ptr) {\
-			memset((void *) __ptr, 0, __n * sizeof(__struct));\
+			memset((void *) (__ptr), 0, __n * sizeof(__struct));\
 		}\
 	}
 
@@ -248,6 +256,121 @@ Dynamic concatenation of string with optional separator
 \return error code
  */
 GF_Err gf_dynstrcat(char **str, const char *to_append, const char *sep);
+
+
+/*!
+\brief fraction parsing
+
+Parse a 64 bit fraction from string
+\param str string to parse
+\param frac fraction to fill
+\return GF_TRUE if success, GF_FALSE otherwise ( fraction being set to {0,0} )
+ */
+Bool gf_parse_lfrac(const char *str, GF_Fraction64 *frac);
+
+/*!
+\brief fraction parsing
+
+Parse a 32 bit fraction from string
+\param str string to parse
+\param frac fraction to fill
+\return GF_TRUE if success, GF_FALSE otherwise ( fraction being set to {0,0} )
+ */
+Bool gf_parse_frac(const char *str, GF_Fraction *frac);
+
+/*!
+\brief search string without case
+
+Search a aubstring in a string witout checking for case
+\param text text to search
+\param subtext string to find
+\param subtext_len length of string to find
+\return GF_TRUE if success, GF_FALSE otherwise
+ */
+Bool gf_strnistr(const char *text, const char *subtext, u32 subtext_len);
+
+
+/*!
+\brief safe timestamp rescale
+
+Rescale a 64 bit timestamp value to new timescale, i.e. performs value * new_timescale / timescale
+\param value value to rescale. A value of -1 means no timestamp defined and is returned unmodified
+\param timescale timescale of value. Assumed to be less than 0xFFFFFFFF
+\param new_timescale new timescale? Assumed to be less than 0xFFFFFFFF
+\return new value
+ */
+u64 gf_timestamp_rescale(u64 value, u64 timescale, u64 new_timescale);
+
+/*!
+\brief safe signed timestamp rescale
+
+Rescale a 64 bit timestamp value to new timescale, i.e. performs value * new_timescale / timescale
+\param value value to rescale
+\param timescale timescale of value. Assumed to be less than 0xFFFFFFFF
+\param new_timescale new timescale. Assumed to be less than 0xFFFFFFFF
+\return new value
+ */
+s64 gf_timestamp_rescale_signed(s64 value, u64 timescale, u64 new_timescale);
+
+/*!
+\brief compare timestamps
+
+Compares two timestamps
+\param value1 value to rescale
+\param timescale1 timescale of value. Assumed to be less than 0xFFFFFFFF
+\param value2 value to rescale
+\param timescale2 timescale of value. Assumed to be less than 0xFFFFFFFF
+\return GF_TRUE if (value1 / timescale1) is stricly less than (value2 / timescale2)
+ */
+Bool gf_timestamp_less(u64 value1, u64 timescale1, u64 value2, u64 timescale2);
+
+/*!
+\brief compare timestamps
+
+Compares two timestamps
+\param value1 value to rescale
+\param timescale1 timescale of value. Assumed to be less than 0xFFFFFFFF
+\param value2 value to rescale
+\param timescale2 timescale of value. Assumed to be less than 0xFFFFFFFF
+\return GF_TRUE if (value1 / timescale1) is stricly less than or equal to (value2 / timescale2)
+ */
+Bool gf_timestamp_less_or_equal(u64 value1, u64 timescale1, u64 value2, u64 timescale2);
+
+/*!
+\brief compare timestamps
+
+Compares two timestamps
+\param value1 value to rescale
+\param timescale1 timescale of value. Assumed to be less than 0xFFFFFFFF
+\param value2 value to rescale
+\param timescale2 timescale of value. Assumed to be less than 0xFFFFFFFF
+\return GF_TRUE if (value1 / timescale1) is stricly greater than (value2 / timescale2)
+ */
+Bool gf_timestamp_greater(u64 value1, u64 timescale1, u64 value2, u64 timescale2);
+
+/*!
+\brief compare timestamps
+
+Compares two timestamps
+\param value1 value to rescale
+\param timescale1 timescale of value. Assumed to be less than 0xFFFFFFFF
+\param value2 value to rescale
+\param timescale2 timescale of value. Assumed to be less than 0xFFFFFFFF
+\return GF_TRUE if (value1 / timescale1) is stricly greater than or equal to (value2 / timescale2)
+ */
+Bool gf_timestamp_greater_or_equal(u64 value1, u64 timescale1, u64 value2, u64 timescale2);
+
+/*!
+\brief compare timestamps
+
+Compares two timestamps
+\param value1 value to rescale
+\param timescale1 timescale of value. Assumed to be less than 0xFFFFFFFF
+\param value2 value to rescale
+\param timescale2 timescale of value. Assumed to be less than 0xFFFFFFFF
+\return GF_TRUE if (value1 / timescale1) is equal to (value2 / timescale2)
+ */
+Bool gf_timestamp_equal(u64 value1, u64 timescale1, u64 value2, u64 timescale2);
 
 /*! @} */
 
@@ -287,28 +410,80 @@ typedef enum
 /*!
 \brief System setup
 
-Inits the system high-resolution clock if any, CPU usage manager, random number and GPAC global config. It is strongly recommended to call this function before calling any other GPAC functions, since on some systems (like winCE) it may result in a better memory usage estimation.
+Inits system tools (GPAC global config, high-resolution clock if any, CPU usage manager, random number, ...).
+
+You MUST call this function before calling any libgpac function, typically only once at startup.
 
 The profile allows using a different global config file than the default, and may be a name (without / or \\) or point to an existing config file.
 \note This can be called several times but only the first call will result in system setup.
+
 \param mem_tracker_type memory tracking mode
 \param profile name of the profile to load, NULL for default.
 \return Error code if any
  */
 GF_Err gf_sys_init(GF_MemTrackerType mem_tracker_type, const char *profile);
+
 /*!
 \brief System closing
-Closes the system high-resolution clock and any CPU associated ressources.
-\note This can be called several times but the system will be closed when no more users are counted.
+
+Closes allocated system resources opened by \ref gf_sys_init.
+\note This can be called several times but systems resources will be closed when no more users are accounted for.
+
+When JavaScript APIs are loaded, the JS runtime is destroyed in this function call.
+If your application needs to reload GPAC a second time after this, you MUST prevent JS runtime destruction otherwise the application will crash due to static JS class definitions refering to freed memory.
+To prevent destruction, make sure you have called
+ \code gf_opts_set_key("temp", "static-jsrt", "true"); \endcode
+
+before calling \ref gf_sys_close. For example:
+
+\code
+gf_sys_init(GF_MemTrackerNone, NULL);
+//run your code, eg a filter session
+
+//prevent JSRT destruction
+gf_opts_set_key("temp", "static-jsrt", "true");
+gf_sys_close();
+
+//The JSRT is still valid
+
+gf_sys_init(GF_MemTrackerNone, NULL);
+//run your code, eg another filter session
+
+//do NOT prevent JSRT, parent app will exit after this call
+gf_sys_close();
+
+\endcode
+
  */
 void gf_sys_close();
+
+
+#if defined(GPAC_CONFIG_ANDROID)
+
+/*!
+\brief Android paths setup
+
+Sets application data and external storage paths for android, to be called by JNI wrappers BEFORE \ref gf_sys_init is called.
+If not set, default are:
+- app_data is /data/data/io.gpac.gpac
+- ext_storage is /sdcard
+
+The default profile used on android is located in $ext_storage/GPAC/ if that directory exists, otherwise in $app_data/GPAC
+
+\param app_data application data path, with no trailing path separator
+\param ext_storage external storage location, with no trailing path separator
+*/
+void gf_sys_set_android_paths(const char *app_data, const char *ext_storage);
+
+#endif // GPAC_CONFIG_ANDROID
+
 
 /*!
 \brief System arguments
 
 Sets the user app arguments (used by GUI mode)
 \param argc Number of arguments
-\param argv Array of arguments
+\param argv Array of arguments - the first string is ignored (considered to be the executable name)
 \return error code if any, GF_OK otherwise
  */
 GF_Err gf_sys_set_args(s32 argc, const char **argv);
@@ -338,6 +513,14 @@ Gets the number of argument of the user application if any
  */
 const char *gf_sys_get_arg(u32 arg);
 
+/*!
+\brief Locate a global filter arg
+
+Looks for a filter option specified as global argument
+\param arg name of option to search, without "--" or "-+" specififers
+\return argument value string, empty string for booleans or NULL if not found
+ */
+const char *gf_sys_find_global_arg(const char *arg);
 
 /*!
 \brief Mark arg as used
@@ -507,13 +690,13 @@ typedef enum
 \brief Log exits at first error assignment
 
 When GF_LOG_ERROR happens, program leaves with instruction exit(1);
-\param strict strict behaviour when encoutering a serious error.
+\param strict strict behavior when encoutering a serious error.
 \return old value before the call.
  */
 Bool gf_log_set_strict_error(Bool strict);
 
 /*!
-\brief gets string-formated log tools
+\brief gets string-formatted log tools
 
 Gets the string-formatted log tools and levels. Returned string shall be freed by the caller.
 \return string-formatted log tools.
@@ -540,15 +723,11 @@ typedef enum
 	GF_LOG_HTTP,
 	/*! Log message from the RTP/RTCP stack (TS info) and packet structure & hinting (debug)*/
 	GF_LOG_RTP,
-	/*! Log message from authoring subsystem (file manip, import/export)*/
-	GF_LOG_AUTHOR,
-	/*! Log message from the sync layer of the terminal*/
-	GF_LOG_SYNC,
 	/*! Log message from a codec*/
 	GF_LOG_CODEC,
-	/*! Log message from any XML parser (context loading, etc)*/
+	/*! Log message from any textual (XML, ...) parser (context loading, etc)*/
 	GF_LOG_PARSER,
-	/*! Log message from the terminal/compositor, indicating media object state*/
+	/*! Generic log message from a filter (not from filter core library)*/
 	GF_LOG_MEDIA,
 	/*! Log message from the scene graph/scene manager (handling of nodes and attribute modif, DOM core)*/
 	GF_LOG_SCENE,
@@ -558,14 +737,14 @@ typedef enum
 	GF_LOG_INTERACT,
 	/*! Log message from compositor*/
 	GF_LOG_COMPOSE,
+	/*! Log message from the compositor, indicating media object state*/
+	GF_LOG_COMPTIME,
 	/*! Log for video object cache */
 	GF_LOG_CACHE,
 	/*! Log message from multimedia I/O devices (audio/video input/output, ...)*/
 	GF_LOG_MMIO,
 	/*! Log for runtime info (times, memory, CPU usage)*/
 	GF_LOG_RTI,
-	/*! Log for SMIL timing and animation*/
-	GF_LOG_SMIL,
 	/*! Log for memory tracker*/
 	GF_LOG_MEMORY,
 	/*! Log for audio compositor*/
@@ -578,13 +757,13 @@ typedef enum
 	GF_LOG_CONDITION,
 	/*! Log for all HTTP streaming */
 	GF_LOG_DASH,
-	/*! Log for all messages coming from filters */
+	/*! Log for all messages from filter core library (not from a filter) */
 	GF_LOG_FILTER,
 	/*! Log for filter scheduler only */
 	GF_LOG_SCHEDULER,
-	/*! Log for all ATSC3 message */
-	GF_LOG_ATSC,
-	/*! Log for all messages coming from GF_Terminal or script alert()*/
+	/*! Log for all ROUTE message */
+	GF_LOG_ROUTE,
+	/*! Log for all messages coming from script*/
 	GF_LOG_CONSOLE,
 	/*! Log for all messages coming the application, not used by libgpac or the modules*/
 	GF_LOG_APP,
@@ -632,9 +811,9 @@ gf_log_cbk gf_log_set_callback(void *usr_cbk, gf_log_cbk cbk);
  \cond DUMMY_DOXY_SECTION
 */
 #ifndef GPAC_DISABLE_LOG
-/*note:
-		to turn log on, change to GPAC_ENABLE_LOG
-		to turn log off, change to GPAC_DISABLE_LOG
+/*\note
+	- to turn log on, change to GPAC_ENABLE_LOG
+	- to turn log off, change to GPAC_DISABLE_LOG
 	this is needed by configure+sed to modify this file directly
 */
 #define GPAC_ENABLE_LOG
@@ -660,6 +839,15 @@ Checks if a given tool is logged for the given level
 \return 1 if logged, 0 otherwise
 */
 Bool gf_log_tool_level_on(GF_LOG_Tool log_tool, GF_LOG_Level log_level);
+
+/*!
+\brief Log tool name
+
+Gets log  tool name
+\param log_tool tool to check
+\return name, or "unknwon" if not known
+*/
+const char *gf_log_tool_name(GF_LOG_Tool log_tool);
 
 /*!
 \brief Log level getter
@@ -706,7 +894,8 @@ Checks if logs are stored to file
 Bool gf_log_use_file();
 
 #ifdef GPAC_DISABLE_LOG
-#define GF_LOG(_ll, _lm, __args)
+void gf_log_check_error(u32 ll, u32 lt);
+#define GF_LOG(_ll, _lm, __args) gf_log_check_error(_ll, _lm);
 #else
 /*!
 \brief Message logging
@@ -804,11 +993,11 @@ Gets the current character entered at prompt if any.
 char gf_prompt_get_char();
 
 /*!
-\brief Get prompt terminal size
+\brief Get prompt TTY size
 
 Gets the stdin prompt size (columns and rows)
-\param width set to number of rows in the terminal
-\param height set to number of columns in the terminal
+\param width set to number of rows in the TTY
+\param height set to number of columns in the TTY
 \return error if any
 */
 GF_Err gf_prompt_get_size(u32 *width, u32 *height);
@@ -846,6 +1035,13 @@ Parses 128 bit from string
  */
 GF_Err gf_bin128_parse(const char *string, bin128 value);
 
+
+enum
+{
+    GF_BLOB_IN_TRANSFER = 1,
+    GF_BLOB_CORRUPTED = 1<<1,
+};
+
 /*!
  * Blob structure used to pass data pointer around
  */
@@ -855,16 +1051,59 @@ typedef struct
 	u8 *data;
 	/*! size of blob */
 	u32 size;
+    /*! blob flags */
+    u32 flags;
+    /*! blob mutex for multi-thread access */
+    struct __tag_mutex *mx;
 } GF_Blob;
 
 /*!
- * Retrieves data associated with a blob url
+ * Retrieves data associated with a blob url. If success, \ref gf_blob_release must be called after this
 \param blob_url URL of blob object (ie gmem://%p)
 \param out_data if success, set to blob data pointer
 \param out_size if success, set to blob data size
+\param blob_flags if success, set to blob flags - may be NULL
 \return error code
  */
-GF_Err gf_blob_get_data(const char *blob_url, u8 **out_data, u32 *out_size);
+GF_Err gf_blob_get(const char *blob_url, u8 **out_data, u32 *out_size, u32 *blob_flags);
+
+/*!
+ * Releases blob data
+\param blob_url URL of blob object (ie gmem://%p)
+\return error code
+ */
+GF_Err gf_blob_release(const char *blob_url);
+
+/*!
+ * Registers a new blob
+\param blob  blob object
+\return URL of blob object (ie gmem://%p), must be freed by user
+ */
+char *gf_blob_register(GF_Blob *blob);
+
+/*!
+ * Unegisters a blob. This must be called before destroying a registered blob
+\param blob  blob object
+ */
+void gf_blob_unregister(GF_Blob *blob);
+
+/*!
+\brief Portable getch()
+
+Returns immediately a typed char from stdin
+\return the typed char
+*/
+int gf_getch();
+
+/*!
+\brief Reads a line of input from stdin
+\param line the buffer to fill
+\param maxSize the maximum size of the line to read
+\param showContent boolean indicating if the line read should be printed on stderr or not
+\return GF_TRUE if some content was read, GF_FALSE otherwise
+*/
+u32 gf_read_line_input(char * line, int maxSize, Bool showContent);
+
 
 /*!
 \addtogroup time_grp
@@ -919,7 +1158,7 @@ u64 gf_net_get_utc();
 \brief converts an ntp timestamp into UTC time in milliseconds
 
 Converts NTP 64-bit timestamp to UTC clock in milliseconds
-\u64 ntp NTP timestamp
+\param ntp NTP timestamp
 \return UTC time in milliseconds
  */
 u64 gf_net_ntp_to_utc(u64 ntp);
@@ -940,7 +1179,7 @@ u64 gf_net_parse_date(const char *date);
 /*!
 \brief returns 64-bit UTC timestamp from year, month, day, hour, min and sec
 \param year the year
-\param month the month
+\param month the month, from 0 to 11
 \param day the day
 \param hour the hour
 \param min the min
@@ -956,6 +1195,14 @@ Gets timezone adjustment in seconds, with localtime - timezone = UTC time
 \return timezone shift in seconds
  */
 s32 gf_net_get_timezone();
+
+/*!
+\brief gets timezone daylight saving time status
+
+Gets timezone daylight saving time
+\return GF_TRUE if DST is active
+ */
+Bool gf_net_time_is_dst();
 
 /*!
 \brief gets time from UTC timestamp
@@ -1131,7 +1378,7 @@ Cleanup a directory within the full path, removing all the files and the directo
 \param DirPathName the dir path name.
 \return error if any
  */
-GF_Err gf_cleanup_dir(const char* DirPathName);
+GF_Err gf_dir_cleanup(const char* DirPathName);
 
 
 /**
@@ -1214,6 +1461,18 @@ Wrapper to properly handle calls to fprintf()
 \return same as fprintf
 */
 int gf_fprintf(FILE *stream, const char *format, ...);
+
+/*!
+\brief file writing helper
+
+Wrapper to properly handle calls to vfprintf()
+\param stream same as vfprintf
+\param format same as vfprintf
+\param args same as vfprintf
+\return same as fprintf
+*/
+int gf_vfprintf(FILE *stream, const char *format, va_list args);
+
 /*!
 \brief file flush helper
 
@@ -1274,10 +1533,11 @@ Opens a file, potentially using file IO if the parent URL is a File IO wrapper
 \param file_name same as fopen
 \param parent_url URL of parent file. If not a file io wrapper (gfio://), the function is equivalent to gf_fopen
 \param mode same as fopen
+\param no_warn if GF_TRUE, do not throw log message if failure
 \return stream handle of the file object
 \note You only need to call this function if you're suspecting the file to be a large one (usually only media files), otherwise use regular stdio.
 \return stream habdle of the file or file IO object*/
-FILE *gf_fopen_ex(const char *file_name, const char *parent_url, const char *mode);
+FILE *gf_fopen_ex(const char *file_name, const char *parent_url, const char *mode, Bool no_warn);
 
 /*!
 \brief file closing
@@ -1322,7 +1582,6 @@ char* gf_file_basename(const char* filename);
 \return a pointer to the start of a filepath extension or null
 */
 char* gf_file_ext_start(const char* filename);
-
 
 /*!\brief FileEnum info object
 
@@ -1403,7 +1662,7 @@ FILE *gf_file_temp(char ** const fileName);
 /*!
 \brief File Modification Time
 
-Gets the modification time of the given file. The exact meaning of this value is system dependent
+Gets the UTC modification time of the given file in microseconds
 \param filename file to check
 \return modification time of the file
  */
@@ -1433,11 +1692,12 @@ typedef struct __gf_file_io GF_FileIO;
 /*! open proc for memory file IO
 \param fileio_ref reference file_io. A file can be opened multiple times for the same reference, your code must handle this
 \param url target file name.
-\param mode opening mode of file, same as fopen mode. The following additionnal modes are defined:
+\param mode opening mode of file, same as fopen mode. The following additional modes are defined:
 	- "ref": indicates this FileIO object is used by some part of the code and must not be destroyed upon closing of the file. Associated URL is null
 	- "unref": indicates this FileIO object is not used by some part of the code and may be destroyed if no more references to this object are set. Associated URL is null
 	- "url": indicates to create a new FileIO object for the given URL without opening the output file. The resulting FileIO object must be garbage collected by the app in case its is never used by the callers
 	- "probe": checks if the file exists, but no need to open the file. The function should return NULL in this case. If file does not exist, set out_error to GF_URL_ERROR
+	- "close": indicates the fileIO object is being closed (fclose)
 \param out_error must be set to error code if any (never NULL)
 \return the opened GF_FileIO if success, or NULL otherwise
  */
@@ -1556,6 +1816,22 @@ Bool gf_fileio_get_stats(GF_FileIO *fileio, u64 *bytes_done, u64 *file_size, Boo
 */
 GF_FileIO *gf_fileio_open_url(GF_FileIO *fileio, const char *url, const char *mode, GF_Err *out_err);
 
+
+/*! Tags a FileIO object to be accessed from main thread only
+\param fileio target file IO object
+\return error if any
+*/
+GF_Err gf_fileio_tag_main_thread(GF_FileIO *fileio);
+
+/*! Check if a FileIO object is to be accessed from main thread only
+
+ \note Filters accessing FileIO objects by other means that a filter option must manually tag themselves as main thread, potentially rescheduling a configure call to next process. Not doing so can result in binding crashes in multi-threaded mode.
+
+\param url target url
+\return GF_TRUE if object is tagged for main thread, GF_FALSE otherwise
+*/
+Bool gf_fileio_is_main_thread(const char *url);
+
 /*! Gets GF_FileIO object from its URL
  The url uses the protocol scheme "gfio://"
 \param url the URL of  the File IO object
@@ -1564,7 +1840,7 @@ GF_FileIO *gf_fileio_open_url(GF_FileIO *fileio, const char *url, const char *mo
 GF_FileIO *gf_fileio_from_url(const char *url);
 
 /*! Constructs a new GF_FileIO object from a URL
- The url can be absolute or relative to the parent GF_FileIO. This is typcically needed by filters (dash input, dasher, NHML/NHNT writers...) generating or consuming additionnal files associated with the main file IO object but being written or read by other filters.
+ The url can be absolute or relative to the parent GF_FileIO. This is typcically needed by filters (dash input, dasher, NHML/NHNT writers...) generating or consuming additional files associated with the main file IO object but being written or read by other filters.
  The function will not open the associated resource, only create the file IO wrapper for later usage
  If you need to create a new fileIO to be opened immediately, use \ref gf_fopen_ex.
 
@@ -1769,6 +2045,13 @@ void gf_sha1_finish(GF_SHA1Context *ctx, u8 digest[GF_SHA1_DIGEST_SIZE] );
 */
 GF_Err gf_sha1_file(const char *filename, u8 digest[GF_SHA1_DIGEST_SIZE]);
 
+/*! gets SHA1 message digest of a opened file
+\param file  handle to open file
+\param digest buffer to store message digest
+\return error if any
+*/
+GF_Err gf_sha1_file_ptr(FILE *file, u8 digest[GF_SHA1_DIGEST_SIZE] );
+
 /*! gets SHA-1 of input buffer
 \param buf input buffer to hash
 \param buflen sizeo of input buffer in bytes
@@ -1776,6 +2059,15 @@ GF_Err gf_sha1_file(const char *filename, u8 digest[GF_SHA1_DIGEST_SIZE]);
  */
 void gf_sha1_csum(u8 *buf, u32 buflen, u8 digest[GF_SHA1_DIGEST_SIZE]);
 /*! @} */
+
+/*! checksum size for SHA-256*/
+#define GF_SHA256_DIGEST_SIZE 32
+/*! gets SHA-256 of input buffer
+\param buf input buffer to hash
+\param buflen sizeo of input buffer in bytes
+\param digest buffer to store message digest
+ */
+void gf_sha256_csum(const void *buf, u64 buflen, u8 digest[GF_SHA256_DIGEST_SIZE]);
 
 
 /*!
@@ -1853,6 +2145,12 @@ const char *gf_opts_get_key_restricted(const char *secName, const char *keyName)
 GF_Err gf_opts_discard_changes();
 
 /*!
+ * Force immediate write of config
+\return error code
+ */
+GF_Err gf_opts_save();
+
+/*!
  * Returns file name of global config
 \return file name of global config or NULL if libgpac is not initialized
  */
@@ -1864,6 +2162,24 @@ const char *gf_opts_get_filename();
 \return GF_TRUE if success, GF_FALSE otherwise
  */
 Bool gf_opts_default_shared_directory(char *path_buffer);
+
+
+/*!
+ * Checks given user and password are valid
+\param username user name
+\param password password
+\return GF_OK if success, GF_NOT_FOUND if no such user or GF_AUTHENTICATION_FAILURE if wrong password
+ */
+GF_Err gf_creds_check_password(const char *username, char *password);
+
+/*!
+ * Checks given user belongs to list of users or groups.
+\param username user name
+\param users comma-seprated list of users to check, may be NULL
+\param groups comma-seprated list of groups to check, may be NULL
+\return GF_TRUE if success, GF_FALSE otherwise
+ */
+Bool gf_creds_check_membership(const char *username, const char *users, const char *groups);
 
 /*! @} */
 
@@ -1880,7 +2196,7 @@ Bool gf_opts_default_shared_directory(char *path_buffer);
 #define RMT_USE_OPENGL	1
 #endif
 
-// #include <gpac/Remotery.h>
+ #include <gpac/Remotery.h>
 
 #define GF_RMT_AGGREGATE	RMTSF_Aggregate
 /*! begins remotery CPU sample*/
@@ -1902,15 +2218,11 @@ Bool gf_opts_default_shared_directory(char *path_buffer);
 
 //! @endcond
 
-/* \cond dummy */
-#ifdef GPAC_CONFIG_ANDROID
-typedef void (*fm_callback_func)(void *cbk_obj, u32 type, u32 param, int *value);
-extern void gf_fm_request_set_callback(void *cbk_obj, fm_callback_func cbk_func);
-void gf_fm_request_call(u32 type, u32 param, int *value);
-#endif //GPAC_CONFIG_ANDROID
 
-/*to call whenever the OpenGL library is opened - this function is needed to bind openGL and remotery, and to load
-openGL extensions on windows
+/* \cond dummy */
+
+/*to call whenever the OpenGL library is opened - this function is needed to bind OpenGL and remotery, and to load
+OpenGL extensions on windows
 not exported, and not included in src/compositor/gl_inc.h since it may be needed even when no OpenGL 
 calls are made by the caller*/
 void gf_opengl_init();
@@ -1937,6 +2249,7 @@ typedef struct _gl_texture_wrap
 	Bool is_yuv;
 	u32 bit_depth, uv_w, uv_h;
 	u32 scale_10bit;
+	u32 init_active_texture;
 
 	u32 gl_format;
 	u32 bytes_per_pix;
@@ -1947,13 +2260,18 @@ typedef struct _gl_texture_wrap
 	struct _gf_filter_frame_interface *frame_ifce;
 	Bool first_tx_load;
 
-	//PBO state - must be managed by caller, especially if using seperated push and texImg steps through gf_gl_txw_setup calls
+	//PBO state - must be managed by caller, especially if using separated push and texImg steps through gf_gl_txw_setup calls
 	GF_GLPBOState pbo_state;
 	Bool flip;
+	//YUV is full video range
+	Bool fullrange;
+	s32 mx_cicp;
+
+	u32 last_program;
 } GF_GLTextureWrapper;
 
-Bool gf_gl_txw_insert_fragment_shader(u32 pix_fmt, const char *tx_name, char **f_source);
-Bool gf_gl_txw_setup(GF_GLTextureWrapper *tx, u32 pix_fmt, u32 width, u32 height, u32 stride, u32 uv_stride, Bool linear_interp, struct _gf_filter_frame_interface *frame_ifce);
+Bool gf_gl_txw_insert_fragment_shader(u32 pix_fmt, const char *tx_name, char **f_source, Bool y_flip);
+Bool gf_gl_txw_setup(GF_GLTextureWrapper *tx, u32 pix_fmt, u32 width, u32 height, u32 stride, u32 uv_stride, Bool linear_interp, struct _gf_filter_frame_interface *frame_ifce, Bool full_range, s32 matrix_coef_or_neg);
 Bool gf_gl_txw_upload(GF_GLTextureWrapper *tx, const u8 *data, struct _gf_filter_frame_interface *frame_ifce);
 Bool gf_gl_txw_bind(GF_GLTextureWrapper *tx, const char *tx_name, u32 gl_program, u32 texture_unit);
 void gf_gl_txw_reset(GF_GLTextureWrapper *tx);

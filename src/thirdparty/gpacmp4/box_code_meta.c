@@ -54,6 +54,7 @@ void meta_reset(GF_Box *s)
 	ptr->IPMP_control = NULL;
 	ptr->item_refs = NULL;
 	ptr->item_props = NULL;
+	ptr->groups_list = NULL;
 }
 
 void meta_box_del(GF_Box *s)
@@ -63,41 +64,40 @@ void meta_box_del(GF_Box *s)
 }
 
 
-GF_Err meta_on_child_box(GF_Box *s, GF_Box *a)
+GF_Err meta_on_child_box(GF_Box *s, GF_Box *a, Bool is_rem)
 {
 	GF_MetaBox *ptr = (GF_MetaBox *)s;
 	switch (a->type) {
 	case GF_ISOM_BOX_TYPE_HDLR:
-		if (ptr->handler) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->handler = (GF_HandlerBox*)a;
+		BOX_FIELD_ASSIGN(handler, GF_HandlerBox)
 		break;
 	case GF_ISOM_BOX_TYPE_PITM:
-		if (ptr->primary_resource) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->primary_resource = (GF_PrimaryItemBox*)a;
+		BOX_FIELD_ASSIGN(primary_resource, GF_PrimaryItemBox)
 		break;
 	case GF_ISOM_BOX_TYPE_DINF:
-		if (ptr->file_locations) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->file_locations = (GF_DataInformationBox*)a;
+		BOX_FIELD_ASSIGN(file_locations, GF_DataInformationBox)
 		break;
 	case GF_ISOM_BOX_TYPE_ILOC:
-		if (ptr->item_locations) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->item_locations = (GF_ItemLocationBox*)a;
+		BOX_FIELD_ASSIGN(item_locations, GF_ItemLocationBox)
 		break;
 	case GF_ISOM_BOX_TYPE_IPRO:
-		if (ptr->protections) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->protections = (GF_ItemProtectionBox*)a;
+		BOX_FIELD_ASSIGN(protections, GF_ItemProtectionBox)
 		break;
 	case GF_ISOM_BOX_TYPE_IINF:
-		if (ptr->item_infos) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->item_infos = (GF_ItemInfoBox*)a;
+		BOX_FIELD_ASSIGN(item_infos, GF_ItemInfoBox)
 		break;
 	case GF_ISOM_BOX_TYPE_IREF:
-		if (ptr->item_refs) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->item_refs = (GF_ItemReferenceBox*)a;
+		BOX_FIELD_ASSIGN(item_refs, GF_ItemReferenceBox);
 		break;
 	case GF_ISOM_BOX_TYPE_IPRP:
-		if (ptr->item_props) ERROR_ON_DUPLICATED_BOX(a, ptr)
-		ptr->item_props = (GF_ItemPropertiesBox*)a;
+		BOX_FIELD_ASSIGN(item_props, GF_ItemPropertiesBox)
+		break;
+	case GF_ISOM_BOX_TYPE_GRPL:
+		BOX_FIELD_ASSIGN(groups_list, GF_GroupListBox)
+		break;
+	case GF_ISOM_BOX_TYPE_KEYS:
+		BOX_FIELD_ASSIGN(keys, GF_MetaKeysBox)
+		ptr->keys->meta = ptr;
 		break;
 	}
 	return GF_OK;
@@ -105,15 +105,38 @@ GF_Err meta_on_child_box(GF_Box *s, GF_Box *a)
 
 GF_Err meta_box_read(GF_Box *s, GF_BitStream *bs)
 {
+	GF_MetaBox *ptr = (GF_MetaBox *)s;
 	u64 pos = gf_bs_get_position(bs);
 	u64 size = s->size;
-	GF_Err e = gf_isom_box_array_read(s, bs, meta_on_child_box);
-	/*try to hack around QT files which don't use a full box for meta, rewind 4 bytes*/
-	if (e && (pos>4) ) {
-		gf_bs_seek(bs, pos-4);
+	//probe 4->8 bytes, if equal to one of the following this is a QT meta
+	u32 qt_type = (pos>8) ? gf_bs_peek_bits(bs, 32, 4) : 0;
+	switch (qt_type) {
+	case GF_4CC('h', 'd', 'l', 'r'):
+	case GF_4CC('m', 'h', 'd', 'r'):
+	case GF_4CC('k', 'e', 'y', 's'):
+	case GF_4CC('i', 'l', 's', 't'):
+	case GF_4CC('c', 't', 'r', 'y'):
+	case GF_4CC('l', 'a', 'n', 'g'):
+		break;
+	default:
+		qt_type = 0;
+		break;
+	}
+	GF_Err e = GF_EOS;
+	if (!qt_type) {
+		ISOM_DECREASE_SIZE(s, 4)
+		ptr->version = gf_bs_read_u8(bs);
+		ptr->flags = gf_bs_read_u24(bs);
+		e = gf_isom_box_array_read(s, bs);
+	}
+
+	/*try to hack around QT files which don't use a full box for meta, reparse*/
+	if (e && (pos>8) ) {
+		gf_bs_seek(bs, pos);
 		meta_reset(s);
 		s->size = size+4;
-		e = gf_isom_box_array_read(s, bs, meta_on_child_box);
+		ptr->is_qt = GF_TRUE;
+		e = gf_isom_box_array_read(s, bs);
 	}
 	return e;
 }
@@ -121,6 +144,10 @@ GF_Err meta_box_read(GF_Box *s, GF_BitStream *bs)
 #ifndef GPAC_DISABLE_ISOM_WRITE
 GF_Err meta_box_write(GF_Box *s, GF_BitStream *bs)
 {
+	GF_MetaBox *ptr = (GF_MetaBox *)s;
+	if (ptr->write_qt) {
+		return gf_isom_box_write_header(s, bs);
+	}
 	return gf_isom_full_box_write(s, bs);
 }
 
@@ -137,6 +164,11 @@ GF_Err meta_box_size(GF_Box *s)
 	gf_isom_check_position(s, (GF_Box *)ptr->item_infos, &pos);
 	gf_isom_check_position(s, (GF_Box *)ptr->item_refs, &pos);
 	gf_isom_check_position(s, (GF_Box *)ptr->item_props, &pos);
+	gf_isom_check_position(s, (GF_Box *)ptr->groups_list, &pos);
+	gf_isom_check_position(s, (GF_Box *)ptr->keys, &pos);
+
+	if (!ptr->write_qt)
+		s->size+=4;
 	return GF_OK;
 }
 #endif /*GPAC_DISABLE_ISOM_WRITE*/
@@ -193,7 +225,7 @@ void bxml_box_del(GF_Box *s)
 {
 	GF_BinaryXMLBox *ptr = (GF_BinaryXMLBox *)s;
 	if (ptr == NULL) return;
-	if (ptr->data_length && ptr->data) gf_free(ptr->data);
+	if (ptr->data) gf_free(ptr->data);
 	gf_free(ptr);
 }
 
@@ -285,7 +317,8 @@ GF_Err iloc_box_read(GF_Box *s, GF_BitStream *bs)
 	}
 
 	for (i = 0; i < item_count; i++) {
-		GF_ItemLocationEntry *location_entry = (GF_ItemLocationEntry *)gf_malloc(sizeof(GF_ItemLocationEntry));
+		GF_ItemLocationEntry *location_entry;
+		GF_SAFEALLOC(location_entry, GF_ItemLocationEntry);
 		if (!location_entry) return GF_OUT_OF_MEM;
 
 		gf_list_add(ptr->location_entries, location_entry);
@@ -314,7 +347,8 @@ GF_Err iloc_box_read(GF_Box *s, GF_BitStream *bs)
 		extent_count = gf_bs_read_u16(bs);
 		location_entry->extent_entries = gf_list_new();
 		for (j = 0; j < extent_count; j++) {
-			GF_ItemExtentEntry *extent_entry = (GF_ItemExtentEntry *)gf_malloc(sizeof(GF_ItemExtentEntry));
+			GF_ItemExtentEntry *extent_entry;
+			GF_SAFEALLOC(extent_entry, GF_ItemExtentEntry);
 			if (!extent_entry) return GF_OUT_OF_MEM;
 			
 			gf_list_add(location_entry->extent_entries, extent_entry);
@@ -479,17 +513,20 @@ void ipro_box_del(GF_Box *s)
 	gf_free(ptr);
 }
 
-GF_Err ipro_on_child_box(GF_Box *s, GF_Box *a)
+GF_Err ipro_on_child_box(GF_Box *s, GF_Box *a, Bool is_rem)
 {
 	GF_ItemProtectionBox *ptr = (GF_ItemProtectionBox *)s;
-	if (a->type == GF_ISOM_BOX_TYPE_SINF)
-		return gf_list_add(ptr->protection_information, a);
-
+	if (a->type == GF_ISOM_BOX_TYPE_SINF) {
+		BOX_FIELD_LIST_ASSIGN(protection_information)
+		return GF_OK;
+	}
 	return GF_OK;
 }
 GF_Err ipro_box_read(GF_Box *s, GF_BitStream *bs)
 {
-	return gf_isom_box_array_read(s, bs, ipro_on_child_box);
+	ISOM_DECREASE_SIZE(s, 2)
+	gf_bs_read_u16(bs);
+	return gf_isom_box_array_read(s, bs);
 }
 
 #ifndef GPAC_DISABLE_ISOM_WRITE
@@ -566,10 +603,13 @@ GF_Err infe_box_read(GF_Box *s, GF_BitStream *bs)
 				ptr->content_type = (char*)gf_malloc(sizeof(char)*string_len);
 				if (!ptr->content_type) return GF_OUT_OF_MEM;
 				memcpy(ptr->content_type, buf+string_start, string_len);
-			} else {
+			} else if (!ptr->content_encoding) {
 				ptr->content_encoding = (char*)gf_malloc(sizeof(char)*string_len);
 				if (!ptr->content_encoding) return GF_OUT_OF_MEM;
 				memcpy(ptr->content_encoding, buf+string_start, string_len);
+			} else {
+				//we could throw an error but we silently accept this infe
+				break;
 			}
 			string_start += string_len;
 			string_len = 0;
@@ -580,9 +620,24 @@ GF_Err infe_box_read(GF_Box *s, GF_BitStream *bs)
 		string_len++;
 	}
 	gf_free(buf);
+
 	if (!ptr->item_name || (!ptr->content_type && ptr->version < 2)) {
 		GF_LOG(GF_LOG_WARNING, GF_LOG_CONTAINER, ("[isoff] Infe without name or content type !\n"));
 	}
+
+	if (ptr->item_name && !ptr->item_name[0]) {
+		gf_free(ptr->item_name);
+		ptr->item_name = NULL;
+	}
+	if (ptr->content_type && !ptr->content_type[0]) {
+		gf_free(ptr->content_type);
+		ptr->content_type = NULL;
+	}
+	if (ptr->content_encoding && !ptr->content_encoding[0]) {
+		gf_free(ptr->content_encoding);
+		ptr->content_encoding = NULL;
+	}
+	
 	return GF_OK;
 }
 
@@ -681,12 +736,13 @@ void iinf_box_del(GF_Box *s)
 	gf_free(ptr);
 }
 
-GF_Err iinf_on_child_box(GF_Box *s, GF_Box *a)
+GF_Err iinf_on_child_box(GF_Box *s, GF_Box *a, Bool is_rem)
 {
 	GF_ItemInfoBox *ptr = (GF_ItemInfoBox *)s;
 
 	if (a->type == GF_ISOM_BOX_TYPE_INFE) {
-		return gf_list_add(ptr->item_infos, a);
+		BOX_FIELD_LIST_ASSIGN(item_infos)
+		return GF_OK;
 	} else {
 		return GF_OK;
 	}
@@ -703,7 +759,7 @@ GF_Err iinf_box_read(GF_Box *s, GF_BitStream *bs)
 		ISOM_DECREASE_SIZE(s, 4)
 		gf_bs_read_u32(bs);
 	}
-	return gf_isom_box_array_read(s, bs, iinf_on_child_box);
+	return gf_isom_box_array_read(s, bs);
 }
 
 #ifndef GPAC_DISABLE_ISOM_WRITE
@@ -735,10 +791,11 @@ GF_Err iinf_box_size(GF_Box *s)
 }
 #endif /*GPAC_DISABLE_ISOM_WRITE*/
 
-GF_Err iref_on_child_box(GF_Box *s, GF_Box *a)
+GF_Err iref_on_child_box(GF_Box *s, GF_Box *a, Bool is_rem)
 {
 	GF_ItemReferenceBox *ptr = (GF_ItemReferenceBox *)s;
-	return gf_list_add(ptr->references, a);
+	BOX_FIELD_LIST_ASSIGN(references)
+	return GF_OK;
 }
 
 void iref_box_del(GF_Box *s)
@@ -752,7 +809,7 @@ void iref_box_del(GF_Box *s)
 
 GF_Err iref_box_read(GF_Box *s, GF_BitStream *bs)
 {
-	return gf_isom_box_array_read_ex(s, bs, iref_on_child_box, s->type);
+	return gf_isom_box_array_read(s, bs);
 }
 
 GF_Box *iref_box_new()
@@ -795,7 +852,7 @@ GF_Err ireftype_box_read(GF_Box *s, GF_BitStream *bs)
 	ISOM_DECREASE_SIZE(ptr, 4)
 	ptr->from_item_id = gf_bs_read_u16(bs);
 	ptr->reference_count = gf_bs_read_u16(bs);
-	if (ptr->size < ptr->reference_count*2)
+	if (ptr->size / 2 < ptr->reference_count)
 		return GF_ISOM_INVALID_FILE;
 
 	ptr->to_item_IDs = (u32 *)gf_malloc(ptr->reference_count * sizeof(u32));
