@@ -917,7 +917,7 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 		Bool gf_opts_load_option(const char *arg_name, const char *val, Bool *consumed_next, GF_Err *e);
 		void gf_cfg_load_restrict();
 
-		gpac_use_poll = GF_TRUE;
+		// gpac_use_poll = GF_TRUE;
 
 		for (i=1; i<argc; i++) {
 			Bool consumed;
@@ -983,7 +983,7 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 			} else if (!stricmp(arg, "-no-save")) {
 				gpac_discard_config = bool_value;
 			} else if (!stricmp(arg, "-no-poll")) {
-				gpac_use_poll = bool_value;
+				// gpac_use_poll = bool_value;
 			} else if (!stricmp(arg, "-ntp-shift")) {
 				s32 shift = arg_val ? atoi(arg_val) : 0;
 				gf_net_set_ntp_shift(shift);
@@ -3156,7 +3156,7 @@ GF_Err gf_creds_check_password(const char *user, char *password)
 	passbuf[len]='@';
 	memcpy(passbuf+len+1, salt, GF_SHA256_DIGEST_SIZE);
 	len += GF_SHA256_DIGEST_SIZE+1;
-	gf_sha256_csum(passbuf, len, hash);
+	// gf_sha256_csum(passbuf, len, hash);
 	len=1;
 	for (i=0; i<GF_SHA256_DIGEST_SIZE; i++) {
 		if (hash[i] != ohash[i]) len=0;
