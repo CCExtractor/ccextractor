@@ -8,6 +8,7 @@
 - Refactored: the `general_loop` function has some code moved to a new function
 - Fix: WebVTT X-TIMESTAMP-MAP placement (#1463)
 - Disable X-TIMESTAMP-MAP by default (changed option --no-timestamp-map to --timestamp-map)
+- Fix: missing `#` in color attribute of font tag
 
 0.94 (2021-12-14)
 -----------------
