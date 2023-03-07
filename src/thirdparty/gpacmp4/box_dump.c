@@ -29,6 +29,7 @@
 #include <gpac/color.h>
 #include <gpac/avparse.h>
 #include <gpac/base_coding.h>
+#include "gpac/webvtt.h"
 
 #ifndef GPAC_DISABLE_ISOM_DUMP
 
