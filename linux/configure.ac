@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([CCExtractor],[0.94],[carlos@ccextractor.org])
+AC_INIT([CCExtractor], [0.94], [carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -63,7 +63,7 @@ AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memch
 
 # Checks for arguments with configure
 AC_ARG_ENABLE([hardsubx],
-AS_HELP_STRING([--enable-hardsubx],[Enables extraction of burnt subtitles (hard subtitles)]),
+AS_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
 [case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
@@ -71,7 +71,7 @@ AS_HELP_STRING([--enable-hardsubx],[Enables extraction of burnt subtitles (hard 
 esac],[hardsubx=false])
 
 AC_ARG_ENABLE([ocr],
-AS_HELP_STRING([--enable-ocr],[Enables Optical Character Recognition]),
+AS_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
 [case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
@@ -79,7 +79,7 @@ AS_HELP_STRING([--enable-ocr],[Enables Optical Character Recognition]),
 esac],[ocr=false])
 
 AC_ARG_ENABLE([ffmpeg],
-AS_HELP_STRING([--enable-ffmpeg],[Enable FFmpeg integration]),
+AS_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
 [case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
@@ -88,7 +88,7 @@ esac],[ffmpeg=false])
 
 #Add argument for rust
 AC_ARG_WITH([rust],
-AS_HELP_STRING([--with-rust],[Builds CCExtractor with rust library]),
+AS_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
 [with_rust=$withval],
 [with_rust=yes])
 
@@ -114,7 +114,8 @@ fi
 AM_CONDITIONAL([WITH_RUST], [test "x$with_rust" = "xyes"])
 
 AC_ARG_ENABLE(debug,
-              AS_HELP_STRING([--enable-debug],[Build Rust code with debugging information [default=no]]),
+              AS_HELP_STRING([--enable-debug],
+                             [Build Rust code with debugging information [default=no]]),
               [debug_release=$enableval],
               [debug_release=no])
 
