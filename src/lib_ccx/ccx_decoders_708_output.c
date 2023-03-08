@@ -75,7 +75,7 @@ void dtvcc_change_pen_colors(dtvcc_tv_screen *tv, dtvcc_pen_color pen_color, int
 			red = (255 / 3) * red;
 			green = (255 / 3) * green;
 			blue = (255 / 3) * blue;
-			(*buf_len) += sprintf(buf + (*buf_len), "<font color=\"%02x%02x%02x\">", red, green, blue);
+			(*buf_len) += sprintf(buf + (*buf_len), "<font color=\"#%02x%02x%02x\">", red, green, blue);
 		}
 	}
 }

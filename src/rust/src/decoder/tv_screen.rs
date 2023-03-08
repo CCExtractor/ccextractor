@@ -469,7 +469,7 @@ impl dtvcc_tv_screen {
                 red *= 255 / 3;
                 green *= 255 / 3;
                 blue *= 255 / 3;
-                let font_tag = format!("<font color=\"{:02x}{:02x}{:02x}\">", red, green, blue);
+                let font_tag = format!("<font color=\"#{:02x}{:02x}{:02x}\">", red, green, blue);
                 buf.extend_from_slice(font_tag.as_bytes());
             }
         }
