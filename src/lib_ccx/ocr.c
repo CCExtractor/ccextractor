@@ -111,7 +111,7 @@ char *probe_tessdata_location(const char *lang)
 	for (int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
 	{
 		if (!search_language_pack(paths[i], lang))
-			return paths[i];
+			return (char *)paths[i];
 	}
 
 	return NULL;
