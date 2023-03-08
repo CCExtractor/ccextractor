@@ -6,7 +6,7 @@ Downloads for precompiled binaries and source code can be found [on our website]
 
 Clone the latest repository from Github
 
-```
+```bash
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
@@ -25,7 +25,13 @@ RHEL:
 ```bash
 yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
 ```
-Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust
+
+Arch:
+```bash
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+```
+
+Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
@@ -34,10 +40,11 @@ Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/too
 2. Compiling
 
 ### Using the build script
+
 By default build script does not include debugging information hence, you cannot debug the executable produced (i.e. `./ccextractor`) on a debugger. To include debugging information, use the `builddebug` script.
 
 ```bash
-#Navigate to linux directory and call the build script
+# navigate to linux directory and call the build script
 
 cd ccextractor/linux
 
@@ -57,10 +64,10 @@ cd ccextractor/linux
 ### Standard linux compilation through Autoconf scripts
 
 ```bash
-sudo apt-get install autoconf      #Dependency to generate configuration script
+sudo apt-get install autoconf  # dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure # OR ./configure --without-rust
+./configure                    # OR ./configure --without-rust
 make
 
 # test your build
@@ -73,12 +80,12 @@ sudo make install
 ### Using CMake
 
 ```bash
-#Create and navigate to directory where you want to store built files
+# create and navigate to directory where you want to store built files
 cd ccextractor/
 mkdir build
 cd build
 
-#Generate makefile using cmake and then compile
+# generate makefile using cmake and then compile
 cmake ../src/  # options here
 make
 
@@ -133,12 +140,12 @@ cd ccextractor/mac
 #### Using CMake
 
 ```bash
-#Create and navigate to directory where you want to store built files
+# create and navigate to directory where you want to store built files
 cd ccextractor/
 mkdir build
 cd build
 
-#Generate makefile using cmake and then compile
+# generate makefile using cmake and then compile
 cmake ../src/  # options here
 make
 
@@ -156,7 +163,7 @@ make
 ```bash
 cd ccextractor/mac
 ./autogen.sh
-./configure   # OR ./configure --without-rust
+./configure         # OR ./configure --without-rust
 make
 
 # test your build
