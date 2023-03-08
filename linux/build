@@ -91,7 +91,7 @@ else
     else
         (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build --release) || { echo "Failed. " ; exit 1; }
     fi
-    cp rust/debug/libccx_rust.a ./libccx_rust.a
+    cp rust/release/libccx_rust.a ./libccx_rust.a
 fi
 
 echo "Building ccextractor"
