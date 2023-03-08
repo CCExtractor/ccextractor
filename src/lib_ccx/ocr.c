@@ -97,41 +97,22 @@ void delete_ocr(void **arg)
 char *probe_tessdata_location(const char *lang)
 {
 	int ret = 0;
-	char *tessdata_dir_path = getenv("TESSDATA_PREFIX");
 
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
+	const char *paths[] = {
+	    getenv("TESSDATA_PREFIX"),
+	    "./",
+	    "/usr/share/",
+	    "/usr/local/share/",
+	    "/usr/share/tesseract-ocr/",
+	    "/usr/share/tesseract-ocr/4.00/",
+	    "/usr/share/tesseract-ocr/5/",
+	    "/usr/share/tesseract/"};
 
-	tessdata_dir_path = "./";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/local/share/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/tesseract-ocr/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-
-	tessdata_dir_path = "/usr/share/tesseract-ocr/4.00/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
-	
-	tessdata_dir_path = "/usr/share/tesseract-ocr/5/";
-	ret = search_language_pack(tessdata_dir_path, lang);
-	if (!ret)
-		return tessdata_dir_path;
+	for (int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
+	{
+		if (!search_language_pack(paths[i], lang))
+			return paths[i];
+	}
 
 	return NULL;
 }

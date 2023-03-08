@@ -222,7 +222,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	char *pars_values = strdup("/dev/null");
 	char *tessdata_path = NULL;
 
-	char *lang = options->ocrlang;
+	char *lang = (char *)options->ocrlang;
 	if (!lang)
 		lang = "eng"; // English is default language
 
@@ -246,7 +246,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	int ret = -1;
 
-	if (!strncmp("4.", TessVersion(), 2))
+	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
 	{
 		char tess_path[1024];
 		if (ccx_options.ocr_oem < 0)
