@@ -40,8 +40,20 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		fatal(EXIT_READ_ERROR, "Video Stream not found!\n");
 	}
 
-	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codecpar;
-	ctx->codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
+	ctx->codec_ctx = avcodec_alloc_context3(NULL);
+	if (!ctx->codec_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate codec context!\n");
+	}
+
+	// Assign codec parameters to codec context
+	if (avcodec_parameters_to_context(ctx->codec_ctx, ctx->format_ctx->streams[ctx->video_stream_id]->codecpar) < 0)
+	{
+		fatal(EXIT_READ_ERROR, "Could not initialize codec context!\n");
+	}
+
+	// Find decoder for the codec context
+	ctx->codec = (AVCodec *)avcodec_find_decoder(ctx->codec_ctx->codec_id);
 	if (ctx->codec == NULL)
 	{
 		fatal(EXIT_READ_ERROR, "Input codec is not supported!\n");
