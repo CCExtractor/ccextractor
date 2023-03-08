@@ -87,9 +87,9 @@ else
     echo "${BLD_FLAGS}"
     tokens=( ${BLD_FLAGS} )
     if [ ${tokens[0]} = "-DENABLE_HARDSUBX" ]; then
-        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build --features "hardsubx_ocr") || { echo "Failed. " ; exit 1; }
+        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build --release --features "hardsubx_ocr") || { echo "Failed. " ; exit 1; }
     else
-        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build) || { echo "Failed. " ; exit 1; }
+        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build --release) || { echo "Failed. " ; exit 1; }
     fi
     cp rust/debug/libccx_rust.a ./libccx_rust.a
 fi
