@@ -375,7 +375,6 @@ char *_process_frame_tickertext(struct lib_hardsubx_ctx *ctx, AVFrame *frame, in
 int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
-	int got_frame;
 	int cur_sec = 0, total_sec, progress;
 	int frame_number = 0;
 	char *ticker_text = NULL;
@@ -386,8 +385,8 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 		{
 			frame_number++;
 			// Decode the video stream packet
-			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-			if (got_frame && frame_number % 1000 == 0)
+			avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+			if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0 && frame_number % 1000 == 0)
 			{
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
@@ -422,7 +421,6 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 	// Do an exhaustive linear search over the video
 
 	int prev_sub_encoded = 1; // Previous seen subtitle encoded or not
-	int got_frame;
 	int dist = 0;
 	int cur_sec = 0, total_sec, progress;
 	int frame_number = 0;
@@ -438,9 +436,8 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 			frame_number++;
 
 			// Decode the video stream packet
-			avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-
-			if (got_frame && frame_number % 25 == 0)
+			avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+			if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0 && frame_number % 25 == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				if (fabsf(diff) < 1000 * ctx->min_sub_duration) // If the minimum duration of a subtitle line is exceeded, process packet
@@ -563,7 +560,6 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 
 	// variables for burnt-in subtitle extraction
 	int prev_sub_encoded_hard = 1; // Previous seen burnt-in subtitle encoded or not
-	int got_frame;
 	int dist = 0;
 	int cur_sec = 0, total_sec, progress;
 	int frame_number = 0;
@@ -707,12 +703,10 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 			{
 				frame_number++;
 
-				avcodec_decode_video2(hard_ctx->codec_ctx,
-						      hard_ctx->frame,
-						      &got_frame,
-						      &hard_ctx->packet);
-
-				if (got_frame && frame_number % 25 == 0)
+				avcodec_send_packet(hard_ctx->codec_ctx, &hard_ctx->packet);
+				if (avcodec_receive_frame(hard_ctx->codec_ctx,
+							  hard_ctx->frame) == 0 &&
+				    frame_number % 25 == 0)
 				{
 					float diff = (float)convert_pts_to_ms(hard_ctx->packet.pts - prev_packet_pts_hard,
 									      hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
@@ -821,7 +815,6 @@ void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 {
 	// Do a binary search over the input video for faster processing
 	// printf("Duration: %d\n", (int)ctx->format_ctx->duration);
-	int got_frame;
 	int seconds_time = 0;
 	for (seconds_time = 0; seconds_time < 20; seconds_time++)
 	{
@@ -841,8 +834,8 @@ void hardsubx_process_frames_binary(struct lib_hardsubx_ctx *ctx)
 			{
 				if (ctx->packet.stream_index == ctx->video_stream_id)
 				{
-					avcodec_decode_video2(ctx->codec_ctx, ctx->frame, &got_frame, &ctx->packet);
-					if (got_frame)
+					avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+					if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0)
 					{
 						// printf("%d\n", seek_time);
 						if (ctx->packet.pts < seek_time)
