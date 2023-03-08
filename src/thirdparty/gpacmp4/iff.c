@@ -1270,6 +1270,7 @@ static GF_Err gf_isom_iff_create_image_item_from_track_internal(GF_ISOFile *movi
 		if (image_props->src_file)
 			e = GF_SERVICE_ERROR;
 		else
+			// Undefined reference looked in gpac repo only function declaration is avaialble
 			// e = gf_media_split_hevc_tiles(movie, 0);
 #else
 		e = GF_NOT_SUPPORTED;
@@ -1557,7 +1558,9 @@ import_next_sample:
 			}
 			gf_list_del(((GF_AV1ConfigurationBox *)config_box)->config->obu_array);
 			((GF_AV1ConfigurationBox *)config_box)->config->obu_array = NULL;
-			// e = gf_media_av1_layer_size_get(fsrc, imported_track, sample_number, image_props->av1_op_index, image_props->av1_layer_size);
+			
+			// Same as Above, Undefined reference. Looked in gpac repo only function declaration is avaialble
+			//  e = gf_media_av1_layer_size_get(fsrc, imported_track, sample_number, image_props->av1_op_index, image_props->av1_layer_size);
       if (e) {
         GF_LOG(GF_LOG_ERROR, GF_LOG_CONTAINER, ("AV1 operating point index out of range for stream\n"));
         goto exit;

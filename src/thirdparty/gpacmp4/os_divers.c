@@ -26,6 +26,8 @@
 #include <gpac/tools.h>
 #include <gpac/network.h>
 #include <gpac/config_file.h>
+#include <gpac/token.h>
+#include "gpac/token.c"
 
 #if defined(_WIN32_WCE)
 
@@ -983,7 +985,7 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 			} else if (!stricmp(arg, "-no-save")) {
 				gpac_discard_config = bool_value;
 			} else if (!stricmp(arg, "-no-poll")) {
-				// gpac_use_poll = bool_value;
+				//  gpac_use_poll = bool_value;
 			} else if (!stricmp(arg, "-ntp-shift")) {
 				s32 shift = arg_val ? atoi(arg_val) : 0;
 				gf_net_set_ntp_shift(shift);

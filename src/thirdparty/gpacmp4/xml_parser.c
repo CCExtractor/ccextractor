@@ -26,7 +26,8 @@
 #include <gpac/xml.h>
 #include <gpac/utf.h>
 #include <gpac/network.h>
-
+#include <gpac/setup.h>
+#include "gpac/alloc.c"
 #ifndef GPAC_DISABLE_ZLIB
 /*since 0.2.2, we use zlib for xmt/x3d reading to handle gz files*/
 #include <zlib.h>
