@@ -127,6 +127,11 @@ char *probe_tessdata_location(const char *lang)
 	ret = search_language_pack(tessdata_dir_path, lang);
 	if (!ret)
 		return tessdata_dir_path;
+	
+	tessdata_dir_path = "/usr/share/tesseract-ocr/5/";
+	ret = search_language_pack(tessdata_dir_path, lang);
+	if (!ret)
+		return tessdata_dir_path;
 
 	return NULL;
 }
