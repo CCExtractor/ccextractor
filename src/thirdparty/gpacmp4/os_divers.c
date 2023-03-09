@@ -27,7 +27,7 @@
 #include <gpac/network.h>
 #include <gpac/config_file.h>
 #include <gpac/token.h>
-#include "gpac/token.c"
+#include <gpac/token.c>
 
 #if defined(_WIN32_WCE)
 

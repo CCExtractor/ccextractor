@@ -27,7 +27,8 @@
 #include <gpac/utf.h>
 #include <gpac/network.h>
 #include <gpac/setup.h>
-#include "gpac/alloc.c"
+#include <gpac/alloc.c>
+
 #ifndef GPAC_DISABLE_ZLIB
 /*since 0.2.2, we use zlib for xmt/x3d reading to handle gz files*/
 #include <zlib.h>
@@ -2243,7 +2244,8 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 			if (nb_bits)
 				gf_bs_write_int(bs, len, nb_bits);
 
-			gf_bs_write_data(bs, szString, len);
+			//differ in signedness fixed
+			gf_bs_write_data(bs,(const u8 *) szString, len);
 		} else if (szBase64) {
 			u32 len = (u32) strlen(szBase64);
 			char *data = (char *) gf_malloc(sizeof(char)*len);
@@ -2253,10 +2255,10 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 				goto exit;
 			}
 
-			ret = (u32) gf_base64_decode((char *)szBase64, len, data, len);
+			ret = (u32) gf_base64_decode((u8 *)((char *)szBase64), len,(u8 *) data, len);
 			if ((s32) ret >=0) {
 				gf_bs_write_int(bs, ret, nb_bits);
-				gf_bs_write_data(bs, data, ret);
+				gf_bs_write_data(bs,(const u8 *) data, ret);
 			} else {
 				GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[XML/NHML] Error decoding base64 %s\n", att->value));
 				gf_free(data);
@@ -2280,7 +2282,7 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 				data[j/2] = v;
 			}
 			gf_bs_write_int(bs, len/2, nb_bits);
-			gf_bs_write_data(bs, data, len/2);
+			gf_bs_write_data(bs,(const u8 *) data, len/2);
 			gf_free(data);
 		} else if (has_float) {
 			gf_bs_write_float(bs, val_float);
@@ -2338,12 +2340,12 @@ GF_Err gf_xml_parse_bit_sequence_bs(GF_XMLNode *bsroot, const char *parent_url, 
 					goto exit;
 				}
 
-				gf_bs_write_data(bs, block, read);
+				gf_bs_write_data(bs,(const u8 *) block, read);
 				remain -= bsize;
 			}
 			gf_fclose(_tmp);
 		} else if (use_word128) {
-			gf_bs_write_data(bs, (char *)word128, 16);
+			gf_bs_write_data(bs,(const u8*)((char *)word128), 16);
 		}
 
 		if ((enc_base64==1) || (enc_base64==3)) {
