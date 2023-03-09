@@ -105,14 +105,15 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica:x64-windows-static-md tesseract:x64-windows-static-md ffmpeg:x64-windows
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: "${{ github.workspace }}\\vcpkg"
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -141,7 +142,7 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica:x64-windows-static-md tesseract:x64-windows-static-md ffmpeg:x64-windows
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -154,6 +155,8 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information

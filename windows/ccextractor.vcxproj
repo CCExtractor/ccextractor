@@ -493,18 +493,18 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\x86-windows\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avcodec-59.dll"
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avformat-59.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avutil-57.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swresample-4.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swscale-6.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -537,7 +537,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/x86-windows/lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
@@ -567,15 +567,15 @@
       <Command>call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avcodec-59.dll"
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avformat-59.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\avutil-57.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swresample-4.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x86-windows\lib\swscale-6.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <ProjectReference>
@@ -586,7 +586,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/x64-windows/lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)/installed/x64-windows/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_OCR;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -603,7 +603,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)/installed/x64-windows/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call rustx86.bat</Command>
@@ -617,7 +617,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/x86-windows/lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;$(VCPKG_ROOT)/installed/x86-windows/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\;..\src\thirdparty\libpng;..\src;libs\include;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -640,15 +640,15 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avcodec-59.dll"
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avformat-59.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avutil-57.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swresample-4.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swscale-6.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -663,7 +663,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/x64-windows/lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -680,7 +680,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>
-        $(ProjectDir)libs\lib\ffmpeg-lib;$(VCPKG_ROOT)/installed/x64-windows/lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(ProjectDir)libs\lib\ffmpeg-lib;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call rustx86.bat</Command>
@@ -718,15 +718,15 @@
       <Command>call pre-build.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avcodec-59.dll"
+      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avformat-59.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\avutil-57.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swresample-4.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
         "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\x64-windows\lib\swscale-6.dll"
+        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
