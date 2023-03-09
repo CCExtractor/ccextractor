@@ -495,6 +495,9 @@
       <AdditionalLibraryDirectories>
         $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>call pre-build.bat</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
@@ -530,7 +533,8 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>call rust.bat</Command>
+      <Command>call pre-build.bat
+        call rust.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
@@ -564,7 +568,8 @@
       <AdditionalLibraryDirectories>$(ProjectDir)libs\lib\ffmpeg-lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>call rustx86.bat</Command>
+      <Command>call pre-build.bat
+        call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
@@ -606,7 +611,8 @@
         $(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>call rustx86.bat</Command>
+      <Command>call pre-build.bat
+        call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
@@ -683,7 +689,8 @@
         $(ProjectDir)libs\lib\ffmpeg-lib;$(VCPKG_ROOT)/installed/$(VCPKG_DEFAULT_TRIPLET)/lib%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>call rustx86.bat</Command>
+      <Command>call pre-build.bat
+        call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
