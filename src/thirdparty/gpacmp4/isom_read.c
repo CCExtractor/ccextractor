@@ -359,7 +359,7 @@ static GF_Err isom_create_init_from_mem(const char *fileName, GF_ISOFile *file)
 			GF_NALUFFParam *slc;
 			u8 nal_type;
 			char *nal = &CodecParams[pos];
-			end = gf_media_nalu_next_start_code(nal, CodecParamLen-pos, &sc_size);
+			end = gf_media_nalu_next_start_code( (const u8 *) nal, CodecParamLen-pos, &sc_size);
 			if (!end) end = CodecParamLen;
 
 			GF_SAFEALLOC(slc, GF_NALUFFParam);
@@ -2304,7 +2304,7 @@ GF_Err gf_isom_get_sample_for_media_time(GF_ISOFile *the_file, u32 trackNumber, 
 	}
 	if (static_sample && ! (*sample)->alloc_size )
 		 (*sample)->alloc_size =  (*sample)->dataLength;
-		 
+
 	return GF_OK;
 }
 
@@ -4674,7 +4674,7 @@ const u32 *gf_isom_get_track_switch_parameter(GF_ISOFile *movie, u32 trackNumber
 	if (!map) return NULL;
 	tsel = (GF_TrackSelectionBox*)gf_list_get(map->boxes, group_index-1);
 	if (!tsel) return NULL;
-	
+
 	*switchGroupID = tsel->switchGroup;
 	*criteriaListSize = tsel->attributeListCount;
 	return (const u32 *) tsel->attributeList;
@@ -5409,7 +5409,7 @@ GF_Err gf_isom_get_sample_cenc_info_internal(GF_TrackBox *trak, void *traf, GF_S
 	if (skip_byte_block) *skip_byte_block = 0;
 	if (key_info) *key_info = NULL;
 	if (key_info_size) *key_info_size = 0;
-	
+
 	if (!trak) return GF_BAD_PARAM;
 
 #ifdef	GPAC_DISABLE_ISOM_FRAGMENTS
@@ -5692,6 +5692,7 @@ u32 gf_isom_get_nalu_length_field(GF_ISOFile *file, u32 track, u32 StreamDescrip
 	if (ve->svc_config) return ve->svc_config->config->nal_unit_size;
 	if (ve->hevc_config) return ve->hevc_config->config->nal_unit_size;
 	if (ve->lhvc_config) return ve->lhvc_config->config->nal_unit_size;
+	if (ve->vvc_config) return ve->vvc_config->config->nal_unit_size;
 	return 0;
 }
 
