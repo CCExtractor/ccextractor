@@ -2,7 +2,7 @@
 use leptonica_sys::*;
 
 // #[cfg(feature = "hardsubx_ocr")]
-// use ffmpeg_sys_next::*;
+// use rsmpeg::*;
 
 use std::convert::TryInto;
 use std::eprintln;
