@@ -150,3 +150,7 @@ src/rust/CMakeCache.txt
 src/rust/Makefile
 src/rust/cmake_install.cmake
 src/rust/target/
+windows/ccx_rust.lib
+windows/*/debug/*
+windows/*/CACHEDIR.TAG
+windows/.rustc_info.json

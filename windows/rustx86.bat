@@ -3,4 +3,4 @@ set CARGO_TARGET_DIR=%output%
 cd ..\src\rust
 cargo build --features "hardsubx_ocr" --target x86_64-pc-windows-msvc
 cd ..\..\windows
-copy debug\ccx_rust.lib .\ccx_rust.lib
+copy x86_64-pc-windows-msvc\debug\ccx_rust.lib .\ccx_rust.lib
