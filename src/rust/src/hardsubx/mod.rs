@@ -4,7 +4,9 @@ pub mod imgops;
 pub mod utility;
 
 #[cfg(feature = "hardsubx_ocr")]
-use rsmpeg::*;
+use rsmpeg::avutil::*;
+#[cfg(feature = "hardsubx_ocr")]
+use rsmpeg::ffi::{AVCodec, AVCodecContext, AVFormatContext, AVRational, SwsContext};
 
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;

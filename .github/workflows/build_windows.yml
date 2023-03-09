@@ -143,29 +143,29 @@ jobs:
           ignore-reserve-cache-error: true
       - name: Install dependencies
         run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Install Win 10 SDK
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: build Debug-Full
-        env:
-          LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
-          LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
-          CARGO_TARGET_DIR: "..\\..\\windows"
-          BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
-        working-directory: ./windows
-      - name: Display version information
-        run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v3
-        with:
-          name: CCExtractor Windows OCR and HardSubX Debug build
-          path: |
-            ./windows/x64/Debug-Full/ccextractorwinfull.exe
-            ./windows/x64/Debug-Full/ccextractorwinfull.pdb
-            ./windows/x64/Debug-Full/*.dll
+      # - uses: actions-rs/toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     override: true
+      # - name: Install Win 10 SDK
+      #   uses: ilammy/msvc-dev-cmd@v1
+      # - name: build Debug-Full
+      #   env:
+      #     LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
+      #     LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
+      #     CARGO_TARGET_DIR: "..\\..\\windows"
+      #     BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+      #     VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+      #     VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      #   run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
+      #   working-directory: ./windows
+      # - name: Display version information
+      #   run: ./ccextractorwinfull.exe --version
+      #   working-directory: ./windows/x64/Debug-Full
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     name: CCExtractor Windows OCR and HardSubX Debug build
+      #     path: |
+      #       ./windows/x64/Debug-Full/ccextractorwinfull.exe
+      #       ./windows/x64/Debug-Full/ccextractorwinfull.pdb
+      #       ./windows/x64/Debug-Full/*.dll

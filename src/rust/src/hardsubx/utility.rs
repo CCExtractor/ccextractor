@@ -1,5 +1,7 @@
 #[cfg(feature = "hardsubx_ocr")]
-use rsmpeg::*;
+use rsmpeg::avutil::*;
+#[cfg(feature = "hardsubx_ocr")]
+use rsmpeg::ffi::AVRational;
 use std::os::raw::{c_char, c_int};
 use std::{cmp, ffi};
 
