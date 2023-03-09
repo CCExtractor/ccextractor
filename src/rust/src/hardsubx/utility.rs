@@ -1,5 +1,5 @@
 #[cfg(feature = "hardsubx_ocr")]
-use ffmpeg_sys_next::*;
+use ffmpeg_sys_the_third::*;
 use std::os::raw::{c_char, c_int};
 use std::{cmp, ffi};
 
