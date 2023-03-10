@@ -573,7 +573,8 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
@@ -615,7 +616,8 @@
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
@@ -641,7 +643,8 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DisableSpecificWarnings>4005;4996</DisableSpecificWarnings>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -693,7 +696,8 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
