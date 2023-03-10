@@ -10,6 +10,7 @@
 - Disable X-TIMESTAMP-MAP by default (changed option --no-timestamp-map to --timestamp-map)
 - Fix: missing `#` in color attribute of font tag
 - Fix: ffmpeg 5.0, tesseract 5.0 compatibility and remove deprecated methods
+- Fix: tesseract 5.x traineddata location in ocr
 
 0.94 (2021-12-14)
 -----------------
