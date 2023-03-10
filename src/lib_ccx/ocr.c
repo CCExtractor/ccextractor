@@ -160,7 +160,7 @@ void *init_ocr(int lang_index)
 	char *pars_values = strdup("tess.log");
 
 	ctx->api = TessBaseAPICreate();
-	if (!strncmp("4.", TessVersion(), 2))
+	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
 	{
 		char tess_path[1024];
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
