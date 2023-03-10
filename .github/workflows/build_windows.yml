@@ -95,9 +95,6 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: Copy Include Files
-        run: |
-          Copy-Item -Path vcpkg/installed/x64-windows-static-md/include/* -Destination windows/libs/include -Recurse -Force
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: Setup Vcpkg
@@ -109,6 +106,9 @@ jobs:
           ignore-reserve-cache-error: true
       - name: Install dependencies
         run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
+      - name: Copy Include Files
+        run: |
+          Copy-Item -Path vcpkg/installed/x64-windows-static-md/include/* -Destination windows/libs/include -Recurse -Force
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
