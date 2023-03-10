@@ -5,6 +5,7 @@
 #include <tesseract/capi.h>
 #include "ccx_common_constants.h"
 #include <leptonica/allheaders.h>
+#include <leptonica/pix.h>
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"

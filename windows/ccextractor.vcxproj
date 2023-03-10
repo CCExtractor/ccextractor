@@ -559,7 +559,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;lzma.lib;$(ProjectDir)libs\lib\debug-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -641,7 +641,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.tiff-4.0.7.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.jpeg-9.2.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.openjpeg.openjp2-2.1.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.jbig-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.mgk25.jbig.ar-2.1.0.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.xz_utils.lzma-5.2.2.lib;$(ProjectDir)libs\lib\release-lib\pvt.cppan.demo.webp-0.5.1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
