@@ -78,8 +78,6 @@ jobs:
     - name: cmake
       run: |
         mkdir build && cd build
-        FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
-        FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
       run: |
