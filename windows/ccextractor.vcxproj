@@ -559,7 +559,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -605,7 +605,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;WS2_32.Lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;WS2_32.Lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -641,7 +641,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Ws2_32.lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -684,7 +684,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;WS2_32.Lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;WS2_32.Lib;bcrypt.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
