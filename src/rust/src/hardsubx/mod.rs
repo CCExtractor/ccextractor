@@ -6,7 +6,7 @@ pub mod utility;
 #[cfg(feature = "hardsubx_ocr")]
 use rsmpeg::avutil::*;
 #[cfg(feature = "hardsubx_ocr")]
-use rsmpeg::ffi::{AVCodec, AVCodecContext, AVFormatContext, AVRational, SwsContext};
+use rsmpeg::ffi::{AVCodec, AVCodecContext, AVFormatContext, SwsContext};
 
 #[cfg(feature = "hardsubx_ocr")]
 use tesseract_sys::*;
