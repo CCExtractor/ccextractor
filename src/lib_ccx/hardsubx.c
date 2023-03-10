@@ -12,9 +12,6 @@
 
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
-	// Get the required media attributes and initialize structures
-	av_register_all();
-
 	if (avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL) != 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error reading input file!\n");
@@ -32,7 +29,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	ctx->video_stream_id = -1;
 	for (int i = 0; i < ctx->format_ctx->nb_streams; i++)
 	{
-		if (ctx->format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+		if (ctx->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
 			ctx->video_stream_id = i;
 			break;
@@ -43,8 +40,20 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		fatal(EXIT_READ_ERROR, "Video Stream not found!\n");
 	}
 
-	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codec;
-	ctx->codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
+	ctx->codec_ctx = avcodec_alloc_context3(NULL);
+	if (!ctx->codec_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate codec context!\n");
+	}
+
+	// Assign codec parameters to codec context
+	if (avcodec_parameters_to_context(ctx->codec_ctx, ctx->format_ctx->streams[ctx->video_stream_id]->codecpar) < 0)
+	{
+		fatal(EXIT_READ_ERROR, "Could not initialize codec context!\n");
+	}
+
+	// Find decoder for the codec context
+	ctx->codec = (AVCodec *)avcodec_find_decoder(ctx->codec_ctx->codec_id);
 	if (ctx->codec == NULL)
 	{
 		fatal(EXIT_READ_ERROR, "Input codec is not supported!\n");
@@ -225,7 +234,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	char *pars_values = strdup("/dev/null");
 	char *tessdata_path = NULL;
 
-	char *lang = options->ocrlang;
+	char *lang = (char *)options->ocrlang;
 	if (!lang)
 		lang = "eng"; // English is default language
 
@@ -249,7 +258,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	int ret = -1;
 
-	if (!strncmp("4.", TessVersion(), 2))
+	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
 	{
 		char tess_path[1024];
 		if (ccx_options.ocr_oem < 0)

@@ -66,7 +66,6 @@ void *init_ffmpeg(const char *path)
 	struct ffmpeg_ctx *ctx;
 	AVCodec *dec = NULL;
 	avcodec_register_all();
-	av_register_all();
 
 	if (ccx_options.debug_mask & CCX_DMT_VERBOSE)
 		av_log_set_level(AV_LOG_INFO);
@@ -133,7 +132,6 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 	struct ffmpeg_ctx *ctx = arg;
 	int len = 0;
 	int ret = 0;
-	int got_frame;
 	AVPacket packet;
 
 	ret = av_read_frame(ctx->ifmt, &packet);
@@ -151,12 +149,13 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 		return AVERROR(EAGAIN);
 	}
 
-	ret = avcodec_decode_video2(ctx->dec_ctx, ctx->frame, &got_frame, &packet);
+	avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+	ret = avcodec_receive_frame(ctx->dec_ctx, ctx->frame);
 	if (ret < 0)
 	{
 		av_log(NULL, AV_LOG_ERROR, "unable to decode packet\n");
 	}
-	else if (!got_frame)
+	else if (ret != 0)
 	{
 		return AVERROR(EAGAIN);
 	}
