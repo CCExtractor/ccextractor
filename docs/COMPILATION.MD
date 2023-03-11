@@ -55,7 +55,13 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./builddebug
+./build -debug            # same as ./build_debug
+
+# compile with hardsubx
+./build -hardsubx         # same as ./build_hardsubx
+
+# compile in debug mode without rust
+./build -debug -without-rust
 
 # test your build
 ./ccextractor
