@@ -7,3 +7,4 @@
 #include "../lib_ccx/lib_ccx.h"
 #include "../lib_ccx/hardsubx.h"
 #include "../lib_ccx/utility.h"
+#include "../lib_ccx/ocr.h"

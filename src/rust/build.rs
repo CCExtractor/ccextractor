@@ -16,6 +16,29 @@ fn main() {
         "convert_pts_to_.*",
         "av_rescale_q",
         "mprint",
+        "av_packet_unref",
+        "av_read_frame",
+        "activity_progress",
+        "avcodec_decode_video2",
+        "probe_tessdata_location",
+        "get_file_extension",
+        "init_encoder",
+        "dinit_encoder",
+        "encode_sub",
+        "add_cc_sub_text",
+        "position_sanity_check",
+        "process_non_multiprogram_general_loop",
+        "get_fts",
+        "segment_output_file",
+        "net_check_conn",
+        "update_encoder_list",
+        "general_get_more_data",
+        "wtv_get_more_data",
+        "asf_get_more_data",
+        "ts_get_more_data",
+        "ps_get_more_data",
+        "is_decoder_processed_enough",
+        "flush_cc_decode",
     ]);
 
     let mut allowlist_types = vec![
@@ -24,6 +47,10 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
+        "ccx_s_options",
+        "lib_ccx_ctx",
+        "encoder_ctx",
+        "demuxer_data",
     ];
 
     #[cfg(feature = "hardsubx_ocr")]
