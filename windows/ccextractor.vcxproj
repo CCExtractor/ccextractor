@@ -35,10 +35,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup
-    Condition="(('$(Configuration)|$(Platform)'=='Debug-Full|Win32') OR ('$(Configuration)|$(Platform)'=='Debug-Full|x64') OR ('$(Configuration)|$(Platform)'=='Release-Full|Win32') OR ('$(Configuration)|$(Platform)'=='Release-Full|x64'))">
-    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\leptonica\pix.h" />
-  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
@@ -73,13 +69,6 @@
     <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
     <ClInclude Include="..\src\lib_ccx\compile_info.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\png.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pngconf.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pngdebug.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pnginfo.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pnglibconf.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pngpriv.h" />
-    <ClInclude Include="..\src\thirdparty\libpng\pngstruct.h" />
     <ClInclude Include="..\src\lib_ccx\avc_functions.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_common.h" />
@@ -108,17 +97,6 @@
     <ClInclude Include="..\src\thirdparty\utf8proc\utf8proc.h" />
     <ClInclude Include="..\src\thirdparty\win_iconv\iconv.h" />
     <ClInclude Include="..\src\thirdparty\win_spec_incld\dirent.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\crc32.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\deflate.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\gzguts.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\inffast.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\inffixed.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\inflate.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\inftrees.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\trees.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\zconf.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\zlib.h" />
-    <ClInclude Include="..\src\thirdparty\zlib\zutil.h" />
     <ClInclude Include="..\src\lib_ccx\zvbi\bcd.h" />
     <ClInclude Include="..\src\lib_ccx\zvbi\bit_slicer.h" />
     <ClInclude Include="..\src\lib_ccx\zvbi\macros.h" />
@@ -197,21 +175,6 @@
     <ClCompile Include="..\src\thirdparty\gpacmp4\os_module.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\xml_parser.c" />
     <ClCompile Include="..\src\thirdparty\gpacmp4\constants.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\png.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngerror.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngget.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngmem.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngpread.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngread.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngrio.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngrtran.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngrutil.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngset.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngtrans.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngwio.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngwrite.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngwtran.c" />
-    <ClCompile Include="..\src\thirdparty\libpng\pngwutil.c" />
     <ClCompile Include="..\src\lib_ccx\activity.c" />
     <ClCompile Include="..\src\lib_ccx\asf_functions.c" />
     <ClCompile Include="..\src\lib_ccx\avc_functions.c" />
@@ -282,14 +245,6 @@
     <ClCompile Include="..\src\thirdparty\protobuf-c\protobuf-c.c" />
     <ClCompile Include="..\src\thirdparty\utf8proc\utf8proc.c" />
     <ClCompile Include="..\src\thirdparty\win_iconv\win_iconv.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\adler32.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\crc32.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\deflate.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\inffast.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\inflate.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\inftrees.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\trees.c" />
-    <ClCompile Include="..\src\thirdparty\zlib\zutil.c" />
     <ClCompile Include="..\src\lib_ccx\zvbi\bit_slicer.c" />
     <ClCompile Include="..\src\lib_ccx\zvbi\decoder.c" />
     <ClCompile Include="..\src\lib_ccx\zvbi\raw_decoder.c" />
