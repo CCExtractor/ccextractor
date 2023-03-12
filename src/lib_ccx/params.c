@@ -999,7 +999,7 @@ char *calculateSHA256(char *location)
 	int size_read, bytes_read, fh = 0;
 	SHA256_CTX ctx256;
 
-	SHA256_Init(&ctx256);
+	CC_SHA256_Init(&ctx256);
 
 #ifdef _WIN32
 	fh = OPEN(location, O_RDONLY | O_BINARY);
@@ -1015,7 +1015,7 @@ char *calculateSHA256(char *location)
 	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0)
 	{
 		size_read += bytes_read;
-		SHA256_Update(&ctx256, (unsigned char *)sha256_buf, bytes_read);
+		CC_SHA256_Update(&ctx256, (unsigned char *)sha256_buf, bytes_read);
 	}
 	close(fh);
 	SHA256_End(&ctx256, sha256_buf);
