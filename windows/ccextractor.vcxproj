@@ -506,7 +506,7 @@
       <Command>call pre-build.bat
         call rust.bat </Command>
     </PreBuildEvent>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
@@ -517,7 +517,7 @@
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -580,7 +580,7 @@
       <Command>call pre-build.bat
         call rustx86.bat</Command>
     </PreBuildEvent>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
@@ -591,7 +591,7 @@
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
@@ -656,7 +656,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
@@ -667,7 +667,7 @@
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
     <PreBuildEvent>
       <Command>call pre-build.bat
         call rustx86.bat</Command>
@@ -736,7 +736,7 @@
       <Command>call pre-build.bat
         call rust.bat </Command>
     </PreBuildEvent>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
@@ -747,7 +747,7 @@
         "$(ProjectDir)$(OutDir)"
         xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
