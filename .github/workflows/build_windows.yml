@@ -95,7 +95,7 @@ jobs:
           platform: x86
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: 1.60.0
           override: true
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
@@ -131,7 +131,7 @@ jobs:
           platform: x86
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: 1.60.0
           override: true
           target: i686-pc-windows-msvc
       - name: Install Win 10 SDK

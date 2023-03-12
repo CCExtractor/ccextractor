@@ -94,6 +94,14 @@ Bool gf_url_is_local(const char *pathName)
 }
 
 GF_EXPORT
+Bool gf_url_is_relative(const char *pathName)
+{
+	if (!pathName) return GF_TRUE;
+	u32 mode = URL_GetProtocolType(pathName);
+	return (mode==GF_URL_TYPE_RELATIVE) ? GF_TRUE : GF_FALSE;
+}
+
+GF_EXPORT
 char *gf_url_get_absolute_path(const char *pathName, const char *parentPath)
 {
 	char* sep;
@@ -329,9 +337,29 @@ static char *gf_url_concatenate_ex(const char *parentName, const char *pathName,
 	else if (!had_sep_count && (pathName[0]=='.') && (tmp[0]=='.') && ((tmp[1]=='/') || (tmp[1]=='\\') ) ) {
 		u32 nb_path_sep=0;
 		u32 len = (u32) strlen(tmp);
+
 		for (i=0; i<len; i++) {
 			if ((tmp[i]=='/') || (tmp[i]=='\\') )
 				nb_path_sep++;
+		}
+
+		const char *p_src = pathName+2;
+		const char *p_tmp = tmp+2;
+		//strip if same beginning
+		while (1) {
+			char *sep = strchr(p_src, '/');
+			if (!sep) sep = strchr(p_src, '\\');
+			if (!sep) break;
+			u32 sep_len = (u32) (sep - p_src);
+			if (!sep_len) break;
+			if (sep_len > len) break;
+			if (strncmp(p_tmp, p_src, sep_len)) break;
+			if ((p_tmp[sep_len] != '/') && (p_tmp[sep_len] != '\\')) break;
+			p_src += sep_len+1;
+			name += sep_len+1;
+			p_tmp += sep_len+1;
+			len -= sep_len;
+			nb_path_sep--;
 		}
 		strcpy(tmp, "");
 		while (nb_path_sep--)
@@ -399,7 +427,7 @@ void gf_url_to_fs_path(char *sURL)
 
 //TODO handle reserved characters
 const char *pce_special = " %";
-const char *pce_encoded = "0123456789ABCDEF";
+const char *pce_encoded = "0123456789ABCDEFabcdef";
 
 char *gf_url_percent_encode(const char *path)
 {
@@ -451,6 +479,43 @@ char *gf_url_percent_encode(const char *path)
 	return outpath;
 }
 
+char *gf_url_percent_decode(const char *path)
+{
+	char *outpath;
+	u32 i, count, len;
+	if (!path) return NULL;
+
+	len = (u32) strlen(path);
+	count = 0;
+	for (i=0; i<len; i++) {
+		u8 c = path[i];
+		if (c=='%') {
+			i+= 2;
+		}
+		count++;
+	}
+	if (!count) return gf_strdup(path);
+	outpath = (char*)gf_malloc(sizeof(char) * (count + 1));
+
+	for (i=0; i<len; i++) {
+		u8 c = path[i];
+		if (c=='%') {
+			u32 res;
+			char szChar[3];
+			szChar[0] = path[i+1];
+			szChar[1] = path[i+1];
+			szChar[2] = 0;
+			sscanf(szChar, "%02X", &res);
+			i += 2;
+			outpath[i] = (char) res;
+		} else {
+			outpath[i] = c;
+		}
+	}
+	outpath[count] = 0;
+	return outpath;
+}
+
 GF_EXPORT
 const char *gf_url_get_resource_name(const char *sURL)
 {
@@ -463,19 +528,21 @@ const char *gf_url_get_resource_name(const char *sURL)
 }
 
 GF_EXPORT
-Bool gf_url_get_resource_path(const char *sURL, char *res_path)
+const char *gf_url_get_path(const char *sURL)
 {
-	char *sep;
-	strcpy(res_path, sURL);
-	sep = strrchr(res_path, '/');
-	if (!sep) sep = strrchr(res_path, '\\');
-	if (sep) {
-		sep[1] = 0;
-		return GF_TRUE;
-	}
-	return GF_FALSE;
+	char *sep = strstr(sURL, "://");
+	if (!sep) return sURL;
+	sep = strchr(sep + 3, '/');
+	if (sep) return sep;
+	return NULL;
 }
 
+//exported for python bindings
+GF_EXPORT
+void gf_url_free(char *sURL)
+{
+	if (sURL) gf_free(sURL);
+}
 
 #if 0 //unused
 Bool gf_url_remove_last_delimiter(const char *sURL, char *res_path)
@@ -489,7 +556,7 @@ Bool gf_url_remove_last_delimiter(const char *sURL, char *res_path)
 	return GF_FALSE;
 }
 
-const char* gf_url_get_ressource_extension(const char *sURL) {
+const char* gf_url_get_resource_extension(const char *sURL) {
 	const char *dot = strrchr(sURL, '.');
 	if(!dot || dot == sURL) return "";
 	return dot + 1;

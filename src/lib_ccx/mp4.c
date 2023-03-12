@@ -451,7 +451,7 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	// Basically it's 16-bit length + UTF-8/UTF-16 text + optional extension (ignored)
 	// TODO: support extension & style
 
-	static struct cc_subtitle last_sub;
+	// static struct cc_subtitle last_sub;
 	static int has_previous_sub = 0;
 
 	// Always encode the previous subtitle, no matter the current one is valid or not

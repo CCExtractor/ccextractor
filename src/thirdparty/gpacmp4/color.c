@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2012
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -1817,6 +1817,7 @@ static Bool format_is_yuv(u32 in_pf)
 	case GF_PIXEL_UYVY:
 	case GF_PIXEL_VYUY:
 	case GF_PIXEL_YUV:
+	case GF_PIXEL_YVU:
 	case GF_PIXEL_YUV_10:
 	case GF_PIXEL_YUV422:
 	case GF_PIXEL_YUV422_10:
@@ -1883,15 +1884,22 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 					e = color_write_yuv422_10_to_yuv422(dst, src, src_wnd, GF_FALSE);
 				else if (dst->pixel_format == GF_PIXEL_YUV)
 					e = color_write_yuv422_10_to_yuv(dst, src, src_wnd, GF_FALSE);
+				else if (dst->pixel_format == GF_PIXEL_YVU)
+					e = color_write_yuv422_10_to_yuv(dst, src, src_wnd, GF_TRUE);
 				break;
 			case GF_PIXEL_YUV444_10:
 				if (dst->pixel_format == GF_PIXEL_YUV444)
 					e = color_write_yuv444_10_to_yuv444(dst, src, src_wnd, GF_FALSE);
 				else if (dst->pixel_format == GF_PIXEL_YUV)
 					e = color_write_yuv444_10_to_yuv(dst, src, src_wnd, GF_FALSE);
+				else if (dst->pixel_format == GF_PIXEL_YVU)
+					e = color_write_yuv444_10_to_yuv(dst, src, src_wnd, GF_TRUE);
 				break;
 			case GF_PIXEL_YUV:
 				e = color_write_yuv420_to_yuv(dst, src, src_wnd, GF_FALSE);
+				break;
+			case GF_PIXEL_YVU:
+				e = color_write_yuv420_to_yuv(dst, src, src_wnd, GF_TRUE);
 				break;
 			case GF_PIXEL_YUV422:
 				e = color_write_yuv422_to_yuv(dst, src, src_wnd, GF_FALSE);
@@ -1911,7 +1919,6 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 			//check rgb->rgb copy
 			switch (dst->pixel_format) {
 			case GF_PIXEL_RGB:
-			case GF_PIXEL_RGBS:
 			case GF_PIXEL_BGR:
 				e = color_write_rgb_to_24(dst, src, src_wnd);
 				break;
@@ -1950,7 +1957,6 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 		load_line = load_line_rgb_565;
 		break;
 	case GF_PIXEL_RGB:
-	case GF_PIXEL_RGBS:
 		load_line = load_line_rgb_24;
 		break;
 	case GF_PIXEL_BGR:
@@ -1965,7 +1971,6 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 		load_line = load_line_bgra;
 		break;
 	case GF_PIXEL_RGBA:
-	case GF_PIXEL_RGBAS:
 		has_alpha = GF_TRUE;
 	case GF_PIXEL_RGBX:
 		load_line = load_line_rgb_32;
@@ -1984,6 +1989,7 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 		load_line = load_line_rgbd;
 		break;
 	case GF_PIXEL_YUV:
+	case GF_PIXEL_YVU:
 		yuv2rgb_init();
 		yuv_planar_type = 1;
 		break;
@@ -2110,6 +2116,9 @@ GF_Err gf_stretch_bits(GF_VideoSurface *dst, GF_VideoSurface *src, GF_Window *ds
 	dst_w = dst_wnd ? dst_wnd->w : dst->width;
 	dst_h = dst_wnd ? dst_wnd->h : dst->height;
 
+	if (!src_w || !src_h || !dst_w || !dst_h)
+		return GF_OK;
+		
 	if (yuv_planar_type && (src_w%2)) src_w++;
 
 	tmp = (u8 *) gf_malloc(sizeof(u8) * src_w * (yuv_planar_type ? 8 : 4) );
@@ -3502,6 +3511,7 @@ static Bool is_planar_yuv(u32 pf)
 {
 	switch (pf) {
 	case GF_PIXEL_YUV:
+	case GF_PIXEL_YVU:
 	case GF_PIXEL_YUV_10:
 	case GF_PIXEL_YUV422:
 	case GF_PIXEL_YUV422_10:
@@ -3971,7 +3981,6 @@ u32 get_bpp(u32 pf)
 	case GF_PIXEL_RGB_565:
 		return 2;
 	case GF_PIXEL_RGB:
-	case GF_PIXEL_RGBS:
 	case GF_PIXEL_BGR:
 		return 3;
 	case GF_PIXEL_RGBX:
@@ -3979,7 +3988,6 @@ u32 get_bpp(u32 pf)
 	case GF_PIXEL_XRGB:
 	case GF_PIXEL_XBGR:
 	case GF_PIXEL_ARGB:
-	case GF_PIXEL_RGBAS:
 	case GF_PIXEL_RGBD:
 	case GF_PIXEL_RGBDS:
 		return 4;
@@ -4055,7 +4063,6 @@ static GF_Err color_write_rgb_to_32(GF_VideoSurface *vs_dst, GF_VideoSurface *vs
 	if (isBGR) {
 		switch (vs_src->pixel_format) {
 		case GF_PIXEL_RGB:
-		case GF_PIXEL_RGBS:
 			for (i = 0; i<h; i++) {
 				dst = (u8*)vs_dst->video_buffer + i*vs_dst->pitch_y;
 				cur = src + i*vs_src->pitch_y;
@@ -4100,7 +4107,6 @@ static GF_Err color_write_rgb_to_32(GF_VideoSurface *vs_dst, GF_VideoSurface *vs
 	else {
 		switch (vs_src->pixel_format) {
 		case GF_PIXEL_RGB:
-		case GF_PIXEL_RGBS:
 			for (i = 0; i<h; i++) {
 				dst = (u8*)vs_dst->video_buffer + i*vs_dst->pitch_y;
 				cur = src + i*vs_src->pitch_y;
@@ -4312,12 +4318,16 @@ GF_Color gf_color_parse(const char *name)
 {
 	u32 i, count;
 	u32 res;
+	if (!strcmp(name, "none") )
+		return 0;
 	if ((name[0]=='$') || (name[0]=='#')) {
 		sscanf(name+1, "%x", &res);
+		if (strlen(name+1) == 8) return res;
 		return res | 0xFF000000;
 	}
 	if (!strnicmp(name, "0x", 2) ) {
 		sscanf(name+2, "%x", &res);
+		if (strlen(name+2) == 8) return res;
 		return res | 0xFF000000;
 	}
 
@@ -4328,7 +4338,7 @@ GF_Color gf_color_parse(const char *name)
 			return res;
 		}
 	}
-
+	GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("Unknown color code %s, using 0x00000000\n", name));
 	return 0;
 
 }

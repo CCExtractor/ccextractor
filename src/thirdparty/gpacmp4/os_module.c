@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2012
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -156,7 +156,7 @@ Bool gf_modules_load_library(ModuleInstance *inst)
 #endif
 	if (!inst->filterreg_func && (!inst->load_func || !inst->query_func || !inst->destroy_func) ) {
 
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] Invalid module file %s, missing %s function\n", inst->name, !inst->query_func ? "QueryInterface" :  !inst->load_func ? "LoadInterface" : "ShutdownInterface"));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] Invalid module file %s, missing %s or RegisterFilter function\n", inst->name, !inst->query_func ? "QueryInterface" :  !inst->load_func ? "LoadInterface" : "ShutdownInterface"));
 		return GF_TRUE;
 	}
 
@@ -191,6 +191,7 @@ void gf_modules_unload_library(ModuleInstance *inst)
 static Bool enum_modules(void *cbck, char *item_name, char *item_path, GF_FileEnumInfo *file_info)
 {
 	ModuleInstance *inst;
+	char *sep;
 #if CHECK_MODULE
 	QueryInterface query_func;
 	LoadInterface load_func;
@@ -207,7 +208,6 @@ static Bool enum_modules(void *cbck, char *item_name, char *item_path, GF_FileEn
 
 	GF_ModuleManager *pm = (GF_ModuleManager*)cbck;
 
-	if (strstr(item_name, "nposmozilla")) return GF_FALSE;
 	if (strncmp(item_name, "gf_", 3) && strncmp(item_name, "gm_", 3) && strncmp(item_name, "libgm_", 6)) return GF_FALSE;
 	if (gf_module_is_loaded(pm, item_name) ) return GF_FALSE;
 
@@ -273,7 +273,11 @@ static Bool enum_modules(void *cbck, char *item_name, char *item_path, GF_FileEn
 	inst->plugman = pm;
 	inst->name = gf_strdup(item_name);
 	inst->dir = gf_strdup(item_path);
-	gf_url_get_resource_path(item_path, inst->dir);
+
+	sep = strrchr(inst->dir, '/');
+	if (!sep) sep = strrchr(inst->dir, '\\');
+	if (sep) sep[1] = 0;
+
 	GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[Core] Added module %s.\n", inst->name));
 	gf_list_add(pm->plug_list, inst);
 	return GF_FALSE;

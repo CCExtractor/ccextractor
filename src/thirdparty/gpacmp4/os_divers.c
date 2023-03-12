@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2020
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -26,6 +26,8 @@
 #include <gpac/tools.h>
 #include <gpac/network.h>
 #include <gpac/config_file.h>
+#include <gpac/token.h>
+#include <gpac/token.c>
 
 #if defined(_WIN32_WCE)
 
@@ -79,8 +81,8 @@ static u64 sys_start_time_hr = 0;
 
 #include <gpac/revision.h>
 #define GPAC_FULL_VERSION       GPAC_VERSION "-rev" GPAC_GIT_REVISION
-#define GPAC_COPYRIGHT "(c) 2000-2020 Telecom Paris distributed under LGPL v2.1+ - http://gpac.io"
 
+#define GPAC_COPYRIGHT "(c) 2000-2022 Telecom Paris distributed under LGPL v2.1+ - http://gpac.io"
 
 GF_EXPORT
 const char *gf_gpac_version()
@@ -88,20 +90,48 @@ const char *gf_gpac_version()
 	return GPAC_FULL_VERSION;
 }
 
+#ifdef GPAC_MP4BOX_MINI
+#define MINI_BUILD_DISCLAIMER "\n\tMINI build (encoders, decoders, audio and video output disabled)"
+#endif
+
 GF_EXPORT
 const char *gf_gpac_copyright()
 {
-	return GPAC_COPYRIGHT;
+	return GPAC_COPYRIGHT
+#ifdef GPAC_MP4BOX_MINI
+		MINI_BUILD_DISCLAIMER
+#endif
+		;
 }
 GF_EXPORT
 const char *gf_gpac_copyright_cite()
 {
-	return GPAC_COPYRIGHT"\n\n" \
-			"Please cite our work in your research:\n"\
-		"\tGPAC Filters: https://doi.org/10.1145/3339825.3394929\n"\
-		"\tGPAC: https://doi.org/10.1145/1291233.1291452\n"\
+	return GPAC_COPYRIGHT
+#ifdef GPAC_MP4BOX_MINI
+		MINI_BUILD_DISCLAIMER
+#endif
+		"\n\n" \
+			"Please cite our work in your research:\n"
+		"\tGPAC Filters: https://doi.org/10.1145/3339825.3394929\n"
+		"\tGPAC: https://doi.org/10.1145/1291233.1291452\n"
 		;
 
+}
+
+GF_EXPORT
+u32 gf_gpac_abi_major()
+{
+	return GPAC_VERSION_MAJOR;
+}
+GF_EXPORT
+u32 gf_gpac_abi_minor()
+{
+	return GPAC_VERSION_MINOR;
+}
+GF_EXPORT
+u32 gf_gpac_abi_micro()
+{
+	return GPAC_VERSION_MICRO;
 }
 
 
@@ -125,12 +155,13 @@ u64 gf_sys_clock_high_res()
 
 #endif
 
-static Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown);
+Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown);
 
 
 GF_EXPORT
 void gf_sleep(u32 ms)
 {
+	gf_rmt_begin(sleep, GF_RMT_AGGREGATE);
 
 #ifdef WIN32
 	Sleep(ms);
@@ -168,6 +199,7 @@ void gf_sleep(u32 ms)
 	} while ( sel_err && (errno == EINTR) );
 #endif
 
+	gf_rmt_end();
 
 }
 
@@ -454,12 +486,18 @@ Bool gf_prompt_has_input()
 
 char gf_prompt_get_char()
 {
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return 0;
+#endif
 	return getchar();
 }
 
 GF_EXPORT
 void gf_prompt_set_echo_off(Bool echo_off)
 {
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return;
+#endif
 	DWORD flags;
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
 	BOOL ret = GetConsoleMode(hStdin, &flags);
@@ -519,10 +557,14 @@ static void close_keyboard(Bool new_line)
 GF_EXPORT
 void gf_prompt_set_echo_off(Bool echo_off)
 {
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return;
+#endif
+
 	init_keyboard();
 	if (echo_off) t_orig.c_lflag &= ~ECHO;
 	else t_orig.c_lflag |= ECHO;
-	close_keyboard(0);
+	close_keyboard(GF_FALSE);
 }
 
 GF_EXPORT
@@ -534,10 +576,10 @@ Bool gf_prompt_has_input()
 
 	//we are not foreground nor piped (used for IDEs), can't read stdin
 	if ((fg!=-1) && (fg != getpgrp())) {
-		return 0;
+		return GF_FALSE;
 	}
 	init_keyboard();
-	if (ch_peek != -1) return 1;
+	if (ch_peek != -1) return GF_TRUE;
 	t_new.c_cc[VMIN]=0;
 	tcsetattr(0, TCSANOW, &t_new);
 	nread = (s32) read(0, &ch, 1);
@@ -545,25 +587,28 @@ Bool gf_prompt_has_input()
 	tcsetattr(0, TCSANOW, &t_new);
 	if(nread == 1) {
 		ch_peek = ch;
-		return 1;
+		return GF_TRUE;
 	}
-	close_keyboard(0);
-	return 0;
+	close_keyboard(GF_FALSE);
+	return GF_FALSE;
 }
 
 GF_EXPORT
 char gf_prompt_get_char()
 {
 	char ch;
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return 0;
+#endif
 	if (ch_peek != -1) {
 		ch = ch_peek;
 		ch_peek = -1;
-		close_keyboard(1);
+		close_keyboard(GF_TRUE);
 		return ch;
 	}
 	if (0==read(0,&ch,1))
 		ch = 0;
-	close_keyboard(1);
+	close_keyboard(GF_TRUE);
 	return ch;
 }
 
@@ -863,6 +908,8 @@ Bool gf_sys_has_filter_global_meta_args()
 }
 
 static u32 gpac_quiet = 0;
+char gf_prog_lf = '\r';
+extern Bool gpac_use_poll;
 
 GF_EXPORT
 GF_Err gf_sys_set_args(s32 argc, const char **argv)
@@ -872,26 +919,37 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 		Bool gf_opts_load_option(const char *arg_name, const char *val, Bool *consumed_next, GF_Err *e);
 		void gf_cfg_load_restrict();
 
+		// gpac_use_poll = GF_TRUE;
+
 		for (i=1; i<argc; i++) {
 			Bool consumed;
 			GF_Err e;
-			Bool use_sep=GF_FALSE;
+			Bool use_sep = GF_FALSE;
+			Bool bool_value = GF_TRUE;
+			char szArg[1024];
+			char *arg_val;
 			const char *arg = argv[i];
-			char *arg_val = strchr(arg, '=');
+			if (!arg) continue;
+
+			arg_val = strchr(arg, '=');
 			if (arg_val) {
-				arg_val[0]=0;
+				u32 len = (u32) (arg_val-arg);
+				if (len>1023) len = 1023;
+				strncpy(szArg, arg, len);
+				szArg[len]=0;
 				arg_val++;
-				use_sep=GF_TRUE;
+				arg = szArg;
+				use_sep = GF_TRUE;
 			} else if (i+1<argc) {
 				arg_val = (char *) argv[i+1];
 			}
 			if ((arg[0] != '-') || ! arg[1]) {
-				if (use_sep) {
-					arg_val--;
-					arg_val[0]='=';
-				}
 				continue;
 			}
+			if (arg_val && (!strcmp(arg_val, "no") || !strcmp(arg_val, "false") || !strcmp(arg_val, "°0") ) )
+				bool_value = GF_FALSE;
+
+
 			if (arg[1]=='-') {
 				gpac_has_global_filter_args = GF_TRUE;
 			} else if (arg[1]=='+') {
@@ -904,7 +962,7 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 			} else if (!strcmp(arg, "-logs") ) {
 				e = gf_log_set_tools_levels(arg_val, GF_FALSE);
 				if (e) return e;
-				
+
 				if (!use_sep) i += 1;
 			} else if (!strcmp(arg, "-log-clock") || !strcmp(arg, "-lc")) {
 #ifndef GPAC_DISABLE_LOG
@@ -918,27 +976,35 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 				gpac_quiet = 2;
 			} else if (!strcmp(arg, "-noprog")) {
 				if (!gpac_quiet) gpac_quiet = 1;
+			} else if (!strcmp(arg, "-proglf")) {
+				gf_prog_lf = '\n';
 			} else if (!stricmp(arg, "-for-test")) {
-				gpac_test_mode = GF_TRUE;
+				gpac_test_mode = bool_value;
 			} else if (!stricmp(arg, "-old-arch")) {
-				gpac_old_arch = GF_TRUE;
+				gpac_old_arch = bool_value;
 			} else if (!stricmp(arg, "-no-save")) {
-				gpac_discard_config = GF_TRUE;
+				gpac_discard_config = bool_value;
+			} else if (!stricmp(arg, "-no-poll")) {
+				//  gpac_use_poll = bool_value;
 			} else if (!stricmp(arg, "-ntp-shift")) {
 				s32 shift = arg_val ? atoi(arg_val) : 0;
 				gf_net_set_ntp_shift(shift);
 				if (!use_sep) i += 1;
 			} else if (gf_opts_load_option(arg, arg_val, &consumed, &e)) {
 				if (e) return e;
-				
+
 				if (consumed && !use_sep)
 					i += 1;
 			}
-			if (use_sep) {
-				arg_val--;
-				arg_val[0]='=';
-			}
 		}
+
+#ifdef GPAC_CONFIG_DARWIN
+		//if running in xcode disable color logs (not supported by output console)
+		if (getenv("__XCODE_BUILT_PRODUCTS_DIR_PATHS") != NULL) {
+			gf_log_set_tools_levels("ncl", GF_FALSE);
+		}
+#endif
+
 
 #ifndef GPAC_DISABLE_LOG
 		if (gpac_log_file_name) {
@@ -954,7 +1020,6 @@ GF_Err gf_sys_set_args(s32 argc, const char **argv)
 		}
 		//now that we have parsed all options, load restrict
 		gf_cfg_load_restrict();
-
 	}
 	//for OSX we allow overwrite of argc/argv due to different behavior between console-mode apps and GUI
 #if !defined(__DARWIN__) && !defined(__APPLE__)
@@ -1009,6 +1074,32 @@ const char *gf_sys_get_arg(u32 arg)
 	if (arg>=gpac_argc) return NULL;
 	return gpac_argv[arg];
 }
+GF_EXPORT
+const char *gf_sys_find_global_arg(const char *arg)
+{
+	u32 i;
+	if (!gpac_argc || !gpac_argv) return NULL;
+	for (i=0; i<gpac_argc; i++) {
+		const char *sep;
+		u32 len;
+		const char *an_arg = gpac_argv[i];
+		if (an_arg[0]!='-') continue;
+		if ((an_arg[1]!='-') && (an_arg[1]!='+')) continue;
+		an_arg += 2;
+		sep = strchr(an_arg, '@');
+		if (sep) an_arg = sep+1;
+		sep = strchr(an_arg, '=');
+		if (sep) len = (u32) (sep - an_arg);
+		else len = (u32) strlen(an_arg);
+		if (len != (u32) strlen(arg)) continue;
+
+		if (strncmp(an_arg, arg, len)) continue;
+
+		if (!sep) return "";
+		return sep;
+	}
+	return NULL;
+}
 
 
 #ifndef GPAC_DISABLE_REMOTERY
@@ -1023,6 +1114,8 @@ const char *gf_log_level_name(GF_LOG_Level log_level);
 
 void gpac_rmt_log_callback(void *cbck, GF_LOG_Level level, GF_LOG_Tool tool, const char *fmt, va_list vlist)
 {
+#ifndef GPAC_DISABLE_LOG
+
 #define RMT_LOG_SIZE	5000
 	char szMsg[RMT_LOG_SIZE];
 	u32 len;
@@ -1035,6 +1128,9 @@ void gpac_rmt_log_callback(void *cbck, GF_LOG_Level level, GF_LOG_Tool tool, con
 	rmt_LogText(szMsg);
 
 #undef RMT_LOG_SIZE
+
+#endif
+
 }
 
 static void *rmt_udta = NULL;
@@ -1047,7 +1143,7 @@ static void gpac_rmt_input_handler(const char* text, void* context)
 }
 #endif
 
-static Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown)
+Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown)
 {
 #ifndef GPAC_DISABLE_REMOTERY
 	if (start && !remotery_handle) {
@@ -1066,7 +1162,7 @@ static Bool gf_sys_enable_remotery(Bool start, Bool is_shutdown)
 			GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[core] unable to initialize Remotery profiler: error %d\n", rme));
 			return GF_FALSE;
 		}
-		//openGL binding is done upon loading of the driver, otherwise crashes on windows
+		//OpenGL binding is done upon loading of the driver, otherwise crashes on windows
 
 		if (gf_opts_get_bool("core", "rmt-log")) {
 			gpac_prev_default_logs = gf_log_set_callback(NULL, gpac_rmt_log_callback);
@@ -1143,6 +1239,80 @@ Bool gf_sys_profiler_sampling_enabled()
 	return GF_FALSE;
 }
 
+#include <gpac/list.h>
+GF_List *all_blobs = NULL;
+
+GF_EXPORT
+GF_Err gf_blob_get(const char *blob_url, u8 **out_data, u32 *out_size, u32 *out_flags)
+{
+	GF_Blob *blob = NULL;
+	if (strncmp(blob_url, "gmem://", 7)) return GF_BAD_PARAM;
+	if (sscanf(blob_url, "gmem://%p", &blob) != 1) return GF_BAD_PARAM;
+	if (!blob)
+		return GF_BAD_PARAM;
+	if (gf_list_find(all_blobs, blob)<0)
+		return GF_URL_REMOVED;
+	if (blob->data && blob->mx)
+		gf_mx_p(blob->mx);
+	if (out_data) *out_data = blob->data;
+	if (out_size) *out_size = blob->size;
+	if (out_flags) *out_flags = blob->flags;
+	return GF_OK;
+}
+
+GF_EXPORT
+GF_Err gf_blob_release(const char *blob_url)
+{
+    GF_Blob *blob = NULL;
+    if (strncmp(blob_url, "gmem://", 7)) return GF_BAD_PARAM;
+    if (sscanf(blob_url, "gmem://%p", &blob) != 1) return GF_BAD_PARAM;
+    if (!blob)
+		return GF_BAD_PARAM;
+	if (gf_list_find(all_blobs, blob)<0)
+		return GF_URL_REMOVED;
+    if (blob->data && blob->mx)
+        gf_mx_v(blob->mx);
+    return GF_OK;
+}
+
+GF_EXPORT
+char *gf_blob_register(GF_Blob *blob)
+{
+	char szPath[200];
+	if (!blob) return NULL;
+	sprintf(szPath, "gmem://%p", blob);
+	if (!all_blobs) {
+		all_blobs = gf_list_new();
+	} else {
+		gf_list_del_item(all_blobs, blob);
+	}
+	gf_list_add(all_blobs, blob);
+
+	return gf_strdup(szPath);
+}
+
+GF_EXPORT
+void gf_blob_unregister(GF_Blob *blob)
+{
+	if (!blob) return;
+	if (all_blobs) gf_list_del_item(all_blobs, blob);
+}
+
+//unused
+#if 0
+GF_Blob *gf_blob_from_url(const char *blob_url)
+{
+	GF_Blob *blob = NULL;
+	if (strncmp(blob_url, "gmem://", 7)) return NULL;
+	if (sscanf(blob_url, "gmem://%p", &blob) != 1) return NULL;
+	if (!blob)
+		return NULL;
+	if (gf_list_find(all_blobs, blob)<0)
+		return NULL;
+	return blob;
+}
+#endif
+
 void gf_init_global_config(const char *profile);
 void gf_uninit_global_config(Bool discard_config);
 
@@ -1184,6 +1354,47 @@ const char *gf_sys_localized(const char *sec_name, const char *key_name, const c
 	const char *opt = gf_cfg_get_key(lcfg, sec_name, key_name);
 	if (opt) return opt;
 	return def_val;
+}
+
+static void gf_sys_refresh_cache()
+{
+	u32 i, count;
+	count = gf_opts_get_section_count();
+	for (i=0; i<count; i++) {
+		const char *opt;
+		u32 sec, frac, exp;
+		Bool force_delete;
+		const char *file;
+		const char *name = gf_opts_get_section_name(i);
+		if (strncmp(name, "@cache=", 7)) continue;
+
+		file = gf_opts_get_key(name, "cacheFile");
+		opt = gf_opts_get_key(name, "expireAfterNTP");
+		if (!opt) {
+			if (file) gf_file_delete((char*) file);
+			gf_opts_del_section(name);
+			i--;
+			count--;
+			continue;
+		}
+
+		force_delete = 0;
+		if (file && gf_file_exists(file)) {
+			force_delete = 1;
+		}
+		sscanf(opt, "%u", &exp);
+		gf_net_get_ntp(&sec, &frac);
+		if (exp && (exp<sec)) force_delete=1;
+
+		if (force_delete) {
+			if (file) gf_file_delete(file);
+
+			gf_opts_del_section(name);
+			i--;
+			count--;
+			continue;
+		}
+	}
 }
 
 GF_EXPORT
@@ -1290,9 +1501,10 @@ GF_Err gf_sys_init(GF_MemTrackerType mem_tracker_type, const char *profile)
 		logs_mx = gf_mx_new("Logs");
 
 		gf_rand_init(GF_FALSE);
-		
+
 		gf_init_global_config(profile);
 
+		gf_sys_refresh_cache();
 
 	}
 	sys_init += 1;
@@ -1335,7 +1547,12 @@ void gf_sys_close()
 #endif
 
 		gf_sys_enable_remotery(GF_FALSE, GF_TRUE);
-		
+
+#ifdef GPAC_HAS_QJS
+		void gf_js_delete_runtime();
+		gf_js_delete_runtime();
+#endif
+
 		gf_uninit_global_config(gpac_discard_config);
 
 #ifndef GPAC_DISABLE_LOG
@@ -1357,6 +1574,14 @@ void gf_sys_close()
 			gf_free(gpac_argv_state);
 			gpac_argv_state = NULL;
 		}
+		gpac_argc = 0;
+		gpac_argv = NULL;
+		memory_at_gpac_startup = 0;
+		gpac_test_mode = gpac_old_arch = gpac_discard_config = GF_FALSE;
+
+		gf_list_del(all_blobs);
+		all_blobs = NULL;
+
 	}
 }
 
@@ -1713,8 +1938,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		count = THREAD_BASIC_INFO_COUNT;
 		error = thread_info(thread_table[i], THREAD_BASIC_INFO, (thread_info_t)thi, &count);
 		if (error != KERN_SUCCESS) {
-			mach_error("[RTI] Unexpected thread_info() call return", error);
-			GF_LOG(GF_LOG_WARNING, GF_LOG_CORE, ("[RTI] Unexpected thread info for PID %d\n", the_rti.pid));
+			GF_LOG(GF_LOG_DEBUG, GF_LOG_CORE, ("[RTI] Unexpected thread_info error for process %d: %s\n", the_rti.pid, mach_error_string(error) ));
 			break;
 		}
 		if ((thi->flags & TH_FLAGS_IDLE) == 0) {
@@ -1757,8 +1981,103 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	return 1;
 }
 
-//linux
+//ios
+#elif defined(GPAC_CONFIG_IOS)
+
+#import <mach/mach.h>
+#import <assert.h>
+
+Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
+{
+	u64 u_k_time = 0;
+    kern_return_t kr;
+    task_info_data_t tinfo;
+    mach_msg_type_number_t task_info_count;
+    task_basic_info_t basic_info;
+    thread_array_t thread_list;
+    mach_msg_type_number_t thread_count;
+    thread_info_data_t thinfo;
+    mach_msg_type_number_t thread_info_count;
+    thread_basic_info_t basic_info_th;
+    u32 j, tot_cpu = 0, nb_threads = 0;
+
+	u32 entry_time = gf_sys_clock();
+	if (last_update_time && (entry_time - last_update_time < refresh_time_ms)) {
+		memcpy(rti, &the_rti, sizeof(GF_SystemRTInfo));
+		return GF_FALSE;
+	}
+
+    task_info_count = TASK_INFO_MAX;
+    kr = task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)tinfo, &task_info_count);
+    if (kr != KERN_SUCCESS) {
+        return GF_FALSE;
+    }
+
+    basic_info = (task_basic_info_t)tinfo;
+    the_rti.gpac_memory = the_rti.process_memory = basic_info->resident_size;
+
+    // get threads in the task
+    kr = task_threads(mach_task_self(), &thread_list, &thread_count);
+    if (kr != KERN_SUCCESS) {
+        return GF_FALSE;
+    }
+    if (thread_count > 0)
+        nb_threads = (u32) thread_count;
+
+    for (j = 0; j < nb_threads; j++)   {
+        thread_info_count = THREAD_INFO_MAX;
+        kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
+                         (thread_info_t)thinfo, &thread_info_count);
+        if (kr != KERN_SUCCESS) {
+			vm_deallocate(mach_task_self(), (vm_offset_t)thread_list, thread_count * sizeof(thread_t));
+            return GF_FALSE;
+        }
+
+        basic_info_th = (thread_basic_info_t)thinfo;
+
+        if (!(basic_info_th->flags & TH_FLAGS_IDLE)) {
+            u64 tot_sec = basic_info_th->user_time.seconds + basic_info_th->system_time.seconds;
+            tot_sec *= 1000000;
+            tot_sec += basic_info_th->user_time.microseconds + basic_info_th->system_time.microseconds;
+            u_k_time += tot_sec;
+			tot_cpu += basic_info_th->cpu_usage;
+        }
+
+    } // for each thread
+
+    the_rti.process_cpu_usage = (tot_cpu * 100) / TH_USAGE_SCALE;
+	the_rti.total_cpu_usage = the_rti.process_cpu_usage;
+
+    kr = vm_deallocate(mach_task_self(), (vm_offset_t)thread_list, thread_count * sizeof(thread_t));
+    assert(kr == KERN_SUCCESS);
+
+
+	if (last_update_time) {
+		the_rti.sampling_period_duration = (entry_time - last_update_time);
+		the_rti.process_cpu_time_diff = 0;
+		/*move to ms*/
+		the_rti.total_cpu_time_diff = (u32) (u_k_time - last_cpu_u_k_time) / 1000;
+
+		/*we're not that accurate....*/
+		if (the_rti.total_cpu_time_diff > the_rti.sampling_period_duration)
+			the_rti.sampling_period_duration = the_rti.total_cpu_time_diff;
+	} else {
+		mem_at_startup = the_rti.physical_memory_avail;
+	}
+
+#ifdef GPAC_MEMORY_TRACKING
+	the_rti.gpac_memory = gpac_allocated_memory;
+#endif
+	last_cpu_u_k_time = u_k_time;
+	last_update_time = entry_time;
+	memcpy(rti, &the_rti, sizeof(GF_SystemRTInfo));
+
+	last_update_time = entry_time;
+	return GF_TRUE;
+}
+
 #else
+
 
 Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 {
@@ -1775,7 +2094,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	entry_time = gf_sys_clock();
 	if (last_update_time && (entry_time - last_update_time < refresh_time_ms)) {
 		memcpy(rti, &the_rti, sizeof(GF_SystemRTInfo));
-		return 0;
+		return GF_FALSE;
 	}
 	u_k_time = idle_time = 0;
 	f = gf_fopen("/proc/stat", "r");
@@ -1793,7 +2112,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	the_rti.process_memory = 0;
 
 	/*FIXME? under LinuxThreads this will only fetch stats for the calling thread, we would have to enumerate /proc to get
-	the complete CPU usage of all therads of the process...*/
+	the complete CPU usage of all threads of the process...*/
 #if 0
 	sprintf(szProc, "/proc/%d/stat", the_rti.pid);
 	f = gf_fopen(szProc, "r");
@@ -1855,10 +2174,10 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 		char line[2048];
 		while (gf_fgets(line, 1024, f) != NULL) {
 			if (!strnicmp(line, "MemTotal:", 9)) {
-				sscanf(line, "MemTotal: "LLU" kB",  &the_rti.physical_memory);
+				sscanf(line, "MemTotal: " LLU " kB",  &the_rti.physical_memory);
 				the_rti.physical_memory *= 1024;
 			} else if (!strnicmp(line, "MemFree:", 8)) {
-				sscanf(line, "MemFree: "LLU" kB",  &the_rti.physical_memory_avail);
+				sscanf(line, "MemFree: " LLU " kB",  &the_rti.physical_memory_avail);
 				the_rti.physical_memory_avail *= 1024;
 				break;
 			}
@@ -1919,7 +2238,7 @@ Bool gf_sys_get_rti_os(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 	last_cpu_u_k_time = u_k_time;
 	last_update_time = entry_time;
 	memcpy(rti, &the_rti, sizeof(GF_SystemRTInfo));
-	return 1;
+	return GF_TRUE;
 }
 
 #endif
@@ -1936,8 +2255,8 @@ Bool gf_sys_get_rti(u32 refresh_time_ms, GF_SystemRTInfo *rti, u32 flags)
 }
 
 static char szCacheDir[GF_MAX_PATH];
-GF_EXPORT
-const char * gf_get_default_cache_directory()
+
+const char * gf_get_default_cache_directory_ex(Bool do_create)
 {
 	const char *cache_dir;
 	char root_tmp[GF_MAX_PATH];
@@ -1951,7 +2270,7 @@ const char * gf_get_default_cache_directory()
 #elif defined(WIN32)
 	GetTempPath(GF_MAX_PATH, szCacheDir);
 #elif defined(GPAC_CONFIG_ANDROID)
-	strcpy(szCacheDir, "/data/data/com.gpac.Osmo4/cache");
+	strcpy(szCacheDir, "/data/data/io.gpac.gpac/cache");
 #else
 	strcpy(szCacheDir, "/tmp");
 #endif
@@ -1966,11 +2285,17 @@ const char * gf_get_default_cache_directory()
 
 	strcat(szCacheDir, "gpac_cache");
 
-	if ( !gf_dir_exists(szCacheDir) && gf_mkdir(szCacheDir)!=GF_OK ) {
+	if (do_create && !gf_dir_exists(szCacheDir) && gf_mkdir(szCacheDir)!=GF_OK ) {
 		strcpy(szCacheDir, root_tmp);
 		return szCacheDir;
 	}
 	return szCacheDir;
+}
+
+GF_EXPORT
+const char * gf_get_default_cache_directory()
+{
+	return gf_get_default_cache_directory_ex(GF_TRUE);
 }
 
 
@@ -2187,24 +2512,6 @@ GF_Err gf_global_resource_unlock(GF_GlobalLock * lock) {
 #endif //global lock uni-used
 
 
-#ifdef GPAC_CONFIG_ANDROID
-
-fm_callback_func fm_cbk = NULL;
-static void *fm_cbk_obj = NULL;
-
-void gf_fm_request_set_callback(void *cbk_obj, fm_callback_func cbk_func) {
-	fm_cbk = cbk_func;
-	fm_cbk_obj = cbk_obj;
-}
-
-void gf_fm_request_call(u32 type, u32 param, int *value) {
-	if (fm_cbk)
-		fm_cbk(fm_cbk_obj, type, param, value);
-}
-
-#endif //GPAC_CONFIG_ANDROID
-
-
 static u32 ntp_shift = GF_NTP_SEC_1900_TO_1970;
 
 GF_EXPORT
@@ -2288,6 +2595,39 @@ s32 gf_net_get_ntp_diff_ms(u64 ntp)
 	return (s32) (local - remote);
 }
 
+#if 0
+/*!
+
+Adds or remove a given amount of microseconds to an NTP timestamp
+\param ntp NTP timestamp
+\param usec microseconds to add/remove
+\return adjusted NTP timestamp
+ */
+GF_EXPORT
+u64 gf_net_add_usec(u64 ntp, s32 usec)
+{
+	u64 sec, frac;
+	s64 usec_ntp;
+
+	sec = (ntp >> 32);
+	frac = (ntp & 0xFFFFFFFFULL);
+	usec_ntp = (s64) ( frac*1000000 / 0xFFFFFFFFULL );
+	usec_ntp += usec;
+	while (usec_ntp > 1000000) {
+		usec_ntp -= 1000000;
+		sec += 1;
+	}
+	while (usec_ntp < 0) {
+		usec_ntp += 1000000;
+		sec -= 1;
+	}
+	ntp = ( usec_ntp * 0xFFFFFFFFULL / 1000000 ) & 0xFFFFFFFFULL;
+	ntp |= (sec<<32);
+	return ntp;
+}
+#endif
+
+
 GF_EXPORT
 u64 gf_net_get_ntp_ms()
 {
@@ -2330,9 +2670,21 @@ s32 gf_net_get_timezone()
 	t_timezone = (t_gmt.tm_hour - t_local.tm_hour) * 3600 + (t_gmt.tm_min - t_local.tm_min) * 60;
 	return t_timezone;
 #endif
-
 }
 
+GF_EXPORT
+Bool gf_net_time_is_dst()
+{
+#if defined(_WIN32_WCE)
+	return GF_FALSE;
+#else
+	struct tm t_local;
+	time_t t_time;
+	t_time = time(NULL);
+	t_local = *localtime(&t_time);
+	return t_local.tm_isdst ? GF_TRUE : GF_FALSE;
+#endif
+}
 //no mkgmtime on mingw..., use our own
 #if (defined(WIN32) && defined(__GNUC__))
 
@@ -2373,13 +2725,13 @@ static time_t gf_mktime_utc(struct tm *tm)
 }
 
 #elif defined(GPAC_CONFIG_ANDROID)
-#include <time64.h>
 #if defined(__LP64__)
 static time_t gf_mktime_utc(struct tm *tm)
 {
-	return timegm64(tm);
+	return timegm(tm);
 }
 #else
+#include <time64.h>
 static time_t gf_mktime_utc(struct tm *tm)
 {
 	static const time_t kTimeMax = ~(1L << (sizeof(time_t) * CHAR_BIT - 1));
@@ -2423,12 +2775,12 @@ u64 gf_net_parse_date(const char *val)
 	oh = om = 0;
 	secs = 0;
 
-	if (sscanf(val, "%d-%d-%dT%d:%d:%gZ", &year, &month, &day, &h, &m, &secs) == 6) {
-	}
-	else if (sscanf(val, "%d-%d-%dT%d:%d:%g-%d:%d", &year, &month, &day, &h, &m, &secs, &oh, &om) == 8) {
+	if (sscanf(val, "%d-%d-%dT%d:%d:%g-%d:%d", &year, &month, &day, &h, &m, &secs, &oh, &om) == 8) {
 		neg_time_zone = GF_TRUE;
 	}
 	else if (sscanf(val, "%d-%d-%dT%d:%d:%g+%d:%d", &year, &month, &day, &h, &m, &secs, &oh, &om) == 8) {
+	}
+	else if (sscanf(val, "%d-%d-%dT%d:%d:%gZ", &year, &month, &day, &h, &m, &secs) == 6) {
 	}
 	else if (sscanf(val, "%3s, %d %3s %d %d:%d:%d", szDay, &day, szMonth, &year, &h, &m, &s)==7) {
 		secs  = (Float) s;
@@ -2439,7 +2791,12 @@ u64 gf_net_parse_date(const char *val)
 	else if (sscanf(val, "%3s %3s %d %02d:%02d:%02d %d", szDay, szMonth, &day, &year, &h, &m, &s)==7) {
 		secs  = (Float) s;
 	}
-	else {
+	else if (sscanf(val, LLU, &current_time) == 1 && current_time > 1000000000 && current_time < GF_INT_MAX) {
+		return current_time * 1000; // guessed raw duration since UTC0 in seconds
+	}
+	else if (sscanf(val, LLU, &current_time) == 1 && current_time > 1000000000000ULL && current_time < GF_INT_MAX * 1000ULL) {
+		return current_time; // guessed duration since UTC0 in milliseconds
+	} else {
 		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] Cannot parse date string %s\n", val));
 		return 0;
 	}
@@ -2497,7 +2854,7 @@ u64 gf_net_parse_date(const char *val)
 		//use 1 ms
 		return 1;
 	}
-	if (current_time == 0) {
+	if (current_time == 0 && secs == 0.0) {
 		//use 1 ms
 		return 1;
 	}
@@ -2506,7 +2863,7 @@ u64 gf_net_parse_date(const char *val)
 
 	if (om || oh) {
 		s32 diff = (60*oh + om)*60;
-		if (neg_time_zone) diff = -diff;
+		if (!neg_time_zone) diff = -diff;
 		current_time = current_time + diff;
 	}
 	current_time *= 1000;
@@ -2639,13 +2996,13 @@ GF_Err gf_file_load_data_filep(FILE *file, u8 **out_data, u32 *out_size)
 
 	fsize = gf_fsize(file);
 	if (fsize>0xFFFFFFFFUL) {
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] file %s is too big to load in memory ("LLU" bytes)\n", fsize));
+		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ( "[Core] file %s is too big to load in memory (" LLU " bytes)\n", fsize) );
 		return GF_OUT_OF_MEM;
 	}
 
 	*out_size = (u32) fsize;
 	if (fsize == 0) {
-		GF_LOG(GF_LOG_ERROR, GF_LOG_CORE, ("[Core] file is empty\n"));
+		GF_LOG(GF_LOG_INFO, GF_LOG_CORE, ("[Core] file is empty\n"));
 		return GF_OK;
 	}
 
@@ -2698,3 +3055,154 @@ u32 gf_sys_get_process_id()
 }
 #endif
 
+#ifndef WIN32
+#include <termios.h>
+GF_EXPORT
+int gf_getch()
+{
+	struct termios old;
+	struct termios new;
+	int rc;
+
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return 0;
+#endif
+
+	if (tcgetattr(0, &old) == -1) {
+		return -1;
+	}
+	new = old;
+	new.c_lflag &= ~(ICANON | ECHO | ISIG);
+	new.c_cc[VMIN] = 1;
+	new.c_cc[VTIME] = 0;
+	if (tcsetattr(0, TCSANOW, &new) == -1) {
+		return -1;
+	}
+	rc = getchar();
+	(void) tcsetattr(0, TCSANOW, &old);
+	return rc;
+}
+#else
+GF_EXPORT
+int gf_getch()
+{
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return 0;
+#endif
+	return getchar();
+}
+#endif
+
+GF_EXPORT
+Bool gf_read_line_input(char * line, int maxSize, Bool showContent)
+{
+	char read;
+	int i = 0;
+#ifdef GPAC_ENABLE_COVERAGE
+	if (gf_sys_is_cov_mode()) return GF_FALSE;
+#endif
+
+	if (fflush( stderr ))
+		perror("Failed to flush buffer %s");
+	do {
+		line[i] = '\0';
+		if (i >= maxSize - 1)
+			return GF_FALSE;
+		read = gf_getch();
+		if (read == 8 || read == 127) {
+			if (i > 0) {
+				fprintf(stderr, "\b \b");
+				i--;
+			}
+		} else if (read >= 32) {
+			fputc(showContent ? read : '*', stderr);
+			line[i++] = read;
+		}
+		fflush(stderr);
+	} while (read != '\n');
+	if (!read)
+		return GF_FALSE;
+	return GF_TRUE;
+}
+
+
+GF_EXPORT
+GF_Err gf_creds_check_password(const char *user, char *password)
+{
+	u32 i, len, v;
+	u8 passbuf[150];
+	u8 hash[GF_SHA256_DIGEST_SIZE], ohash[GF_SHA256_DIGEST_SIZE];
+	const char *cred_file = gf_opts_get_key("core", "users");
+	if (!cred_file) return GF_NOT_FOUND;
+	GF_Config *creds = gf_cfg_new(NULL, cred_file);
+	if (!creds) return GF_NOT_FOUND;
+	len = (u32) strlen(password);
+	const char *pass_hex = gf_cfg_get_key(creds, user, "password");
+	const char *salt_hex = gf_cfg_get_key(creds, user, "salt");
+	if (!salt_hex || !pass_hex || (strlen(salt_hex) != 64) || (strlen(pass_hex) != 64) || (len>=100)) {
+		gf_cfg_del(creds);
+		return GF_NOT_FOUND;
+	}
+
+	u8 salt[GF_SHA256_DIGEST_SIZE];
+	for (i=0; i<GF_SHA256_DIGEST_SIZE; i++) {
+		sscanf(salt_hex+2*i, "%02x", &v);
+		salt[i] = v;
+	}
+	for (i=0; i<GF_SHA256_DIGEST_SIZE; i++) {
+		sscanf(pass_hex+2*i, "%02x", &v);
+		ohash[i] = v;
+	}
+
+	memcpy(passbuf, password, len);
+	passbuf[len]='@';
+	memcpy(passbuf+len+1, salt, GF_SHA256_DIGEST_SIZE);
+	len += GF_SHA256_DIGEST_SIZE+1;
+	// gf_sha256_csum(passbuf, len, hash);
+	len=1;
+	for (i=0; i<GF_SHA256_DIGEST_SIZE; i++) {
+		if (hash[i] != ohash[i]) len=0;
+	}
+
+	if (len) {
+		sprintf((char *)passbuf, LLU, gf_net_get_utc());
+		gf_cfg_set_key(creds, user, "last_auth", (char *)passbuf);
+		gf_cfg_save(creds);
+	}
+	gf_cfg_del(creds);
+
+	if (!len) return GF_AUTHENTICATION_FAILURE;
+	return GF_OK;
+}
+
+#include <gpac/token.h>
+
+GF_EXPORT
+Bool gf_creds_check_membership(const char *username, const char *users, const char *groups)
+{
+	if (!username) return GF_FALSE;
+	//users specified and username is listed
+	if (users && gf_token_find_word(users, username, ",")) return GF_TRUE;
+
+	if (!groups)
+		return users ? GF_TRUE : GF_FALSE;
+
+	//check all defined groups
+	const char *cred_file = gf_opts_get_key("core", "users");
+	if (!cred_file) return GF_FALSE;
+	GF_Config *creds = gf_cfg_new(NULL, cred_file);
+	if (!creds) return GF_FALSE;
+	u32 i, nb_groups = gf_cfg_get_key_count(creds, "groups");
+	for (i=0; i<nb_groups; i++) {
+		const char *g = gf_cfg_get_key_name(creds, "groups", i);
+		if (!gf_token_find_word(groups, g, ",")) continue;
+		//group is present in groups being checked, check user
+		const char *members = gf_cfg_get_key(creds, "groups", g);
+		if (gf_token_find_word(members, username, ",")) {
+			gf_cfg_del(creds);
+			return GF_TRUE;
+		}
+	}
+	gf_cfg_del(creds);
+	return GF_FALSE;
+}
