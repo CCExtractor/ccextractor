@@ -386,13 +386,13 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
     <OutDir>Debug-Full\</OutDir>
@@ -400,14 +400,14 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>
       $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
@@ -423,7 +423,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>
       $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
@@ -431,7 +431,7 @@
     <OutDir>Release\</OutDir>
     <IntDir>Release\</IntDir>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
   </PropertyGroup>
@@ -439,7 +439,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwin</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

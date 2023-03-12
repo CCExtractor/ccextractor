@@ -3,9 +3,8 @@
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
 #include <tesseract/capi.h>
-#include "ccx_common_constants.h"
 #include <leptonica/allheaders.h>
-#include <leptonica/pix.h>
+#include "ccx_common_constants.h"
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
@@ -196,15 +195,15 @@ fail:
  * The return value **has** to be freed:
  *
  * ```c
- * BOX *box = ignore_alpha_at_edge(...);
+ * struct Box *box = ignore_alpha_at_edge(...);
  * boxDestroy(&box);
  * ```
  */
-BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, PIX *in, PIX **out)
+struct Box *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, PIX *in, PIX **out)
 {
 	int i, j, index, start_y = 0, end_y = 0;
 	int find_end_x = CCX_FALSE;
-	BOX *cropWindow;
+	struct Box *cropWindow;
 	for (j = 1; j < w - 1; j++)
 	{
 		for (i = 0; i < h; i++)
@@ -299,7 +298,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 			ppixel++;
 		}
 	}
-	BOX *temp = ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+	struct Box *temp = ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
 	boxDestroy(&temp);
 
 	// For the unquantized bitmap
@@ -317,7 +316,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		}
 	}
 
-	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
+	struct Box *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 
