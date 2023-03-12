@@ -318,9 +318,9 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
 
-	l_int32 x, y, w, h;
+	l_int32 x, y, _w, _h;
 
-	boxGetGeometry(crop_points, &x, &y, &w, &h);
+	boxGetGeometry(crop_points, &x, &y, &_w, &_h);
 
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
