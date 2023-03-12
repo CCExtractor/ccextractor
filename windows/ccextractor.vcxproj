@@ -459,7 +459,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -501,10 +501,12 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
@@ -532,7 +534,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.liblibpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -578,7 +580,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.liblibpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -614,7 +616,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.liblibpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -657,7 +659,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.liblibpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -689,13 +691,14 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PreBuildEvent>
@@ -729,11 +732,13 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
