@@ -113,6 +113,10 @@
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\png.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\pngconf.h" />
+    <ClInclude
+      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\pnglibconf.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\thirdparty\gpacmp4\box_dump.c" />
