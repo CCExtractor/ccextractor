@@ -1,5 +1,7 @@
 #[cfg(feature = "hardsubx_ocr")]
-use ffmpeg_sys_next::*;
+use rsmpeg::avutil::*;
+#[cfg(feature = "hardsubx_ocr")]
+use rsmpeg::ffi::AVRational;
 use std::os::raw::{c_char, c_int};
 use std::{cmp, ffi};
 
@@ -11,17 +13,17 @@ const AV_TIME_BASE_Q: AVRational = AVRational {
 
 #[no_mangle]
 pub extern "C" fn convert_pts_to_ns(pts: i64, time_base: AVRational) -> i64 {
-    unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) }
+    av_rescale_q(pts, time_base, AV_TIME_BASE_Q)
 }
 
 #[no_mangle]
 pub extern "C" fn convert_pts_to_ms(pts: i64, time_base: AVRational) -> i64 {
-    unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000 }
+    av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000
 }
 
 #[no_mangle]
 pub extern "C" fn convert_pts_to_s(pts: i64, time_base: AVRational) -> i64 {
-    unsafe { av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000000 }
+    av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000000
 }
 
 fn _edit_distance_rec(

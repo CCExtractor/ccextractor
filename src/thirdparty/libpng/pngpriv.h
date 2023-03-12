@@ -383,7 +383,7 @@
 #  endif
 #endif
 
-#include "png.h"
+#include <png.h>
 
 /* pngconf.h does not set PNG_DLL_EXPORT unless it is required, so: */
 #ifndef PNG_DLL_EXPORT

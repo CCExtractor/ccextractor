@@ -1,10 +1,10 @@
 #include <math.h>
-#include "png.h"
+#include <png.h>
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
 #include <tesseract/capi.h>
-#include "ccx_common_constants.h"
 #include <leptonica/allheaders.h>
+#include "ccx_common_constants.h"
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
@@ -317,6 +317,11 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	}
 
 	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
+
+	l_int32 x, y, _w, _h;
+
+	boxGetGeometry(crop_points, &x, &y, &_w, &_h);
+
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 
@@ -412,8 +417,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				{
 					for (int j = x1; j <= x2; j++)
 					{
-						if (copy->data[(crop_points->y + i) * w + (crop_points->x + j)] != firstpixel)
-							histogram[copy->data[(crop_points->y + i) * w + (crop_points->x + j)]]++;
+						if (copy->data[(y + i) * w + (x + j)] != firstpixel)
+							histogram[copy->data[(y + i) * w + (x + j)]]++;
 					}
 				}
 				/* sorted in increasing order of intensity */

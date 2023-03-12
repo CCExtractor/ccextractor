@@ -1,6 +1,7 @@
 name: Build CCExtractor on Windows
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - ".github/workflows/build_windows.yml"
@@ -27,16 +28,27 @@ jobs:
         run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
       - name: build Release
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -59,16 +71,27 @@ jobs:
         run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
       - name: build Debug
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -89,34 +112,41 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x86
+        run: choco install llvm
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
-          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/Release-Full
+        working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows OCR and HardSubX Release build
           path: |
-            ./windows/Release-Full/ccextractorwinfull.exe
-            ./windows/Release-Full/*.dll
+            ./windows/x64/Release-Full/ccextractorwinfull.exe
+            ./windows/x64/Release-Full/*.dll
   build_ocr_hardsubx_debug:
     runs-on: windows-2019
     steps:
@@ -125,15 +155,20 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        uses: egor-tensin/setup-clang@v1
+        run: choco install llvm
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
         with:
-          version: latest
-          platform: x86
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
-          target: i686-pc-windows-msvc
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
       - name: build Debug-Full
@@ -142,15 +177,17 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=Win32
+          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/Debug-Full
+        working-directory: ./windows/x64/Debug-Full
       - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows OCR and HardSubX Debug build
           path: |
-            ./windows/Debug-Full/ccextractorwinfull.exe
-            ./windows/Debug-Full/ccextractorwinfull.pdb
-            ./windows/Debug-Full/*.dll
+            ./windows/x64/Debug-Full/ccextractorwinfull.exe
+            ./windows/x64/Debug-Full/ccextractorwinfull.pdb
+            ./windows/x64/Debug-Full/*.dll

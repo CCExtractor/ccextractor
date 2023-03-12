@@ -128,7 +128,7 @@ if(WIN32)
     include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/win_spec_incld/")
     include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/win_iconv/")
     aux_source_directory ("${PROJECT_SOURCE_DIR}/thirdparty/win_iconv/" SOURCEFILE)
-    set (EXTRA_LIBS ${EXTRA_LIBS} ws2_32 winmm)
+    set (EXTRA_LIBS ${EXTRA_LIBS} ws2_32 winmm Bcrypt)
 else (WIN32)
     # Adding some platform specific library path
     link_directories (/opt/local/lib)

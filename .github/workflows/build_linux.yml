@@ -1,6 +1,7 @@
 name: Build CCExtractor on Linux
 
 on:
+  workflow_dispatch:
   push:
     paths:
     - '.github/workflows/build_linux.yml'
@@ -73,11 +74,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: dependencies
-      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev yasm
+      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
     - name: cmake
-      run: mkdir build && cd build && cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
+      run: |
+        mkdir build && cd build
+        cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
-      run: make -j$(nproc)
+      run: |
+        FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
+        FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
+        make -j$(nproc)
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
@@ -96,7 +102,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
       - name: build
         run: cargo build 

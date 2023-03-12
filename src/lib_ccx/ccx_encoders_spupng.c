@@ -1,7 +1,7 @@
 #include "ccfont2.xbm" // CC font from libzvbi
 #include "ccx_common_common.h"
 #include "ccx_encoders_common.h"
-#include "png.h"
+#include <png.h>
 #include <ft2build.h>
 #include <math.h>
 #include FT_FREETYPE_H

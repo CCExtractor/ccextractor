@@ -42,12 +42,15 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.56.0
+          toolchain: stable
           override: true
           components: rustfmt, clippy
       - name: dependencies
-        run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev yasm
+        run: sudo apt update && sudo apt install libtesseract-dev  libavformat-dev libavdevice-dev libswscale-dev yasm
       - name: rustfmt
         run: cargo fmt --all -- --check
       - name: clippy
-        run: cargo clippy --all-features -- -D warnings
+        run: |
+          FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
+          FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
+          cargo clippy --all-features -- -D warnings
