@@ -195,15 +195,15 @@ fail:
  * The return value **has** to be freed:
  *
  * ```c
- * struct Box *box = ignore_alpha_at_edge(...);
+ * BOX *box = ignore_alpha_at_edge(...);
  * boxDestroy(&box);
  * ```
  */
-struct Box *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, PIX *in, PIX **out)
+BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, PIX *in, PIX **out)
 {
 	int i, j, index, start_y = 0, end_y = 0;
 	int find_end_x = CCX_FALSE;
-	struct Box *cropWindow;
+	BOX *cropWindow;
 	for (j = 1; j < w - 1; j++)
 	{
 		for (i = 0; i < h; i++)
@@ -298,7 +298,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 			ppixel++;
 		}
 	}
-	struct Box *temp = ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
+	BOX *temp = ignore_alpha_at_edge(alpha, indata, w, h, pix, &cpix);
 	boxDestroy(&temp);
 
 	// For the unquantized bitmap
@@ -316,7 +316,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		}
 	}
 
-	struct Box *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
+	BOX *crop_points = ignore_alpha_at_edge(copy->alpha, copy->data, w, h, color_pix, &color_pix_out);
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 
