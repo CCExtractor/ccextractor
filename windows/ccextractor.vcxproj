@@ -331,6 +331,10 @@
   <ItemGroup>
     <None Include="..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
+  <ItemGroup
+    Condition="(('$(Configuration)|$(Platform)'=='Debug-Full|Win32') OR ('$(Configuration)|$(Platform)'=='Debug-Full|x64') OR ('$(Configuration)|$(Platform)'=='Release-Full|Win32') OR ('$(Configuration)|$(Platform)'=='Release-Full|x64'))">
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\leptonica\pix.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
     <RootNamespace>ccextractor</RootNamespace>
