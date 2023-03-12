@@ -442,7 +442,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
+    <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
       $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
     <LibraryPath>
@@ -458,7 +458,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
+    <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
       $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng;$(IncludePath)</IncludePath>
     <LibraryPath>
