@@ -413,8 +413,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				{
 					for (int j = x1; j <= x2; j++)
 					{
-						if (copy->data[(crop_points->y + i) * w + (crop_points->x + j)] != firstpixel)
-							histogram[copy->data[(crop_points->y + i) * w + (crop_points->x + j)]]++;
+						if (copy->data[(/*crop_points->y*/ +i) * w + (/*crop_points->x*/ +j)] != firstpixel)
+							histogram[copy->data[(/*crop_points->y*/ +i) * w + (/*crop_points->x*/ +j)]]++;
 					}
 				}
 				/* sorted in increasing order of intensity */

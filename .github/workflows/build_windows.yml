@@ -32,6 +32,15 @@ jobs:
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
       - name: build Release
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
@@ -64,6 +73,15 @@ jobs:
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup Vcpkg
+        id: vcpkg
+        uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: "2023.02.24"
+          cache-version: "1"
+          ignore-reserve-cache-error: true
+      - name: Install dependencies
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
       - name: build Debug
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
