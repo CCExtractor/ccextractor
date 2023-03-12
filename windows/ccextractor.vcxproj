@@ -99,6 +99,7 @@
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
+    <ClInclude Include="..\src\thirdparty\lib_hash\sha2.h" />
     <ClInclude Include="..\src\thirdparty\protobuf-c\protobuf-c.h" />
     <ClInclude Include="..\src\thirdparty\utf8proc\utf8proc.h" />
     <ClInclude Include="..\src\thirdparty\win_iconv\iconv.h" />
@@ -273,6 +274,7 @@
     <ClCompile Include="..\src\lib_ccx\ts_tables_epg.c" />
     <ClCompile Include="..\src\lib_ccx\utility.c" />
     <ClCompile Include="..\src\lib_ccx\wtv_functions.c" />
+    <ClCompile Include="..\src\thirdparty\lib_hash\sha2.c" />
     <ClCompile Include="..\src\thirdparty\protobuf-c\protobuf-c.c" />
     <ClCompile Include="..\src\thirdparty\utf8proc\utf8proc.c" />
     <ClCompile Include="..\src\thirdparty\win_iconv\win_iconv.c" />
@@ -478,7 +480,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         WIN32;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
@@ -547,7 +549,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
@@ -598,7 +600,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -630,7 +632,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -678,7 +680,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -709,7 +711,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty\libpng;..\src\thirdparty;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -750,7 +752,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/thirdparty/libpng;../src/thirdparty/zlib;../src/lib_ccx/zvbi;../src/thirdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
