@@ -1,5 +1,5 @@
 #include <math.h>
-#include "png.h"
+#include <png.h>
 #include "lib_ccx.h"
 #ifdef ENABLE_OCR
 #include <tesseract/capi.h>
