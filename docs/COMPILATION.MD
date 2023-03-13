@@ -185,7 +185,6 @@ Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target
 
 Other dependencies are required through vcpkg, so you can follow below steps:
 1. Download vcpkg (prefer version `2023.02.24` as it is supported)
-http://ffmpeg.zeranoe.com/builds/
 2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
 ```
 vcpkg integrate install
