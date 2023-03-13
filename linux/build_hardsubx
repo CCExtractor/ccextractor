@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
-export BLD_FLAGS="-DENABLE_HARDSUBX"
-export BLD_LINKER="-lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lswresample"
-./build
+
+./build -hardsubx

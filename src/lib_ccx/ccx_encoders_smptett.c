@@ -24,7 +24,7 @@
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
-#include "png.h"
+#include <png.h>
 #include "ocr.h"
 #include "utility.h"
 #include "ccx_encoders_helpers.h"

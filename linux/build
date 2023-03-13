@@ -1,4 +1,34 @@
 #!/usr/bin/env bash
+
+RUST_LIB="rust/release/libccx_rust.a"
+RUST_PROFILE="--release"
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -debug)
+      DEBUG=true
+      BLD_FLAGS="$BLD_FLAGS -g"
+      RUST_PROFILE=""
+      RUST_LIB="rust/debug/libccx_rust.a"
+      shift
+      ;;
+    -without-rust)
+      WITHOUT_RUST=true
+      shift
+      ;;
+    -hardsubx)
+      HARDSUBX=true
+      RUST_FEATURES="--features hardsubx_ocr"
+      BLD_FLAGS="$BLD_FLAGS -DENABLE_HARDSUBX"
+      BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lxcb-shm -lxcb -lX11 -llzma -lswresample"
+      shift
+      ;;
+    -*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+  esac
+done
+
 BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H"
 bit_os=$(getconf LONG_BIT)
 if [ "$bit_os"=="64" ]
@@ -61,7 +91,7 @@ echo "Running pre-build script..."
 ./pre-build.sh
 echo "Trying to compile..."
 
-if [ "$1" = "-without-rust" ]; then
+if [ "$WITHOUT_RUST" = true ]; then
     echo "Building without rust files..."
     BLD_FLAGS="$BLD_FLAGS -DDISABLE_RUST"
 else 
@@ -84,14 +114,9 @@ else
     fi 
     
     echo "Building rust files..."
-    echo "${BLD_FLAGS}"
-    tokens=( ${BLD_FLAGS} )
-    if [ ${tokens[0]} = "-DENABLE_HARDSUBX" ]; then
-        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build --features "hardsubx_ocr") || { echo "Failed. " ; exit 1; }
-    else
-        (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build) || { echo "Failed. " ; exit 1; }
-    fi
-    cp rust/debug/libccx_rust.a ./libccx_rust.a
+    (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build $RUST_PROFILE $RUST_FEATURES) || { echo "Failed. " ; exit 1; }
+
+    cp $RUST_LIB ./libccx_rust.a
 fi
 
 echo "Building ccextractor"
