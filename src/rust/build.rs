@@ -2,13 +2,14 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let mut allowlist_functions = vec![
+    let mut allowlist_functions = Vec::new();
+    allowlist_functions.extend_from_slice(&[
         ".*(?i)_?dtvcc_.*",
         "get_visible_.*",
         "get_fts",
         "printdata",
         "writercwtdata",
-    ];
+    ]);
 
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_functions.extend_from_slice(&[
@@ -18,13 +19,14 @@ fn main() {
         "mprint",
     ]);
 
-    let mut allowlist_types = vec![
+    let mut allowlist_types = Vec::new();
+    allowlist_types.extend_from_slice(&[
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
-    ];
+    ]);
 
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
