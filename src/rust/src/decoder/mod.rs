@@ -25,15 +25,15 @@ const CCX_DTVCC_MAX_SERVICES: usize = 63;
 pub struct Dtvcc<'a> {
     pub is_active: bool,
     pub active_services_count: u8,
-    pub services_active: Vec<i32>,
+    pub services_active: [i32; CCX_DTVCC_MAX_SERVICES],
     pub report_enabled: bool,
     pub report: &'a mut ccx_decoder_dtvcc_report,
-    pub decoders: Vec<&'a mut dtvcc_service_decoder>,
-    pub packet: Vec<u8>,
+    pub decoders: [Option<&'a mut dtvcc_service_decoder>; CCX_DTVCC_MAX_SERVICES],
+    pub packet: [u8; CCX_DTVCC_MAX_SERVICES],
     pub packet_length: u8,
     pub is_header_parsed: bool,
     pub last_sequence: i32,
-    pub encoder: &'a mut encoder_ctx,
+    pub encoder: Option<&'a mut encoder_ctx>,
     pub no_rollup: bool,
     pub timing: &'a mut ccx_common_timing_ctx,
 }
@@ -44,30 +44,30 @@ impl<'a> Dtvcc<'a> {
         let report = unsafe { &mut *opts.report };
         report.reset_count = 0;
 
-        let decoders = (0..CCX_DTVCC_MAX_SERVICES)
-            .map(|i| {
-                if !is_true(opts.services_enabled[i]) {
-                    return unsafe { &mut *std::ptr::null_mut() };
-                }
+        const INIT: Option<&mut dtvcc_service_decoder> = None;
+        let decoders = [INIT; CCX_DTVCC_MAX_SERVICES];
+        decoders.iter_mut().enumerate().for_each(|(i, val)| {
+            if !is_true(opts.services_enabled[i]) {
+                return;
+            }
 
-                let decoder = Box::leak(Box::new(dtvcc_service_decoder {
-                    tv: Box::leak(Box::new(dtvcc_tv_screen {
-                        cc_count: 0,
-                        service_number: i as i32 + 1,
-                        ..dtvcc_tv_screen::default()
-                    })),
-                    ..dtvcc_service_decoder::default()
-                }));
+            let decoder = Box::leak(Box::new(dtvcc_service_decoder {
+                tv: Box::leak(Box::new(dtvcc_tv_screen {
+                    cc_count: 0,
+                    service_number: i as i32 + 1,
+                    ..dtvcc_tv_screen::default()
+                })),
+                ..dtvcc_service_decoder::default()
+            }));
 
-                decoder.windows.iter_mut().for_each(|w| {
-                    w.memory_reserved = 0;
-                });
+            decoder.windows.iter_mut().for_each(|w| {
+                w.memory_reserved = 0;
+            });
 
-                unsafe { dtvcc_windows_reset(decoder) };
+            unsafe { dtvcc_windows_reset(decoder) };
 
-                decoder
-            })
-            .collect();
+            val = &mut Some(decoder);
+        });
 
         for i in 0..CCX_DTVCC_MAX_SERVICES {
             if !is_true(opts.services_enabled[i]) {
@@ -83,14 +83,14 @@ impl<'a> Dtvcc<'a> {
             is_active: false,
             no_rollup: is_true(opts.no_rollup),
             active_services_count: opts.active_services_count as u8,
-            services_active: opts.services_enabled.to_vec(),
+            services_active: opts.services_enabled.clone(),
             packet_length: 0,
             is_header_parsed: false,
-            packet: vec![0; CCX_DTVCC_MAX_SERVICES],
+            packet: [0; CCX_DTVCC_MAX_SERVICES],
             last_sequence: CCX_DTVCC_NO_LAST_SEQUENCE,
             report_enabled: is_true(opts.print_file_reports),
             timing: unsafe { &mut *opts.timing },
-            encoder: unsafe { &mut *std::ptr::null_mut() },
+            encoder: None,
         }
 
         // notes: import CCX_DTVCC_MAX_SERVICES, initialize the decoders
