@@ -148,8 +148,8 @@ impl dtvcc_tv_screen {
         use_colors: bool,
     ) -> Result<(), String> {
         let mut buf = Vec::new();
-        let mut pen_color = dtvcc_pen_color::default();
-        let mut pen_attribs = dtvcc_pen_attribs::default();
+        let mut pen_color = dtvcc_pen_color::new();
+        let mut pen_attribs = dtvcc_pen_attribs::new();
         let (first, last) = self.get_write_interval(row_index);
         debug!("First: {}, Last: {}", first, last);
 
@@ -418,7 +418,7 @@ impl dtvcc_tv_screen {
             return;
         }
         let new_pen_attribs = if col_index >= CCX_DTVCC_SCREENGRID_COLUMNS as usize {
-            dtvcc_pen_attribs::default()
+            dtvcc_pen_attribs::new()
         } else {
             self.pen_attribs[row_index][col_index]
         };
@@ -455,7 +455,7 @@ impl dtvcc_tv_screen {
             return;
         }
         let new_pen_color = if col_index >= CCX_DTVCC_SCREENGRID_COLUMNS as usize {
-            dtvcc_pen_color::default()
+            dtvcc_pen_color::new()
         } else {
             self.pen_colors[row_index][col_index]
         };

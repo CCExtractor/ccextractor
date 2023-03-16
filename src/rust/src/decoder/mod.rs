@@ -19,6 +19,7 @@ const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
 const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
+const CCX_DTVCC_MAX_SERVICES: usize = 63;
 
 /// Context required for processing 708 data
 pub struct Dtvcc<'a> {
@@ -39,26 +40,60 @@ pub struct Dtvcc<'a> {
 
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
-    pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
-        let report = unsafe { &mut *ctx.report };
-        let encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
-        let timing = unsafe { &mut *ctx.timing };
+    pub fn new(opts: &'a mut ccx_decoder_dtvcc_settings) -> Self {
+        let report = unsafe { &mut *opts.report };
+        report.reset_count = 0;
+
+        let decoders = (0..CCX_DTVCC_MAX_SERVICES)
+            .map(|i| {
+                if !is_true(opts.services_enabled[i]) {
+                    return unsafe { &mut *std::ptr::null_mut() };
+                }
+
+                let decoder = Box::leak(Box::new(dtvcc_service_decoder {
+                    tv: Box::leak(Box::new(dtvcc_tv_screen {
+                        cc_count: 0,
+                        service_number: i as i32 + 1,
+                        ..dtvcc_tv_screen::default()
+                    })),
+                    ..dtvcc_service_decoder::default()
+                }));
+
+                decoder.windows.iter_mut().for_each(|w| {
+                    w.memory_reserved = 0;
+                });
+
+                unsafe { dtvcc_windows_reset(decoder) };
+
+                decoder
+            })
+            .collect();
+
+        for i in 0..CCX_DTVCC_MAX_SERVICES {
+            if !is_true(opts.services_enabled[i]) {
+                continue;
+            }
+        }
+
+        // dtvcc_clear_packet sets current_packet_length, is_current_packet_header_parsed, current_packet to 0
 
         Self {
-            is_active: is_true(ctx.is_active),
-            active_services_count: ctx.active_services_count as u8,
-            services_active: ctx.services_active.to_vec(),
-            report_enabled: is_true(ctx.report_enabled),
             report,
-            decoders: ctx.decoders.iter_mut().collect(),
-            packet: ctx.current_packet.to_vec(),
-            packet_length: ctx.current_packet_length as u8,
-            is_header_parsed: is_true(ctx.is_current_packet_header_parsed),
-            last_sequence: ctx.last_sequence,
-            encoder,
-            no_rollup: is_true(ctx.no_rollup),
-            timing,
+            decoders,
+            is_active: false,
+            no_rollup: is_true(opts.no_rollup),
+            active_services_count: opts.active_services_count as u8,
+            services_active: opts.services_enabled.to_vec(),
+            packet_length: 0,
+            is_header_parsed: false,
+            packet: vec![0; CCX_DTVCC_MAX_SERVICES],
+            last_sequence: CCX_DTVCC_NO_LAST_SEQUENCE,
+            report_enabled: is_true(opts.print_file_reports),
+            timing: unsafe { &mut *opts.timing },
+            encoder: unsafe { &mut *std::ptr::null_mut() },
         }
+
+        // notes: import CCX_DTVCC_MAX_SERVICES, initialize the decoders
     }
     /// Process cc data and add it to the dtvcc packet
     pub fn process_cc_data(&mut self, cc_valid: u8, cc_type: u8, data1: u8, data2: u8) {
@@ -214,12 +249,5 @@ impl dtvcc_symbol {
     /// Check if symbol is initialized
     pub fn is_set(&self) -> bool {
         is_true(self.init)
-    }
-}
-
-impl Default for dtvcc_symbol {
-    /// Create a blank uninitialized symbol
-    fn default() -> Self {
-        Self { sym: 0, init: 0 }
     }
 }
