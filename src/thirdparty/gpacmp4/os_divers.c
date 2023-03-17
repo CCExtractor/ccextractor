@@ -28,7 +28,8 @@
 #include <gpac/config_file.h>
 #include <gpac/token.h>
 #include <gpac/token.c>
-
+#include <gpac/os_net.c>
+#include <gpac/sha256.c>
 #if defined(_WIN32_WCE)
 
 #include <winbase.h>
