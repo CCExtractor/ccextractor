@@ -45,19 +45,41 @@ pub struct Dtvcc<'a> {
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
     pub fn new<'b>(opts: &'b mut ccx_decoder_dtvcc_settings) -> Self {
-        let report = unsafe { &mut *opts.report };
+        // closely follows `dtvcc_init` at `src/lib_ccx/ccx_dtvcc.c:76`
+
+        let report = unsafe { opts.report.as_mut().unwrap() };
         report.reset_count = 0;
 
+        let is_active = false;
+        let no_rollup = opts.no_rollup;
+        let active_services_count = opts.active_services_count;
+        let no_rollup = is_true(opts.no_rollup);
+        let active_services_count = opts.active_services_count as u8;
+        let services_active = opts.services_enabled.clone();
+
+        // `dtvcc_clear_packet` does the following
+        let packet_length = 0;
+        let is_header_parsed = false;
+        let packet = [0; CCX_DTVCC_MAX_SERVICES]; // unlike C, packet is allocated on the stack
+
+        let last_sequence = CCX_DTVCC_NO_LAST_SEQUENCE;
+
+        let report_enabled = is_true(opts.print_file_reports);
+        let timing = unsafe { opts.timing.as_mut() }.unwrap();
+
+        // unlike C, here the decoders are allocated on the stack as an array.
         let decoders = {
             const INIT: Option<dtvcc_service_decoder> = None;
             let val = [INIT; CCX_DTVCC_MAX_SERVICES];
 
             for i in 0..CCX_DTVCC_MAX_SERVICES {
-                if !is_true(opts.services_enabled[i]) {
+                if is_false(opts.services_enabled[i]) {
                     continue;
                 }
 
                 let decoder = dtvcc_service_decoder {
+                    // we cannot allocate this on the stack as `dtvcc_service_decoder` is a C
+                    // struct cannot be changed trivially
                     tv: Box::into_raw(Box::new(dtvcc_tv_screen {
                         cc_count: 0,
                         service_number: i as i32 + 1,
@@ -78,28 +100,22 @@ impl<'a> Dtvcc<'a> {
             val
         };
 
-        for i in 0..CCX_DTVCC_MAX_SERVICES {
-            if !is_true(opts.services_enabled[i]) {
-                continue;
-            }
-        }
-
-        // dtvcc_clear_packet sets current_packet_length, is_current_packet_header_parsed, current_packet to 0
+        let encoder = None; // Unlike C, does not mention `encoder` and is initialised to `null` by default
 
         Self {
             report,
+            is_active,
+            no_rollup,
+            active_services_count,
+            services_active,
+            packet_length,
+            is_header_parsed,
+            packet,
+            last_sequence,
+            report_enabled,
+            timing,
             decoders,
-            is_active: false,
-            no_rollup: is_true(opts.no_rollup),
-            active_services_count: opts.active_services_count as u8,
-            services_active: opts.services_enabled.clone(),
-            packet_length: 0,
-            is_header_parsed: false,
-            packet: [0; CCX_DTVCC_MAX_SERVICES],
-            last_sequence: CCX_DTVCC_NO_LAST_SEQUENCE,
-            report_enabled: is_true(opts.print_file_reports),
-            timing: unsafe { &mut *opts.timing },
-            encoder: None,
+            encoder,
         }
     }
 
@@ -242,30 +258,28 @@ impl<'a> Dtvcc<'a> {
 
 impl<'a> Drop for Dtvcc<'a> {
     fn drop(&mut self) {
+        // closely follows `dtvcc_free` at `src/lib_ccx/ccx_dtvcc.c:126`
         for i in 0..CCX_DTVCC_MAX_SERVICES {
-            match self.decoders[i] {
-                Some(decoder) => {
-                    if !is_true(self.services_active[i]) {
-                        continue;
+            if let Some(decoder) = self.decoders[i] {
+                if !is_true(self.services_active[i]) {
+                    continue;
+                }
+
+                decoder.windows.iter().for_each(|window| {
+                    if is_false(window.memory_reserved) {
+                        return;
                     }
 
-                    decoder.windows.iter().for_each(|window| {
-                        if is_false(window.memory_reserved) {
-                            return;
-                        }
-
-                        window.rows.iter().for_each(|symbol_ptr| unsafe {
-                            symbol_ptr.drop_in_place();
-                        });
-
-                        window.memory_reserved = 0;
+                    window.rows.iter().for_each(|symbol_ptr| unsafe {
+                        symbol_ptr.drop_in_place();
                     });
 
-                    unsafe {
-                        decoder.tv.drop_in_place();
-                    }
+                    window.memory_reserved = 0;
+                });
+
+                unsafe {
+                    decoder.tv.drop_in_place();
                 }
-                None => {}
             }
         }
     }

@@ -44,14 +44,30 @@ pub extern "C" fn ccxr_init_logger() {
         .init();
 }
 
+/// Create a `dtvcc_rust`
+///
+/// SAFETY:
+/// The following should not be `NULL`:
+///     - opts
+///     - opts.report
+///     - opts.timing
 #[no_mangle]
 extern "C" fn ccxr_dtvcc_init<'a>(opts: *mut ccx_decoder_dtvcc_settings) -> *mut Dtvcc<'a> {
     Box::into_raw(Box::new(Dtvcc::new(unsafe { opts.as_mut() }.unwrap())))
 }
 
+/// Frees `dtvcc_rust`
+///
+/// SAFETY:
+/// The following should not be `NULL`:
+///     - dtvcc_rust
+///     - dtvcc_rust.decoders[i] if dtvcc_rust.services_active[i] is true
+///     - dtvcc_rust.decoders[i].windows[j].rows[k] if
+///         dtvcc_rust.decoders[i].windows[j].memory_reserved is true
+///     - dtvcc_rust.decoders[i].tv
 #[no_mangle]
-extern "C" fn ccxr_dtvcc_free(dtvcc: *mut Dtvcc) {
-    unsafe { dtvcc.drop_in_place() };
+extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
+    unsafe { dtvcc_rust.drop_in_place() };
 }
 
 /// Process cc_data
