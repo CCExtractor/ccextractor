@@ -30,6 +30,8 @@
 #include <gpac/avparse.h>
 #include <gpac/base_coding.h>
 #include <gpac/webvtt.h>
+// #include <gpac/webvtt.c>
+
 
 #ifndef GPAC_DISABLE_ISOM_DUMP
 

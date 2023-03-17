@@ -60,6 +60,7 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/os_module.c \
 				../src/thirdparty/gpacmp4/xml_parser.c \
 				../src/thirdparty/gpacmp4/constants.c \
+				../src/thirdparty/gpacmp4/webvtt.c \
 				../src/thirdparty/gpacmp4/gpac/avparse.h \
 				../src/thirdparty/gpacmp4/gpac/base_coding.h \
 				../src/thirdparty/gpacmp4/gpac/bitstream.h \
@@ -81,6 +82,7 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/gpac/utf.h \
 				../src/thirdparty/gpacmp4/gpac/version.h \
 				../src/thirdparty/gpacmp4/gpac/iso639.h \
+				../src/thirdparty/gpacmp4/gpac/Remotery.h \
 				../src/thirdparty/gpacmp4/gpac/internal/avilib.h \
 				../src/thirdparty/gpacmp4/gpac/internal/isomedia_dev.h \
 				../src/thirdparty/gpacmp4/gpac/internal/media_dev.h \
