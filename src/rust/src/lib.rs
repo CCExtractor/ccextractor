@@ -44,6 +44,16 @@ pub extern "C" fn ccxr_init_logger() {
         .init();
 }
 
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_init<'a>(opts: *mut ccx_decoder_dtvcc_settings) -> *mut Dtvcc<'a> {
+    Box::into_raw(Box::new(Dtvcc::new(unsafe { opts.as_mut() }.unwrap())))
+}
+
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_free(dtvcc: *mut Dtvcc) {
+    unsafe { dtvcc.drop_in_place() };
+}
+
 /// Process cc_data
 ///
 /// # Safety
