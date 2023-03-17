@@ -11,6 +11,7 @@
 - Fix: missing `#` in color attribute of font tag
 - Fix: ffmpeg 5.0, tesseract 5.0 compatibility and remove deprecated methods
 - Fix: tesseract 5.x traineddata location in ocr
+- Fix: add missing compile_info_real.h source to Autotools build
 
 0.94 (2021-12-14)
 -----------------
