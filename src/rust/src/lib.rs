@@ -86,13 +86,11 @@ extern "C" fn ccxr_process_cc_data(
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
     let dec_ctx = unsafe { &mut *dec_ctx };
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb(dec_ctx, cc_block);
         if success {
             ret = 0;
         }
@@ -136,7 +134,8 @@ pub fn verify_parity(data: u8) -> bool {
 }
 
 /// Process CC data according to its type
-pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
+pub fn do_cb(ctx: &mut lib_cc_decode, cc_block: &[u8]) -> bool {
+    let dtvcc: &mut Dtvcc = unsafe { std::mem::transmute(ctx.dtvcc_rust) };
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;

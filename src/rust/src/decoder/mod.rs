@@ -70,14 +70,14 @@ impl<'a> Dtvcc<'a> {
         // unlike C, here the decoders are allocated on the stack as an array.
         let decoders = {
             const INIT: Option<dtvcc_service_decoder> = None;
-            let val = [INIT; CCX_DTVCC_MAX_SERVICES];
+            let mut val = [INIT; CCX_DTVCC_MAX_SERVICES];
 
             for i in 0..CCX_DTVCC_MAX_SERVICES {
                 if is_false(opts.services_enabled[i]) {
                     continue;
                 }
 
-                let decoder = dtvcc_service_decoder {
+                let mut decoder = dtvcc_service_decoder {
                     // we cannot allocate this on the stack as `dtvcc_service_decoder` is a C
                     // struct cannot be changed trivially
                     tv: Box::into_raw(Box::new(dtvcc_tv_screen {
@@ -232,7 +232,7 @@ impl<'a> Dtvcc<'a> {
                 let decoder = &mut self.decoders[(service_number - 1) as usize];
                 decoder.unwrap().process_service_block(
                     &self.packet[pos as usize..(pos + block_length) as usize],
-                    self.encoder.unwrap(),
+                    self.encoder.as_mut().unwrap(),
                     self.timing,
                     self.no_rollup,
                 );
@@ -260,12 +260,12 @@ impl<'a> Drop for Dtvcc<'a> {
     fn drop(&mut self) {
         // closely follows `dtvcc_free` at `src/lib_ccx/ccx_dtvcc.c:126`
         for i in 0..CCX_DTVCC_MAX_SERVICES {
-            if let Some(decoder) = self.decoders[i] {
+            if let Some(mut decoder) = self.decoders[i] {
                 if !is_true(self.services_active[i]) {
                     continue;
                 }
 
-                decoder.windows.iter().for_each(|window| {
+                decoder.windows.iter_mut().for_each(|window| {
                     if is_false(window.memory_reserved) {
                         return;
                     }
