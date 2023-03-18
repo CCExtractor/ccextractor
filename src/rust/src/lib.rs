@@ -135,7 +135,7 @@ pub fn verify_parity(data: u8) -> bool {
 
 /// Process CC data according to its type
 pub fn do_cb(ctx: &mut lib_cc_decode, cc_block: &[u8]) -> bool {
-    let dtvcc: &mut Dtvcc = unsafe { std::mem::transmute(ctx.dtvcc_rust) };
+    let dtvcc = unsafe { &mut *(ctx.dtvcc_rust as *mut decoder::Dtvcc<'_>) };
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;
