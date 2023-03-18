@@ -18,6 +18,10 @@
 #include "dvd_subtitle_decoder.h"
 #include "ccx_demuxer_mxf.h"
 
+#ifndef DISABLE_RUST
+extern void ccxr_dtvcc_set_encoder(void *dtvcc_rust, void *encoder);
+#endif
+
 int end_of_file = 0; // End of file?
 
 // Program stream specific data grabber
@@ -897,6 +901,9 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	*enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 	*dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 	(*dec_ctx)->dtvcc->encoder = (void *)(*enc_ctx);
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder((*dec_ctx)->dtvcc_rust, *enc_ctx);
+#endif
 
 	if ((*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL) // if we didn't set the min_pts of the program
 	{
@@ -1094,6 +1101,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+#ifndef DISABLE_RUST
+				ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, (void *)enc_ctx);
+#endif
 
 				if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL) // if we didn't set the min_pts of the program
 				{
@@ -1269,6 +1279,9 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, (void *)enc_ctx);
+#endif
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;

@@ -70,6 +70,11 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
     unsafe { dtvcc_rust.drop_in_place() };
 }
 
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encoder_ctx) {
+    unsafe { dtvcc_rust.as_mut() }.unwrap().encoder = Some(unsafe { encoder.as_mut() }.unwrap());
+}
+
 /// Process cc_data
 ///
 /// # Safety
