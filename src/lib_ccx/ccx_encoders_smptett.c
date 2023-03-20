@@ -191,11 +191,14 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 		{
 			float row1 = 0;
 			float col1 = 0;
+            int row1_int, col1_int, row1_dec, col1_dec;
 			int firstcol = -1;
 
 			// ROWS is actually 90% of the screen size
 			// Add +10% because row 0 is at position 10%
 			row1 = ((100 * row) / (ROWS / 0.8)) + 10;
+            row1_int = row1;
+            row1_dec = (row1 - row1_int) * 1000;
 
 			for (int column = 0; column < COLUMNS; column++)
 			{
@@ -213,13 +216,16 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			// COLUMNS is actually 90% of the screen size
 			// Add +10% because column 0 is at position 10%
 			col1 = ((100 * firstcol) / (COLUMNS / 0.8)) + 10;
+            col1_int = col1;
+            col1_dec = (col1 - col1_int) * 1000;
 
 			if (firstcol >= 0)
 			{
 				wrote_something = 1;
 
-				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%1.3f%% %1.3f%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, col1, row1);
-				if (context->encoding != CCX_ENC_UNICODE)
+                sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%d.%03d%% %d.%03d%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, col1_int, col1_dec, row1_int, row1_dec);
+
+                if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
