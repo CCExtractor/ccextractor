@@ -900,8 +900,9 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	cinfo = get_cinfo(ctx->demux_ctx, pid);
 	*enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 	*dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+#ifdef DISABLE_RUST
 	(*dec_ctx)->dtvcc->encoder = (void *)(*enc_ctx);
-#ifndef DISABLE_RUST
+#else
 	ccxr_dtvcc_set_encoder((*dec_ctx)->dtvcc_rust, *enc_ctx);
 #endif
 
@@ -1100,8 +1101,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+#ifdef DISABLE_RUST
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
-#ifndef DISABLE_RUST
+#else
 				ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, (void *)enc_ctx);
 #endif
 
@@ -1278,8 +1280,9 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+#ifdef DISABLE_RUST
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
-#ifndef DISABLE_RUST
+#else
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, (void *)enc_ctx);
 #endif
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
