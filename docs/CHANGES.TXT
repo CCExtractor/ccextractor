@@ -13,6 +13,7 @@
 - Fix: tesseract 5.x traineddata location in ocr
 - Fix: fix autoconf tesseract detection problem (#1503)
 - Fix: add missing compile_info_real.h source to Autotools build
+- Fix: refactors SMPTE-TT encoding with int values to avoid locale issues with sprintf 
 
 0.94 (2021-12-14)
 -----------------
