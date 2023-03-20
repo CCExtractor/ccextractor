@@ -203,7 +203,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 			// ROWS is actually 90% of the screen size
 			// Add +10% because row 0 is at position 10%
-			row1 = round((((100 * row) / (ROWS / 0.8)) + 10));
+			row1 = round(((100 * row) / (ROWS / 0.8)) + 10);
 
 			for (int column = 0; column < COLUMNS; column++)
 			{
@@ -220,7 +220,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			}
 			// COLUMNS is actually 90% of the screen size
 			// Add +10% because column 0 is at position 10%
-			col1 = round((((100 * firstcol) / (COLUMNS / 0.8)) + 10));
+			col1 = round(((100 * firstcol) / (COLUMNS / 0.8)) + 10);
 
 			if (firstcol >= 0)
 			{
