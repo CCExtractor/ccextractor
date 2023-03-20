@@ -225,7 +225,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%d.%03d%% %d.%03d%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, col1_int, col1_dec, row1_int, row1_dec);
 
-                if (context->encoding != CCX_ENC_UNICODE)
+				if (context->encoding != CCX_ENC_UNICODE)
 				{
 					dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 				}
