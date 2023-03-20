@@ -24,7 +24,7 @@
 
 /*
 	Up-to-date standards as of March 2023 can be found at
-	https://www.w3.org/TR/ttml1/ and 
+	https://www.w3.org/TR/ttml1/ and
 	https://ieeexplore.ieee.org/document/7291854
 */
 
