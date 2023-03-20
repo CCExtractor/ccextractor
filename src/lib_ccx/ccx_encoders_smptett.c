@@ -21,10 +21,18 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+/*
+	Up-to-date standards as of March 2023 can be found at
+	https://www.w3.org/TR/ttml1/ and 
+	https://ieeexplore.ieee.org/document/7291854
+*/
+
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "ccx_encoders_common.h"
 #include <png.h>
+#include <math.h>
 #include "ocr.h"
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
@@ -189,16 +197,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 	{
 		if (data->row_used[row])
 		{
-			float row1 = 0;
-			float col1 = 0;
-			int row1_int, col1_int, row1_dec, col1_dec;
+			int row1 = 0;
+			int col1 = 0;
 			int firstcol = -1;
 
 			// ROWS is actually 90% of the screen size
 			// Add +10% because row 0 is at position 10%
-			row1 = ((100 * row) / (ROWS / 0.8)) + 10;
-			row1_int = row1;
-			row1_dec = (row1 - row1_int) * 1000;
+			row1 = round((((100 * row) / (ROWS / 0.8)) + 10));
 
 			for (int column = 0; column < COLUMNS; column++)
 			{
@@ -215,15 +220,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			}
 			// COLUMNS is actually 90% of the screen size
 			// Add +10% because column 0 is at position 10%
-			col1 = ((100 * firstcol) / (COLUMNS / 0.8)) + 10;
-			col1_int = col1;
-			col1_dec = (col1 - col1_int) * 1000;
+			col1 = round((((100 * firstcol) / (COLUMNS / 0.8)) + 10));
 
 			if (firstcol >= 0)
 			{
 				wrote_something = 1;
 
-				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%d.%03d%% %d.%03d%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, col1_int, col1_dec, row1_int, row1_dec);
+				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%u%% %u%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, col1, row1);
 
 				if (context->encoding != CCX_ENC_UNICODE)
 				{
