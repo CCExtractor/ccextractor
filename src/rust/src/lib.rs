@@ -52,8 +52,9 @@ pub extern "C" fn ccxr_init_logger() {
 ///     - opts.report
 ///     - opts.timing
 #[no_mangle]
-extern "C" fn ccxr_dtvcc_init<'a>(opts: *mut ccx_decoder_dtvcc_settings) -> *mut Dtvcc<'a> {
-    Box::into_raw(Box::new(Dtvcc::new(unsafe { opts.as_mut() }.unwrap())))
+extern "C" fn ccxr_dtvcc_init(opts_ptr: *const ccx_decoder_dtvcc_settings) -> *mut Dtvcc {
+    let opts = unsafe { opts_ptr.as_ref() }.unwrap();
+    Box::into_raw(Box::new(Dtvcc::new(opts)))
 }
 
 /// Frees `dtvcc_rust`
@@ -72,7 +73,7 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
 
 #[no_mangle]
 extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encoder_ctx) {
-    unsafe { dtvcc_rust.as_mut() }.unwrap().encoder = Some(unsafe { encoder.as_mut() }.unwrap());
+    unsafe { (*dtvcc_rust).encoder = encoder };
 }
 
 /// Process cc_data
@@ -140,7 +141,7 @@ pub fn verify_parity(data: u8) -> bool {
 
 /// Process CC data according to its type
 pub fn do_cb(ctx: &mut lib_cc_decode, cc_block: &[u8]) -> bool {
-    let dtvcc = unsafe { &mut *(ctx.dtvcc_rust as *mut decoder::Dtvcc<'_>) };
+    let dtvcc = unsafe { &mut *(ctx.dtvcc_rust as *mut decoder::Dtvcc) };
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;

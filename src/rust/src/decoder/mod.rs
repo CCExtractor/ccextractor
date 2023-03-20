@@ -26,33 +26,35 @@ const CCX_DTVCC_MAX_SERVICES: usize = 63;
 // const CCX_DTVCC_MAX_WINDOWS: usize = 8;
 
 /// Context required for processing 708 data
-pub struct Dtvcc<'a> {
+pub struct Dtvcc {
     pub is_active: bool,
     pub active_services_count: u8,
     pub services_active: [i32; CCX_DTVCC_MAX_SERVICES],
     pub report_enabled: bool,
-    pub report: &'a mut ccx_decoder_dtvcc_report,
-    pub decoders: [Option<dtvcc_service_decoder>; CCX_DTVCC_MAX_SERVICES],
+    pub report: *mut ccx_decoder_dtvcc_report,
+    pub decoders: [Option<Box<dtvcc_service_decoder>>; CCX_DTVCC_MAX_SERVICES],
     pub packet: [u8; CCX_DTVCC_MAX_SERVICES],
     pub packet_length: u8,
     pub is_header_parsed: bool,
     pub last_sequence: i32,
-    pub encoder: Option<&'a mut encoder_ctx>,
+    pub encoder: *mut encoder_ctx,
     pub no_rollup: bool,
-    pub timing: &'a mut ccx_common_timing_ctx,
+    pub timing: *mut ccx_common_timing_ctx,
 }
 
-impl<'a> Dtvcc<'a> {
+impl Dtvcc {
     /// Create a new dtvcc context
-    pub fn new(opts: &'_ mut ccx_decoder_dtvcc_settings) -> Self {
+    pub fn new(opts: &ccx_decoder_dtvcc_settings) -> Self {
         // closely follows `dtvcc_init` at `src/lib_ccx/ccx_dtvcc.c:76`
 
-        let report = unsafe { opts.report.as_mut().unwrap() };
-        report.reset_count = 0;
+        let report = opts.report;
+        unsafe {
+            (*report).reset_count = 0;
+        }
 
         let is_active = false;
-        let _no_rollup = is_true(opts.no_rollup);
-        let _active_services_count = opts.active_services_count as u8;
+        let no_rollup = is_true(opts.no_rollup);
+        let active_services_count = opts.active_services_count as u8;
         let services_active = opts.services_enabled;
 
         // `dtvcc_clear_packet` does the following
@@ -63,11 +65,11 @@ impl<'a> Dtvcc<'a> {
         let last_sequence = CCX_DTVCC_NO_LAST_SEQUENCE;
 
         let report_enabled = is_true(opts.print_file_reports);
-        let timing = unsafe { opts.timing.as_mut() }.unwrap();
+        let timing = opts.timing;
 
         // unlike C, here the decoders are allocated on the stack as an array.
         let decoders = {
-            const INIT: Option<dtvcc_service_decoder> = None;
+            const INIT: Option<Box<dtvcc_service_decoder>> = None;
             let mut decoders = [INIT; CCX_DTVCC_MAX_SERVICES];
 
             decoders
@@ -79,7 +81,7 @@ impl<'a> Dtvcc<'a> {
                         return;
                     }
 
-                    let mut decoder = dtvcc_service_decoder {
+                    let mut decoder = Box::new(dtvcc_service_decoder {
                         // we cannot allocate this on the stack as `dtvcc_service_decoder` is a C
                         // struct cannot be changed trivially
                         tv: Box::into_raw(Box::new(dtvcc_tv_screen {
@@ -88,13 +90,13 @@ impl<'a> Dtvcc<'a> {
                             ..dtvcc_tv_screen::default()
                         })),
                         ..dtvcc_service_decoder::default()
-                    };
+                    });
 
                     decoder.windows.iter_mut().for_each(|w| {
                         w.memory_reserved = 0;
                     });
 
-                    unsafe { dtvcc_windows_reset(&mut decoder) };
+                    unsafe { dtvcc_windows_reset(decoder.as_mut()) };
 
                     *d = Some(decoder);
                 });
@@ -102,13 +104,13 @@ impl<'a> Dtvcc<'a> {
             decoders
         };
 
-        let encoder = None; // Unlike C, does not mention `encoder` and is initialised to `null` by default
+        let encoder = std::ptr::null_mut(); // Unlike C, does not mention `encoder` and is initialised to `null` by default
 
         Self {
             report,
             is_active,
-            no_rollup: _no_rollup,
-            active_services_count: _active_services_count,
+            no_rollup,
+            active_services_count,
             services_active,
             packet_length,
             is_header_parsed,
@@ -227,15 +229,15 @@ impl<'a> Dtvcc<'a> {
             }
 
             if block_length != 0 {
-                self.report.services[service_number as usize] = 1;
+                unsafe { (*self.report).services[service_number as usize] = 1 };
             }
 
             if service_number > 0 && is_true(self.services_active[(service_number - 1) as usize]) {
                 let decoder = &mut self.decoders[(service_number - 1) as usize];
-                decoder.unwrap().process_service_block(
+                decoder.as_mut().unwrap().process_service_block(
                     &self.packet[pos as usize..(pos + block_length) as usize],
-                    self.encoder.as_mut().unwrap(),
-                    self.timing,
+                    unsafe { self.encoder.as_mut().unwrap() },
+                    unsafe { self.timing.as_mut().unwrap() },
                     self.no_rollup,
                 );
             }
@@ -258,11 +260,11 @@ impl<'a> Dtvcc<'a> {
     }
 }
 
-impl<'a> Drop for Dtvcc<'a> {
+impl Drop for Dtvcc {
     fn drop(&mut self) {
         // closely follows `dtvcc_free` at `src/lib_ccx/ccx_dtvcc.c:126`
         for i in 0..CCX_DTVCC_MAX_SERVICES {
-            if let Some(mut decoder) = self.decoders[i] {
+            if let Some(decoder) = self.decoders[i].as_mut() {
                 if !is_true(self.services_active[i]) {
                     continue;
                 }
@@ -279,9 +281,7 @@ impl<'a> Drop for Dtvcc<'a> {
                     window.memory_reserved = 0;
                 });
 
-                unsafe {
-                    decoder.tv.drop_in_place();
-                }
+                unsafe { decoder.tv.drop_in_place() };
             }
         }
     }

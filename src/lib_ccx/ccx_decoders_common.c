@@ -18,7 +18,7 @@ made to reuse, not duplicate, as many functions as possible */
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
-extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *decoder_settings);
+extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *settings_dtvcc);
 extern void ccxr_dtvcc_free(void *dtvcc_rust);
 #endif
 
@@ -267,7 +267,7 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->noscte20 = setting->noscte20;
 
 #ifndef DISABLE_RUST
-	ctx->dtvcc = ccxr_dtvcc_init(setting->settings_dtvcc);
+	ctx->dtvcc_rust = ccxr_dtvcc_init(setting->settings_dtvcc);
 #endif
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
