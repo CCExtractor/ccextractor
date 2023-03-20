@@ -58,6 +58,10 @@ cd ccextractor/linux
 ./build -debug            # same as ./build_debug
 
 # compile with hardsubx
+You need to set these environment variables correctly according to your machine,
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
+
 ./build -hardsubx         # same as ./build_hardsubx
 
 # compile in debug mode without rust
@@ -106,6 +110,11 @@ sudo make install
      `-DWITH_OCR=ON` to enable OCR
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
+     
+(For hardsubx, you also need to set these environment variables correctly according to your machine)
+
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
 ### Compiling with GUI
 
