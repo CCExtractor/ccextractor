@@ -58,6 +58,10 @@ cd ccextractor/linux
 ./build -debug            # same as ./build_debug
 
 # compile with hardsubx
+You need to set these environment variables correctly according to your machine,
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
+
 ./build -hardsubx         # same as ./build_hardsubx
 
 # compile in debug mode without rust
@@ -106,6 +110,11 @@ sudo make install
      `-DWITH_OCR=ON` to enable OCR
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
+     
+(For hardsubx, you also need to set these environment variables correctly according to your machine)
+
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
 ### Compiling with GUI
 
@@ -182,6 +191,26 @@ The GUI for CCExtractor has been moved to a separate repository ([https://github
 
 ## Windows
 Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 
+
+Other dependencies are required through vcpkg, so you can follow below steps:
+1. Download vcpkg (prefer version `2023.02.24` as it is supported)
+2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
+```
+vcpkg integrate install
+```
+3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
+```
+setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+```
+3. Install dependencies from vcpkg
+if building Debug-Full, Release-Full (HardSubx)
+```
+vcpkg install ffmpeg leptonica tesseract
+```
+otherwise if you have Debug, Release
+```
+vcpkg install libpng
+```
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
