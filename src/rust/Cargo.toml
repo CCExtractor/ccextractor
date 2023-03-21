@@ -15,7 +15,7 @@ log = "0.4.0"
 env_logger = "0.8.4"
 iconv = "0.1.1"
 palette = "0.6.0"
-rsmpeg = { version = "0.14", optional = true, default-features = false, features = ["link_system_ffmpeg"] }
+rsmpeg = { version = "0.14", optional = true, default-features = false, features = ["link_system_ffmpeg", "ffmpeg5"] }
 tesseract-sys = { version = "0.5.14", optional = true, default-features = false}
 leptonica-sys = { version = "0.4.3", optional = true, default-features = false}
 
