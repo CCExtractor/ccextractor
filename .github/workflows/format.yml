@@ -51,6 +51,4 @@ jobs:
         run: cargo fmt --all -- --check
       - name: clippy
         run: |
-          FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
-          FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
           cargo clippy --all-features -- -D warnings
