@@ -463,9 +463,9 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rsmpeg"
-version = "0.14.0+ffmpeg.6.0"
+version = "0.14.1+ffmpeg.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a0a7d94d291c7a070254344e799e136879d8d7ddfef4d27be4f43fc38f94132"
+checksum = "055510ebd8693dfe70570352b19a9147314da95e7435477526b976fc83b04455"
 dependencies = [
  "libc",
  "paste",
@@ -481,9 +481,9 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rusty_ffmpeg"
-version = "0.13.0+ffmpeg.6.0"
+version = "0.13.1+ffmpeg.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43d757d403040f08d1a3b05905af00dfa00b01f5562f14588b1e8bccce6633ea"
+checksum = "0e7c726b08ea3ed199e21f6f4b3a1c23fc56a154be731b4445e4ef9ee004cffc"
 dependencies = [
  "bindgen 0.64.0",
  "camino",
