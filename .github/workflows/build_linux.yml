@@ -81,8 +81,6 @@ jobs:
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
       run: |
-        FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
-        FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
         make -j$(nproc)
       working-directory: build
     - name: Display version information

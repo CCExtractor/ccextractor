@@ -58,7 +58,7 @@ cd ccextractor/linux
 ./build -debug            # same as ./build_debug
 
 # compile with hardsubx
-You need to set these environment variables correctly according to your machine,
+[Optional] You need to set these environment variables correctly according to your machine,
      FFMPEG_INCLUDE_DIR=/usr/include 
      FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
@@ -111,7 +111,7 @@ sudo make install
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
      
-(For hardsubx, you also need to set these environment variables correctly according to your machine)
+([OPTIONAL] For hardsubx, you also need to set these environment variables correctly according to your machine)
 
      FFMPEG_INCLUDE_DIR=/usr/include 
      FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
@@ -195,22 +195,25 @@ Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target
 Other dependencies are required through vcpkg, so you can follow below steps:
 1. Download vcpkg (prefer version `2023.02.24` as it is supported)
 2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
-```
-vcpkg integrate install
-```
+     ```
+     vcpkg integrate install
+     ```
 3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
-```
-setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
-```
-3. Install dependencies from vcpkg
-if building Debug-Full, Release-Full (HardSubx)
-```
-vcpkg install ffmpeg leptonica tesseract
-```
-otherwise if you have Debug, Release
-```
-vcpkg install libpng
-```
+     ```
+     setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+     ```
+4. Install dependencies from vcpkg
+
+     In this step we are using `x64-windows-static-md` triplet, but you will have to use the triplet you set in Step 3
+
+     if building Debug-Full, Release-Full (HardSubx)
+     ```
+     vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static-md
+     ```
+     otherwise if you have Debug, Release
+     ```
+     vcpkg install libpng --triplet x64-windows-static-md
+     ```
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
