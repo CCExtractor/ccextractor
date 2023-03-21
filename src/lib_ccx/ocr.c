@@ -691,6 +691,54 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	return text_out;
 }
 
+void erode(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color)
+{
+	int background_index;
+	for (background_index = 0; background_index < nb_color; background_index++)
+	{
+		if (alpha[background_index])
+		{
+			break;
+		}
+	}
+	// we will use a 2*2 kernel for the erosion
+	for (int row = 0; row < h - 1; row++)
+	{
+		for (int col = 0; col < w - 1; col++)
+		{
+			if (alpha[bitmap[row * w + col]] || alpha[bitmap[(row + 1) * w + col]] ||
+			    alpha[bitmap[row * w + (col + 1)]] || alpha[bitmap[(row + 1) * w + (col + 1)]])
+			{
+				bitmap[row * w + col] = background_index;
+			}
+		}
+	}
+}
+
+void dilate(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color)
+{
+	int foreground_index;
+	for (foreground_index = 0; foreground_index < nb_color; foreground_index++)
+	{
+		if (!alpha[foreground_index])
+		{
+			break;
+		}
+	}
+	// we will use a 2*2 kernel for the erosion
+	for (int row = 0; row < h - 1; row++)
+	{
+		for (int col = 0; col < w - 1; col++)
+		{
+			if (!(alpha[bitmap[row * w + col]] && alpha[bitmap[(row + 1) * w + col]] &&
+			      alpha[bitmap[row * w + (col + 1)]] && alpha[bitmap[(row + 1) * w + (col + 1)]]))
+			{
+				bitmap[row * w + col] = foreground_index;
+			}
+		}
+	}
+}
+
 /*
  * @param alpha out
  * @param intensity in
@@ -701,7 +749,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
  * @param nb_color in
  */
 static int quantize_map(png_byte *alpha, png_color *palette,
-			uint8_t *bitmap, int size, int max_color, int nb_color)
+			uint8_t *bitmap, int w, int h, int max_color, int nb_color)
 {
 	/*
 	 * occurrence of color in image
@@ -748,7 +796,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	memset(mcit, 0, nb_color * sizeof(uint32_t));
 
 	/* calculate histogram of image */
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < w * h; i++)
 	{
 		histogram[bitmap[i]]++;
 	}
@@ -823,6 +871,8 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 			palette[iot[i]].green = palette[index].green;
 		}
 	}
+	erode(palette, alpha, bitmap, w, h, nb_color);
+	dilate(palette, alpha, bitmap, w, h, nb_color);
 #ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 	for (int i = 0; i < nb_color; i++)
@@ -887,7 +937,7 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 	switch (ocr_quantmode)
 	{
 		case 1:
-			quantize_map(alpha, palette, rect->data0, size, 3, rect->nb_colors);
+			quantize_map(alpha, palette, rect->data0, rect->w, rect->h, 3, rect->nb_colors);
 			break;
 
 			// Case 2 reduces the color set of the image
