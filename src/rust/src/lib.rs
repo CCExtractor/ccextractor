@@ -76,6 +76,17 @@ extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encod
     unsafe { (*dtvcc_rust).encoder = encoder };
 }
 
+#[no_mangle]
+extern "C" fn ccxr_process_data(
+    dtvcc_rust: *mut Dtvcc,
+    cc_valid: u8,
+    cc_type: u8,
+    data1: u8,
+    data2: u8,
+) {
+    unsafe { dtvcc_rust.as_mut().unwrap() }.process_cc_data(cc_valid, cc_type, data1, data2);
+}
+
 /// Process cc_data
 ///
 /// # Safety

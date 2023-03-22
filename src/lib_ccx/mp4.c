@@ -16,6 +16,11 @@
 
 #define GF_ISOM_SUBTYPE_C708 GF_4CC('c', '7', '0', '8')
 
+#ifndef DISABLE_RUST
+extern void ccxr_process_data(void *dtvcc_rust, unsigned char cc_valid, unsigned char cc_char, unsigned char data1, unsigned char data2);
+extern void ccxr_dtvcc_set_encoder(void *dtvcc_rust, void *encoder);
+#endif
+
 static short bswap16(short v)
 {
 	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
@@ -394,8 +399,13 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 					continue;
 				}
 				// WARN: otherwise cea-708 will not work
+#ifdef DISABLE_RUST
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx;
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+#else
+				ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, (void *)enc_ctx);
+				ccxr_process_data(dec_ctx->dtvcc_rust, cc_valid, cc_type, cc_data[1], cc_data[2]);
+#endif
 				cb_708++;
 			}
 			if (ctx->write_format == CCX_OF_MCC)
