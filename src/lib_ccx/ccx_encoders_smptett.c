@@ -206,7 +206,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			row1 = ((100 * row) / (ROWS / 0.8)) + 10;
 			// Split integer and fractional parts of float
 			r1_i = (int)row1;
-			r1_d = (int)((row1 - r1_i) * 100);
+			r1_d = (int)((row1 - r1_i) * 1000);
 
 			for (int column = 0; column < COLUMNS; column++)
 			{
@@ -226,13 +226,13 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 			col1 = ((100 * firstcol) / (COLUMNS / 0.8)) + 10;
 			// Split integer and fractional parts of float
 			c1_i = (int)col1;
-			c1_d = (int)((col1 - c1_i) * 100);
+			c1_d = (int)((col1 - c1_i) * 1000);
 
 			if (firstcol >= 0)
 			{
 				wrote_something = 1;
 
-				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%u.%02u%% %u.%02u%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, c1_i, c1_d, r1_i, r1_d);
+				sprintf(str, "      <p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\" tts:origin=\"%u.%03u%% %u.%03u%%\">\n        <span>", h1, m1, s1, ms1, h2, m2, s2, ms2, c1_i, c1_d, r1_i, r1_d);
 
 				if (context->encoding != CCX_ENC_UNICODE)
 				{
