@@ -6,7 +6,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     -debug)
       DEBUG=true
-      BLD_FLAGS="$BLD_FLAGS -g"
+      BLD_FLAGS="$BLD_FLAGS -g -fsanitize=address"
       RUST_PROFILE=""
       RUST_LIB="rust/debug/libccx_rust.a"
       shift
