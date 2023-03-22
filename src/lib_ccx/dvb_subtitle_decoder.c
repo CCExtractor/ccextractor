@@ -1600,7 +1600,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				break;
 		}
 
-		rect->data1 = malloc(1024);
+		if (rect->data1 == NULL) {
+		    rect->data1 = malloc(1024);
+		}
 		memset(rect->data1, 0, 1024);
 		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
 		assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);

@@ -18,17 +18,21 @@ Note:If you installed ffmpeg on non-standard location, please change/update your
 ### Download and Install FFmpeg on your Windows pc:
 1. Download vcpkg (prefer version `2023.02.24` as it is supported)
 2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
-```
-vcpkg integrate install
-```
+	```
+	vcpkg integrate install
+	```
 3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
-```
-setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
-```
-3. Install ffmpeg from vcpkg
-```
-vcpkg install ffmpeg
-```
+	```
+	setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+	```
+4. Install ffmpeg from vcpkg
+
+
+	In this step we are using `x64-windows-static-md` triplet, but you will have to use the triplet you set in Step 3
+
+	```
+	vcpkg install ffmpeg --triplet x64-windows-static-md
+	```
 
 ## How to compile ccextractor
 

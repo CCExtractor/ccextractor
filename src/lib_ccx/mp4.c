@@ -617,6 +617,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 						GF_AVCConfigSlot *seqcnf = (GF_AVCConfigSlot *)gf_list_get(cnf->sequenceParameterSets, j);
 						do_NAL(enc_ctx, dec_ctx, (unsigned char *)seqcnf->data, seqcnf->size, &dec_sub);
 					}
+					gf_odf_avc_cfg_del(cnf);
 				}
 				if (process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0)
 				{
