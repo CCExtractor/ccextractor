@@ -651,6 +651,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						last_font_tag = font_tag;
 					}
 					last_font_tag_end = strstr(last_font_tag, ">");
+					if (last_font_tag_end > line_end)
+						last_font_tag_end = NULL;
 					if (last_font_tag_end)
 					{
 						last_font_tag_end += 1; // move string to the "right" if ">" was found, otherwise leave empty string (solves #1084)
