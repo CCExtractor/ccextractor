@@ -672,14 +672,14 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					line_start = line_end + 1;
 				}
 				*new_text_out_iter = '\0';
-				free(text_out);
+				freep(&text_out);
 				text_out = new_text_out;
 			}
 		}
 		TessResultIteratorDelete(ri);
 	}
 	// End Color Detection
-
+	freep(&text_out);
 	boxDestroy(&crop_points);
 
 	pixDestroy(&pix);
