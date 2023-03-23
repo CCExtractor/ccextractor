@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / common tools sub-project
@@ -104,6 +104,7 @@ GF_BitStream *gf_bs_from_file(FILE *f, u32 mode);
 \brief bitstream destructor from file handle
 
 Deletes the bitstream object. If the buffer was created by the bitstream, it is deleted if still present.
+\warning If the bitstream was constructed from a FILE object in write mode, the FILE object MUST be closed after destructing the bitstream
 \param bs the target bitstream
  */
 void gf_bs_del(GF_BitStream *bs);
@@ -178,7 +179,7 @@ Double gf_bs_read_double(GF_BitStream *bs);
 /*!
 \brief data reading
 
-Reads a data buffer. Emultation prevention byte removal is not applied here !
+Reads a data buffer. Emultation prevention byte removal is NOT applied here
 \param bs the target bitstream
 \param data the data buffer to be filled
 \param nbBytes the amount of bytes to read
@@ -486,7 +487,7 @@ void gf_bs_get_content_no_truncate(GF_BitStream *bs, u8 **output, u32 *outSize, 
 \brief byte skipping
 
 Skips bytes in the bitstream. In Write mode, this will write the 0 integer value for memory-based bitstreams or seek the stream
- for file-based bitstream. In read mode, emultation prevention byte removal is not applied !
+ for file-based bitstream. In read mode, emultation prevention byte  is applied if enabled
 \param bs the target bitstream
 \param nbBytes the number of bytes to skip
  */
@@ -563,7 +564,6 @@ u64 gf_bs_get_refreshed_size(GF_BitStream *bs);
 /*!
 \brief transfer content from source bitstream to destination bitstream
 
-Returns the size of the associated buffer/file.
 \param dst the target bitstream
 \param src the source bitstream.
 \param keep_src If not set, the source bitstream is empty after calling the function
@@ -581,13 +581,22 @@ Flushes bitstream contet to disk
 void gf_bs_flush(GF_BitStream *bs);
 
 /*!
-\brief AVC&HEVC Annex B mode, only used for read mode
+\brief NALU-based Annex B mode, only used for read mode
 
-Enables or disable emulation byte prevention for AVC and HEVC annex B formats in read mode. This does NOT apply to \ref gf_bs_read_data nor  \ref gf_bs_skip_bytes
+Enables or disable emulation byte prevention for NALU-based  annex B formats in read mode. This does NOT apply to \ref gf_bs_read_data nor  \ref gf_bs_skip_bytes
 \param bs the target bitstream
 \param do_remove if true, emulation prevention bytes will be removed
  */
 void gf_bs_enable_emulation_byte_removal(GF_BitStream *bs, Bool do_remove);
+
+/*!
+\brief NALU-based Annex B mode, only used for read mode
+
+Enables or disable emulation byte prevention for NALU-based  annex B formats in read mode.
+\param bs the target bitstream
+\return number of bytes currently removed
+ */
+u32 gf_bs_get_emulation_byte_removed(GF_BitStream *bs);
 
 /*!
 \brief Inserts a data block, moving bytes to the end
@@ -622,6 +631,45 @@ Gets the current cookie on the bitstream
 \return the current cookie value
  */
 u64 gf_bs_get_cookie(GF_BitStream *bs);
+
+/*!
+\brief Reads string
+
+reads utf-8 NULL-terminated string - bitstream must be aligned
+\param bs the target bitstream
+\return the string read or NULL if error - MUST be freed by user
+ */
+char *gf_bs_read_utf8(GF_BitStream *bs);
+
+/*!
+\brief Writes string
+
+Writes utf-8 NULL-terminated string - bitstream must be aligned
+\param bs the target bitstream
+\param str UTF-8 string to write
+\return error if any
+ */
+GF_Err gf_bs_write_utf8(GF_BitStream *bs, const char *str);
+
+
+/*!
+\brief Marks overflow access
+
+Marks the bitstream as overflown (reading outside of buffer range). Marking is done automatically when reading but can be forced using this function.
+
+\param bs the target bitstream
+\param reset if GF_TRUE, reset overflown state, otherwise mark as overflown
+ */
+void gf_bs_mark_overflow(GF_BitStream *bs, Bool reset);
+
+/*!
+\brief Gets overflow state
+
+Gets overflow state of the bitstream
+\param bs the target bitstream
+\return 2 if an overflow was marked by user using \ref gf_bs_mark_overflow, 1 if an overflow occured, 0 otherwise
+ */
+u32 gf_bs_is_overflow(GF_BitStream *bs);
 
 /*! @} */
 
