@@ -1,8 +1,8 @@
 /*
  *  avilib.h
  *
- *  Copyright (C) Thomas Östreich - June 2001
- *  multiple audio track support Copyright (C) 2002 Thomas Östreich
+ *  Copyright (C) Thomas ï¿½streich - June 2001
+ *  multiple audio track support Copyright (C) 2002 Thomas ï¿½streich
  *
  *  Original code:
  *  Copyright (C) 1999 Rainer Johanni <Rainer@Johanni.de>
@@ -62,7 +62,7 @@ typedef struct
 //
 #define AVI_INDEX_2FIELD     0x01             // when fields within frames
 // are also indexed
-
+ 
 
 
 typedef struct _avisuperindex_entry {
