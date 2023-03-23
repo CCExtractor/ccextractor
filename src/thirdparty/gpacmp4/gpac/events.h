@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2020
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / Events management
@@ -42,7 +42,7 @@ extern "C" {
 \ingroup playback_grp
 \brief Event system used by GPAC playback.
 
-This section documents the event structures used by the terminal, the compositor, input modules and output rendering modules for communication.
+This section documents the event structures used by thethe compositor, input modules and output rendering modules for communication.
 @{
  */
 
@@ -74,6 +74,8 @@ typedef struct
 	u32 button;
 	/*key modifier*/
 	u32 key_states;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventMouse;
 
 /*! Mouse event structure
@@ -91,6 +93,8 @@ typedef struct
 	Fixed pinch;
 	/*number of fingers detected*/
 	u32 num_fingers;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventMultiTouch;
 
 /*! Keyboard key event
@@ -106,6 +110,8 @@ typedef struct
 	u32 hw_code;
 	/*key modifier*/
 	u32 flags;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventKey;
 
 /*! Keyboard character event
@@ -117,17 +123,39 @@ typedef struct
 	u8 type;
 	/*above virtual key code*/
 	u32 unicode_char;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventChar;
+
+/*! Display orientation */
+typedef enum
+{
+	/*! Unknown display orientation */
+    GF_DISPLAY_MODE_UNKNOWN=0,
+    /*! portrait display orientation*/
+    GF_DISPLAY_MODE_PORTRAIT,
+    /*! landscape display orientation (+90deg anti-clockwise from portrait)*/
+    GF_DISPLAY_MODE_LANDSCAPE,
+    /*! inverted landscape display orientation (-90deg anti-clockwise from portrait)*/
+    GF_DISPLAY_MODE_LANDSCAPE_INV,
+    /*! upside down portrait display orientation (+180deg anti-clockwise from portrait)*/
+    GF_DISPLAY_MODE_PORTRAIT_INV
+} GF_DisplayOrientationType;
 
 /*! Window resize event
 	event proc return value: ignored
 */
 typedef struct
 {
-	/*GF_EVENT_SIZE*/
+	/*GF_EVENT_SIZE, GF_EVENT_SCENE_SIZE*/
 	u8 type;
 	/*width and height*/
 	u32 width, height;
+	/*display orientation */
+	GF_DisplayOrientationType orientation;
+	/*ID of window the event occured in (driver to app only)
+	For GF_EVENT_SCENE_SIZE, a value different from 0 indicates the root node is connected (scene is parsed)*/
+	u32 window_id;
 } GF_EventSize;
 
 /*! Video setup (2D or 3D) event
@@ -151,7 +179,7 @@ typedef struct
 
 	Bool disable_vsync;
 
-	// resources must be resetup before next render step (this is mainly due to discard all openGL textures and cached objects) - inly used when sent from plugin to term
+	// resources must be resetup before next render step (this is mainly due to discard all OpenGL textures and cached objects) - inly used when sent from plugin to term
 	Bool hw_reset;
 } GF_EventVideoSetup;
 
@@ -165,6 +193,8 @@ typedef struct
 	u8 type;
 	/*0: hidden - 1: visible - 2: fullscreen*/
 	u32 show_type;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventShow;
 
 /*! Mouse cursor event
@@ -200,6 +230,8 @@ typedef struct
 	u32 relative;
 	/*0: left/top, 1: middle, 2: right/bottom*/
 	u8 align_x, align_y;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventMove;
 
 /*! Media duration event
@@ -218,7 +250,7 @@ typedef struct
 
 /*! Hyperlink navigation event
 	event proc return value: 0 if URL not supported, 1 if accepted (it is the user responsability to load the url)
-	YOU SHALL NOT DIRECTLY OPEN THE NEW URL IN THE EVENT PROC, THIS WOULD DEADLOCK THE TERMINAL
+	YOU SHALL NOT DIRECTLY OPEN THE NEW URL IN THE EVENT PROC, THIS WOULD DEADLOCK THE COMPOSITOR
 */
 typedef struct
 {
@@ -285,7 +317,7 @@ typedef struct
 } GF_EventConnect;
 
 /*! Addon connection notification event
-	event proc return value: 1 to indicate the terminal should attempt a default layout for this addon, 0: nothing will be done
+	event proc return value: 1 to indicate the compositor should attempt a default layout for this addon, 0: nothing will be done
 */
 typedef struct
 {
@@ -300,14 +332,20 @@ typedef struct
 */
 typedef struct
 {
-	/*GF_EVENT_AUTHORIZATION*/
+	/*! GF_EVENT_AUTHORIZATION*/
 	u8 type;
-	/*the URL the auth request is for*/
+	/*! set to GF_TRUE if TLS is used*/
+	Bool secure;
+	/*! the URL the auth request is for*/
 	const char *site_url;
-	/*user name (provided buffer can hold 50 bytes). It may already be formated, or an empty ("") string*/
+	/*! user name (provided buffer can hold 50 bytes). It may already be formatted, or an empty ("") string*/
 	char *user;
-	/*password (provided buffer can hold 50 bytes)*/
+	/*! password (provided buffer can hold 50 bytes)*/
 	char *password;
+	/*! async function to call back once pass is entered. If NULL, user/password must be set in the event*/
+	void (*on_usr_pass)(void *usr_cbk, const char *usr_name, const char *password, Bool store_info);
+	/*! user data for async function*/
+	void *async_usr_data;
 } GF_EventAuthorize;
 
 
@@ -316,9 +354,9 @@ typedef struct
 */
 typedef struct
 {
-	/*GF_EVENT_SYS_COLORS*/
+	/*! GF_EVENT_SYS_COLORS*/
 	u8 type;
-	/*ARGB colors, in order:
+	/*! ARGB colors, in order:
 	ActiveBorder, ActiveCaption, AppWorkspace, Background, ButtonFace, ButtonHighlight, ButtonShadow,
 	ButtonText, CaptionText, GrayText, Highlight, HighlightText, InactiveBorder, InactiveCaption,
 	InactiveCaptionText, InfoBackground, InfoText, Menu, MenuText, Scrollbar, ThreeDDarkShadow,
@@ -344,6 +382,8 @@ typedef struct {
 	u8 type;
 	u32 nb_files;
 	char **files;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventOpenFile;
 
 /*! Orientation sensor change event
@@ -353,9 +393,25 @@ typedef struct
 {
 	/*GF_EVENT_SENSOR_ORIENTATION*/
 	u8 type;
-	/*device orientation as quaternion if w is not 0, or as radians otherwise*/
+	/* device orientation as quaternion if w is not 0, or as radians otherwise*/
 	Float x, y, z, w;
-} GF_EventSensor;
+} GF_EventOrientationSensor;
+
+/*! GPS sensor change event
+	event proc return value: ignored
+*/
+typedef struct
+{
+	/*GF_EVENT_SENSOR_GPS*/
+	u8 type;
+	/* position in degrees*/
+	Double longitude, latitude;
+	/* altitude in meters above the WGS84 reference ellipsoid*/
+	Double altitude;
+	Float accuracy, bearing;
+	//ms since unix EPOCH
+	u64 timestamp;
+} GF_EventGPS;
 
 
 /*! Orientation sensor activation event
@@ -383,6 +439,8 @@ typedef struct
 	- char * for COPY_TEXT, must be freed by caller
 	*/
 	char *text;
+	/*ID of window the event occured in (driver to app only)*/
+	u32 window_id;
 } GF_EventClipboard;
 
 
@@ -394,7 +452,8 @@ typedef union
 	GF_EventMultiTouch mtouch;
 	GF_EventKey key;
 	GF_EventChar character;
-	GF_EventSensor sensor;
+	GF_EventOrientationSensor sensor;
+	GF_EventGPS gps;
 	GF_EventSize size;
 	GF_EventShow show;
 	GF_EventDuration duration;
