@@ -123,8 +123,8 @@ static void short2str(unsigned char *dst, s32 n)
 
 static u64 str2ullong(unsigned char *str)
 {
-	u64 r = (str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24));
-	u64 s = (str[4] | (str[5]<<8) | (str[6]<<16) | (str[7]<<24));
+	u64 r = ((u32)str[0] | ((u32)str[1]<<8) | ((u32)str[2]<<16) | ((u32)str[3]<<24));
+	u64 s = ((u32)str[4] | ((u32)str[5]<<8) | ((u32)str[6]<<16) | ((u32)str[7]<<24));
 #ifdef __GNUC__
 	return ((s<<32)&0xffffffff00000000ULL)|(r&0xffffffff);
 #else
@@ -134,11 +134,11 @@ static u64 str2ullong(unsigned char *str)
 
 static u32 str2ulong(unsigned char *str)
 {
-	return ( str[0] | (str[1]<<8) | (str[2]<<16) | (str[3]<<24) );
+	return ( (u32)str[0] | ((u32)str[1]<<8) | ((u32)str[2]<<16) | ((u32)str[3]<<24) );
 }
 static u32 str2ushort(unsigned char *str)
 {
-	return ( str[0] | (str[1]<<8) );
+	return ( (u32)str[0] | ((u32)str[1]<<8) );
 }
 
 // bit 31 denotes a keyframe
@@ -705,10 +705,12 @@ void AVI_set_audio(avi_t *AVI, int channels, int rate, int bits, int format, int
 }
 
 #define OUT4CC(s) \
-   if(nhb<=HEADERBYTES-4) memcpy(AVI_header+nhb,s,4); nhb += 4
+   if(nhb<=HEADERBYTES-4) memcpy(AVI_header+nhb,s,4); \
+   nhb += 4
 
 #define OUTLONG(n) \
-   if(nhb<=HEADERBYTES-4) long2str(AVI_header+nhb, (s32)(n)); nhb += 4
+   if(nhb<=HEADERBYTES-4) long2str(AVI_header+nhb, (s32)(n)); \
+   nhb += 4
 
 #define OUTSHRT(n) \
    if(nhb<=HEADERBYTES-2) { \
@@ -1060,7 +1062,7 @@ static int avi_close_output_file(avi_t *AVI)
 	}
 
 
-	/* Try to ouput the index entries. This may fail e.g. if no space
+	/* Try to output the index entries. This may fail e.g. if no space
 	   is left on device. We will report this as an error, but we still
 	   try to write the header correctly (so that the file still may be
 	   readable in the most cases */
@@ -1882,8 +1884,8 @@ avi_t *AVI_open_fd(FILE *fd, int getIndex)
 
 int avi_parse_input_file(avi_t *AVI, int getIndex)
 {
-	int i, rate, scale, idx_type;
-	s64 n;
+	int rate, scale, idx_type;
+	s64 n, i;
 	unsigned char *hdrl_data;
 	u64 header_offset=0;
 	int hdrl_len=0;
@@ -1937,6 +1939,7 @@ int avi_parse_input_file(avi_t *AVI, int getIndex)
 				n -= 4;
 			if(strnicmp(data,"hdrl",4) == 0)
 			{
+				if (n>0xFFFFFFFF) ERR_EXIT(AVI_ERR_READ)
 				hdrl_len = (u32) n;
 				hdrl_data = (unsigned char *) gf_malloc((u32)n);
 				if(hdrl_data==0) ERR_EXIT(AVI_ERR_NO_MEM);
@@ -2089,8 +2092,10 @@ int avi_parse_input_file(avi_t *AVI, int getIndex)
 						AVI->compressor2[4] = 0;
 
 						if (n>40) {
+							if (n>0xFFFFFFFF) ERR_EXIT(AVI_ERR_READ)
 							AVI->extradata_size = (u32) (n - 40);
 							AVI->extradata = gf_malloc(sizeof(u8)* AVI->extradata_size);
+							if (!AVI->extradata) ERR_EXIT(AVI_ERR_NO_MEM)
 							memcpy(AVI->extradata, hdrl_data + i + 40, AVI->extradata_size);
 						}
 
@@ -2102,7 +2107,7 @@ int avi_parse_input_file(avi_t *AVI, int getIndex)
 						int wfes;
 
 						if ((u32) (hdrl_len - i) < sizeof(alWAVEFORMATEX))
-							wfes = hdrl_len - i;
+							wfes = (int) (hdrl_len - i);
 						else
 							wfes = sizeof(alWAVEFORMATEX);
 						wfe = (alWAVEFORMATEX *)gf_malloc(sizeof(alWAVEFORMATEX));
