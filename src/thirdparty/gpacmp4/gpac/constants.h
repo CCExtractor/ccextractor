@@ -2,7 +2,7 @@
  *			GPAC - Multimedia Framework C SDK
  *
  *			Authors: Jean Le Feuvre
- *			Copyright (c) Telecom ParisTech 2000-2019
+ *			Copyright (c) Telecom ParisTech 2000-2022
  *					All rights reserved
  *
  *  This file is part of GPAC / exported constants
@@ -112,17 +112,17 @@ enum
  */
 const char *gf_stream_type_name(u32 streamType);
 
+/*! Gets the stream type short name based on stream type (usually the lower case value of the stream name)
+\param streamType stream type GF_STREAM_XXX as defined in constants.h
+\return NULL if unknown, otherwise value
+ */
+const char *gf_stream_type_short_name(u32 streamType);
 
 /*! Gets the stream type by name
 \param name name of the stream type to query
 \return GF_STREAM_UNKNOWN if unknown, otherwise GF_STREAM_XXX value
  */
 u32 gf_stream_type_by_name(const char *name);
-
-/*! Gets the list of names of all stream types defined
-\return names of all stream types defined
- */
-const char *gf_stream_type_all_names();
 
 /*! Enumerates defined stream types
 \param idx index of the stream type, 0-based
@@ -171,7 +171,7 @@ typedef enum
 
 	/*!32 bit ARGB. Component ordering in bytes is A-R-G-B.*/
 	GF_PIXEL_ARGB		=	GF_4CC('A','R','G','B'),
-	/*!32 bit RGBA (openGL like). Component ordering in bytes is R-G-B-A.*/
+	/*!32 bit RGBA (OpenGL like). Component ordering in bytes is R-G-B-A.*/
 	GF_PIXEL_RGBA		=	GF_4CC('R','G','B', 'A'),
 	/*!32 bit BGRA. Component ordering in bytes is B-G-R-A.*/
 	GF_PIXEL_BGRA		=	GF_4CC('B','G','R','A'),
@@ -182,16 +182,15 @@ typedef enum
 	GF_PIXEL_RGBD		=	GF_4CC('R', 'G', 'B', 'D'),
 	/*!RGB24 + depth plane (7 lower bits) + shape mask. Component ordering in bytes is R-G-B-(S+D).*/
 	GF_PIXEL_RGBDS		=	GF_4CC('3', 'C', 'D', 'S'),
-	/*!Stereo RGB24 */
-	GF_PIXEL_RGBS		=	GF_4CC('R', 'G', 'B', 'S'),
-	/*!Stereo RGBA. Component ordering in bytes is R-G-B-A. */
-	GF_PIXEL_RGBAS		=	GF_4CC('R', 'G', 'A', 'S'),
 
 	/*internal format for OpenGL using pachek RGB 24 bit plus planar depth plane at the end of the image*/
 	GF_PIXEL_RGB_DEPTH = GF_4CC('R', 'G', 'B', 'd'),
 
+	/*generic pixel format uncv from ISO/IEC 23001-17*/
+	GF_PIXEL_UNCV = GF_4CC('u', 'n', 'c', 'v'),
+
 	/*!YUV packed 422 format*/
-	GF_PIXEL_YUYV		=	GF_4CC('Y','U','Y','2'),
+	GF_PIXEL_YUYV		=	GF_4CC('Y','U','Y','V'),
 	/*!YUV packed 422 format*/
 	GF_PIXEL_YVYU		=	GF_4CC('Y','V','Y','U'),
 	/*!YUV packed 422 format*/
@@ -199,8 +198,19 @@ typedef enum
 	/*!YUV packed 422 format*/
 	GF_PIXEL_VYUY		=	GF_4CC('V','Y','U','Y'),
 
+	/*!YUV packed 422 format 10 bits, little endian*/
+	GF_PIXEL_YUYV_10		=	GF_4CC('Y','U','Y','L'),
+	/*!YUV packed 422 format 10 bits, little endian*/
+	GF_PIXEL_YVYU_10		=	GF_4CC('Y','V','Y','L'),
+	/*!YUV packed 422 format 10 bits, little endian*/
+	GF_PIXEL_UYVY_10		=	GF_4CC('U','Y','V','L'),
+	/*!YUV packed 422 format 10 bits, little endian*/
+	GF_PIXEL_VYUY_10		=	GF_4CC('V','Y','U','L'),
+
 	/*!YUV planar format*/
-	GF_PIXEL_YUV		=	GF_4CC('Y','V','1','2'),
+	GF_PIXEL_YUV		=	GF_4CC('Y','U','1','2'),
+	/*!YVU planar format*/
+	GF_PIXEL_YVU		=	GF_4CC('Y','V','1','2'),
 	/*!YUV420p in 10 bits mode, little endian*/
 	GF_PIXEL_YUV_10	=	GF_4CC('Y','0','1','0'),
 	/*!YUV420p + Alpha plane*/
@@ -225,8 +235,20 @@ typedef enum
 	GF_PIXEL_YUV444		=	GF_4CC('Y','4','4','4'),
 	/*!444 YUV, 10 bits, little endian*/
 	GF_PIXEL_YUV444_10	=	GF_4CC('Y','4','1','0'),
+	/*!444 YUV packed*/
+	GF_PIXEL_YUV444_PACK	=	GF_4CC('Y','U','V','4'),
+	/*!444 VYU packed (v308) */
+	GF_PIXEL_VYU444_PACK	=	GF_4CC('V','Y','U','4'),
+	/*!444 YUV+Alpha packed*/
+	GF_PIXEL_YUVA444_PACK	=	GF_4CC('Y','A','4','p'),
+	/*!444 UYVA packed (v408) */
+	GF_PIXEL_UYVA444_PACK	=	GF_4CC('U','Y','V','A'),
+	/*!444 YUV 10 bit packed little endian (v410)*/
+	GF_PIXEL_YUV444_10_PACK	=	GF_4CC('Y','4','1','p'),
+	/*!422 YUV 10 bit packed in v210 format*/
+	GF_PIXEL_V210			= GF_4CC('v','2','1','0'),
 
-	/*!Unknown format exposed a single openGL texture to be consumed using samplerExternalOES*/
+	/*!Unknown format exposed a single OpenGL texture to be consumed using samplerExternalOES*/
 	GF_PIXEL_GL_EXTERNAL	=	GF_4CC('E','X','G','L')
 } GF_PixelFormat;
 
@@ -243,9 +265,16 @@ GF_PixelFormat gf_pixel_fmt_parse(const char *pf_name);
 */
 const char *gf_pixel_fmt_name(GF_PixelFormat pfmt);
 
+/*! checks if pixel format is known, does not throw error message
+\param pf_4cc pixel format code or 0
+\param pf_name pixel format name or short name or NULL
+\return GF_TRUE is format is known, GF_FALSE otherwise
+*/
+Bool gf_pixel_fmt_probe(GF_PixelFormat pf_4cc, const char *pf_name);
+
 /*! gets short name of pixel formats, as used for file extensions
 \param pfmt pixel format code
-\return pixel format short name
+\return pixel format short name, "unknown" if not found
 */
 const char *gf_pixel_fmt_sname(GF_PixelFormat pfmt);
 
@@ -254,9 +283,9 @@ const char *gf_pixel_fmt_sname(GF_PixelFormat pfmt);
 \param name name of the pixel format
 \param fileext file extension of the pixel format
 \param description description of the pixel format
-\return pixel format code, 0 if no more pixel formats are availble
+\return pixel format code, 0 if no more pixel formats are available
 */
-Bool gf_pixel_fmt_enum(u32 *idx, const char **name, const char **fileext, const char **description);
+GF_PixelFormat gf_pixel_fmt_enum(u32 *idx, const char **name, const char **fileext, const char **description);
 
 /*! gets the list of all supported pixel format names
 \return list of supported pixel format names
@@ -287,16 +316,51 @@ Bool gf_pixel_get_size_info(GF_PixelFormat pixfmt, u32 width, u32 height, u32 *o
 */
 u32 gf_pixel_get_bytes_per_pixel(GF_PixelFormat pixfmt);
 
+/*! Gets the number of bits per component
+\param pixfmt  pixel format code
+\return number of bits per component
+*/
+u32 gf_pixel_is_wide_depth(GF_PixelFormat pixfmt);
+
 /*! Gets the number of component per pixel
 \param pixfmt  pixel format code
 \return number of bytes per pixel
 */
 u32 gf_pixel_get_nb_comp(GF_PixelFormat pixfmt);
 
+/*! Checks if  pixel format is transparent
+\param pixfmt  pixel format code
+\return GF_TRUE if alpha channel is present, GF_FALSE otherwise
+*/
+Bool gf_pixel_fmt_is_transparent(GF_PixelFormat pixfmt);
+
+/*! Checks if format is YUV
+\param pixfmt  pixel format code
+\return GF_TRUE is YUV format, GF_FALSE otherwise (greyscale or RGB)
+*/
+Bool gf_pixel_fmt_is_yuv(GF_PixelFormat pixfmt);
+
+/*! gets pixel format associated with a given uncompressed video QT code
+\param qt_code the desired QT/ISOBMFF uncompressed video code
+\return the corresponding pixel format, or 0 if unknown code
+*/
+GF_PixelFormat gf_pixel_fmt_from_qt_type(u32 qt_code);
+/*! gets QY code associated with a given pixel format
+\param pixfmt the desired pixel format
+\return the corresponding QT code, or 0 if no asociation
+*/
+u32 gf_pixel_fmt_to_qt_type(GF_PixelFormat pixfmt);
+
 /*!
 \brief Codec IDs
 
-Codec ID identifies the stream coding type. The enum is devided into values less than 255, which are equivalent to MPEG-4 systems ObjectTypeIndication. Other values are 4CCs, usually matching ISOMEDIA sample entry types*/
+Codec ID identifies the stream coding type. The enum is divided into values less than 255, which are equivalent to MPEG-4 systems ObjectTypeIndication. Other values are 4CCs, usually matching ISOMEDIA sample entry types.
+
+Unless specified otherwise the decoder configuration is:
+- the one specified in MPEG-4 systems if any
+- or the one defined in ISOBMFF and derived specs (3GPP, dolby, etc) if any
+- or NULL
+*/
 typedef enum
 {
 	/*!Never used by PID declarations, but used by filters caps*/
@@ -364,7 +428,7 @@ typedef enum
 	GF_CODECID_MPEG2_PART3 = 0x69,
 	/*! codecid for MPEG-1 Video streams*/
 	GF_CODECID_MPEG1 = 0x6A,
-	/*! codecid for MPEG-1 Audio streams*/
+	/*! codecid for MPEG-1 Audio streams, layer 3*/
 	GF_CODECID_MPEG_AUDIO = 0x6B,
 	/*! codecid for JPEG streams*/
 	GF_CODECID_JPEG = 0x6C,
@@ -404,6 +468,8 @@ typedef enum
 	GF_CODECID_AC3 = GF_4CC('a','c','-','3'),
 	/*! codecid for enhanced AC-3 audio streams*/
 	GF_CODECID_EAC3 = GF_4CC('e','c','-','3'),
+	/*! codecid for Dolby TrueHS audio streams*/
+	GF_CODECID_TRUEHD = GF_4CC('m','l','p','a'),
 	/*! codecid for DRA audio streams*/
 	GF_CODECID_DRA = GF_4CC('d','r','a','1'),
 	/*! codecid for ITU G719 audio streams*/
@@ -444,11 +510,16 @@ typedef enum
 	/*! codecid for subtitle/text streams in tx3g / apple text format*/
 	GF_CODECID_TX3G = GF_4CC( 't', 'x', '3', 'g' ),
 
+	/*! codecid for SSA / ASS text streams (only demux -> tx3f conv)*/
+	GF_CODECID_SUBS_SSA = GF_4CC( 'a', 's', 's', 'a' ),
+
+	GF_CODECID_DVB_SUBS = GF_4CC( 'd', 'v', 'b', 's' ),
+	GF_CODECID_DVB_TELETEXT = GF_4CC( 'd', 'v', 'b', 't' ),
 	/*!
 		\brief OGG DecoderConfig
 
-	 The DecoderConfig for theora, vorbis, flac and opus contains all intitialization ogg packets for the codec
-	  and is formated as follows:\n
+	 The DecoderConfig for theora, vorbis and speek contains all intitialization ogg packets for the codec
+	  and is formatted as follows:\n
 	 \code
 	  while (dsi_size) {
 			bit(16) packet_size;
@@ -456,6 +527,11 @@ typedef enum
 			dsi_size -= packet_size;
 		}
 	 \endcode
+
+	 The DecoderConfig for FLAC is the full flac header without "fLaC" magic
+
+	 The DecoderConfig for OPUS is the full opus header without "OpusHead" magic
+
 	*/
 	/*! codecid for theora video streams*/
 	GF_CODECID_THEORA = GF_4CC('t','h','e','u'),
@@ -521,8 +597,24 @@ typedef enum
 
 	GF_CODECID_TMCD = GF_4CC('t','m','c','d'),
 
+	/*! codecid for FFV1*/
+	GF_CODECID_FFV1 = GF_4CC('f','f','v','1'),
 
 	GF_CODECID_FFMPEG = GF_4CC('F','F','I','D'),
+
+	/*! codecid for VVC video */
+	GF_CODECID_VVC = GF_4CC('v','v','c',' '),
+	GF_CODECID_VVC_SUBPIC = GF_4CC('v','v','c','s'),
+
+	/*! codecid for USAC / xHE-AACv2 audio */
+	GF_CODECID_USAC = GF_4CC('u','s','a','c'),
+
+	/*! codecid for MPEG-1 Audio streams, layer 1*/
+	GF_CODECID_MPEG_AUDIO_L1 = GF_4CC('m','p','a','1'),
+
+	GF_CODECID_MSPEG4_V3 = GF_4CC('D','I','V','3'),
+
+	GF_CODECID_ALAC = GF_4CC('A','L','A','C'),
 
 	//fake codec IDs for RTP
 	GF_CODECID_FAKE_MP2T = GF_4CC('M','P','2','T')
@@ -573,11 +665,17 @@ GF_CodecID gf_codecid_from_oti(u32 stream_type, u32 oti);
 */
 u32 gf_codecid_4cc_type(GF_CodecID codecid);
 
+/*! Checks if reframer/unframer exists for this codec in gpac
+\param codecid target codec ID
+\return GF_TRUE if reframer/unframer exist (bitstream reparse is possible), GF_FALSE otherwise
+*/
+Bool gf_codecid_has_unframer(GF_CodecID codecid);
+
 /*! Gets the codecid given the associated short name
 \param cname target codec short name
 \return codecid codec ID
 */
-GF_CodecID gf_codec_parse(const char *cname);
+GF_CodecID gf_codecid_parse(const char *cname);
 
 /*! Gets the raw file ext (one or more, | separated) for the given codecid
 \param codecid codec ID
@@ -733,12 +831,18 @@ typedef enum
 	GF_AUDIO_FMT_U8 = 1,
 	/*! sample = signed short Little Endian, interleaved channels*/
 	GF_AUDIO_FMT_S16,
+	/*! sample = signed short Big Endian, interleaved channels*/
+	GF_AUDIO_FMT_S16_BE,
 	/*! sample = signed integer, interleaved channels*/
 	GF_AUDIO_FMT_S32,
 	/*! sample = 1 float, interleaved channels*/
 	GF_AUDIO_FMT_FLT,
 	/*! sample = 1 double, interleaved channels*/
 	GF_AUDIO_FMT_DBL,
+	/*! sample = signed integer, interleaved channels*/
+	GF_AUDIO_FMT_S24,
+	/*! not a format, indicates the value of last packed format*/
+	GF_AUDIO_FMT_LAST_PACKED,
 	/*! sample = unsigned byte, planar channels*/
 	GF_AUDIO_FMT_U8P,
 	/*! sample = signed short, planar channels*/
@@ -749,8 +853,6 @@ typedef enum
 	GF_AUDIO_FMT_FLTP,
 	/*! sample = 1 double, planar channels*/
 	GF_AUDIO_FMT_DBLP,
-	/*! sample = signed integer, interleaved channels*/
-	GF_AUDIO_FMT_S24,
 	/*! sample = signed integer, planar channels*/
 	GF_AUDIO_FMT_S24P,
 } GF_AudioFormat;
@@ -799,21 +901,27 @@ Bool gf_audio_fmt_is_planar(GF_AudioFormat afmt);
 
 /*! Returns audio format for raw audio ISOBMFF sample description type
 \param msubtype ISOBMFF sample description type
-\return the associated audio format of 0 if not known
+\return the associated audio format or 0 if not known
  */
 GF_AudioFormat gf_audio_fmt_from_isobmf(u32 msubtype);
+
+/*! Returns QTFF/ISOBMFF sample description 4CC of an audio format
+\param afmt audio format to query
+\return the associated 4CC or 0 if not known
+ */
+u32 gf_audio_fmt_to_isobmf(GF_AudioFormat afmt);
 
 /*! enumerates audio formats
 \param idx index of the audio format, 0-based
 \param name name of the audio format
 \param fileext file extension of the pixel format
 \param desc audio format description
-\return audio format or 0 if no more audio formats are availble
+\return audio format or 0 if no more audio formats are available
 */
 GF_AudioFormat gf_audio_fmt_enum(u32 *idx, const char **name, const char **fileext, const char **desc);
 
 /*! get CICP layout code point from audio configuration
-\param nb_chan number of channels
+\param nb_chan total number of channels
 \param nb_surr number of surround channels
 \param nb_lfe number of LFE channels
 \return CICP layout code point format or 0 if unknown
@@ -832,11 +940,43 @@ u64 gf_audio_fmt_get_layout_from_cicp(u32 cicp_layout);
 */
 const char *gf_audio_fmt_get_layout_name_from_cicp(u32 cicp_layout);
 
+/*! get channel layout name
+\param chan_layout channel layout mask
+\return name of layout of "unknown" if unknown
+*/
+const char *gf_audio_fmt_get_layout_name(u64 chan_layout);
+
+
+/*! get channel layout from name
+\param name channel layout name
+\return channel layout mask
+*/
+u64 gf_audio_fmt_get_layout_from_name(const char *name);
+
 /*! get CICP layout value from channel layout mask 
 \param chan_layout channel layout mask
 \return CICP code point or 255 if unknown
 */
 u32 gf_audio_fmt_get_cicp_from_layout(u64 chan_layout);
+
+/*! get channel count from channel  layout
+\param chan_layout channel layout mask
+\return number of channels in this layout
+*/
+u32 gf_audio_fmt_get_num_channels_from_layout(u64 chan_layout);
+
+/*! get dloby chanmap value from cicp layout
+\param cicp_layout channel CICP layout
+\return dolby chanmap
+*/
+u16 gf_audio_fmt_get_dolby_chanmap(u32 cicp_layout);
+
+/*! enumerates CICP channel layout
+\param idx index of cicp layout value to query
+\param short_name set t o CICP name as used in GPAC - may be NULL
+\param ch_mask set t o audio channel mask, as used in GPAC - may be NULL
+\return CICP code point, or 0 if no more to enumerate*/
+u32 gf_audio_fmt_cicp_enum(u32 idx, const char **short_name, u64 *ch_mask);
 
 /*! Color primaries as defined by ISO/IEC 23001-8 / 23091-2
   */
@@ -988,6 +1128,11 @@ enum
 	GF_AVC_NALU_DV_RPU = 28,
 	/*! Dolby Vision EL */
 	GF_AVC_NALU_DV_EL = 30,
+
+	/*! NALU-FF extractor */
+	GF_AVC_NALU_FF_AGGREGATOR=30,
+	/*! NALU-FF aggregator */
+	GF_AVC_NALU_FF_EXTRACTOR=31,
 };
 
 
@@ -1015,6 +1160,10 @@ enum
 	/*! Type2 SI slice*/
 	GF_AVC_TYPE2_SI = 9
 };
+
+/*! Scheme Type only used internally to signal HLS sample AES in TS */
+#define GF_HLS_SAMPLE_AES_SCHEME	GF_4CC('s','a','e','s')
+
 
 /*! HEVC NAL unit types */
 enum
@@ -1077,6 +1226,12 @@ enum
 	GF_HEVC_NALU_SEI_PREFIX = 39,
 	/*! suffix SEI message*/
 	GF_HEVC_NALU_SEI_SUFFIX = 40,
+
+	/*! NALU-FF aggregator */
+	GF_HEVC_NALU_FF_AGGREGATOR=48,
+	/*! NALU-FF extractor */
+	GF_HEVC_NALU_FF_EXTRACTOR=49,
+
 	/*! Dolby Vision RPU */
 	GF_HEVC_NALU_DV_RPU = 62,
 	/*! Dolby Vision EL */
@@ -1085,6 +1240,55 @@ enum
 
 
 
+/*! VVC NAL unit types - vtm10) */
+enum
+{
+	/*! Trail N VVC slice*/
+	GF_VVC_NALU_SLICE_TRAIL = 0,
+	/*! STSA N VVC slice*/
+	GF_VVC_NALU_SLICE_STSA = 1,
+	/*! STSA N VVC slice*/
+	GF_VVC_NALU_SLICE_RADL = 2,
+	/*! STSA N VVC slice*/
+	GF_VVC_NALU_SLICE_RASL = 3,
+	/*! IDR with RADL VVC slice*/
+	GF_VVC_NALU_SLICE_IDR_W_RADL = 7,
+	/*! IDR DLP VVC slice*/
+	GF_VVC_NALU_SLICE_IDR_N_LP = 8,
+	/*! CRA VVC slice*/
+	GF_VVC_NALU_SLICE_CRA = 9,
+	/*! CRA VVC slice*/
+	GF_VVC_NALU_SLICE_GDR = 10,
+
+	/*! Operation Point Info */
+	GF_VVC_NALU_OPI = 12,
+	/*! Decode Parameter Set*/
+	GF_VVC_NALU_DEC_PARAM = 13,
+	/*! Video Parameter Set*/
+	GF_VVC_NALU_VID_PARAM = 14,
+	/*! Sequence Parameter Set*/
+	GF_VVC_NALU_SEQ_PARAM = 15,
+	/*! Picture Parameter Set*/
+	GF_VVC_NALU_PIC_PARAM = 16,
+	/*! APS prefix */
+	GF_VVC_NALU_APS_PREFIX = 17,
+	/*! APS suffix */
+	GF_VVC_NALU_APS_SUFFIX = 18,
+	/*! Picture Header*/
+	GF_VVC_NALU_PIC_HEADER = 19,
+	/*! AU delimiter*/
+	GF_VVC_NALU_ACCESS_UNIT = 20,
+	/*! End of sequence*/
+	GF_VVC_NALU_END_OF_SEQ = 21,
+	/*! End of stream*/
+	GF_VVC_NALU_END_OF_STREAM = 22,
+	/*! prefix SEI message*/
+	GF_VVC_NALU_SEI_PREFIX = 23,
+	/*! suffix SEI message*/
+	GF_VVC_NALU_SEI_SUFFIX = 24,
+	/*! Filler Data*/
+	GF_VVC_NALU_FILLER_DATA = 25,
+};
 /*! Number of defined QCELP rate sizes*/
 static const unsigned int GF_QCELP_RATE_TO_SIZE_NB = 7;
 /*! QCELP rate sizes - note that these sizes INCLUDE the rate_type header byte*/
@@ -1136,11 +1340,13 @@ typedef enum {
 	GF_ID3V2_FRAME_SYTC = GF_4CC('S','Y','T','C'),
 	GF_ID3V2_FRAME_TALB = GF_4CC('T','A','L','B'),
 	GF_ID3V2_FRAME_TBPM = GF_4CC('T','B','P','M'),
+	GF_ID3V2_FRAME_TCAT = GF_4CC('T','C','A','T'),
 	GF_ID3V2_FRAME_TCMP = GF_4CC('T','C','M','P'),
 	GF_ID3V2_FRAME_TCOM = GF_4CC('T','C','O','M'),
 	GF_ID3V2_FRAME_TCON = GF_4CC('T','C','O','N'),
 	GF_ID3V2_FRAME_TCOP = GF_4CC('T','C','O','P'),
 	GF_ID3V2_FRAME_TDAT = GF_4CC('T','D','A','T'),
+	GF_ID3V2_FRAME_TDES = GF_4CC('T','D','E','S'),
 	GF_ID3V2_FRAME_TDLY = GF_4CC('T','D','L','Y'),
 	GF_ID3V2_FRAME_TDRC = GF_4CC('T','D','R','C'),
 	GF_ID3V2_FRAME_TENC = GF_4CC('T','E','N','C'),
@@ -1151,6 +1357,7 @@ typedef enum {
 	GF_ID3V2_FRAME_TIT2 = GF_4CC('T','I','T','2'),
 	GF_ID3V2_FRAME_TIT3 = GF_4CC('T','I','T','3'),
 	GF_ID3V2_FRAME_TKEY = GF_4CC('T','K','E','Y'),
+	GF_ID3V2_FRAME_TKWD = GF_4CC('T','K','W','D'),
 	GF_ID3V2_FRAME_TLAN = GF_4CC('T','L','A','N'),
 	GF_ID3V2_FRAME_TLEN = GF_4CC('T','L','E','N'),
 	GF_ID3V2_FRAME_TMED = GF_4CC('T','M','E','D'),
@@ -1171,6 +1378,11 @@ typedef enum {
 	GF_ID3V2_FRAME_TRSN = GF_4CC('T','R','S','N'),
 	GF_ID3V2_FRAME_TRSO = GF_4CC('T','R','S','O'),
 	GF_ID3V2_FRAME_TSIZ = GF_4CC('T','S','I','Z'),
+	GF_ID3V2_FRAME_TSO2 = GF_4CC('T','S','O','2'),
+	GF_ID3V2_FRAME_TSOA = GF_4CC('T','S','O','A'),
+	GF_ID3V2_FRAME_TSOC = GF_4CC('T','S','O','C'),
+	GF_ID3V2_FRAME_TSOT = GF_4CC('T','S','O','T'),
+	GF_ID3V2_FRAME_TSOP = GF_4CC('T','S','O','P'),
 	GF_ID3V2_FRAME_TSRC = GF_4CC('T','S','R','C'),
 	GF_ID3V2_FRAME_TSSE = GF_4CC('T','S','S','E'),
 	GF_ID3V2_FRAME_TYER = GF_4CC('T','Y','E','R'),
@@ -1194,14 +1406,24 @@ enum
 {
 	/*! tag is a string*/
 	GF_ITAG_STR=0,
-	/*! tag is an int*/
-	GF_ITAG_INT,
-	/*! tag is a fraction*/
-	GF_ITAG_FRAC,
-	/*! tag is a boolean*/
+	/*! tag is an 8 bit int*/
+	GF_ITAG_INT8,
+	/*! tag is a 16 bit int*/
+	GF_ITAG_INT16,
+	/*! tag is a 32 bit int*/
+	GF_ITAG_INT32,
+	/*! tag is an 64 bits int*/
+	GF_ITAG_INT64,
+	/*! tag is a boolean (8bit) */
 	GF_ITAG_BOOL,
-	/*! tag is a string but name is matched as substring*/
-	GF_ITAG_SUBSTR,
+	/*! tag is ID3 genre tag, either 32 bit int or string*/
+	GF_ITAG_ID3_GENRE,
+	/*! tag is an fraction on 6 bytes (first 2 unused)*/
+	GF_ITAG_FRAC6,
+	/*! tag is an fraction on 8 bytes (first 2 and last 2 unused)*/
+	GF_ITAG_FRAC8,
+	/*! tag is a file*/
+	GF_ITAG_FILE,
 };
 /*! finds a tag by its ID3 value
  \param id3tag ID3 tag value
@@ -1223,15 +1445,21 @@ s32 gf_itags_find_by_name(const char *tag_name);
 
 /*! gets tag associated type
  \param tag_idx tag index
- \return corresponding tag type, 0 if error
+ \return corresponding tag type, -1 if error
 */
-u32 gf_itags_get_type(u32 tag_idx);
+s32 gf_itags_get_type(u32 tag_idx);
 
 /*! gets tag associated name
  \param tag_idx tag index
  \return corresponding tag name, NULL if error
 */
 const char *gf_itags_get_name(u32 tag_idx);
+
+/*! gets tag associated alternative names
+ \param tag_idx tag index
+ \return corresponding tag name, NULL if none
+*/
+const char *gf_itags_get_alt_name(u32 tag_idx);
 
 /*! gets tag associated itunes tag
  \param tag_idx tag index
@@ -1293,6 +1521,157 @@ enum {
 	GF_S4CC_LASER = GF_4CC('l', 's', 'r', '1'),
 };
 
+
+/*! CICP code points for color primaries */
+enum
+{
+	GF_CICP_PRIM_RESERVED_0 = 0,
+	GF_CICP_PRIM_BT709,
+	GF_CICP_PRIM_UNSPECIFIED,
+	GF_CICP_PRIM_RESERVED_3,
+	GF_CICP_PRIM_BT470M,
+	GF_CICP_PRIM_BT470G,
+	GF_CICP_PRIM_SMPTE170,
+	GF_CICP_PRIM_SMPTE240,
+	GF_CICP_PRIM_FILM,
+	GF_CICP_PRIM_BT2020,
+	GF_CICP_PRIM_SMPTE428,
+	GF_CICP_PRIM_SMPTE431,
+	GF_CICP_PRIM_SMPTE432,
+
+	GF_CICP_PRIM_EBU3213=22,
+
+	GF_CICP_PRIM_LAST
+};
+
+/*! CICP code points for color transfer */
+enum
+{
+	GF_CICP_TRANSFER_RESERVED_0 = 0,
+	GF_CICP_TRANSFER_BT709,
+	GF_CICP_TRANSFER_UNSPECIFIED,
+	GF_CICP_TRANSFER_RESERVED_3,
+	GF_CICP_TRANSFER_BT470M,
+	GF_CICP_TRANSFER_BT470BG,
+	GF_CICP_TRANSFER_SMPTE170,
+	GF_CICP_TRANSFER_SMPTE240,
+	GF_CICP_TRANSFER_LINEAR,
+	GF_CICP_TRANSFER_LOG100,
+	GF_CICP_TRANSFER_LOG316,
+	GF_CICP_TRANSFER_IEC61966,
+	GF_CICP_TRANSFER_BT1361,
+	GF_CICP_TRANSFER_SRGB,
+	GF_CICP_TRANSFER_BT2020_10,
+	GF_CICP_TRANSFER_BT2020_12,
+	GF_CICP_TRANSFER_SMPTE2084,
+	GF_CICP_TRANSFER_SMPTE428,
+	GF_CICP_TRANSFER_STDB67, //prores only
+
+	GF_CICP_TRANSFER_LAST
+};
+
+
+/*! CICP code points for matrix coefficients */
+enum
+{
+	GF_CICP_MX_IDENTITY = 0,
+	GF_CICP_MX_BT709,
+	GF_CICP_MX_UNSPECIFIED,
+	GF_CICP_MX_RESERVED_3,
+	GF_CICP_MX_FCC47,
+	GF_CICP_MX_BT601_625,
+	GF_CICP_MX_SMPTE170,
+	GF_CICP_MX_SMPTE240,
+	GF_CICP_MX_YCgCo,
+	GF_CICP_MX_BT2020,
+	GF_CICP_MX_BT2020_CL,
+	GF_CICP_MX_YDzDx,
+
+	GF_CICP_MX_LAST
+	//the rest is reserved
+};
+
+/*! parse CICP color primaries
+ \param val CICP color primaries name
+\return 0xFFFFFFFF if error , value otherwise
+*/
+u32 gf_cicp_parse_color_primaries(const char *val);
+
+/*! get CICP color primaries name
+\param cicp_prim CICP color primaries code
+\return name or "unknown"" if error
+*/
+const char *gf_cicp_color_primaries_name(u32 cicp_prim);
+
+/*! get CICP color primaries names
+\return coma-separated list of GPAC names for CICP color primaries
+*/
+const char *gf_cicp_color_primaries_all_names();
+
+/*! parse CICP color transfer
+ \param val CICP color transfer name
+\return 0xFFFFFFFF if error , value otherwise
+*/
+u32 gf_cicp_parse_color_transfer(const char *val);
+
+/*! get CICP color transfer name
+\param cicp_trans CICP color transfer code
+\return name or "unknown"" if error
+*/
+const char *gf_cicp_color_transfer_name(u32 cicp_trans);
+
+/*! get CICP color transfer names
+\return coma-separated list of GPAC names for CICP color transfer
+*/
+const char *gf_cicp_color_transfer_all_names();
+
+/*! parse CICP color matrix coefficients
+ \param val CICP color matrix coefficients name
+\return 0xFFFFFFFF if error , value otherwise
+*/
+u32 gf_cicp_parse_color_matrix(const char *val);
+
+/*! get CICP color matrix coefficients name
+\param cicp_mx CICP color matrix coefficients code
+\return name or "unknown"" if error
+*/
+const char *gf_cicp_color_matrix_name(u32 cicp_mx);
+
+/*! get CICP color matrix names
+\return coma-separated list of GPAC names for CICP color matrix
+*/
+const char *gf_cicp_color_matrix_all_names();
+
+
+/*! stereo frame packing types */
+enum
+{
+	/*! monoscopic video*/
+	GF_STEREO_NONE = 0,
+	/*! left eye in top half of video, right eye in bottom half of video*/
+	GF_STEREO_TOP_BOTTOM,
+	/*! left eye in left half of video, right eye in right half of video*/
+	GF_STEREO_LEFT_RIGHT,
+	/*! stereo mapped through mesh*/
+	GF_STEREO_CUSTOM,
+	/*! left eye in right half of video, right eye in left half of video*/
+	GF_STEREO_RIGHT_LEFT,
+	/*! left eye in bottom half of video, right eye in top half of video*/
+	GF_STEREO_BOTTOM_TOP,
+};
+
+/*! 360 projection types */
+enum
+{
+	/*! flat video*/
+	GF_PROJ360_NONE = 0,
+	/*! cube map projection video is upper half: right, left, up, lower half: down, front, back*/
+	GF_PROJ360_CUBE_MAP,
+	/*! Equirectangular projection / video*/
+	GF_PROJ360_EQR,
+	/*! Mesh projection (not supported yet)*/
+	GF_PROJ360_MESH
+};
 
 /*! @} */
 
