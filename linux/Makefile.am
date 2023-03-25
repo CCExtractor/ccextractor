@@ -353,10 +353,12 @@ if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
+ccextractor_CPPFLAGS+= ${libavfilter_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
 ccextractor_CPPFLAGS+= ${libswscale_CFLAGS}
 AV_LIB = ${libavcodec_LIBS}
 AV_LIB += ${libavformat_LIBS}
+AV_LIB += ${libavfilter_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
