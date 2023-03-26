@@ -437,9 +437,9 @@ struct ccx_s_options *api_init_options()
 int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, ""); // Supports non-English CCs
-    // Use POSIX locale for numbers so we get "." as decimal separator and no
-    // thousands' groupoing instead of what the locale might say
-	setlocale (LC_NUMERIC, "POSIX");
+			       // Use POSIX locale for numbers so we get "." as decimal separator and no
+			       // thousands' groupoing instead of what the locale might say
+	setlocale(LC_NUMERIC, "POSIX");
 
 	struct ccx_s_options *api_options = api_init_options();
 	parse_configuration(api_options);
