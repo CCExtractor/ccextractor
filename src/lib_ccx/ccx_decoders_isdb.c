@@ -4,8 +4,8 @@
 #include "utility.h"
 #include "limits.h"
 
-//#define DEBUG
-//#define COMMAND_DEBUG
+// #define DEBUG
+// #define COMMAND_DEBUG
 
 #ifdef DEBUG
 #define isdb_log(format, ...) mprint(format, ##__VA_ARGS__)

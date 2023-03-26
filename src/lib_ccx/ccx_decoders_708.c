@@ -258,7 +258,7 @@ void dtvcc_window_apply_style(dtvcc_window *window, dtvcc_window_attribs *style)
 	window->attribs.word_wrap = style->word_wrap;
 }
 
-//#define DTVCC_PRINT_DEBUG
+// #define DTVCC_PRINT_DEBUG
 #ifdef DTVCC_PRINT_DEBUG
 
 int dtvcc_is_win_row_empty(dtvcc_window *window, int row_index)

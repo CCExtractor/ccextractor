@@ -2,10 +2,10 @@
 #include "ccx_common_option.h"
 
 // Defined by the maximum number of B-Frames per anchor frame.
-//#define MAXBFRAMES 50 - from lib_ccx.h
+// #define MAXBFRAMES 50 - from lib_ccx.h
 //  They can be (temporally) before or after the anchor. Reserve
 // enough space.
-//#define SORTBUF (2*MAXBFRAMES+1) - from lib_ccx.h
+// #define SORTBUF (2*MAXBFRAMES+1) - from lib_ccx.h
 // B-Frames can be (temporally) before or after the anchor
 
 void init_hdcc(struct lib_cc_decode *ctx)
