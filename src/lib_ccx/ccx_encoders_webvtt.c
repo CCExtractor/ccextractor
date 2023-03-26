@@ -470,6 +470,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			// Write symbol by symbol with events
 			for (int j = 0; j < length; j++)
 			{
+
 				if (ccx_options.use_webvtt_styling)
 				{
 					// opening events for fonts
@@ -488,13 +489,38 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					{
 						write_wrapped(context->out->fh, strdup("<c."), 3);
 						write_wrapped(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
-						write_wrapped(context->out->fh, ">", 1);
+						write_wrapped(context->out->fh, ">", 1);	
 					}
 				}
 
 				// write current text symbol
 				if (context->subline[j] != '\0')
-					write_wrapped(context->out->fh, &(context->subline[j]), 1);
+					if((context->subline[j])>240){ //4bytes
+						char c[4];
+						c[0]=context->subline[j];
+						c[1]=context->subline[j+1];
+						c[2]=context->subline[j+2];
+						c[3]=context->subline[j+3];
+						write_wrapped(context->out->fh, c, 4);
+					}
+					else if((context->subline[j])>224){ //3bytes
+						char c[3];
+						c[0]=context->subline[j];
+						c[1]=context->subline[j+1];
+						c[2]=context->subline[j+2];
+						write_wrapped(context->out->fh, c, 3);
+					}
+					else if((context->subline[j])>192){//2bytes
+						char c[2];
+						c[0]=context->subline[j];
+						c[1]=context->subline[j+1];
+						write_wrapped(context->out->fh, c, 2);
+					}
+					else if((context->subline[j])>128 && (context->subline[j])<192){
+					}
+					else{//1byte
+						write_wrapped(context->out->fh, &(context->subline[j]), 1);
+					}
 
 				if (ccx_options.use_webvtt_styling)
 				{
