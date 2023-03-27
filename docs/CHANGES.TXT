@@ -14,6 +14,7 @@
 - Fix: fix autoconf tesseract detection problem (#1503)
 - Fix: add missing compile_info_real.h source to Autotools build
 - Fix: add missing `-lavfilter` for hardsubx linking
+- Fix: make webvtt-full work correctly with multi-byte utf-8 characters
 
 0.94 (2021-12-14)
 -----------------
