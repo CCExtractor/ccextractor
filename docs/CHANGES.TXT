@@ -15,6 +15,7 @@
 - Fix: add missing compile_info_real.h source to Autotools build
 - Fix: add missing `-lavfilter` for hardsubx linking
 - Fix: make webvtt-full work correctly with multi-byte utf-8 characters
+- Fix: encoding of solid block in latin-1 and unicode
 
 0.94 (2021-12-14)
 -----------------
