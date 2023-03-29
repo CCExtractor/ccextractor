@@ -35,6 +35,8 @@ void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 			case 0x7e: // lowercase n tilde
 				c1 = 0xf1;
 				break;
+			case 0x7f: // Solid Block - Does not exist in Latin 1
+				break;
 			default:
 				c1 = c;
 				break;
@@ -292,6 +294,9 @@ void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 	unsigned char c1, c2;
 	switch (c)
 	{
+		case 0x7f: // Solid block
+			c2 = 0x25;
+			c1 = 0xa0;
 		case 0x84: // Trademark symbol (TM)
 			c2 = 0x21;
 			c1 = 0x22;
