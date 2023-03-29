@@ -297,6 +297,7 @@ void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 		case 0x7f: // Solid block
 			c2 = 0x25;
 			c1 = 0xa0;
+			break;
 		case 0x84: // Trademark symbol (TM)
 			c2 = 0x21;
 			c1 = 0x22;
