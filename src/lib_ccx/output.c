@@ -177,8 +177,9 @@ void printdata(struct lib_cc_decode *ctx, const unsigned char *data1, int length
 			ctx->current_field = 2;
 			if (ctx->extract != 1)
 				ctx->writedata(data2, length2, ctx, sub);
-			else // User doesn't want field 2 data, but we want XDS.
+			else if (ctx->writedata != writeraw)
 			{
+				// User doesn't want field 2 data, but we want XDS.
 				ctx->writedata(data2, length2, ctx, sub);
 			}
 		}
