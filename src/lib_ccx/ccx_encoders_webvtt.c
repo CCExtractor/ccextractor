@@ -446,7 +446,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			if (written != used)
 				return -1;
 
-			int length = get_line_encoded(context, context->subline, i, data);
+			char *line = data->characters[i];
 
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
@@ -458,17 +458,15 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			int *font_events;
 			if (ccx_options.use_webvtt_styling)
 			{
-				color_events = (int *)malloc(sizeof(int) * length);
-				font_events = (int *)malloc(sizeof(int) * length);
-				memset(color_events, 0, sizeof(int) * length);
-				memset(font_events, 0, sizeof(int) * length);
+				color_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				font_events = (int *)calloc(COLUMNS + 1, sizeof(int));
 
 				get_color_events(color_events, i, data);
 				get_font_events(font_events, i, data);
 			}
 
 			// Write symbol by symbol with events
-			for (int j = 0; j < length; j++)
+			for (int j = 0; j < COLUMNS + 1; j++)
 			{
 				if (ccx_options.use_webvtt_styling)
 				{
@@ -493,8 +491,13 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				}
 
 				// write current text symbol
-				if (context->subline[j] != '\0')
-					write_wrapped(context->out->fh, &(context->subline[j]), 1);
+				if (line[j] != '\0')
+				{
+					unsigned char buf[5] = {0};
+					// Note: reference should be safe even when j == COLUMNS; characters is nul-terminated
+					int bytes = get_char_in_utf_8(buf, data->characters[i][j]);
+					write_wrapped(context->out->fh, buf, bytes);
+				}
 
 				if (ccx_options.use_webvtt_styling)
 				{
@@ -509,10 +512,10 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					int close_font = font_events[j] >> 16; // First 16 bytes
 					if (close_font != FONT_REGULAR)
 					{
-						if (close_font & FONT_ITALICS)
-							write_wrapped(context->out->fh, strdup("</i>"), 4);
 						if (close_font & FONT_UNDERLINED)
 							write_wrapped(context->out->fh, strdup("</u>"), 4);
+						if (close_font & FONT_ITALICS)
+							write_wrapped(context->out->fh, strdup("</i>"), 4);
 					}
 				}
 			}
