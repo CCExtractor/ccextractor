@@ -81,7 +81,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/gpacmp4/gpac/utf.h \
 				../src/thirdparty/gpacmp4/gpac/version.h \
 				../src/thirdparty/gpacmp4/gpac/iso639.h \
-				../src/thirdparty/gpacmp4/gpac/Remotery.h \
 				../src/thirdparty/gpacmp4/gpac/internal/avilib.h \
 				../src/thirdparty/gpacmp4/gpac/internal/isomedia_dev.h \
 				../src/thirdparty/gpacmp4/gpac/internal/media_dev.h \
@@ -326,7 +325,7 @@ ccextractor_SOURCES += 	../src/thirdparty/libpng/arm/arm_init.c \
   						../src/thirdparty/libpng/arm/palette_neon_intrinsics.c
 endif
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H 
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT  -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H 
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 
