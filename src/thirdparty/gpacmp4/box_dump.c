@@ -3885,16 +3885,6 @@ void webvtt_write_cue_bs(GF_BitStream *bs, GF_WebVTTCue *cue, Bool write_srt)
 	}
 }
 
-// void gf_webvtt_cue_del(GF_WebVTTCue * cue)
-// {
-// 	if (!cue) return;
-// 	if (cue->id) gf_free(cue->id);
-// 	if (cue->settings) gf_free(cue->settings);
-// 	if (cue->text) gf_free(cue->text);
-// 	if (cue->pre_text) gf_free(cue->pre_text);
-// 	if (cue->post_text) gf_free(cue->post_text);
-// 	gf_free(cue);
-// }
 
 
 static GF_Err gf_isom_dump_srt_track(GF_ISOFile *the_file, u32 track, FILE *dump)
@@ -3975,7 +3965,7 @@ static GF_Err gf_isom_dump_srt_track(GF_ISOFile *the_file, u32 track, FILE *dump
 			start_ts /= trak->Media->mediaHeader->timeScale;
 			end_ts = end * 1000;
 			end_ts /= trak->Media->mediaHeader->timeScale;
-			cues = gf_webvtt_parse_cues_from_data(s->data, s->dataLength, start_ts, end_ts);
+			// cues = gf_webvtt_parse_cues_from_data(s->data, s->dataLength, start_ts, end_ts);
 			gf_isom_sample_del(&s);
 			nb_cues = gf_list_count(cues);
 
@@ -3991,7 +3981,7 @@ static GF_Err gf_isom_dump_srt_track(GF_ISOFile *the_file, u32 track, FILE *dump
 			for (j = 0; j < gf_list_count(cues); j++) {
 				GF_WebVTTCue *cue = (GF_WebVTTCue *)gf_list_get(cues, j);
 				webvtt_write_cue_bs(bs, cue, GF_TRUE);
-				gf_webvtt_cue_del(cue);
+				// gf_webvtt_cue_del(cue);
 			}
 			gf_list_del(cues);
 			gf_bs_write_u16(bs, 0);
