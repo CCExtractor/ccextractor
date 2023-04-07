@@ -58,6 +58,12 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 				}
 				else
 				{
+					if (dtvcc->is_current_packet_header_parsed)
+					{
+						ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
+											  "Warning: Incorrect packet length specified. Packet will be skipped.\n");
+						dtvcc_clear_packet(dtvcc);
+					}
 					dtvcc->current_packet[dtvcc->current_packet_length++] = data[2];
 					dtvcc->current_packet[dtvcc->current_packet_length++] = data[3];
 					dtvcc->is_current_packet_header_parsed = 1;
