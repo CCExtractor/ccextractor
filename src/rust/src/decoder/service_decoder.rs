@@ -1044,7 +1044,7 @@ impl dtvcc_service_decoder {
     pub fn handle_G0(&mut self, block: &[c_uchar]) -> i32 {
         if self.current_window == -1 {
             warn!("dtvcc_handle_G0: Window has to be defined first");
-            return block.len() as i32;
+            return 1;
         }
 
         let character = block[0];
@@ -1062,7 +1062,7 @@ impl dtvcc_service_decoder {
     pub fn handle_G1(&mut self, block: &[c_uchar]) -> i32 {
         if self.current_window == -1 {
             warn!("dtvcc_handle_G1: Window has to be defined first");
-            return block.len() as i32;
+            return 1;
         }
 
         let character = block[0];
