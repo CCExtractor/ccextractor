@@ -164,7 +164,7 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
+        run: cd vcpkg && .\bootstrap-vcpkg.bat && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
