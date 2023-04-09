@@ -1,5 +1,5 @@
-#ifndef _FFMPEG_INTIGRATION
-#define _FFMPEG_INTIGRATION
+#ifndef _FFMPEG_INTEGRATION
+#define _FFMPEG_INTEGRATION
 
 #include "lib_ccx.h"
 #ifdef ENABLE_FFMPEG
