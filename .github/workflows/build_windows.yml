@@ -36,7 +36,7 @@ jobs:
         id: vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          committish: "2023.02.24"
+          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
@@ -79,7 +79,7 @@ jobs:
         id: vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          committish: "2023.02.24"
+          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
@@ -123,7 +123,7 @@ jobs:
         id: vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          committish: "2023.02.24"
+          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
@@ -160,7 +160,7 @@ jobs:
         id: vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          committish: "2023.02.24"
+          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
