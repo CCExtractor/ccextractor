@@ -1406,7 +1406,7 @@ int dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int dat
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_G0: Window has to be defined first\n");
-		return data_length;
+		return 1;
 	}
 
 	unsigned char c = data[0];
