@@ -99,6 +99,10 @@ impl<'a> Dtvcc<'a> {
                     if self.packet_length > (CCX_DTVCC_MAX_PACKET_LENGTH - 1) {
                         warn!("dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
                     } else {
+                        if self.is_header_parsed {
+                            warn!("dtvcc_process_data: Warning: Incorrect packet length specified. Packet will be skipped.");
+                            self.clear_packet();
+                        }
                         self.add_data_to_packet(data1, data2);
                         self.is_header_parsed = true;
                     }

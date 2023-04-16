@@ -18,6 +18,7 @@
 - Fix: encoding of solid block in latin-1 and unicode
 - Fix: McPoodle Broadcast Raw format for field 1
 - Improvement : Updated libGPAC dependency to 2.2.0
+- Fix: Incorrect skipping of packets
 
 0.94 (2021-12-14)
 -----------------
