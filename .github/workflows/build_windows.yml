@@ -49,6 +49,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
         run: msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -92,6 +93,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
         run: msbuild ccextractor.sln /p:Configuration=Debug /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -136,6 +138,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -179,6 +182,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
