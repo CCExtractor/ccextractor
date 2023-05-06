@@ -25,8 +25,8 @@ jobs:
   build_shell:
     runs-on: ubuntu-latest
     steps:
-    - name: Install tesseract
-      run: sudo apt-get install libtesseract-dev
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev
     - uses: actions/checkout@v3
     - name: build
       run: ./build
@@ -45,6 +45,8 @@ jobs:
   build_autoconf:
     runs-on: ubuntu-latest
     steps:
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install libgpac-dev
     - uses: actions/checkout@v3
     - name: run autogen
       run: ./autogen.sh
@@ -61,6 +63,8 @@ jobs:
   cmake:
     runs-on: ubuntu-latest
     steps:
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install libgpac-dev
     - uses: actions/checkout@v3
     - name: cmake
       run: mkdir build && cd build && cmake ../src
@@ -73,8 +77,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: dependencies
-      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
+    - name: Install dependencies
+      run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
     - name: cmake
       run: |
         mkdir build && cd build
@@ -88,6 +92,8 @@ jobs:
   build_rust:
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: sudo apt update && sudo apt-get install libgpac-dev
       - uses: actions/checkout@v3
       - name: cache 
         uses: actions/cache@v3
