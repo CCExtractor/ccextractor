@@ -29,7 +29,6 @@ CFLAGS = $(WFLAGS) \
 INCLUDES = -I $(TOP_DIR)/include
 LDFLAGS =
 LIBS = -lm \
-       -lgpac \
        -lz \
        -lpng \
        -lbz2 \
