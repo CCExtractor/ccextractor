@@ -121,8 +121,15 @@ if(WIN32)
     set (EXTRA_LIBS ${EXTRA_LIBS} ws2_32 winmm Bcrypt)
 else (WIN32)
     # Adding some platform specific library path
-    link_directories (/opt/local/lib)
-    link_directories (/usr/local/lib)
+    if(UNIX AND NOT APPLE)
+        link_directories (/usr/local/lib)
+    endif()
+
+    if(APPLE)
+        # Homebrew library paths
+        link_directories(/usr/local/lib)
+        link_directories(/opt/homebrew/lib)
+    endif()
 endif(WIN32)
 
 if(MSVC)
@@ -136,6 +143,7 @@ add_subdirectory (lib_ccx)
 
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
+set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
 # set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -143,7 +151,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl -lgpac)
+set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
 
 find_package (PkgConfig)
 

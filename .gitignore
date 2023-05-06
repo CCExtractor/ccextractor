@@ -84,7 +84,7 @@ linux/aclocal.m4
 linux/*.in
 linux/configure
 linux/build-conf/
-mac/config.h
+mac/rust/
 mac/config.log
 mac/config.status
 mac/Makefile

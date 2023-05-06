@@ -244,18 +244,20 @@ endif
 
 ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP
 
+ccextractor_LDFLAGS = $(shell pkg-config --libs gpac)
+GPAC_CPPFLAGS = $(shell pkg-config --cflags gpac)
+
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
+ccextractor_CPPFLAGS += $(GPAC_CPPFLAGS)
 
-
-ccextractor_LDADD=-lm -lpthread -ldl -lgpac
-
+ccextractor_LDADD=-lm -lpthread -ldl
 
 if SYS_IS_LINUX
 ccextractor_CFLAGS += -O3 -s
 endif
 
 if SYS_IS_MAC
-ccextractor_CFLAGS += -DPAC_CONFIG_DARWIN -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
+ccextractor_CFLAGS += -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek
 ccextractor_LDADD += -liconv -lz
 endif
 
@@ -318,7 +320,7 @@ endif
 
 ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
 	cd ../src/rust && \
-	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
+	CARGO_TARGET_DIR=../../mac/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
 
 EXTRA_DIST = ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
 
