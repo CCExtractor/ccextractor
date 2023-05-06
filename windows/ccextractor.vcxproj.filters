@@ -13,12 +13,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Source Files\gpacmp4">
-      <UniqueIdentifier>{53ddf332-3341-4811-853d-37995dbfcda8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\gpacmp4">
-      <UniqueIdentifier>{230ece07-6169-4824-8439-c941bcd01da5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\libpng">
       <UniqueIdentifier>{ecb47d6d-60ec-4fda-8afd-31833767e830}</UniqueIdentifier>
     </Filter>
@@ -182,87 +176,6 @@
     </ClInclude>
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h">
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\avparse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\base_coding.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\bitstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\color.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\configuration.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\config_file.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\events_constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\ietf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\avilib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\isomedia_dev.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\media_dev.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_dev.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_parse_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\ogg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\isomedia.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\maths.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\media_tools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\mpeg4_odf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\network.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\revision.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\setup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\sync_layer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\tools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\utf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\version.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\thirdparty\libpng\png.h">
       <Filter>Header Files</Filter>
@@ -599,157 +512,7 @@
     <ClCompile Include="..\src\lib_ccx\ccx_decoders_708_output.c">
       <Filter>Source Files\ccx_decoders</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_dump.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\hint_track.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\thirdparty\freetype\gzip\ftgzip.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\avc_ext.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\avilib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\av_parsers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\base_encoding.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\bitstream.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_3gpp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_adobe.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_apple.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_base.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_drm.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_code_meta.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\box_funcs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\configfile.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\data_map.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\descriptors.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\desc_private.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\drm_sample.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\error.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\gpac_ogg.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\hinting.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\ipmpx_code.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\ipmpx_parse.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_intern.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_read.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_store.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\isom_write.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\list.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\math.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\media.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\media_odf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\meta.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\movie_fragments.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_code.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_codec.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\odf_command.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_config_init.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_divers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_file.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\qos.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\sample_descs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\slc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\stbl_read.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\stbl_write.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\track.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\tx3g.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\url.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\utf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\color.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\thirdparty\libpng\png.c">
@@ -945,21 +708,6 @@
       <Filter>Source Files\zlib</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\mp4.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_thread.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\module.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\os_module.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\xml_parser.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\gpacmp4\constants.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\lib_ccx\zvbi\bit_slicer.c">

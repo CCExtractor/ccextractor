@@ -5,88 +5,6 @@ bin_PROGRAMS = ccextractor
 ccextractor_SOURCES = \
 				../src/ccextractor.c \
 				../src/ccextractor.h \
-				../src/thirdparty/gpacmp4/avc_ext.c \
-				../src/thirdparty/gpacmp4/avilib.c \
-				../src/thirdparty/gpacmp4/av_parsers.c \
-				../src/thirdparty/gpacmp4/base_encoding.c \
-				../src/thirdparty/gpacmp4/bitstream.c \
-				../src/thirdparty/gpacmp4/box_code_3gpp.c \
-				../src/thirdparty/gpacmp4/box_code_adobe.c \
-				../src/thirdparty/gpacmp4/box_code_apple.c \
-				../src/thirdparty/gpacmp4/box_code_base.c \
-				../src/thirdparty/gpacmp4/box_code_drm.c \
-				../src/thirdparty/gpacmp4/box_dump.c \
-				../src/thirdparty/gpacmp4/box_code_meta.c \
-				../src/thirdparty/gpacmp4/box_funcs.c \
-				../src/thirdparty/gpacmp4/color.c \
-				../src/thirdparty/gpacmp4/configfile.c \
-				../src/thirdparty/gpacmp4/data_map.c \
-				../src/thirdparty/gpacmp4/desc_private.c \
-				../src/thirdparty/gpacmp4/descriptors.c \
-				../src/thirdparty/gpacmp4/drm_sample.c \
-				../src/thirdparty/gpacmp4/error.c \
-				../src/thirdparty/gpacmp4/gpac_ogg.c \
-				../src/thirdparty/gpacmp4/hint_track.c \
-				../src/thirdparty/gpacmp4/hinting.c \
-				../src/thirdparty/gpacmp4/ipmpx_code.c \
-				../src/thirdparty/gpacmp4/ipmpx_parse.c \
-				../src/thirdparty/gpacmp4/isom_intern.c \
-				../src/thirdparty/gpacmp4/isom_read.c \
-				../src/thirdparty/gpacmp4/isom_store.c \
-				../src/thirdparty/gpacmp4/isom_write.c \
-				../src/thirdparty/gpacmp4/list.c \
-				../src/thirdparty/gpacmp4/math.c \
-				../src/thirdparty/gpacmp4/media.c \
-				../src/thirdparty/gpacmp4/media_odf.c \
-				../src/thirdparty/gpacmp4/meta.c \
-				../src/thirdparty/gpacmp4/movie_fragments.c \
-				../src/thirdparty/gpacmp4/odf_code.c \
-				../src/thirdparty/gpacmp4/odf_codec.c \
-				../src/thirdparty/gpacmp4/odf_command.c \
-				../src/thirdparty/gpacmp4/os_config_init.c \
-				../src/thirdparty/gpacmp4/os_divers.c \
-				../src/thirdparty/gpacmp4/os_file.c \
-				../src/thirdparty/gpacmp4/qos.c \
-				../src/thirdparty/gpacmp4/sample_descs.c \
-				../src/thirdparty/gpacmp4/slc.c \
-				../src/thirdparty/gpacmp4/stbl_read.c \
-				../src/thirdparty/gpacmp4/stbl_write.c \
-				../src/thirdparty/gpacmp4/track.c \
-				../src/thirdparty/gpacmp4/tx3g.c \
-				../src/thirdparty/gpacmp4/url.c \
-				../src/thirdparty/gpacmp4/utf.c \
-				../src/thirdparty/gpacmp4/os_thread.c \
-				../src/thirdparty/gpacmp4/module.c \
-				../src/thirdparty/gpacmp4/os_module.c \
-				../src/thirdparty/gpacmp4/xml_parser.c \
-				../src/thirdparty/gpacmp4/constants.c \
-				../src/thirdparty/gpacmp4/gpac/avparse.h \
-				../src/thirdparty/gpacmp4/gpac/base_coding.h \
-				../src/thirdparty/gpacmp4/gpac/bitstream.h \
-				../src/thirdparty/gpacmp4/gpac/color.h \
-				../src/thirdparty/gpacmp4/gpac/config_file.h \
-				../src/thirdparty/gpacmp4/gpac/configuration.h \
-				../src/thirdparty/gpacmp4/gpac/constants.h \
-				../src/thirdparty/gpacmp4/gpac/events_constants.h \
-				../src/thirdparty/gpacmp4/gpac/ietf.h \
-				../src/thirdparty/gpacmp4/gpac/isomedia.h \
-				../src/thirdparty/gpacmp4/gpac/list.h \
-				../src/thirdparty/gpacmp4/gpac/maths.h \
-				../src/thirdparty/gpacmp4/gpac/media_tools.h \
-				../src/thirdparty/gpacmp4/gpac/mpeg4_odf.h \
-				../src/thirdparty/gpacmp4/gpac/network.h \
-				../src/thirdparty/gpacmp4/gpac/revision.h \
-				../src/thirdparty/gpacmp4/gpac/setup.h \
-				../src/thirdparty/gpacmp4/gpac/tools.h \
-				../src/thirdparty/gpacmp4/gpac/utf.h \
-				../src/thirdparty/gpacmp4/gpac/version.h \
-				../src/thirdparty/gpacmp4/gpac/iso639.h \
-				../src/thirdparty/gpacmp4/gpac/internal/avilib.h \
-				../src/thirdparty/gpacmp4/gpac/internal/isomedia_dev.h \
-				../src/thirdparty/gpacmp4/gpac/internal/media_dev.h \
-				../src/thirdparty/gpacmp4/gpac/internal/odf_dev.h \
-				../src/thirdparty/gpacmp4/gpac/internal/odf_parse_common.h \
-				../src/thirdparty/gpacmp4/gpac/internal/ogg.h \
 				../src/thirdparty/libpng/pngstruct.h \
 				../src/thirdparty/libpng/pngpriv.h \
 				../src/thirdparty/libpng/pnginfo.h \
@@ -324,16 +242,16 @@ ccextractor_SOURCES += 	../src/thirdparty/libpng/arm/arm_init.c \
   						../src/thirdparty/libpng/arm/palette_neon_intrinsics.c
 endif
 
-ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H
+ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 
 
-ccextractor_LDADD=-lm -lpthread -ldl
+ccextractor_LDADD=-lm -lpthread -ldl -lgpac
 
 
 if SYS_IS_LINUX
-ccextractor_CFLAGS += -O3 -s -DGPAC_CONFIG_LINUX
+ccextractor_CFLAGS += -O3 -s
 endif
 
 if SYS_IS_MAC
@@ -402,5 +320,5 @@ endif
 	cd ../src/rust && \
 	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
 
-EXTRA_DIST = ../src/thirdparty/gpacmp4/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
+EXTRA_DIST = ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
 

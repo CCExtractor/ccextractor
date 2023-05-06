@@ -1,6 +1,7 @@
 #include <png.h>
 #include "protobuf-c.h"
 #include "zlib.h"
+#include "gpac/setup.h"
 #include "gpac/version.h"
 #include "lib_ccx.h"
 #include "ccx_common_option.h"

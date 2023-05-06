@@ -41,15 +41,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
-add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H)
-
-if(UNIX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_definitions(-DGPAC_CONFIG_DARWIN)
-  else ()
-    add_definitions(-DGPAC_CONFIG_LINUX)
-  endif()
-endif(UNIX)
+add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   add_definitions(-DGPAC_64_BITS)
@@ -59,7 +51,6 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/lib_ccx)
 include_directories(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
@@ -71,7 +62,6 @@ endif ()
 
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
-aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/gpacmp4/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/ SOURCEFILE)
@@ -153,7 +143,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
+set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl -lgpac)
 
 find_package (PkgConfig)
 

@@ -29,7 +29,7 @@ To do:
   though. No samples, no support.
 - A few commands are not yet supported, specifically those related
   to delay. 
-- Detect and extract captions from MP4 (MOV) files, handled by gpacmp4
+- Detect and extract captions from MP4 (MOV) files, handled by gpac
 
 Done (18.08.2015):
 

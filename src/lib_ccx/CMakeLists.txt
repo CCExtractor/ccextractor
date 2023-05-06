@@ -55,7 +55,6 @@ if (WITH_SHARING)
 endif (WITH_SHARING)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
 target_link_libraries (ccx ${EXTRA_LIBS})
@@ -85,22 +84,9 @@ if (WITH_HARDSUBX)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (WITH_HARDSUBX)
 
-if (MINGW OR CYGWIN)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_WIN32")
-endif (MINGW OR CYGWIN)
-
 if (WITHOUT_RUST)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
 endif (WITHOUT_RUST)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_LINUX")
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_DARWIN")
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
 
 file (GLOB HeaderFiles *.h)
 file (WRITE ccx.pc "prefix=${CMAKE_INSTALL_PREFIX}\n"

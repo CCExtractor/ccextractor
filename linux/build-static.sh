@@ -84,15 +84,13 @@ cd -;
 git clone https://github.com/CCExtractor/ccextractor;
 cd ccextractor/linux/;
 perl -i -pe 's/O3 /O3 -static /' Makefile;
-# quick patch:
-perl -i -pe 's/(strchr|strstr)\(/$1((char *)/'  ../src/thirdparty/gpacmp4/url.c  ../src/thirdparty/gpacmp4/error.c;
 set +e; # this _will_ FAIL at the end..
 make ENABLE_OCR=yes;
 set -e;
 # I confess hand-compiling (cherrypicking which .a to use when there are 2, etc.) is fragile...
 # But it was the _only_ way I could get a fully static build after hours of thrashing...
-gcc -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -O3 -std=gnu99 -s -DGPAC_CONFIG_LINUX -DENABLE_OCR -DPNG_NO_CONFIG_H -I/usr/local/include/tesseract -I/usr/local/include/leptonica objs/*.o -o ccextractor \
-  --static -lm \
+gcc -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -O3 -std=gnu99 -s -DENABLE_OCR -DPNG_NO_CONFIG_H -I/usr/local/include/tesseract -I/usr/local/include/leptonica objs/*.o -o ccextractor \
+  --static -lm -lgpac \
   /usr/local/lib/libtesseract.a \
   /usr/local/lib/liblept.a \
   /usr/local/lib/libgif.a \

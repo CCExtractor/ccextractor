@@ -29,17 +29,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -DGPAC_CONFIG_LINUX -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP -DGPAC_HAVE_CONFIG_H"
+BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
 bit_os=$(getconf LONG_BIT)
 if [ "$bit_os"=="64" ]
 then
     BLD_FLAGS="$BLD_FLAGS -DGPAC_64_BITS"
 fi
-BLD_INCLUDE="-I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I../src/thirdparty/gpacmp4/ -I../src/thirdparty/libpng -I../src/thirdparty/zlib -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash -I../src/thirdparty/protobuf-c -I../src/thirdparty -I../src/thirdparty/freetype/include"
+BLD_INCLUDE="-I../src -I /usr/include/leptonica/ -I /usr/include/tesseract/ -I../src/lib_ccx/ -I /usr/include/gpac/ -I../src/thirdparty/libpng -I../src/thirdparty/zlib -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash -I../src/thirdparty/protobuf-c -I../src/thirdparty -I../src/thirdparty/freetype/include"
 SRC_LIBPNG="$(find ../src/thirdparty/libpng/ -name '*.c')"
 SRC_ZLIB="$(find ../src/thirdparty/zlib/ -name '*.c')"
 SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
-SRC_GPAC="$(find ../src/thirdparty/gpacmp4/ -name '*.c')"
+SRC_GPAC="$(find /usr/include/gpac/ -name '*.c')"
 SRC_HASH="$(find ../src/thirdparty/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/thirdparty/utf8proc/utf8proc.c"
@@ -85,7 +85,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c
         ../src/thirdparty/freetype/type42/type42.c
         ../src/thirdparty/freetype/winfonts/winfnt.c"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $SRC_FREETYPE"
-BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l lept -lpthread -ldl"
+BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l lept -lpthread -ldl -lgpac"
 
 echo "Running pre-build script..."
 ./pre-build.sh
