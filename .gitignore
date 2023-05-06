@@ -85,6 +85,7 @@ linux/*.in
 linux/configure
 linux/build-conf/
 mac/rust/
+mac/config.h
 mac/config.log
 mac/config.status
 mac/Makefile
