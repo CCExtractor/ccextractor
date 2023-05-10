@@ -2,36 +2,12 @@
 <Project DefaultTargets="Build" ToolsVersion="14.0"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug-Full|Win32">
-      <Configuration>Debug-Full</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug-Full|x64">
       <Configuration>Debug-Full</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release-Full|Win32">
-      <Configuration>Release-Full</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release-Full|x64">
       <Configuration>Release-Full</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -302,35 +278,9 @@
     <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project=" $(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'"
-    Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'"
-    Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'"
     Label="Configuration">
@@ -340,38 +290,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
-      Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
-      Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'"
-    Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
       Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
       Label="LocalAppDataPlatform" />
@@ -385,29 +304,6 @@
   <PropertyGroup>
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>Debug\</OutDir>
-    <IntDir>Debug\</IntDir>
-    <LinkIncremental>true</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
-    <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
-    <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
-    <OutDir>Debug-Full\</OutDir>
-    <IntDir>Debug-Full\</IntDir>
-    <LinkIncremental>true</LinkIncremental>
-    <TargetName>ccextractorwinfull</TargetName>
-    <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
@@ -415,14 +311,6 @@
       $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>
       $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
-    <OutDir>Release-Full\</OutDir>
-    <IntDir>Release-Full\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>ccextractorwinfull</TargetName>
-    <IncludePath>$(IncludePath)</IncludePath>
-    <LibraryPath>$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -432,142 +320,6 @@
     <LibraryPath>
       $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>Release\</OutDir>
-    <IntDir>Release\</IntDir>
-    <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>ccextractorwin</TargetName>
-    <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        WIN32;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;_CRT_SECURE_NO_WARNINGS;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader />
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ShowProgress>NotSet</ShowProgress>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rust.bat </Command>
-    </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/thirdparty/gpacmp4;../src;../src/lib_ccx;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        WIN32;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ShowProgress>NotSet</ShowProgress>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rust.bat</Command>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|Win32'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <CompileAs>CompileAsC</CompileAs>
-      <DisableSpecificWarnings>4005;4996</DisableSpecificWarnings>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ShowProgress>NotSet</ShowProgress>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rustx86.bat</Command>
-    </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -600,54 +352,6 @@
         xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent> -->
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
-    <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <DisableSpecificWarnings>4005;4996</DisableSpecificWarnings>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;Ws2_32.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;tiff.lib;jpeg.lib;openjp2.lib;lzma.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <OptimizeReferences>true</OptimizeReferences>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <TargetMachine>MachineX86</TargetMachine>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-    </Link>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rustx86.bat</Command>
-    </PreBuildEvent>
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -679,75 +383,6 @@
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
         xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent> -->
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\zlib;..\src\thirdparty;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PrecompiledHeader />
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <OptimizeReferences>true</OptimizeReferences>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-    </Link>
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rust.bat </Command>
-    </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avcodec-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avformat-59.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\avutil-57.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swresample-4.dll"
-        "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib\swscale-6.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;../src/thirdparty/protobuf-c;../src/thirdparty/win_spec_incld;../src/lib_ccx;../src/thirdparty/lib_hash;../src/thirdparty/gpacmp4;../src/lib_ccx/zvbi;../src/thirdparty;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>
-        VERSION_FILE_PRESENT;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;Bcrypt.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
-      <OptimizeReferences>true</OptimizeReferences>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <PreBuildEvent>
-      <Command>call pre-build.bat
-        call rust.bat </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
