@@ -345,7 +345,7 @@
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
-        call rustx86.bat</Command>
+        call rust.bat</Command>
     </PreBuildEvent>
     <!-- <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
@@ -377,7 +377,7 @@
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
-        call rustx86.bat</Command>
+        call rust.bat</Command>
     </PreBuildEvent>
     <!-- <PostBuildEvent>
       <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
