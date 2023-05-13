@@ -600,8 +600,8 @@
         xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent> -->
     <PostBuildEvent>
-      <Command>xcopy /y "C:\Windows\System32\vcruntime140d.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "C:\Windows\System32\vcruntime140_1d.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCRedistPath)\vcruntime140.dll" "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCRedistPath)\vcruntime140_1.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|Win32'">
@@ -680,8 +680,8 @@
         call rustx86.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "C:\Windows\System32\vcruntime140.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "C:\Windows\System32\vcruntime140_1.dll" "$(ProjectDir)$(OutDir)"</Command>
+      <Command>xcopy /y "$(VCRedistPath)\vcruntime140.dll" "$(ProjectDir)$(OutDir)"
+        xcopy /y "$(VCRedistPath)\vcruntime140_1.dll" "$(ProjectDir)$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
