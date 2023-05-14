@@ -58,7 +58,7 @@ jobs:
       #   run: ./ccextractorwinfull.exe --version
       #   working-directory: ./windows/x64/Release-Full
       - name: Display dlls
-        run: dir /s/b *.dll
+        run: Get-ChildItem -Recurse -Path * -Filter *.dll
       - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows Release build
@@ -102,7 +102,7 @@ jobs:
       #   run: ./ccextractorwinfull.exe --version
       #   working-directory: ./windows/x64/Debug-Full
       - name: Display dlls
-        run: dir /s/b *.dll
+        run: Get-ChildItem -Recurse -Path * -Filter *.dll
       - uses: actions/upload-artifact@v3
         with:
           name: CCExtractor Windows Debug build
