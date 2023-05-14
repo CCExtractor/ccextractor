@@ -260,7 +260,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;vcruntime140.dll;vcruntime140_1.dll;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -293,7 +293,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;vcruntime140.dll;vcruntime140_1.dll;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -314,4 +314,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="_CopyVCRuntime" AfterTargets="Build" Inputs="@(VCRuntimeDLL)"
+    Outputs="$(OutDir)%(Filename)%(Extension)" DependsOnTargets="FindVCRuntime">
+    <!-- bpo-38597: When we switch to another VCRuntime DLL, include vcruntime140.dll as well -->
+    <Warning Text="A copy of vcruntime140.dll is also required"
+      Condition="!$(VCToolsRedistVersion.StartsWith(`14.`))" />
+    <Copy SourceFiles="%(VCRuntimeDLL.FullPath)" DestinationFolder="$(ProjectDir)$(OutDir)" />
+  </Target>
 </Project>
