@@ -62,8 +62,10 @@
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h" />
-    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
-    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
+    <ClInclude
+      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
+    <ClInclude
+      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=" ..\src\thirdparty\freetype\gzip\ftgzip.c" />
@@ -283,7 +285,7 @@
         "C:\Program Files\GPAC\sdk\include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
         ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
