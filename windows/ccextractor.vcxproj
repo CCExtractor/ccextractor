@@ -62,10 +62,8 @@
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=" ..\src\thirdparty\freetype\gzip\ftgzip.c" />
@@ -272,10 +270,10 @@
       <Command>call pre-build.bat
         call rust.bat</Command>
     </PreBuildEvent>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
@@ -306,10 +304,10 @@
       <Command>call pre-build.bat
         call rust.bat -r</Command>
     </PreBuildEvent>
-    <PostBuildEvent>
+    <!-- <PostBuildEvent>
       <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
         "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent>
+    </PostBuildEvent> -->
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
