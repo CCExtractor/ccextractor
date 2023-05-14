@@ -272,10 +272,10 @@
       <Command>call pre-build.bat
         call rust.bat</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
@@ -306,10 +306,10 @@
       <Command>call pre-build.bat
         call rust.bat -r</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
+        "$(ProjectDir)$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
