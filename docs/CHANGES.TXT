@@ -19,6 +19,8 @@
 - Fix: McPoodle Broadcast Raw format for field 1
 - Fix: Incorrect skipping of packets
 - Fix: Repeated values for enums
+- Cleanup: Remove the (unmaintained) Nuklear GUI code
+- Cleanup: Reduce the amount of Windows build options in the project file
 
 0.94 (2021-12-14)
 -----------------
