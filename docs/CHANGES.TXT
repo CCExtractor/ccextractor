@@ -18,6 +18,7 @@
 - Fix: encoding of solid block in latin-1 and unicode
 - Fix: McPoodle Broadcast Raw format for field 1
 - Fix: Incorrect skipping of packets
+- Fix: Repeated values for enums
 
 0.94 (2021-12-14)
 -----------------
