@@ -190,7 +190,12 @@ make
 The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## Windows
-Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 
+Dependencies are clang and rust. To enable OCR, rust x86_64-pc-windows-msvc or i686-pc-windows-msvc target should be installed
+
+GPAC is also required, you can install it through chocolatey:
+```
+choco install gpac
+```
 
 Other dependencies are required through vcpkg, so you can follow below steps:
 1. Download vcpkg (prefer version `2023.02.24` as it is supported)
