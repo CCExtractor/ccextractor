@@ -1,5 +1,9 @@
 name: Build CCExtractor on Windows
 
+env:
+  RUSTFLAGS: -Ctarget-feature=+crt-static
+  VCPKG_DEFAULT_TRIPLET: x64-windows-static
+
 on:
   workflow_dispatch:
   push:
@@ -40,14 +44,13 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static
       - name: build Release
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
         working-directory: ./windows
@@ -83,14 +86,13 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static-md
+        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static
       - name: build Debug
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug /p:Platform=x64
         working-directory: ./windows
@@ -127,14 +129,13 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
@@ -164,7 +165,7 @@ jobs:
           cache-version: "1"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static-md
+        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -177,7 +178,6 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_DEFAULT_TRIPLET: x64-windows-static-md
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
