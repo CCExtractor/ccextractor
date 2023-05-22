@@ -23,15 +23,16 @@ Note:If you installed ffmpeg on non-standard location, please change/update your
 	```
 3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
 	```
-	setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+	setx VCPKG_DEFAULT_TRIPLET "x64-windows-static"
+	setx RUSTFLAGS "-Ctarget-feature=+crt-static"
 	```
 4. Install ffmpeg from vcpkg
 
 
-	In this step we are using `x64-windows-static-md` triplet, but you will have to use the triplet you set in Step 3
+	In this step we are using `x64-windows-static` triplet, but you will have to use the triplet you set in Step 3
 
 	```
-	vcpkg install ffmpeg --triplet x64-windows-static-md
+	vcpkg install ffmpeg --triplet x64-windows-static
 	```
 
 ## How to compile ccextractor

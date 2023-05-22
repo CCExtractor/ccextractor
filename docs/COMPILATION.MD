@@ -200,19 +200,20 @@ Other dependencies are required through vcpkg, so you can follow below steps:
      ```
 3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
      ```
-     setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+     setx VCPKG_DEFAULT_TRIPLET "x64-windows-static"
+     setx RUSTFLAGS "-Ctarget-feature=+crt-static"
      ```
 4. Install dependencies from vcpkg
 
-     In this step we are using `x64-windows-static-md` triplet, but you will have to use the triplet you set in Step 3
+     In this step we are using `x64-windows-static` triplet, but you will have to use the triplet you set in Step 3
 
      if building Debug-Full, Release-Full (HardSubx)
      ```
-     vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static-md
+     vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static
      ```
      otherwise if you have Debug, Release
      ```
-     vcpkg install libpng --triplet x64-windows-static-md
+     vcpkg install libpng --triplet x64-windows-static
      ```
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
