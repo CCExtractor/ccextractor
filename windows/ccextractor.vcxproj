@@ -272,10 +272,20 @@
       <Command>call pre-build.bat
         call rust.bat</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
@@ -306,10 +316,20 @@
       <Command>call pre-build.bat
         call rust.bat -r</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(VCPKG_ROOT)\downloads\tools\python\python-*-x64\vcruntime140*.dll"
-        "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
