@@ -218,7 +218,7 @@ Other dependencies are required through vcpkg, so you can follow below steps:
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
-1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
+1.Open `windows/` directory to locate `ccextractor.vcxproj` and `ccextractor.sln` (red arrow).
 
 ![Project Files](img/projectFiles.png)
 

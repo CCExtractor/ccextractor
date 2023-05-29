@@ -21,92 +21,7 @@ on:
       - "windows/**"
 
 jobs:
-  build_non_ocr_release:
-    runs-on: windows-2019
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v1.3.1
-      - name: Install llvm and clang
-        run: choco install llvm
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Install Win 10 SDK
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Setup Vcpkg
-        id: vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
-        with:
-          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
-          cache-version: "1"
-          ignore-reserve-cache-error: true
-      - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static
-      - name: build Release
-        env:
-          LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
-          LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
-          CARGO_TARGET_DIR: "..\\..\\windows"
-          BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Release /p:Platform=x64
-        working-directory: ./windows
-      - name: Display version information
-        run: ./ccextractorwin.exe --version
-        working-directory: ./windows/x64/Release
-      - uses: actions/upload-artifact@v3
-        with:
-          name: CCExtractor Windows Non-OCR Release build
-          path: |
-            ./windows/x64/Release/ccextractorwin.exe
-            ./windows/x64/Release/*.dll
-  build_non_ocr_debug:
-    runs-on: windows-2019
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v1.3.1
-      - name: Install llvm and clang
-        run: choco install llvm
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Install Win 10 SDK
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: Setup Vcpkg
-        id: vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
-        with:
-          committish: "217194cea7e3491c14779c763beec50b6a4575d6"
-          cache-version: "1"
-          ignore-reserve-cache-error: true
-      - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install libpng --triplet x64-windows-static
-      - name: build Debug
-        env:
-          LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
-          LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
-          CARGO_TARGET_DIR: "..\\..\\windows"
-          BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Debug /p:Platform=x64
-        working-directory: ./windows
-      - name: Display version information
-        run: ./ccextractorwin.exe --version
-        working-directory: ./windows/x64/Debug
-      - uses: actions/upload-artifact@v3
-        with:
-          name: CCExtractor Windows Non-OCR Debug build
-          path: |
-            ./windows/x64/Debug/ccextractorwin.exe
-            ./windows/x64/Debug/ccextractorwin.pdb
-            ./windows/x64/Debug/*.dll
-  build_ocr_hardsubx_release:
+  build_release:
     runs-on: windows-2019
     steps:
       - name: Check out repository
@@ -144,11 +59,11 @@ jobs:
         working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v3
         with:
-          name: CCExtractor Windows OCR and HardSubX Release build
+          name: CCExtractor Windows Release build
           path: |
             ./windows/x64/Release-Full/ccextractorwinfull.exe
             ./windows/x64/Release-Full/*.dll
-  build_ocr_hardsubx_debug:
+  build_debug:
     runs-on: windows-2019
     steps:
       - name: Check out repository
@@ -186,7 +101,7 @@ jobs:
         working-directory: ./windows/x64/Debug-Full
       - uses: actions/upload-artifact@v3
         with:
-          name: CCExtractor Windows OCR and HardSubX Debug build
+          name: CCExtractor Windows Debug build
           path: |
             ./windows/x64/Debug-Full/ccextractorwinfull.exe
             ./windows/x64/Debug-Full/ccextractorwinfull.pdb
