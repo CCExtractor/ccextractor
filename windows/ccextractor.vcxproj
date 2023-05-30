@@ -273,7 +273,10 @@
         call rust.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+      <Command>
+        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
@@ -317,7 +320,10 @@
         call rust.bat -r</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+      <Command>
+        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
