@@ -115,7 +115,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/activity.h \
 				../src/lib_ccx/asf_constants.h \
 				../src/lib_ccx/avc_functions.h \
-				../src/lib_ccx/bitstream.h \
+				../src/lib_ccx/cc_bitstream.h \
 				../src/lib_ccx/ccx_common_option.c \
 				../src/lib_ccx/ccx_common_common.c \
 				../src/lib_ccx/compile_info_real.h \
