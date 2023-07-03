@@ -24,4 +24,5 @@ bindgen = "0.58.1"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+rust_ocr = ["tesseract-sys", "leptonica-sys"]
 
