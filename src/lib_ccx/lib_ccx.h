@@ -15,7 +15,7 @@
 #include "ccx_demuxer.h"
 #include "ccx_encoders_common.h"
 #include "ccx_decoders_common.h"
-#include "bitstream.h"
+#include "cc_bitstream.h"
 
 #include "networking.h"
 #include "avc_functions.h"
