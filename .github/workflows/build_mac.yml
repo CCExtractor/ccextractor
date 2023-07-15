@@ -78,8 +78,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
-    - name: dependencies
-      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
     - name: cmake
       run: |
         mkdir build && cd build
