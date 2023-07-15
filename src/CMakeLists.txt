@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 3.0.2)
-
 project (CCExtractor)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
@@ -65,7 +64,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   else()
     include_directories("/usr/local/include")
   endif()
-endif
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
