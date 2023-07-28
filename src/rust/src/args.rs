@@ -41,7 +41,7 @@ http://www.ccextractor.org
 #[command(
     help_template = "{name} {version}, {author}.\n{about}\n {all-args} {tab}\n
     An example command for burned-in subtitle extraction is as follows:
-    ccextractor video.mp4 -hardsubx -subcolor white -detect_italics -whiteness_thresh 90 -conf_thresh 60"
+    ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60"
 )]
 #[command(arg_required_else_help = true)]
 pub struct Args {
@@ -55,7 +55,7 @@ pub struct Args {
     output: Option<String>,
     /// Write output to stdout (console) instead of file. If
     /// stdout is used, then -o can't be used. Also
-    /// -stdout will redirect all messages to stderr (error).
+    /// --stdout will redirect all messages to stderr (error).
     #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
     stdout: bool,
     /// Dump the PES Header to stdout (console). This is
@@ -74,7 +74,7 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
     fixptsjumps: bool,
     /// Reads input from stdin (console) instead of file.
-    /// Alternatively, - can be used instead of -stdin
+    /// Alternatively, - can be used instead of --stdin
     #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
     stdin: bool,
     #[arg(long, value_name="x", help_heading=OUTPUT_FILE_SEGMENTATION)]
@@ -146,7 +146,7 @@ pub struct Args {
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you
     /// are processing video hat was split with a editing
-    /// tool, use -ve so ccextractor doesn't try to rebuild
+    /// tool, use --videoedited so ccextractor doesn't try to rebuild
     /// the original timing.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     videoedited: bool,
@@ -159,7 +159,7 @@ pub struct Args {
     /// new data after which ccextractor should exit. Use
     /// this parameter if you want to process a live stream
     /// but not kill ccextractor externally.
-    /// Note: If -s is used then only one input file is
+    /// Note: If --s is used then only one input file is
     /// allowed.
     #[arg(short, long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     stream: Option<u32>,
@@ -195,7 +195,7 @@ pub struct Args {
     /// is not specified and CCExtractor detects more than one
     /// program in the input, it will list the programs found
     /// and terminate without doing anything, unless
-    /// -autoprogram (see below) is used.
+    /// --autoprogram (see below) is used.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     program_number: Option<u16>,
     /// If there's more than one program in the stream, just use
@@ -215,7 +215,7 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     datastreamtype: Option<String>,
     /// Assume the data is of this type, don't autodetect. This
-    /// parameter may be needed if -datapid or -datastreamtype
+    /// parameter may be needed if --datapid or --datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
@@ -237,7 +237,7 @@ pub struct Args {
     /// such data is available, CCExtractor will set its time
     /// reference to the received data. Use this parameter if
     /// you prefer your own reference. Note: Current this only
-    /// affects Teletext in timed transcript with -datets.
+    /// affects Teletext in timed transcript with --datets.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     no_autotimeref: bool,
     /// Ignore SCTE-20 data if present.
@@ -324,7 +324,7 @@ pub struct Args {
     /// white). This causes all output in .srt/.smi/.vtt
     /// files to have a font tag, which makes the files
     /// larger. Add the color you want in RGB, such as
-    /// -dc #FF0000 for red.
+    /// --dc #FF0000 for red.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
@@ -395,7 +395,7 @@ pub struct Args {
     df: bool,
     /// Based on position on screen, attempt to determine
     /// the different speakers and a dash (-) when each
-    /// of them talks (.srt/.vtt only, -trim required).
+    /// of them talks (.srt/.vtt only, --trim required).
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     autodash: bool,
     /// produce an XMLTV file containing the EPG data from
@@ -425,7 +425,7 @@ pub struct Args {
     /// Manually select the name of the Tesseract .traineddata
     /// file. Helpful if you want to OCR a caption stream of
     /// one language with the data of another language.
-    /// e.g. '-dvblang chs -ocrlang chi_tra' will decode the
+    /// e.g. '-dvblang chs --ocrlang chi_tra' will decode the
     /// Chinese (Simplified) caption stream but perform OCR
     /// using the Chinese (Traditional) trained data
     /// This option is also helpful when the traineddata file
@@ -516,7 +516,7 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
     ru: Option<Ru>,
     /// For srt/sami/webvtt, add this number of milliseconds to
-    /// all times. For example, -delay 400 makes subtitles
+    /// all times. For example, --delay 400 makes subtitles
     /// appear 400ms late. You can also use negative numbers
     /// to make subs appear early.
     #[arg(long, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
@@ -524,13 +524,13 @@ pub struct Args {
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.
-    /// For example, -startat 3:00 means 'start writing from
+    /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
     #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     startat: Option<u32>,
     /// Stop processing after the given time (same format as
-    /// -startat).
-    /// The -startat and -endat options are honored in all
+    /// --startat).
+    /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
     #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
@@ -647,7 +647,7 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
     tverbose: bool,
     /// Force teletext mode even if teletext is not detected.
-    /// If used, you should also pass -datapid to specify
+    /// If used, you should also pass --datapid to specify
     /// the stream ID you want to process.
     #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
     teletext: bool,
@@ -672,10 +672,10 @@ pub struct Args {
     /// Examples:
     /// 0000101 is the default setting for transcripts
     /// 1110101 is the default for timed transcripts
-    /// 1111001 is the default setting for -ucla
+    /// 1111001 is the default setting for --ucla
     /// Make sure you use this parameter after others that might
-    /// affect these settings (-out, -ucla, -xds, -txt, 
-    /// -ttxt ...)
+    /// affect these settings (--out, --ucla, --xds, --txt, 
+    /// --ttxt ...)
     #[arg(long, verbatim_doc_comment, value_name="format", help_heading=TRANSCRIPT_OPTIONS)]
     customtxt: Option<u32>,
     /// Report progress and interesting events to stderr
@@ -718,7 +718,7 @@ pub struct Args {
     /// A lower value gives better results, but takes more 
     /// processing time.
     /// The recommended value is 0.5 (default).
-    /// e.g. -min_sub_duration 1.0 (for a duration of 1 second)
+    /// e.g. --min_sub_duration 1.0 (for a duration of 1 second)
     #[arg(long, verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     min_sub_duration: Option<u32>,
     /// Specify whether italics are to be detected from the 
@@ -731,7 +731,7 @@ pub struct Args {
     /// 1 and 100.
     /// Try and use a threshold which works for you if you get 
     /// a lot of garbage text.
-    /// e.g. -conf_thresh 50
+    /// e.g. --conf_thresh 50
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     conf_thresh: bool,
     /// For white subtitles only, specify the luminance 
