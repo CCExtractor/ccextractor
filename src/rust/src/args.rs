@@ -197,7 +197,7 @@ pub struct Args {
     /// and terminate without doing anything, unless
     /// -autoprogram (see below) is used.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    program_number: bool,
+    program_number: Option<u16>,
     /// If there's more than one program in the stream, just use
     /// the first one we find that contains a suitable stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
@@ -208,19 +208,19 @@ pub struct Args {
     /// Don't try to find out the stream for caption/teletext
     /// data, just use this one instead.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    datapid: bool,
+    datapid: Option<u16>,
     /// Instead of selecting the stream by its PID, select it
     /// by its type (pick the stream that has this type in
     /// the PMT)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    datastreamtype: bool,
+    datastreamtype: Option<String>,
     /// Assume the data is of this type, don't autodetect. This
     /// parameter may be needed if -datapid or -datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    streamtype: bool,
+    streamtype: Option<String>,
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
     /// force the special treatment.
@@ -232,7 +232,7 @@ pub struct Args {
     /// of the video track. If you need to force the video track
     /// to be processed instead use this option.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    mp4vidtrack: bool,
+    mp4vidtrack: Option<String>,
     /// Some streams come with broadcast date information. When
     /// such data is available, CCExtractor will set its time
     /// reference to the received data. Use this parameter if
@@ -326,7 +326,7 @@ pub struct Args {
     /// larger. Add the color you want in RGB, such as
     /// -dc #FF0000 for red.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    defaultcolor: bool,
+    defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -421,7 +421,7 @@ pub struct Args {
     /// If there are multiple languages, only this specified
     /// language stream will be processed (default).
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    dvblang: bool,
+    dvblang: Option<String>,
     /// Manually select the name of the Tesseract .traineddata
     /// file. Helpful if you want to OCR a caption stream of
     /// one language with the data of another language.
@@ -431,7 +431,7 @@ pub struct Args {
     /// This option is also helpful when the traineddata file
     /// has non standard names that don't follow ISO specs
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    ocrlang: bool,
+    ocrlang: Option<String>,
     /// How to quantize the bitmap before passing it to tesseract
     /// for OCR'ing.
     /// 0: Don't quantize at all.
