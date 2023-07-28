@@ -7,15 +7,19 @@ const INPUT_FORMATS: &str = "Input Formats";
 const OUTPUT_FORMATS: &str = "Output Formats";
 const OPTIONS_AFFECTING_INPUT_FILES: &str = "Options that affect how input files will be processed";
 const LEVENSHTEIN_DISTANCE: &str = "Levenshtein distance";
-const OUTPUT_AFFECTING_OUTPUT_FILES: &str = "Options that affect what kind of output will be produced";
-const OUTPUT_AFFECTING_BUFFERING: &str = "Options that affect how ccextractor reads and writes (buffering)";
+const OUTPUT_AFFECTING_OUTPUT_FILES: &str =
+    "Options that affect what kind of output will be produced";
+const OUTPUT_AFFECTING_BUFFERING: &str =
+    "Options that affect how ccextractor reads and writes (buffering)";
 const OUTPUT_AFFECTING_TIMING: &str = "Options that affect timing";
-const OUTPUT_AFFECTING_SEGMENT: &str = "Options that affect what segment of the input file(s) to process";
-const OUTPUT_AFFECTING_CODEC: &str = "Options that affect which codec is to be used have to be searched in input";
+const OUTPUT_AFFECTING_SEGMENT: &str =
+    "Options that affect what segment of the input file(s) to process";
+const OUTPUT_AFFECTING_CODEC: &str =
+    "Options that affect which codec is to be used have to be searched in input";
 const ADDING_CREDITS: &str = "Adding start and end credits";
-const OUTPUT_AFFECTING_DEBUG_DATA: &str= "Options that affect debug data";
+const OUTPUT_AFFECTING_DEBUG_DATA: &str = "Options that affect debug data";
 const TELETEXT_OPTIONS: &str = "Teletext related options";
-const TRANSCRIPT_OPTIONS: &str=  "Transcript customizing options";
+const TRANSCRIPT_OPTIONS: &str = "Transcript customizing options";
 const COMMUNICATION_PROTOCOL: &str = "Communication with other programs and console output";
 // const SPUPNG_NOTES: &str=  "Notes on spupng output format";
 const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
@@ -250,7 +254,7 @@ pub struct Args {
     /// strings is displayed. The output includes both strings,
     /// the calculated distance, the maximum allowed distance,
     /// and whether the strings are ultimately considered  
-    /// equivalent or not, i.e. the calculated distance is 
+    /// equivalent or not, i.e. the calculated distance is
     /// less or equal than the max allowed.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     deblev: bool,
@@ -265,21 +269,21 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     no_levdist: bool,
     /// Minimum distance we always allow regardless
-    /// of the length of the strings.Default 2. 
-    /// This means that if the calculated distance 
+    /// of the length of the strings.Default 2.
+    /// This means that if the calculated distance
     /// is 0,1 or 2, we consider the strings to be equivalent.
     #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     levdistmincnt: Option<u32>,
     /// Maximum distance we allow, as a percentage of
     /// the shortest string length. Default 10%.0
-    /// For example, consider a comparison of one string of 
-    ///      30 characters and one of 60 characters. We want to 
+    /// For example, consider a comparison of one string of
+    ///      30 characters and one of 60 characters. We want to
     /// determine whether the first 30 characters of the longer
     /// string are more or less the same as the shortest string,
     ///      i.e. whether the longest string  is the shortest one
     /// plus new characters and maybe some corrections. Since
     /// the shortest string is 30 characters and  the default
-    /// percentage is 10%, we would allow a distance of up 
+    /// percentage is 10%, we would allow a distance of up
     /// to 3 between the first 30 characters.
     #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     levdistmaxpct: Option<u32>,
@@ -540,7 +544,7 @@ pub struct Args {
     screenfuls: Option<u32>,
     /// --codec dvbsub
     ///     select the dvb subtitle from all elementary stream,
-    ///     if stream of dvb subtitle type is not found then 
+    ///     if stream of dvb subtitle type is not found then
     ///     nothing is selected and no subtitle is generated
     /// --codec teletext
     ///     select the teletext subtitle from elementary stream
@@ -661,7 +665,7 @@ pub struct Args {
     /// output. The format must be like this: 1100100 (7 digits).
     /// These indicate whether the next things should be
     /// displayed or not in the (timed) transcript. They
-    /// represent (in order): 
+    /// represent (in order):
     ///     - Display start time
     ///     - Display end time
     ///     - Display caption mode
@@ -674,7 +678,7 @@ pub struct Args {
     /// 1110101 is the default for timed transcripts
     /// 1111001 is the default setting for --ucla
     /// Make sure you use this parameter after others that might
-    /// affect these settings (--out, --ucla, --xds, --txt, 
+    /// affect these settings (--out, --ucla, --xds, --txt,
     /// --ttxt ...)
     #[arg(long, verbatim_doc_comment, value_name="format", help_heading=TRANSCRIPT_OPTIONS)]
     customtxt: Option<u32>,
@@ -699,42 +703,42 @@ pub struct Args {
     tickertext: bool,
     /// Set the OCR mode to either frame-wise, word-wise
     /// or letter wise.
-    /// e.g. --ocr-mode frame (default), --ocr-mode word, 
+    /// e.g. --ocr-mode frame (default), --ocr-mode word,
     /// --ocr-mode letter
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     ocr_mode: Option<String>,
     /// Specify the color of the subtitles
-    /// Possible values are in the set 
+    /// Possible values are in the set
     /// {white,yellow,green,cyan,blue,magenta,red}.
-    /// Alternatively, a custom hue value between 1 and 360 
+    /// Alternatively, a custom hue value between 1 and 360
     /// may also be specified.
     /// e.g. --subcolor white or --subcolor 270 (for violet).
     /// Refer to an HSV color chart for values.
     #[arg(long, verbatim_doc_comment, value_name="color", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     subcolor: Option<String>,
-    /// Specify the minimum duration that a subtitle line 
+    /// Specify the minimum duration that a subtitle line
     /// must exist on the screen.
     /// The value is specified in seconds.
-    /// A lower value gives better results, but takes more 
+    /// A lower value gives better results, but takes more
     /// processing time.
     /// The recommended value is 0.5 (default).
     /// e.g. --min_sub_duration 1.0 (for a duration of 1 second)
     #[arg(long, verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     min_sub_duration: Option<u32>,
-    /// Specify whether italics are to be detected from the 
+    /// Specify whether italics are to be detected from the
     /// OCR text.
-    /// Italic detection automatically enforces the OCR mode 
+    /// Italic detection automatically enforces the OCR mode
     /// to be word-wise
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     detect_italics: bool,
     /// Specify the classifier confidence threshold between
     /// 1 and 100.
-    /// Try and use a threshold which works for you if you get 
+    /// Try and use a threshold which works for you if you get
     /// a lot of garbage text.
     /// e.g. --conf_thresh 50
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     conf_thresh: bool,
-    /// For white subtitles only, specify the luminance 
+    /// For white subtitles only, specify the luminance
     /// threshold between 1 and 100
     /// This threshold is content dependent, and adjusting
     /// values may give you better results
@@ -830,4 +834,3 @@ enum OutFormat {
     /// Don't produce any file output.
     Report,
 }
-
