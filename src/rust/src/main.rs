@@ -28,8 +28,10 @@ fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
         opt.demux_cfg.auto_stream = CcxStreamMode::ElementaryOrNotFound;
     } else if args.ts || can_unwrap && args.input.unwrap().to_string() == "ts" {
         opt.demux_cfg.auto_stream = CcxStreamMode::Transport;
+        opt.demux_cfg.m2ts = false;
     } else if can_unwrap && args.input.unwrap().to_string() == "m2ts" {
         opt.demux_cfg.auto_stream = CcxStreamMode::Transport;
+        opt.demux_cfg.m2ts = true;
     } else if args.ps || can_unwrap && args.input.unwrap().to_string() == "ps" {
         opt.demux_cfg.auto_stream = CcxStreamMode::Program;
     } else if args.asf
@@ -74,7 +76,7 @@ fn mkvlang_params_check(lang: &str) {
 
             if present - initial == 6 {
                 let sub_slice = &lang[initial..present];
-                if !sub_slice.contains("-") {
+                if !sub_slice.contains('-') {
                     panic!("language code is not of the form xxx-xx\n");
                 }
             }
@@ -99,7 +101,7 @@ fn mkvlang_params_check(lang: &str) {
 
     if present - initial == 5 {
         let sub_slice = &lang[initial..present];
-        if !sub_slice.contains("-") {
+        if !sub_slice.contains('-') {
             panic!("last language code is not of the form xxx-xx\n");
         }
     }
@@ -120,7 +122,6 @@ fn main() {
         opt.live_stream = Some(-1);
     }
 
-    #[cfg(feature = "hardsubx_ocr")]
     {
         if args.hardsubx {
             opt.hardsubx = Some(1);
@@ -129,28 +130,25 @@ fn main() {
                 opt.hardsubx_and_common = Some(1);
             }
 
-            match args.ocr_mode {
-                Some(ref ocr_mode) => {
-                    let ocr_mode = match ocr_mode.as_str() {
-                        "simple" | "frame" => Some(HardsubxOcrMode::Frame),
-                        "word" => Some(HardsubxOcrMode::Word),
-                        "letter" | "symbol" => Some(HardsubxOcrMode::Letter),
-                        _ => None,
-                    };
+            if let Some(ref ocr_mode) = args.ocr_mode {
+                let ocr_mode = match ocr_mode.as_str() {
+                    "simple" | "frame" => Some(HardsubxOcrMode::Frame),
+                    "word" => Some(HardsubxOcrMode::Word),
+                    "letter" | "symbol" => Some(HardsubxOcrMode::Letter),
+                    _ => None,
+                };
 
-                    if ocr_mode.is_none() {
-                        println!("Invalid OCR mode");
-                        std::process::exit(ExitCode::MalformedParameter as i32);
-                    }
-
-                    let value = Some(ocr_mode.unwrap() as i32);
-                    opt.hardsubx_ocr_mode = value;
+                if ocr_mode.is_none() {
+                    println!("Invalid OCR mode");
+                    std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                None => {}
+
+                let value = Some(ocr_mode.unwrap() as i32);
+                opt.hardsubx_ocr_mode = value;
             }
 
-            match args.subcolor {
-                Some(ref subcolor) => match subcolor.as_str() {
+            if let Some(ref subcolor) = args.subcolor {
+                match subcolor.as_str() {
                     "white" => {
                         opt.hardsubx_subcolor = Some(HardsubxColorType::White as i32);
                         opt.hardsubx_hue = Some(0.0);
@@ -195,45 +193,35 @@ fn main() {
                         opt.hardsubx_subcolor = Some(HardsubxColorType::Custom as i32);
                         opt.hardsubx_hue = Some(hue);
                     }
-                },
-                None => {}
+                }
             }
 
-            match args.min_sub_duration {
-                Some(value) => {
-                    if value == 0.0 {
-                        println!("Invalid minimum subtitle duration");
-                        std::process::exit(ExitCode::MalformedParameter as i32);
-                    }
-                    opt.hardsubx_min_sub_duration = Some(value);
+            if let Some(value) = args.min_sub_duration {
+                if value == 0.0 {
+                    println!("Invalid minimum subtitle duration");
+                    std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                None => {}
+                opt.hardsubx_min_sub_duration = Some(value);
             }
 
             if args.detect_italics {
                 opt.hardsubx_detect_italics = Some(1);
             }
 
-            match args.conf_thresh {
-                Some(value) => {
-                    if value <= 0.0 || value > 100.0 {
-                        println!("Invalid confidence threshold, valid values are between 0 & 100");
-                        std::process::exit(ExitCode::MalformedParameter as i32);
-                    }
-                    opt.hardsubx_conf_thresh = Some(value);
+            if let Some(value) = args.conf_thresh {
+                if !(0.0..=100.0).contains(&value) {
+                    println!("Invalid confidence threshold, valid values are between 0 & 100");
+                    std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                None => {}
+                opt.hardsubx_conf_thresh = Some(value);
             }
 
-            match args.whiteness_thresh {
-                Some(value) => {
-                    if value <= 0.0 || value > 100.0 {
-                        println!("Invalid whiteness threshold, valid values are between 0 & 100");
-                        std::process::exit(ExitCode::MalformedParameter as i32);
-                    }
-                    opt.hardsubx_lum_thresh = Some(value);
+            if let Some(value) = args.whiteness_thresh {
+                if !(0.0..=100.0).contains(&value) {
+                    println!("Invalid whiteness threshold, valid values are between 0 & 100");
+                    std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                None => {}
+                opt.hardsubx_lum_thresh = Some(value);
             }
         }
     } // END OF HARDSUBX
@@ -262,8 +250,8 @@ fn main() {
         opt.append_mode = Some(1);
     }
 
-    match args.buffersize {
-        Some(buffersize) => unsafe {
+    if let Some(buffersize) = args.buffersize {
+        unsafe {
             let mut_ref = &mut FILEBUFFERSIZE;
 
             if buffersize < 8 {
@@ -271,8 +259,7 @@ fn main() {
             } else {
                 *mut_ref = buffersize;
             }
-        },
-        None => {}
+        }
     }
 
     if args.dru {
@@ -319,85 +306,60 @@ fn main() {
         set_input_format(&mut opt, &args);
     }
 
-    match args.codec {
-        Some(codec) => match codec {
+    if let Some(codec) = args.codec {
+        match codec {
             Codec::Teletext => {
                 opt.demux_cfg.codec = CcxCodeType::Teletext;
             }
             Codec::Dvbsub => {
                 opt.demux_cfg.codec = CcxCodeType::Dvb;
             }
-            _ => {
-                println!("Invalid codec");
-                std::process::exit(ExitCode::MalformedParameter as i32);
-            }
-        },
-        None => {}
+        }
     }
 
-    match args.no_codec {
-        Some(codec) => match codec {
+    if let Some(codec) = args.no_codec {
+        match codec {
             Codec::Dvbsub => {
                 opt.demux_cfg.codec = CcxCodeType::Teletext;
             }
             Codec::Teletext => {
                 opt.demux_cfg.codec = CcxCodeType::Dvb;
             }
-            _ => {
-                println!("Invalid codec");
-                std::process::exit(ExitCode::MalformedParameter as i32);
-            }
-        },
-        None => {}
+        }
     }
 
-    match args.dvblang {
-        Some(lang) => {
-            opt.dvblang = Some(lang);
-        }
-        None => {}
+    if let Some(lang) = args.dvblang {
+        opt.dvblang = Some(lang);
     }
 
-    match args.ocrlang {
-        Some(lang) => {
-            opt.ocrlang = Some(lang);
-        }
-        None => {}
+    if let Some(lang) = args.ocrlang {
+        opt.ocrlang = Some(lang);
     }
 
-    match args.quant {
-        Some(quant) => {
-            if quant < 0 || quant > 2 {
-                println!("Invalid quant value");
-                std::process::exit(ExitCode::MalformedParameter as i32);
-            }
-            opt.ocr_quantmode = Some(quant);
+    if let Some(quant) = args.quant {
+        if !(0..=2).contains(&quant) {
+            println!("Invalid quant value");
+            std::process::exit(ExitCode::MalformedParameter as i32);
         }
-        None => {}
+        opt.ocr_quantmode = Some(quant);
     }
 
     if args.no_spupngocr {
         opt.enc_cfg.nospupngocr = true;
     }
 
-    match args.oem {
-        Some(oem) => {
-            if oem < 0 || oem > 2 {
-                println!("Invalid oem value");
-                std::process::exit(ExitCode::MalformedParameter as i32);
-            }
-            opt.ocr_oem = Some(oem);
+    if let Some(oem) = args.oem {
+        if !(0..=2).contains(&oem) {
+            println!("Invalid oem value");
+            std::process::exit(ExitCode::MalformedParameter as i32);
         }
-        None => {}
+        opt.ocr_oem = Some(oem);
     }
 
-    match args.mkvlang {
-        Some(ref lang) => {
-            opt.mkvlang = Some(lang.to_string());
-            let str = lang.as_str();
-            mkvlang_params_check(str);
-        }
-        None => {}
+    if let Some(ref lang) = args.mkvlang {
+        opt.mkvlang = Some(lang.to_string());
+        let str = lang.as_str();
+        mkvlang_params_check(str);
     }
 
     println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");
