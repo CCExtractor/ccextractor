@@ -120,7 +120,7 @@ fn main() {
         opt.live_stream = Some(-1);
     }
 
-    // #[cfg(feature = "hardsubx_ocr")]
+    #[cfg(feature = "hardsubx_ocr")]
     {
         if args.hardsubx {
             opt.hardsubx = Some(1);
@@ -258,10 +258,9 @@ fn main() {
         opt.force_flush = Some(1);
     }
 
-    // TODO(prateekmedia): Check this too
-    // if args.append {
-    //     opt.append_mode = Some(1);
-    // }
+    if args.append {
+        opt.append_mode = Some(1);
+    }
 
     match args.buffersize {
         Some(buffersize) => unsafe {

@@ -533,6 +533,8 @@ pub struct Args {
     /// Flush the file buffer whenever content is written.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub forceflush: bool,
+    #[arg(long, hide = true)]
+    pub append: bool,
     /// Direct Roll-Up. When in roll-up mode, write character by
     /// character instead of line by line. Note that this
     /// produces (much) larger files.
