@@ -1,5 +1,5 @@
 mod args;
-use args::Args;
+use args::{Args, OutFormat};
 
 mod structs;
 use clap::Parser;
@@ -9,6 +9,91 @@ use structs::CcxSOptions;
 use crate::{args::Codec, structs::*};
 
 static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
+
+fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
+    opt.write_format_rewritten = true;
+
+    let can_unwrap = args.out.is_some();
+    // TODO(prateemedia): there was no reference of this in help
+    // #[cfg(feature = "with_libcurl")]
+    // {
+    //     if can_unwrap && args.out.unwrap() == OutFormat::Curl {
+    //         opt.write_format = CcxOutputFormat::Curl;
+    //         return;
+    //     }
+    // }
+
+    if opt.send_to_srv && can_unwrap && args.out.unwrap() == OutFormat::Bin {
+        println!("Output format is changed to bin\n");
+        opt.write_format = CcxOutputFormat::Rcwt;
+        return;
+    }
+
+    if can_unwrap && args.out.unwrap() == OutFormat::Ass {
+        opt.write_format = CcxOutputFormat::Ssa;
+        opt.use_ass_instead_of_ssa = true;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Ccd {
+        opt.write_format = CcxOutputFormat::Ccd;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Scc {
+        opt.write_format = CcxOutputFormat::Scc;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Srt {
+        opt.write_format = CcxOutputFormat::Srt;
+    } else if args.srt || can_unwrap && args.out.unwrap() == OutFormat::Ssa {
+        opt.write_format = CcxOutputFormat::Ssa;
+    } else if args.webvtt || can_unwrap && args.out.unwrap() == OutFormat::Webvtt {
+        opt.write_format = CcxOutputFormat::Webvtt;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::WebvttFull {
+        opt.write_format = CcxOutputFormat::Webvtt;
+        opt.use_webvtt_styling = true;
+    } else if args.sami || can_unwrap && args.out.unwrap() == OutFormat::Sami {
+        opt.write_format = CcxOutputFormat::Sami;
+    } else if args.txt || can_unwrap && args.out.unwrap() == OutFormat::Txt {
+        opt.write_format = CcxOutputFormat::Transcript;
+        opt.settings_dtvcc.no_rollup = true;
+    } else if args.ttxt || can_unwrap && args.out.unwrap() == OutFormat::Ttxt {
+        opt.write_format = CcxOutputFormat::Transcript;
+        if opt.date == CcxOutputDateFormat::None {
+            opt.date = CcxOutputDateFormat::HHMMSSMS;
+        }
+        // Sets the right things so that timestamps and the mode are printed.
+        if !opt.transcript_settings.is_final {
+            opt.transcript_settings.show_start_time = true;
+            opt.transcript_settings.show_end_time = true;
+            opt.transcript_settings.show_cc = false;
+            opt.transcript_settings.show_mode = true;
+        }
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Report {
+        opt.write_format = CcxOutputFormat::Null;
+        opt.messages_target = false;
+        opt.print_file_reports = true;
+        opt.demux_cfg.ts_allprogram = true;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Raw {
+        opt.write_format = CcxOutputFormat::Raw;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Smptett {
+        opt.write_format = CcxOutputFormat::Smptett;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Bin {
+        opt.write_format = CcxOutputFormat::Rcwt;
+    } else if args.null || can_unwrap && args.out.unwrap() == OutFormat::Null {
+        opt.write_format = CcxOutputFormat::Null;
+    } else if args.dvdraw || can_unwrap && args.out.unwrap() == OutFormat::Dvdraw {
+        opt.write_format = CcxOutputFormat::Dvdraw;
+    } else if can_unwrap && args.out.unwrap() == OutFormat::Spupng {
+        opt.write_format = CcxOutputFormat::Spupng;
+    }
+    // else if can_unwrap && args.out.unwrap() == OutFormat:: {
+    // opt.write_format = CcxOutputFormat::SimpleXml;}
+    else if can_unwrap && args.out.unwrap() == OutFormat::G608 {
+        opt.write_format = CcxOutputFormat::G608;
+    } else if args.mcc || can_unwrap && args.out.unwrap() == OutFormat::Mcc {
+        opt.write_format = CcxOutputFormat::Mcc;
+    } else {
+        println!(
+            "Unknown input file format: {}\n",
+            args.input.unwrap().to_string()
+        );
+        std::process::exit(ExitCode::MalformedParameter as i32);
+    }
+}
 
 fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
     if opt.input_source == CcxDatasource::Tcp {
@@ -64,43 +149,43 @@ fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
 
 fn mkvlang_params_check(lang: &str) {
     let mut initial = 0;
-    let mut present = 0;
+    let mut _present = 0;
 
     for (char_index, c) in lang.to_lowercase().chars().enumerate() {
         if c == ',' {
-            present = char_index;
+            _present = char_index;
 
-            if present - initial < 3 || present - initial > 6 {
+            if _present - initial < 3 || _present - initial > 6 {
                 panic!("language codes should be xxx,xxx,xxx,....\n");
             }
 
-            if present - initial == 6 {
-                let sub_slice = &lang[initial..present];
+            if _present - initial == 6 {
+                let sub_slice = &lang[initial.._present];
                 if !sub_slice.contains('-') {
                     panic!("language code is not of the form xxx-xx\n");
                 }
             }
 
-            initial = present + 1;
+            initial = _present + 1;
         }
     }
 
     // Steps to check for the last lang of multiple mkvlangs provided by the user.
-    present = lang.len() - 1;
+    _present = lang.len() - 1;
 
-    for char_index in (0..present).rev() {
+    for char_index in (0.._present).rev() {
         if lang.chars().nth(char_index) == Some(',') {
             initial = char_index + 1;
             break;
         }
     }
 
-    if present - initial < 2 || present - initial > 5 {
+    if _present - initial < 2 || _present - initial > 5 {
         panic!("last language code should be xxx.\n");
     }
 
-    if present - initial == 5 {
-        let sub_slice = &lang[initial..present];
+    if _present - initial == 5 {
+        let sub_slice = &lang[initial.._present];
         if !sub_slice.contains('-') {
             panic!("last language code is not of the form xxx-xx\n");
         }
@@ -125,10 +210,10 @@ fn main() {
     #[cfg(feature = "hardsubx_ocr")]
     {
         if args.hardsubx {
-            opt.hardsubx = Some(1);
+            opt.hardsubx = true;
 
             if args.hcc {
-                opt.hardsubx_and_common = Some(1);
+                opt.hardsubx_and_common = true;
             }
 
             if let Some(ref ocr_mode) = args.ocr_mode {
@@ -197,7 +282,7 @@ fn main() {
                 }
             }
 
-            if let Some(value) = args.min_sub_duration {
+            if let Some(ref value) = args.min_sub_duration {
                 if value == 0.0 {
                     println!("Invalid minimum subtitle duration");
                     std::process::exit(ExitCode::MalformedParameter as i32);
@@ -206,10 +291,10 @@ fn main() {
             }
 
             if args.detect_italics {
-                opt.hardsubx_detect_italics = Some(1);
+                opt.hardsubx_detect_italics = true;
             }
 
-            if let Some(value) = args.conf_thresh {
+            if let Some(ref value) = args.conf_thresh {
                 if !(0.0..=100.0).contains(&value) {
                     println!("Invalid confidence threshold, valid values are between 0 & 100");
                     std::process::exit(ExitCode::MalformedParameter as i32);
@@ -217,7 +302,7 @@ fn main() {
                 opt.hardsubx_conf_thresh = Some(value);
             }
 
-            if let Some(value) = args.whiteness_thresh {
+            if let Some(ref value) = args.whiteness_thresh {
                 if !(0.0..=100.0).contains(&value) {
                     println!("Invalid whiteness threshold, valid values are between 0 & 100");
                     std::process::exit(ExitCode::MalformedParameter as i32);
@@ -228,37 +313,37 @@ fn main() {
     } // END OF HARDSUBX
 
     if args.chapters {
-        opt.extract_chapters = Some(1);
+        opt.extract_chapters = true;
     }
 
     if args.bufferinput {
-        opt.buffer_input = Some(1);
+        opt.buffer_input = true;
     }
 
     if args.no_bufferinput {
-        opt.buffer_input = Some(0);
+        opt.buffer_input = false;
     }
 
     if args.koc {
-        opt.keep_output_closed = Some(1);
+        opt.keep_output_closed = true;
     }
 
     if args.forceflush {
-        opt.force_flush = Some(1);
+        opt.force_flush = true;
     }
 
     if args.append {
-        opt.append_mode = Some(1);
+        opt.append_mode = true;
     }
 
-    if let Some(buffersize) = args.buffersize {
+    if let Some(ref buffersize) = args.buffersize {
         unsafe {
             let mut_ref = &mut FILEBUFFERSIZE;
 
-            if buffersize < 8 {
+            if *buffersize < 8 {
                 *mut_ref = 8; // Otherwise crashes are guaranteed at least in MythTV
             } else {
-                *mut_ref = buffersize;
+                *mut_ref = *buffersize;
             }
         }
     }
@@ -291,7 +376,7 @@ fn main() {
     }
 
     if args.timestamp_map {
-        opt.timestamp_map = Some(1);
+        opt.timestamp_map = true;
     }
 
     if args.es
@@ -307,7 +392,7 @@ fn main() {
         set_input_format(&mut opt, &args);
     }
 
-    if let Some(codec) = args.codec {
+    if let Some(ref codec) = args.codec {
         match codec {
             Codec::Teletext => {
                 opt.demux_cfg.codec = CcxCodeType::Teletext;
@@ -318,7 +403,7 @@ fn main() {
         }
     }
 
-    if let Some(codec) = args.no_codec {
+    if let Some(ref codec) = args.no_codec {
         match codec {
             Codec::Dvbsub => {
                 opt.demux_cfg.codec = CcxCodeType::Teletext;
@@ -329,38 +414,55 @@ fn main() {
         }
     }
 
-    if let Some(lang) = args.dvblang {
-        opt.dvblang = Some(lang);
+    if let Some(ref lang) = args.dvblang {
+        opt.dvblang = Some(lang.clone());
     }
 
-    if let Some(lang) = args.ocrlang {
-        opt.ocrlang = Some(lang);
+    if let Some(ref lang) = args.ocrlang {
+        opt.ocrlang = Some(lang.clone());
     }
 
-    if let Some(quant) = args.quant {
-        if !(0..=2).contains(&quant) {
+    if let Some(ref quant) = args.quant {
+        if !(0..=2).contains(&*quant) {
             println!("Invalid quant value");
             std::process::exit(ExitCode::MalformedParameter as i32);
         }
-        opt.ocr_quantmode = Some(quant);
+        opt.ocr_quantmode = Some(*quant);
     }
 
     if args.no_spupngocr {
         opt.enc_cfg.nospupngocr = true;
     }
 
-    if let Some(oem) = args.oem {
-        if !(0..=2).contains(&oem) {
+    if let Some(ref oem) = args.oem {
+        if !(0..=2).contains(&*oem) {
             println!("Invalid oem value");
             std::process::exit(ExitCode::MalformedParameter as i32);
         }
-        opt.ocr_oem = Some(oem);
+        opt.ocr_oem = Some(*oem);
     }
 
     if let Some(ref lang) = args.mkvlang {
         opt.mkvlang = Some(lang.to_string());
         let str = lang.as_str();
         mkvlang_params_check(str);
+    }
+    if args.srt
+        || args.mcc
+        || args.dvdraw
+        || args.smi
+        || args.sami
+        || args.txt
+        || args.ttxt
+        || args.webvtt
+        || args.null
+        || args.out.is_some()
+    {
+        set_output_format(&mut opt, &args);
+    }
+
+    if let Some(ref startcreditstext) = args.startcreditstext {
+        opt.enc_cfg.start_credits_text = startcreditstext.clone();
     }
 
     println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");

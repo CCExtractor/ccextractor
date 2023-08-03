@@ -829,7 +829,7 @@ pub enum InputFormat {
     Mxf,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Display, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum OutFormat {
     /// SubRip (default, so not actually needed).
     Srt,
