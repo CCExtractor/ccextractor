@@ -122,6 +122,7 @@ fn main() {
         opt.live_stream = Some(-1);
     }
 
+    #[cfg(feature = "hardsubx_ocr")]
     {
         if args.hardsubx {
             opt.hardsubx = Some(1);
