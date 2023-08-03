@@ -320,10 +320,10 @@ fn main() {
     if let Some(codec) = args.no_codec {
         match codec {
             Codec::Dvbsub => {
-                opt.demux_cfg.codec = CcxCodeType::Teletext;
+                opt.demux_cfg.nocodec = CcxCodeType::Teletext;
             }
             Codec::Teletext => {
-                opt.demux_cfg.codec = CcxCodeType::Dvb;
+                opt.demux_cfg.nocodec = CcxCodeType::Dvb;
             }
         }
     }
