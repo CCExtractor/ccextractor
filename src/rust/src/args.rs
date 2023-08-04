@@ -4,6 +4,7 @@ use strum_macros::Display;
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
 const OUTPUT_FILE_SEGMENTATION: &str = "Output File Segmentation";
 const NETWORK_SUPPORT: &str = "Network support";
+const OPTION_AFFECT_PROCESSED: &str = "Options that affect what will be processed";
 const INPUT_FORMATS: &str = "Input Formats";
 const OUTPUT_FORMATS: &str = "Output Formats";
 const OPTIONS_AFFECTING_INPUT_FILES: &str = "Options that affect how input files will be processed";
@@ -47,7 +48,38 @@ http://www.ccextractor.org
 #[command(
     help_template = "{name} {version}, {author}.\n{about}\n {all-args} {tab}\n
     An example command for burned-in subtitle extraction is as follows:
-    ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60"
+    ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60
+    
+    Notes on the CEA-708 decoder: While it is starting to be useful, it's
+    a work in progress. A number of things don't work yet in the decoder
+    itself, and many of the auxiliary tools (case conversion to name one)
+    won't do anything yet. Feel free to submit samples that cause problems
+    and feature requests.
+
+    Notes on spupng output format:
+    One .xml file is created per output field. A set of .png files are created in
+    a directory with the same base name as the corresponding .xml file(s), but with
+    a .d extension. Each .png file will contain an image representing one caption
+    and named subNNNN.png, starting with sub0000.png.
+    For example, the command:
+        ccextractor -out=spupng input.mpg
+    will create the files:
+        input.xml
+        input.d/sub0000.png
+        input.d/sub0001.png
+        ...
+    The command:
+        ccextractor -out=spupng -o /tmp/output -12 input.mpg
+    will create the files:
+        /tmp/output_1.xml
+        /tmp/output_1.d/sub0000.png
+        /tmp/output_1.d/sub0001.png
+        ...
+        /tmp/output_2.xml
+        /tmp/output_2.d/sub0000.png
+        /tmp/output_2.d/sub0001.png
+        ...
+    "
 )]
 #[command(arg_required_else_help = true)]
 pub struct Args {
@@ -77,7 +109,7 @@ pub struct Args {
     pub ignoreptsjumps: bool,
     /// fix pts jumps. Use this parameter if you
     /// experience timeline resets/jumps in the output.
-    #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
+    #[arg(long, verbatim_doc_comment, conflicts_with="ignoreptsjumps", help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub fixptsjumps: bool,
     /// Reads input from stdin (console) instead of file.
     /// Alternatively, - can be used instead of --stdin
@@ -121,6 +153,30 @@ pub struct Args {
     /// captions e.g. channel name or file name
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_description: Option<String>,
+    /// Output field1 data, field2 data, or both
+    #[arg(long, value_name="data", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    pub output_field: Option<OutputField>,
+    /// Use --append to prevent overwriting of existing files. The output will be
+    /// appended instead.
+    #[arg(long, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    pub append: bool,
+    /// When in srt/sami mode, process captions in channel 2
+    /// instead of channel 1.
+    #[arg(long, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    pub cc2: bool,
+    /// Enable CEA-708 (DTVCC) captions processing for the listed
+    /// services. The parameter is a comma delimited list
+    /// of services numbers, such as "1,2" to process the
+    /// primary and secondary language services.
+    /// Pass "all" to process all services found.
+    /// If captions in a service are stored in 16-bit encoding,
+    /// you can specify what charset or encoding was used. Pass
+    /// its name after service number (e.g. "1[EUC-KR],3" or
+    /// "all[EUC-KR]") and it will encode specified charset to
+    /// UTF-8 using iconv. See iconv documentation to check if
+    /// required encoding/charset is supported.
+    #[arg(long="service", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    pub cea708services: Option<String>,
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the
     /// input format correctly. Use this parameter to override the detected
@@ -202,7 +258,7 @@ pub struct Args {
     /// Note: If --s is used then only one input file is
     /// allowed.
     #[arg(short, long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub stream: Option<u32>,
+    pub stream: Option<i32>,
     /// Use the pic_order_cnt_lsb in AVC/H.264 data streams
     /// to order the CC information.  The default way is to
     /// use the PTS information.  Use this switch only when
@@ -237,7 +293,7 @@ pub struct Args {
     /// and terminate without doing anything, unless
     /// --autoprogram (see below) is used.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub program_number: Option<u16>,
+    pub program_number: Option<u32>,
     /// If there's more than one program in the stream, just use
     /// the first one we find that contains a suitable stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
@@ -248,7 +304,7 @@ pub struct Args {
     /// Don't try to find out the stream for caption/teletext
     /// data, just use this one instead.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub datapid: Option<u16>,
+    pub datapid: Option<u32>,
     /// Instead of selecting the stream by its PID, select it
     /// by its type (pick the stream that has this type in
     /// the PMT)
@@ -272,7 +328,7 @@ pub struct Args {
     /// of the video track. If you need to force the video track
     /// to be processed instead use this option.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub mp4vidtrack: Option<String>,
+    pub mp4vidtrack: bool,
     /// Some streams come with broadcast date information. When
     /// such data is available, CCExtractor will set its time
     /// reference to the received data. Use this parameter if
@@ -383,7 +439,7 @@ pub struct Args {
     /// Use one line per word. Lines starting with # are
     /// considered comments and discarded.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub capfile: bool,
+    pub capfile: Option<String>,
     /// Censors profane words from subtitles.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub kf: bool,
@@ -533,8 +589,6 @@ pub struct Args {
     /// Flush the file buffer whenever content is written.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub forceflush: bool,
-    #[arg(long, hide = true)]
-    pub append: bool,
     /// Direct Roll-Up. When in roll-up mode, write character by
     /// character instead of line by line. Note that this
     /// produces (much) larger files.
@@ -562,21 +616,21 @@ pub struct Args {
     /// appear 400ms late. You can also use negative numbers
     /// to make subs appear early.
     #[arg(long, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
-    pub delay: Option<u32>,
+    pub delay: Option<i32>,
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
     #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub startat: Option<u32>,
+    pub startat: Option<String>,
     /// Stop processing after the given time (same format as
     /// --startat).
     /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
     #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub endat: Option<u32>,
+    pub endat: Option<String>,
     /// Write 'num' screenfuls and terminate processing.
     #[arg(long, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub screenfuls: Option<u32>,
@@ -794,6 +848,13 @@ pub struct Args {
 pub enum Codec {
     Dvbsub,
     Teletext,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum OutputField {
+    Field1,
+    Field2,
+    Both,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
