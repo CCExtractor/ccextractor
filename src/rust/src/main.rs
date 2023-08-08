@@ -1,7 +1,9 @@
 mod args;
 use args::{Args, OutFormat};
 
+mod activity;
 mod structs;
+
 use clap::Parser;
 
 mod enums;
@@ -10,6 +12,7 @@ use structs::CcxSOptions;
 use time::OffsetDateTime;
 
 use crate::{
+    activity::activity_report_version,
     args::{Codec, Ru},
     enums::CcxDebugMessageTypes,
     structs::*,
@@ -21,6 +24,7 @@ static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
 static mut MPEG_CLOCK_FREQ: i64 = 0;
 static mut USERCOLOR_RGB: String = String::new();
 static mut UTC_REFVALUE: u64 = 0;
+const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
 
 pub trait FromStr {
     #[allow(dead_code)]
@@ -76,6 +80,37 @@ fn atoi_hex(s: &str) -> usize {
         // Decimal
         return s.parse::<usize>().unwrap();
     }
+}
+
+fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
+    let mut file = std::fs::File::open(filename)?;
+    let mut line = String::new();
+    let mut num = 0;
+    while file.read_line(&mut line)? > 0 {
+        num += 1;
+        if line.starts_with('#') {
+            continue;
+        }
+
+        let new_len = line.trim().len();
+        if new_len > CCX_DECODER_608_SCREEN_WIDTH {
+            println!(
+                "Word in line {} too long, max = {} characters.",
+                num, CCX_DECODER_608_SCREEN_WIDTH
+            );
+            continue;
+        }
+
+        if new_len > 0 {
+            list.push(line.trim().to_string());
+        }
+    }
+
+    Ok(())
+}
+
+fn set_output_format_bin(opt: &mut CcxSOptions) {
+    opt.write_format = CcxOutputFormat::Rcwt;
 }
 
 fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
@@ -161,6 +196,10 @@ fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
         );
         std::process::exit(ExitCode::MalformedParameter as i32);
     }
+}
+
+fn set_input_format_bin(opt: &mut CcxSOptions) {
+    opt.demux_cfg.auto_stream = CcxStreamMode::Rcwt;
 }
 
 fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
@@ -1044,6 +1083,141 @@ fn main() {
     }
 
     // Network stuff
+    if let Some(ref udp) = args.udp {
+        if let Some(at) = udp.find('@') {
+            let addr = &udp[0..at];
+            let port = &udp[at + 1..];
+
+            opt.udpsrc = Some(udp.clone());
+            opt.udpaddr = Some(addr.to_owned());
+            opt.udpport = Some(port.parse().unwrap());
+        } else if let Some(colon) = udp.find(':') {
+            let addr = &udp[0..colon];
+            let port = atoi_hex(&udp[colon + 1..]) as u32;
+
+            opt.udpsrc = Some(udp.clone());
+            opt.udpaddr = Some(addr.to_owned());
+            opt.udpport = Some(port);
+        } else {
+            opt.udpaddr = None;
+            opt.udpport = Some(udp.parse().unwrap());
+        }
+
+        opt.input_source = CcxDatasource::Network;
+    }
+
+    if let Some(ref addr) = args.sendto {
+        opt.send_to_srv = true;
+        set_output_format_bin(&mut opt);
+
+        opt.xmltv = Some(2);
+        opt.xmltvliveinterval = Some(2);
+        let mut _addr: String = addr.to_string();
+
+        if addr.starts_with('[') {
+            _addr = addr[1..].to_string();
+
+            let mut br = _addr
+                .find(']')
+                .expect("Wrong address format, for IPv6 use [address]:port");
+            _addr = _addr.replace("]", "");
+
+            opt.srv_addr = Some(_addr.clone());
+
+            br += 1;
+            if !_addr[br..].is_empty() {
+                opt.srv_port = Some(_addr[br..].parse().unwrap());
+            }
+        }
+
+        opt.srv_addr = Some(_addr.clone());
+
+        let colon = _addr.find(':').unwrap();
+        _addr = _addr.replace(":", "");
+        opt.srv_port = Some(_addr[(colon + 1)..].parse().unwrap());
+    }
+
+    if let Some(ref tcp) = args.tcp {
+        opt.tcpport = Some(*tcp);
+        opt.input_source = CcxDatasource::Tcp;
+        set_input_format_bin(&mut opt);
+    }
+
+    if let Some(ref tcppassworrd) = args.tcp_password {
+        opt.tcp_password = Some(tcppassworrd.to_string());
+    }
+
+    if let Some(ref tcpdesc) = args.tcp_description {
+        opt.tcp_desc = Some(tcpdesc.to_string());
+    }
+
+    if let Some(ref font) = args.font {
+        opt.enc_cfg.render_font = font.to_string();
+    }
+
+    if let Some(ref italics) = args.italics {
+        opt.enc_cfg.render_font_italics = italics.to_string();
+    }
+
+    #[cfg(feature = "with_libcurl")]
+    if let Some(ref curlposturl) = args.curlposturl {
+        opt.curlposturl = curlposturl.to_string();
+    }
+
+    #[cfg(feature = "enable_sharing")]
+    {
+        if args.enable_sharing {
+            opt.sharing_enabled = true;
+        }
+
+        if let Some(ref sharingurl) = args.sharing_url {
+            opt.sharing_url = sharingurl.to_string();
+        }
+
+        if let Some(ref translate) = args.translate {
+            opt.translate_enabled = true;
+            opt.sharing_enabled = true;
+            opt.translate_langs = translate.to_string();
+        }
+
+        if let Some(ref translateauth) = args.translate_auth {
+            opt.translate_key = translateauth.to_string();
+        }
+    }
+
+    if opt.demux_cfg.auto_stream == CcxStreamMode::Mp4 && opt.input_source == CcxDatasource::Stdin {
+        println!("MP4 requires an actual file, it's not possible to read from a stream, including stdin.");
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    if opt.extract_chapters {
+        println!("Request to extract chapters recieved.");
+        println!("Note that this must only be used with MP4 files,");
+        println!("for other files it will simply generate subtitles file.\n");
+    }
+
+    if opt.gui_mode_reports {
+        opt.no_progress_bar = true;
+        // Do it as soon as possible, because it something fails we might not have a chance
+        activity_report_version(&mut opt);
+    }
+
+    if opt.enc_cfg.sentence_cap {
+        add_builtin_words(capitalized_builtin, &capitalization_list)
+            .expect("Not enough memory for capitalized word list");
+        if opt.sentence_cap_file {
+            process_word_file(opt.sentence_cap_file, &capitalization_list)
+                .expect("There was an error processing the capitalization file.\n");
+        }
+    }
+    if opt.enc_cfg.filter_profanity {
+        add_builtin_words(profane_builtin, &profane)
+            .expect("Not enough memory for profane word list");
+        if let Some(ref profanityfile) = opt.filter_profanity_file {
+            process_word_file(profanityfile.as_str(), &profane)
+                .expect("There was an error processing the profanity file.\n");
+        }
+    }
 
     println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");
 }

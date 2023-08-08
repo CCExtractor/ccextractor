@@ -124,12 +124,11 @@ pub struct Args {
     pub segmentonkeyonly: bool,
     /// Read the input via UDP (listening in the specified port)
     /// instead of reading a file.
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
-    pub udp: Option<u32>,
-    /// Read the input via UDP (listening in the specified port)
-    /// instead of reading a file.
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
-    pub host: Option<String>,
+    /// Host can be a
+    /// hostname or IPv4 address. If host is not specified
+    /// then listens on the local host.
+    #[arg(long, value_name="[host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    pub udp: Option<String>,
     /// Can be a hostname or IPv4 address.
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub src: Option<String>,
@@ -864,6 +863,9 @@ pub struct Args {
     /// closed captions and burned in subtitles
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub hcc: bool,
+    #[cfg(feature = "with_libcurl")]
+    #[arg(long, hide = true)]
+    pub curlposturl: Option<String>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -954,4 +956,9 @@ pub enum OutFormat {
     /// Prints to stdout information about captions in specified input.
     /// Don't produce any file output.
     Report,
+    #[cfg(feature = "with_libcurl")]
+    /// POST plain transcription frame-by-frame to a
+    /// URL specified by --curlposturl. Don't produce
+    /// any file output.
+    Curl,
 }

@@ -164,7 +164,7 @@ impl Default for CcxStreamMode {
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum CcxStreamMode {
     ElementaryOrNotFound = 0,
     Transport = 1,
@@ -462,11 +462,11 @@ pub struct CcxSOptions {
     pub udpsrc: Option<String>,
     pub udpaddr: Option<String>,
     pub udpport: Option<u32>,
-    pub tcpport: Option<String>,
+    pub tcpport: Option<u16>,
     pub tcp_password: Option<String>,
     pub tcp_desc: Option<String>,
     pub srv_addr: Option<String>,
-    pub srv_port: Option<String>,
+    pub srv_port: Option<u32>,
     pub noautotimeref: bool,
     pub input_source: CcxDatasource,
     pub output_filename: Option<String>,
@@ -484,7 +484,7 @@ pub struct CcxSOptions {
     pub curlposturl: Option<String>,
     pub sharing_enabled: bool,
     pub sharing_url: Option<String>,
-    pub translate_enabled: Option<i32>,
+    pub translate_enabled: bool,
     pub translate_langs: Option<String>,
     pub translate_key: Option<String>,
 }
