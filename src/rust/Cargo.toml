@@ -23,6 +23,7 @@ leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
 clap = { version = "4.3.19", features = ["derive"] }
 strum = "0.25"
 strum_macros = "0.25"
+time = "0.3.25"
 
 [build-dependencies]
 bindgen = "0.58.1"

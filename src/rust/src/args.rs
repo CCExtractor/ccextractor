@@ -23,7 +23,8 @@ const OUTPUT_AFFECTING_DEBUG_DATA: &str = "Options that affect debug data";
 const TELETEXT_OPTIONS: &str = "Teletext related options";
 const TRANSCRIPT_OPTIONS: &str = "Transcript customizing options";
 const COMMUNICATION_PROTOCOL: &str = "Communication with other programs and console output";
-// const SPUPNG_NOTES: &str=  "Notes on spupng output format";
+const SHARING_EXTRACTED_CAPTIONS: &str = "Sharing extracted captions via TCP";
+const CCTRANSLATE_INTEGRATION: &str = "CCTranslate application integration";
 const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 
 #[derive(Debug, Parser)]
@@ -258,7 +259,7 @@ pub struct Args {
     /// Note: If --s is used then only one input file is
     /// allowed.
     #[arg(short, long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub stream: Option<i32>,
+    pub stream: Option<String>,
     /// Use the pic_order_cnt_lsb in AVC/H.264 data streams
     /// to order the CC information.  The default way is to
     /// use the PTS information.  Use this switch only when
@@ -293,7 +294,7 @@ pub struct Args {
     /// and terminate without doing anything, unless
     /// --autoprogram (see below) is used.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub program_number: Option<u32>,
+    pub program_number: Option<String>,
     /// If there's more than one program in the stream, just use
     /// the first one we find that contains a suitable stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
@@ -304,7 +305,7 @@ pub struct Args {
     /// Don't try to find out the stream for caption/teletext
     /// data, just use this one instead.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub datapid: Option<u32>,
+    pub datapid: Option<String>,
     /// Instead of selecting the stream by its PID, select it
     /// by its type (pick the stream that has this type in
     /// the PMT)
@@ -365,7 +366,7 @@ pub struct Args {
     /// This means that if the calculated distance
     /// is 0,1 or 2, we consider the strings to be equivalent.
     #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
-    pub levdistmincnt: Option<u32>,
+    pub levdistmincnt: Option<String>,
     /// Maximum distance we allow, as a percentage of
     /// the shortest string length. Default 10%.0
     /// For example, consider a comparison of one string of
@@ -378,7 +379,7 @@ pub struct Args {
     /// percentage is 10%, we would allow a distance of up
     /// to 3 between the first 30 characters.
     #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
-    pub levdistmaxpct: Option<u32>,
+    pub levdistmaxpct: Option<String>,
     /// (Experimental) Produces a chapter file from MP4 files.
     /// Note that this must only be used with MP4 files,
     /// for other files it will simply generate subtitles file.
@@ -460,7 +461,7 @@ pub struct Args {
     /// ccextractor will automatically switch to transport
     /// stream UTC timestamps when available.
     #[arg(long, verbatim_doc_comment, value_name="REF", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub unixts: Option<u32>,
+    pub unixts: Option<String>,
     /// In transcripts, write time as YYYYMMDDHHMMss,ms.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub datets: bool,
@@ -498,16 +499,16 @@ pub struct Args {
     /// the source TS file. Mode: 1 = full output
     /// 2 = live output. 3 = both
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub xmltv: Option<u32>,
+    pub xmltv: Option<String>,
     /// interval of x seconds between writing live mode xmltv output.
     #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub xmltvliveinterval: Option<u32>,
+    pub xmltvliveinterval: Option<String>,
     /// interval of x seconds between writing full file xmltv output.
     #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub xmltvoutputinterval: Option<u32>,
+    pub xmltvoutputinterval: Option<String>,
     /// Only print current events for xmltv output.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub xmltvonlycurrent: bool,
+    #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub xmltvonlycurrent: Option<String>,
     /// Create a .sem file for each output file that is open
     /// and delete it on file close.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -633,7 +634,7 @@ pub struct Args {
     pub endat: Option<String>,
     /// Write 'num' screenfuls and terminate processing.
     #[arg(long, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub screenfuls: Option<u32>,
+    pub screenfuls: Option<String>,
     /// --codec dvbsub
     ///     select the dvb subtitle from all elementary stream,
     ///     if stream of dvb subtitle type is not found then
@@ -734,6 +735,10 @@ pub struct Args {
     /// to find data in all packets by scanning.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub investigate_packets: bool,
+    #[cfg(feature = "enable_sharing")]
+    /// Print extracted CC sharing service messages
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    pub sharing_debug: bool,
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
     /// page is always 888, may vary in other countries.
@@ -786,6 +791,23 @@ pub struct Args {
     /// Don't write any message.
     #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
     pub quiet: bool,
+    #[cfg(feature = "enable_sharing")]
+    /// Enables real-time sharing of extracted captions
+    #[arg(long, verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
+    pub enable_sharing: bool,
+    #[cfg(feature = "enable_sharing")]
+    /// Set url for sharing service in nanomsg format. Default: tcp://*:3269
+    #[arg(long, value_name="url", verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
+    pub sharing_url: Option<String>,
+    #[cfg(feature = "enable_sharing")]
+    /// Enables real-time sharing of extracted captions
+    #[arg(long, value="languages", verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
+    pub translate: Option<String>,
+    #[cfg(feature = "enable_sharing")]
+    /// Set Translation Service authorization data to make translation possible
+    /// In case of Google Translate API - API Key
+    #[arg(long, verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
+    pub translate_auth: Option<String>,
     /// Enable the burned-in subtitle extraction subsystem.
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub hardsubx: bool,

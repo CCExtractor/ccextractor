@@ -4,10 +4,14 @@ use args::{Args, OutFormat};
 mod structs;
 use clap::Parser;
 
+mod enums;
+
 use structs::CcxSOptions;
+use time::OffsetDateTime;
 
 use crate::{
     args::{Codec, Ru},
+    enums::CcxDebugMessageTypes,
     structs::*,
 };
 
@@ -15,7 +19,8 @@ use crate::{
 
 static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
 static mut MPEG_CLOCK_FREQ: i64 = 0;
-static mut usercolor_rgb: String = String::new();
+static mut USERCOLOR_RGB: String = String::new();
+static mut UTC_REFVALUE: u64 = 0;
 
 pub trait FromStr {
     #[allow(dead_code)]
@@ -26,7 +31,7 @@ impl FromStr for &str {
     fn to_ms(&self) -> CcxBoundaryTime {
         let mut parts = self.rsplit(":");
 
-        let mut seconds: u32 = 0;
+        let seconds: u32;
 
         match parts.next() {
             Some(sec) => seconds = sec.parse().unwrap(),
@@ -60,6 +65,16 @@ impl FromStr for &str {
             time_in_ms: hours + 60 * minutes + 3600 * seconds,
             set: true,
         }
+    }
+}
+
+fn atoi_hex(s: &str) -> usize {
+    if s.len() > 2 && s.to_lowercase().starts_with("0x") {
+        // Hexadecimal
+        return usize::from_str_radix(&s[2..], 16).unwrap();
+    } else {
+        // Decimal
+        return s.parse::<usize>().unwrap();
     }
 }
 
@@ -251,8 +266,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
         opts.settings_dtvcc.enabled = true;
         opts.enc_cfg.dtvcc_extract = true;
         opts.enc_cfg.all_services_charset = charset.to_owned();
-        opts.enc_cfg.services_charsets =
-            vec![Box::new(charset.to_owned())].into_boxed_slice();
+        opts.enc_cfg.services_charsets = vec![charset.to_owned()];
         opts.settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES;
         return;
     }
@@ -268,8 +282,8 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
             } else if e == '[' {
                 charset = Some(e.to_string());
             } else if e == ']' {
-                if let Some(c) = charset {
-                    charsets.push(c);
+                if let Some(ref c) = charset {
+                    charsets.push(c.clone());
                 }
             }
         }
@@ -280,7 +294,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
     }
 
     for (i, service) in services.iter().enumerate() {
-        let svc = service.parse::<i32>().unwrap();
+        let svc = service.parse::<usize>().unwrap();
         if svc < 1 || svc > CCX_DTVCC_MAX_SERVICES {
             panic!("[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, CCX_DTVCC_MAX_SERVICES);
         }
@@ -297,10 +311,13 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
     }
 }
 
-
 fn main() {
     let args: Args = Args::parse();
     let mut opt = CcxSOptions {
+        ..Default::default()
+    };
+
+    let mut tlt_config: CcxSTeletextConfig = CcxSTeletextConfig {
         ..Default::default()
     };
 
@@ -512,10 +529,10 @@ fn main() {
     if let Some(ref codec) = args.no_codec {
         match codec {
             Codec::Dvbsub => {
-                opt.demux_cfg.codec = CcxCodeType::Teletext;
+                opt.demux_cfg.nocodec = CcxCodeType::Dvb;
             }
             Codec::Teletext => {
-                opt.demux_cfg.codec = CcxCodeType::Dvb;
+                opt.demux_cfg.nocodec = CcxCodeType::Teletext;
             }
         }
     }
@@ -693,7 +710,7 @@ fn main() {
     }
 
     if let Some(ref program_number) = args.program_number {
-        opt.demux_cfg.ts_forced_program = *program_number;
+        opt.demux_cfg.ts_forced_program = atoi_hex(program_number.as_str()) as u32;
         opt.demux_cfg.ts_forced_program_selected = true;
     }
 
@@ -707,7 +724,7 @@ fn main() {
     }
 
     if let Some(ref stream) = args.stream {
-        opt.live_stream = Some(*stream);
+        opt.live_stream = Some(atoi_hex(stream.as_str()) as i32);
     }
 
     if let Some(ref defaultcolor) = args.defaultcolor {
@@ -716,7 +733,7 @@ fn main() {
                 println!("Invalid default color");
                 std::process::exit(ExitCode::MalformedParameter as i32);
             }
-            usercolor_rgb = defaultcolor.clone();
+            USERCOLOR_RGB = defaultcolor.clone();
             opt.settings_608.default_color = CcxDecoder608ColorCode::Userdefined;
         }
     }
@@ -726,7 +743,7 @@ fn main() {
     }
 
     if let Some(ref screenfuls) = args.screenfuls {
-        opt.settings_608.screens_to_process = screenfuls.clone();
+        opt.settings_608.screens_to_process = atoi_hex(screenfuls.as_str()) as u32;
     }
 
     if let Some(ref startat) = args.startat {
@@ -741,8 +758,10 @@ fn main() {
     }
 
     if args.stdout {
-        if let Some(message_target) = opt.messages_target {
-            opt.messages_target = Some(2);
+        if let Some(messages_target) = opt.messages_target {
+            if messages_target == 1 {
+                opt.messages_target = Some(2);
+            }
         }
         opt.cc_to_stdout = true;
     }
@@ -752,7 +771,7 @@ fn main() {
     }
 
     if args.debugdvdsub {
-        opt.debug_mask = CCxDmt
+        opt.debug_mask = CcxDebugMessageTypes::Dvb;
     }
 
     if args.ignoreptsjumps {
@@ -764,19 +783,19 @@ fn main() {
     }
 
     if args.quiet {
-        opt.messages_target = false;
+        opt.messages_target = Some(0);
     }
 
     if args.debug {
-        opt.debug_mask =;
+        opt.debug_mask = CcxDebugMessageTypes::Verbose;
     }
 
     if args.eia608 {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Decoder608;
     }
 
     if args.deblev {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Levenshtein;
     }
 
     if args.no_levdist {
@@ -784,22 +803,22 @@ fn main() {
     }
 
     if let Some(ref levdistmincnt) = args.levdistmincnt {
-        opt.levdistmincnt = Some(*levdistmincnt);
+        opt.levdistmincnt = Some(atoi_hex(levdistmincnt.as_str()) as u32);
     }
     if let Some(ref levdistmaxpct) = args.levdistmaxpct {
-        opt.levdistmaxpct = Some(*levdistmaxpct);
+        opt.levdistmaxpct = Some(atoi_hex(levdistmaxpct.as_str()) as u32);
     }
 
     if args.eia708 {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Parse;
     }
 
     if args.goppts {
-        opt.debug_mask =;
+        opt.debug_mask = CcxDebugMessageTypes::Time;
     }
 
     if args.vides {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Vides;
         opt.analyze_video_stream = true;
     }
 
@@ -812,23 +831,23 @@ fn main() {
     }
     if args.xdsdebug {
         opt.transcript_settings.xds = true;
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::DecoderXds;
     }
 
     if args.parsedebug {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Parse;
     }
 
     if args.parse_pat {
-        opt.debug_mask =;
+        opt.debug_mask = CcxDebugMessageTypes::Pat;
     }
 
     if args.parse_pmt {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Pmt;
     }
 
     if args.dumpdef {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Dumpdef;
     }
 
     if args.investigate_packets {
@@ -836,21 +855,23 @@ fn main() {
     }
 
     if args.cbraw {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Cbraw;
     }
 
     if args.tverbose {
-        opt.debug_mask = ;
+        opt.debug_mask = CcxDebugMessageTypes::Teletext;
         tlt_config.verbose = true;
     }
 
-    // TODO: Check below configuration if exists
-    // #[cfg(feature = "enable_sharing")]
-    // {
-            // opt.debug_mask = ;
-    // }
+    #[cfg(feature = "enable_sharing")]
+    {
+        if args.sharing_debug {
+            opt.debug_mask = CcxDebugMessageTypes::Share;
+            tlt_config.verbose = true;
+        }
+    }
 
-    if  args.fullbin {
+    if args.fullbin {
         opt.fullbin = true;
     }
 
@@ -891,23 +912,138 @@ fn main() {
         opt.wtvmpeg2 = true;
     }
 
-    if let Some(ref output) =  args.output {
+    if let Some(ref output) = args.output {
         opt.output_filename = Some(output.clone());
     }
 
-    if let Some(ref service) =  args.cea708services {
+    if let Some(ref service) = args.cea708services {
         opt.is_708_enabled = true;
-        parse_708_services(opt, service);
+        parse_708_services(&mut opt, service);
     }
 
     if let Some(ref datapid) = args.datapid {
-        opt.demux_cfg.ts_cappids[opt.demux_cfg.nb_ts_cappid] = *datapid;
+        opt.demux_cfg.ts_cappids[opt.demux_cfg.nb_ts_cappid] = atoi_hex(datapid.as_str()) as u32;
         opt.demux_cfg.nb_ts_cappid += 1;
     }
 
     if let Some(ref datastreamtype) = args.datastreamtype {
         opt.demux_cfg.ts_datastreamtype = datastreamtype.clone().parse().unwrap();
     }
+
+    if let Some(ref streamtype) = args.streamtype {
+        opt.demux_cfg.ts_forced_streamtype = streamtype.clone().parse().unwrap();
+    }
+
+    if let Some(ref tpage) = args.tpage {
+        tlt_config.page = atoi_hex(tpage.as_str()) as u16;
+        tlt_config.user_page = tlt_config.page.clone();
+    }
+
+    // Red Hen/ UCLA Specific stuff
+    if args.ucla {
+        opt.ucla = true;
+        opt.millis_separator = '.';
+        opt.enc_cfg.no_bom = true;
+
+        if !opt.transcript_settings.is_final {
+            opt.transcript_settings.show_start_time = true;
+            opt.transcript_settings.show_end_time = true;
+            opt.transcript_settings.show_cc = true;
+            opt.transcript_settings.show_mode = true;
+            opt.transcript_settings.relative_timestamp = false;
+            opt.transcript_settings.is_final = true;
+        }
+    }
+
+    if args.latrusmap {
+        tlt_config.latrusmap = true;
+    }
+
+    if args.tickertext {
+        opt.tickertext = true;
+    }
+
+    if args.lf {
+        opt.enc_cfg.line_terminator_lf = true;
+    }
+
+    if args.df {
+        opt.enc_cfg.force_dropframe = true;
+    }
+
+    if args.no_autotimeref {
+        opt.noautotimeref = true;
+    }
+
+    if args.autodash {
+        opt.enc_cfg.autodash = true;
+    }
+
+    if let Some(ref xmltv) = args.xmltv {
+        opt.xmltv = Some(atoi_hex(xmltv.as_str()) as i32);
+    }
+
+    if let Some(ref xmltvliveinterval) = args.xmltvliveinterval {
+        opt.xmltvliveinterval = Some(atoi_hex(xmltvliveinterval.as_str()) as i32);
+    }
+
+    if let Some(ref xmltvoutputinterval) = args.xmltvoutputinterval {
+        opt.xmltvoutputinterval = Some(atoi_hex(xmltvoutputinterval.as_str()) as i32);
+    }
+    if let Some(ref xmltvonlycurrent) = args.xmltvonlycurrent {
+        opt.xmltvonlycurrent = Some(atoi_hex(xmltvonlycurrent.as_str()) as i32);
+    }
+
+    if let Some(ref unixts) = args.unixts {
+        let mut t = atoi_hex(unixts.as_str()) as u64;
+
+        if t <= 0 {
+            t = OffsetDateTime::now_utc().unix_timestamp() as u64;
+        }
+        unsafe {
+            UTC_REFVALUE = t;
+        }
+        opt.noautotimeref = true;
+    }
+
+    if args.sects {
+        opt.date = CcxOutputDateFormat::Seconds;
+    }
+
+    if args.datets {
+        opt.date = CcxOutputDateFormat::Date;
+    }
+
+    if args.teletext {
+        opt.demux_cfg.codec = CcxCodeType::Teletext;
+    }
+
+    if args.no_teletext {
+        opt.demux_cfg.nocodec = CcxCodeType::Teletext;
+    }
+
+    if let Some(ref customtxt) = args.customtxt {
+        if customtxt.to_string().len() == 7 {
+            if opt.date == CcxOutputDateFormat::None {
+                opt.date = CcxOutputDateFormat::HHMMSSMS;
+            }
+
+            if !opt.transcript_settings.is_final {
+                opt.transcript_settings.show_start_time = customtxt >> 0 == 1;
+                opt.transcript_settings.show_end_time = customtxt >> 1 == 1;
+                opt.transcript_settings.show_mode = customtxt >> 2 == 1;
+                opt.transcript_settings.show_cc = customtxt >> 3 == 1;
+                opt.transcript_settings.relative_timestamp = customtxt >> 4 == 1;
+                opt.transcript_settings.xds = customtxt >> 5 == 1;
+                opt.transcript_settings.use_colors = customtxt >> 6 == 1;
+            }
+        } else {
+            println!("Invalid customtxt value. It must be 7 digits long");
+            std::process::exit(ExitCode::MalformedParameter as i32);
+        }
+    }
+
+    // Network stuff
 
     println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");
 }
