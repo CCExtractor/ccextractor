@@ -3,6 +3,11 @@ use args::{Args, OutFormat};
 
 mod activity;
 mod structs;
+use std::fs::File;
+use std::io::{prelude::*, BufReader};
+use std::string::String;
+
+mod ccx_encoders_helpers;
 
 use clap::Parser;
 
@@ -11,6 +16,9 @@ mod enums;
 use structs::CcxSOptions;
 use time::OffsetDateTime;
 
+use crate::ccx_encoders_helpers::{
+    capitalization_list, profane, CAPITALIZED_BUILTIN, PROFANE_BUILTIN,
+};
 use crate::{
     activity::activity_report_version,
     args::{Codec, Ru},
@@ -72,6 +80,14 @@ impl FromStr for &str {
     }
 }
 
+fn get_vector_words(string_array: &[&str]) -> Vec<String> {
+    let mut vector = Vec::new();
+    for string in string_array {
+        vector.push(String::from(*string));
+    }
+    return vector;
+}
+
 fn atoi_hex(s: &str) -> usize {
     if s.len() > 2 && s.to_lowercase().starts_with("0x") {
         // Hexadecimal
@@ -83,17 +99,19 @@ fn atoi_hex(s: &str) -> usize {
 }
 
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
-    let mut file = std::fs::File::open(filename)?;
-    let mut line = String::new();
+    let file = File::open("foo.txt")?;
+    let reader = BufReader::new(file);
     let mut num = 0;
-    while file.read_line(&mut line)? > 0 {
+
+    for line in reader.lines() {
         num += 1;
+        let line = line.unwrap();
         if line.starts_with('#') {
             continue;
         }
 
         let new_len = line.trim().len();
-        if new_len > CCX_DECODER_608_SCREEN_WIDTH {
+        if new_len > CCX_DECODER_608_SCREEN_WIDTH as usize {
             println!(
                 "Word in line {} too long, max = {} characters.",
                 num, CCX_DECODER_608_SCREEN_WIDTH
@@ -105,7 +123,6 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
             list.push(line.trim().to_string());
         }
     }
-
     Ok(())
 }
 
@@ -253,6 +270,8 @@ fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
         std::process::exit(ExitCode::MalformedParameter as i32);
     }
 }
+
+fn add_builtin_words() {}
 
 fn mkvlang_params_check(lang: &str) {
     let mut initial = 0;
@@ -1203,19 +1222,21 @@ fn main() {
     }
 
     if opt.enc_cfg.sentence_cap {
-        add_builtin_words(capitalized_builtin, &capitalization_list)
-            .expect("Not enough memory for capitalized word list");
-        if opt.sentence_cap_file {
-            process_word_file(opt.sentence_cap_file, &capitalization_list)
-                .expect("There was an error processing the capitalization file.\n");
+        unsafe {
+            capitalization_list = get_vector_words(&CAPITALIZED_BUILTIN);
+            if let Some(ref sentence_cap_file) = opt.sentence_cap_file {
+                process_word_file(sentence_cap_file, &mut capitalization_list)
+                    .expect("There was an error processing the capitalization file.\n");
+            }
         }
     }
     if opt.enc_cfg.filter_profanity {
-        add_builtin_words(profane_builtin, &profane)
-            .expect("Not enough memory for profane word list");
-        if let Some(ref profanityfile) = opt.filter_profanity_file {
-            process_word_file(profanityfile.as_str(), &profane)
-                .expect("There was an error processing the profanity file.\n");
+        unsafe {
+            profane = get_vector_words(&PROFANE_BUILTIN);
+            if let Some(ref profanityfile) = opt.filter_profanity_file {
+                process_word_file(profanityfile.as_str(), &mut profane)
+                    .expect("There was an error processing the profanity file.\n");
+            }
         }
     }
 
