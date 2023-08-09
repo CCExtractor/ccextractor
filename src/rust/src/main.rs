@@ -1,5 +1,6 @@
 mod args;
 use args::{Args, OutFormat};
+use num_integer::Integer;
 
 mod activity;
 mod structs;
@@ -13,9 +14,44 @@ use clap::Parser;
 
 mod enums;
 
+#[cfg(windows)]
+use std::os::windows::io::{AsRawHandle, FromRawHandle};
 use structs::CcxSOptions;
 use time::OffsetDateTime;
+#[cfg(windows)]
+use winapi::um::ioapiset::SetFileCompletionNotificationModes;
+#[cfg(windows)]
+use winapi::um::winbase::FILE_FLAG_OVERLAPPED;
+#[cfg(windows)]
+use winapi::um::winbase::{FILE_SKIP_COMPLETION_PORT_ON_SUCCESS, FILE_SKIP_SET_EVENT_ON_HANDLE};
+#[cfg(windows)]
+use winapi::um::winnt::{FILE_READ_ATTRIBUTES, FILE_SHARE_DELETE, FILE_SHARE_WRITE};
+#[cfg(windows)]
+use winapi::um::winnt::{FILE_SHARE_READ, GENERIC_READ, HANDLE};
 
+#[cfg(windows)]
+unsafe fn set_binary_mode() {
+    let stdin_handle: HANDLE = libc::get_osfhandle(libc::STDIN_FILENO);
+
+    SetFileCompletionNotificationModes(
+        stdin_handle,
+        FILE_SKIP_COMPLETION_PORT_ON_SUCCESS | FILE_SKIP_SET_EVENT_ON_HANDLE,
+    );
+
+    let mut flags: u32 = 0;
+    let handle = libc::get_osfhandle(0);
+    flags |= FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    let access_mode = GENERIC_READ;
+    if access_mode != FILE_READ_ATTRIBUTES {
+        flags |= FILE_FLAG_OVERLAPPED;
+    }
+    SetFileCompletionNotificationModes(
+        handle as HANDLE,
+        FILE_SKIP_COMPLETION_PORT_ON_SUCCESS | FILE_SKIP_SET_EVENT_ON_HANDLE,
+    );
+}
+
+use crate::args::OutputField;
 use crate::ccx_encoders_helpers::{
     capitalization_list, profane, CAPITALIZED_BUILTIN, PROFANE_BUILTIN,
 };
@@ -26,7 +62,20 @@ use crate::{
     structs::*,
 };
 
-// TODO(prateekmedia): Check atoi_hex everywhere
+#[cfg(target_os = "windows")]
+const DEFAULT_FONT_PATH: &str = "C:\\Windows\\Fonts\\calibri.ttf";
+#[cfg(target_os = "windows")]
+const DEFAULT_FONT_PATH_ITALICS: &str = "C:\\Windows\\Fonts\\calibrii.ttf";
+
+#[cfg(target_os = "macos")]
+const DEFAULT_FONT_PATH: &str = "/System/Library/Fonts/Helvetica.ttc";
+#[cfg(target_os = "macos")]
+const DEFAULT_FONT_PATH_ITALICS: &str = "/System/Library/Fonts/Helvetica-Oblique.ttf";
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+const DEFAULT_FONT_PATH: &str = "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf";
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+const DEFAULT_FONT_PATH_ITALICS: &str = "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf";
 
 static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
 static mut MPEG_CLOCK_FREQ: i64 = 0;
@@ -88,18 +137,34 @@ fn get_vector_words(string_array: &[&str]) -> Vec<String> {
     return vector;
 }
 
-fn atoi_hex(s: &str) -> usize {
+fn atoi_hex<T>(s: &str) -> Result<T, &str>
+where
+    T: Integer + std::str::FromStr,
+{
     if s.len() > 2 && s.to_lowercase().starts_with("0x") {
         // Hexadecimal
-        return usize::from_str_radix(&s[2..], 16).unwrap();
+        T::from_str_radix(&s[2..], 16).map_err(|_| "not a valid hexadecimal number")
     } else {
         // Decimal
-        return s.parse::<usize>().unwrap();
+        s.parse::<T>().map_err(|_| "not a valid decimal number")
+    }
+}
+
+fn get_atoi_hex<T>(s: &str) -> T
+where
+    T: Integer + std::str::FromStr<Err = std::num::ParseIntError>,
+{
+    match atoi_hex(s) {
+        Ok(val) => val,
+        Err(_) => {
+            println!("Malformed parameter: {}", s);
+            std::process::exit(ExitCode::MalformedParameter as i32)
+        }
     }
 }
 
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
-    let file = File::open("foo.txt")?;
+    let file = File::open(filename)?;
     let reader = BufReader::new(file);
     let mut num = 0;
 
@@ -134,14 +199,13 @@ fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
     opt.write_format_rewritten = true;
 
     let can_unwrap = args.out.is_some();
-    // TODO(prateemedia): there was no reference of this in help
-    // #[cfg(feature = "with_libcurl")]
-    // {
-    //     if can_unwrap && args.out.unwrap() == OutFormat::Curl {
-    //         opt.write_format = CcxOutputFormat::Curl;
-    //         return;
-    //     }
-    // }
+    #[cfg(feature = "with_libcurl")]
+    {
+        if can_unwrap && args.out.unwrap() == OutFormat::Curl {
+            opt.write_format = CcxOutputFormat::Curl;
+            return;
+        }
+    }
 
     if opt.send_to_srv && can_unwrap && args.out.unwrap() == OutFormat::Bin {
         println!("Output format is changed to bin\n");
@@ -271,8 +335,6 @@ fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
     }
 }
 
-fn add_builtin_words() {}
-
 fn mkvlang_params_check(lang: &str) {
     let mut initial = 0;
     let mut _present = 0;
@@ -380,10 +442,11 @@ fn main() {
     };
 
     if args.stdin {
-        if cfg!(windows) {
-            // TODO(prateekmedia): check this
-            // setmode(fileno(stdin), O_BINARY);
+        #[cfg(feature = "windows")]
+        {
+            set_binary_mode();
         }
+
         opt.input_source = CcxDatasource::Stdin;
         opt.live_stream = Some(-1);
     }
@@ -678,8 +741,6 @@ fn main() {
         opt.binary_concat = false;
     }
 
-    // TODO(prateekmedia): -12
-
     if args.goptime {
         opt.use_gop_as_pts = 1;
     }
@@ -768,7 +829,7 @@ fn main() {
     }
 
     if let Some(ref program_number) = args.program_number {
-        opt.demux_cfg.ts_forced_program = atoi_hex(program_number.as_str()) as u32;
+        opt.demux_cfg.ts_forced_program = get_atoi_hex(program_number.as_str());
         opt.demux_cfg.ts_forced_program_selected = true;
     }
 
@@ -782,7 +843,7 @@ fn main() {
     }
 
     if let Some(ref stream) = args.stream {
-        opt.live_stream = Some(atoi_hex(stream.as_str()) as i32);
+        opt.live_stream = Some(get_atoi_hex(stream.as_str()));
     }
 
     if let Some(ref defaultcolor) = args.defaultcolor {
@@ -801,7 +862,7 @@ fn main() {
     }
 
     if let Some(ref screenfuls) = args.screenfuls {
-        opt.settings_608.screens_to_process = atoi_hex(screenfuls.as_str()) as u32;
+        opt.settings_608.screens_to_process = get_atoi_hex(screenfuls.as_str());
     }
 
     if let Some(ref startat) = args.startat {
@@ -813,6 +874,11 @@ fn main() {
 
     if args.cc2 {
         opt.cc_channel = Some(2);
+    }
+
+    if let Some(ref extract) = args.output_field {
+        opt.extract = Some(extract.clone());
+        opt.is_608_enabled = true;
     }
 
     if args.stdout {
@@ -857,14 +923,14 @@ fn main() {
     }
 
     if args.no_levdist {
-        opt.dolevdist = Some(0);
+        opt.dolevdist = 0;
     }
 
     if let Some(ref levdistmincnt) = args.levdistmincnt {
-        opt.levdistmincnt = Some(atoi_hex(levdistmincnt.as_str()) as u32);
+        opt.levdistmincnt = Some(get_atoi_hex(levdistmincnt.as_str()));
     }
     if let Some(ref levdistmaxpct) = args.levdistmaxpct {
-        opt.levdistmaxpct = Some(atoi_hex(levdistmaxpct.as_str()) as u32);
+        opt.levdistmaxpct = Some(get_atoi_hex(levdistmaxpct.as_str()));
     }
 
     if args.eia708 {
@@ -980,7 +1046,7 @@ fn main() {
     }
 
     if let Some(ref datapid) = args.datapid {
-        opt.demux_cfg.ts_cappids[opt.demux_cfg.nb_ts_cappid] = atoi_hex(datapid.as_str()) as u32;
+        opt.demux_cfg.ts_cappids[opt.demux_cfg.nb_ts_cappid] = get_atoi_hex(datapid.as_str());
         opt.demux_cfg.nb_ts_cappid += 1;
     }
 
@@ -993,7 +1059,7 @@ fn main() {
     }
 
     if let Some(ref tpage) = args.tpage {
-        tlt_config.page = atoi_hex(tpage.as_str()) as u16;
+        tlt_config.page = get_atoi_hex(tpage.as_str());
         tlt_config.user_page = tlt_config.page.clone();
     }
 
@@ -1038,22 +1104,22 @@ fn main() {
     }
 
     if let Some(ref xmltv) = args.xmltv {
-        opt.xmltv = Some(atoi_hex(xmltv.as_str()) as i32);
+        opt.xmltv = Some(get_atoi_hex(xmltv.as_str()));
     }
 
     if let Some(ref xmltvliveinterval) = args.xmltvliveinterval {
-        opt.xmltvliveinterval = Some(atoi_hex(xmltvliveinterval.as_str()) as i32);
+        opt.xmltvliveinterval = Some(get_atoi_hex(xmltvliveinterval.as_str()));
     }
 
     if let Some(ref xmltvoutputinterval) = args.xmltvoutputinterval {
-        opt.xmltvoutputinterval = Some(atoi_hex(xmltvoutputinterval.as_str()) as i32);
+        opt.xmltvoutputinterval = Some(get_atoi_hex(xmltvoutputinterval.as_str()));
     }
     if let Some(ref xmltvonlycurrent) = args.xmltvonlycurrent {
-        opt.xmltvonlycurrent = Some(atoi_hex(xmltvonlycurrent.as_str()) as i32);
+        opt.xmltvonlycurrent = Some(get_atoi_hex(xmltvonlycurrent.as_str()));
     }
 
     if let Some(ref unixts) = args.unixts {
-        let mut t = atoi_hex(unixts.as_str()) as u64;
+        let mut t = get_atoi_hex(unixts.as_str());
 
         if t <= 0 {
             t = OffsetDateTime::now_utc().unix_timestamp() as u64;
@@ -1112,7 +1178,7 @@ fn main() {
             opt.udpport = Some(port.parse().unwrap());
         } else if let Some(colon) = udp.find(':') {
             let addr = &udp[0..colon];
-            let port = atoi_hex(&udp[colon + 1..]) as u32;
+            let port = get_atoi_hex(&udp[colon + 1..]);
 
             opt.udpsrc = Some(udp.clone());
             opt.udpaddr = Some(addr.to_owned());
@@ -1238,6 +1304,153 @@ fn main() {
                     .expect("There was an error processing the profanity file.\n");
             }
         }
+    }
+
+    if opt.demux_cfg.ts_forced_program == -1 {
+        opt.demux_cfg.ts_forced_program_selected = true;
+    }
+
+    // Init telexcc redundant options
+    tlt_config.dolevdist = opt.dolevdist;
+    tlt_config.levdistmincnt = opt.levdistmincnt.unwrap_or(0);
+    tlt_config.levdistmaxpct = opt.levdistmaxpct.unwrap_or(0);
+    tlt_config.extraction_start = opt.extraction_start.clone();
+    tlt_config.extraction_end = opt.extraction_end.clone();
+    tlt_config.write_format = opt.write_format.clone();
+    tlt_config.gui_mode_reports = opt.gui_mode_reports;
+    tlt_config.date_format = opt.date;
+    tlt_config.noautotimeref = opt.noautotimeref;
+    tlt_config.send_to_srv = opt.send_to_srv;
+    tlt_config.nofontcolor = opt.nofontcolor;
+    tlt_config.nohtmlescape = opt.nohtmlescape;
+    tlt_config.millis_separator = opt.millis_separator;
+
+    // teletext page number out of range
+    if tlt_config.page != 0 && (tlt_config.page < 100 || tlt_config.page > 899) {
+        println!("Teletext page number out of range (100-899)");
+        std::process::exit(ExitCode::NotClassified as i32);
+    }
+
+    if opt.num_input_files.unwrap_or(0) == 0 && opt.input_source == CcxDatasource::File {
+        std::process::exit(ExitCode::NoInputFiles as i32);
+    }
+
+    if opt.num_input_files.is_some() && opt.live_stream.is_some() {
+        println!("Live stream mode only supports one input file");
+        std::process::exit(ExitCode::TooManyInputFiles as i32);
+    }
+
+    if opt.num_input_files.is_some() && opt.input_source == CcxDatasource::Network {
+        println!("UDP mode is not compatible with input files");
+        std::process::exit(ExitCode::TooManyInputFiles as i32);
+    }
+
+    if opt.input_source == CcxDatasource::Network || opt.input_source == CcxDatasource::Tcp {
+        // TODO(prateekmedia): Check why we use ccx_options instead of opts
+        // currently using same]
+        opt.buffer_input = true;
+    }
+
+    if opt.num_input_files.is_some() && opt.input_source == CcxDatasource::Tcp {
+        println!("TCP mode is not compatible with input files");
+        std::process::exit(ExitCode::TooManyInputFiles as i32);
+    }
+
+    if opt.demux_cfg.auto_stream == CcxStreamMode::McpoodlesRaw
+        && opt.write_format == CcxOutputFormat::Raw
+    {
+        println!("-in=raw can only be used if the output is a subtitle file.");
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    if opt.demux_cfg.auto_stream == CcxStreamMode::Rcwt
+        && opt.write_format == CcxOutputFormat::Rcwt
+        && opt.output_filename.is_none()
+    {
+        println!("CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    if opt.write_format != CcxOutputFormat::Dvdraw
+        && opt.cc_to_stdout
+        && opt.extract.is_some()
+        && opt.extract.unwrap() == OutputField::Both
+    {
+        println!("You can't extract both fields to stdout at the same time in broadcast mode.\n",);
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    if opt.write_format == CcxOutputFormat::Spupng && opt.cc_to_stdout {
+        println!("You cannot use -out=spupng with -stdout.\n");
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    if opt.write_format == CcxOutputFormat::Webvtt && opt.enc_cfg.encoding != CcxEncodingType::Utf8
+    {
+        opt.enc_cfg.encoding = CcxEncodingType::Utf8;
+        println!("Note: Output format is WebVTT, forcing UTF-8");
+        std::process::exit(ExitCode::IncompatibleParameters as i32);
+    }
+
+    // Check WITH_LIBCURL
+    #[cfg(feature = "with_libcurl")]
+    {
+        if opt.write_format == CCX_OF_CURL && opt.curlposturl.is_none() {
+            return Err("You must pass a URL (-curlposturl) if output format is curl\n");
+        }
+        if opt.write_format != CCX_OF_CURL && opt.curlposturl.is_some() {
+            return Err("-curlposturl requires that the format is curl\n");
+        }
+    }
+
+    // Initialize some Encoder Configuration
+    opt.enc_cfg.extract = opt.extract;
+    if opt.num_input_files.unwrap_or(0) > 0 {
+        opt.enc_cfg.multiple_files = true;
+        opt.enc_cfg.first_input_file = opt.inputfile.as_ref().unwrap()[0].to_string();
+    }
+    opt.enc_cfg.cc_to_stdout = opt.cc_to_stdout;
+    opt.enc_cfg.write_format = opt.write_format.clone();
+    opt.enc_cfg.send_to_srv = opt.send_to_srv;
+    opt.enc_cfg.date_format = opt.date;
+    opt.enc_cfg.transcript_settings = opt.transcript_settings.clone();
+    opt.enc_cfg.millis_separator = opt.millis_separator;
+    opt.enc_cfg.no_font_color = opt.nofontcolor;
+    opt.enc_cfg.force_flush = opt.force_flush;
+    opt.enc_cfg.append_mode = opt.append_mode;
+    opt.enc_cfg.ucla = opt.ucla;
+    opt.enc_cfg.no_type_setting = opt.notypesetting;
+    opt.enc_cfg.subs_delay = opt.subs_delay;
+    opt.enc_cfg.gui_mode_reports = opt.gui_mode_reports;
+
+    if opt.enc_cfg.render_font.len() == 0 {
+        opt.enc_cfg.render_font = DEFAULT_FONT_PATH.to_string();
+    }
+
+    if opt.enc_cfg.render_font_italics.len() == 0 {
+        opt.enc_cfg.render_font = DEFAULT_FONT_PATH_ITALICS.to_string();
+    }
+
+    if opt.output_filename.is_some() && opt.multiprogram {
+        opt.enc_cfg.output_filename = opt.output_filename.clone().unwrap();
+    }
+
+    if !opt.is_608_enabled && !opt.is_708_enabled {
+        // If nothing is selected then extract both 608 and 708 subs
+        // 608 field 1 is enabled by default
+        // Enable 708 subs extraction
+        parse_708_services(&mut opt, "all");
+    } else if !opt.is_608_enabled && opt.is_708_enabled {
+        // Extract only 708 subs
+        // 608 field 1 is enabled by default, disable it
+        opt.extract = None;
+        opt.enc_cfg.extract_only_708 = true;
+    }
+
+    // Check WITH_LIBCURL
+    #[cfg(feature = "with_libcurl")]
+    {
+        opt.enc_cfg.curlposturl = opt.curlposturl.clone();
     }
 
     println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");

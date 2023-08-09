@@ -1,4 +1,4 @@
-use crate::enums::CcxDebugMessageTypes;
+use crate::{args::OutputField, enums::CcxDebugMessageTypes};
 
 #[derive(Debug, Default)]
 pub struct CcxSTeletextConfig {
@@ -15,10 +15,10 @@ pub struct CcxSTeletextConfig {
     pub extraction_start: CcxBoundaryTime,
     pub extraction_end: CcxBoundaryTime,
     pub write_format: CcxOutputFormat,
-    pub gui_mode_reports: i32,
+    pub gui_mode_reports: bool,
     pub date_format: CcxOutputDateFormat,
     pub noautotimeref: bool,
-    pub send_to_srv: u32,
+    pub send_to_srv: bool,
     pub encoding: CcxEncodingType,
     pub nofontcolor: bool,
     pub nohtmlescape: bool,
@@ -26,7 +26,7 @@ pub struct CcxSTeletextConfig {
     pub latrusmap: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CcxBoundaryTime {
     pub hh: u32,
     pub mm: u32,
@@ -131,7 +131,7 @@ pub struct CcxDecoderDtvccReport {
     pub services: [u32; CCX_DTVCC_MAX_SERVICES],
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CcxEncodersTranscriptFormat {
     pub show_start_time: bool,
     pub show_end_time: bool,
@@ -149,7 +149,7 @@ impl Default for CcxOutputDateFormat {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxOutputDateFormat {
     None = 0,
     HHMMSS = 1,
@@ -231,7 +231,7 @@ pub struct CcxDemuxerCfg {
     pub ts_cappids: [u32; 128],
     pub nb_ts_cappid: usize,
     pub ts_forced_cappid: u32,
-    pub ts_forced_program: u32,
+    pub ts_forced_program: i32,
     pub ts_forced_program_selected: bool,
     pub ts_datastreamtype: u32,
     pub ts_forced_streamtype: u32,
@@ -243,7 +243,7 @@ impl Default for CcxOutputFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CcxOutputFormat {
     Raw = 0,
     Srt = 1,
@@ -270,7 +270,7 @@ impl Default for CcxEncodingType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CcxEncodingType {
     Unicode = 0,
     Latin1 = 1,
@@ -281,7 +281,7 @@ pub enum CcxEncodingType {
 impl Default for CcxEncoderCfg {
     fn default() -> Self {
         Self {
-            extract: false,
+            extract: None,
             dtvcc_extract: false,
             gui_mode_reports: false,
             output_filename: String::default(),
@@ -309,7 +309,7 @@ impl Default for CcxEncoderCfg {
             endcreditsforatleast: CcxBoundaryTime::default(),
             endcreditsforatmost: CcxBoundaryTime::default(),
             transcript_settings: CcxEncodersTranscriptFormat::default(),
-            send_to_srv: 0,
+            send_to_srv: false,
             no_bom: false,
             first_input_file: String::default(),
             multiple_files: false,
@@ -334,7 +334,7 @@ impl Default for CcxEncoderCfg {
 
 #[derive(Debug)]
 pub struct CcxEncoderCfg {
-    pub extract: bool,
+    pub extract: Option<OutputField>,
     pub dtvcc_extract: bool,
     pub gui_mode_reports: bool,
     pub output_filename: String,
@@ -362,7 +362,7 @@ pub struct CcxEncoderCfg {
     pub endcreditsforatleast: CcxBoundaryTime,
     pub endcreditsforatmost: CcxBoundaryTime,
     pub transcript_settings: CcxEncodersTranscriptFormat,
-    pub send_to_srv: u32,
+    pub send_to_srv: bool,
     pub no_bom: bool,
     pub first_input_file: String,
     pub multiple_files: bool,
@@ -370,7 +370,7 @@ pub struct CcxEncoderCfg {
     pub no_type_setting: bool,
     pub cc_to_stdout: bool,
     pub line_terminator_lf: bool,
-    pub subs_delay: i64,
+    pub subs_delay: i32,
     pub program_number: u32,
     pub in_format: u8,
     pub nospupngocr: bool,
@@ -385,7 +385,7 @@ pub struct CcxEncoderCfg {
 
 #[derive(Debug, Default)]
 pub struct CcxSOptions {
-    pub extract: Option<i32>,
+    pub extract: Option<OutputField>,
     pub no_rollup: bool,
     pub noscte20: bool,
     pub webvtt_create_css: bool,
@@ -401,7 +401,7 @@ pub struct CcxSOptions {
     pub print_file_reports: bool,
     pub settings_608: CcxDecoder608Settings,
     pub settings_dtvcc: CcxDecoderDtvccSettings,
-    pub is_608_enabled: Option<i32>,
+    pub is_608_enabled: bool,
     pub is_708_enabled: bool,
     pub millis_separator: char,
     pub binary_concat: bool,
@@ -414,9 +414,9 @@ pub struct CcxSOptions {
     pub filter_profanity_file: Option<String>,
     pub messages_target: Option<i32>,
     pub timestamp_map: bool,
-    pub dolevdist: Option<i32>,
-    pub levdistmincnt: Option<u32>,
-    pub levdistmaxpct: Option<u32>,
+    pub dolevdist: i32,
+    pub levdistmincnt: Option<i32>,
+    pub levdistmaxpct: Option<i32>,
     pub investigate_packets: bool,
     pub fullbin: bool,
     pub nosync: bool,

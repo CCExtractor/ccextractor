@@ -177,12 +177,15 @@ dependencies = [
  "iconv",
  "leptonica-sys",
  "log",
+ "num-integer",
+ "num-traits",
  "palette",
  "rsmpeg",
  "strum",
  "strum_macros",
  "tesseract-sys",
  "time",
+ "winapi",
 ]
 
 [[package]]
@@ -478,6 +481,16 @@ checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
 dependencies = [
  "memchr",
  "minimal-lexical",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
+dependencies = [
+ "autocfg",
+ "num-traits",
 ]
 
 [[package]]
