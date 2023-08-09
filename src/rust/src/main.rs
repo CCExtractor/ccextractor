@@ -527,11 +527,11 @@ fn main() {
             }
 
             if let Some(ref value) = args.min_sub_duration {
-                if value == 0.0 {
+                if *value == 0.0 {
                     println!("Invalid minimum subtitle duration");
                     std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                opt.hardsubx_min_sub_duration = Some(value);
+                opt.hardsubx_min_sub_duration = Some(*value);
             }
 
             if args.detect_italics {
@@ -539,19 +539,19 @@ fn main() {
             }
 
             if let Some(ref value) = args.conf_thresh {
-                if !(0.0..=100.0).contains(&value) {
+                if !(0.0..=100.0).contains(value) {
                     println!("Invalid confidence threshold, valid values are between 0 & 100");
                     std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                opt.hardsubx_conf_thresh = Some(value);
+                opt.hardsubx_conf_thresh = Some(*value);
             }
 
             if let Some(ref value) = args.whiteness_thresh {
-                if !(0.0..=100.0).contains(&value) {
+                if !(0.0..=100.0).contains(value) {
                     println!("Invalid whiteness threshold, valid values are between 0 & 100");
                     std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                opt.hardsubx_lum_thresh = Some(value);
+                opt.hardsubx_lum_thresh = Some(*value);
             }
         }
     } // END OF HARDSUBX
