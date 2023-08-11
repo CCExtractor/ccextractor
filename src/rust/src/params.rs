@@ -5,20 +5,51 @@ use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::string::String;
 
-#[cfg(windows)]
-use std::os::windows::io::{AsRawHandle, FromRawHandle};
+use cfg_if::cfg_if;
+
 use structs::CcxSOptions;
 use time::OffsetDateTime;
-#[cfg(windows)]
-use winapi::um::ioapiset::SetFileCompletionNotificationModes;
-#[cfg(windows)]
-use winapi::um::winbase::FILE_FLAG_OVERLAPPED;
-#[cfg(windows)]
-use winapi::um::winbase::{FILE_SKIP_COMPLETION_PORT_ON_SUCCESS, FILE_SKIP_SET_EVENT_ON_HANDLE};
-#[cfg(windows)]
-use winapi::um::winnt::{FILE_READ_ATTRIBUTES, FILE_SHARE_DELETE, FILE_SHARE_WRITE};
-#[cfg(windows)]
-use winapi::um::winnt::{FILE_SHARE_READ, GENERIC_READ, HANDLE};
+
+cfg_if! {
+    if #[cfg(windows)] {
+        use std::os::windows::io::{AsRawHandle, FromRawHandle};
+        use winapi::um::ioapiset::SetFileCompletionNotificationModes;
+        use winapi::um::winbase::FILE_FLAG_OVERLAPPED;
+        use winapi::um::winbase::{FILE_SKIP_COMPLETION_PORT_ON_SUCCESS, FILE_SKIP_SET_EVENT_ON_HANDLE};
+        use winapi::um::winnt::{FILE_READ_ATTRIBUTES, FILE_SHARE_DELETE, FILE_SHARE_WRITE};
+        use winapi::um::winnt::{FILE_SHARE_READ, GENERIC_READ, HANDLE};
+    }
+}
+use crate::args::{self, OutputField};
+use crate::ccx_encoders_helpers::{
+    CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
+};
+use crate::structs;
+use crate::{
+    activity::activity_report_version,
+    args::{Codec, Ru},
+    enums::CcxDebugMessageTypes,
+    structs::*,
+};
+
+cfg_if! {
+    if #[cfg(target_os = "windows")] {
+        const DEFAULT_FONT_PATH: &str = "C:\\\\Windows\\\\Fonts\\\\calibri.ttf";
+        const DEFAULT_FONT_PATH_ITALICS: &str = "C:\\\\Windows\\\\Fonts\\\\calibrii.ttf";
+    } else if #[cfg(target_os = "macos")] {
+        const DEFAULT_FONT_PATH: &str = "/System/Library/Fonts/Helvetica.ttc";
+        const DEFAULT_FONT_PATH_ITALICS: &str = "/System/Library/Fonts/Helvetica-Oblique.ttf";
+    } else {
+        const DEFAULT_FONT_PATH: &str = "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf";
+        const DEFAULT_FONT_PATH_ITALICS: &str = "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf";
+    }
+}
+
+static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
+static mut MPEG_CLOCK_FREQ: i64 = 0;
+static mut USERCOLOR_RGB: String = String::new();
+static mut UTC_REFVALUE: u64 = 0;
+const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
 
 #[cfg(windows)]
 unsafe fn set_binary_mode() {
@@ -42,82 +73,42 @@ unsafe fn set_binary_mode() {
     );
 }
 
-use crate::args::{self, OutputField};
-use crate::ccx_encoders_helpers::{
-    capitalization_list, profane, CAPITALIZED_BUILTIN, PROFANE_BUILTIN,
-};
-use crate::structs;
-use crate::{
-    activity::activity_report_version,
-    args::{Codec, Ru},
-    enums::CcxDebugMessageTypes,
-    structs::*,
-};
+fn to_ms(value: &str) -> CcxBoundaryTime {
+    let mut parts = value.rsplit(":");
 
-#[cfg(target_os = "windows")]
-const DEFAULT_FONT_PATH: &str = "C:\\\\Windows\\\\Fonts\\\\calibri.ttf";
-#[cfg(target_os = "windows")]
-const DEFAULT_FONT_PATH_ITALICS: &str = "C:\\\\Windows\\\\Fonts\\\\calibrii.ttf";
+    let seconds: u32;
 
-#[cfg(target_os = "macos")]
-const DEFAULT_FONT_PATH: &str = "/System/Library/Fonts/Helvetica.ttc";
-#[cfg(target_os = "macos")]
-const DEFAULT_FONT_PATH_ITALICS: &str = "/System/Library/Fonts/Helvetica-Oblique.ttf";
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-const DEFAULT_FONT_PATH: &str = "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf";
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-const DEFAULT_FONT_PATH_ITALICS: &str = "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf";
-
-static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
-static mut MPEG_CLOCK_FREQ: i64 = 0;
-static mut USERCOLOR_RGB: String = String::new();
-static mut UTC_REFVALUE: u64 = 0;
-const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
-
-pub trait FromStr {
-    #[allow(dead_code)]
-    fn to_ms(&self) -> CcxBoundaryTime;
-}
-
-impl FromStr for &str {
-    fn to_ms(&self) -> CcxBoundaryTime {
-        let mut parts = self.rsplit(":");
-
-        let seconds: u32;
-
-        match parts.next() {
-            Some(sec) => seconds = sec.parse().unwrap(),
-            None => {
-                println!("Malformed timecode: {}", self);
-                std::process::exit(ExitCode::MalformedParameter as i32);
-            }
-        };
-        let mut minutes: u32 = 0;
-
-        match parts.next() {
-            Some(mins) => minutes = mins.parse().unwrap(),
-            None => {}
-        };
-        let mut hours: u32 = 0;
-
-        match parts.next() {
-            Some(hrs) => hours = hrs.parse().unwrap(),
-            None => {}
-        };
-
-        if seconds > 60 || minutes > 60 {
-            println!("Malformed timecode: {}", self);
+    match parts.next() {
+        Some(sec) => seconds = sec.parse().unwrap(),
+        None => {
+            println!("Malformed timecode: {}", value);
             std::process::exit(ExitCode::MalformedParameter as i32);
         }
+    };
+    let mut minutes: u32 = 0;
 
-        CcxBoundaryTime {
-            hh: hours,
-            mm: minutes,
-            ss: seconds,
-            time_in_ms: hours + 60 * minutes + 3600 * seconds,
-            set: true,
-        }
+    match parts.next() {
+        Some(mins) => minutes = mins.parse().unwrap(),
+        None => {}
+    };
+    let mut hours: u32 = 0;
+
+    match parts.next() {
+        Some(hrs) => hours = hrs.parse().unwrap(),
+        None => {}
+    };
+
+    if seconds > 60 || minutes > 60 {
+        println!("Malformed timecode: {}", value);
+        std::process::exit(ExitCode::MalformedParameter as i32);
+    }
+
+    CcxBoundaryTime {
+        hh: hours,
+        mm: minutes,
+        ss: seconds,
+        time_in_ms: hours + 60 * minutes + 3600 * seconds,
+        set: true,
     }
 }
 
@@ -693,18 +684,18 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-        opt.enc_cfg.startcreditsnotbefore = startcreditsnotbefore.clone().as_str().to_ms();
+        opt.enc_cfg.startcreditsnotbefore = to_ms(startcreditsnotbefore.clone().as_str());
     }
 
     if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-        opt.enc_cfg.startcreditsnotafter = startcreditsnotafter.clone().as_str().to_ms();
+        opt.enc_cfg.startcreditsnotafter = to_ms(startcreditsnotafter.clone().as_str());
     }
 
     if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-        opt.enc_cfg.startcreditsforatleast = startcreditsforatleast.clone().as_str().to_ms();
+        opt.enc_cfg.startcreditsforatleast = to_ms(startcreditsforatleast.clone().as_str());
     }
     if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-        opt.enc_cfg.startcreditsforatmost = startcreditsforatmost.clone().as_str().to_ms();
+        opt.enc_cfg.startcreditsforatmost = to_ms(startcreditsforatmost.clone().as_str());
     }
 
     if let Some(ref endcreditstext) = args.endcreditstext {
@@ -712,11 +703,11 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-        opt.enc_cfg.endcreditsforatleast = endcreditsforatleast.clone().as_str().to_ms();
+        opt.enc_cfg.endcreditsforatleast = to_ms(endcreditsforatleast.clone().as_str());
     }
 
     if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-        opt.enc_cfg.endcreditsforatmost = endcreditsforatmost.clone().as_str().to_ms();
+        opt.enc_cfg.endcreditsforatmost = to_ms(endcreditsforatmost.clone().as_str());
     }
 
     /* More stuff */
@@ -849,10 +840,10 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref startat) = args.startat {
-        opt.extraction_start = startat.clone().as_str().to_ms();
+        opt.extraction_start = to_ms(startat.clone().as_str());
     }
     if let Some(ref endat) = args.endat {
-        opt.extraction_end = endat.clone().as_str().to_ms();
+        opt.extraction_end = to_ms(endat.clone().as_str());
     }
 
     if args.cc2 {
@@ -1272,18 +1263,18 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
     if opt.enc_cfg.sentence_cap {
         unsafe {
-            capitalization_list = get_vector_words(&CAPITALIZED_BUILTIN);
+            CAPITALIZATION_LIST = get_vector_words(&CAPITALIZED_BUILTIN);
             if let Some(ref sentence_cap_file) = opt.sentence_cap_file {
-                process_word_file(sentence_cap_file, &mut capitalization_list)
+                process_word_file(sentence_cap_file, &mut CAPITALIZATION_LIST)
                     .expect("There was an error processing the capitalization file.\n");
             }
         }
     }
     if opt.enc_cfg.filter_profanity {
         unsafe {
-            profane = get_vector_words(&PROFANE_BUILTIN);
+            PROFANE = get_vector_words(&PROFANE_BUILTIN);
             if let Some(ref profanityfile) = opt.filter_profanity_file {
-                process_word_file(profanityfile.as_str(), &mut profane)
+                process_word_file(profanityfile.as_str(), &mut PROFANE)
                     .expect("There was an error processing the profanity file.\n");
             }
         }

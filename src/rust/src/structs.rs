@@ -581,7 +581,6 @@ pub enum CcxDecoder608ColorCode {
 
 #[derive(Copy, Clone, Debug)]
 pub enum ExitCode {
-    OK = 0,
     NoInputFiles = 2,
     TooManyInputFiles = 3,
     IncompatibleParameters = 4,

@@ -172,6 +172,7 @@ name = "ccx_rust"
 version = "0.1.0"
 dependencies = [
  "bindgen 0.58.1",
+ "cfg-if",
  "clap 4.3.21",
  "env_logger",
  "iconv",

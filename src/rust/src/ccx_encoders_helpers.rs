@@ -1,8 +1,8 @@
 // Some basic English words, so user-defined doesn't have to
 // include the common stuff
 
-pub static mut profane: Vec<String> = Vec::new();
-pub static mut capitalization_list: Vec<String> = Vec::new();
+pub static mut PROFANE: Vec<String> = Vec::new();
+pub static mut CAPITALIZATION_LIST: Vec<String> = Vec::new();
 
 pub const CAPITALIZED_BUILTIN: [&str; 29] = [
     "I",

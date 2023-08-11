@@ -1,3 +1,4 @@
+use cfg_if::cfg_if;
 use clap::{Parser, ValueEnum};
 use strum_macros::Display;
 
@@ -23,9 +24,14 @@ const OUTPUT_AFFECTING_DEBUG_DATA: &str = "Options that affect debug data";
 const TELETEXT_OPTIONS: &str = "Teletext related options";
 const TRANSCRIPT_OPTIONS: &str = "Transcript customizing options";
 const COMMUNICATION_PROTOCOL: &str = "Communication with other programs and console output";
-const SHARING_EXTRACTED_CAPTIONS: &str = "Sharing extracted captions via TCP";
-const CCTRANSLATE_INTEGRATION: &str = "CCTranslate application integration";
 const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
+
+cfg_if! {
+    if #[cfg(feature = "enable_sharing")] {
+        const SHARING_EXTRACTED_CAPTIONS: &str = "Sharing extracted captions via TCP";
+        const CCTRANSLATE_INTEGRATION: &str = "CCTranslate application integration";
+    }
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
