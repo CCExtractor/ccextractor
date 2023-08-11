@@ -20,7 +20,7 @@ cfg_if! {
         use winapi::um::winnt::{FILE_SHARE_READ, GENERIC_READ, HANDLE};
     }
 }
-use crate::args::{self, OutputField};
+use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
@@ -174,141 +174,123 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     Ok(())
 }
 
-fn set_output_format_bin(opt: &mut CcxSOptions) {
-    opt.write_format = CcxOutputFormat::Rcwt;
+fn set_output_format_type(opt: &mut CcxSOptions, out_format: OutFormat) {
+    match out_format {
+        #[cfg(feature = "with_libcurl")]
+        OutFormat::Curl => opt.write_format = CcxOutputFormat::Curl,
+        OutFormat::Ass => opt.write_format = CcxOutputFormat::Ssa,
+        OutFormat::Ccd => opt.write_format = CcxOutputFormat::Ccd,
+        OutFormat::Scc => opt.write_format = CcxOutputFormat::Scc,
+        OutFormat::Srt => opt.write_format = CcxOutputFormat::Srt,
+        OutFormat::Ssa => opt.write_format = CcxOutputFormat::Ssa,
+        OutFormat::Webvtt => opt.write_format = CcxOutputFormat::Webvtt,
+        OutFormat::WebvttFull => {
+            opt.write_format = CcxOutputFormat::Webvtt;
+            opt.use_webvtt_styling = true;
+        }
+        OutFormat::Sami => opt.write_format = CcxOutputFormat::Sami,
+        OutFormat::Txt => {
+            opt.write_format = CcxOutputFormat::Transcript;
+            opt.settings_dtvcc.no_rollup = true;
+        }
+        OutFormat::Ttxt => {
+            opt.write_format = CcxOutputFormat::Transcript;
+            if opt.date == CcxOutputDateFormat::None {
+                opt.date = CcxOutputDateFormat::HHMMSSMS;
+            }
+            // Sets the right things so that timestamps and the mode are printed.
+            if !opt.transcript_settings.is_final {
+                opt.transcript_settings.show_start_time = true;
+                opt.transcript_settings.show_end_time = true;
+                opt.transcript_settings.show_cc = false;
+                opt.transcript_settings.show_mode = true;
+            }
+        }
+        OutFormat::Report => {
+            opt.write_format = CcxOutputFormat::Null;
+            opt.messages_target = Some(0);
+            opt.print_file_reports = true;
+            opt.demux_cfg.ts_allprogram = true;
+        }
+        OutFormat::Raw => opt.write_format = CcxOutputFormat::Raw,
+        OutFormat::Smptett => opt.write_format = CcxOutputFormat::Smptett,
+        OutFormat::Bin => opt.write_format = CcxOutputFormat::Rcwt,
+        OutFormat::Null => opt.write_format = CcxOutputFormat::Null,
+        OutFormat::Dvdraw => opt.write_format = CcxOutputFormat::Dvdraw,
+        OutFormat::Spupng => opt.write_format = CcxOutputFormat::Spupng,
+        // OutFormat::SimpleXml => opt.write_format = CcxOutputFormat::SimpleXml,
+        OutFormat::G608 => opt.write_format = CcxOutputFormat::G608,
+        OutFormat::Mcc => opt.write_format = CcxOutputFormat::Mcc,
+    }
 }
 
 fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
     opt.write_format_rewritten = true;
 
-    let can_unwrap = args.out.is_some();
-    #[cfg(feature = "with_libcurl")]
-    {
-        if can_unwrap && args.out.unwrap() == OutFormat::Curl {
-            opt.write_format = CcxOutputFormat::Curl;
-            return;
-        }
-    }
-
-    if opt.send_to_srv && can_unwrap && args.out.unwrap() == OutFormat::Bin {
+    if opt.send_to_srv && args.out.unwrap_or(OutFormat::Null) != OutFormat::Bin {
         println!("Output format is changed to bin\n");
-        opt.write_format = CcxOutputFormat::Rcwt;
+        set_output_format_type(opt, OutFormat::Bin);
         return;
     }
 
-    if can_unwrap && args.out.unwrap() == OutFormat::Ass {
-        opt.write_format = CcxOutputFormat::Ssa;
-        opt.use_ass_instead_of_ssa = true;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Ccd {
-        opt.write_format = CcxOutputFormat::Ccd;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Scc {
-        opt.write_format = CcxOutputFormat::Scc;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Srt {
-        opt.write_format = CcxOutputFormat::Srt;
-    } else if args.srt || can_unwrap && args.out.unwrap() == OutFormat::Ssa {
-        opt.write_format = CcxOutputFormat::Ssa;
-    } else if args.webvtt || can_unwrap && args.out.unwrap() == OutFormat::Webvtt {
-        opt.write_format = CcxOutputFormat::Webvtt;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::WebvttFull {
-        opt.write_format = CcxOutputFormat::Webvtt;
-        opt.use_webvtt_styling = true;
-    } else if args.sami || can_unwrap && args.out.unwrap() == OutFormat::Sami {
-        opt.write_format = CcxOutputFormat::Sami;
-    } else if args.txt || can_unwrap && args.out.unwrap() == OutFormat::Txt {
-        opt.write_format = CcxOutputFormat::Transcript;
-        opt.settings_dtvcc.no_rollup = true;
-    } else if args.ttxt || can_unwrap && args.out.unwrap() == OutFormat::Ttxt {
-        opt.write_format = CcxOutputFormat::Transcript;
-        if opt.date == CcxOutputDateFormat::None {
-            opt.date = CcxOutputDateFormat::HHMMSSMS;
-        }
-        // Sets the right things so that timestamps and the mode are printed.
-        if !opt.transcript_settings.is_final {
-            opt.transcript_settings.show_start_time = true;
-            opt.transcript_settings.show_end_time = true;
-            opt.transcript_settings.show_cc = false;
-            opt.transcript_settings.show_mode = true;
-        }
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Report {
-        opt.write_format = CcxOutputFormat::Null;
-        opt.messages_target = Some(0);
-        opt.print_file_reports = true;
-        opt.demux_cfg.ts_allprogram = true;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Raw {
-        opt.write_format = CcxOutputFormat::Raw;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Smptett {
-        opt.write_format = CcxOutputFormat::Smptett;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Bin {
-        opt.write_format = CcxOutputFormat::Rcwt;
-    } else if args.null || can_unwrap && args.out.unwrap() == OutFormat::Null {
-        opt.write_format = CcxOutputFormat::Null;
-    } else if args.dvdraw || can_unwrap && args.out.unwrap() == OutFormat::Dvdraw {
-        opt.write_format = CcxOutputFormat::Dvdraw;
-    } else if can_unwrap && args.out.unwrap() == OutFormat::Spupng {
-        opt.write_format = CcxOutputFormat::Spupng;
-    }
-    // else if can_unwrap && args.out.unwrap() == OutFormat:: {
-    // opt.write_format = CcxOutputFormat::SimpleXml;}
-    else if can_unwrap && args.out.unwrap() == OutFormat::G608 {
-        opt.write_format = CcxOutputFormat::G608;
-    } else if args.mcc || can_unwrap && args.out.unwrap() == OutFormat::Mcc {
-        opt.write_format = CcxOutputFormat::Mcc;
-    } else {
-        println!(
-            "Unknown input file format: {}\n",
-            args.input.unwrap().to_string()
-        );
-        std::process::exit(ExitCode::MalformedParameter as i32);
+    if let Some(out_format) = args.out {
+        set_output_format_type(opt, out_format);
+    } else if args.sami {
+        set_output_format_type(opt, OutFormat::Sami);
+    } else if args.webvtt {
+        set_output_format_type(opt, OutFormat::Webvtt);
+    } else if args.srt {
+        set_output_format_type(opt, OutFormat::Srt);
+    } else if args.null {
+        set_output_format_type(opt, OutFormat::Null);
+    } else if args.dvdraw {
+        set_output_format_type(opt, OutFormat::Dvdraw);
+    } else if args.txt {
+        set_output_format_type(opt, OutFormat::Txt);
+    } else if args.ttxt {
+        set_output_format_type(opt, OutFormat::Ttxt);
+    } else if args.mcc {
+        set_output_format_type(opt, OutFormat::Mcc);
     }
 }
 
-fn set_input_format_bin(opt: &mut CcxSOptions) {
-    opt.demux_cfg.auto_stream = CcxStreamMode::Rcwt;
+fn set_input_format_type(opt: &mut CcxSOptions, input_format: InFormat) {
+    match input_format {
+        #[cfg(feature = "wtv_debug")]
+        InFormat::Hex => opt.demux_cfg.auto_stream = CcxStreamMode::HexDump,
+        InFormat::Es => opt.demux_cfg.auto_stream = CcxStreamMode::ElementaryOrNotFound,
+        InFormat::Ts => opt.demux_cfg.auto_stream = CcxStreamMode::Transport,
+        InFormat::M2ts => opt.demux_cfg.auto_stream = CcxStreamMode::Transport,
+        InFormat::Ps => opt.demux_cfg.auto_stream = CcxStreamMode::Program,
+        InFormat::Asf => opt.demux_cfg.auto_stream = CcxStreamMode::Asf,
+        InFormat::Wtv => opt.demux_cfg.auto_stream = CcxStreamMode::Wtv,
+        InFormat::Raw => opt.demux_cfg.auto_stream = CcxStreamMode::McpoodlesRaw,
+        InFormat::Bin => opt.demux_cfg.auto_stream = CcxStreamMode::Rcwt,
+        InFormat::Mp4 => opt.demux_cfg.auto_stream = CcxStreamMode::Mp4,
+        InFormat::Mkv => opt.demux_cfg.auto_stream = CcxStreamMode::Mkv,
+        InFormat::Mxf => opt.demux_cfg.auto_stream = CcxStreamMode::Mxf,
+    }
 }
 
 fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
     if opt.input_source == CcxDatasource::Tcp {
         println!("Input format is changed to bin\n");
-        opt.demux_cfg.auto_stream = CcxStreamMode::Rcwt;
+        set_input_format_type(opt, InFormat::Bin);
         return;
     }
 
-    let can_unwrap = args.input.is_some();
-    #[cfg(feature = "wtv_debug")]
-    if can_unwrap && args.input.unwrap().to_string() == "hex" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::HexDump;
-        return;
-    }
-
-    if args.es || can_unwrap && args.input.unwrap().to_string() == "es" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::ElementaryOrNotFound;
-    } else if args.ts || can_unwrap && args.input.unwrap().to_string() == "ts" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Transport;
-        opt.demux_cfg.m2ts = false;
-    } else if can_unwrap && args.input.unwrap().to_string() == "m2ts" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Transport;
-        opt.demux_cfg.m2ts = true;
-    } else if args.ps || can_unwrap && args.input.unwrap().to_string() == "ps" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Program;
-    } else if args.asf
-        || args.dvr_ms
-        || can_unwrap
-            && (args.input.unwrap().to_string() == "asf"
-                || args.input.unwrap().to_string() == "dvr-ms")
-    {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Asf;
-    } else if args.wtv || can_unwrap && args.input.unwrap().to_string() == "wtv" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Wtv;
-    } else if can_unwrap && args.input.unwrap().to_string() == "raw" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::McpoodlesRaw;
-    } else if can_unwrap && args.input.unwrap().to_string() == "bin" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Rcwt;
-    } else if can_unwrap && args.input.unwrap().to_string() == "mp4" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Mp4;
-    } else if can_unwrap && args.input.unwrap().to_string() == "mkv" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Mkv;
-    } else if can_unwrap && args.input.unwrap().to_string() == "bin" {
-        opt.demux_cfg.auto_stream = CcxStreamMode::Mxf;
+    if let Some(input_format) = args.input {
+        set_input_format_type(opt, input_format);
+    } else if args.es {
+        set_input_format_type(opt, InFormat::Es);
+    } else if args.ts {
+        set_input_format_type(opt, InFormat::Ts);
+    } else if args.ps {
+        set_input_format_type(opt, InFormat::Ps);
+    } else if args.asf || args.dvr_ms {
+        set_input_format_type(opt, InFormat::Asf);
+    } else if args.wtv {
+        set_input_format_type(opt, InFormat::Wtv);
     } else {
         println!(
             "Unknown input file format: {}\n",
@@ -1167,7 +1149,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
     if let Some(ref addr) = args.sendto {
         opt.send_to_srv = true;
-        set_output_format_bin(opt);
+        set_output_format_type(opt, OutFormat::Bin);
 
         opt.xmltv = Some(2);
         opt.xmltvliveinterval = Some(2);
@@ -1199,7 +1181,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     if let Some(ref tcp) = args.tcp {
         opt.tcpport = Some(*tcp);
         opt.input_source = CcxDatasource::Tcp;
-        set_input_format_bin(opt);
+        set_input_format_type(opt, InFormat::Bin);
     }
 
     if let Some(ref tcppassworrd) = args.tcp_password {

@@ -187,7 +187,7 @@ pub struct Args {
     /// caption data with no other info, CCExtractor can usually detect the
     /// input format correctly. Use this parameter to override the detected
     #[arg(long, value_name="format",verbatim_doc_comment, help_heading=INPUT_FORMATS)]
-    pub input: Option<InputFormat>,
+    pub input: Option<InFormat>,
     #[arg(long, hide = true)]
     pub es: bool,
     #[arg(long, hide = true)]
@@ -895,7 +895,7 @@ pub enum Ru {
 }
 
 #[derive(Display, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum InputFormat {
+pub enum InFormat {
     /// For Transport Streams.
     Ts,
     /// For Program Streams.
