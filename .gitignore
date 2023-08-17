@@ -84,6 +84,7 @@ linux/aclocal.m4
 linux/*.in
 linux/configure
 linux/build-conf/
+mac/rust/
 mac/config.h
 mac/config.log
 mac/config.status
@@ -97,8 +98,6 @@ package_creators/*tar.gz
 package_creators/build/*.deb
 src/.deps/
 src/.dirstamp
-src/gpacmp4/.deps/
-src/gpacmp4/.dirstamp
 src/lib_ccx/.deps/
 src/lib_ccx/.dirstamp
 src/lib_hash/.deps/

@@ -5,7 +5,6 @@ cc_binary(
     deps = [
             "//src/lib_ccx:lib_ccx",
             "//src/thirdparty/protobuf-c:protobuf-c",
-            "//src/thirdparty/gpacmp4:gpacmp4",
             "//src/thirdparty/zlib:zlib",
             "//src/thirdparty/freetype:freetype"
     ],

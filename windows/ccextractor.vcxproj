@@ -14,33 +14,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\avparse.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\base_coding.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\bitstream.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\color.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\configuration.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\config_file.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\constants.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\events_constants.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\ietf.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\avilib.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\isomedia_dev.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\media_dev.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_dev.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\odf_parse_common.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\internal\ogg.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\isomedia.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\list.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\maths.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\media_tools.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\mpeg4_odf.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\network.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\revision.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\setup.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\sync_layer.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\tools.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\utf.h" />
-    <ClInclude Include="..\src\thirdparty\gpacmp4\gpac\version.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
@@ -95,67 +68,11 @@
       Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="
-    ..\src\thirdparty\gpacmp4\box_dump.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\hint_track.c" />
     <ClCompile Include=" ..\src\thirdparty\freetype\gzip\ftgzip.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_demuxer_mxf.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_encoders_spupng.c" />
     <ClCompile Include=" ..\src\ccextractor.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\avc_ext.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\avilib.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\av_parsers.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\base_encoding.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\bitstream.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_3gpp.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_adobe.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_apple.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_base.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_drm.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_code_meta.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\box_funcs.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\configfile.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\data_map.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\descriptors.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\desc_private.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\drm_sample.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\error.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\gpac_ogg.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\hinting.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\ipmpx_code.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\ipmpx_parse.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\isom_intern.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\isom_read.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\isom_store.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\isom_write.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\list.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\math.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\media.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\media_odf.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\meta.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\movie_fragments.c" />
     <ClCompile Include=" ..\src\lib_ccx\mp4.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\odf_code.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\odf_codec.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\odf_command.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\os_config_init.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\os_divers.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\os_file.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\qos.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\sample_descs.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\slc.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\stbl_read.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\stbl_write.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\track.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\tx3g.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\url.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\utf.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\color.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\os_thread.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\module.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\os_module.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\xml_parser.c" />
-    <ClCompile Include=" ..\src\thirdparty\gpacmp4\constants.c" />
     <ClCompile Include=" ..\src\lib_ccx\activity.c" />
     <ClCompile Include=" ..\src\lib_ccx\asf_functions.c" />
     <ClCompile Include=" ..\src\lib_ccx\avc_functions.c" />
@@ -308,25 +225,32 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
+      "C:\Program Files\GPAC\sdk\include";
+      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>
-      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;
+      "C:\Program Files\GPAC\sdk\lib";$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>ccextractorwinfull</TargetName>
     <IncludePath>
-      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
+      $(ProjectDir)\libs\include;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
+      "C:\Program Files\GPAC\sdk\include";
+      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16;$(IncludePath)</IncludePath>
     <LibraryPath>
-      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+      $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;
+      "C:\Program Files\GPAC\sdk\lib";$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
+        "C:\Program Files\GPAC\sdk\include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
-        SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
@@ -336,29 +260,44 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;
+        "C:\Program Files\GPAC\sdk\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
         call rust.bat</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>
+        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>
-        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\gpacmp4;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+        ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\protobuf-c;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
+        "C:\Program Files\GPAC\sdk\include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
-        ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;GPAC_HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;VERSION_FILE_PRESENT;ENABLE_OCR;WIN32;NDEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -367,22 +306,36 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <AdditionalLibraryDirectories>
-        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        $(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\lib;
+        "C:\Program Files\GPAC\sdk\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
         call rust.bat -r</Command>
     </PreBuildEvent>
-    <!-- <PostBuildEvent>
-      <Command>xcopy /y "$(ProjectDir)libs\lib\liblept172.dll" "$(ProjectDir)$(OutDir)"
-        xcopy /y "$(ProjectDir)libs\lib\libtesseract304d.dll" "$(ProjectDir)$(OutDir)"</Command>
-    </PostBuildEvent> -->
+    <PostBuildEvent>
+      <Command>
+        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

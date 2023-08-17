@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 SRC_LIBPNG="$(find ../src/thirdparty/libpng/ -name '*.c')"
-SRC_ZLIB="$(find ../sr/thirdpartyc/zlib/ -name '*.c')"
-SRC_ZVBI="$(find ../sr/thirdpartyc/zvbi/ -name '*.c')"
+SRC_ZLIB="$(find ../src/thirdparty/zlib/ -name '*.c')"
+SRC_ZVBI="$(find ../src/thirdparty/zvbi/ -name '*.c')"
 SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
-SRC_GPAC="$(find ../sr/thirdpartyc/gpacmp4/ -name '*.c')"
-SRC_HASH="$(find ../sr/thirdpartyc/lib_hash/ -name '*.c')"
+SRC_HASH="$(find ../src/thirdparty/lib_hash/ -name '*.c')"
 SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
-BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
+BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
 
 python setup.py $BLD_SOURCES

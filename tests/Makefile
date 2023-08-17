@@ -14,7 +14,7 @@ CFLAGS+=-DDEBUG
 endif
 
 #ALL_FLAGS = -Wno-write-strings -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT
-LDFLAGS=-lm -g
+LDFLAGS=-lm -g -lgpac
 
 CFLAGS+=$(shell pkg-config --cflags check)
 LDFLAGS+=$(shell pkg-config --libs check)

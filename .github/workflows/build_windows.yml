@@ -29,7 +29,7 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        run: choco install llvm
+        run: choco install llvm gpac
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -71,7 +71,7 @@ jobs:
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
-        run: choco install llvm
+        run: choco install llvm gpac
       - name: Setup Vcpkg
         id: vcpkg
         uses: friendlyanon/setup-vcpkg@v1
