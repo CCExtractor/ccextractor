@@ -74,7 +74,7 @@ unsafe fn set_binary_mode() {
 }
 
 fn to_ms(value: &str) -> CcxBoundaryTime {
-    let mut parts = value.rsplit(":");
+    let mut parts = value.rsplit(':');
 
     let seconds: u32 = parts
         .next()
@@ -194,7 +194,7 @@ fn set_output_format_type(opt: &mut CcxSOptions, out_format: OutFormat) {
         OutFormat::Ttxt => {
             opt.write_format = CcxOutputFormat::Transcript;
             if opt.date == CcxOutputDateFormat::None {
-                opt.date = CcxOutputDateFormat::HHMMSSMS;
+                opt.date = CcxOutputDateFormat::HhMmSsMs;
             }
             // Sets the right things so that timestamps and the mode are printed.
             if !opt.transcript_settings.is_final {
@@ -290,10 +290,7 @@ fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
     } else if args.wtv {
         set_input_format_type(opt, InFormat::Wtv);
     } else {
-        println!(
-            "Unknown input file format: {}\n",
-            args.input.unwrap().to_string()
-        );
+        println!("Unknown input file format: {}\n", args.input.unwrap());
         std::process::exit(ExitCode::MalformedParameter as i32);
     }
 }
@@ -360,7 +357,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
         let mut service = String::new();
         let mut charset = None;
         for e in c.chars() {
-            if e.is_digit(10) {
+            if e.is_ascii_digit() {
                 service.push(e);
             } else if e == '[' {
                 charset = Some(e.to_string());
@@ -378,7 +375,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
 
     for (i, service) in services.iter().enumerate() {
         let svc = service.parse::<usize>().unwrap();
-        if svc < 1 || svc > CCX_DTVCC_MAX_SERVICES {
+        if !(1..=CCX_DTVCC_MAX_SERVICES).contains(&svc) {
             panic!("[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, CCX_DTVCC_MAX_SERVICES);
         }
         opts.settings_dtvcc.services_enabled[svc - 1] = true;
@@ -389,7 +386,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
         }
     }
 
-    if opts.settings_dtvcc.active_services_count <= 0 {
+    if opts.settings_dtvcc.active_services_count == 0 {
         panic!("[CEA-708] Malformed parameter: no services\n");
     }
 }
@@ -587,7 +584,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
         || args.dvr_ms
         || args.input.is_some()
     {
-        set_input_format(opt, &args);
+        set_input_format(opt, args);
     }
 
     if let Some(ref codec) = args.codec {
@@ -621,7 +618,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref quant) = args.quant {
-        if !(0..=2).contains(&*quant) {
+        if !(0..=2).contains(quant) {
             println!("Invalid quant value");
             std::process::exit(ExitCode::MalformedParameter as i32);
         }
@@ -633,7 +630,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref oem) = args.oem {
-        if !(0..=2).contains(&*oem) {
+        if !(0..=2).contains(oem) {
             println!("Invalid oem value");
             std::process::exit(ExitCode::MalformedParameter as i32);
         }
@@ -656,7 +653,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
         || args.null
         || args.out.is_some()
     {
-        set_output_format(opt, &args);
+        set_output_format(opt, args);
     }
 
     if let Some(ref startcreditstext) = args.startcreditstext {
@@ -802,7 +799,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
     if let Some(ref defaultcolor) = args.defaultcolor {
         unsafe {
-            if defaultcolor.len() != 7 || !defaultcolor.starts_with("#") {
+            if defaultcolor.len() != 7 || !defaultcolor.starts_with('#') {
                 println!("Invalid default color");
                 std::process::exit(ExitCode::MalformedParameter as i32);
             }
@@ -812,7 +809,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref delay) = args.delay {
-        opt.subs_delay = delay.clone();
+        opt.subs_delay = *delay;
     }
 
     if let Some(ref screenfuls) = args.screenfuls {
@@ -831,7 +828,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     }
 
     if let Some(ref extract) = args.output_field {
-        opt.extract = Some(extract.clone());
+        opt.extract = Some(*extract);
         opt.is_608_enabled = true;
     }
 
@@ -1014,7 +1011,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
     if let Some(ref tpage) = args.tpage {
         tlt_config.page = get_atoi_hex(tpage.as_str());
-        tlt_config.user_page = tlt_config.page.clone();
+        tlt_config.user_page = tlt_config.page;
     }
 
     // Red Hen/ UCLA Specific stuff
@@ -1075,7 +1072,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     if let Some(ref unixts) = args.unixts {
         let mut t = get_atoi_hex(unixts.as_str());
 
-        if t <= 0 {
+        if t == 0 {
             t = OffsetDateTime::now_utc().unix_timestamp() as u64;
         }
         unsafe {
@@ -1103,17 +1100,18 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     if let Some(ref customtxt) = args.customtxt {
         if customtxt.to_string().len() == 7 {
             if opt.date == CcxOutputDateFormat::None {
-                opt.date = CcxOutputDateFormat::HHMMSSMS;
+                opt.date = CcxOutputDateFormat::HhMmSsMs;
             }
 
             if !opt.transcript_settings.is_final {
-                opt.transcript_settings.show_start_time = customtxt >> 0 == 1;
-                opt.transcript_settings.show_end_time = customtxt >> 1 == 1;
-                opt.transcript_settings.show_mode = customtxt >> 2 == 1;
-                opt.transcript_settings.show_cc = customtxt >> 3 == 1;
-                opt.transcript_settings.relative_timestamp = customtxt >> 4 == 1;
-                opt.transcript_settings.xds = customtxt >> 5 == 1;
-                opt.transcript_settings.use_colors = customtxt >> 6 == 1;
+                let chars = format!("{}", customtxt).chars().collect::<Vec<char>>();
+                opt.transcript_settings.show_start_time = chars[0] == '1';
+                opt.transcript_settings.show_end_time = chars[1] == '1';
+                opt.transcript_settings.show_mode = chars[2] == '1';
+                opt.transcript_settings.show_cc = chars[3] == '1';
+                opt.transcript_settings.relative_timestamp = chars[4] == '1';
+                opt.transcript_settings.xds = chars[5] == '1';
+                opt.transcript_settings.use_colors = chars[6] == '1';
             }
         } else {
             println!("Invalid customtxt value. It must be 7 digits long");
@@ -1153,13 +1151,13 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
         opt.xmltvliveinterval = Some(2);
         let mut _addr: String = addr.to_string();
 
-        if addr.starts_with('[') {
-            _addr = addr[1..].to_string();
+        if let Some(saddr) = addr.strip_prefix('[') {
+            _addr = saddr.to_string();
 
             let mut br = _addr
                 .find(']')
                 .expect("Wrong address format, for IPv6 use [address]:port");
-            _addr = _addr.replace("]", "");
+            _addr = _addr.replace(']', "");
 
             opt.srv_addr = Some(_addr.clone());
 
@@ -1172,7 +1170,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
         opt.srv_addr = Some(_addr.clone());
 
         let colon = _addr.find(':').unwrap();
-        _addr = _addr.replace(":", "");
+        _addr = _addr.replace(':', "");
         opt.srv_port = Some(_addr[(colon + 1)..].parse().unwrap());
     }
 
@@ -1377,11 +1375,11 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     opt.enc_cfg.subs_delay = opt.subs_delay;
     opt.enc_cfg.gui_mode_reports = opt.gui_mode_reports;
 
-    if opt.enc_cfg.render_font.len() == 0 {
+    if opt.enc_cfg.render_font.is_empty() {
         opt.enc_cfg.render_font = DEFAULT_FONT_PATH.to_string();
     }
 
-    if opt.enc_cfg.render_font_italics.len() == 0 {
+    if opt.enc_cfg.render_font_italics.is_empty() {
         opt.enc_cfg.render_font = DEFAULT_FONT_PATH_ITALICS.to_string();
     }
 

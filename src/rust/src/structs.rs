@@ -155,7 +155,7 @@ pub enum CcxOutputDateFormat {
     // HHMMSS = 1,
     Seconds = 2,
     Date = 3,
-    HHMMSSMS = 4, // HH:MM:SS,MILIS (.srt style)
+    HhMmSsMs = 4, // HH:MM:SS,MILIS (.srt style)
 }
 
 impl Default for CcxStreamMode {
