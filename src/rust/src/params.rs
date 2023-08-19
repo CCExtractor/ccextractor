@@ -76,26 +76,24 @@ unsafe fn set_binary_mode() {
 fn to_ms(value: &str) -> CcxBoundaryTime {
     let mut parts = value.rsplit(":");
 
-    let seconds: u32;
-
-    match parts.next() {
-        Some(sec) => seconds = sec.parse().unwrap(),
-        None => {
+    let seconds: u32 = parts
+        .next()
+        .unwrap_or_else(|| {
             println!("Malformed timecode: {}", value);
             std::process::exit(ExitCode::MalformedParameter as i32);
-        }
-    };
+        })
+        .parse()
+        .unwrap();
+
     let mut minutes: u32 = 0;
 
-    match parts.next() {
-        Some(mins) => minutes = mins.parse().unwrap(),
-        None => {}
+    if let Some(mins) = parts.next() {
+        minutes = mins.parse().unwrap();
     };
     let mut hours: u32 = 0;
 
-    match parts.next() {
-        Some(hrs) => hours = hrs.parse().unwrap(),
-        None => {}
+    if let Some(hrs) = parts.next() {
+        hours = hrs.parse().unwrap();
     };
 
     if seconds > 60 || minutes > 60 {
@@ -117,7 +115,7 @@ fn get_vector_words(string_array: &[&str]) -> Vec<String> {
     for string in string_array {
         vector.push(String::from(*string));
     }
-    return vector;
+    vector
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -1352,10 +1350,10 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     #[cfg(feature = "with_libcurl")]
     {
         if opt.write_format == CCX_OF_CURL && opt.curlposturl.is_none() {
-            return Err("You must pass a URL (-curlposturl) if output format is curl\n");
+            Err("You must pass a URL (-curlposturl) if output format is curl\n")
         }
         if opt.write_format != CCX_OF_CURL && opt.curlposturl.is_some() {
-            return Err("-curlposturl requires that the format is curl\n");
+            Err("-curlposturl requires that the format is curl\n")
         }
     }
 
