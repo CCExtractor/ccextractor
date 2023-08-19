@@ -1,17 +1,16 @@
+pub mod args;
+pub mod params;
+
+pub mod activity;
+pub mod structs;
+
+pub mod ccx_encoders_helpers;
+pub mod enums;
+
 use args::Args;
+use clap::Parser;
 use params::parse_parameters;
 use structs::{CcxSOptions, CcxSTeletextConfig};
-
-mod args;
-mod params;
-
-mod activity;
-mod structs;
-
-mod ccx_encoders_helpers;
-
-mod enums;
-use clap::Parser;
 
 fn main() {
     let args: Args = Args::parse();
