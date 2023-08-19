@@ -494,10 +494,11 @@ impl Default for HardsubxOcrMode {
         Self::Frame
     }
 }
+#[allow(dead_code)]
 pub enum HardsubxOcrMode {
     Frame = 0,
-    // Word = 1,
-    // Letter = 2,
+    Word = 1,
+    Letter = 2,
 }
 
 impl Default for CcxDatasource {
@@ -609,13 +610,14 @@ pub enum CCXResult {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[allow(dead_code)]
 pub enum HardsubxColorType {
-    // White = 0,
-    // Yellow = 1,
-    // Green = 2,
-    // Cyan = 3,
-    // Blue = 4,
-    // Magenta = 5,
-    // Red = 6,
-    // Custom = 7,
+    White = 0,
+    Yellow = 1,
+    Green = 2,
+    Cyan = 3,
+    Blue = 4,
+    Magenta = 5,
+    Red = 6,
+    Custom = 7,
 }
