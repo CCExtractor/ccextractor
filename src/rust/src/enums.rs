@@ -4,7 +4,7 @@ impl Default for CcxDebugMessageTypes {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum CcxDebugMessageTypes {
     None = 0,
     Parse = 1,

@@ -45,10 +45,10 @@ cfg_if! {
     }
 }
 
-static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
-static mut MPEG_CLOCK_FREQ: i64 = 0;
+pub static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
+pub static mut MPEG_CLOCK_FREQ: i64 = 0;
 static mut USERCOLOR_RGB: String = String::new();
-static mut UTC_REFVALUE: u64 = 0;
+pub static mut UTC_REFVALUE: u64 = 0;
 const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
 
 #[cfg(windows)]
@@ -116,6 +116,22 @@ fn get_vector_words(string_array: &[&str]) -> Vec<String> {
         vector.push(String::from(*string));
     }
     vector
+}
+
+fn atol(bufsize: &str) -> i64 {
+    let mut val = bufsize[0..bufsize.len() - 1].parse::<i64>().unwrap();
+    let size = bufsize
+        .to_string()
+        .to_uppercase()
+        .chars()
+        .nth(bufsize.len() - 1)
+        .unwrap();
+    if size == 'M' {
+        val *= 1024 * 1024;
+    } else if size == 'K' {
+        val *= 1024;
+    }
+    return val;
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -342,11 +358,17 @@ fn mkvlang_params_check(lang: &str) {
 
 fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
     if s.starts_with("all") {
-        let charset = &s[4..];
+        let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
         opts.settings_dtvcc.enabled = true;
         opts.enc_cfg.dtvcc_extract = true;
         opts.enc_cfg.all_services_charset = charset.to_owned();
-        opts.enc_cfg.services_charsets = vec![charset.to_owned()];
+        opts.enc_cfg.services_charsets = vec![String::new(); CCX_DTVCC_MAX_SERVICES];
+
+        for i in 0..CCX_DTVCC_MAX_SERVICES {
+            opts.settings_dtvcc.services_enabled[i] = true;
+            opts.enc_cfg.services_enabled[i] = true;
+        }
+
         opts.settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES;
         return;
     }
@@ -356,22 +378,30 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
     for c in s.split(',') {
         let mut service = String::new();
         let mut charset = None;
+        let mut inside_charset = false;
+
         for e in c.chars() {
-            if e.is_ascii_digit() {
+            if e.is_ascii_digit() && !inside_charset {
                 service.push(e);
             } else if e == '[' {
-                charset = Some(e.to_string());
+                inside_charset = true;
             } else if e == ']' {
-                if let Some(ref c) = charset {
-                    charsets.push(c.clone());
+                inside_charset = false;
+            } else if inside_charset {
+                if charset == None {
+                    charset = Some(String::new());
                 }
+                charset.as_mut().unwrap().push(e);
             }
         }
         if service.is_empty() {
             continue;
         }
         services.push(service);
+        charsets.push(charset.clone());
     }
+
+    opts.enc_cfg.services_charsets = vec![String::new(); CCX_DTVCC_MAX_SERVICES];
 
     for (i, service) in services.iter().enumerate() {
         let svc = service.parse::<usize>().unwrap();
@@ -380,9 +410,12 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
         }
         opts.settings_dtvcc.services_enabled[svc - 1] = true;
         opts.enc_cfg.services_enabled[svc - 1] = true;
+        opts.settings_dtvcc.enabled = true;
+        opts.enc_cfg.dtvcc_extract = true;
         opts.settings_dtvcc.active_services_count += 1;
-        if charsets.len() > i {
-            opts.enc_cfg.services_charsets[svc - 1] = charsets[i].to_owned();
+
+        if charsets.len() > i && charsets[i].is_some() {
+            opts.enc_cfg.services_charsets[svc - 1] = charsets[i].as_ref().unwrap().to_owned();
         }
     }
 
@@ -533,12 +566,10 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
     if let Some(ref buffersize) = args.buffersize {
         unsafe {
-            let mut_ref = &mut FILEBUFFERSIZE;
+            FILEBUFFERSIZE = atol(buffersize);
 
-            if *buffersize < 8 {
-                *mut_ref = 8; // Otherwise crashes are guaranteed at least in MythTV
-            } else {
-                *mut_ref = *buffersize;
+            if FILEBUFFERSIZE < 8 {
+                FILEBUFFERSIZE = 8; // Otherwise crashes are guaranteed at least in MythTV
             }
         }
     }
@@ -722,7 +753,7 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
         opt.settings_dtvcc.no_rollup = true;
     }
 
-    if let Some(ref ru) = args.ru {
+    if let Some(ref ru) = args.rollup {
         match ru {
             Ru::Ru1 => {
                 opt.settings_608.force_rollup = 1;
@@ -965,6 +996,11 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
     if args.unicode {
         opt.enc_cfg.encoding = CcxEncodingType::Unicode;
     }
+
+    if args.utf8 {
+        opt.enc_cfg.encoding = CcxEncodingType::Utf8;
+    }
+
     if args.latin1 {
         opt.enc_cfg.encoding = CcxEncodingType::Latin1;
     }

@@ -190,7 +190,7 @@ impl Default for CcxCodeType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CcxCodeType {
     // Any = 0,
     Teletext = 1,
@@ -324,7 +324,7 @@ impl Default for CcxEncoderCfg {
             force_dropframe: false,
             render_font: String::default(),
             render_font_italics: String::default(),
-            services_enabled: [false; 63],
+            services_enabled: [false; CCX_DTVCC_MAX_SERVICES],
             services_charsets: vec![],
             all_services_charset: String::default(),
             extract_only_708: false,
@@ -503,12 +503,13 @@ pub enum HardsubxOcrMode {
 
 impl Default for CcxDatasource {
     fn default() -> Self {
-        Self::File
+        Self::None
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum CcxDatasource {
+    None = -1,
     File = 0,
     Stdin = 1,
     Network = 2,

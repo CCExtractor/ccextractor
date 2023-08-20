@@ -478,7 +478,7 @@ pub struct Args {
     /// free to play with it but be aware that this format
     /// is really live - don't rely on its output format
     /// not changing between versions.
-    #[arg(long="UCLA", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub ucla: bool,
     /// Map Latin symbols to Cyrillic ones in special cases
     /// of Russian Teletext files (issue #1086)
@@ -586,7 +586,7 @@ pub struct Args {
     /// Specify a size for reading, in bytes (suffix with K or
     /// or M for kilobytes and megabytes). Default is 16M.
     #[arg(long, verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING)]
-    pub buffersize: Option<i64>,
+    pub buffersize: Option<String>,
     /// keep-output-close. If used then CCExtractor will close
     /// the output file after writing each subtitle frame and
     /// attempt to create it again when needed.
@@ -616,7 +616,7 @@ pub struct Args {
     /// of the first character received which is possibly more
     /// accurate.
     #[arg(long, verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
-    pub ru: Option<Ru>,
+    pub rollup: Option<Ru>,
     /// For srt/sami/webvtt, add this number of milliseconds to
     /// all times. For example, --delay 400 makes subtitles
     /// appear 400ms late. You can also use negative numbers
