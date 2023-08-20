@@ -131,7 +131,7 @@ fn atol(bufsize: &str) -> i64 {
     } else if size == 'K' {
         val *= 1024;
     }
-    return val;
+    val
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -388,7 +388,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
             } else if e == ']' {
                 inside_charset = false;
             } else if inside_charset {
-                if charset == None {
+                if charset.is_none() {
                     charset = Some(String::new());
                 }
                 charset.as_mut().unwrap().push(e);
