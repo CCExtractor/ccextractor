@@ -446,7 +446,11 @@ int main(int argc, char *argv[])
 	// If "ccextractor.cnf" is present, takes options from it.
 	// See docs/ccextractor.cnf.sample for more info.
 
+#ifndef DISABLE_RUST
+	int compile_ret = ccxr_parse_parameters(api_options, argc, argv);
+#else
 	int compile_ret = parse_parameters(api_options, argc, argv);
+#endif
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
