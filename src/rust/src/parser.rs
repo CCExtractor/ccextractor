@@ -7,7 +7,7 @@ use std::string::String;
 
 use cfg_if::cfg_if;
 
-use structs::CcxSOptions;
+use common::CcxOptions;
 use time::OffsetDateTime;
 
 cfg_if! {
@@ -24,12 +24,12 @@ use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
-use crate::structs;
+use crate::common;
 use crate::{
     activity::activity_report_version,
     args::{Codec, Ru},
-    enums::CcxDebugMessageTypes,
-    structs::*,
+    common::CcxDebugMessageTypes,
+    common::*,
 };
 
 cfg_if! {
@@ -188,7 +188,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     Ok(())
 }
 
-fn set_output_format_type(opt: &mut CcxSOptions, out_format: OutFormat) {
+fn set_output_format_type(opt: &mut CcxOptions, out_format: OutFormat) {
     match out_format {
         #[cfg(feature = "with_libcurl")]
         OutFormat::Curl => opt.write_format = CcxOutputFormat::Curl,
@@ -238,7 +238,7 @@ fn set_output_format_type(opt: &mut CcxSOptions, out_format: OutFormat) {
     }
 }
 
-fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
+fn set_output_format(opt: &mut CcxOptions, args: &Args) {
     opt.write_format_rewritten = true;
 
     if opt.send_to_srv && args.out.unwrap_or(OutFormat::Null) != OutFormat::Bin {
@@ -268,7 +268,7 @@ fn set_output_format(opt: &mut CcxSOptions, args: &Args) {
     }
 }
 
-fn set_input_format_type(opt: &mut CcxSOptions, input_format: InFormat) {
+fn set_input_format_type(opt: &mut CcxOptions, input_format: InFormat) {
     match input_format {
         #[cfg(feature = "wtv_debug")]
         InFormat::Hex => opt.demux_cfg.auto_stream = CcxStreamMode::HexDump,
@@ -286,7 +286,7 @@ fn set_input_format_type(opt: &mut CcxSOptions, input_format: InFormat) {
     }
 }
 
-fn set_input_format(opt: &mut CcxSOptions, args: &Args) {
+fn set_input_format(opt: &mut CcxOptions, args: &Args) {
     if opt.input_source == CcxDatasource::Tcp {
         println!("Input format is changed to bin\n");
         set_input_format_type(opt, InFormat::Bin);
@@ -356,7 +356,7 @@ fn mkvlang_params_check(lang: &str) {
     }
 }
 
-fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
+fn parse_708_services(opts: &mut CcxOptions, s: &str) {
     if s.starts_with("all") {
         let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
         opts.settings_dtvcc.enabled = true;
@@ -424,7 +424,7 @@ fn parse_708_services(opts: &mut CcxSOptions, s: &str) {
     }
 }
 
-pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut CcxSTeletextConfig) {
+pub fn parse_parameters(opt: &mut CcxOptions, args: &Args, tlt_config: &mut CcxTeletextConfig) {
     if args.stdin {
         #[cfg(feature = "windows")]
         {
@@ -1446,17 +1446,17 @@ pub fn parse_parameters(opt: &mut CcxSOptions, args: &Args, tlt_config: &mut Ccx
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{args::*, enums::*, params::*, structs::*};
+    use crate::{args::*, common::*, parser::*};
     use clap::Parser;
 
-    fn parse_args(args: &[&str]) -> (CcxSOptions, CcxSTeletextConfig) {
+    fn parse_args(args: &[&str]) -> (CcxOptions, CcxTeletextConfig) {
         let mut common_args = vec!["./ccextractor", "input_file"];
         common_args.extend_from_slice(args);
         let args = Args::try_parse_from(common_args).expect("Failed to parse arguments");
-        let mut options = CcxSOptions {
+        let mut options = CcxOptions {
             ..Default::default()
         };
-        let mut tlt_config = CcxSTeletextConfig {
+        let mut tlt_config = CcxTeletextConfig {
             ..Default::default()
         };
 
@@ -1855,7 +1855,7 @@ pub mod tests {
 
     #[test]
     fn options_20() {
-        let (opt, _) = parse_args(&["--buffersize", "1M"]);
+        let (_, _) = parse_args(&["--buffersize", "1M"]);
 
         unsafe {
             assert_eq!(FILEBUFFERSIZE, 1024 * 1024);

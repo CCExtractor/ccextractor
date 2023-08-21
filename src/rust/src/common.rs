@@ -1,7 +1,7 @@
-use crate::{args::OutputField, enums::CcxDebugMessageTypes};
+use crate::args::OutputField;
 
 #[derive(Debug, Default)]
-pub struct CcxSTeletextConfig {
+pub struct CcxTeletextConfig {
     pub verbose: bool,
     pub page: u16,
     pub tid: u16,
@@ -384,7 +384,7 @@ pub struct CcxEncoderCfg {
 }
 
 #[derive(Debug, Default)]
-pub struct CcxSOptions {
+pub struct CcxOptions {
     pub extract: Option<OutputField>,
     pub no_rollup: bool,
     pub noscte20: bool,
@@ -621,4 +621,32 @@ pub enum HardsubxColorType {
     Magenta = 5,
     Red = 6,
     Custom = 7,
+}
+
+impl Default for CcxDebugMessageTypes {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum CcxDebugMessageTypes {
+    None = 0,
+    Parse = 1,
+    Vides = 2,
+    Time = 4,
+    Verbose = 8,
+    Decoder608 = 0x10,
+    // Decoder708 = 0x20,
+    DecoderXds = 0x40,
+    Cbraw = 0x80,
+    // GenericNotices = 0x100,
+    Teletext = 0x200,
+    Pat = 0x400,
+    Pmt = 0x800,
+    Levenshtein = 0x1000,
+    Dvb = 0x2000,
+    Dumpdef = 0x4000,
+    #[cfg(feature = "enable_sharing")]
+    Share = 0x8000,
 }

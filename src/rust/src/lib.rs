@@ -15,12 +15,11 @@ pub mod bindings {
 pub mod activity;
 pub mod args;
 pub mod ccx_encoders_helpers;
+pub mod common;
 pub mod decoder;
-pub mod enums;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
-pub mod params;
-pub mod structs;
+pub mod parser;
 pub mod utils;
 
 #[cfg(windows)]

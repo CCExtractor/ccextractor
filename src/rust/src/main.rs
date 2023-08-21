@@ -1,24 +1,23 @@
 pub mod args;
-pub mod params;
+pub mod parser;
 
 pub mod activity;
-pub mod structs;
 
 pub mod ccx_encoders_helpers;
-pub mod enums;
+pub mod common;
 
 use args::Args;
 use clap::Parser;
-use params::parse_parameters;
-use structs::{CcxSOptions, CcxSTeletextConfig};
+use common::{CcxOptions, CcxTeletextConfig};
+use parser::parse_parameters;
 
 fn main() {
     let args: Args = Args::parse();
 
-    let mut opt = CcxSOptions {
+    let mut opt = CcxOptions {
         ..Default::default()
     };
-    let mut tlt_config: CcxSTeletextConfig = CcxSTeletextConfig {
+    let mut tlt_config: CcxTeletextConfig = CcxTeletextConfig {
         ..Default::default()
     };
 
