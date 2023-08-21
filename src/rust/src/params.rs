@@ -2150,13 +2150,9 @@ pub mod tests {
 
     #[test]
     fn options_12() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--capfile",
-            "tests/resources/dictionary.txt",
-        ])
-        .expect("Failed to parse arguments");
+        let args: Args =
+            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--capfile", "Cargo.toml"])
+                .expect("Failed to parse arguments");
         let mut opt: CcxSOptions = CcxSOptions {
             ..Default::default()
         };
@@ -2166,10 +2162,7 @@ pub mod tests {
         parse_parameters(&mut opt, &args, &mut tlt_config);
 
         assert!(opt.enc_cfg.sentence_cap);
-        assert_eq!(
-            opt.sentence_cap_file.unwrap(),
-            "tests/resources/dictionary.txt"
-        );
+        assert_eq!(opt.sentence_cap_file.unwrap(), "Cargo.toml");
     }
 
     #[test]
