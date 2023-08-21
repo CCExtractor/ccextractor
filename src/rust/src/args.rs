@@ -123,7 +123,7 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub stdin: bool,
     #[arg(long, value_name="x", help_heading=OUTPUT_FILE_SEGMENTATION)]
-    pub outinterval: Option<u32>,
+    pub outinterval: Option<i32>,
     /// When segmenting files, do it only after a I frame
     /// trying to behave like FFmpeg
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_FILE_SEGMENTATION)]
@@ -622,7 +622,7 @@ pub struct Args {
     /// appear 400ms late. You can also use negative numbers
     /// to make subs appear early.
     #[arg(long, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
-    pub delay: Option<i32>,
+    pub delay: Option<i64>,
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.

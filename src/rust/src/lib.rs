@@ -26,17 +26,22 @@ pub mod utils;
 use std::os::windows::io::{FromRawHandle, RawHandle};
 use std::{io::Write, os::raw::c_int};
 
+use args::Args;
 use bindings::*;
+use clap::Parser;
+use common::{CcxOptions, CcxTeletextConfig};
 use decoder::Dtvcc;
 use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
+use std::ffi::CStr;
 
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+    static mut tlt_config: ccx_s_teletext_config;
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -173,4 +178,32 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
         // File will close automatically (due to Drop) once it goes out of scope
         let _file = File::from_raw_handle(handle);
     }
+}
+
+/// Parse parameters from argv and argc
+#[no_mangle]
+pub extern "C" fn ccxr_parse_parameters(
+    options: *mut ccx_s_options,
+    argc: c_int,
+    argv: *mut *mut *const i8,
+) -> c_int {
+    // Convert argv to Vec<String> and pass it to parse_parameters
+    let args: Vec<String> = argv
+        .as_ref()
+        .map(|x| {
+            (0..argc)
+                .map(|i| unsafe { CStr::from_ptr(*x.add(i as usize)) })
+                .map(|x| x.to_string_lossy().into_owned())
+                .collect()
+        })
+        .unwrap_or_default();
+    let args: Args = Args::try_parse_from(args).unwrap(); // Handle the error here
+    let opt = CcxOptions::default();
+    let mut _tlt_config = CcxTeletextConfig::default();
+
+    opt.parse_parameters(&args, &mut _tlt_config);
+    tlt_config = _tlt_config.to_ctype();
+    // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
+    options = opt.to_ctype();
+    1
 }
