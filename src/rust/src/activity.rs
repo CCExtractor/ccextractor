@@ -3,11 +3,13 @@ use std::io::Write;
 
 use crate::common::CcxOptions;
 
-pub fn activity_report_version(ccx_options: &mut CcxOptions) {
-    if ccx_options.gui_mode_reports {
-        let mut stderr = io::stderr();
-        let version = env!("CARGO_PKG_VERSION");
-        writeln!(stderr, "###VERSION#CCExtractor#{}", version).unwrap();
-        stderr.flush().unwrap();
+impl CcxOptions {
+    pub fn activity_report_version(&mut self) {
+        if self.gui_mode_reports {
+            let mut stderr = io::stderr();
+            let version = env!("CARGO_PKG_VERSION");
+            writeln!(stderr, "###VERSION#CCExtractor#{}", version).unwrap();
+            stderr.flush().unwrap();
+        }
     }
 }
