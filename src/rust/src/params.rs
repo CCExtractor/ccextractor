@@ -1449,25 +1449,24 @@ pub mod tests {
     use crate::{args::*, enums::*, params::*, structs::*};
     use clap::Parser;
 
-    #[test]
-    fn broken_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--autoprogram",
-            "--out",
-            "srt",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
+    fn parse_args(args: &[&str]) -> (CcxSOptions, CcxSTeletextConfig) {
+        let mut common_args = vec!["./ccextractor", "input_file"];
+        common_args.extend_from_slice(args);
+        let args = Args::try_parse_from(common_args).expect("Failed to parse arguments");
+        let mut options = CcxSOptions {
             ..Default::default()
         };
         let mut tlt_config = CcxSTeletextConfig {
             ..Default::default()
         };
 
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        parse_parameters(&mut options, &args, &mut tlt_config);
+        (options, tlt_config)
+    }
+
+    #[test]
+    fn broken_1() {
+        let (opt, _) = parse_args(&["--autoprogram", "--out", "srt", "--latin1"]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.write_format, CcxOutputFormat::Srt);
@@ -1476,23 +1475,7 @@ pub mod tests {
 
     #[test]
     fn broken_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--autoprogram",
-            "--out",
-            "sami",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--autoprogram", "--out", "sami", "--latin1"]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.write_format, CcxOutputFormat::Sami);
@@ -1501,25 +1484,14 @@ pub mod tests {
 
     #[test]
     fn broken_3() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--autoprogram",
             "--out",
             "ttxt",
             "--latin1",
             "--ucla",
             "--xds",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
@@ -1530,68 +1502,25 @@ pub mod tests {
 
     #[test]
     fn broken_4() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--out",
-            "ttxt",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--out", "ttxt", "--latin1"]);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
+
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 
     #[test]
     fn broken_5() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--out", "srt", "--latin1"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--out", "srt", "--latin1"]);
         assert_eq!(opt.write_format, CcxOutputFormat::Srt);
+
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 
     #[test]
     fn cea708_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--service",
-            "1",
-            "--out",
-            "txt",
-            "--no-bom",
-            "--no-rollup",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--service", "1", "--out", "txt", "--no-bom", "--no-rollup"]);
         assert!(opt.is_708_enabled);
+
         assert!(opt.enc_cfg.no_bom);
         assert!(opt.no_rollup);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
@@ -1599,26 +1528,13 @@ pub mod tests {
 
     #[test]
     fn cea708_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--service",
             "1,2[UTF-8],3[EUC-KR],54",
             "--out",
             "txt",
             "--no-rollup",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
-        println!("{:?}", opt.enc_cfg.services_charsets);
+        ]);
 
         assert!(opt.is_708_enabled);
         assert!(opt.no_rollup);
@@ -1629,33 +1545,16 @@ pub mod tests {
 
     #[test]
     fn cea708_3() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--service",
-            "all[EUC-KR]",
-            "--no-rollup",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--service", "all[EUC-KR]", "--no-rollup"]);
         assert!(opt.is_708_enabled);
+
         assert!(opt.no_rollup);
         assert_eq!(opt.enc_cfg.all_services_charset, "EUC-KR");
     }
 
     #[test]
     fn dvb_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--autoprogram",
             "--out",
             "srt",
@@ -1663,16 +1562,7 @@ pub mod tests {
             "--teletext",
             "--datapid",
             "5603",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.demux_cfg.ts_cappids[0], 5603);
@@ -1683,73 +1573,31 @@ pub mod tests {
 
     #[test]
     fn dvb_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--stdout",
-            "--quiet",
-            "--no-fontcolor",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--stdout", "--quiet", "--no-fontcolor"]);
         assert!(opt.cc_to_stdout);
+
         assert_eq!(opt.messages_target.unwrap(), 0);
         assert_eq!(opt.nofontcolor, true);
     }
 
     #[test]
     fn dvd_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--autoprogram",
-            "--out",
-            "ttxt",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--autoprogram", "--out", "ttxt", "--latin1"]);
         assert!(opt.demux_cfg.ts_autoprogram);
+
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 
     #[test]
     fn dvr_ms_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--wtvconvertfix",
             "--autoprogram",
             "--out",
             "srt",
             "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.wtvconvertfix);
         assert!(opt.demux_cfg.ts_autoprogram);
@@ -1759,9 +1607,7 @@ pub mod tests {
 
     #[test]
     fn general_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--ucla",
             "--autoprogram",
             "--out",
@@ -1769,16 +1615,7 @@ pub mod tests {
             "--latin1",
             "--output-field",
             "field2",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.ucla);
         assert!(opt.demux_cfg.ts_autoprogram);
@@ -1790,26 +1627,9 @@ pub mod tests {
 
     #[test]
     fn general_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--autoprogram",
-            "--out",
-            "bin",
-            "--latin1",
-            "--sentencecap",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--autoprogram", "--out", "bin", "--latin1", "--sentencecap"]);
         assert!(opt.demux_cfg.ts_autoprogram);
+
         assert!(opt.enc_cfg.sentence_cap);
         assert_eq!(opt.write_format, CcxOutputFormat::Rcwt);
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
@@ -1817,25 +1637,14 @@ pub mod tests {
 
     #[test]
     fn haup_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--hauppauge",
             "--ucla",
             "--autoprogram",
             "--out",
             "ttxt",
             "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.ucla);
         assert!(opt.hauppauge_mode);
@@ -1846,52 +1655,18 @@ pub mod tests {
 
     #[test]
     fn mp4_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--input",
-            "mp4",
-            "--out",
-            "srt",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--input", "mp4", "--out", "srt", "--latin1"]);
         assert_eq!(opt.demux_cfg.auto_stream, CcxStreamMode::Mp4);
+
         assert_eq!(opt.write_format, CcxOutputFormat::Srt);
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 
     #[test]
     fn mp4_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--autoprogram",
-            "--out",
-            "srt",
-            "--bom",
-            "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--autoprogram", "--out", "srt", "--bom", "--latin1"]);
         assert!(opt.demux_cfg.ts_autoprogram);
+
         assert!(!opt.enc_cfg.no_bom);
         assert_eq!(opt.write_format, CcxOutputFormat::Srt);
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Latin1);
@@ -1899,24 +1674,13 @@ pub mod tests {
 
     #[test]
     fn nocc_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--autoprogram",
             "--out",
             "ttxt",
             "--mp4vidtrack",
             "--latin1",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert!(opt.mp4vidtrack);
@@ -1926,25 +1690,14 @@ pub mod tests {
 
     #[test]
     fn nocc_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--autoprogram",
             "--out",
             "ttxt",
             "--latin1",
             "--ucla",
             "--xds",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert!(opt.ucla);
@@ -1955,96 +1708,38 @@ pub mod tests {
 
     #[test]
     fn options_1() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--input", "ts"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--input", "ts"]);
 
         assert_eq!(opt.demux_cfg.auto_stream, CcxStreamMode::Transport);
     }
 
     #[test]
     fn options_2() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--out", "dvdraw"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--out", "dvdraw"]);
         assert_eq!(opt.write_format, CcxOutputFormat::Dvdraw);
     }
 
     #[test]
     fn options_3() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--goptime"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--goptime"]);
         assert_eq!(opt.use_gop_as_pts, 1);
     }
 
     #[test]
     fn options_4() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--no-goptime"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--no-goptime"]);
         assert_eq!(opt.use_gop_as_pts, -1);
     }
 
     #[test]
     fn options_5() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--fixpadding"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--fixpadding"]);
         assert!(opt.fix_padding);
     }
 
     #[test]
     fn options_6() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--90090"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (_, _) = parse_args(&["--90090"]);
 
         unsafe {
             assert_eq!(MPEG_CLOCK_FREQ, 90090);
@@ -2053,57 +1748,25 @@ pub mod tests {
 
     #[test]
     fn options_7() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--myth"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--myth"]);
         assert_eq!(opt.auto_myth.unwrap(), 1);
     }
 
     #[test]
     fn options_8() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--program-number", "1"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--program-number", "1"]);
         assert_eq!(opt.demux_cfg.ts_forced_program, 1);
     }
 
     #[test]
     fn options_9() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--datastreamtype",
             "2",
             "--streamtype",
             "2",
             "--no-autotimeref",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.noautotimeref);
         assert_eq!(opt.demux_cfg.ts_datastreamtype, 2);
@@ -2111,55 +1774,23 @@ pub mod tests {
     }
     #[test]
     fn options_10() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--unicode",
-            "--no-typesetting",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--unicode", "--no-typesetting"]);
         assert!(opt.notypesetting);
+
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Unicode);
     }
 
     #[test]
     fn options_11() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--utf8", "--trim"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
-
+        let (opt, _) = parse_args(&["--utf8", "--trim"]);
         assert!(opt.enc_cfg.trim_subs);
+
         assert_eq!(opt.enc_cfg.encoding, CcxEncodingType::Utf8);
     }
 
     #[test]
     fn options_12() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--capfile", "Cargo.toml"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--capfile", "Cargo.toml"]);
 
         assert!(opt.enc_cfg.sentence_cap);
         assert_eq!(opt.sentence_cap_file.unwrap(), "Cargo.toml");
@@ -2167,22 +1798,8 @@ pub mod tests {
 
     #[test]
     fn options_13() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--unixts",
-            "5",
-            "--out",
-            "txt",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--unixts", "5", "--out", "txt"]);
+
         unsafe {
             assert_eq!(UTC_REFVALUE, 5);
         }
@@ -2192,16 +1809,7 @@ pub mod tests {
 
     #[test]
     fn options_14() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--datets", "--out", "txt"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--datets", "--out", "txt"]);
 
         assert_eq!(opt.date, CcxOutputDateFormat::Date);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
@@ -2209,16 +1817,7 @@ pub mod tests {
 
     #[test]
     fn options_15() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--sects", "--out", "txt"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--sects", "--out", "txt"]);
 
         assert_eq!(opt.date, CcxOutputDateFormat::Seconds);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
@@ -2226,16 +1825,7 @@ pub mod tests {
 
     #[test]
     fn options_16() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--lf", "--out", "txt"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--lf", "--out", "txt"]);
 
         assert!(opt.enc_cfg.line_terminator_lf);
         assert_eq!(opt.write_format, CcxOutputFormat::Transcript);
@@ -2243,16 +1833,7 @@ pub mod tests {
 
     #[test]
     fn options_17() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--autodash", "--trim"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--autodash", "--trim"]);
 
         assert!(opt.enc_cfg.autodash);
         assert!(opt.enc_cfg.trim_subs);
@@ -2260,46 +1841,21 @@ pub mod tests {
 
     #[test]
     fn options_18() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--bufferinput"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--bufferinput"]);
 
         assert!(opt.buffer_input);
     }
 
     #[test]
     fn options_19() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--no-bufferinput"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--no-bufferinput"]);
 
         assert!(!opt.buffer_input);
     }
 
     #[test]
     fn options_20() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--buffersize", "1M"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--buffersize", "1M"]);
 
         unsafe {
             assert_eq!(FILEBUFFERSIZE, 1024 * 1024);
@@ -2308,361 +1864,161 @@ pub mod tests {
 
     #[test]
     fn options_21() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--dru"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--dru"]);
 
         assert_eq!(opt.settings_608.direct_rollup, 1);
     }
 
     #[test]
     fn options_22() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--no-rollup"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--no-rollup"]);
 
         assert!(opt.no_rollup);
     }
 
     #[test]
     fn options_23() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--rollup", "ru1"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--rollup", "ru1"]);
 
         assert_eq!(opt.settings_608.force_rollup, 1);
     }
 
     #[test]
     fn options_24() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--delay", "200"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--delay", "200"]);
 
         assert_eq!(opt.subs_delay, 200);
     }
 
     #[test]
     fn options_25() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--startat",
-            "4",
-            "--endat",
-            "7",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--startat", "4", "--endat", "7"]);
 
         assert_eq!(opt.extraction_start.ss, 4);
     }
 
     #[test]
     fn options_26() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--no-codec", "dvbsub"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--no-codec", "dvbsub"]);
 
         assert_eq!(opt.demux_cfg.nocodec, CcxCodeType::Dvb);
     }
 
     #[test]
     fn options_27() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--debug"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--debug"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Verbose);
     }
 
     #[test]
     fn options_28() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--608"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--608"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Decoder608);
     }
 
     #[test]
     fn options_29() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--708"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--708"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Parse);
     }
 
     #[test]
     fn options_30() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--goppts"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--goppts"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Time);
     }
 
     #[test]
     fn options_31() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--xdsdebug"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--xdsdebug"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::DecoderXds);
     }
 
     #[test]
     fn options_32() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--vides"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--vides"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Vides);
     }
 
     #[test]
     fn options_33() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--cbraw"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--cbraw"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Cbraw);
     }
 
     #[test]
     fn options_34() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--no-sync"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--no-sync"]);
 
         assert!(opt.nosync);
     }
 
     #[test]
     fn options_35() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--fullbin"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--fullbin"]);
 
         assert!(opt.fullbin);
     }
 
     #[test]
     fn options_36() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--parsedebug"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--parsedebug"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Parse);
     }
 
     #[test]
     fn options_37() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--parsePAT"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--parsePAT"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Pat);
     }
 
     #[test]
     fn options_38() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--parsePMT"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--parsePMT"]);
 
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Pmt);
     }
 
     #[test]
     fn options_39() {
-        let args: Args =
-            Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--investigate-packets"])
-                .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--investigate-packets"]);
 
         assert!(opt.investigate_packets);
     }
 
     #[test]
     fn options_40() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--mp4vidtrack"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--mp4vidtrack"]);
 
         assert!(opt.mp4vidtrack);
     }
 
     #[test]
     fn options_41() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--wtvmpeg2"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--wtvmpeg2"]);
 
         assert!(opt.wtvmpeg2);
     }
 
     #[test]
     fn options_42() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--hauppauge"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--hauppauge"]);
 
         assert!(opt.hauppauge_mode);
     }
 
     #[test]
     fn options_43() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--xmltv",
-            "1",
-            "--out",
-            "null",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--xmltv", "1", "--out", "null"]);
 
         assert_eq!(opt.xmltv.unwrap(), 1);
         assert_eq!(opt.write_format, CcxOutputFormat::Null);
@@ -2670,22 +2026,7 @@ pub mod tests {
 
     #[test]
     fn options_44() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
-            "--codec",
-            "dvbsub",
-            "--out",
-            "spupng",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, _) = parse_args(&["--codec", "dvbsub", "--out", "spupng"]);
 
         assert_eq!(opt.demux_cfg.codec, CcxCodeType::Dvb);
         assert_eq!(opt.write_format, CcxOutputFormat::Spupng);
@@ -2693,22 +2034,12 @@ pub mod tests {
 
     #[test]
     fn options_45() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--startcreditsnotbefore",
             "1",
             "--startcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.startcreditsnotbefore.ss, 1);
         assert_eq!(
@@ -2719,22 +2050,12 @@ pub mod tests {
 
     #[test]
     fn options_46() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--startcreditsnotafter",
             "2",
             "--startcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.startcreditsnotafter.ss, 2);
         assert_eq!(
@@ -2745,22 +2066,12 @@ pub mod tests {
 
     #[test]
     fn options_47() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--startcreditsforatleast",
             "1",
             "--startcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.startcreditsforatleast.ss, 1);
         assert_eq!(
@@ -2771,22 +2082,12 @@ pub mod tests {
 
     #[test]
     fn options_48() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--startcreditsforatmost",
             "2",
             "--startcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.startcreditsforatmost.ss, 2);
         assert_eq!(
@@ -2797,22 +2098,12 @@ pub mod tests {
 
     #[test]
     fn options_49() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--endcreditsforatleast",
             "3",
             "--endcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.endcreditsforatleast.ss, 3);
         assert_eq!(
@@ -2823,22 +2114,12 @@ pub mod tests {
 
     #[test]
     fn options_50() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--endcreditsforatmost",
             "2",
             "--endcreditstext",
             "CCextractor Start credit Testing",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert_eq!(opt.enc_cfg.endcreditsforatmost.ss, 2);
         assert_eq!(
@@ -2849,15 +2130,7 @@ pub mod tests {
 
     #[test]
     fn options_51() {
-        let args: Args = Args::try_parse_from(vec!["<PROGRAM NAME>", "myfile", "--tverbose"])
-            .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        let (opt, tlt_config) = parse_args(&["--tverbose"]);
 
         assert!(tlt_config.verbose);
         assert_eq!(opt.debug_mask, CcxDebugMessageTypes::Teletext);
@@ -2865,25 +2138,14 @@ pub mod tests {
 
     #[test]
     fn teletext_1() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, _) = parse_args(&[
             "--autoprogram",
             "--out",
             "srt",
             "--latin1",
             "--datapid",
             "2310",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.demux_cfg.ts_cappids[0], 2310);
@@ -2894,9 +2156,7 @@ pub mod tests {
 
     #[test]
     fn teletext_2() {
-        let args: Args = Args::try_parse_from(vec![
-            "<PROGRAM NAME>",
-            "myfile",
+        let (opt, tlt_config) = parse_args(&[
             "--autoprogram",
             "--out",
             "srt",
@@ -2904,16 +2164,7 @@ pub mod tests {
             "--teletext",
             "--tpage",
             "398",
-        ])
-        .expect("Failed to parse arguments");
-        let mut opt: CcxSOptions = CcxSOptions {
-            ..Default::default()
-        };
-        let mut tlt_config = CcxSTeletextConfig {
-            ..Default::default()
-        };
-
-        parse_parameters(&mut opt, &args, &mut tlt_config);
+        ]);
 
         assert!(opt.demux_cfg.ts_autoprogram);
         assert_eq!(opt.demux_cfg.codec, CcxCodeType::Teletext);
