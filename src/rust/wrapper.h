@@ -8,5 +8,4 @@
 #include "../lib_ccx/ccx_common_timing.h"
 #include "../lib_ccx/lib_ccx.h"
 #include "../lib_ccx/hardsubx.h"
-#include "stdint.h"
 #include "../lib_ccx/utility.h"

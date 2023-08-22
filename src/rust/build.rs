@@ -33,6 +33,10 @@ fn main() {
         "ccx_output_date_format",
         "ccx_encoding_type",
         "ccx_output_date_format",
+        "ccx_encoder_cfg",
+        "ccx_decoder_608_settings",
+        "ccx_decoder_608_report",
+        "ccx_demuxer_cfg",
         "ccx_output_format",
         "uint8_t",
     ]);

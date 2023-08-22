@@ -202,8 +202,10 @@ pub extern "C" fn ccxr_parse_parameters(
     let mut _tlt_config = CcxTeletextConfig::default();
 
     opt.parse_parameters(&args, &mut _tlt_config);
-    tlt_config = _tlt_config.to_ctype();
-    // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    options = opt.to_ctype();
+    unsafe {
+        tlt_config = _tlt_config.to_ctype();
+        // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
+        options = opt.to_ctype();
+    }
     1
 }

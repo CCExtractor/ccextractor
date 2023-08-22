@@ -882,9 +882,9 @@ pub enum Codec {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum OutputField {
-    Field1,
-    Field2,
-    Both,
+    Field1 = 1,
+    Field2 = 2,
+    Both = 12,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

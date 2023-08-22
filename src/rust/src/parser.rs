@@ -75,7 +75,7 @@ unsafe fn set_binary_mode() {
 fn to_ms(value: &str) -> CcxBoundaryTime {
     let mut parts = value.rsplit(':');
 
-    let seconds: u32 = parts
+    let seconds: i32 = parts
         .next()
         .unwrap_or_else(|| {
             println!("Malformed timecode: {}", value);
@@ -84,12 +84,12 @@ fn to_ms(value: &str) -> CcxBoundaryTime {
         .parse()
         .unwrap();
 
-    let mut minutes: u32 = 0;
+    let mut minutes: i32 = 0;
 
     if let Some(mins) = parts.next() {
         minutes = mins.parse().unwrap();
     };
-    let mut hours: u32 = 0;
+    let mut hours: i32 = 0;
 
     if let Some(hrs) = parts.next() {
         hours = hrs.parse().unwrap();
@@ -104,7 +104,7 @@ fn to_ms(value: &str) -> CcxBoundaryTime {
         hh: hours,
         mm: minutes,
         ss: seconds,
-        time_in_ms: hours + 60 * minutes + 3600 * seconds,
+        time_in_ms: (hours + 60 * minutes + 3600 * seconds) as i64,
         set: true,
     }
 }
