@@ -1,4 +1,8 @@
 pub mod args;
+#[allow(clippy::all)]
+pub mod bindings {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
 pub mod parser;
 
 pub mod activity;

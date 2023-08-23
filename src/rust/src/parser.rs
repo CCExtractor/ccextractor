@@ -368,7 +368,7 @@ impl CcxOptions {
                 self.enc_cfg.services_enabled[i] = true;
             }
 
-            self.settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES;
+            self.settings_dtvcc.active_services_count = CCX_DTVCC_MAX_SERVICES as _;
             return;
         }
 
@@ -1032,7 +1032,8 @@ impl CcxOptions {
         }
 
         if let Some(ref datapid) = args.datapid {
-            self.demux_cfg.ts_cappids[self.demux_cfg.nb_ts_cappid] = get_atoi_hex(datapid.as_str());
+            self.demux_cfg.ts_cappids[self.demux_cfg.nb_ts_cappid as usize] =
+                get_atoi_hex(datapid.as_str());
             self.demux_cfg.nb_ts_cappid += 1;
         }
 

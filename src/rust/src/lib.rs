@@ -183,29 +183,29 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// Parse parameters from argv and argc
 #[no_mangle]
 pub extern "C" fn ccxr_parse_parameters(
-    options: *mut ccx_s_options,
+    mut _options: *mut ccx_s_options,
     argc: c_int,
     argv: *mut *mut *const i8,
 ) -> c_int {
-    // Convert argv to Vec<String> and pass it to parse_parameters
-    let args: Vec<String> = argv
-        .as_ref()
-        .map(|x| {
-            (0..argc)
-                .map(|i| unsafe { CStr::from_ptr(*x.add(i as usize)) })
-                .map(|x| x.to_string_lossy().into_owned())
-                .collect()
-        })
-        .unwrap_or_default();
-    let args: Args = Args::try_parse_from(args).unwrap(); // Handle the error here
-    let opt = CcxOptions::default();
-    let mut _tlt_config = CcxTeletextConfig::default();
-
-    opt.parse_parameters(&args, &mut _tlt_config);
     unsafe {
+        // Convert argv to Vec<String> and pass it to parse_parameters
+        let args: Vec<String> = argv
+            .as_ref()
+            .map(|x| {
+                (0..argc)
+                    .map(|i| CStr::from_ptr(*x.add(i as usize)))
+                    .map(|x| x.to_string_lossy().into_owned())
+                    .collect()
+            })
+            .unwrap_or_default();
+        let args: Args = Args::try_parse_from(args).unwrap(); // Handle the error here
+        let mut opt = CcxOptions::default();
+        let mut _tlt_config = CcxTeletextConfig::default();
+
+        opt.parse_parameters(&args, &mut _tlt_config);
         tlt_config = _tlt_config.to_ctype();
         // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-        options = opt.to_ctype();
+        _options = &mut opt.to_ctype();
     }
     1
 }
