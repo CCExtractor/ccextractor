@@ -29,7 +29,7 @@ pub struct CcxTeletextConfig {
 }
 
 impl CcxTeletextConfig {
-    pub fn to_ctype(self) -> ccx_s_teletext_config {
+    pub fn to_ctype(&self) -> ccx_s_teletext_config {
         let mut config = ccx_s_teletext_config {
             _bitfield_1: Default::default(),
             _bitfield_2: Default::default(),
@@ -73,7 +73,7 @@ pub struct CcxBoundaryTime {
 }
 
 impl CcxBoundaryTime {
-    pub fn to_ctype(self) -> ccx_boundary_time {
+    pub fn to_ctype(&self) -> ccx_boundary_time {
         ccx_boundary_time {
             hh: self.hh,
             mm: self.mm,
@@ -84,14 +84,14 @@ impl CcxBoundaryTime {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct CcxDecoder608Report {
     pub xds: bool,
     pub cc_channels: [u8; 4],
 }
 
 impl CcxDecoder608Report {
-    pub fn to_ctype(self) -> ccx_decoder_608_report {
+    pub fn to_ctype(&self) -> ccx_decoder_608_report {
         let mut decoder = ccx_decoder_608_report {
             _bitfield_1: Default::default(),
             _bitfield_align_1: Default::default(),
@@ -102,7 +102,7 @@ impl CcxDecoder608Report {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct CcxDecoder608Settings {
     pub direct_rollup: i32,
     pub force_rollup: i32,
@@ -113,7 +113,7 @@ pub struct CcxDecoder608Settings {
 }
 
 impl CcxDecoder608Settings {
-    pub fn to_ctype(self) -> ccx_decoder_608_settings {
+    pub fn to_ctype(&self) -> ccx_decoder_608_settings {
         ccx_decoder_608_settings {
             direct_rollup: self.direct_rollup,
             force_rollup: self.force_rollup,
@@ -137,7 +137,7 @@ impl Default for CcxFrameType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CcxFrameType {
     ResetOrUnknown = 0,
     // IFrame = 1,
@@ -169,7 +169,7 @@ pub struct CcxCommonTimingCtx {
 }
 
 impl CcxCommonTimingCtx {
-    pub fn to_ctype(self) -> ccx_common_timing_ctx {
+    pub fn to_ctype(&self) -> ccx_common_timing_ctx {
         ccx_common_timing_ctx {
             pts_set: self.pts_set,
             min_pts_adjusted: self.min_pts_adjusted,
@@ -219,7 +219,7 @@ pub struct CcxDecoderDtvccSettings {
 }
 
 impl CcxDecoderDtvccSettings {
-    pub fn to_ctype(self) -> ccx_decoder_dtvcc_settings {
+    pub fn to_ctype(&self) -> ccx_decoder_dtvcc_settings {
         ccx_decoder_dtvcc_settings {
             enabled: self.enabled as _,
             print_file_reports: self.print_file_reports as _,
@@ -245,7 +245,7 @@ impl Default for CcxDecoderDtvccReport {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 
 pub struct CcxDecoderDtvccReport {
     pub reset_count: i32,
@@ -253,7 +253,7 @@ pub struct CcxDecoderDtvccReport {
 }
 
 impl CcxDecoderDtvccReport {
-    pub fn to_ctype(self) -> ccx_decoder_dtvcc_report {
+    pub fn to_ctype(&self) -> ccx_decoder_dtvcc_report {
         ccx_decoder_dtvcc_report {
             reset_count: self.reset_count,
             services: self.services,
@@ -274,7 +274,7 @@ pub struct CcxEncodersTranscriptFormat {
 }
 
 impl CcxEncodersTranscriptFormat {
-    fn to_ctype(self) -> ccx_encoders_transcript_format {
+    fn to_ctype(&self) -> ccx_encoders_transcript_format {
         ccx_encoders_transcript_format {
             showStartTime: self.show_start_time as _,
             showEndTime: self.show_end_time as _,
@@ -309,7 +309,7 @@ impl Default for CcxStreamMode {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum CcxStreamMode {
     ElementaryOrNotFound = 0,
     Transport = 1,
@@ -335,7 +335,7 @@ impl Default for CcxCodeType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum CcxCodeType {
     // Any = 0,
     Teletext = 1,
@@ -383,7 +383,7 @@ pub struct CcxDemuxerCfg {
 }
 
 impl CcxDemuxerCfg {
-    pub fn to_ctype(self) -> demuxer_cfg {
+    pub fn to_ctype(&self) -> demuxer_cfg {
         demuxer_cfg {
             m2ts: self.m2ts as _,
             auto_stream: self.auto_stream as _,
@@ -408,7 +408,7 @@ impl Default for CcxOutputFormat {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxOutputFormat {
     Raw = 0,
     Srt = 1,
@@ -429,9 +429,26 @@ pub enum CcxOutputFormat {
     Ccd = 16,
 }
 
-impl Into<ccx_output_format> for CcxOutputFormat {
-    fn into(self) -> ccx_output_format {
-        match self {
+impl From<CcxOutputFormat> for ccx_output_format {
+    fn from(value: CcxOutputFormat) -> ccx_output_format {
+        match value {
+            //     ccx_output_format::CCX_OF_RAW => CcxOutputFormat::Raw,
+            //     ccx_output_format::CCX_OF_SRT => CcxOutputFormat::Srt,
+            //     ccx_output_format::CCX_OF_SAMI => CcxOutputFormat::Sami,
+            //     ccx_output_format::CCX_OF_TRANSCRIPT => CcxOutputFormat::Transcript,
+            //     ccx_output_format::CCX_OF_RCWT => CcxOutputFormat::Rcwt,
+            //     ccx_output_format::CCX_OF_NULL => CcxOutputFormat::Null,
+            //     ccx_output_format::CCX_OF_SMPTETT => CcxOutputFormat::Smptett,
+            //     ccx_output_format::CCX_OF_SPUPNG => CcxOutputFormat::Spupng,
+            //     ccx_output_format::CCX_OF_DVDRAW => CcxOutputFormat::Dvdraw,
+            //     ccx_output_format::CCX_OF_WEBVTT => CcxOutputFormat::Webvtt,
+            //     // ccx_output_format::CCX_OF_SIMPLE_XML => CcxOutputFormat::SimpleXml,
+            //     ccx_output_format::CCX_OF_G608 => CcxOutputFormat::G608,
+            //     // ccx_output_format::CCX_OF_CURL => CcxOutputFormat::Curl,
+            //     ccx_output_format::CCX_OF_SSA => CcxOutputFormat::Ssa,
+            //     ccx_output_format::CCX_OF_MCC => CcxOutputFormat::Mcc,
+            //     ccx_output_format::CCX_OF_SCC => CcxOutputFormat::Scc,
+            //     ccx_output_format::CCX_OF_CCD => CcxOutputFormat::Ccd,
             CcxOutputFormat::Raw => ccx_output_format::CCX_OF_RAW,
             CcxOutputFormat::Srt => ccx_output_format::CCX_OF_SRT,
             CcxOutputFormat::Sami => ccx_output_format::CCX_OF_SAMI,
@@ -459,7 +476,7 @@ impl Default for CcxEncodingType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxEncodingType {
     Unicode = 0,
     Latin1 = 1,
@@ -573,7 +590,7 @@ pub struct CcxEncoderCfg {
 }
 
 impl CcxEncoderCfg {
-    pub fn to_ctype(self) -> encoder_cfg {
+    pub fn to_ctype(&self) -> encoder_cfg {
         encoder_cfg {
             extract: if let Some(value) = self.extract {
                 value as i32
@@ -582,7 +599,7 @@ impl CcxEncoderCfg {
             },
             dtvcc_extract: self.dtvcc_extract as _,
             gui_mode_reports: self.gui_mode_reports as _,
-            output_filename: get_raw_string(self.output_filename),
+            output_filename: get_raw_string(&self.output_filename),
             write_format: self.write_format.into(),
             keep_output_closed: self.keep_output_closed as _,
             force_flush: self.force_flush as _,
@@ -596,11 +613,11 @@ impl CcxEncoderCfg {
             sentence_cap: self.sentence_cap as _,
             splitbysentence: self.splitbysentence as _,
             #[cfg(feature = "with_libcurl")]
-            curlposturl: get_raw_string(self.curlposturl.unwrap_or_default()),
+            curlposturl: get_raw_string(&self.curlposturl.unwrap_or_default()),
             filter_profanity: self.filter_profanity as _,
             with_semaphore: self.with_semaphore as _,
-            start_credits_text: get_raw_string(self.start_credits_text),
-            end_credits_text: get_raw_string(self.end_credits_text),
+            start_credits_text: get_raw_string(&self.start_credits_text),
+            end_credits_text: get_raw_string(&self.end_credits_text),
             startcreditsnotbefore: self.startcreditsnotbefore.to_ctype(),
             startcreditsnotafter: self.startcreditsnotafter.to_ctype(),
             startcreditsforatleast: self.startcreditsforatleast.to_ctype(),
@@ -610,7 +627,7 @@ impl CcxEncoderCfg {
             transcript_settings: self.transcript_settings.to_ctype(),
             send_to_srv: self.send_to_srv as _,
             no_bom: self.no_bom as _,
-            first_input_file: get_raw_string(self.first_input_file),
+            first_input_file: get_raw_string(&self.first_input_file),
             multiple_files: self.multiple_files as _,
             no_font_color: self.no_font_color as _,
             no_type_setting: self.no_type_setting as _,
@@ -621,11 +638,11 @@ impl CcxEncoderCfg {
             in_format: self.in_format,
             nospupngocr: self.nospupngocr as _,
             force_dropframe: self.force_dropframe as _,
-            render_font: get_raw_string(self.render_font),
-            render_font_italics: get_raw_string(self.render_font_italics),
+            render_font: get_raw_string(&self.render_font),
+            render_font_italics: get_raw_string(&self.render_font_italics),
             services_enabled: self.services_enabled.map(|b| if b { 1 } else { 0 }),
-            services_charsets: get_raw_strings(self.services_charsets),
-            all_services_charset: get_raw_string(self.all_services_charset),
+            services_charsets: get_raw_strings(self.services_charsets.clone()),
+            all_services_charset: get_raw_string(&self.all_services_charset),
             extract_only_708: self.extract_only_708 as _,
         }
     }
@@ -736,20 +753,20 @@ pub struct CcxOptions {
     pub translate_key: Option<String>,
 }
 
-fn get_raw_string(str: String) -> *mut i8 {
-    CString::new(str).unwrap().into_raw()
+fn get_raw_string(str: &String) -> *mut i8 {
+    CString::new(str.clone()).unwrap().into_raw()
 }
 
 fn get_raw_strings(strs: Vec<String>) -> *mut *mut i8 {
-    (&*(strs
+    (*(strs
         .iter()
-        .map(|s| get_raw_string(s.clone()))
+        .map(|s| get_raw_string(&s.clone()))
         .collect::<Vec<_>>()))
-        .as_ptr() as *mut *mut i8
+    .as_ptr() as *mut *mut i8
 }
 
 impl CcxOptions {
-    pub fn to_ctype(self) -> ccx_s_options {
+    pub fn to_ctype(&self) -> ccx_s_options {
         ccx_s_options {
             extract: if let Some(value) = self.extract {
                 value as i32
@@ -779,9 +796,11 @@ impl CcxOptions {
             fix_padding: self.fix_padding as _,
             gui_mode_reports: self.gui_mode_reports as _,
             no_progress_bar: self.no_progress_bar as _,
-            sentence_cap_file: get_raw_string(self.sentence_cap_file.unwrap_or_default()),
+            sentence_cap_file: get_raw_string(&self.sentence_cap_file.clone().unwrap_or_default()),
             live_stream: self.live_stream.unwrap_or_default(),
-            filter_profanity_file: get_raw_string(self.filter_profanity_file.unwrap_or_default()),
+            filter_profanity_file: get_raw_string(
+                &self.filter_profanity_file.clone().unwrap_or_default(),
+            ),
             messages_target: self.messages_target.unwrap_or_default(),
             timestamp_map: self.timestamp_map as _,
             dolevdist: self.dolevdist,
@@ -808,11 +827,11 @@ impl CcxOptions {
             tickertext: self.tickertext as _,
             hardsubx: self.hardsubx as _,
             hardsubx_and_common: self.hardsubx_and_common as _,
-            dvblang: get_raw_string(self.dvblang.unwrap_or_default()),
-            ocrlang: get_raw_string(self.ocrlang.unwrap_or_default()),
+            dvblang: get_raw_string(&self.dvblang.clone().unwrap_or_default()),
+            ocrlang: get_raw_string(&self.ocrlang.clone().unwrap_or_default()),
             ocr_oem: self.ocr_oem.unwrap_or_default(),
             ocr_quantmode: self.ocr_quantmode.unwrap_or_default(),
-            mkvlang: get_raw_string(self.mkvlang.unwrap_or_default()),
+            mkvlang: get_raw_string(&self.mkvlang.clone().unwrap_or_default()),
             analyze_video_stream: self.analyze_video_stream as _,
             hardsubx_ocr_mode: self.hardsubx_ocr_mode.unwrap_or_default(),
             hardsubx_subcolor: self.hardsubx_subcolor.unwrap_or_default(),
@@ -828,18 +847,18 @@ impl CcxOptions {
             use_webvtt_styling: self.use_webvtt_styling as _,
             debug_mask: self.debug_mask as i64,
             debug_mask_on_debug: self.debug_mask_on_debug,
-            udpsrc: get_raw_string(self.udpsrc.unwrap_or_default()),
-            udpaddr: get_raw_string(self.udpaddr.unwrap_or_default()),
+            udpsrc: get_raw_string(&self.udpsrc.clone().unwrap_or_default()),
+            udpaddr: get_raw_string(&self.udpaddr.clone().unwrap_or_default()),
             udpport: self.udpport.unwrap_or_default(),
-            tcpport: get_raw_string(self.tcpport.unwrap_or_default().to_string()),
-            tcp_password: get_raw_string(self.tcp_password.unwrap_or_default()),
-            tcp_desc: get_raw_string(self.tcp_desc.unwrap_or_default()),
-            srv_addr: get_raw_string(self.srv_addr.unwrap_or_default()),
-            srv_port: get_raw_string(self.srv_port.unwrap_or_default().to_string()),
+            tcpport: get_raw_string(&self.tcpport.unwrap_or_default().to_string()),
+            tcp_password: get_raw_string(&self.tcp_password.clone().unwrap_or_default()),
+            tcp_desc: get_raw_string(&self.tcp_desc.clone().unwrap_or_default()),
+            srv_addr: get_raw_string(&self.srv_addr.clone().unwrap_or_default()),
+            srv_port: get_raw_string(&self.srv_port.unwrap_or_default().to_string()),
             noautotimeref: self.noautotimeref as _,
             input_source: self.input_source as u32,
-            output_filename: get_raw_string(self.output_filename.unwrap_or_default()),
-            inputfile: get_raw_strings(self.inputfile.unwrap_or_default()),
+            output_filename: get_raw_string(&self.output_filename.clone().unwrap_or_default()),
+            inputfile: get_raw_strings(self.inputfile.clone().unwrap_or_default()),
             num_input_files: self.num_input_files.unwrap_or_default(),
             demux_cfg: self.demux_cfg.to_ctype(),
             enc_cfg: self.enc_cfg.to_ctype(),
@@ -851,17 +870,17 @@ impl CcxOptions {
             out_interval: self.out_interval.unwrap_or_default(),
             segment_on_key_frames_only: self.segment_on_key_frames_only as _,
             #[cfg(feature = "with_libcurl")]
-            curlposturl: get_raw_string(self.curlposturl.unwrap_or_default()),
+            curlposturl: get_raw_string(&self.curlposturl.unwrap_or_default()),
             #[cfg(feature = "enable_sharing")]
             sharing_enabled: self.sharing_enabled as _,
             #[cfg(feature = "enable_sharing")]
-            sharing_url: get_raw_string(self.sharing_url.unwrap_or_default()),
+            sharing_url: get_raw_string(&self.sharing_url.unwrap_or_default()),
             #[cfg(feature = "enable_sharing")]
             translate_enabled: self.translate_enabled as _,
             #[cfg(feature = "enable_sharing")]
-            translate_langs: get_raw_string(self.translate_langs.unwrap_or_default()),
+            translate_langs: get_raw_string(&self.translate_langs.unwrap_or_default()),
             #[cfg(feature = "enable_sharing")]
-            translate_key: get_raw_string(self.translate_key.unwrap_or_default()),
+            translate_key: get_raw_string(&self.translate_key.unwrap_or_default()),
         }
     }
 }
@@ -884,7 +903,7 @@ impl Default for CcxDatasource {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CcxDatasource {
     None = -1,
     File = 0,
@@ -941,7 +960,7 @@ impl Default for CcxDecoder608ColorCode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CcxDecoder608ColorCode {
     // White = 0,
     // Green = 1,
