@@ -195,7 +195,7 @@ pub extern "C" fn ccxr_parse_parameters(
 ) -> c_int {
     unsafe {
         // Convert argv to Vec<String> and pass it to parse_parameters
-        #[allow(clippy::all)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         let args = std::slice::from_raw_parts(argv, argc as usize)
             .iter()
             .map(|&arg| {
@@ -222,7 +222,7 @@ pub extern "C" fn ccxr_parse_parameters(
                         return ExitCode::WithHelp as _;
                     }
                     ErrorKind::DisplayVersion => {
-                        #[allow(clippy::all)]
+                        #[allow(clippy::not_unsafe_ptr_arg_deref)]
                         version(*argv);
                         return ExitCode::WithHelp as _;
                     }
