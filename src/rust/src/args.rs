@@ -92,7 +92,7 @@ http://www.ccextractor.org
 pub struct Args {
     /// file(s) to process
     #[arg(value_name = "inputfile")]
-    pub inputfile: Vec<String>,
+    pub inputfile: Option<Vec<String>>,
     /// Use -o parameters to define output filename if you don't
     /// like the default ones (same as infile plus _1 or _2 when
     /// needed and file extension, e.g. .srt).

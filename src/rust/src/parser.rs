@@ -424,6 +424,14 @@ impl CcxOptions {
     }
 
     pub fn parse_parameters(&mut self, args: &Args, tlt_config: &mut CcxTeletextConfig) {
+        if let Some(ref inputfile) = args.inputfile {
+            self.inputfile = Some(inputfile.to_owned());
+            self.num_input_files = Some(inputfile.len() as _);
+        } else {
+            println!("No input file specified\n");
+            std::process::exit(ExitCode::NoInputFiles as i32);
+        }
+
         if args.stdin {
             #[cfg(feature = "windows")]
             {

@@ -965,7 +965,7 @@ pub enum ExitCode {
     MalformedParameter = 7,
     // ReadError = 8,
     // NoCaptions = 10,
-    // WithHelp = 11,
+    WithHelp = 11,
     NotClassified = 300,
     // ErrorInCapitalizationFile = 501,
     // BufferFull = 502,

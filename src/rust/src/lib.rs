@@ -37,6 +37,8 @@ use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
 use std::ffi::CStr;
 
+use crate::common::ExitCode;
+
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
@@ -191,7 +193,6 @@ pub extern "C" fn ccxr_parse_parameters(
     argc: c_int,
     argv: *mut *mut c_char,
 ) -> c_int {
-    const EXIT_WITH_HELP: i32 = 11;
     unsafe {
         // Convert argv to Vec<String> and pass it to parse_parameters
         let args = std::slice::from_raw_parts(argv, argc as usize)
@@ -203,6 +204,11 @@ pub extern "C" fn ccxr_parse_parameters(
                     .to_owned()
             })
             .collect::<Vec<String>>();
+
+        if args.len() <= 1 {
+            return ExitCode::NoInputFiles as _;
+        }
+
         let args: Args = match Args::try_parse_from(args) {
             Ok(args) => args,
             Err(e) => {
@@ -212,11 +218,11 @@ pub extern "C" fn ccxr_parse_parameters(
                     ErrorKind::DisplayHelp => {
                         // Print the help string
                         println!("{}", e);
-                        return EXIT_WITH_HELP;
+                        return ExitCode::WithHelp as _;
                     }
                     ErrorKind::DisplayVersion => {
                         version(*argv);
-                        return EXIT_WITH_HELP;
+                        return ExitCode::WithHelp as _;
                     }
                     _ => {
                         return 1;
@@ -224,6 +230,7 @@ pub extern "C" fn ccxr_parse_parameters(
                 }
             }
         };
+
         let mut opt = CcxOptions::default();
         let mut _tlt_config = CcxTeletextConfig::default();
 
