@@ -55,14 +55,9 @@ impl CcxTeletextConfig {
             millis_separator: self.millis_separator as i8,
             latrusmap: self.latrusmap as i32,
         };
-        let verbose: i32 = ::std::mem::transmute(if self.verbose { 1 } else { 0 });
-        config._bitfield_1.set(0usize, 1u8, verbose as u64);
-
-        let bom: i32 = ::std::mem::transmute(if self.bom { 1 } else { 0 });
-        config._bitfield_2.set(0usize, 1u8, bom as u64);
-
-        let nonempty: i32 = ::std::mem::transmute(if self.nonempty { 1 } else { 0 });
-        config._bitfield_2.set(1usize, 1u8, nonempty as u64);
+        config.set_verbose(if self.verbose { 1 } else { 0 });
+        config.set_bom(if self.bom { 1 } else { 0 });
+        config.set_nonempty(if self.nonempty { 1 } else { 0 });
 
         config
     }
@@ -102,8 +97,7 @@ impl CcxDecoder608Report {
             _bitfield_align_1: Default::default(),
             cc_channels: self.cc_channels,
         };
-        let xds: i32 = ::std::mem::transmute(if self.xds { 1 } else { 0 });
-        decoder._bitfield_1.set(0usize, 1u8, xds as u64);
+        decoder.set_xds(if self.xds { 1 } else { 0 });
         decoder
     }
 }
@@ -726,6 +720,85 @@ pub struct CcxOptions {
     pub translate_enabled: bool,
     pub translate_langs: Option<String>,
     pub translate_key: Option<String>,
+}
+
+impl CcxOptions {
+    pub fn to_ctype(self) -> ccx_options {
+        ccx_options {
+            extract: if let Some(value) = self.extract {
+                value as i32
+            } else {
+                0
+            },
+            no_rollup: self.no_rollup as _,
+            noscte20: self.noscte20 as _,
+            webvtt_create_css: self.webvtt_create_css as _,
+            cc_channel: self.cc_channel.unwrap_or_default(),
+            buffer_input: self.buffer_input as _,
+            nofontcolor: self.nofontcolor as _,
+            write_format: self.write_format.into(),
+            send_to_srv: self.send_to_srv as _,
+            nohtmlescape: self.nohtmlescape as _,
+            notypesetting: self.notypesetting as _,
+            extraction_start: self.extraction_start.to_ctype(),
+            extraction_end: self.extraction_end.to_ctype(),
+            print_file_reports: self.print_file_reports as _,
+            settings_608: self.settings_608.to_ctype(),
+            settings_dtvcc: self.settings_dtvcc.to_ctype(),
+            is_608_enabled: self.is_608_enabled as _,
+            is_708_enabled: self.is_708_enabled as _,
+            millis_separator: self.millis_separator as _,
+            binary_concat: self.binary_concat as _,
+            use_gop_as_pts: self.use_gop_as_pts,
+            fix_padding: self.fix_padding as _,
+            gui_mode_reports: self.gui_mode_reports as _,
+            no_progress_bar: self.no_progress_bar as _,
+            sentence_cap_file: get_raw_string(self.sentence_cap_file.unwrap_or_default()),
+            live_stream: self.live_stream.unwrap_or_default(),
+            filter_profanity_file: get_raw_string(self.filter_profanity_file.unwrap_or_default()),
+            messages_target: self.messages_target.unwrap_or_default(),
+            timestamp_map: self.timestamp_map as _,
+            dolevdist: self.dolevdist,
+            levdistmincnt: self.levdistmincnt.unwrap_or_default(),
+            levdistmaxpct: self.levdistmaxpct.unwrap_or_default(),
+            investigate_packets: self.investigate_packets as _,
+            fullbin: self.fullbin as _,
+            nosync: self.nosync as _,
+            hauppauge_mode: self.hauppauge_mode as _,
+            wtvconvertfix: self.wtvconvertfix as _,
+            wtvmpeg2: self.wtvmpeg2 as _,
+            auto_myth: self.auto_myth.unwrap_or_default() as _,
+            mp4vidtrack: self.mp4vidtrack as _,
+            extract_chapters: self.extract_chapters as _,
+            usepicorder: self.usepicorder as _,
+            xmltv: self.xmltv.unwrap_or_default() as _,
+            xmltvliveinterval: self.xmltvliveinterval.unwrap_or_default() as _,
+            xmltvoutputinterval: self.xmltvoutputinterval.unwrap_or_default() as _,
+            xmltvonlycurrent: self.xmltvonlycurrent.unwrap_or_default() as _,
+            keep_output_closed: self.keep_output_closed as _,
+            force_flush: self.force_flush as _,
+            append_mode: self.append_mode as _,
+            ucla: self.ucla as _,
+            tickertext: self.tickertext as _,
+            hardsubx: self.hardsubx as _,
+            hardsubx_and_common: self.hardsubx_and_common as _,
+            dvblang: get_raw_string(self.dvblang.unwrap_or_default()),
+            ocrlang: get_raw_string(self.ocrlang.unwrap_or_default()),
+            ocr_oem: self.ocr_oem.unwrap_or_default(),
+            ocr_quantmode: self.ocr_quantmode.unwrap_or_default(),
+            mkvlang: get_raw_string(self.mkvlang.unwrap_or_default()),
+            analyze_video_stream: self.analyze_video_stream as _,
+            hardsubx_ocr_mode: self.hardsubx_ocr_mode.unwrap_or_default(),
+            hardsubx_subcolor: self.hardsubx_subcolor.unwrap_or_default(),
+            hardsubx_min_sub_duration: self.hardsubx_min_sub_duration.unwrap_or_default(),
+            hardsubx_detect_italics: self.hardsubx_detect_italics as _,
+            hardsubx_conf_thresh: self.hardsubx_conf_thresh.unwrap_or_default(),
+            hardsubx_hue: self.hardsubx_hue.unwrap_or_default(),
+            hardsubx_lum_thresh: self.hardsubx_lum_thresh.unwrap_or_default(),
+            transcript_settings: self.transcript_settings.to_ctype(),
+            date: self.date as _,
+        }
+    }
 }
 
 fn get_raw_string(str: String) -> *mut i8 {
