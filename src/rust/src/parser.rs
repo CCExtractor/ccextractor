@@ -1314,7 +1314,7 @@ impl CcxOptions {
         tlt_config.levdistmaxpct = self.levdistmaxpct.unwrap_or(0);
         tlt_config.extraction_start = self.extraction_start.clone();
         tlt_config.extraction_end = self.extraction_end.clone();
-        tlt_config.write_format = self.write_format.clone();
+        tlt_config.write_format = self.write_format;
         tlt_config.gui_mode_reports = self.gui_mode_reports;
         tlt_config.date_format = self.date;
         tlt_config.noautotimeref = self.noautotimeref;
@@ -1411,7 +1411,7 @@ impl CcxOptions {
             self.enc_cfg.first_input_file = self.inputfile.as_ref().unwrap()[0].to_string();
         }
         self.enc_cfg.cc_to_stdout = self.cc_to_stdout;
-        self.enc_cfg.write_format = self.write_format.clone();
+        self.enc_cfg.write_format = self.write_format;
         self.enc_cfg.send_to_srv = self.send_to_srv;
         self.enc_cfg.date_format = self.date;
         self.enc_cfg.transcript_settings = self.transcript_settings.clone();

@@ -753,7 +753,7 @@ pub struct CcxOptions {
     pub translate_key: Option<String>,
 }
 
-fn get_raw_string(str: &String) -> *mut i8 {
+fn get_raw_string(str: &str) -> *mut i8 {
     CString::new(str.clone()).unwrap().into_raw()
 }
 
