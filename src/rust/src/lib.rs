@@ -24,11 +24,11 @@ pub mod utils;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
-use std::{io::Write, os::raw::c_int};
+use std::{io::Write, os::raw::c_char, os::raw::c_int};
 
 use args::Args;
 use bindings::*;
-use clap::Parser;
+use clap::{error::ErrorKind, Parser};
 use common::{CcxOptions, CcxTeletextConfig};
 use decoder::Dtvcc;
 use utils::is_true;
@@ -180,25 +180,50 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     }
 }
 
+extern "C" {
+    fn version(location: *const c_char);
+}
+
 /// Parse parameters from argv and argc
 #[no_mangle]
 pub extern "C" fn ccxr_parse_parameters(
     mut _options: *mut ccx_s_options,
     argc: c_int,
-    argv: *mut *mut *const i8,
+    argv: *mut *mut c_char,
 ) -> c_int {
+    const EXIT_WITH_HELP: i32 = 11;
     unsafe {
         // Convert argv to Vec<String> and pass it to parse_parameters
-        let args: Vec<String> = argv
-            .as_ref()
-            .map(|x| {
-                (0..argc)
-                    .map(|i| CStr::from_ptr(*x.add(i as usize)))
-                    .map(|x| x.to_string_lossy().into_owned())
-                    .collect()
+        let args = std::slice::from_raw_parts(argv, argc as usize)
+            .iter()
+            .map(|&arg| {
+                CStr::from_ptr(arg)
+                    .to_str()
+                    .expect("Invalid UTF-8 sequence in argument")
+                    .to_owned()
             })
-            .unwrap_or_default();
-        let args: Args = Args::try_parse_from(args).unwrap(); // Handle the error here
+            .collect::<Vec<String>>();
+        let args: Args = match Args::try_parse_from(args) {
+            Ok(args) => args,
+            Err(e) => {
+                // Not all errors are actual errors, some are just help or version
+                // So handle them accordingly
+                match e.kind() {
+                    ErrorKind::DisplayHelp => {
+                        // Print the help string
+                        println!("{}", e);
+                        return EXIT_WITH_HELP;
+                    }
+                    ErrorKind::DisplayVersion => {
+                        version(*argv);
+                        return EXIT_WITH_HELP;
+                    }
+                    _ => {
+                        return 1;
+                    }
+                }
+            }
+        };
         let mut opt = CcxOptions::default();
         let mut _tlt_config = CcxTeletextConfig::default();
 
@@ -207,5 +232,5 @@ pub extern "C" fn ccxr_parse_parameters(
         // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
         _options = &mut opt.to_ctype();
     }
-    1
+    0
 }

@@ -1445,8 +1445,6 @@ impl CcxOptions {
         {
             self.enc_cfg.curlposturl = self.curlposturl.clone();
         }
-
-        println!("Issues? Open a ticket here\n https://github.com/CCExtractor/ccextractor/issues");
     }
 }
 #[cfg(test)]

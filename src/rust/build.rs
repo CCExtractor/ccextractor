@@ -9,6 +9,7 @@ fn main() {
         "get_fts",
         "printdata",
         "writercwtdata",
+        "version",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]

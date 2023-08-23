@@ -28,6 +28,7 @@ num-integer = "0.1.45"
 num-traits = "0.2.16"
 winapi = "0.3.9"
 cfg-if = "1.0.0"
+sha2 = "0.10.7"
 
 [build-dependencies]
 bindgen = "0.58.1"
