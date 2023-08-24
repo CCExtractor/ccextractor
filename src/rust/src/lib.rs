@@ -193,10 +193,9 @@ pub extern "C" fn ccxr_parse_parameters(
     argc: c_int,
     argv: *mut *mut c_char,
 ) -> c_int {
-    unsafe {
-        // Convert argv to Vec<String> and pass it to parse_parameters
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
-        let args = std::slice::from_raw_parts(argv, argc as usize)
+    // Convert argv to Vec<String> and pass it to parse_parameters
+    let args = unsafe {
+        std::slice::from_raw_parts(argv, argc as usize)
             .iter()
             .map(|&arg| {
                 CStr::from_ptr(arg)
@@ -204,42 +203,45 @@ pub extern "C" fn ccxr_parse_parameters(
                     .expect("Invalid UTF-8 sequence in argument")
                     .to_owned()
             })
-            .collect::<Vec<String>>();
+            .collect::<Vec<String>>()
+    };
 
-        if args.len() <= 1 {
-            return ExitCode::NoInputFiles as _;
-        }
+    if args.len() <= 1 {
+        return ExitCode::NoInputFiles as _;
+    }
 
-        let args: Args = match Args::try_parse_from(args) {
-            Ok(args) => args,
-            Err(e) => {
-                // Not all errors are actual errors, some are just help or version
-                // So handle them accordingly
-                match e.kind() {
-                    ErrorKind::DisplayHelp => {
-                        // Print the help string
-                        println!("{}", e);
-                        return ExitCode::WithHelp as _;
-                    }
-                    ErrorKind::DisplayVersion => {
-                        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    let args: Args = match Args::try_parse_from(args) {
+        Ok(args) => args,
+        Err(e) => {
+            // Not all errors are actual errors, some are just help or version
+            // So handle them accordingly
+            match e.kind() {
+                ErrorKind::DisplayHelp => {
+                    // Print the help string
+                    println!("{}", e);
+                    return ExitCode::WithHelp as _;
+                }
+                ErrorKind::DisplayVersion => {
+                    unsafe {
                         version(*argv);
-                        return ExitCode::WithHelp as _;
                     }
-                    _ => {
-                        return 1;
-                    }
+                    return ExitCode::WithHelp as _;
+                }
+                _ => {
+                    return 1;
                 }
             }
-        };
+        }
+    };
 
-        let mut opt = CcxOptions::default();
-        let mut _tlt_config = CcxTeletextConfig::default();
+    let mut opt = CcxOptions::default();
+    let mut _tlt_config = CcxTeletextConfig::default();
 
-        opt.parse_parameters(&args, &mut _tlt_config);
+    opt.parse_parameters(&args, &mut _tlt_config);
+    unsafe {
         tlt_config = _tlt_config.to_ctype();
-        // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-        _options = &mut opt.to_ctype();
     }
+    // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
+    _options = &mut opt.to_ctype();
     0
 }
