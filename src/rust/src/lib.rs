@@ -188,23 +188,21 @@ extern "C" {
 
 /// Parse parameters from argv and argc
 #[no_mangle]
-pub extern "C" fn ccxr_parse_parameters(
+pub unsafe extern "C" fn ccxr_parse_parameters(
     mut _options: *mut ccx_s_options,
     argc: c_int,
     argv: *mut *mut c_char,
 ) -> c_int {
     // Convert argv to Vec<String> and pass it to parse_parameters
-    let args = unsafe {
-        std::slice::from_raw_parts(argv, argc as usize)
-            .iter()
-            .map(|&arg| {
-                CStr::from_ptr(arg)
-                    .to_str()
-                    .expect("Invalid UTF-8 sequence in argument")
-                    .to_owned()
-            })
-            .collect::<Vec<String>>()
-    };
+    let args = std::slice::from_raw_parts(argv, argc as usize)
+        .iter()
+        .map(|&arg| {
+            CStr::from_ptr(arg)
+                .to_str()
+                .expect("Invalid UTF-8 sequence in argument")
+                .to_owned()
+        })
+        .collect::<Vec<String>>();
 
     if args.len() <= 1 {
         return ExitCode::NoInputFiles as _;
@@ -222,9 +220,7 @@ pub extern "C" fn ccxr_parse_parameters(
                     return ExitCode::WithHelp as _;
                 }
                 ErrorKind::DisplayVersion => {
-                    unsafe {
-                        version(*argv);
-                    }
+                    version(*argv);
                     return ExitCode::WithHelp as _;
                 }
                 _ => {
@@ -238,9 +234,7 @@ pub extern "C" fn ccxr_parse_parameters(
     let mut _tlt_config = CcxTeletextConfig::default();
 
     opt.parse_parameters(&args, &mut _tlt_config);
-    unsafe {
-        tlt_config = _tlt_config.to_ctype();
-    }
+    tlt_config = _tlt_config.to_ctype();
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
     _options = &mut opt.to_ctype();
     0
