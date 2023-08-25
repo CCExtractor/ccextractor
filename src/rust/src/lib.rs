@@ -186,6 +186,7 @@ extern "C" {
     fn version(location: *const c_char);
 }
 /// # Safety
+/// Safe if argv is a valid pointer
 ///
 /// Parse parameters from argv and argc
 #[no_mangle]
