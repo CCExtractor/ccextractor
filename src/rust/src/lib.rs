@@ -184,6 +184,8 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 
 extern "C" {
     fn version(location: *const c_char);
+    #[cfg(windows)]
+    fn set_binary_mode();
 }
 /// # Safety
 /// Safe if argv is a valid pointer

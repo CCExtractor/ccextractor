@@ -10,6 +10,7 @@ fn main() {
         "printdata",
         "writercwtdata",
         "version",
+        "set_binary_mode",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]

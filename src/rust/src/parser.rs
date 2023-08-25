@@ -10,16 +10,6 @@ use cfg_if::cfg_if;
 use common::CcxOptions;
 use time::OffsetDateTime;
 
-cfg_if! {
-    if #[cfg(windows)] {
-        use std::os::windows::io::{AsRawHandle, FromRawHandle};
-        use winapi::um::ioapiset::SetFileCompletionNotificationModes;
-        use winapi::um::winbase::FILE_FLAG_OVERLAPPED;
-        use winapi::um::winbase::{FILE_SKIP_COMPLETION_PORT_ON_SUCCESS, FILE_SKIP_SET_EVENT_ON_HANDLE};
-        use winapi::um::winnt::{FILE_READ_ATTRIBUTES, FILE_SHARE_DELETE, FILE_SHARE_WRITE};
-        use winapi::um::winnt::{FILE_SHARE_READ, GENERIC_READ, HANDLE};
-    }
-}
 use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
@@ -32,7 +22,7 @@ use crate::{
 };
 
 cfg_if! {
-    if #[cfg(target_os = "windows")] {
+    if #[cfg(windows)] {
         const DEFAULT_FONT_PATH: &str = "C:\\\\Windows\\\\Fonts\\\\calibri.ttf";
         const DEFAULT_FONT_PATH_ITALICS: &str = "C:\\\\Windows\\\\Fonts\\\\calibrii.ttf";
     } else if #[cfg(target_os = "macos")] {
@@ -49,28 +39,6 @@ pub static mut MPEG_CLOCK_FREQ: i64 = 0;
 static mut USERCOLOR_RGB: String = String::new();
 pub static mut UTC_REFVALUE: u64 = 0;
 const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
-
-#[cfg(windows)]
-unsafe fn set_binary_mode() {
-    let stdin_handle: HANDLE = libc::get_osfhandle(libc::STDIN_FILENO);
-
-    SetFileCompletionNotificationModes(
-        stdin_handle,
-        FILE_SKIP_COMPLETION_PORT_ON_SUCCESS | FILE_SKIP_SET_EVENT_ON_HANDLE,
-    );
-
-    let mut flags: u32 = 0;
-    let handle = libc::get_osfhandle(0);
-    flags |= FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-    let access_mode = GENERIC_READ;
-    if access_mode != FILE_READ_ATTRIBUTES {
-        flags |= FILE_FLAG_OVERLAPPED;
-    }
-    SetFileCompletionNotificationModes(
-        handle as HANDLE,
-        FILE_SKIP_COMPLETION_PORT_ON_SUCCESS | FILE_SKIP_SET_EVENT_ON_HANDLE,
-    );
-}
 
 fn to_ms(value: &str) -> CcxBoundaryTime {
     let mut parts = value.rsplit(':');
@@ -433,8 +401,9 @@ impl CcxOptions {
         }
 
         if args.stdin {
-            #[cfg(feature = "windows")]
-            {
+            #[cfg(windows)]
+            unsafe {
+                use crate::set_binary_mode;
                 set_binary_mode();
             }
 
