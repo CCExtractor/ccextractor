@@ -186,6 +186,7 @@ dependencies = [
  "env_logger",
  "iconv",
  "leptonica-sys",
+ "libc",
  "log",
  "num-integer",
  "num-traits",
