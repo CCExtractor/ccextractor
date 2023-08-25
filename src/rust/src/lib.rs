@@ -185,7 +185,8 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 extern "C" {
     fn version(location: *const c_char);
 }
-
+/// # Safety
+///
 /// Parse parameters from argv and argc
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_parameters(
