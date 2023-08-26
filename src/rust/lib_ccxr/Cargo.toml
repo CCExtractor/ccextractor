@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bitflags = "2.3.1"
 
 [features]
 default = ["enable_sharing", "wtv_debug", "enable_ffmpeg", "debug", "with_libcurl"]
