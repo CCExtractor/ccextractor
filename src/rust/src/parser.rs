@@ -20,7 +20,7 @@ use crate::{
     common::CcxDebugMessageTypes,
     common::*,
 };
-use crate::{cb_708, common, MPEG_CLOCK_FREQ};
+use crate::{common, MPEG_CLOCK_FREQ};
 
 cfg_if! {
     if #[cfg(windows)] {
