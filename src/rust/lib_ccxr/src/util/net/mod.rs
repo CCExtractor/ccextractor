@@ -15,6 +15,8 @@ mod common;
 mod source;
 mod target;
 
+pub mod c_functions;
+
 pub use common::*;
 pub use source::*;
 pub use target::*;

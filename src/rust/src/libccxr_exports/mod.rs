@@ -6,8 +6,10 @@ use lib_ccxr::util::log::*;
 use std::convert::TryInto;
 use std::os::raw::{c_char, c_int, c_uint};
 
+mod net;
 mod time;
 
+pub use net::*;
 pub use time::*;
 
 /// Initializes the logger at the rust side.
