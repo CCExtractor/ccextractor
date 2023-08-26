@@ -43,6 +43,7 @@ extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+    static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
 }
 
@@ -184,8 +185,6 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 
 extern "C" {
     fn version(location: *const c_char);
-    #[cfg(windows)]
-    fn set_binary_mode();
 }
 /// # Safety
 /// Safe if argv is a valid pointer

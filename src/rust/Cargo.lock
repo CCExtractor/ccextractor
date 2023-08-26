@@ -177,6 +177,7 @@ dependencies = [
  "env_logger",
  "iconv",
  "leptonica-sys",
+ "libc",
  "log",
  "num-integer",
  "palette",
@@ -185,6 +186,7 @@ dependencies = [
  "strum_macros",
  "tesseract-sys",
  "time",
+ "winapi",
 ]
 
 [[package]]

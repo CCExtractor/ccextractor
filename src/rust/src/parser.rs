@@ -14,12 +14,13 @@ use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
-use crate::common;
+use crate::common::ffi::set_mode;
 use crate::{
     args::{Codec, Ru},
     common::CcxDebugMessageTypes,
     common::*,
 };
+use crate::{cb_708, common, MPEG_CLOCK_FREQ};
 
 cfg_if! {
     if #[cfg(windows)] {
@@ -35,7 +36,6 @@ cfg_if! {
 }
 
 pub static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
-pub static mut MPEG_CLOCK_FREQ: i64 = 0;
 static mut USERCOLOR_RGB: String = String::new();
 pub static mut UTC_REFVALUE: u64 = 0;
 const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
@@ -401,12 +401,7 @@ impl CcxOptions {
         }
 
         if args.stdin {
-            #[cfg(windows)]
-            unsafe {
-                use crate::set_binary_mode;
-                set_binary_mode();
-            }
-
+            let _ = set_mode();
             self.input_source = CcxDatasource::Stdin;
             self.live_stream = Some(-1);
         }
@@ -1724,7 +1719,7 @@ pub mod tests {
         let (_, _) = parse_args(&["--90090"]);
 
         unsafe {
-            assert_eq!(MPEG_CLOCK_FREQ, 90090);
+            assert_eq!(MPEG_CLOCK_FREQ as i64, 90090);
         }
     }
 

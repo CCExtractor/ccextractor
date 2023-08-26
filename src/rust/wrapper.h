@@ -1,5 +1,6 @@
 #include "../lib_ccx/ccx_common_option.h"
 #include "../lib_ccx/ccx_common_constants.h"
+#include "../lib_ccx/ccx_common_timing.h"
 #include "../lib_ccx/ccx_decoders_708.h"
 #include "../lib_ccx/ccx_decoders_common.h"
 #include "../lib_ccx/ccx_dtvcc.h"
