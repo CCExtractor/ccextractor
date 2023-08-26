@@ -13,5 +13,7 @@
 mod timing;
 mod units;
 
+pub mod c_functions;
+
 pub use timing::*;
 pub use units::*;

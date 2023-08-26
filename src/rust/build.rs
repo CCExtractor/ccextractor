@@ -26,6 +26,9 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
+        "ccx_boundary_time",
+        "gop_time_code",
+        "ccx_common_timing_settings_t",
         "ccx_s_options",
     ]);
 
@@ -72,4 +75,9 @@ fn main() {
         .expect("Couldn't write bindings!");
 }
 
-const RUSTIFIED_ENUMS: &[&str] = &["dtvcc_(window|pen)_.*", "ccx_output_format"];
+const RUSTIFIED_ENUMS: &[&str] = &[
+    "dtvcc_(window|pen)_.*",
+    "ccx_output_format",
+    "ccx_output_date_format",
+    "ccx_frame_type",
+];

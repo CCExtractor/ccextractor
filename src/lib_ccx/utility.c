@@ -11,6 +11,10 @@ volatile sig_atomic_t change_filename_requested = 0;
 
 #ifndef DISABLE_RUST
 extern int ccxr_verify_crc32(uint8_t *buf, int len);
+extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
+extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
+extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
 extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
 #endif
@@ -96,6 +100,10 @@ int verify_crc32(uint8_t *buf, int len)
 
 int stringztoms(const char *s, struct ccx_boundary_time *bt)
 {
+#ifndef DISABLE_RUST
+	return ccxr_stringztoms(s, bt);
+#endif
+
 	unsigned ss = 0, mm = 0, hh = 0;
 	int value = -1;
 	int colons = 0;
@@ -140,6 +148,10 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt)
 }
 void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_srttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -149,6 +161,10 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 }
 void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_vtttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -211,6 +227,20 @@ int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsign
 
 void millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
+#ifndef DISABLE_RUST
+	switch (date_format)
+	{
+		case ODF_NONE:
+		case ODF_HHMMSS:
+		case ODF_HHMMSSMS:
+		case ODF_SECONDS:
+		case ODF_DATE:
+			return ccxr_millis_to_date(timestamp, buffer, date_format, millis_separator);
+		default:
+			fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid value for date_format in millis_to_date()\n");
+	}
+#endif
+
 	time_t secs;
 	unsigned int millis;
 	char c_temp[80];
