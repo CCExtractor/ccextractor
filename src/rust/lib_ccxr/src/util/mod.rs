@@ -4,6 +4,7 @@ mod bits;
 pub mod encoding;
 mod levenshtein;
 pub mod log;
+pub mod time;
 
 pub use bits::*;
 pub use levenshtein::*;
