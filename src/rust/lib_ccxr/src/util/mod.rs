@@ -7,5 +7,7 @@ pub mod log;
 pub mod net;
 pub mod time;
 
+pub mod c_functions;
+
 pub use bits::*;
 pub use levenshtein::*;
