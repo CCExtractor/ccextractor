@@ -15,14 +15,15 @@ log = "0.4.0"
 env_logger = "0.8.4"
 iconv = "0.1.1"
 palette = "0.6.0"
-rsmpeg = { version = "0.14.2", optional = true, features = [
+rsmpeg = { version = "0.14.1", optional = true, features = [
   "link_system_ffmpeg",
 ] }
 tesseract-sys = { version = "0.5.14", optional = true, default-features = false }
 leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
+lib_ccxr = { path = "lib_ccxr" }
 
 [build-dependencies]
-bindgen = "0.64.0"
+bindgen = "0.65.3"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
