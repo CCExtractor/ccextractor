@@ -15,6 +15,7 @@ pub mod bindings {
 pub mod decoder;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
+pub mod libccxr_exports;
 pub mod utils;
 
 #[cfg(windows)]
@@ -32,6 +33,7 @@ extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+    static mut ccx_options: ccx_s_options;
 }
 
 /// Initialize env logger with custom format, using stdout as target
