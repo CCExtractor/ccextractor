@@ -15,6 +15,7 @@ pub mod bindings {
 pub mod decoder;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
+pub mod libccxr_exports;
 pub mod utils;
 
 #[cfg(windows)]
