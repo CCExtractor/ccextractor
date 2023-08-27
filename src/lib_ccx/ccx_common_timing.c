@@ -30,6 +30,18 @@ int gop_rollover = 0;
 
 struct ccx_common_timing_settings_t ccx_common_timing_settings;
 
+#ifndef DISABLE_RUST
+void ccxr_add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
+void ccxr_set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
+int ccxr_set_fts(struct ccx_common_timing_ctx *ctx);
+LLONG ccxr_get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
+LLONG ccxr_get_fts_max(struct ccx_common_timing_ctx *ctx);
+char *ccxr_print_mstime_static(LLONG mstime, char *buf);
+void ccxr_print_debug_timing(struct ccx_common_timing_ctx *ctx);
+void ccxr_calculate_ms_gop_time(struct gop_time_code *g);
+int ccxr_gop_accepted(struct gop_time_code *g);
+#endif
+
 void ccx_common_timing_init(LLONG *file_position, int no_sync)
 {
 	ccx_common_timing_settings.disable_sync_check = 0;
@@ -73,11 +85,19 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 
 void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 {
+#ifndef DISABLE_RUST
+	return ccxr_add_current_pts(ctx, pts);
+#endif
+
 	set_current_pts(ctx, ctx->current_pts + pts);
 }
 
 void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 {
+#ifndef DISABLE_RUST
+	return ccxr_set_current_pts(ctx, pts);
+#endif
+
 	LLONG prev_pts = ctx->current_pts;
 	ctx->current_pts = pts;
 	if (ctx->pts_set == 0)
@@ -95,6 +115,10 @@ void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts)
 
 int set_fts(struct ccx_common_timing_ctx *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_set_fts(ctx);
+#endif
+
 	int pts_jump = 0;
 
 	// ES don't have PTS unless GOP timing is used
@@ -266,6 +290,10 @@ int set_fts(struct ccx_common_timing_ctx *ctx)
 
 LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 {
+#ifndef DISABLE_RUST
+	return ccxr_get_fts(ctx, current_field);
+#endif
+
 	LLONG fts;
 
 	switch (current_field)
@@ -290,6 +318,10 @@ LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_get_fts_max(ctx);
+#endif
+
 	// This returns the maximum FTS that belonged to a frame.  Caption block
 	// counters are not applicable.
 	return ctx->fts_max + ctx->fts_global;
@@ -322,6 +354,10 @@ size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf)
 char *print_mstime_static(LLONG mstime)
 {
 	static char buf[15]; // 14 should be long enough
+#ifndef DISABLE_RUST
+	return ccxr_print_mstime_static(mstime, buf);
+#endif
+
 	print_mstime_buff(mstime, "%02u:%02u:%02u:%03u", buf);
 	return buf;
 }
@@ -329,6 +365,10 @@ char *print_mstime_static(LLONG mstime)
 /* Helper function for to display debug timing info. */
 void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_print_debug_timing(ctx);
+#endif
+
 	// Avoid wrong "Calc. difference" and "Asynchronous by" numbers
 	// for uninitialized min_pts
 	LLONG tempmin_pts = (ctx->min_pts == 0x01FFFFFFFFLL ? ctx->sync_pts : ctx->min_pts);
@@ -355,6 +395,10 @@ void print_debug_timing(struct ccx_common_timing_ctx *ctx)
 
 void calculate_ms_gop_time(struct gop_time_code *g)
 {
+#ifndef DISABLE_RUST
+	return ccxr_calculate_ms_gop_time(g);
+#endif
+
 	int seconds = (g->time_code_hours * 3600) + (g->time_code_minutes * 60) + g->time_code_seconds;
 	g->ms = (LLONG)(1000 * (seconds + g->time_code_pictures / current_fps));
 	if (gop_rollover)
@@ -363,6 +407,10 @@ void calculate_ms_gop_time(struct gop_time_code *g)
 
 int gop_accepted(struct gop_time_code *g)
 {
+#ifndef DISABLE_RUST
+	return ccxr_gop_accepted(g);
+#endif
+
 	if (!((g->time_code_hours <= 23) && (g->time_code_minutes <= 59) && (g->time_code_seconds <= 59) && (g->time_code_pictures <= 59)))
 		return 0;
 

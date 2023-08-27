@@ -28,6 +28,7 @@ fn main() {
         "ccx_output_format",
         "ccx_boundary_time",
         "gop_time_code",
+        "ccx_common_timing_settings_t",
         "ccx_s_options",
     ]);
 
@@ -78,4 +79,5 @@ const RUSTIFIED_ENUMS: &[&str] = &[
     "dtvcc_(window|pen)_.*",
     "ccx_output_format",
     "ccx_output_date_format",
+    "ccx_frame_type",
 ];

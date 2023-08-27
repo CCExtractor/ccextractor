@@ -20,7 +20,10 @@ pub mod utils;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
-use std::{io::Write, os::raw::c_int};
+use std::{
+    io::Write,
+    os::raw::{c_double, c_int, c_long, c_uint},
+};
 
 use bindings::*;
 use decoder::Dtvcc;
@@ -33,6 +36,15 @@ extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+    static mut pts_big_change: c_uint;
+    static mut current_fps: c_double;
+    static mut frames_since_ref_time: c_int;
+    static mut total_frames_count: c_uint;
+    static mut gop_time: gop_time_code;
+    static mut first_gop_time: gop_time_code;
+    static mut fts_at_gop_start: c_long;
+    static mut gop_rollover: c_int;
+    static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
     static mut ccx_options: ccx_s_options;
 }
 
