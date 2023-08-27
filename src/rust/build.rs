@@ -28,6 +28,7 @@ fn main() {
         "ccx_output_format",
         "ccx_boundary_time",
         "gop_time_code",
+        "ccx_s_options",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
