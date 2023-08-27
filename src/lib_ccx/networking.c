@@ -36,6 +36,24 @@
 #define NO_RESPONCE_INTERVAL 20
 #define PING_INTERVAL 3
 
+#ifndef DISABLE_RUST
+extern void ccxr_connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd);
+extern void ccxr_net_send_header(const unsigned char *data, size_t len);
+extern int ccxr_net_send_cc(const unsigned char *data, int length, void *private_data, struct cc_subtitle *sub);
+extern void ccxr_net_check_conn();
+extern void ccxr_net_send_epg(
+    const char *start,
+    const char *stop,
+    const char *title,
+    const char *desc,
+    const char *lang,
+    const char *category);
+extern int ccxr_net_tcp_read(int socket, void *buffer, size_t length);
+extern int ccxr_net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str);
+extern int ccxr_start_tcp_srv(const char *port, const char *pwd);
+extern int ccxr_start_udp_srv(const char *src, const char *addr, unsigned port);
+#endif
+
 int srv_sd = -1; /* Server socket descriptor */
 
 const char *srv_addr;
@@ -84,6 +102,10 @@ int set_nonblocking(int fd);
 
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
+#ifndef DISABLE_RUST
+	return ccxr_connect_to_srv(addr, port, cc_desc, pwd);
+#endif
+
 	if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
@@ -115,6 +137,10 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 
 void net_send_header(const unsigned char *data, size_t len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_send_header(data, len);
+#endif
+
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
@@ -141,6 +167,10 @@ void net_send_header(const unsigned char *data, size_t len)
 
 int net_send_cc(const unsigned char *data, int len, void *private_data, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_send_cc(data, len, private_data, sub);
+#endif
+
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
@@ -160,6 +190,10 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 
 void net_check_conn()
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_check_conn();
+#endif
+
 	time_t now;
 	static time_t last_ping = 0;
 	char c = 0;
@@ -221,6 +255,10 @@ void net_send_epg(
     const char *lang,
     const char *category)
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_send_epg(start, stop, title, desc, lang, category);
+#endif
+
 	size_t st;
 	size_t sp;
 	size_t t;
@@ -301,6 +339,10 @@ void net_send_epg(
 
 int net_tcp_read(int socket, void *buffer, size_t length)
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_tcp_read(socket, buffer, length);
+#endif
+
 	assert(buffer != NULL);
 	assert(length > 0);
 
@@ -333,6 +375,10 @@ int net_tcp_read(int socket, void *buffer, size_t length)
 
 int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str)
 {
+#ifndef DISABLE_RUST
+	return ccxr_net_udp_read(socket, buffer, length, src_str, addr_str);
+#endif
+
 	assert(buffer != NULL);
 	assert(length > 0);
 
@@ -519,6 +565,10 @@ int tcp_connect(const char *host, const char *port)
 
 int start_tcp_srv(const char *port, const char *pwd)
 {
+#ifndef DISABLE_RUST
+	return ccxr_start_tcp_srv(port, pwd);
+#endif
+
 	if (NULL == port)
 		port = DFT_PORT;
 
@@ -974,6 +1024,10 @@ ssize_t read_byte(int fd, char *ch)
 
 int start_upd_srv(const char *src_str, const char *addr_str, unsigned port)
 {
+#ifndef DISABLE_RUST
+	return ccxr_start_udp_srv(src_str, addr_str, port);
+#endif
+
 	init_sockets();
 
 	in_addr_t src;
