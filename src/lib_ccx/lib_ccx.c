@@ -6,6 +6,10 @@
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_isdb.h"
 
+#ifndef DISABLE_RUST
+extern void ccxr_init_basic_logger();
+#endif
+
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
     struct ccx_s_options *opt)
@@ -99,6 +103,10 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ccx_common_logging.fatal_ftn = &fatal;
 	ccx_common_logging.log_ftn = &mprint;
 	ccx_common_logging.gui_ftn = &activity_library_process;
+
+#ifndef DISABLE_RUST
+	ccxr_init_basic_logger();
+#endif
 
 	struct lib_ccx_ctx *ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if (!ctx)
