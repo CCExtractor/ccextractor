@@ -1046,26 +1046,3 @@ pub enum CcxDebugMessageTypes {
     #[cfg(feature = "enable_sharing")]
     Share = 0x8000,
 }
-#[cfg(windows)]
-pub mod ffi {
-    use libc::c_int;
-    use std::io::Read;
-    use std::os::windows::io::AsRawHandle;
-    use winapi::um::ioapiset::{_setmode, setmode, _O_BINARY};
-
-    pub fn set_mode() -> c_int {
-        // Get the raw file handle from stdin
-        let handle = std::io::stdin().as_raw_handle();
-        // Use the raw handle to set the mode
-        unsafe { setmode(handle as c_int, _O_BINARY) }
-    }
-}
-
-#[cfg(not(windows))]
-pub mod ffi {
-    use libc::c_int;
-
-    pub fn set_mode() -> c_int {
-        -1 // Return an error code on non-Windows platforms
-    }
-}

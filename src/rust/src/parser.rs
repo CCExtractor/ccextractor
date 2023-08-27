@@ -14,13 +14,12 @@ use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
-use crate::common::ffi::set_mode;
 use crate::{
     args::{Codec, Ru},
     common::CcxDebugMessageTypes,
     common::*,
 };
-use crate::{common, MPEG_CLOCK_FREQ};
+use crate::{common, set_binary_mode, MPEG_CLOCK_FREQ};
 
 cfg_if! {
     if #[cfg(windows)] {
@@ -401,7 +400,9 @@ impl CcxOptions {
         }
 
         if args.stdin {
-            let _ = set_mode();
+            unsafe {
+                set_binary_mode();
+            }
             self.input_source = CcxDatasource::Stdin;
             self.live_stream = Some(-1);
         }

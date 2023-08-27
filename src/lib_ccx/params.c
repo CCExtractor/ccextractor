@@ -127,6 +127,13 @@ int parsedelay(struct ccx_s_options *opt, char *par)
 	return 0;
 }
 
+void set_binary_mode()
+{
+#ifdef WIN32
+	setmode(fileno(stdin), O_BINARY);
+#endif
+}
+
 int append_file_to_queue(struct ccx_s_options *opt, char *filename)
 {
 	if (filename[0] == '\0') // skip files with empty file name (ex : ./ccextractor "")
@@ -1240,9 +1247,8 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-") == 0 || strcmp(argv[i], "-stdin") == 0)
 		{
-#ifdef WIN32
-			setmode(fileno(stdin), O_BINARY);
-#endif
+			set_binary_mode();
+
 			opt->input_source = CCX_DS_STDIN;
 			if (!opt->live_stream)
 				opt->live_stream = -1;
