@@ -14,12 +14,20 @@ use crate::args::{self, InFormat, OutputField};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
+use crate::common;
 use crate::{
     args::{Codec, Ru},
     common::CcxDebugMessageTypes,
     common::*,
 };
-use crate::{common, set_binary_mode, MPEG_CLOCK_FREQ};
+
+cfg_if! {
+    if #[cfg(test)] {
+        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ};
+    } else {
+        use crate::{set_binary_mode, MPEG_CLOCK_FREQ};
+    }
+}
 
 cfg_if! {
     if #[cfg(windows)] {
@@ -1425,6 +1433,10 @@ pub mod tests {
     use crate::{args::*, common::*, parser::*};
     use clap::Parser;
 
+    #[no_mangle]
+    pub extern "C" fn set_binary_mode() {}
+    pub static mut MPEG_CLOCK_FREQ: u64 = 0;
+
     fn parse_args(args: &[&str]) -> (CcxOptions, CcxTeletextConfig) {
         let mut common_args = vec!["./ccextractor", "input_file"];
         common_args.extend_from_slice(args);
@@ -1716,14 +1728,14 @@ pub mod tests {
     }
 
     // Disable cause of c constants not accessible in rust
-    // #[test]
-    // fn options_6() {
-    //     let (_, _) = parse_args(&["--90090"]);
+    #[test]
+    fn options_6() {
+        let (_, _) = parse_args(&["--90090"]);
 
-    //     unsafe {
-    //         assert_eq!(MPEG_CLOCK_FREQ as i64, 90090);
-    //     }
-    // }
+        unsafe {
+            assert_eq!(MPEG_CLOCK_FREQ as i64, 90090);
+        }
+    }
 
     #[test]
     fn options_7() {
