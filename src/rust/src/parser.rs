@@ -1727,7 +1727,6 @@ pub mod tests {
         assert!(options.fix_padding);
     }
 
-    // Disable cause of c constants not accessible in rust
     #[test]
     fn options_6() {
         let (_, _) = parse_args(&["--90090"]);
