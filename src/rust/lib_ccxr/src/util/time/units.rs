@@ -2,10 +2,15 @@ use derive_more::{Add, Neg, Sub};
 use std::convert::TryInto;
 use std::fmt::Write;
 use std::num::TryFromIntError;
+use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use time::macros::{datetime, format_description};
 use time::{error::Format, Duration};
+
+extern "C" {
+    static mut MPEG_CLOCK_FREQ: c_int;
+}
 
 /// Represents a timestamp in milliseconds.
 ///
@@ -448,8 +453,10 @@ impl Timestamp {
 pub struct MpegClockTick(i64);
 
 impl MpegClockTick {
-    /// The ratio to convert a clock tick to time duration.
-    pub const MPEG_CLOCK_FREQ: i64 = 90000;
+    /// Returns the ratio to convert a clock tick to time duration.
+    pub fn mpeg_clock_freq() -> i64 {
+        unsafe { MPEG_CLOCK_FREQ.into() }
+    }
 
     /// Create a value representing `ticks` clock ticks.
     pub fn new(ticks: i64) -> MpegClockTick {
@@ -465,7 +472,7 @@ impl MpegClockTick {
     ///
     /// The conversion ratio used is [`MpegClockTick::MPEG_CLOCK_FREQ`].
     pub fn as_timestamp(&self) -> Timestamp {
-        Timestamp::from_millis(self.0 / (MpegClockTick::MPEG_CLOCK_FREQ / 1000))
+        Timestamp::from_millis(self.0 / (MpegClockTick::mpeg_clock_freq() / 1000))
     }
 }
 
@@ -497,7 +504,7 @@ impl FrameCount {
     ///
     /// The conversion ratio used is [`MpegClockTick::MPEG_CLOCK_FREQ`] and `fps`.
     pub fn as_mpeg_clock_tick(&self, fps: f64) -> MpegClockTick {
-        MpegClockTick::new(((self.0 * MpegClockTick::MPEG_CLOCK_FREQ as u64) as f64 / fps) as i64)
+        MpegClockTick::new(((self.0 * MpegClockTick::mpeg_clock_freq() as u64) as f64 / fps) as i64)
     }
 }
 

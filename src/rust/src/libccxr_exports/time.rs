@@ -88,7 +88,9 @@ pub unsafe extern "C" fn ccxr_millis_to_date(
 /// `s` must contain valid utf-8 data and have a nul terminator at the end of the string.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_stringztoms(s: *const c_char, bt: *mut ccx_boundary_time) -> c_int {
-    let s = CStr::from_ptr(s).to_str().unwrap();
+    let s = CStr::from_ptr(s)
+        .to_str()
+        .expect("Failed to convert buffer `s` into a &str");
 
     let option_timestamp = c::stringztoms(s);
 
