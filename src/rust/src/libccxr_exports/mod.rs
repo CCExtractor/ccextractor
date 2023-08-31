@@ -37,7 +37,8 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist(
 
     let ans = levenshtein_dist(s1, s2);
 
-    ans.try_into().unwrap()
+    ans.try_into()
+        .expect("Failed to convert the levenshtein distance to C int")
 }
 
 /// Rust equivalent for `levenshtein_dist_char` function in C. Uses C-native types as input and output.
@@ -58,5 +59,6 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
 
     let ans = levenshtein_dist_char(s1, s2);
 
-    ans.try_into().unwrap()
+    ans.try_into()
+        .expect("Failed to convert the levenshtein distance to C int")
 }
