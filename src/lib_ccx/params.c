@@ -350,15 +350,15 @@ void print_usage(void)
 	mprint("  Syntax:\n");
 	mprint("  ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\n");
 	mprint("\n");
-	mprint("To see This Help Message: -h or --help\n\n");
+	mprint("To see This Help Message: --h or --help\n\n");
 	mprint("File name related options:\n");
 	mprint("            inputfile: file(s) to process\n");
-	mprint("    -o outputfilename: Use -o parameters to define output filename if you don't\n");
+	mprint("    --o outputfilename: Use --o parameters to define output filename if you don't\n");
 	mprint("                       like the default ones (same as infile plus _1 or _2 when\n");
 	mprint("                       needed and file extension, e.g. .srt).\n");
 	mprint("              -stdout: Write output to stdout (console) instead of file. If\n");
-	mprint("                       stdout is used, then -o can't be used. Also\n");
-	mprint("                       -stdout will redirect all messages to stderr (error).\n");
+	mprint("                       stdout is used, then --o can't be used. Also\n");
+	mprint("                       --stdout will redirect all messages to stderr (error).\n");
 	mprint("           -pesheader: Dump the PES Header to stdout (console). This is\n");
 	mprint("                       used for debugging purposes to see the contents\n");
 	mprint("                       of each PES packet header.\n");
@@ -376,29 +376,29 @@ void print_usage(void)
 	mprint("recording in several cuts (to skip commercials for example) but you want one\n");
 	mprint("subtitle file with contiguous timing.\n\n");
 	mprint("Output file segmentation:\n");
-	mprint("    -outinterval x output in interval of x seconds\n");
+	mprint("    --outinterval x output in interval of x seconds\n");
 	mprint("   --segmentonkeyonly -key: When segmenting files, do it only after a I frame\n");
 	mprint("                            trying to behave like FFmpeg\n\n");
 	mprint("Network support:\n");
-	mprint("            -udp port: Read the input via UDP (listening in the specified port)\n");
+	mprint("            --udp port: Read the input via UDP (listening in the specified port)\n");
 	mprint("                       instead of reading a file.\n\n");
-	mprint("            -udp [host:]port: Read the input via UDP (listening in the specified\n");
+	mprint("            --udp [host:]port: Read the input via UDP (listening in the specified\n");
 	mprint("                              port) instead of reading a file. Host can be a\n");
 	mprint("                              hostname or IPv4 address. If host is not specified\n");
 	mprint("                              then listens on the local host.\n\n");
-	mprint("            -udp [src@host:]port: Read the input via UDP (listening in the specified\n");
+	mprint("            --udp [src@host:]port: Read the input via UDP (listening in the specified\n");
 	mprint("                              port) instead of reading a file. Host and src can be a\n");
 	mprint("                              hostname or IPv4 address. If host is not specified\n");
 	mprint("                              then listens on the local host.\n\n");
-	mprint("            -sendto host[:port]: Sends data in BIN format to the server\n");
+	mprint("            --sendto host[:port]: Sends data in BIN format to the server\n");
 	mprint("                                 according to the CCExtractor's protocol over\n");
 	mprint("                                 TCP. For IPv6 use [address]:port\n");
-	mprint("            -tcp port: Reads the input data in BIN format according to\n");
+	mprint("            --tcp port: Reads the input data in BIN format according to\n");
 	mprint("                        CCExtractor's protocol, listening specified port on the\n");
 	mprint("                        local host\n");
-	mprint("            -tcppassword password: Sets server password for new connections to\n");
+	mprint("            --tcppassword password: Sets server password for new connections to\n");
 	mprint("                                   tcp server\n");
-	mprint("            -tcpdesc description: Sends to the server short description about\n");
+	mprint("            --tcpdesc description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
 	mprint("Options that affect what will be processed:\n");
 	mprint("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
@@ -406,7 +406,7 @@ void print_usage(void)
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
 	mprint("                 -cc2: When in srt/sami mode, process captions in channel 2\n");
-	mprint("                       instead of channel 1. Alternatively, -CC2 can also be used.\n");
+	mprint("                       instead of channel 1. Alternatively, --CC2 can also be used.\n");
 	mprint("-svc --service N1[cs1],N2[cs2]...:\n");
 	mprint("                       Enable CEA-708 (DTVCC) captions processing for the listed\n");
 	mprint("                       services. The parameter is a comma delimited list\n");
@@ -444,7 +444,7 @@ void print_usage(void)
 #ifdef WTV_DEBUG
 	mprint("                       hex  -> Hexadecimal dump as generated by wtvccdump.\n");
 #endif
-	mprint("       -ts, -ps, -es, -mp4, -wtv, -mkv and -asf/--dvr-ms can be used as shorts.\n\n");
+	mprint("       -ts, -ps, -es, -mp4, -wtv, --mkv and -asf/--dvr-ms can be used as shorts.\n\n");
 	mprint("Output formats:\n\n");
 	mprint("                 -out=format\n\n");
 	mprint("       where format is one of these:\n");
@@ -477,29 +477,29 @@ void print_usage(void)
 	mprint("                      report  -> Prints to stdout information about captions\n");
 	mprint("                                 in specified input. Don't produce any file\n");
 	mprint("                                 output\n\n");
-	mprint("       -srt, -dvdraw, -sami, -webvtt, -txt, -ttxt and -null can be used as shorts.\n\n");
+	mprint("       -srt, -dvdraw, -sami, -webvtt, -txt, --ttxt and --null can be used as shorts.\n\n");
 
 	mprint("Options that affect how input files will be processed.\n");
 
-	mprint("        -gt --goptime: Use GOP for timing instead of PTS. This only applies\n");
+	mprint("        --gt --goptime: Use GOP for timing instead of PTS. This only applies\n");
 	mprint("                       to Program or Transport Streams with MPEG2 data and\n");
 	mprint("                       overrides the default PTS timing.\n");
 	mprint("                       GOP timing is always used for Elementary Streams.\n");
-	mprint("    -nogt --nogoptime: Never use GOP timing (use PTS), even if ccextractor\n");
+	mprint("    --no-gt --no-goptime: Never use GOP timing (use PTS), even if ccextractor\n");
 	mprint("                       detects GOP timing is the reasonable choice.\n");
-	mprint("     -fp --fixpadding: Fix padding - some cards (or providers, or whatever)\n");
+	mprint("     --fp --fixpadding: Fix padding - some cards (or providers, or whatever)\n");
 	mprint("                       seem to send 0000 as CC padding instead of 8080. If you\n");
 	mprint("                       get bad timing, this might solve it.\n");
 	mprint("               -90090: Use 90090 (instead of 90000) as MPEG clock frequency.\n");
 	mprint("                       (reported to be needed at least by Panasonic DMR-ES15\n");
 	mprint("                       DVD Recorder)\n");
-	mprint("    -ve --videoedited: By default, ccextractor will process input files in\n");
+	mprint("    --ve --videoedited: By default, ccextractor will process input files in\n");
 	mprint("                       sequence as if they were all one large file (i.e.\n");
 	mprint("                       split by a generic, non video-aware tool. If you\n");
 	mprint("                       are processing video hat was split with a editing\n");
-	mprint("                       tool, use -ve so ccextractor doesn't try to rebuild\n");
+	mprint("                       tool, use --ve so ccextractor doesn't try to rebuild\n");
 	mprint("                       the original timing.\n");
-	mprint("   -s --stream [secs]: Consider the file as a continuous stream that is\n");
+	mprint("   --s --stream [secs]: Consider the file as a continuous stream that is\n");
 	mprint("                       growing as ccextractor processes it, so don't try\n");
 	mprint("                       to figure out its size and don't terminate processing\n");
 	mprint("                       when reaching the current end (i.e. wait for more\n");
@@ -508,9 +508,9 @@ void print_usage(void)
 	mprint("                       new data after which ccextractor should exit. Use\n");
 	mprint("                       this parameter if you want to process a live stream\n");
 	mprint("                       but not kill ccextractor externally.\n");
-	mprint("                       Note: If -s is used then only one input file is\n");
+	mprint("                       Note: If --s is used then only one input file is\n");
 	mprint("                       allowed.\n");
-	mprint("  -poc  --usepicorder: Use the pic_order_cnt_lsb in AVC/H.264 data streams\n");
+	mprint("  --poc  --usepicorder: Use the pic_order_cnt_lsb in AVC/H.264 data streams\n");
 	mprint("                       to order the CC information.  The default way is to\n");
 	mprint("                       use the PTS information.  Use this switch only when\n");
 	mprint("                       needed.\n");
@@ -527,12 +527,12 @@ void print_usage(void)
 	mprint("                       captions. Use this switch only when needed.\n");
 	mprint("            -wtvmpeg2: Read the captions from the MPEG2 video stream rather\n");
 	mprint("                       than the captions stream in WTV files\n");
-	mprint(" -pn --program-number: In TS mode, specifically select a program to process.\n");
+	mprint(" --pn --program-number: In TS mode, specifically select a program to process.\n");
 	mprint("                       Not needed if the TS only has one. If this parameter\n");
 	mprint("                       is not specified and CCExtractor detects more than one\n");
 	mprint("                       program in the input, it will list the programs found\n");
 	mprint("                       and terminate without doing anything, unless\n");
-	mprint("                       -autoprogram (see below) is used.\n");
+	mprint("                       --autoprogram (see below) is used.\n");
 	mprint("         -autoprogram: If there's more than one program in the stream, just use\n");
 	mprint("                       the first one we find that contains a suitable stream.\n");
 	mprint("        -multiprogram: Uses multiple programs from the same input stream.\n");
@@ -542,11 +542,11 @@ void print_usage(void)
 	mprint("                       by its type (pick the stream that has this type in\n");
 	mprint("                       the PMT)\n");
 	mprint("          -streamtype: Assume the data is of this type, don't autodetect. This\n");
-	mprint("                       parameter may be needed if -datapid or -datastreamtype\n");
+	mprint("                       parameter may be needed if --datapid or -datastreamtype\n");
 	mprint("                       is used and CCExtractor cannot determine how to process\n");
 	mprint("                       the stream. The value will usually be 2 (MPEG video) or\n");
 	mprint("                       6 (MPEG private data).\n");
-	mprint("    -haup --hauppauge: If the video was recorder using a Hauppauge card, it\n");
+	mprint("    --haup --hauppauge: If the video was recorder using a Hauppauge card, it\n");
 	mprint("                       might need special processing. This parameter will\n");
 	mprint("                       force the special treatment.\n");
 	mprint("         -mp4vidtrack: In MP4 files the closed caption data can be embedded in\n");
@@ -559,7 +559,7 @@ void print_usage(void)
 	mprint("                       reference to the received data. Use this parameter if\n");
 	mprint("                       you prefer your own reference. Note: Current this only\n");
 	mprint("                       affects Teletext in timed transcript with -datets.\n");
-	mprint("           --noscte20: Ignore SCTE-20 data if present.\n");
+	mprint("           --no-scte20: Ignore SCTE-20 data if present.\n");
 	mprint("  --webvtt-create-css: Create a separate file for CSS instead of inline.\n");
 	mprint("              -deblev: Enable debug so the calculated distance for each two\n");
 	mprint("                       strings is displayed. The output includes both strings,\n");
@@ -579,11 +579,11 @@ void print_usage(void)
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
 	mprint("  parameters.\n\n");
 	mprint("           -nolevdist: Don't attempt to correct typos with Levenshtein distance.\n");
-	mprint(" -levdistmincnt value: Minimum distance we always allow regardless\n");
+	mprint(" --levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint("                       of the length of the strings.Default 2. \n");
 	mprint("                       This means that if the calculated distance \n");
 	mprint("                       is 0,1 or 2, we consider the strings to be equivalent.\n");
-	mprint(" -levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
+	mprint(" --levdistmaxpct value: Maximum distance we allow, as a percentage of\n");
 	mprint("                       the shortest string length. Default 10%.\n");
 	mprint("                       For example, consider a comparison of one string of \n");
 	mprint("	                    30 characters and one of 60 characters. We want to \n");
@@ -609,18 +609,18 @@ void print_usage(void)
 	mprint("                -utf8: Encode subtitles in UTF-8 (no longer needed.\n");
 	mprint("                       because UTF-8 is now the default).\n");
 	mprint("              -latin1: Encode subtitles in Latin-1\n");
-	mprint("  -nofc --nofontcolor: For .srt/.sami/.vtt, don't add font color tags.\n");
-	mprint("  --nohtmlescape: For .srt/.sami/.vtt, don't covert html unsafe character\n");
-	mprint("-nots --notypesetting: For .srt/.sami/.vtt, don't add typesetting tags.\n");
+	mprint("  --no-fc --no-fontcolor: For .srt/.sami/.vtt, don't add font color tags.\n");
+	mprint("  --no-htmlescape: For .srt/.sami/.vtt, don't covert html unsafe character\n");
+	mprint("-nots --no-typesetting: For .srt/.sami/.vtt, don't add typesetting tags.\n");
 	mprint("                -trim: Trim lines.\n");
-	mprint("   -dc --defaultcolor: Select a different default color (instead of\n");
+	mprint("   --dc --defaultcolor: Select a different default color (instead of\n");
 	mprint("                       white). This causes all output in .srt/.smi/.vtt\n");
 	mprint("                       files to have a font tag, which makes the files\n");
 	mprint("                       larger. Add the color you want in RGB, such as\n");
-	mprint("                       -dc #FF0000 for red.\n");
-	mprint("    -sc --sentencecap: Sentence capitalization. Use if you hate\n");
+	mprint("                       --dc #FF0000 for red.\n");
+	mprint("    --sc --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint("                       ALL CAPS in subtitles.\n");
-	mprint("  --capfile -caf file: Add the contents of 'file' to the list of words\n");
+	mprint("  --capfile --caf file: Add the contents of 'file' to the list of words\n");
 	mprint("                       that must be capitalized. For example, if file\n");
 	mprint("                       is a plain text file that contains\n\n");
 	mprint("                       Tony\n");
@@ -636,7 +636,7 @@ void print_usage(void)
 	mprint("-sbs --splitbysentence: Split output text so each frame contains a complete\n");
 	mprint("                       sentence. Timings are adjusted based on number of\n");
 	mprint("                       characters\n.");
-	mprint("          -unixts REF: For timed transcripts that have an absolute date\n");
+	mprint("          --unixts REF: For timed transcripts that have an absolute date\n");
 	mprint("                       instead of a timestamp relative to the file start), use\n");
 	mprint("                       this time reference (UNIX timestamp). 0 => Use current\n");
 	mprint("                       system time.\n");
@@ -649,7 +649,7 @@ void print_usage(void)
 	mprint("                       free to play with it but be aware that this format\n");
 	mprint("                       is really live - don't rely on its output format\n");
 	mprint("                       not changing between versions.\n");
-	mprint("            -latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
+	mprint("            --latrusmap Map Latin symbols to Cyrillic ones in special cases\n");
 	mprint("                       of Russian Teletext files (issue #1086)\n");
 	mprint("                 -xds: In timed transcripts, all XDS information will be saved\n");
 	mprint("                       to the output file.\n");
@@ -658,11 +658,11 @@ void print_usage(void)
 	mprint("                  -df: For MCC Files, force dropframe frame count.\n");
 	mprint("            -autodash: Based on position on screen, attempt to determine\n");
 	mprint("                       the different speakers and a dash (-) when each\n");
-	mprint("                       of them talks (.srt/.vtt only, -trim required).\n");
-	mprint("          -xmltv mode: produce an XMLTV file containing the EPG data from\n");
+	mprint("                       of them talks (.srt/.vtt only, --trim required).\n");
+	mprint("          --xmltv mode: produce an XMLTV file containing the EPG data from\n");
 	mprint("                       the source TS file. Mode: 1 = full output\n");
 	mprint("                       2 = live output. 3 = both\n");
-	mprint(" -xmltvliveinterval x: interval of x seconds between writing live mode xmltv output.\n");
+	mprint(" --xmltvliveinterval x: interval of x seconds between writing live mode xmltv output.\n");
 	mprint("-xmltvoutputinterval x: interval of x seconds between writing full file xmltv output.\n");
 	mprint("    -xmltvonlycurrent: Only print current events for xmltv output.\n");
 	mprint("                 -sem: Create a .sem file for each output file that is open\n");
@@ -674,12 +674,12 @@ void print_usage(void)
 	mprint("             -ocrlang: Manually select the name of the Tesseract .traineddata\n");
 	mprint("                       file. Helpful if you want to OCR a caption stream of\n");
 	mprint("                       one language with the data of another language.\n");
-	mprint("                       e.g. '-dvblang chs -ocrlang chi_tra' will decode the\n");
+	mprint("                       e.g. '-dvblang chs --ocrlang chi_tra' will decode the\n");
 	mprint("                       Chinese (Simplified) caption stream but perform OCR\n");
 	mprint("                       using the Chinese (Traditional) trained data\n");
 	mprint("                       This option is also helpful when the traineddata file\n");
 	mprint("                       has non standard names that don't follow ISO specs\n");
-	mprint("          -quant mode: How to quantize the bitmap before passing it to tesseract\n");
+	mprint("          --quant mode: How to quantize the bitmap before passing it to tesseract\n");
 	mprint("                       for OCR'ing.\n");
 	mprint("                       0: Don't quantize at all.\n");
 	mprint("                       1: Use CCExtractor's internal function (default).\n");
@@ -698,7 +698,7 @@ void print_usage(void)
 	mprint("                       ISO-639-2 form (like \"fre\" for french) or a language\n");
 	mprint("                       code followed by a dash and a country code for specialities\n");
 	mprint("                       in languages (like \"fre-ca\" for Canadian French).\n");
-	mprint("          -nospupngocr When processing DVB don't use the OCR to write the text as\n");
+	mprint("          --no-spupngocr When processing DVB don't use the OCR to write the text as\n");
 	mprint("                       comments in the XML file.\n");
 	mprint("                -font: Specify the full path of the font that is to be used when\n");
 	mprint("                       generating SPUPNG files. If not specified, you need to\n");
@@ -713,14 +713,14 @@ void print_usage(void)
 	mprint("\n");
 	mprint("Options that affect how ccextractor reads and writes (buffering):\n");
 
-	mprint("    -bi --bufferinput: Forces input buffering.\n");
-	mprint(" -nobi -nobufferinput: Disables input buffering.\n");
-	mprint(" -bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
+	mprint("    --bi --bufferinput: Forces input buffering.\n");
+	mprint(" --no-bi -nobufferinput: Disables input buffering.\n");
+	mprint(" --bs --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint("                 -koc: keep-output-close. If used then CCExtractor will close\n");
 	mprint("                       the output file after writing each subtitle frame and\n");
 	mprint("                       attempt to create it again when needed.\n");
-	mprint("     -ff --forceflush: Flush the file buffer whenever content is written.\n");
+	mprint("     --ff --forceflush: Flush the file buffer whenever content is written.\n");
 	mprint("\n");
 
 	mprint("Options that affect the built-in 608 closed caption decoder:\n");
@@ -728,43 +728,43 @@ void print_usage(void)
 	mprint("                 -dru: Direct Roll-Up. When in roll-up mode, write character by\n");
 	mprint("                       character instead of line by line. Note that this\n");
 	mprint("                       produces (much) larger files.\n");
-	mprint("     -noru --norollup: If you hate the repeated lines caused by the roll-up\n");
+	mprint("     --no-ru --no-rollup: If you hate the repeated lines caused by the roll-up\n");
 	mprint("                       emulation, you can have ccextractor write only one\n");
 	mprint("                       line at a time, getting rid of these repeated lines.\n");
-	mprint("     -ru1 / ru2 / ru3: roll-up captions can consist of 2, 3 or 4 visible\n");
+	mprint("     --ru1 / ru2 / ru3: roll-up captions can consist of 2, 3 or 4 visible\n");
 	mprint("                       lines at any time (the number of lines is part of\n");
 	mprint("                       the transmission). If having 3 or 4 lines annoys\n");
-	mprint("                       you you can use -ru to force the decoder to always\n");
+	mprint("                       you you can use --ru to force the decoder to always\n");
 	mprint("                       use 1, 2 or 3 lines. Note that 1 line is not\n");
 	mprint("                       a real mode rollup mode, so CCExtractor does what\n");
 	mprint("                       it can.\n");
-	mprint("                       In -ru1 the start timestamp is actually the timestamp\n");
+	mprint("                       In --ru1 the start timestamp is actually the timestamp\n");
 	mprint("                       of the first character received which is possibly more\n");
 	mprint("                       accurate.\n");
 	mprint("\n");
 
 	mprint("Options that affect timing:\n");
 
-	mprint("            -delay ms: For srt/sami/webvtt, add this number of milliseconds to\n");
-	mprint("                       all times. For example, -delay 400 makes subtitles\n");
+	mprint("            --delay ms: For srt/sami/webvtt, add this number of milliseconds to\n");
+	mprint("                       all times. For example, --delay 400 makes subtitles\n");
 	mprint("                       appear 400ms late. You can also use negative numbers\n");
 	mprint("                       to make subs appear early.\n");
-	mprint("Notes on times: -startat and -endat times are used first, then -delay.\n");
-	mprint("So if you use -srt -startat 3:00 -endat 5:00 -delay 120000, ccextractor will\n");
+	mprint("Notes on times: --startat and --endat times are used first, then -delay.\n");
+	mprint("So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will\n");
 	mprint("generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
 	mprint("and then add that (huge) delay, which would make the final file start at\n");
 	mprint("5:00 and end at 7:00.\n\n");
 
 	mprint("Options that affect what segment of the input file(s) to process:\n");
 
-	mprint("        -startat time: Only write caption information that starts after the\n");
+	mprint("        --startat time: Only write caption information that starts after the\n");
 	mprint("                       given time.\n");
 	mprint("                       Time can be seconds, MM:SS or HH:MM:SS.\n");
-	mprint("                       For example, -startat 3:00 means 'start writing from\n");
+	mprint("                       For example, --startat 3:00 means 'start writing from\n");
 	mprint("                       minute 3.\n");
-	mprint("          -endat time: Stop processing after the given time (same format as\n");
+	mprint("          --endat time: Stop processing after the given time (same format as\n");
 	mprint("                       -startat).\n");
-	mprint("                       The -startat and -endat options are honored in all\n");
+	mprint("                       The --startat and --endat options are honored in all\n");
 	mprint("                       output formats.  In all formats with timing information\n");
 	mprint("                       the times are unchanged.\n");
 	mprint("-scr --screenfuls num: Write 'num' screenfuls and terminate processing.\n\n");
@@ -772,16 +772,16 @@ void print_usage(void)
 	mprint("Options that affect which codec is to be used have to be searched in input\n");
 
 	mprint("  If codec type is not selected then first elementary stream suitable for \n"
-	       "  subtitle is selected, please consider -teletext -noteletext override this\n"
+	       "  subtitle is selected, please consider --teletext -noteletext override this\n"
 	       "  option.\n"
-	       "      -codec dvbsub    select the dvb subtitle from all elementary stream,\n"
+	       "      --codec dvbsub    select the dvb subtitle from all elementary stream,\n"
 	       "                        if stream of dvb subtitle type is not found then \n"
 	       "                        nothing is selected and no subtitle is generated\n"
-	       "      -nocodec dvbsub   ignore dvb subtitle and follow default behaviour\n"
-	       "      -codec teletext   select the teletext subtitle from elementary stream\n"
-	       "      -nocodec teletext ignore teletext subtitle\n"
+	       "      --no-codec dvbsub   ignore dvb subtitle and follow default behaviour\n"
+	       "      --codec teletext   select the teletext subtitle from elementary stream\n"
+	       "      --no-codec teletext ignore teletext subtitle\n"
 	       "  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
-	       "        valid option are only in form -foo bar\n"
+	       "        valid option are only in form --foo bar\n"
 	       "        nocodec and codec parameter must not be same if found to be same \n"
 	       "        then parameter of nocodec is ignored, this flag should be passed \n"
 	       "        once, more then one are not supported yet and last parameter would \n"
@@ -847,12 +847,12 @@ void print_usage(void)
 
 	mprint("Teletext related options:\n");
 
-	mprint("          -tpage page: Use this page for subtitles (if this parameter\n");
+	mprint("          --tpage page: Use this page for subtitles (if this parameter\n");
 	mprint("                       is not used, try to autodetect). In Spain the\n");
 	mprint("                       page is always 888, may vary in other countries.\n");
 	mprint("            -tverbose: Enable verbose mode in the teletext decoder.\n\n");
 	mprint("            -teletext: Force teletext mode even if teletext is not detected.\n");
-	mprint("                       If used, you should also pass -datapid to specify\n");
+	mprint("                       If used, you should also pass --datapid to specify\n");
 	mprint("                       the stream ID you want to process.\n");
 	mprint("          -noteletext: Disable teletext processing. This might be needed\n");
 	mprint("                       for video streams that have both teletext packets\n");
@@ -862,7 +862,7 @@ void print_usage(void)
 
 	mprint("Transcript customizing options:\n");
 
-	mprint("    -customtxt format: Use the passed format to customize the (Timed) Transcript\n");
+	mprint("    --customtxt format: Use the passed format to customize the (Timed) Transcript\n");
 	mprint("                       output. The format must be like this: 1100100 (7 digits).\n");
 	mprint("                       These indicate whether the next things should be\n");
 	mprint("                       displayed or not in the (timed) transcript. They\n");
@@ -880,7 +880,7 @@ void print_usage(void)
 	mprint("                       1111001 is the default setting for -ucla\n");
 	mprint("                       Make sure you use this parameter after others that might\n");
 	mprint("                       affect these settings (-out, -ucla, -xds, -txt, \n");
-	mprint("                       -ttxt ...)\n");
+	mprint("                       --ttxt ...)\n");
 
 	mprint("\n");
 
@@ -890,7 +890,7 @@ void print_usage(void)
 	mprint("                       in a easy to parse format. This is intended to be\n");
 	mprint("                       used by other programs. See docs directory for.\n");
 	mprint("                       details.\n");
-	mprint("    --no_progress_bar: Suppress the output of the progress bar\n");
+	mprint("    --no-_progress_bar: Suppress the output of the progress bar\n");
 	mprint("               -quiet: Don't write any message.\n");
 	mprint("\n");
 #ifdef ENABLE_SHARING
@@ -901,7 +901,7 @@ void print_usage(void)
 
 	mprint("CCTranslate application integration:\n");
 	mprint("           -translate: Enable Translation tool and set target languages\n");
-	mprint("                       in csv format (e.g. -translate ru,fr,it\n");
+	mprint("                       in csv format (e.g. --translate ru,fr,it\n");
 	mprint("      -translate-auth: Set Translation Service authorization data to make translation possible\n");
 	mprint("                       In case of Google Translate API - API Key\n");
 #endif // ENABLE_SHARING
@@ -925,7 +925,7 @@ void print_usage(void)
 	mprint("    input.d/sub0001.png\n");
 	mprint("    ...\n");
 	mprint("The command:\n");
-	mprint("    ccextractor -out=spupng -o /tmp/output -12 input.mpg\n");
+	mprint("    ccextractor -out=spupng --o /tmp/output --12 input.mpg\n");
 	mprint("will create the files:\n");
 	mprint("    /tmp/output_1.xml\n");
 	mprint("    /tmp/output_1.d/sub0000.png\n");
@@ -937,47 +937,47 @@ void print_usage(void)
 	mprint("    ...\n");
 	mprint("\n");
 	mprint("Burned-in subtitle extraction:\n");
-	mprint("         -hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
+	mprint("         --hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
 	mprint("\n");
-	mprint("         NOTE: The following options will work only if -hardsubx is \n");
+	mprint("         NOTE: The following options will work only if --hardsubx is \n");
 	mprint("                specified before them:-\n");
 	mprint("\n");
-	mprint("       -tickertext : Search for burned-in ticker text at the bottom of\n");
+	mprint("       --tickertext : Search for burned-in ticker text at the bottom of\n");
 	mprint("                     the screen.\n");
 	mprint("\n");
-	mprint("         -ocr_mode : Set the OCR mode to either frame-wise, word-wise\n");
+	mprint("         --ocr_mode : Set the OCR mode to either frame-wise, word-wise\n");
 	mprint("                     or letter wise.\n");
-	mprint("                     e.g. -ocr_mode frame (default), -ocr_mode word, \n");
-	mprint("                     -ocr_mode letter\n");
+	mprint("                     e.g. --ocr_mode frame (default), --ocr_mode word, \n");
+	mprint("                     --ocr_mode letter\n");
 	mprint("\n");
-	mprint("         -subcolor : Specify the color of the subtitles\n");
+	mprint("         --subcolor : Specify the color of the subtitles\n");
 	mprint("                     Possible values are in the set \n");
 	mprint("                     {white,yellow,green,cyan,blue,magenta,red}.\n");
 	mprint("                     Alternatively, a custom hue value between 1 and 360 \n");
 	mprint("                     may also be specified.\n");
-	mprint("                     e.g. -subcolor white or -subcolor 270 (for violet).\n");
+	mprint("                     e.g. --subcolor white or --subcolor 270 (for violet).\n");
 	mprint("                     Refer to an HSV color chart for values.\n");
 	mprint("\n");
-	mprint(" -min_sub_duration : Specify the minimum duration that a subtitle line \n");
+	mprint(" --min_sub_duration : Specify the minimum duration that a subtitle line \n");
 	mprint("                     must exist on the screen.\n");
 	mprint("                     The value is specified in seconds.\n");
 	mprint("                     A lower value gives better results, but takes more \n");
 	mprint("                     processing time.\n");
 	mprint("                     The recommended value is 0.5 (default).\n");
-	mprint("                     e.g. -min_sub_duration 1.0 (for a duration of 1 second)\n");
+	mprint("                     e.g. --min_sub_duration 1.0 (for a duration of 1 second)\n");
 	mprint("\n");
-	mprint("   -detect_italics : Specify whether italics are to be detected from the \n");
+	mprint("   --detect_italics : Specify whether italics are to be detected from the \n");
 	mprint("                     OCR text.\n");
 	mprint("                     Italic detection automatically enforces the OCR mode \n");
 	mprint("                     to be word-wise");
 	mprint("\n");
-	mprint("      -conf_thresh : Specify the classifier confidence threshold between\n");
+	mprint("      --conf_thresh : Specify the classifier confidence threshold between\n");
 	mprint("                      1 and 100.\n");
 	mprint("                     Try and use a threshold which works for you if you get \n");
 	mprint("                     a lot of garbage text.\n");
-	mprint("                     e.g. -conf_thresh 50\n");
+	mprint("                     e.g. --conf_thresh 50\n");
 	mprint("\n");
-	mprint(" -whiteness_thresh : For white subtitles only, specify the luminance \n");
+	mprint(" --whiteness_thresh : For white subtitles only, specify the luminance \n");
 	mprint("                     threshold between 1 and 100\n");
 	mprint("                     This threshold is content dependent, and adjusting\n");
 	mprint("                     values may give you better results\n");
@@ -987,8 +987,8 @@ void print_usage(void)
 	mprint("		-hcc	   : This option will be used if the file should have both\n");
 	mprint("					 closed captions and burned in subtitles\n");
 	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
-	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
-	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
+	mprint("               ccextractor video.mp4 --hardsubx -subcolor white --detect_italics \n");
+	mprint("                   --whiteness_thresh 90 --conf_thresh 60\n");
 	mprint("\n");
 	mprint("\n         --version : Display current CCExtractor version and detailed information.\n");
 }
@@ -1228,7 +1228,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 {
 	for (int i = 1; i < argc; i++)
 	{
-		if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+		if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "--h") == 0)
 		{
 			print_usage();
 			return EXIT_WITH_HELP;
@@ -1238,7 +1238,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			version(argv[0]);
 			return EXIT_WITH_HELP;
 		}
-		if (strcmp(argv[i], "-") == 0 || strcmp(argv[i], "-stdin") == 0)
+		if (strcmp(argv[i], "-") == 0 || strcmp(argv[i], "--stdin") == 0)
 		{
 #ifdef WIN32
 			setmode(fileno(stdin), O_BINARY);
@@ -1268,21 +1268,21 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 #ifdef ENABLE_HARDSUBX
-		// Parse -hardsubx and related parameters
-		if (strcmp(argv[i], "-hardsubx") == 0)
+		// Parse --hardsubx and related parameters
+		if (strcmp(argv[i], "--hardsubx") == 0)
 		{
 			opt->hardsubx = 1;
 			continue;
 		}
 		if (opt->hardsubx == 1)
 		{
-			if (strcmp(argv[i], "-hcc") == 0)
+			if (strcmp(argv[i], "--hcc") == 0)
 			{
 				// if extraction of both burned in and non burned in subs
 				opt->hardsubx_and_common = 1;
 				continue;
 			}
-			if (strcmp(argv[i], "-ocr_mode") == 0)
+			if (strcmp(argv[i], "--ocr_mode") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1312,7 +1312,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-ocr_mode has no argument.\nValid values are {frame,word,letter}\n");
 				}
 			}
-			if (strcmp(argv[i], "-subcolor") == 0 || strcmp(argv[i], "-sub_color") == 0)
+			if (strcmp(argv[i], "--subcolor") == 0 || strcmp(argv[i], "--sub_color") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1373,7 +1373,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-subcolor has no argument.\nValid values are {white,yellow,green,cyan,blue,magenta,red} or a custom hue value between 0 and 360\n");
 				}
 			}
-			if (strcmp(argv[i], "-min_sub_duration") == 0)
+			if (strcmp(argv[i], "--min_sub_duration") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1394,12 +1394,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-min_sub_duration has no argument.\n");
 				}
 			}
-			if (strcmp(argv[i], "-detect_italics") == 0)
+			if (strcmp(argv[i], "--detect_italics") == 0)
 			{
 				opt->hardsubx_detect_italics = 1;
 				continue;
 			}
-			if (strcmp(argv[i], "-conf_thresh") == 0)
+			if (strcmp(argv[i], "--conf_thresh") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1420,7 +1420,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					fatal(EXIT_MALFORMED_PARAMETER, "-conf_thresh has no argument.\n");
 				}
 			}
-			if (strcmp(argv[i], "-whiteness_thresh") == 0 || strcmp(argv[i], "-lum_thresh") == 0)
+			if (strcmp(argv[i], "--whiteness_thresh") == 0 || strcmp(argv[i], "--lum_thresh") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1444,27 +1444,27 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 #endif // ENABLE_HARDSUBX
 
-		if (strcmp(argv[i], "-chapters") == 0)
+		if (strcmp(argv[i], "--chapters") == 0)
 		{
 			opt->extract_chapters = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bi") == 0 || strcmp(argv[i], "--bufferinput") == 0)
+		if (strcmp(argv[i], "--bi") == 0 || strcmp(argv[i], "--bufferinput") == 0)
 		{
 			opt->buffer_input = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobi") == 0 || strcmp(argv[i], "--nobufferinput") == 0)
+		if (strcmp(argv[i], "--no-bi") == 0 || strcmp(argv[i], "--no-bufferinput") == 0)
 		{
 			opt->buffer_input = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-koc") == 0)
+		if (strcmp(argv[i], "--koc") == 0)
 		{
 			opt->keep_output_closed = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-ff") == 0 || strcmp(argv[i], "--forceflush") == 0)
+		if (strcmp(argv[i], "--ff") == 0 || strcmp(argv[i], "--forceflush") == 0)
 		{
 			opt->force_flush = 1;
 			continue;
@@ -1474,7 +1474,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->append_mode = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bs") == 0 || strcmp(argv[i], "--buffersize") == 0)
+		if (strcmp(argv[i], "--bs") == 0 || strcmp(argv[i], "--buffersize") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1493,56 +1493,56 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--buffersize has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-dru") == 0)
+		if (strcmp(argv[i], "--dru") == 0)
 		{
 			opt->settings_608.direct_rollup = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nofc") == 0 || strcmp(argv[i], "--nofontcolor") == 0)
+		if (strcmp(argv[i], "--no-fc") == 0 || strcmp(argv[i], "--no-fontcolor") == 0)
 		{
 			opt->nofontcolor = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--nohtmlescape") == 0)
+		if (strcmp(argv[i], "--no-htmlescape") == 0)
 		{
 			opt->nohtmlescape = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-bom") == 0)
+		if (strcmp(argv[i], "--bom") == 0)
 		{
 			opt->enc_cfg.no_bom = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-nobom") == 0)
+		if (strcmp(argv[i], "--no-bom") == 0)
 		{
 			opt->enc_cfg.no_bom = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-sem") == 0)
+		if (strcmp(argv[i], "--sem") == 0)
 		{
 			opt->enc_cfg.with_semaphore = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nots") == 0 || strcmp(argv[i], "--notypesetting") == 0)
+		if (strcmp(argv[i], "--no-ts") == 0 || strcmp(argv[i], "--no-typesetting") == 0)
 		{
 			opt->notypesetting = 1;
 			continue;
 		}
 
-		if (strcmp(argv[i], "--timestamp-map") == 0 || strcmp(argv[i], "-tm") == 0)
+		if (strcmp(argv[i], "--timestamp-map") == 0 || strcmp(argv[i], "--tm") == 0)
 		{
 			opt->timestamp_map = 1;
 			continue;
 		}
 
 		/* Input file formats */
-		if (strcmp(argv[i], "-es") == 0 ||
-		    strcmp(argv[i], "-ts") == 0 ||
-		    strcmp(argv[i], "-ps") == 0 ||
-		    strcmp(argv[i], "-asf") == 0 ||
-		    strcmp(argv[i], "-wtv") == 0 ||
-		    strcmp(argv[i], "-mp4") == 0 ||
-		    strcmp(argv[i], "-mkv") == 0 ||
+		if (strcmp(argv[i], "--es") == 0 ||
+		    strcmp(argv[i], "--ts") == 0 ||
+		    strcmp(argv[i], "--ps") == 0 ||
+		    strcmp(argv[i], "--asf") == 0 ||
+		    strcmp(argv[i], "--wtv") == 0 ||
+		    strcmp(argv[i], "--mp4") == 0 ||
+		    strcmp(argv[i], "--mkv") == 0 ||
 		    strcmp(argv[i], "--dvr-ms") == 0)
 		{
 			set_input_format(opt, argv[i]);
@@ -1555,7 +1555,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/*user specified subtitle to be selected */
-		if (strcmp(argv[i], "-codec") == 0)
+		if (strcmp(argv[i], "--codec") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1583,7 +1583,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/*user specified subtitle to be selected */
-		if (strcmp(argv[i], "-nocodec") == 0)
+		if (strcmp(argv[i], "--no-codec") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1610,7 +1610,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 
-		if (strcmp(argv[i], "-dvblang") == 0)
+		if (strcmp(argv[i], "--dvblang") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1631,7 +1631,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 
-		if (strcmp(argv[i], "-ocrlang") == 0)
+		if (strcmp(argv[i], "--ocrlang") == 0)
 		{
 			if (i++ < argc - 1)
 			{
@@ -1643,7 +1643,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-ocrlang has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-quant") == 0)
+		if (strcmp(argv[i], "--quant") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1656,12 +1656,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-quant has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-nospupngocr") == 0)
+		if (strcmp(argv[i], "--no-spupngocr") == 0)
 		{
 			opt->enc_cfg.nospupngocr = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-oem") == 0)
+		if (strcmp(argv[i], "--oem") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1682,7 +1682,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-oem has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-mkvlang") == 0)
+		if (strcmp(argv[i], "--mkvlang") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1701,12 +1701,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* Output file formats */
-		if (strcmp(argv[i], "-srt") == 0 ||
-		    strcmp(argv[i], "-mcc") == 0 || strcmp(argv[i], "-dvdraw") == 0 ||
-		    strcmp(argv[i], "-smi") == 0 || strcmp(argv[i], "-sami") == 0 ||
-		    strcmp(argv[i], "-txt") == 0 || strcmp(argv[i], "--transcript") == 0 ||
-		    strcmp(argv[i], "-ttxt") == 0 || strcmp(argv[i], "--timedtranscript") == 0 ||
-		    strcmp(argv[i], "-webvtt") == 0 || strcmp(argv[i], "-null") == 0)
+		if (strcmp(argv[i], "--srt") == 0 ||
+		    strcmp(argv[i], "--mcc") == 0 || strcmp(argv[i], "--dvdraw") == 0 ||
+		    strcmp(argv[i], "--smi") == 0 || strcmp(argv[i], "--sami") == 0 ||
+		    strcmp(argv[i], "--txt") == 0 || strcmp(argv[i], "--transcript") == 0 ||
+		    strcmp(argv[i], "--ttxt") == 0 || strcmp(argv[i], "--timedtranscript") == 0 ||
+		    strcmp(argv[i], "--webvtt") == 0 || strcmp(argv[i], "--null") == 0)
 		{
 			set_output_format(opt, argv[i]);
 			continue;
@@ -1842,38 +1842,38 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* More stuff */
-		if (strcmp(argv[i], "-ve") == 0 || strcmp(argv[i], "--videoedited") == 0)
+		if (strcmp(argv[i], "--ve") == 0 || strcmp(argv[i], "--videoedited") == 0)
 		{
 			opt->binary_concat = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-12") == 0)
+		if (strcmp(argv[i], "--12") == 0)
 		{
 			opt->is_608_enabled = 1;
 			opt->extract = 12;
 			continue;
 		}
-		if (strcmp(argv[i], "-gt") == 0 || strcmp(argv[i], "--goptime") == 0)
+		if (strcmp(argv[i], "--gt") == 0 || strcmp(argv[i], "--goptime") == 0)
 		{
 			opt->use_gop_as_pts = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nogt") == 0 || strcmp(argv[i], "--nogoptime") == 0)
+		if (strcmp(argv[i], "--no-gt") == 0 || strcmp(argv[i], "--no-goptime") == 0)
 		{
 			opt->use_gop_as_pts = -1; // Don't use even if we would want to
 			continue;
 		}
-		if (strcmp(argv[i], "-fp") == 0 || strcmp(argv[i], "--fixpadding") == 0)
+		if (strcmp(argv[i], "--fp") == 0 || strcmp(argv[i], "--fixpadding") == 0)
 		{
 			opt->fix_padding = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-90090") == 0)
+		if (strcmp(argv[i], "--90090") == 0)
 		{
 			MPEG_CLOCK_FREQ = 90090;
 			continue;
 		}
-		if (strcmp(argv[i], "--noscte20") == 0)
+		if (strcmp(argv[i], "--no-scte20") == 0)
 		{
 			opt->noscte20 = 1;
 			continue;
@@ -1883,34 +1883,34 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->webvtt_create_css = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-noru") == 0 || strcmp(argv[i], "--norollup") == 0)
+		if (strcmp(argv[i], "--no-ru") == 0 || strcmp(argv[i], "--no-rollup") == 0)
 		{
 			opt->no_rollup = 1;
 			opt->settings_608.no_rollup = 1;
 			opt->settings_dtvcc.no_rollup = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-ru1") == 0)
+		if (strcmp(argv[i], "--ru1") == 0)
 		{
 			opt->settings_608.force_rollup = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-ru2") == 0)
+		if (strcmp(argv[i], "--ru2") == 0)
 		{
 			opt->settings_608.force_rollup = 2;
 			continue;
 		}
-		if (strcmp(argv[i], "-ru3") == 0)
+		if (strcmp(argv[i], "--ru3") == 0)
 		{
 			opt->settings_608.force_rollup = 3;
 			continue;
 		}
-		if (strcmp(argv[i], "-trim") == 0)
+		if (strcmp(argv[i], "--trim") == 0)
 		{
 			opt->enc_cfg.trim_subs = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-outinterval") == 0)
+		if (strcmp(argv[i], "--outinterval") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -1923,7 +1923,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-outinterval has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "--segmentonkeyonly") == 0 || strcmp(argv[i], "-key") == 0)
+		if (strcmp(argv[i], "--segmentonkeyonly") == 0 || strcmp(argv[i], "--key") == 0)
 		{
 			opt->segment_on_key_frames_only = 1;
 			opt->analyze_video_stream = 1;
@@ -1934,24 +1934,24 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->gui_mode_reports = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--no_progress_bar") == 0)
+		if (strcmp(argv[i], "--no-_progress_bar") == 0)
 		{
 			opt->no_progress_bar = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--splitbysentence") == 0 || strcmp(argv[i], "-sbs") == 0)
+		if (strcmp(argv[i], "--splitbysentence") == 0 || strcmp(argv[i], "--sbs") == 0)
 		{
 			opt->enc_cfg.splitbysentence = 1;
 			continue;
 		}
 
-		if (strcmp(argv[i], "--sentencecap") == 0 || strcmp(argv[i], "-sc") == 0)
+		if (strcmp(argv[i], "--sentencecap") == 0 || strcmp(argv[i], "--sc") == 0)
 		{
 			opt->enc_cfg.sentence_cap = 1;
 			continue;
 		}
 
-		if ((strcmp(argv[i], "--capfile") == 0 || strcmp(argv[i], "-caf") == 0) && i < argc - 1)
+		if ((strcmp(argv[i], "--capfile") == 0 || strcmp(argv[i], "--caf") == 0) && i < argc - 1)
 		{
 			opt->enc_cfg.sentence_cap = 1;
 			opt->sentence_cap_file = argv[i + 1];
@@ -1975,7 +1975,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "-pn") == 0)
+		if (strcmp(argv[i], "--program-number") == 0 || strcmp(argv[i], "--pn") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -1990,18 +1990,18 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
-		if (strcmp(argv[i], "-autoprogram") == 0)
+		if (strcmp(argv[i], "--autoprogram") == 0)
 		{
 			opt->demux_cfg.ts_autoprogram = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-multiprogram") == 0)
+		if (strcmp(argv[i], "--multiprogram") == 0)
 		{
 			opt->multiprogram = 1;
 			opt->demux_cfg.ts_allprogram = CCX_TRUE;
 			continue;
 		}
-		if (strcmp(argv[i], "--stream") == 0 || strcmp(argv[i], "-s") == 0)
+		if (strcmp(argv[i], "--stream") == 0 || strcmp(argv[i], "--s") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -2015,7 +2015,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
-		if (strcmp(argv[i], "--defaultcolor") == 0 || strcmp(argv[i], "-dc") == 0)
+		if (strcmp(argv[i], "--defaultcolor") == 0 || strcmp(argv[i], "--dc") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2033,14 +2033,14 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--defaultcolor has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-delay") == 0)
+		if (strcmp(argv[i], "--delay") == 0)
 		{
 			if (i < argc - 1)
 			{
 				i++;
 				if (parsedelay(opt, argv[i]))
 				{
-					fatal(EXIT_MALFORMED_PARAMETER, "-delay only accept integers (such as -300 or 300)\n");
+					fatal(EXIT_MALFORMED_PARAMETER, "-delay only accept integers (such as --300 or 300)\n");
 				}
 				continue;
 			}
@@ -2049,7 +2049,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-delay has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-scr") == 0 || strcmp(argv[i], "--screenfuls") == 0)
+		if (strcmp(argv[i], "--scr") == 0 || strcmp(argv[i], "--screenfuls") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2066,7 +2066,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--screenfuls has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-startat") == 0)
+		if (strcmp(argv[i], "--startat") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2082,7 +2082,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-startat has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-endat") == 0)
+		if (strcmp(argv[i], "--endat") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2098,79 +2098,79 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-endat has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-1") == 0)
+		if (strcmp(argv[i], "--1") == 0)
 		{
 			opt->is_608_enabled = 1;
 			opt->extract = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-2") == 0)
+		if (strcmp(argv[i], "--2") == 0)
 		{
 			opt->is_608_enabled = 1;
 			opt->extract = 2;
 			continue;
 		}
-		if (strcmp(argv[i], "-cc2") == 0 || strcmp(argv[i], "-CC2") == 0)
+		if (strcmp(argv[i], "--cc2") == 0 || strcmp(argv[i], "--CC2") == 0)
 		{
 			opt->cc_channel = 2;
 			continue;
 		}
-		if (strcmp(argv[i], "-stdout") == 0)
+		if (strcmp(argv[i], "--stdout") == 0)
 		{
-			if (opt->messages_target == 1) // Only change this if still stdout. -quiet could set it to 0 for example
+			if (opt->messages_target == 1) // Only change this if still stdout. --quiet could set it to 0 for example
 			{
 				opt->messages_target = 2; // stderr
 			}
 			opt->cc_to_stdout = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-pesheader") == 0)
+		if (strcmp(argv[i], "--pesheader") == 0)
 		{
 			opt->pes_header_to_stdout = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-debugdvbsub") == 0)
+		if (strcmp(argv[i], "--debugdvbsub") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_DVB;
 			continue;
 		}
-		if (strcmp(argv[i], "-ignoreptsjumps") == 0)
+		if (strcmp(argv[i], "--ignoreptsjumps") == 0)
 		{
 			opt->ignore_pts_jumps = 1;
 			continue;
 		}
-		// -ignoreptsjumps counterpart
-		if (strcmp(argv[i], "-fixptsjumps") == 0)
+		// --ignoreptsjumps counterpart
+		if (strcmp(argv[i], "--fixptsjumps") == 0)
 		{
 			opt->ignore_pts_jumps = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-quiet") == 0)
+		if (strcmp(argv[i], "--quiet") == 0)
 		{
 			opt->messages_target = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-debug") == 0)
+		if (strcmp(argv[i], "--debug") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_VERBOSE;
 			continue;
 		}
-		if (strcmp(argv[i], "-608") == 0)
+		if (strcmp(argv[i], "--608") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_DECODER_608;
 			continue;
 		}
-		if (strcmp(argv[i], "-deblev") == 0)
+		if (strcmp(argv[i], "--deblev") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_LEVENSHTEIN;
 			continue;
 		}
-		if (strcmp(argv[i], "-nolevdist") == 0)
+		if (strcmp(argv[i], "--no-levdist") == 0)
 		{
 			opt->dolevdist = 0;
 			continue;
 		}
-		if (strcmp(argv[i], "-levdistmincnt") == 0)
+		if (strcmp(argv[i], "--levdistmincnt") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2183,7 +2183,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-levdistmincnt has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-levdistmaxpct") == 0)
+		if (strcmp(argv[i], "--levdistmaxpct") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2196,7 +2196,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-levdistmaxpct has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-708") == 0)
+		if (strcmp(argv[i], "--708") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_708;
 #ifndef DISABLE_RUST
@@ -2204,65 +2204,65 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 #endif
 			continue;
 		}
-		if (strcmp(argv[i], "-goppts") == 0)
+		if (strcmp(argv[i], "--goppts") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_TIME;
 			continue;
 		}
-		if (strcmp(argv[i], "-vides") == 0)
+		if (strcmp(argv[i], "--vides") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_VIDES;
 			opt->analyze_video_stream = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-anvid") == 0 || strcmp(argv[i], "--analyzevideo") == 0)
+		if (strcmp(argv[i], "--anvid") == 0 || strcmp(argv[i], "--analyzevideo") == 0)
 		{
 			opt->analyze_video_stream = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-xds") == 0)
+		if (strcmp(argv[i], "--xds") == 0)
 		{
-			// XDS can be set regardless of -UCLA (isFinal) usage.
+			// XDS can be set regardless of --UCLA (isFinal) usage.
 			opt->transcript_settings.xds = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-xdsdebug") == 0)
+		if (strcmp(argv[i], "--xdsdebug") == 0)
 		{
 			opt->transcript_settings.xds = 1;
 			opt->debug_mask |= CCX_DMT_DECODER_XDS;
 			continue;
 		}
-		if (strcmp(argv[i], "-parsedebug") == 0)
+		if (strcmp(argv[i], "--parsedebug") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_PARSE;
 			continue;
 		}
-		if (strcmp(argv[i], "-parsePAT") == 0 || strcmp(argv[i], "-parsepat") == 0)
+		if (strcmp(argv[i], "--parsePAT") == 0 || strcmp(argv[i], "--parsepat") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_PAT;
 			continue;
 		}
-		if (strcmp(argv[i], "-parsePMT") == 0 || strcmp(argv[i], "-parsepmt") == 0)
+		if (strcmp(argv[i], "--parsePMT") == 0 || strcmp(argv[i], "--parsepmt") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_PMT;
 			continue;
 		}
-		if (strcmp(argv[i], "-dumpdef") == 0)
+		if (strcmp(argv[i], "--dumpdef") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_DUMPDEF;
 			continue;
 		}
-		if (strcmp(argv[i], "-investigate_packets") == 0)
+		if (strcmp(argv[i], "--investigate_packets") == 0)
 		{
 			opt->investigate_packets = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-cbraw") == 0)
+		if (strcmp(argv[i], "--cbraw") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_CBRAW;
 			continue;
 		}
-		if (strcmp(argv[i], "-tverbose") == 0)
+		if (strcmp(argv[i], "--tverbose") == 0)
 		{
 			opt->debug_mask |= CCX_DMT_TELETEXT;
 			tlt_config.verbose = 1;
@@ -2275,67 +2275,67 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 #endif // ENABLE_SHARING
-		if (strcmp(argv[i], "-fullbin") == 0)
+		if (strcmp(argv[i], "--fullbin") == 0)
 		{
 			opt->fullbin = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-nosync") == 0)
+		if (strcmp(argv[i], "--no-sync") == 0)
 		{
 			opt->nosync = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-haup") == 0 || strcmp(argv[i], "--hauppauge") == 0)
+		if (strcmp(argv[i], "--haup") == 0 || strcmp(argv[i], "--hauppauge") == 0)
 		{
 			opt->hauppauge_mode = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-mp4vidtrack") == 0)
+		if (strcmp(argv[i], "--mp4vidtrack") == 0)
 		{
 			opt->mp4vidtrack = 1;
 			continue;
 		}
-		if (strstr(argv[i], "-unicode") != NULL)
+		if (strstr(argv[i], "--unicode") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_UNICODE;
 			continue;
 		}
-		if (strstr(argv[i], "-utf8") != NULL)
+		if (strstr(argv[i], "--utf8") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_UTF_8;
 			continue;
 		}
-		if (strstr(argv[i], "-latin1") != NULL)
+		if (strstr(argv[i], "--latin1") != NULL)
 		{
 			opt->enc_cfg.encoding = CCX_ENC_LATIN_1;
 			continue;
 		}
-		if (strcmp(argv[i], "-poc") == 0 || strcmp(argv[i], "--usepicorder") == 0)
+		if (strcmp(argv[i], "--poc") == 0 || strcmp(argv[i], "--usepicorder") == 0)
 		{
 			opt->usepicorder = 1;
 			continue;
 		}
-		if (strstr(argv[i], "-myth") != NULL)
+		if (strstr(argv[i], "--myth") != NULL)
 		{
 			opt->auto_myth = 1;
 			continue;
 		}
-		if (strstr(argv[i], "-nomyth") != NULL)
+		if (strstr(argv[i], "--no-myth") != NULL)
 		{
 			opt->auto_myth = 0;
 			continue;
 		}
-		if (strstr(argv[i], "-wtvconvertfix") != NULL)
+		if (strstr(argv[i], "--wtvconvertfix") != NULL)
 		{
 			opt->wtvconvertfix = 1;
 			continue;
 		}
-		if (strstr(argv[i], "-wtvmpeg2") != NULL)
+		if (strstr(argv[i], "--wtvmpeg2") != NULL)
 		{
 			opt->wtvmpeg2 = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-o") == 0)
+		if (strcmp(argv[i], "--o") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2348,7 +2348,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-o has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-svc") == 0 || strcmp(argv[i], "--service") == 0)
+		if (strcmp(argv[i], "--svc") == 0 || strcmp(argv[i], "--service") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2362,7 +2362,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--service has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-datapid") == 0)
+		if (strcmp(argv[i], "--datapid") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2376,7 +2376,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-datapid has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-datastreamtype") == 0)
+		if (strcmp(argv[i], "--datastreamtype") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2389,7 +2389,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-datastreamtype has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-streamtype") == 0)
+		if (strcmp(argv[i], "--streamtype") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2404,7 +2404,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* Teletext stuff */
-		if (strcmp(argv[i], "-tpage") == 0)
+		if (strcmp(argv[i], "--tpage") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2420,7 +2420,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* Red Hen/ UCLA Specific stuff */
-		if (strcmp(argv[i], "-UCLA") == 0 || strcmp(argv[i], "-ucla") == 0)
+		if (strcmp(argv[i], "--UCLA") == 0 || strcmp(argv[i], "--ucla") == 0)
 		{
 			opt->ucla = 1;
 			opt->millis_separator = '.';
@@ -2436,37 +2436,37 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 			continue;
 		}
-		if (strcmp(argv[i], "-latrusmap") == 0)
+		if (strcmp(argv[i], "--latrusmap") == 0)
 		{
 			tlt_config.latrusmap = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-tickertext") == 0 || strcmp(argv[i], "-tickertape") == 0)
+		if (strcmp(argv[i], "--tickertext") == 0 || strcmp(argv[i], "--tickertape") == 0)
 		{
 			opt->tickertext = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-lf") == 0 || strcmp(argv[i], "-LF") == 0)
+		if (strcmp(argv[i], "--lf") == 0 || strcmp(argv[i], "--LF") == 0)
 		{
 			opt->enc_cfg.line_terminator_lf = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-df") == 0 || strcmp(argv[i], "-DF") == 0)
+		if (strcmp(argv[i], "--df") == 0 || strcmp(argv[i], "--DF") == 0)
 		{
 			opt->enc_cfg.force_dropframe = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-noautotimeref") == 0)
+		if (strcmp(argv[i], "--no-autotimeref") == 0)
 		{
 			opt->noautotimeref = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-autodash") == 0 || strcmp(argv[i], "-sem") == 0)
+		if (strcmp(argv[i], "--autodash") == 0 || strcmp(argv[i], "--sem") == 0)
 		{
 			opt->enc_cfg.autodash = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "-xmltv") == 0)
+		if (strcmp(argv[i], "--xmltv") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -2480,7 +2480,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
-		if (strcmp(argv[i], "-xmltvliveinterval") == 0)
+		if (strcmp(argv[i], "--xmltvliveinterval") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -2494,7 +2494,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
-		if (strcmp(argv[i], "-xmltvoutputinterval") == 0)
+		if (strcmp(argv[i], "--xmltvoutputinterval") == 0)
 		{
 			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
@@ -2508,13 +2508,13 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				continue;
 			}
 		}
-		if (strcmp(argv[i], "-xmltvonlycurrent") == 0)
+		if (strcmp(argv[i], "--xmltvonlycurrent") == 0)
 		{
 			opt->xmltvonlycurrent = 1;
 			i++; // why do we skip next?
 			continue;
 		}
-		if (strcmp(argv[i], "-unixts") == 0)
+		if (strcmp(argv[i], "--unixts") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2536,28 +2536,28 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-unixts has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-sects") == 0)
+		if (strcmp(argv[i], "--sects") == 0)
 		{
 			opt->date_format = ODF_SECONDS;
 			continue;
 		}
-		if (strcmp(argv[i], "-datets") == 0)
+		if (strcmp(argv[i], "--datets") == 0)
 		{
 			opt->date_format = ODF_DATE;
 			continue;
 		}
-		if (strcmp(argv[i], "-teletext") == 0)
+		if (strcmp(argv[i], "--teletext") == 0)
 		{
 			opt->demux_cfg.codec = CCX_CODEC_TELETEXT;
 			continue;
 		}
-		if (strcmp(argv[i], "-noteletext") == 0)
+		if (strcmp(argv[i], "--no-teletext") == 0)
 		{
 			opt->demux_cfg.nocodec = CCX_CODEC_TELETEXT;
 			continue;
 		}
 		/* Custom transcript */
-		if (strcmp(argv[i], "-customtxt") == 0)
+		if (strcmp(argv[i], "--customtxt") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2582,7 +2582,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 					}
 					else
 					{
-						fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after -UCLA is used!\n");
+						fatal(EXIT_INCOMPATIBLE_PARAMETERS, "customtxt cannot be set after --UCLA is used!\n");
 					}
 				}
 				else
@@ -2599,7 +2599,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 		/* Network stuff */
-		if (strcmp(argv[i], "-udp") == 0)
+		if (strcmp(argv[i], "--udp") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2609,7 +2609,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				char *colon = strchr(argv[i], ':');
 				if (at && !colon)
 				{
-					fatal(EXIT_MALFORMED_PARAMETER, "If -udp contains an '@', it must also contain a ':'\n");
+					fatal(EXIT_MALFORMED_PARAMETER, "If --udp contains an '@', it must also contain a ':'\n");
 				}
 				else if (at && colon)
 				{
@@ -2639,7 +2639,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-udp has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-sendto") == 0)
+		if (strcmp(argv[i], "--sendto") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2691,7 +2691,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-sendto has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-tcp") == 0)
+		if (strcmp(argv[i], "--tcp") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2709,7 +2709,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-tcp has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-tcppassword") == 0)
+		if (strcmp(argv[i], "--tcppassword") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2722,7 +2722,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-tcppassword has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-tcpdesc") == 0)
+		if (strcmp(argv[i], "--tcpdesc") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2736,7 +2736,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			}
 		}
 
-		if (strcmp(argv[i], "-font") == 0)
+		if (strcmp(argv[i], "--font") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2749,7 +2749,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-font has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-italics") == 0 && i < argc - 1)
+		if (strcmp(argv[i], "--italics") == 0 && i < argc - 1)
 		{
 			opt->enc_cfg.render_font_italics = argv[i + 1];
 			i++;
@@ -2757,7 +2757,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 
 #ifdef WITH_LIBCURL
-		if (strcmp(argv[i], "-curlposturl") == 0)
+		if (strcmp(argv[i], "--curlposturl") == 0)
 		{
 			if (i < argc - 1)
 			{
@@ -2791,7 +2791,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-sharing-url has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "-translate") == 0)
+		if (strcmp(argv[i], "--translate") == 0)
 		{
 			if (i < argc - 1)
 			{
