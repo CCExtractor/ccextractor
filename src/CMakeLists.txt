@@ -1,5 +1,4 @@
 cmake_minimum_required (VERSION 3.0.2)
-
 project (CCExtractor)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
@@ -55,10 +54,17 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
-  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
-endif ()
+# Check if the operating system is macOS (Darwin)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+    # ARM Macs
+    include_directories("/opt/homebrew/include")
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
+    aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
+  else()
+    include_directories("/usr/local/include")
+  endif()
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
