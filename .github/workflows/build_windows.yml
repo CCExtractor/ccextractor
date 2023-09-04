@@ -25,7 +25,7 @@ jobs:
     runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
@@ -67,7 +67,7 @@ jobs:
     runs-on: windows-2019
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
       - name: Install llvm and clang
