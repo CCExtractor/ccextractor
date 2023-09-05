@@ -1969,21 +1969,21 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--program-number") == 0) == 0)
+		if (strcmp(argv[i], "--program-number") == 0)
+		{
+			if (i < argc - 1 && isanumber(argv[i + 1]))
 			{
-				if (i < argc - 1 && isanumber(argv[i + 1]))
-				{
-					i++;
-					opt->demux_cfg.ts_forced_program = atoi_hex(argv[i]);
-					opt->demux_cfg.ts_forced_program_selected = 1;
-					continue;
-				}
-				else
-				{
-					opt->demux_cfg.ts_forced_program = -1; // Autodetect
-					continue;
-				}
+				i++;
+				opt->demux_cfg.ts_forced_program = atoi_hex(argv[i]);
+				opt->demux_cfg.ts_forced_program_selected = 1;
+				continue;
 			}
+			else
+			{
+				opt->demux_cfg.ts_forced_program = -1; // Autodetect
+				continue;
+			}
+		}
 		if (strcmp(argv[i], "--autoprogram") == 0)
 		{
 			opt->demux_cfg.ts_autoprogram = 1;
