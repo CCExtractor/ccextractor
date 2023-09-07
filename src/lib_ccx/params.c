@@ -377,16 +377,10 @@ void print_usage(void)
 	mprint("subtitle file with contiguous timing.\n\n");
 	mprint("Output file segmentation:\n");
 	mprint("    --outinterval x output in interval of x seconds\n");
-	mprint("   --segmentonkeyonly --key: When segmenting files, do it only after a I frame\n");
+	mprint("   --segmentonkeyonly: When segmenting files, do it only after a I frame\n");
 	mprint("                            trying to behave like FFmpeg\n\n");
 	mprint("Network support:\n");
-	mprint("            --udp port: Read the input via UDP (listening in the specified port)\n");
-	mprint("                       instead of reading a file.\n\n");
-	mprint("            --udp [host:]port: Read the input via UDP (listening in the specified\n");
-	mprint("                              port) instead of reading a file. Host can be a\n");
-	mprint("                              hostname or IPv4 address. If host is not specified\n");
-	mprint("                              then listens on the local host.\n\n");
-	mprint("            --udp [src@host:]port: Read the input via UDP (listening in the specified\n");
+	mprint("      --udp [[src@]host:]port: Read the input via UDP (listening in the specified\n");
 	mprint("                              port) instead of reading a file. Host and src can be a\n");
 	mprint("                              hostname or IPv4 address. If host is not specified\n");
 	mprint("                              then listens on the local host.\n\n");
@@ -838,7 +832,7 @@ void print_usage(void)
 	mprint("            --parsePAT: Print Program Association Table dump.\n");
 	mprint("            --parsePMT: Print Program Map Table dump.\n");
 	mprint("              --dumpdef: Hex-dump defective TS packets.\n");
-	mprint(" --investigate_packets: If no CC packets are detected based on the PMT, try\n");
+	mprint(" --investigate-packets: If no CC packets are detected based on the PMT, try\n");
 	mprint("                       to find data in all packets by scanning.\n");
 #ifdef ENABLE_SHARING
 	mprint("       -sharing-debug: Print extracted CC sharing service messages\n");
@@ -886,7 +880,7 @@ void print_usage(void)
 
 	mprint("Communication with other programs and console output:\n");
 
-	mprint("   --gui_mode_reports: Report progress and interesting events to stderr\n");
+	mprint("   --gui-mode-reports: Report progress and interesting events to stderr\n");
 	mprint("                       in a easy to parse format. This is intended to be\n");
 	mprint("                       used by other programs. See docs directory for.\n");
 	mprint("                       details.\n");
@@ -914,10 +908,10 @@ void print_usage(void)
 	mprint("       --tickertext : Search for burned-in ticker text at the bottom of\n");
 	mprint("                     the screen.\n");
 	mprint("\n");
-	mprint("         --ocr_mode : Set the OCR mode to either frame-wise, word-wise\n");
+	mprint("         --ocr-mode : Set the OCR mode to either frame-wise, word-wise\n");
 	mprint("                     or letter wise.\n");
-	mprint("                     e.g. --ocr_mode frame (default), --ocr_mode word, \n");
-	mprint("                     --ocr_mode letter\n");
+	mprint("                     e.g. --ocr-mode frame (default), --ocr-mode word, \n");
+	mprint("                     --ocr-mode letter\n");
 	mprint("\n");
 	mprint("         --subcolor : Specify the color of the subtitles\n");
 	mprint("                     Possible values are in the set \n");
@@ -1282,7 +1276,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				opt->hardsubx_and_common = 1;
 				continue;
 			}
-			if (strcmp(argv[i], "--ocr_mode") == 0)
+			if (strcmp(argv[i], "--ocr-mode") == 0)
 			{
 				if (i < argc - 1)
 				{
@@ -1917,13 +1911,13 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-outinterval has no argument.\n");
 			}
 		}
-		if (strcmp(argv[i], "--segmentonkeyonly") == 0 || strcmp(argv[i], "--key") == 0)
+		if (strcmp(argv[i], "--segmentonkeyonly") == 0)
 		{
 			opt->segment_on_key_frames_only = 1;
 			opt->analyze_video_stream = 1;
 			continue;
 		}
-		if (strcmp(argv[i], "--gui_mode_reports") == 0)
+		if (strcmp(argv[i], "--gui-mode-reports") == 0)
 		{
 			opt->gui_mode_reports = 1;
 			continue;
@@ -2253,7 +2247,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->debug_mask |= CCX_DMT_DUMPDEF;
 			continue;
 		}
-		if (strcmp(argv[i], "--investigate_packets") == 0)
+		if (strcmp(argv[i], "--investigate-packets") == 0)
 		{
 			opt->investigate_packets = 1;
 			continue;
