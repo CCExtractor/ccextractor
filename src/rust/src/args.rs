@@ -612,11 +612,15 @@ pub struct Args {
     /// use 1, 2 or 3 lines. Note that 1 line is not
     /// a real mode rollup mode, so CCExtractor does what
     /// it can.
-    /// In --ru ru1 the start timestamp is actually the timestamp
+    /// In --ru1 the start timestamp is actually the timestamp
     /// of the first character received which is possibly more
     /// accurate.
-    #[arg(long, verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
-    pub rollup: Option<Ru>,
+    #[arg(long="ru1", conflicts_with="rollup2", verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    pub rollup1: bool,
+    #[arg(long="ru2", conflicts_with="rollup3", verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    pub rollup2: bool,
+    #[arg(long="ru3", conflicts_with="rollup1", verbatim_doc_comment, value_name="type", help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    pub rollup3: bool,
     /// For srt/sami/webvtt, add this number of milliseconds to
     /// all times. For example, --delay 400 makes subtitles
     /// appear 400ms late. You can also use negative numbers
@@ -878,13 +882,6 @@ pub struct Args {
 pub enum Codec {
     Dvbsub,
     Teletext,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Ru {
-    Ru1,
-    Ru2,
-    Ru3,
 }
 
 #[derive(Display, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

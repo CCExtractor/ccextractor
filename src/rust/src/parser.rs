@@ -15,11 +15,7 @@ use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
 use crate::common;
-use crate::{
-    args::{Codec, Ru},
-    common::CcxDebugMessageTypes,
-    common::*,
-};
+use crate::{args::Codec, common::CcxDebugMessageTypes, common::*};
 
 cfg_if! {
     if #[cfg(test)] {
@@ -731,20 +727,12 @@ impl CcxOptions {
             self.no_rollup = true;
             self.settings_608.no_rollup = true;
             self.settings_dtvcc.no_rollup = true;
-        }
-
-        if let Some(ref ru) = args.rollup {
-            match ru {
-                Ru::Ru1 => {
-                    self.settings_608.force_rollup = 1;
-                }
-                Ru::Ru2 => {
-                    self.settings_608.force_rollup = 2;
-                }
-                Ru::Ru3 => {
-                    self.settings_608.force_rollup = 3;
-                }
-            }
+        } else if args.rollup1 {
+            self.settings_608.force_rollup = 1;
+        } else if args.rollup2 {
+            self.settings_608.force_rollup = 2;
+        } else if args.rollup3 {
+            self.settings_608.force_rollup = 3;
         }
 
         if args.trim {
