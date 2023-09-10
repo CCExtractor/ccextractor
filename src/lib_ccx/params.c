@@ -509,7 +509,7 @@ void print_usage(void)
 	mprint("                       use the PTS information.  Use this switch only when\n");
 	mprint("                       needed.\n");
 	mprint("                --myth: Force MythTV code branch.\n");
-	mprint("              --nomyth: Disable MythTV code branch.\n");
+	mprint("              --no-myth: Disable MythTV code branch.\n");
 	mprint("                       The MythTV branch is needed for analog captures where\n");
 	mprint("                       the closed caption data is stored in the VBI, such as\n");
 	mprint("                       those with bttv cards (Hauppage 250 for example). This\n");
@@ -548,7 +548,7 @@ void print_usage(void)
 	mprint("                       dedicated track is detected it will be processed instead\n");
 	mprint("                       of the video track. If you need to force the video track\n");
 	mprint("                       to be processed instead use this option.\n");
-	mprint("       --noautotimeref: Some streams come with broadcast date information. When\n");
+	mprint("       --no-autotimeref: Some streams come with broadcast date information. When\n");
 	mprint("                       such data is available, CCExtractor will set its time\n");
 	mprint("                       reference to the received data. Use this parameter if\n");
 	mprint("                       you prefer your own reference. Note: Current this only\n");
@@ -572,7 +572,7 @@ void print_usage(void)
 	mprint("  because it's where samples files that could benefit from this were available.\n");
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
 	mprint("  parameters.\n\n");
-	mprint("           --nolevdist: Don't attempt to correct typos with Levenshtein distance.\n");
+	mprint("           --no-levdist: Don't attempt to correct typos with Levenshtein distance.\n");
 	mprint(" --levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint("                       of the length of the strings.Default 2. \n");
 	mprint("                       This means that if the calculated distance \n");
@@ -596,7 +596,7 @@ void print_usage(void)
 	mprint("                 --bom: Append a BOM (Byte Order Mark) to output files.\n");
 	mprint("                       Note that most text processing tools in linux will not\n");
 	mprint("                       like BOM.\n");
-	mprint("                       --nobom: Do not append a BOM (Byte Order Mark) to output\n");
+	mprint("                       --no-bom: Do not append a BOM (Byte Order Mark) to output\n");
 	mprint("                       files. Note that this may break files when using\n");
 	mprint("                       Windows. This is the default in non-Windows builds.\n");
 	mprint("             --unicode: Encode subtitles in Unicode instead of Latin-1.\n");
@@ -708,7 +708,7 @@ void print_usage(void)
 	mprint("Options that affect how ccextractor reads and writes (buffering):\n");
 
 	mprint("         --bufferinput: Forces input buffering.\n");
-	mprint("       --nobufferinput: Disables input buffering.\n");
+	mprint("       --no-bufferinput: Disables input buffering.\n");
 	mprint("      --buffersize val: Specify a size for reading, in bytes (suffix with K or\n");
 	mprint("                       or M for kilobytes and megabytes). Default is 16M.\n");
 	mprint("                 --koc: keep-output-close. If used then CCExtractor will close\n");
@@ -822,7 +822,7 @@ void print_usage(void)
 	mprint("                       video stream.\n");
 	mprint("               --cbraw: Print debug trace with the raw 608/708 data with\n");
 	mprint("                       time stamps.\n");
-	mprint("              --nosync: Disable the syncing code.  Only useful for debugging\n");
+	mprint("              --no-sync: Disable the syncing code.  Only useful for debugging\n");
 	mprint("                       purposes.\n");
 	mprint("             --fullbin: Disable the removal of trailing padding blocks\n");
 	mprint("                       when exporting to bin format.  Only useful for\n");
@@ -848,7 +848,7 @@ void print_usage(void)
 	mprint("            --teletext: Force teletext mode even if teletext is not detected.\n");
 	mprint("                       If used, you should also pass --datapid to specify\n");
 	mprint("                       the stream ID you want to process.\n");
-	mprint("          --noteletext: Disable teletext processing. This might be needed\n");
+	mprint("          --no-teletext: Disable teletext processing. This might be needed\n");
 	mprint("                       for video streams that have both teletext packets\n");
 	mprint("                       and CEA-608/708 packets (if teletext is processed\n");
 	mprint("                       then CEA-608/708 processing is disabled).\n");
