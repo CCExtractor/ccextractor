@@ -395,7 +395,7 @@ void print_usage(void)
 	mprint("            --tcp-description description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
 	mprint("Options that affect what will be processed:\n");
-	mprint(" --output-field 1/2/12: Output Field 1 data, Field 2 data, or both\n");
+	mprint("      --output-field 1 / 2 / both: Output Field 1 data, Field 2 data, or both\n");
 	mprint("                       (DEFAULT is 1)\n");
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
@@ -2091,10 +2091,10 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			if (i < argc - 1)
 			{
 				i++;
-				opt->extract = atoi_hex(argv[i]);
+				opt->extract = strcmp(argv[i], "both") == 0 ? 12 : atoi_hex(argv[i]);
 				if (opt->extract != 1 && opt->extract != 2 && opt->extract != 12)
 				{
-					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 or 2 or 12.\n");
+					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 or 2 or both.\n");
 				}
 				opt->is_608_enabled = 1;
 				continue;
