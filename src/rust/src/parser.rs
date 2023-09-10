@@ -10,7 +10,7 @@ use cfg_if::cfg_if;
 use common::CcxOptions;
 use time::OffsetDateTime;
 
-use crate::args::{self, InFormat, OutputField};
+use crate::args::{self, InFormat};
 use crate::ccx_encoders_helpers::{
     CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
 };
@@ -839,7 +839,14 @@ impl CcxOptions {
         }
 
         if let Some(ref extract) = args.output_field {
-            self.extract = Some(*extract);
+            if *extract == "1" || *extract == "2" {
+                self.extract = Some(get_atoi_hex(extract));
+            } else if *extract == "both" {
+                self.extract = Some(12);
+            } else {
+                println!("Invalid output field");
+                std::process::exit(ExitCode::MalformedParameter as i32);
+            }
             self.is_608_enabled = true;
         }
 
@@ -1345,7 +1352,7 @@ impl CcxOptions {
         if self.write_format != CcxOutputFormat::Dvdraw
             && self.cc_to_stdout
             && self.extract.is_some()
-            && self.extract.unwrap() == OutputField::Both
+            && self.extract.unwrap() == 12
         {
             println!(
                 "You can't extract both fields to stdout at the same time in broadcast mode.\n",
@@ -1603,14 +1610,14 @@ pub mod tests {
             "ttxt",
             "--latin1",
             "--output-field",
-            "field2",
+            "2",
         ]);
 
         assert!(options.ucla);
         assert!(options.demux_cfg.ts_autoprogram);
         assert!(options.is_608_enabled);
         assert_eq!(options.write_format, CcxOutputFormat::Transcript);
-        assert_eq!(options.extract.unwrap(), OutputField::Field2);
+        assert_eq!(options.extract.unwrap(), 2);
         assert_eq!(options.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 

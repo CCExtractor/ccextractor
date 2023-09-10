@@ -160,8 +160,8 @@ pub struct Args {
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_description: Option<String>,
     /// Output field1 data, field2 data, or both
-    #[arg(long, value_name="data", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
-    pub output_field: Option<OutputField>,
+    #[arg(long, value_name="1/2/both", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    pub output_field: Option<String>,
     /// Use --append to prevent overwriting of existing files. The output will be
     /// appended instead.
     #[arg(long, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
@@ -878,13 +878,6 @@ pub struct Args {
 pub enum Codec {
     Dvbsub,
     Teletext,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum OutputField {
-    Field1 = 1,
-    Field2 = 2,
-    Both = 12,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

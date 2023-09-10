@@ -1,4 +1,3 @@
-use crate::args::OutputField;
 use crate::bindings::*;
 use std::ffi::CString;
 
@@ -540,7 +539,7 @@ impl Default for CcxEncoderCfg {
 
 #[derive(Debug)]
 pub struct CcxEncoderCfg {
-    pub extract: Option<OutputField>,
+    pub extract: Option<i32>,
     pub dtvcc_extract: bool,
     pub gui_mode_reports: bool,
     pub output_filename: String,
@@ -650,7 +649,7 @@ impl CcxEncoderCfg {
 
 #[derive(Debug, Default)]
 pub struct CcxOptions {
-    pub extract: Option<OutputField>,
+    pub extract: Option<i32>,
     pub no_rollup: bool,
     pub noscte20: bool,
     pub webvtt_create_css: bool,
