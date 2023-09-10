@@ -7,18 +7,10 @@ env:
 on:
   workflow_dispatch:
   push:
-    paths:
-      - ".github/workflows/build_windows.yml"
-      - "**.c"
-      - "**.h"
-      - "windows/**"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - ".github/workflows/build_windows.yml"
-      - "**.c"
-      - "**.h"
-      - "windows/**"
+    - '.github/workflows/build_windows.yml'
 
 jobs:
   build_release:
