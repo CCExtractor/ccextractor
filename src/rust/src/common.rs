@@ -592,7 +592,7 @@ impl CcxEncoderCfg {
     pub fn to_ctype(&self) -> encoder_cfg {
         encoder_cfg {
             extract: if let Some(value) = self.extract {
-                value as i32
+                value
             } else {
                 0
             },
@@ -768,7 +768,7 @@ impl CcxOptions {
     pub fn to_ctype(&self) -> ccx_s_options {
         ccx_s_options {
             extract: if let Some(value) = self.extract {
-                value as i32
+                value
             } else {
                 0
             },
