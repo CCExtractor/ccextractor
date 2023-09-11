@@ -28,7 +28,7 @@ cfg-if = "1.0.0"
 num-integer = "0.1.45"
 
 [build-dependencies]
-bindgen = "0.58.1"
+bindgen = "0.64.0"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]

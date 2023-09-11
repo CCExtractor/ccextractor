@@ -1863,7 +1863,7 @@ pub mod tests {
 
     #[test]
     fn options_23() {
-        let (options, _) = parse_args(&["--rollup", "ru1"]);
+        let (options, _) = parse_args(&["--ru1"]);
 
         assert_eq!(options.settings_608.force_rollup, 1);
     }
