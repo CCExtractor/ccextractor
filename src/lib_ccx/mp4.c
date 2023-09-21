@@ -51,6 +51,15 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 	{
 		u32 nal_length;
 
+		if (i + c->nal_unit_size > s->dataLength) {
+			mprint("Corrupted packet detected in process_avc_sample. dataLength "
+				"%u is less than index %u + nal_unit_size %u. Ignoring.\n",
+				s->dataLength, i, c->nal_unit_size);
+			// The packet is likely corrupted, it's unsafe to read this many bytes
+			// even to detect the length of the next `nal`. Ignoring this error,
+			// hopefully the outer loop in `process_avc_track` can recover.
+			return status;
+		}
 		switch (c->nal_unit_size)
 		{
 			case 1:
@@ -63,6 +72,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 				nal_length = bswap32(*(long *)&s->data[i]);
 				break;
 		}
+		const u32 previous_index = i;
 		i += c->nal_unit_size;
 
 		s_nalu_stats.total += 1;
@@ -70,6 +80,15 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 
 		temp_debug = 0;
 
+		if (i + nal_length <= previous_index || i + nal_length > s->dataLength) {
+			mprint("Corrupted sample detected in process_avc_sample. dataLength %u "
+				"is less than index %u + nal_unit_size %u + nal_length %u. Ignoring.\n",
+				s->dataLength, previous_index, c->nal_unit_size, nal_length);
+			// The packet is likely corrupted, it's unsafe to procell nal_length bytes
+			// because they are past the sample end. Ignoring this error, hopefully
+			// the outer loop in `process_avc_track` can recover.
+			return status;
+		}
 		if (nal_length > 0)
 			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(s->data[i]), nal_length, sub);
 		i += nal_length;
