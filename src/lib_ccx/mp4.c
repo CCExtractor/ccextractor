@@ -74,12 +74,6 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 		}
 		const u32 previous_index = i;
 		i += c->nal_unit_size;
-
-		s_nalu_stats.total += 1;
-		s_nalu_stats.type[s->data[i] & 0x1F] += 1;
-
-		temp_debug = 0;
-
 		if (i + nal_length <= previous_index || i + nal_length > s->dataLength) {
 			mprint("Corrupted sample detected in process_avc_sample. dataLength %u "
 				"is less than index %u + nal_unit_size %u + nal_length %u. Ignoring.\n",
@@ -89,8 +83,14 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 			// the outer loop in `process_avc_track` can recover.
 			return status;
 		}
-		if (nal_length > 0)
+
+		s_nalu_stats.total += 1;
+		temp_debug = 0;
+
+		if (nal_length > 0) {
+			s_nalu_stats.type[s->data[i] & 0x1F] += 1;
 			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(s->data[i]), nal_length, sub);
+		}
 		i += nal_length;
 	} // outer for
 	assert(i == s->dataLength);
