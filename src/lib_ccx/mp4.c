@@ -88,6 +88,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 		temp_debug = 0;
 
 		if (nal_length > 0) {
+			// s->data[i] is only relevant and safe to access here.
 			s_nalu_stats.type[s->data[i] & 0x1F] += 1;
 			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(s->data[i]), nal_length, sub);
 		}
