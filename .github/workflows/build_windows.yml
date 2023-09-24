@@ -3,6 +3,7 @@ name: Build CCExtractor on Windows
 env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
+  VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
 
 on:
   workflow_dispatch:
@@ -37,10 +38,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            C:\vcpkg
-          key: vcpkg-${{ runner.os }}-${{ matrix.config.vcpkg_triplet }}
+            C:\vcpkg\.cache
+          key: vcpkg-${{ runner.os }}
       - name: Install dependencies
-        run: cd C:\vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -81,10 +82,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            C:\vcpkg
-          key: vcpkg-${{ runner.os }}-${{ matrix.config.vcpkg_triplet }}
+            C:\vcpkg\.cache
+          key: vcpkg-${{ runner.os }}
       - name: Install dependencies
-        run: cd C:\vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
