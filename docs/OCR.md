@@ -93,7 +93,7 @@ Download prebuild library of leptonica and tesseract from following link
 https://drive.google.com/file/d/0B2ou7ZfB-2nZOTRtc3hJMHBtUFk/view?usp=sharing  
 
 put the path of libs/include of leptonica and tesseract in library paths.  
-1. In visual studio 2013 right click <Project> and select property.
+1. In visual studio 2022 right click <Project> and select property.
 2. Select Configuration properties in left panel(column) of property.
 3. Select VC++ Directory.
 4. In the right pane, in the right-hand column of the VC++ Directory property, open the drop-down menu and choose Edit.
@@ -101,7 +101,7 @@ put the path of libs/include of leptonica and tesseract in library paths.
 
 
 Set preprocessor flag ENABLE_OCR=1  
-1. In visual studio 2013 right click <Project> and select property.
+1. In visual studio 2022 right click <Project> and select property.
 2. In the left panel, select Configuration Properties, C/C++, Preprocessor.
 3. In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit.
 4. In the Preprocessor Definitions dialog box, add ENABLE_OCR=1. Choose OK to save your changes.
