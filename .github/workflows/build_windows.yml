@@ -22,12 +22,14 @@ on:
 
 jobs:
   build_release:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
+        with:
+          msbuild-architecture: x64
       - name: Install llvm and clang
         run: choco install llvm gpac
       - uses: actions-rs/toolchain@v1
@@ -64,12 +66,14 @@ jobs:
             ./windows/x64/Release-Full/ccextractorwinfull.exe
             ./windows/x64/Release-Full/*.dll
   build_debug:
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
+        with:
+          msbuild-architecture: x64
       - name: Install llvm and clang
         run: choco install llvm gpac
       - name: Setup Vcpkg
