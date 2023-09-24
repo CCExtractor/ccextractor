@@ -20,7 +20,7 @@ rsmpeg = { version = "0.14.1", optional = true, features = [
 ] }
 tesseract-sys = { version = "0.5.14", optional = true, default-features = false }
 leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
-clap = { version = "4.3.19", features = ["derive"] }
+clap = { version = "4.4.4", features = ["derive"] }
 strum = "0.25"
 strum_macros = "0.25"
 time = "0.3.25"
@@ -32,3 +32,7 @@ bindgen = "0.64.0"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true

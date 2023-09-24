@@ -363,9 +363,9 @@ pub struct Args {
     /// Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub timestamp_map: bool,
-    /// Don't attempt to correct typos with Levenshtein distance.
-    #[arg(long, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
-    pub no_levdist: bool,
+    // /// Don't attempt to correct typos with Levenshtein distance.
+    // #[arg(long, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
+    // pub no_levdist: bool,
     /// Minimum distance we always allow regardless
     /// of the length of the strings.Default 2.
     /// This means that if the calculated distance

@@ -17,8 +17,10 @@ CVS
 mac/ccextractor
 linux/ccextractor
 linux/depend
+windows/x86_64-pc-windows-msvc/**
 windows/Debug/**
 windows/Debug-OCR/**
+windows/release-with-debug/**
 windows/Release/**
 windows/Release-Full/**
 windows/Release-OCR/**
