@@ -46,14 +46,14 @@ jobs:
           cache-version: "3"
           ignore-reserve-cache-error: true
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: cd C:\vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_ROOT: C:\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -76,15 +76,15 @@ jobs:
           msbuild-architecture: x64
       - name: Install llvm and clang
         run: choco install llvm gpac
-      - name: Setup Vcpkg
-        id: vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
+      - name: Cache vcpkg
+        id: cache
+        uses: actions/cache@v3
         with:
-          committish: "2023.08.09"
-          cache-version: "3"
-          ignore-reserve-cache-error: true
+          path: |
+            C:\vcpkg
+          key: vcpkg-${{ runner.os }}-${{ matrix.config.vcpkg_triplet }}
       - name: Install dependencies
-        run: cd vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: cd C:\vcpkg && vcpkg integrate install && vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -97,7 +97,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_ROOT: C:\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
