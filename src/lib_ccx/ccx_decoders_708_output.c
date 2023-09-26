@@ -110,17 +110,10 @@ void dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, dtvcc_pen_attribs pen_attribs
 
 size_t write_utf16_char(unsigned short utf16_char, char *out)
 {
-	if ((utf16_char >> 8) != 0)
-	{
-		out[0] = (unsigned char)(utf16_char >> 8);
-		out[1] = (unsigned char)(utf16_char & 0xff);
-		return 2;
-	}
-	else
-	{
-		out[0] = (unsigned char)(utf16_char);
-		return 1;
-	}
+    // Always write 2 bytes for UTF-16BE
+    out[0] = (char)((utf16_char >> 8) & 0xFF);
+    out[1] = (char)(utf16_char & 0xFF);
+    return 2;
 }
 
 void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
