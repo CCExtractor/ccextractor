@@ -62,7 +62,7 @@ jobs:
       run:  wix build -ext "$HOME\.wix\extensions\WixToolset.UI.wixext\4.0.0-preview.0\tools\WixToolset.UI.wixext.dll" -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs
       working-directory: ./windows
     - name: Upload as asset
-      uses: AButler/upload-release-assets@v2.0
+      uses: AButler/upload-release-assets@v3.0
       with:
         files: './windows/CCExtractor.msi;./windows/CCExtractor_win_portable.zip'
         repo-token: ${{ secrets.GITHUB_TOKEN }} 
@@ -75,7 +75,7 @@ jobs:
       - name: Create .tar.gz without git and windows folders
         run: tar -pczf ./ccextractor_minimal.tar.gz --exclude "ccextractor/windows" --exclude "ccextractor/.git" ccextractor
       - name: Upload as asset
-        uses: AButler/upload-release-assets@v2.0
+        uses: AButler/upload-release-assets@v3.0
         with:
           files: './ccextractor_minimal.tar.gz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
