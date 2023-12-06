@@ -33,6 +33,8 @@ sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
 
+**Note:** On Ubuntu Version 23.10 (Mantic), `libgpac-dev` isn't available, you should build gpac from source. 
+
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
 **Note:** On Ubuntu Version 14.04 (Trusty) and earlier, you should build leptonica and tesseract from source
