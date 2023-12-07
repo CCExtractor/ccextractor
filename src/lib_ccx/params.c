@@ -657,7 +657,7 @@ void print_usage(void)
 	mprint("                       the source TS file. Mode: 1 = full output\n");
 	mprint("                       2 = live output. 3 = both\n");
 	mprint(" --xmltvliveinterval x: interval of x seconds between writing live mode xmltv output.\n");
-	mprint("-xmltvoutputinterval x: interval of x seconds between writing full file xmltv output.\n");
+	mprint("--xmltvoutputinterval x: interval of x seconds between writing full file xmltv output.\n");
 	mprint("    --xmltvonlycurrent: Only print current events for xmltv output.\n");
 	mprint("                 --sem: Create a .sem file for each output file that is open\n");
 	mprint("                       and delete it on file close.\n");
