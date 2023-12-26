@@ -1542,9 +1542,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_input_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "--in=", 4) == 0)
+		if (strncmp(argv[i], "--in=", 5) == 0)
 		{
-			set_input_format(opt, argv[i] + 4);
+			set_input_format(opt, argv[i] + 5);
 			continue;
 		}
 
@@ -1705,9 +1705,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			set_output_format(opt, argv[i]);
 			continue;
 		}
-		if (strncmp(argv[i], "--out=", 5) == 0)
+		if (strncmp(argv[i], "--out=", 6) == 0)
 		{
-			set_output_format(opt, argv[i] + 5);
+			set_output_format(opt, argv[i] + 6);
 			continue;
 		}
 
