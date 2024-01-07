@@ -21,6 +21,7 @@
 - Fix: Repeated values for enums
 - Cleanup: Remove the (unmaintained) Nuklear GUI code
 - Cleanup: Reduce the amount of Windows build options in the project file
+- Fix: fatal out of memory error extracting from a VOB PS
 
 0.94 (2021-12-14)
 -----------------
