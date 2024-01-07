@@ -616,6 +616,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					// realloc if memory allocated may be not enough
 					int length_needed = (new_text_out_iter - new_text_out) +
 							    (line_end - line_start) +
+							    (last_font_tag_end ? (last_font_tag_end - last_font_tag) : 0) +
 							    length_closing_font + 32;
 
 					if (length_needed > length)
