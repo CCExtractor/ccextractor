@@ -57,7 +57,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Release build
           path: |
@@ -99,7 +99,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Debug build
           path: |
