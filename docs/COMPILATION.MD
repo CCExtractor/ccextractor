@@ -17,7 +17,7 @@ git clone https://github.com/CCExtractor/ccextractor.git
 Debian:
 
 ```bash
-sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
+sudo apt-get install -y libgpac-dev libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
 RHEL:
@@ -32,6 +32,8 @@ sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
+
+**Note:** On Ubuntu Version 23.10 (Mantic) and later, `libgpac-dev` isn't available, you should build gpac from source by following the easy build instructions [here](https://github.com/gpac/gpac/wiki/GPAC-Build-Guide-for-Linux)
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 

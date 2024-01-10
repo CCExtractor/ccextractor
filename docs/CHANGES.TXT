@@ -21,6 +21,7 @@
 - Fix: Repeated values for enums
 - Cleanup: Remove the (unmaintained) Nuklear GUI code
 - Cleanup: Reduce the amount of Windows build options in the project file
+- Fix: infinite loop in MP4 file type detector.
 
 0.94 (2021-12-14)
 -----------------
