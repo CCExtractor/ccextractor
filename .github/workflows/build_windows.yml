@@ -26,7 +26,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
         with:
@@ -62,7 +62,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Release build
           path: |
@@ -72,7 +72,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v1.3.1
         with:
@@ -108,7 +108,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Debug build
           path: |
