@@ -866,8 +866,8 @@ void print_usage(void)
 	mprint("Burned-in subtitle extraction:\n");
 	mprint("         --hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
 	mprint("\n");
-	mprint("                       NOTE: This is needed to use the below burned-in \n");
-	mprint("                		     subtitle extractor options\n");
+	mprint("                      NOTE: This is needed to use the below burned-in \n");
+	mprint("                		    subtitle extractor options\n");
 	mprint("\n");
 	mprint("       --tickertext : Search for burned-in ticker text at the bottom of\n");
 	mprint("                     the screen.\n");
