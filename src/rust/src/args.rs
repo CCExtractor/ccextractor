@@ -132,8 +132,7 @@ Notes on spupng output format:
     /tmp/output_2.xml
     /tmp/output_2.d/sub0000.png
     /tmp/output_2.d/sub0001.png
-    ...
-"
+    ..."
 )]
 #[command(arg_required_else_help = true)]
 pub struct Args {
