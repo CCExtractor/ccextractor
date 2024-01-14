@@ -368,13 +368,6 @@ void print_usage(void)
 	mprint("                       experience timeline resets/jumps in the output.\n");
 	mprint("               --stdin: Reads input from stdin (console) instead of file.\n");
 	mprint("                       Alternatively, - can be used instead of -stdin\n");
-	mprint("You can pass as many input files as you need. They will be processed in order.\n");
-	mprint("If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
-	mprint("sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on\n");
-	mprint("until there are no more files.\n");
-	mprint("Output will be one single file (either raw or srt). Use this if you made your\n");
-	mprint("recording in several cuts (to skip commercials for example) but you want one\n");
-	mprint("subtitle file with contiguous timing.\n\n");
 	mprint("Output file segmentation:\n");
 	mprint("    --outinterval x output in interval of x seconds\n");
 	mprint("   --segmentonkeyonly: When segmenting files, do it only after a I frame\n");
@@ -415,9 +408,6 @@ void print_usage(void)
 	mprint("                       UTF-8 using iconv. See iconv documentation to check if\n");
 	mprint("                       required encoding/charset is supported.\n");
 	mprint("\n");
-	mprint("In general, if you want English subtitles you don't need to use these options\n");
-	mprint("as they are broadcast in field 1, channel 1. If you want the second language\n");
-	mprint("(usually Spanish) you may need to try -2, or -cc2, or both.\n\n");
 	mprint("Input formats:\n");
 	mprint("       With the exception of McPoodle's raw format, which is just the closed\n");
 	mprint("       caption data with no other info, CCExtractor can usually detect the\n");
@@ -564,14 +554,7 @@ void print_usage(void)
 	mprint("	   --analyzevideo  Analyze the video stream even if it's not used for\n");
 	mprint("                       subtitles. This allows to provide video information.\n");
 	mprint("  --timestamp-map      Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)\n");
-	mprint("Levenshtein distance:\n\n");
-	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
-	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
-	mprint("  for minor changes (plus next characters) then it assumes that line N that a\n");
-	mprint("  typo that was corrected in N+1. This is currently implemented in teletext\n");
-	mprint("  because it's where samples files that could benefit from this were available.\n");
-	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
-	mprint("  parameters.\n\n");
+	mprint("Levenshtein distance:\n");
 	mprint("           --no-levdist: Don't attempt to correct typos with Levenshtein distance.\n");
 	mprint(" --levdistmincnt value: Minimum distance we always allow regardless\n");
 	mprint("                       of the length of the strings.Default 2. \n");
@@ -629,7 +612,7 @@ void print_usage(void)
 	mprint("                         same syntax as for the capitalization file\n");
 	mprint("      --splitbysentence: Split output text so each frame contains a complete\n");
 	mprint("                       sentence. Timings are adjusted based on number of\n");
-	mprint("                       characters\n.");
+	mprint("                       characters\n");
 	mprint("          --unixts REF: For timed transcripts that have an absolute date\n");
 	mprint("                       instead of a timestamp relative to the file start), use\n");
 	mprint("                       this time reference (UNIX timestamp). 0 => Use current\n");
@@ -743,11 +726,6 @@ void print_usage(void)
 	mprint("                       all times. For example, --delay 400 makes subtitles\n");
 	mprint("                       appear 400ms late. You can also use negative numbers\n");
 	mprint("                       to make subs appear early.\n");
-	mprint("Notes on times: --startat and --endat times are used first, then -delay.\n");
-	mprint("So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will\n");
-	mprint("generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
-	mprint("and then add that (huge) delay, which would make the final file start at\n");
-	mprint("5:00 and end at 7:00.\n\n");
 
 	mprint("Options that affect what segment of the input file(s) to process:\n");
 
@@ -765,29 +743,15 @@ void print_usage(void)
 
 	mprint("Options that affect which codec is to be used have to be searched in input\n");
 
-	mprint("  If codec type is not selected then first elementary stream suitable for \n"
-	       "  subtitle is selected, please consider --teletext -noteletext override this\n"
-	       "  option.\n"
-	       "      --codec dvbsub    select the dvb subtitle from all elementary stream,\n"
+	mprint("      --codec dvbsub    select the dvb subtitle from all elementary stream,\n"
 	       "                        if stream of dvb subtitle type is not found then \n"
 	       "                        nothing is selected and no subtitle is generated\n"
 	       "      --no-codec dvbsub   ignore dvb subtitle and follow default behaviour\n"
 	       "      --codec teletext   select the teletext subtitle from elementary stream\n"
-	       "      --no-codec teletext ignore teletext subtitle\n"
-	       "  NOTE: option given in form -foo=bar ,-foo = bar and --foo=bar are invalid\n"
-	       "        valid option are only in form --foo bar\n"
-	       "        no-codec and codec parameter must not be same if found to be same \n"
-	       "        then parameter of no-codec is ignored, this flag should be passed \n"
-	       "        once, more then one are not supported yet and last parameter would \n"
-	       "        taken in consideration\n");
+	       "      --no-codec teletext ignore teletext subtitle\n");
 
 	mprint("Adding start and end credits:\n");
 
-	mprint("  CCExtractor can _try_ to add a custom message (for credits for example) at\n");
-	mprint("  the start and end of the file, looking for a window where there are no\n");
-	mprint("  captions. If there is no such window, then no text will be added.\n");
-	mprint("  The start window must be between the times given and must have enough time\n");
-	mprint("  to display the message for at least the specified time.\n");
 	mprint("        --startcreditstext txt: Write this text as start credits. If there are\n");
 	mprint("                                several lines, separate them with the\n");
 	mprint("                                characters \\n, for example Line1\\nLine 2.\n");
@@ -954,36 +918,83 @@ void print_usage(void)
 	mprint("                   --whiteness-thresh 90 --conf-thresh 60\n");
 	mprint("\n");
 	mprint("\n         --version : Display current CCExtractor version and detailed information.\n");
-
-	mprint("Notes on the CEA-708 decoder: While it is starting to be useful, it's\n");
-	mprint("a work in progress. A number of things don't work yet in the decoder\n");
-	mprint("itself, and many of the auxiliary tools (case conversion to name one)\n");
-	mprint("won't do anything yet. Feel free to submit samples that cause problems\n");
-	mprint("and feature requests.\n");
+	mprint("\n");
+	mprint("Notes on File name related options\n");
+	mprint("  You can pass as many input files as you need. They will be processed in order.\n");
+	mprint("  If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
+	mprint("  sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on\n");
+	mprint("  until there are no more files.\n");
+	mprint("  Output will be one single file (either raw or srt). Use this if you made your\n");
+	mprint("  recording in several cuts (to skip commercials for example) but you want one\n");
+	mprint("  subtitle file with contiguous timing.\n\n");
+	mprint("\n");
+	mprint("Notes on Options that affect what will be processed\n");
+	mprint("  In general, if you want English subtitles you don't need to use these options\n");
+	mprint("  as they are broadcast in field 1, channel 1. If you want the second language\n");
+	mprint("  (usually Spanish) you may need to try -2, or -cc2, or both.\n\n");
+	mprint("\n");
+	mprint("Notes on Levenshtein distance\n");
+	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
+	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
+	mprint("  for minor changes (plus next characters) then it assumes that line N that a\n");
+	mprint("  typo that was corrected in N+1. This is currently implemented in teletext\n");
+	mprint("  because it's where samples files that could benefit from this were available.\n");
+	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
+	mprint("  parameters.\n\n");
+	mprint("\n");
+	mprint("Notes on times:\n"
+	       "  --startat and --endat times are used first, then -delay.\n");
+	mprint("  So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will\n");
+	mprint("  generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
+	mprint("  and then add that (huge) delay, which would make the final file start at\n");
+	mprint("  5:00 and end at 7:00.\n\n");
+	mprint("\n");
+	mprint("Notes on codec options\n");
+	mprint("  If codec type is not selected then first elementary stream suitable for \n"
+	       "  subtitle is selected, please consider --teletext -noteletext override this\n"
+	       "  option.\n");
+	mprint("  no-codec and codec parameter must not be same if found to be same \n"
+	       "  then parameter of no-codec is ignored, this flag should be passed \n"
+	       "  once, more then one are not supported yet and last parameter would \n"
+	       "  taken in consideration\n");
+	mprint("\n");
+	mprint("Notes on adding credits\n");
+	mprint("  CCExtractor can _try_ to add a custom message (for credits for example) at\n");
+	mprint("  the start and end of the file, looking for a window where there are no\n");
+	mprint("  captions. If there is no such window, then no text will be added.\n");
+	mprint("  The start window must be between the times given and must have enough time\n");
+	mprint("  to display the message for at least the specified time.\n");
+	mprint("\n");
+	mprint("Notes on the CEA-708 decoder:\n"
+	       "  While it is starting to be useful, it's\n");
+	mprint("  a work in progress. A number of things don't work yet in the decoder\n");
+	mprint("  itself, and many of the auxiliary tools (case conversion to name one)\n");
+	mprint("  won't do anything yet. Feel free to submit samples that cause problems\n");
+	mprint("  and feature requests.\n");
 	mprint("\n");
 	mprint("Notes on spupng output format:\n");
-	mprint("One .xml file is created per output field. A set of .png files are created in\n");
-	mprint("a directory with the same base name as the corresponding .xml file(s), but with\n");
-	mprint("a .d extension. Each .png file will contain an image representing one caption\n");
-	mprint("and named subNNNN.png, starting with sub0000.png.\n");
-	mprint("For example, the command:\n");
-	mprint("    ccextractor -out=spupng input.mpg\n");
-	mprint("will create the files:\n");
-	mprint("    input.xml\n");
-	mprint("    input.d/sub0000.png\n");
-	mprint("    input.d/sub0001.png\n");
-	mprint("    ...\n");
-	mprint("The command:\n");
-	mprint("    ccextractor -out=spupng -o /tmp/output --12 input.mpg\n");
-	mprint("will create the files:\n");
-	mprint("    /tmp/output_1.xml\n");
-	mprint("    /tmp/output_1.d/sub0000.png\n");
-	mprint("    /tmp/output_1.d/sub0001.png\n");
-	mprint("    ...\n");
-	mprint("    /tmp/output_2.xml\n");
-	mprint("    /tmp/output_2.d/sub0000.png\n");
-	mprint("    /tmp/output_2.d/sub0001.png\n");
-	mprint("    ...\n");
+	mprint("  One .xml file is created per output field. A set of .png files are created in\n");
+	mprint("  a directory with the same base name as the corresponding .xml file(s), but with\n");
+	mprint("  a .d extension. Each .png file will contain an image representing one caption\n");
+	mprint("  and named subNNNN.png, starting with sub0000.png.\n");
+	mprint("  For example, the command:\n");
+	mprint("      ccextractor -out=spupng input.mpg\n");
+	mprint("  will create the files:\n");
+	mprint("      input.xml\n");
+	mprint("      input.d/sub0000.png\n");
+	mprint("      input.d/sub0001.png\n");
+	mprint("      ...\n");
+	mprint("  The command:\n");
+	mprint("      ccextractor -out=spupng -o /tmp/output --12 input.mpg\n");
+	mprint("  will create the files:\n");
+	mprint("      /tmp/output_1.xml\n");
+	mprint("      /tmp/output_1.d/sub0000.png\n");
+	mprint("      /tmp/output_1.d/sub0001.png\n");
+	mprint("      ...\n");
+	mprint("      /tmp/output_2.xml\n");
+	mprint("      /tmp/output_2.d/sub0000.png\n");
+	mprint("      /tmp/output_2.d/sub0001.png\n");
+	mprint("      ...\n");
 	mprint("\n");
 }
 
