@@ -54,39 +54,86 @@ http://www.ccextractor.org
 ")]
 #[command(
     help_template = "{name} {version}, {author}.\n{about}\n {all-args} {tab}\n
-    An example command for burned-in subtitle extraction is as follows:
-    ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60
-    
-    Notes on the CEA-708 decoder: While it is starting to be useful, it's
-    a work in progress. A number of things don't work yet in the decoder
-    itself, and many of the auxiliary tools (case conversion to name one)
-    won't do anything yet. Feel free to submit samples that cause problems
-    and feature requests.
+An example command for burned-in subtitle extraction is as follows:
+ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60
 
-    Notes on spupng output format:
-    One .xml file is created per output field. A set of .png files are created in
-    a directory with the same base name as the corresponding .xml file(s), but with
-    a .d extension. Each .png file will contain an image representing one caption
-    and named subNNNN.png, starting with sub0000.png.
-    For example, the command:
-        ccextractor -out=spupng input.mpg
-    will create the files:
-        input.xml
-        input.d/sub0000.png
-        input.d/sub0001.png
-        ...
-    The command:
-        ccextractor -out=spupng -o /tmp/output -12 input.mpg
-    will create the files:
-        /tmp/output_1.xml
-        /tmp/output_1.d/sub0000.png
-        /tmp/output_1.d/sub0001.png
-        ...
-        /tmp/output_2.xml
-        /tmp/output_2.d/sub0000.png
-        /tmp/output_2.d/sub0001.png
-        ...
-    "
+Notes on File name related options:
+  You can pass as many input files as you need. They will be processed in order.
+  If a file name is suffixed by +, ccextractor will try to follow a numerical
+  sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on
+  until there are no more files.
+  Output will be one single file (either raw or srt). Use this if you made your
+  recording in several cuts (to skip commercials for example) but you want one
+  subtitle file with contiguous timing.
+
+Notes on Options that affect what will be processed:
+  In general, if you want English subtitles you don't need to use these options
+  as they are broadcast in field 1, channel 1. If you want the second language
+  (usually Spanish) you may need to try -2, or -cc2, or both.
+
+Notes on Levenshtein distance:
+  When processing teletext files CCExtractor tries to correct typos by
+  comparing consecutive lines. If line N+1 is almost identical to line N except
+  for minor changes (plus next characters) then it assumes that line N that a
+  typo that was corrected in N+1. This is currently implemented in teletext
+  because it's where samples files that could benefit from this were available.
+  You can adjust, or disable, the algorithm settings with the following
+  parameters.
+
+Notes on times:
+  --startat and --endat times are used first, then -delay.
+  So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will
+  generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)
+  and then add that (huge) delay, which would make the final file start at
+  5:00 and end at 7:00.
+
+Notes on codec options:
+  If codec type is not selected then first elementary stream suitable for 
+  subtitle is selected, please consider --teletext -noteletext override this
+  option.
+  no-codec and codec parameter must not be same if found to be same 
+  then parameter of no-codec is ignored, this flag should be passed 
+  once, more then one are not supported yet and last parameter would 
+  taken in consideration
+
+Notes on adding credits:
+  CCExtractor can _try_ to add a custom message (for credits for example) at
+  the start and end of the file, looking for a window where there are no
+  captions. If there is no such window, then no text will be added.
+  The start window must be between the times given and must have enough time
+  to display the message for at least the specified time.
+
+Notes on the CEA-708 decoder:
+  While it is starting to be useful, it's
+  a work in progress. A number of things don't work yet in the decoder
+  itself, and many of the auxiliary tools (case conversion to name one)
+  won't do anything yet. Feel free to submit samples that cause problems
+  and feature requests.
+
+Notes on spupng output format:
+  One .xml file is created per output field. A set of .png files are created in
+  a directory with the same base name as the corresponding .xml file(s), but with
+  a .d extension. Each .png file will contain an image representing one caption
+  and named subNNNN.png, starting with sub0000.png.
+  For example, the command:
+    ccextractor -out=spupng input.mpg
+  will create the files:
+    input.xml
+    input.d/sub0000.png
+    input.d/sub0001.png
+    ...
+  The command:
+    ccextractor -out=spupng -o /tmp/output --12 input.mpg
+  will create the files:
+    /tmp/output_1.xml
+    /tmp/output_1.d/sub0000.png
+    /tmp/output_1.d/sub0001.png
+    ...
+    /tmp/output_2.xml
+    /tmp/output_2.d/sub0000.png
+    /tmp/output_2.d/sub0001.png
+    ...
+"
 )]
 #[command(arg_required_else_help = true)]
 pub struct Args {
