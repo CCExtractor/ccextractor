@@ -85,7 +85,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c
         ../src/thirdparty/freetype/type42/type42.c
         ../src/thirdparty/freetype/winfonts/winfnt.c"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC $SRC_FREETYPE"
-BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l lept -lpthread -ldl -lgpac"
+BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l leptonica -lpthread -ldl -lgpac"
 
 echo "Running pre-build script..."
 ./pre-build.sh
