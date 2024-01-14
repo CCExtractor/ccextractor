@@ -866,8 +866,8 @@ void print_usage(void)
 	mprint("Burned-in subtitle extraction:\n");
 	mprint("         --hardsubx : Enable the burned-in subtitle extraction subsystem.\n");
 	mprint("\n");
-	mprint("         NOTE: The following options will work only if --hardsubx is \n");
-	mprint("                specified before them:-\n");
+	mprint("                       NOTE: This is needed to use the below burned-in \n");
+	mprint("                		     subtitle extractor options\n");
 	mprint("\n");
 	mprint("       --tickertext : Search for burned-in ticker text at the bottom of\n");
 	mprint("                     the screen.\n");
@@ -919,37 +919,37 @@ void print_usage(void)
 	mprint("\n");
 	mprint("\n         --version : Display current CCExtractor version and detailed information.\n");
 	mprint("\n");
-	mprint("Notes on File name related options\n");
+	mprint("Notes on File name related options:\n");
 	mprint("  You can pass as many input files as you need. They will be processed in order.\n");
 	mprint("  If a file name is suffixed by +, ccextractor will try to follow a numerical\n");
 	mprint("  sequence. For example, DVD001.VOB+ means DVD001.VOB, DVD002.VOB and so on\n");
 	mprint("  until there are no more files.\n");
 	mprint("  Output will be one single file (either raw or srt). Use this if you made your\n");
 	mprint("  recording in several cuts (to skip commercials for example) but you want one\n");
-	mprint("  subtitle file with contiguous timing.\n\n");
+	mprint("  subtitle file with contiguous timing.\n");
 	mprint("\n");
-	mprint("Notes on Options that affect what will be processed\n");
+	mprint("Notes on Options that affect what will be processed:\n");
 	mprint("  In general, if you want English subtitles you don't need to use these options\n");
 	mprint("  as they are broadcast in field 1, channel 1. If you want the second language\n");
-	mprint("  (usually Spanish) you may need to try -2, or -cc2, or both.\n\n");
+	mprint("  (usually Spanish) you may need to try -2, or -cc2, or both.\n");
 	mprint("\n");
-	mprint("Notes on Levenshtein distance\n");
+	mprint("Notes on Levenshtein distance:\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
 	mprint("  for minor changes (plus next characters) then it assumes that line N that a\n");
 	mprint("  typo that was corrected in N+1. This is currently implemented in teletext\n");
 	mprint("  because it's where samples files that could benefit from this were available.\n");
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
-	mprint("  parameters.\n\n");
+	mprint("  parameters.\n");
 	mprint("\n");
 	mprint("Notes on times:\n"
 	       "  --startat and --endat times are used first, then -delay.\n");
 	mprint("  So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will\n");
 	mprint("  generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
 	mprint("  and then add that (huge) delay, which would make the final file start at\n");
-	mprint("  5:00 and end at 7:00.\n\n");
+	mprint("  5:00 and end at 7:00.\n");
 	mprint("\n");
-	mprint("Notes on codec options\n");
+	mprint("Notes on codec options:\n");
 	mprint("  If codec type is not selected then first elementary stream suitable for \n"
 	       "  subtitle is selected, please consider --teletext -noteletext override this\n"
 	       "  option.\n");
@@ -958,7 +958,7 @@ void print_usage(void)
 	       "  once, more then one are not supported yet and last parameter would \n"
 	       "  taken in consideration\n");
 	mprint("\n");
-	mprint("Notes on adding credits\n");
+	mprint("Notes on adding credits:\n");
 	mprint("  CCExtractor can _try_ to add a custom message (for credits for example) at\n");
 	mprint("  the start and end of the file, looking for a window where there are no\n");
 	mprint("  captions. If there is no such window, then no text will be added.\n");
@@ -994,7 +994,7 @@ void print_usage(void)
 	mprint("      /tmp/output_2.xml\n");
 	mprint("      /tmp/output_2.d/sub0000.png\n");
 	mprint("      /tmp/output_2.d/sub0001.png\n");
-	mprint("      ...\n");
+	mprint("      ...");
 	mprint("\n");
 }
 
