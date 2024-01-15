@@ -1,0 +1,36 @@
+name: Unit Test Rust sourcecode
+on:
+  push:
+    paths:
+      - ".github/workflows/test.yml"
+      - "src/rust/**"
+    tags-ignore:
+      - "*.*"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/test.yml"
+      - "src/rust/**"
+jobs:
+  test_rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/rust
+    steps:
+      - uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            src/rust/.cargo/registry
+            src/rust/.cargo/git
+            src/rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: rustfmt
+        run: cargo test
