@@ -57,7 +57,7 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./build -debug            # same as ./build_debug
+./build -debug            # same as ./builddebug
 
 # compile with hardsubx
 [Optional] You need to set these environment variables correctly according to your machine,
