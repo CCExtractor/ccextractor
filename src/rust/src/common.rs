@@ -753,7 +753,7 @@ pub struct CcxOptions {
 }
 
 fn get_raw_string(str: &str) -> *mut i8 {
-    CString::new(str.clone()).unwrap().into_raw()
+    CString::new(str).unwrap().into_raw()
 }
 
 fn get_raw_strings(strs: Vec<String>) -> *mut *mut i8 {
