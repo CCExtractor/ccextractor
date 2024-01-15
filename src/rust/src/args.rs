@@ -866,7 +866,7 @@ pub struct Args {
     /// Enable the burned-in subtitle extraction subsystem.
     ///
     /// NOTE: This is needed to use the below burned-in
-	  ///       subtitle extractor options
+    ///       subtitle extractor options
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub hardsubx: bool,
     /// Search for burned-in ticker text at the bottom of
