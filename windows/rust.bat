@@ -6,5 +6,5 @@ cd ..\..\windows
 IF "%~1"=="-r" (
 copy x86_64-pc-windows-msvc\release\ccx_rust.lib .\ccx_rust.lib
 ) ELSE (
-copy x86_64-pc-windows-msvc\debug\ccx_rust.lib .\ccx_rust.lib
+copy x86_64-pc-windows-msvc\release-with-debug\ccx_rust.lib .\ccx_rust.lib
 )

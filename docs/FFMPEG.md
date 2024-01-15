@@ -42,7 +42,7 @@ Note:If you installed ffmpeg on non-standard location, please change/update your
 
 ### On Windows:
 #### Set preprocessor flag `ENABLE_FFMPEG=1`
-1. In visual studio 2013 right click <Project> and select property.
+1. In visual studio 2022 right click <Project> and select property.
 2. In the left panel, select Configuration Properties, C/C++, Preprocessor.
 3. In the right panel, in the right-hand column of the Preprocessor Definitions property, open the drop-down menu and choose Edit.
 4. In the Preprocessor Definitions dialog box, add `ENABLE_FFMPEG=1`. Choose OK to save your changes.
