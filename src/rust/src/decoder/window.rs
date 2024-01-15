@@ -441,13 +441,13 @@ impl PenStyle {
         };
 
         let color = PenColor {
-            /// White(2,2,2) i.e 10,10,10 i.e 42
+            // White(2,2,2) i.e 10,10,10 i.e 42
             fg_color: 42,
             fg_opacity: Opacity::Solid,
-            /// Either N/A or black, still always 0
+            // Either N/A or black, still always 0
             bg_color: 0,
             bg_opacity,
-            /// Either N/A or black, still always 0
+            // Either N/A or black, still always 0
             edge_color: 0,
         };
 
