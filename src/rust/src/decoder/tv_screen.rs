@@ -412,7 +412,7 @@ impl dtvcc_tv_screen {
                 if bytes_written % 2 == 1 {
                     buf.push_str("80");
                 } else {
-                    buf.push_str(" ");
+                    buf.push(' ');
                 }
             }
         }
