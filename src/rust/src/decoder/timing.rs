@@ -48,7 +48,7 @@ pub fn get_time_str(time: LLONG) -> String {
     format!("{:02}:{:02}:{:02},{:03}", hh, mm, ss, ms)
 }
 
-///Returns a hh:mm:ss:frame string of time for SCC format
+/// Returns a hh:mm:ss;frame string of time for SCC format
 pub fn get_scc_time_str(time: LLONG) -> String {
     let hh = time / 1000 / 60 / 60;
     let mm = time / 1000 / 60 - 60 * hh;
