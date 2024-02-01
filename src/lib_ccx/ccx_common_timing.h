@@ -77,6 +77,7 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 
 void set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 void add_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
+size_t print_scc_time(LLONG mstime, char *buf);
 int set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx);
