@@ -10,7 +10,7 @@ use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
 use super::output::{color_to_hex, write_char, Writer};
-use super::timing::get_time_str;
+use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
@@ -128,6 +128,7 @@ impl dtvcc_tv_screen {
             ccx_output_format::CCX_OF_SRT => self.write_srt(writer),
             ccx_output_format::CCX_OF_SAMI => self.write_sami(writer),
             ccx_output_format::CCX_OF_TRANSCRIPT => self.write_transcript(writer),
+            ccx_output_format::CCX_OF_SCC => self.write_scc(writer),
             _ => {
                 self.write_debug();
                 Err("Unsupported write format".to_owned())
@@ -355,6 +356,72 @@ impl dtvcc_tv_screen {
                             <body>\r\n";
 
         writer.write_to_file(buf)?;
+        Ok(())
+    }
+
+    /// Write captions in SCC format
+    pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
+        fn adjust_odd_parity(value: u8) -> u8 {
+            let mut ones = 0;
+            for i in 0..=7 {
+                if value & (1 << i) != 0 {
+                    ones += 1;
+                }
+            }
+            if ones % 2 == 0 {
+                0b10000000 | value
+            } else {
+                value
+            }
+        }
+        if self.is_screen_empty(writer) {
+            return Ok(());
+        }
+
+        if self.time_ms_show + writer.subs_delay < 0 {
+            return Ok(());
+        }
+
+        if self.cc_count == 2 {
+            writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
+        }
+
+        let mut buf = String::new();
+        let time_show = get_scc_time_str(self.time_ms_show);
+        let time_end = get_scc_time_str(self.time_ms_hide);
+        buf.push_str(&time_show);
+
+        // Clear buffer (94ae 94ae), start pop-on caption (9420 9420), move cursor to row-15, column-1(9470)
+        buf.push_str("\t94ae 94ae 9420 9420 9470 ");
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                let (first, last) = self.get_write_interval(row_index);
+                debug!("First: {}, Last: {}", first, last);
+
+                let mut bytes_written = 0;
+                for i in 0..last + 1 {
+                    if bytes_written % 2 == 0 {
+                        buf.push(' ');
+                    }
+                    let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
+                    buf = format!("{}{:x}", buf, adjusted_val);
+                    bytes_written += 1;
+                }
+                // add 0x80 padding and form byte pair if the last byte pair is not form
+                if bytes_written % 2 == 1 {
+                    buf.push_str("80");
+                } else {
+                    buf.push_str(" ");
+                }
+            }
+        }
+        // Display caption (942f 942f)
+        buf.push_str("942f 942f \n\n");
+        writer.write_to_file(buf.as_bytes())?;
+        // Clear caption (942c 942c)
+        buf = format!("{}\t942c 942c \n\n", time_end);
+        writer.write_to_file(buf.as_bytes())?;
         Ok(())
     }
 
