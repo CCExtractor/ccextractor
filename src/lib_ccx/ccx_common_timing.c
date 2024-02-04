@@ -298,23 +298,30 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 /**
  * SCC Time formatting
  */
-size_t print_scc_time(LLONG mstime, char *buf)
+size_t print_scc_time(struct ccx_boundary_time time, char *buf)
 {
 	char *fmt = "%02u:%02u:%02u;%02u";
-	unsigned hh, mm, ss;
 	double frame;
-	int signoffset = (mstime < 0 ? 1 : 0);
 
-	if (mstime < 0) // Avoid loss of data warning with abs()
-		mstime = -mstime;
-
-	hh = (unsigned)(mstime / 1000 / 60 / 60);
-	mm = (unsigned)(mstime / 1000 / 60 - 60 * hh);
-	ss = (unsigned)(mstime / 1000 - 60 * (mm + 60 * hh));
 	// since 1000 ms has 29.97 frames ; each ms has 29.97/1000 frames
-	frame = ((double)(mstime - 1000 * (ss + 60 * (mm + 60 * hh))) * 29.97 / 1000);
+	frame = time.time_in_ms * 29.97 / 1000;
 
-	return (size_t)sprintf(buf + signoffset, fmt, hh, mm, ss, (unsigned)frame);
+	return (size_t)sprintf(buf + time.set, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
+}
+
+struct ccx_boundary_time get_time(LLONG time)
+{
+	if (time < 0) // Avoid loss of data warning with abs()
+		time = -time;
+
+	struct ccx_boundary_time result;
+	result.hh = (unsigned)(time / 1000 / 60 / 60);
+	result.mm = (unsigned)(time / 1000 / 60 - 60 * result.hh);
+	result.ss = (unsigned)(time / 1000 - 60 * (result.mm + 60 * result.hh));
+	result.time_in_ms = time;
+	result.set = (time < 0 ? 1 : 0);
+
+	return result;
 }
 
 /**
