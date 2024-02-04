@@ -409,11 +409,40 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		dtvcc_write_scc_header(tv, encoder);
 
 	char *buf = (char *)encoder->buffer;
-	print_scc_time(tv->time_ms_show + encoder->subs_delay, buf);
+	struct ccx_boundary_time time_show = get_time(tv->time_ms_show + encoder->subs_delay);
+	// when hiding subtract a frame (1 frame = 34 ms)
+	struct ccx_boundary_time time_end = get_time(tv->time_ms_hide + encoder->subs_delay - 34);
 
-	// {clear buffer} {pop on caption} {row15 column1}
-	// Clear buffer (94ae 94ae), start pop-on caption (9420 9420), move cursor to row-15, column-1(9470)
-	sprintf(buf + strlen(buf), "\t94ae 94ae 9420 9420 9470 ");
+	if (tv->old_cc_time_end > time_show.time_in_ms)
+	{
+		// Correct the frame delay
+		time_show.time_in_ms -= 1000 / 29.97;
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c");
+		time_show.time_in_ms += 1000 / 29.97;
+		// Clear the buffer and start pop on caption
+		sprintf(buf + strlen(buf), "94ae 94ae 9420 9420");
+	}
+	else if (tv->old_cc_time_end < time_show.time_in_ms)
+	{
+		// Clear the screen for new caption
+		struct ccx_boundary_time time_to_display = get_time(tv->old_cc_time_end);
+		print_scc_time(time_to_display, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c \n\n");
+		// Correct the frame delay
+		time_show.time_in_ms -= 1000 / 29.97;
+		// Clear the buffer and start pop on caption in new time
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t94ae 94ae 9420 9420");
+		time_show.time_in_ms += 1000 / 29.97;
+	}
+	else
+	{
+		time_show.time_in_ms -= 1000 / 29.97;
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c 94ae 94ae 9420 9420");
+		time_show.time_in_ms += 1000 / 29.97;
+	}
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
@@ -438,12 +467,8 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 	// Display caption (942f 942f)
 	sprintf(buf + strlen(buf), "942f 942f \n\n");
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
-	// when hiding subtract a frame
-	// 1 frame = 34 ms
-	print_scc_time(tv->time_ms_hide + encoder->subs_delay - 34, buf);
-	// Clear caption (942c 942c)
-	sprintf(buf + strlen(buf), "\t942c 942c \n\n");
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+
+	tv->old_cc_time_end = time_end.time_in_ms;
 }
 
 void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
