@@ -3,6 +3,7 @@
 //! TV screen contains the captions to be displayed.
 //! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received  
 
+use std::cmp::Ordering;
 #[cfg(unix)]
 use std::os::unix::prelude::IntoRawFd;
 #[cfg(windows)]
@@ -386,13 +387,42 @@ impl dtvcc_tv_screen {
             writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
         }
 
-        let mut buf = String::new();
-        let time_show = get_scc_time_str(self.time_ms_show);
-        let time_end = get_scc_time_str(self.time_ms_hide);
-        buf.push_str(&time_show);
+        if writer.old_cc_time_end == 0 {
+            writer.old_cc_time_end = self.time_ms_show as i32;
+        }
 
-        // Clear buffer (94ae 94ae), start pop-on caption (9420 9420), move cursor to row-15, column-1(9470)
-        buf.push_str("\t94ae 94ae 9420 9420 9470 ");
+        let mut buf = String::new();
+        let mut time_show = ccx_boundary_time::get_time(self.time_ms_show);
+        let time_end = ccx_boundary_time::get_time(self.time_ms_hide);
+
+        // Caption overlapping situation
+        match writer.old_cc_time_end.cmp(&(time_show.time_in_ms as i32)) {
+            Ordering::Greater => {
+                // Correct the frame delay
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                buf.push_str(&(get_scc_time_str(time_show) + "\t942c 942c ").to_owned());
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+                // Clear the buffer and start pop on caption
+                buf.push_str("94ae 94ae 9420 9420");
+            }
+            Ordering::Less => {
+                // Clear the screen for new caption
+                let time_to_display = ccx_boundary_time::get_time(writer.old_cc_time_end as i64);
+                buf.push_str(&(get_scc_time_str(time_to_display) + "\t942c 942c \n\n").to_owned());
+                // Correct the frame delay
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                // Clear the buffer and start pop on caption in new time
+                buf.push_str(&(get_scc_time_str(time_show) + "\t94ae 94ae 9420 9420").to_owned());
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+            }
+            Ordering::Equal => {
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                buf.push_str(
+                    &(get_scc_time_str(time_show) + "\t942c 942c 94ae 94ae 9420 9420").to_owned(),
+                );
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+            }
+        }
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
@@ -410,7 +440,7 @@ impl dtvcc_tv_screen {
                 }
                 // add 0x80 padding and form byte pair if the last byte pair is not form
                 if bytes_written % 2 == 1 {
-                    buf.push_str("80");
+                    buf.push_str("80 ");
                 } else {
                     buf.push(' ');
                 }
@@ -419,9 +449,8 @@ impl dtvcc_tv_screen {
         // Display caption (942f 942f)
         buf.push_str("942f 942f \n\n");
         writer.write_to_file(buf.as_bytes())?;
-        // Clear caption (942c 942c)
-        buf = format!("{}\t942c 942c \n\n", time_end);
-        writer.write_to_file(buf.as_bytes())?;
+
+        writer.old_cc_time_end = time_end.time_in_ms as i32;
         Ok(())
     }
 
