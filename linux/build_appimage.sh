@@ -49,16 +49,12 @@ chmod +x linuxdeploy*.AppImage
 # Create AppDir
 mkdir -p "$BUILD_DIR/AppDir"
 
-# TODO: Put link of CCExtractor image here of correct resolution(8x8, 16x16, 20x20, 22x22, 24x24, 28x28, 32x32, 36x36, 42x42,
+# Link of CCExtractor image of any of these resolution(8x8, 16x16, 20x20, 22x22, 24x24, 28x28, 32x32, 36x36, 42x42,
 # 48x48, 64x64, 72x72, 96x96, 128x128, 160x160, 192x192, 256x256, 384x384, 480x480, 512x512) in png extension
-# PNG_LINK="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.iconsdb.com%2Ficons%2Fpreview%2Fwhite%2Fupload-xxl.png&f=1&nofb=1&ipt=6433f94c4defca121707ebe098aa2a81a1fc6e3c574e598dcaa354d32e092b5a&ipo=images"
+PNG_LINK="https://raw.githubusercontent.com/CCExtractor/website/master/static/images/ccextractor.png"
 
 # Download the image and put it in AppDir
-# wget "$PNG_LINK" AppDir/ccextractor.png
-
-# Delete these lines afterwards
-# For my temporary usage
-cp ~/tempdir/QtQuickApp/temp/AppDir/usr/share/icons/hicolor/128x128/apps/qtquickapp.png AppDir/ccextractor.png
+wget "$PNG_LINK" AppDir/ccextractor.png
 
 # now, build AppImage using linuxdeploy
 ./linuxdeploy-x86_64.AppImage --appdir=AppDir -e ccextractor --create-desktop-file --output appimage -i AppDir/ccextractor.png
