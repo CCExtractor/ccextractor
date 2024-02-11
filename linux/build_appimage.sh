@@ -51,10 +51,10 @@ mkdir -p "$BUILD_DIR/AppDir"
 
 # Link of CCExtractor image of any of these resolution(8x8, 16x16, 20x20, 22x22, 24x24, 28x28, 32x32, 36x36, 42x42,
 # 48x48, 64x64, 72x72, 96x96, 128x128, 160x160, 192x192, 256x256, 384x384, 480x480, 512x512) in png extension
-PNG_LINK="https://raw.githubusercontent.com/CCExtractor/website/master/static/images/ccextractor.png"
+PNG_LINK="https://ccextractor.org/images/ccextractor.png"
 
 # Download the image and put it in AppDir
-wget "$PNG_LINK" AppDir/ccextractor.png
+wget "$PNG_LINK" -P AppDir
 
 # now, build AppImage using linuxdeploy
 ./linuxdeploy-x86_64.AppImage --appdir=AppDir -e ccextractor --create-desktop-file --output appimage -i AppDir/ccextractor.png
