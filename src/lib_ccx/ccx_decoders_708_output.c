@@ -395,6 +395,35 @@ void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
+int count_captions_lines_scc(dtvcc_tv_screen *tv)
+{
+	int count = 0;
+	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!dtvcc_is_row_empty(tv, i))
+		{
+			count++;
+		}
+	}
+
+	return count;
+}
+
+void add_needed_scc_labels(char *buf, int subtitle_count, int count)
+{
+	switch (subtitle_count)
+	{
+		case 1:
+			sprintf(buf + strlen(buf), " 94e0 94e0");
+			break;
+		case 2:
+			sprintf(buf + strlen(buf), count == 1 ? " 9440 9440" : " 94e0 94e0");
+			break;
+		default:
+			sprintf(buf + strlen(buf), count == 1 ? " 13e0 13e0" : (count == 2 ? " 9440 9440" : " 94e0 94e0"));
+	}
+}
+
 void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	dtvcc_tv_screen *tv = decoder->tv;
@@ -444,10 +473,16 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		time_show.time_in_ms += 1000 / 29.97;
 	}
 
+	int subtitle_count = count_captions_lines_scc(tv);
+	int count = 0;
+
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!dtvcc_is_row_empty(tv, i))
 		{
+			count++;
+			add_needed_scc_labels(buf, subtitle_count, count);
+
 			int first, last, bytes_written = 0;
 			dtvcc_get_write_interval(tv, i, &first, &last);
 			for (int j = first; j <= last; j++)
@@ -464,6 +499,7 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 				sprintf(buf + strlen(buf), " ");
 		}
 	}
+
 	// Display caption (942f 942f)
 	sprintf(buf + strlen(buf), "942f 942f \n\n");
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
