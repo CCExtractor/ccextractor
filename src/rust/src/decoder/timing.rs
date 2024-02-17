@@ -67,6 +67,11 @@ impl ccx_boundary_time {
 
 /// Returns a hh:mm:ss;frame string of time for SCC format
 pub fn get_scc_time_str(time: ccx_boundary_time) -> String {
-    let frame = (time.time_in_ms as f32 * 29.97 / 1000.00) as u8;
+    // Feel sorry for formatting:(
+    let frame: u8 = (((time.time_in_ms
+        - 1000 * ((time.ss as i64) + 60 * ((time.mm as i64) + 60 * (time.hh as i64))))
+        as f64)
+        * 29.97
+        / 1000.0) as u8;
     format!("{:02}:{:02}:{:02};{:02}", time.hh, time.mm, time.ss, frame)
 }
