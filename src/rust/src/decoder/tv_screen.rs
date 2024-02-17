@@ -384,20 +384,26 @@ impl dtvcc_tv_screen {
         }
         fn add_needed_scc_labels(buf: &mut String, subtitle_count: usize, count: usize) {
             match subtitle_count {
+                // row 15, column 00
                 1 => buf.push_str(" 94e0 94e0"),
                 2 => {
                     if count == 1 {
+                        // row 14, column 00
                         buf.push_str(" 9440 9440");
                     } else {
+                        // row 15, column 00
                         buf.push_str(" 94e0 94e0")
                     }
                 }
                 _ => {
                     if count == 1 {
+                        // row 13, column 04
                         buf.push_str(" 13e0 13e0");
                     } else if count == 2 {
+                        // row 14, column 00
                         buf.push_str(" 9440 9440");
                     } else {
+                        // row 15, column 00
                         buf.push_str(" 94e0 94e0")
                     }
                 }

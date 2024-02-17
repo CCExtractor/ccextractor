@@ -414,12 +414,15 @@ void add_needed_scc_labels(char *buf, int subtitle_count, int count)
 	switch (subtitle_count)
 	{
 		case 1:
+			// row 15, column 00
 			sprintf(buf + strlen(buf), " 94e0 94e0");
 			break;
 		case 2:
+			// 9440: row 14, column 00 | 94e0: row 15, column 00
 			sprintf(buf + strlen(buf), count == 1 ? " 9440 9440" : " 94e0 94e0");
 			break;
 		default:
+			// 13e0: row 13, column 04 | 9440: row 14, column 00 | 94e0: row 15, column 00
 			sprintf(buf + strlen(buf), count == 1 ? " 13e0 13e0" : (count == 2 ? " 9440 9440" : " 94e0 94e0"));
 	}
 }
