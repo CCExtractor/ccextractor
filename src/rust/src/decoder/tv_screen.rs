@@ -360,6 +360,13 @@ impl dtvcc_tv_screen {
         Ok(())
     }
 
+    fn count_captions_lines_scc(&self) -> usize {
+        (0..CCX_DTVCC_SCREENGRID_ROWS)
+            .into_iter()
+            .filter(|&row_index| !self.is_row_empty(row_index as usize))
+            .count()
+    }
+
     /// Write captions in SCC format
     pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
         fn adjust_odd_parity(value: u8) -> u8 {
@@ -373,6 +380,27 @@ impl dtvcc_tv_screen {
                 0b10000000 | value
             } else {
                 value
+            }
+        }
+        fn add_needed_scc_labels(buf: &mut String, subtitle_count: usize, count: usize) {
+            match subtitle_count {
+                1 => buf.push_str(" 94e0 94e0"),
+                2 => {
+                    if count == 1 {
+                        buf.push_str(" 9440 9440");
+                    } else {
+                        buf.push_str(" 94e0 94e0")
+                    }
+                }
+                _ => {
+                    if count == 1 {
+                        buf.push_str(" 13e0 13e0");
+                    } else if count == 2 {
+                        buf.push_str(" 9440 9440");
+                    } else {
+                        buf.push_str(" 94e0 94e0")
+                    }
+                }
             }
         }
         if self.is_screen_empty(writer) {
@@ -424,8 +452,14 @@ impl dtvcc_tv_screen {
             }
         }
 
+        let subtitle_count = self.count_captions_lines_scc();
+        let mut count = 0;
+
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
+                count += 1;
+                add_needed_scc_labels(&mut buf, subtitle_count, count);
+
                 let (first, last) = self.get_write_interval(row_index);
                 debug!("First: {}, Last: {}", first, last);
 
@@ -446,6 +480,7 @@ impl dtvcc_tv_screen {
                 }
             }
         }
+
         // Display caption (942f 942f)
         buf.push_str("942f 942f \n\n");
         writer.write_to_file(buf.as_bytes())?;
