@@ -409,9 +409,15 @@ int count_captions_lines_scc(dtvcc_tv_screen *tv)
 	return count;
 }
 
-void add_needed_scc_labels(char *buf, int subtitle_count, int count)
+/** This function is designed to assign appropriate SSC labels for positioning subtitles based on their length.
+ * In some scenarios where the video stream provides lengthy subtitles that cannot fit within a single line.
+ * Single-line subtitle can be placed in 15th row(most bottom row)
+ * 2 line length subtitles can be placed in 14th and 15th row
+ * 3 line length subtitles can be placed in 13th, 14th and 15th row
+ */
+void add_needed_scc_labels(char *buf, int total_subtitle_count, int current_subtitle_count)
 {
-	switch (subtitle_count)
+	switch (total_subtitle_count)
 	{
 		case 1:
 			// row 15, column 00
@@ -419,11 +425,11 @@ void add_needed_scc_labels(char *buf, int subtitle_count, int count)
 			break;
 		case 2:
 			// 9440: row 14, column 00 | 94e0: row 15, column 00
-			sprintf(buf + strlen(buf), count == 1 ? " 9440 9440" : " 94e0 94e0");
+			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 9440 9440" : " 94e0 94e0");
 			break;
 		default:
 			// 13e0: row 13, column 04 | 9440: row 14, column 00 | 94e0: row 15, column 00
-			sprintf(buf + strlen(buf), count == 1 ? " 13e0 13e0" : (count == 2 ? " 9440 9440" : " 94e0 94e0"));
+			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 13e0 13e0" : (current_subtitle_count == 2 ? " 9440 9440" : " 94e0 94e0"));
 	}
 }
 
@@ -476,15 +482,15 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		time_show.time_in_ms += 1000 / 29.97;
 	}
 
-	int subtitle_count = count_captions_lines_scc(tv);
-	int count = 0;
+	int total_subtitle_count = count_captions_lines_scc(tv);
+	int current_subtitle_count = 0;
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!dtvcc_is_row_empty(tv, i))
 		{
-			count++;
-			add_needed_scc_labels(buf, subtitle_count, count);
+			current_subtitle_count++;
+			add_needed_scc_labels(buf, total_subtitle_count, current_subtitle_count);
 
 			int first, last, bytes_written = 0;
 			dtvcc_get_write_interval(tv, i, &first, &last);

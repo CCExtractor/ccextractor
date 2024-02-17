@@ -381,12 +381,21 @@ impl dtvcc_tv_screen {
                 value
             }
         }
-        fn add_needed_scc_labels(buf: &mut String, subtitle_count: usize, count: usize) {
-            match subtitle_count {
+        // This function is designed to assign appropriate SSC labels for positioning subtitles based on their length.
+        // In some scenarios where the video stream provides lengthy subtitles that cannot fit within a single line.
+        // Single-line subtitle can be placed in 15th row(most bottom row)
+        // 2 line length subtitles can be placed in 14th and 15th row
+        // 3 line length subtitles can be placed in 13th, 14th and 15th row
+        fn add_needed_scc_labels(
+            buf: &mut String,
+            total_subtitle_count: usize,
+            current_subtitle_count: usize,
+        ) {
+            match total_subtitle_count {
                 // row 15, column 00
                 1 => buf.push_str(" 94e0 94e0"),
                 2 => {
-                    if count == 1 {
+                    if current_subtitle_count == 1 {
                         // row 14, column 00
                         buf.push_str(" 9440 9440");
                     } else {
@@ -395,10 +404,10 @@ impl dtvcc_tv_screen {
                     }
                 }
                 _ => {
-                    if count == 1 {
+                    if current_subtitle_count == 1 {
                         // row 13, column 04
                         buf.push_str(" 13e0 13e0");
-                    } else if count == 2 {
+                    } else if current_subtitle_count == 2 {
                         // row 14, column 00
                         buf.push_str(" 9440 9440");
                     } else {
@@ -457,13 +466,13 @@ impl dtvcc_tv_screen {
             }
         }
 
-        let subtitle_count = self.count_captions_lines_scc();
-        let mut count = 0;
+        let total_subtitle_count = self.count_captions_lines_scc();
+        let mut current_subtitle_count = 0;
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
-                count += 1;
-                add_needed_scc_labels(&mut buf, subtitle_count, count);
+                current_subtitle_count += 1;
+                add_needed_scc_labels(&mut buf, total_subtitle_count, current_subtitle_count);
 
                 let (first, last) = self.get_write_interval(row_index);
                 debug!("First: {}, Last: {}", first, last);
