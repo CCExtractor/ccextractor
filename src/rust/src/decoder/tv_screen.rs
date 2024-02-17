@@ -362,7 +362,6 @@ impl dtvcc_tv_screen {
 
     fn count_captions_lines_scc(&self) -> usize {
         (0..CCX_DTVCC_SCREENGRID_ROWS)
-            .into_iter()
             .filter(|&row_index| !self.is_row_empty(row_index as usize))
             .count()
     }
