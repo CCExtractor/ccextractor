@@ -20,6 +20,7 @@ pub struct Writer<'a> {
     pub no_font_color: bool,
     pub transcript_settings: &'a ccx_encoders_transcript_format,
     pub no_bom: i32,
+    pub old_cc_time_end: i32,
 }
 
 impl<'a> Writer<'a> {
@@ -42,6 +43,7 @@ impl<'a> Writer<'a> {
             no_font_color: is_true(no_font_color),
             transcript_settings,
             no_bom,
+            old_cc_time_end: 0,
         }
     }
     /// Write subtitles to the file

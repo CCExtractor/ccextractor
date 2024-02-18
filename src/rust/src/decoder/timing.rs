@@ -47,3 +47,31 @@ pub fn get_time_str(time: LLONG) -> String {
     let ms = time - 1000 * (ss + 60 * (mm + 60 * hh));
     format!("{:02}:{:02}:{:02},{:03}", hh, mm, ss, ms)
 }
+
+impl ccx_boundary_time {
+    /// Returns ccx_boundary_time from given time
+    pub fn get_time(time: LLONG) -> Self {
+        let hh = time / 1000 / 60 / 60;
+        let mm = time / 1000 / 60 - 60 * hh;
+        let ss = time / 1000 - 60 * (mm + 60 * hh);
+
+        Self {
+            hh: hh as i32,
+            mm: mm as i32,
+            ss: ss as i32,
+            time_in_ms: time,
+            set: Default::default(),
+        }
+    }
+}
+
+/// Returns a hh:mm:ss;frame string of time for SCC format
+pub fn get_scc_time_str(time: ccx_boundary_time) -> String {
+    // Feel sorry for formatting:(
+    let frame: u8 = (((time.time_in_ms
+        - 1000 * ((time.ss as i64) + 60 * ((time.mm as i64) + 60 * (time.hh as i64))))
+        as f64)
+        * 29.97
+        / 1000.0) as u8;
+    format!("{:02}:{:02}:{:02};{:02}", time.hh, time.mm, time.ss, frame)
+}
