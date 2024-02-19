@@ -51,12 +51,12 @@ impl<'a> Dtvcc<'a> {
         let decoders = {
             let mut decoders: [dtvcc_service_decoder; CCX_DTVCC_MAX_SERVICES];
 
-            decoders.iter_mut().enumerate().map(|(i, decoder)| {
+            decoders.iter_mut().enumerate().for_each(|(i, mut dec)| {
                 if is_false(opts.services_enabled[i]) {
                     return;
                 }
 
-                let mut decoder = Box::into_raw(Box::new(dtvcc_service_decoder {
+                let mut decoder = Box::new(dtvcc_service_decoder {
                     tv: Box::into_raw(Box::new(dtvcc_tv_screen {
                         cc_count: 0,
                         service_number: i as i32 + 1,
@@ -64,14 +64,15 @@ impl<'a> Dtvcc<'a> {
                     })),
                     cc_count: 0,
                     ..dtvcc_service_decoder::default()
-                }));
+                });
 
                 decoder.windows.iter_mut().for_each(|window| {
                     window.memory_reserved = 0;
                 });
-                unsafe { dtvcc_windows_reset(decoder) };
 
-                decoder
+                unsafe { dtvcc_windows_reset(decoder.as_mut()) };
+
+                dec = &mut *decoder;
             });
 
             decoders
@@ -248,12 +249,5 @@ impl dtvcc_symbol {
     /// Check if symbol is initialized
     pub fn is_set(&self) -> bool {
         is_true(self.init)
-    }
-}
-
-impl Default for dtvcc_symbol {
-    /// Create a blank uninitialized symbol
-    fn default() -> Self {
-        Self { sym: 0, init: 0 }
     }
 }
