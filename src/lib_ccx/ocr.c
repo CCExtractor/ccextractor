@@ -1,7 +1,7 @@
 #include <math.h>
 #include <png.h>
 #include "lib_ccx.h"
-#ifdef ENABLE_OCR
+#if defined(ENABLE_OCR) && defined(DISABLE_RUST)
 #include <tesseract/capi.h>
 #include <leptonica/allheaders.h>
 #include "ccx_common_constants.h"
@@ -1075,7 +1075,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 	}
 	return str;
 }
-#else
+#elif !defined(ENABLE_OCR)
 
 struct image_copy;
 

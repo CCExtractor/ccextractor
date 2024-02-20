@@ -11,6 +11,14 @@ fn main() {
         "writercwtdata",
     ]);
 
+    #[cfg(feature = "rust_ocr")]
+    allowlist_functions.extend_from_slice(&[
+        "delete_ocr",
+        "init_ocr",
+        "ocr_rect",
+        "paraof_ocrtext",
+    ]);
+
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_functions.extend_from_slice(&[
         "edit_distance",
@@ -27,6 +35,9 @@ fn main() {
         "cc_subtitle",
         "ccx_output_format",
     ]);
+
+    #[cfg(feature = "rust_ocr")]
+    allowlist_types.extend_from_slice(&["ccx_s_options"]);
 
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
