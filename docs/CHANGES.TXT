@@ -1,5 +1,6 @@
 0.95 (to be released)
 -----------------
+- Fix: Initialize data structures for the rust CEA-708 decoder and correct Dtvcc (#1599)
 - New: Add SCC support for CEA-708 decoder (#1595)
 - Fix: respect `-stdout` even if multiple CC tracks are present in a Matroska input file (#1453)
 - Fix: crash in Rust decoder on ATSC1.0 TS Files (#1407)
