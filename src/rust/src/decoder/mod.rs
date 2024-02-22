@@ -232,6 +232,34 @@ impl<'a> Dtvcc<'a> {
     }
 }
 
+impl<'a> Drop for Dtvcc<'a> {
+    /// Follows the `dtvcc_free` function in C code(`src/lib_ccx/ccx_dtvcc.c:L132`)
+    fn drop(&mut self) {
+        debug!("[CEA-708] dtvcc_free: cleaning up\n");
+
+        for i in 0..CCX_DTVCC_MAX_SERVICES {
+            if is_false(self.services_active[i]) {
+                continue;
+            }
+
+            let mut decoder = self.decoders[i];
+            decoder.windows.iter_mut().for_each(|window| {
+                if is_false(window.memory_reserved) {
+                    return;
+                }
+
+                window.rows.iter().for_each(|symbol_ptr| unsafe {
+                    symbol_ptr.drop_in_place();
+                });
+
+                window.memory_reserved = 0;
+            });
+
+            unsafe { decoder.tv.drop_in_place() };
+        }
+    }
+}
+
 /// A single character symbol
 ///
 /// sym stores the symbol
