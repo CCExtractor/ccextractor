@@ -149,9 +149,9 @@ impl dtvcc_window {
     /// Clear all text from the window
     pub fn clear_text(&mut self) {
         // Set pen color to default value
-        self.pen_color_pattern = dtvcc_pen_color::default();
+        self.pen_color_pattern = dtvcc_pen_color::new();
         // Set pen attributes to default value
-        self.pen_attribs_pattern = dtvcc_pen_attribs::default();
+        self.pen_attribs_pattern = dtvcc_pen_attribs::new();
         for row in 0..CCX_DTVCC_MAX_ROWS as usize {
             self.clear_row(row);
         }
@@ -179,23 +179,9 @@ impl dtvcc_window {
             }
             for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
                 // Set pen attributes to default value
-                self.pen_attribs[row_index][col] = dtvcc_pen_attribs {
-                    pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
-                    offset: 0,
-                    text_tag: dtvcc_pen_text_tag::DTVCC_PEN_TEXT_TAG_UNDEFINED_12 as i32,
-                    font_tag: 0,
-                    edge_type: dtvcc_pen_edge::DTVCC_PEN_EDGE_NONE as i32,
-                    underline: 0,
-                    italic: 0,
-                };
+                self.pen_attribs[row_index][col] = dtvcc_pen_attribs::new();
                 // Set pen color to default value
-                self.pen_colors[row_index][col] = dtvcc_pen_color {
-                    fg_color: 0x3F,
-                    fg_opacity: 0,
-                    bg_color: 0,
-                    bg_opacity: 0,
-                    edge_color: 0,
-                };
+                self.pen_colors[row_index][col] = dtvcc_pen_color::new();
             }
         }
     }
@@ -521,9 +507,9 @@ enum Opacity {
     Transparent = 3,
 }
 
-impl Default for dtvcc_pen_color {
+impl dtvcc_pen_color {
     /// Returns the default pen color
-    fn default() -> Self {
+    pub fn new() -> Self {
         Self {
             fg_color: 0x3F,
             fg_opacity: 0,
@@ -534,9 +520,9 @@ impl Default for dtvcc_pen_color {
     }
 }
 
-impl Default for dtvcc_pen_attribs {
+impl dtvcc_pen_attribs {
     /// Returns the default pen attributes
-    fn default() -> Self {
+    pub fn new() -> Self {
         Self {
             pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
             offset: 0,
