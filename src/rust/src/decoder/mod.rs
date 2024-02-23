@@ -36,44 +36,45 @@ pub struct Dtvcc<'a> {
     pub packet_length: u8,
     pub is_header_parsed: bool,
     pub last_sequence: i32,
-    pub encoder: &'a mut encoder_ctx,
+    pub encoder: *mut encoder_ctx,
     pub no_rollup: bool,
     pub timing: &'a mut ccx_common_timing_ctx,
 }
 
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
-    pub fn new(opts: &'a mut ccx_decoder_dtvcc_settings) -> Self {
+    pub fn new(opts: &ccx_decoder_dtvcc_settings) -> Self {
         let report = unsafe { &mut *opts.report };
         let timing = unsafe { &mut *opts.timing };
-        let encoder = unsafe { &mut *std::ptr::null_mut() };
+        let encoder = std::ptr::null_mut();
 
         let decoders = {
-            let mut decoders: [dtvcc_service_decoder; CCX_DTVCC_MAX_SERVICES];
+            let mut decoders: [dtvcc_service_decoder; CCX_DTVCC_MAX_SERVICES] =
+                [dtvcc_service_decoder::default(); CCX_DTVCC_MAX_SERVICES];
 
-            decoders.iter_mut().enumerate().for_each(|(i, mut dec)| {
+            for i in 0..CCX_DTVCC_MAX_SERVICES {
                 if is_false(opts.services_enabled[i]) {
-                    return;
+                    continue;
                 }
 
-                let mut decoder = Box::new(dtvcc_service_decoder {
-                    tv: Box::into_raw(Box::new(dtvcc_tv_screen {
+                decoders[i] = unsafe {
+                    *Box::into_raw(Box::new(dtvcc_service_decoder {
+                        tv: Box::into_raw(Box::new(dtvcc_tv_screen {
+                            cc_count: 0,
+                            service_number: i as i32 + 1,
+                            ..dtvcc_tv_screen::default()
+                        })),
                         cc_count: 0,
-                        service_number: i as i32 + 1,
-                        ..dtvcc_tv_screen::default()
-                    })),
-                    cc_count: 0,
-                    ..dtvcc_service_decoder::default()
-                });
+                        ..dtvcc_service_decoder::default()
+                    }))
+                };
 
-                decoder.windows.iter_mut().for_each(|window| {
+                decoders[i].windows.iter_mut().for_each(|window| {
                     window.memory_reserved = 0;
                 });
 
-                unsafe { dtvcc_windows_reset(decoder.as_mut()) };
-
-                dec = &mut *decoder;
-            });
+                unsafe { dtvcc_windows_reset(&mut decoders[i]) };
+            }
 
             decoders
         };
@@ -208,7 +209,7 @@ impl<'a> Dtvcc<'a> {
                 let decoder = &mut self.decoders[(service_number - 1) as usize];
                 decoder.process_service_block(
                     &self.packet[pos as usize..(pos + block_length) as usize],
-                    self.encoder,
+                    unsafe { &mut *self.encoder },
                     self.timing,
                     self.no_rollup,
                 );

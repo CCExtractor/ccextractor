@@ -52,10 +52,8 @@ pub extern "C" fn ccxr_init_logger() {
 ///     - opts.report
 ///     - opts.timing
 #[no_mangle]
-extern "C" fn ccxr_dtvcc_init<'a>(
-    dtvcc_settings_ptr: *mut ccx_decoder_dtvcc_settings,
-) -> *mut Dtvcc<'a> {
-    let mut opts = unsafe { dtvcc_settings_ptr.as_mut() }.expect("Didn't get dtvcc pointer");
+extern "C" fn ccxr_dtvcc_init<'a>(opts_ptr: *const ccx_decoder_dtvcc_settings) -> *mut Dtvcc<'a> {
+    let opts = unsafe { opts_ptr.as_ref() }.expect("Unable to get dtvcc settings pointer");
     Box::into_raw(Box::new(Dtvcc::new(opts)))
 }
 
@@ -89,13 +87,11 @@ extern "C" fn ccxr_process_cc_data(
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
     let dec_ctx = unsafe { &mut *dec_ctx };
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb(dec_ctx, cc_block);
         if success {
             ret = 0;
         }
@@ -139,7 +135,8 @@ pub fn verify_parity(data: u8) -> bool {
 }
 
 /// Process CC data according to its type
-pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
+pub fn do_cb(ctx: &mut lib_cc_decode, cc_block: &[u8]) -> bool {
+    let dtvcc = unsafe { &mut *(ctx.dtvcc_rust as *mut decoder::Dtvcc) };
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;
