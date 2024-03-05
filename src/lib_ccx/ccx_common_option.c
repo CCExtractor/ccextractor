@@ -72,6 +72,7 @@ void init_options(struct ccx_s_options *options)
 	options->dvblang = NULL;	  // By default, autodetect DVB language
 	options->ocrlang = NULL;	  // By default, autodetect .traineddata file
 	options->ocr_oem = -1;		  // By default, OEM mode depends on the tesseract version
+	options->psm = 3;		  // Default PSM mode (3 is the default tesseract as well)
 	options->ocr_quantmode = 1;	  // CCExtractor's internal
 	options->mkvlang = NULL;	  // By default, all the languages are extracted
 	options->ignore_pts_jumps = 1;
