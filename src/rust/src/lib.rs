@@ -44,6 +44,49 @@ pub extern "C" fn ccxr_init_logger() {
         .init();
 }
 
+/// Create a `dtvcc_rust`
+///
+/// SAFETY:
+/// The following should not be `NULL`:
+///     - opts
+///     - opts.report
+///     - opts.timing
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_init(opts_ptr: *const ccx_decoder_dtvcc_settings) -> *mut Dtvcc {
+    let opts = unsafe { opts_ptr.as_ref() }.unwrap();
+    Box::into_raw(Box::new(Dtvcc::new(opts)))
+}
+
+/// Frees `dtvcc_rust`
+///
+/// SAFETY:
+/// The following should not be `NULL`:
+///     - dtvcc_rust
+///     - dtvcc_rust.decoders[i] if dtvcc_rust.services_active[i] is true
+///     - dtvcc_rust.decoders[i].windows[j].rows[k] if
+///         dtvcc_rust.decoders[i].windows[j].memory_reserved is true
+///     - dtvcc_rust.decoders[i].tv
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
+    unsafe { dtvcc_rust.drop_in_place() };
+}
+
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encoder_ctx) {
+    unsafe { (*dtvcc_rust).encoder = encoder };
+}
+
+#[no_mangle]
+extern "C" fn ccxr_process_data(
+    dtvcc_rust: *mut Dtvcc,
+    cc_valid: u8,
+    cc_type: u8,
+    data1: u8,
+    data2: u8,
+) {
+    unsafe { dtvcc_rust.as_mut().unwrap() }.process_cc_data(cc_valid, cc_type, data1, data2);
+}
+
 /// Process cc_data
 ///
 /// # Safety
@@ -60,13 +103,11 @@ extern "C" fn ccxr_process_cc_data(
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
     let dec_ctx = unsafe { &mut *dec_ctx };
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb(dec_ctx, cc_block);
         if success {
             ret = 0;
         }
@@ -110,7 +151,8 @@ pub fn verify_parity(data: u8) -> bool {
 }
 
 /// Process CC data according to its type
-pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
+pub fn do_cb(ctx: &mut lib_cc_decode, cc_block: &[u8]) -> bool {
+    let dtvcc = unsafe { &mut *(ctx.dtvcc_rust as *mut decoder::Dtvcc) };
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;

@@ -44,6 +44,7 @@ windows/.vs/**
 *.opendb
 *.db
 *.vscode
+.cache
 
 ####
 # Ignore the header file that is updated upon build

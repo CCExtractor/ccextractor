@@ -208,6 +208,7 @@ struct lib_cc_decode
     int stat_divicom;
     int false_pict_header;
 
+    	void *dtvcc_rust;
 	dtvcc_ctx *dtvcc;
 	int current_field;
 	// Analyse/use the picture information

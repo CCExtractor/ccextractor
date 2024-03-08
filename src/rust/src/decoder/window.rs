@@ -149,9 +149,9 @@ impl dtvcc_window {
     /// Clear all text from the window
     pub fn clear_text(&mut self) {
         // Set pen color to default value
-        self.pen_color_pattern = dtvcc_pen_color::default();
+        self.pen_color_pattern = dtvcc_pen_color::new();
         // Set pen attributes to default value
-        self.pen_attribs_pattern = dtvcc_pen_attribs::default();
+        self.pen_attribs_pattern = dtvcc_pen_attribs::new();
         for row in 0..CCX_DTVCC_MAX_ROWS as usize {
             self.clear_row(row);
         }
@@ -521,9 +521,9 @@ enum Opacity {
     Transparent = 3,
 }
 
-impl Default for dtvcc_pen_color {
+impl dtvcc_pen_color {
     /// Returns the default pen color
-    fn default() -> Self {
+    pub fn new() -> Self {
         Self {
             fg_color: 0x3F,
             fg_opacity: 0,
@@ -534,9 +534,9 @@ impl Default for dtvcc_pen_color {
     }
 }
 
-impl Default for dtvcc_pen_attribs {
+impl dtvcc_pen_attribs {
     /// Returns the default pen attributes
-    fn default() -> Self {
+    pub fn new() -> Self {
         Self {
             pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
             offset: 0,
