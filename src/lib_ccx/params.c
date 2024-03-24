@@ -669,6 +669,23 @@ void print_usage(void)
 	mprint("                       Default value depends on the tesseract version linked :\n");
 	mprint("                       Tesseract v3 : default mode is 0,\n");
 	mprint("                       Tesseract v4 : default mode is 1.\n");
+	mprint("                 --psm: Select the PSM mode for Tesseract.\n");
+	mprint("                       Available Page segmentation modes:\n");
+	mprint("                       0    Orientation and script detection (OSD) only.\n");
+	mprint("                       1    Automatic page segmentation with OSD.\n");
+	mprint("                       2    Automatic page segmentation, but no OSD, or OCR.\n");
+	mprint("                       3    Fully automatic page segmentation, but no OSD. (Default)\n");
+	mprint("                       4    Assume a single column of text of variable sizes.\n");
+	mprint("                       5    Assume a single uniform block of vertically aligned text.\n");
+	mprint("                       6    Assume a single uniform block of text.\n");
+	mprint("                       7    Treat the image as a single text line.\n");
+	mprint("                       8    Treat the image as a single word.\n");
+	mprint("                       9    Treat the image as a single word in a circle.\n");
+	mprint("                       10    Treat the image as a single character.\n");
+	mprint("                       11    Sparse text. Find as much text as possible in no particular order.\n");
+	mprint("                       12    Sparse text with OSD.\n");
+	mprint("                       13    Raw line. Treat the image as a single text line,\n");
+	mprint("                       bypassing hacks that are Tesseract-specific.\n");
 	mprint("             --mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");
@@ -1685,6 +1702,27 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			else
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--oem has no argument.\n");
+			}
+		}
+		if (strcmp(argv[i], "--psm") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+
+				char *str = (char *)malloc(sizeof(argv[i]));
+				sprintf(str, "%s", argv[i]);
+				opt->psm = atoi(str);
+				if (opt->psm < 0 || opt->psm > 13)
+				{
+					fatal(EXIT_MALFORMED_PARAMETER, "--psm must be between 0 and 13\n");
+				}
+
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "--psm has no argument.\n");
 			}
 		}
 		if (strcmp(argv[i], "--mkvlang") == 0)

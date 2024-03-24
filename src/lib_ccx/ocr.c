@@ -177,6 +177,9 @@ void *init_ocr(int lang_index)
 				       &pars_values, 1, false);
 	}
 
+	// set PSM mode
+	TessBaseAPISetPageSegMode(ctx->api, ccx_options.psm);
+
 	free(pars_vec);
 	free(pars_values);
 
