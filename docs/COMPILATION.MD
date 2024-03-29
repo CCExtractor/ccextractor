@@ -28,7 +28,7 @@ yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel lep
 
 Arch:
 ```bash
-sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
