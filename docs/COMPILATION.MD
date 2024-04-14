@@ -20,15 +20,15 @@ Debian:
 sudo apt-get install -y libgpac-dev libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
-RHEL:
+RHEL/Fedora:
 
 ```bash
-yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang gpac-devel
 ```
 
 Arch:
 ```bash
-sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
@@ -57,7 +57,7 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./build -debug            # same as ./build_debug
+./build -debug            # same as ./builddebug
 
 # compile with hardsubx
 [Optional] You need to set these environment variables correctly according to your machine,

@@ -302,6 +302,7 @@ typedef struct dtvcc_tv_screen
 	LLONG time_ms_hide;
 	unsigned int cc_count;
 	int service_number;
+	int old_cc_time_end;
 } dtvcc_tv_screen;
 
 /**

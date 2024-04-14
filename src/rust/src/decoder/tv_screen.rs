@@ -3,6 +3,7 @@
 //! TV screen contains the captions to be displayed.
 //! Captions are added to TV screen from a window when any of DSW, HDW, TGW, DLW or CR commands are received  
 
+use std::cmp::Ordering;
 #[cfg(unix)]
 use std::os::unix::prelude::IntoRawFd;
 #[cfg(windows)]
@@ -10,7 +11,7 @@ use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
 use super::output::{color_to_hex, write_char, Writer};
-use super::timing::get_time_str;
+use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
@@ -128,6 +129,7 @@ impl dtvcc_tv_screen {
             ccx_output_format::CCX_OF_SRT => self.write_srt(writer),
             ccx_output_format::CCX_OF_SAMI => self.write_sami(writer),
             ccx_output_format::CCX_OF_TRANSCRIPT => self.write_transcript(writer),
+            ccx_output_format::CCX_OF_SCC => self.write_scc(writer),
             _ => {
                 self.write_debug();
                 Err("Unsupported write format".to_owned())
@@ -355,6 +357,149 @@ impl dtvcc_tv_screen {
                             <body>\r\n";
 
         writer.write_to_file(buf)?;
+        Ok(())
+    }
+
+    fn count_captions_lines_scc(&self) -> usize {
+        (0..CCX_DTVCC_SCREENGRID_ROWS)
+            .filter(|&row_index| !self.is_row_empty(row_index as usize))
+            .count()
+    }
+
+    /// Write captions in SCC format
+    pub fn write_scc(&self, writer: &mut Writer) -> Result<(), String> {
+        fn adjust_odd_parity(value: u8) -> u8 {
+            let mut ones = 0;
+            for i in 0..=7 {
+                if value & (1 << i) != 0 {
+                    ones += 1;
+                }
+            }
+            if ones % 2 == 0 {
+                0b10000000 | value
+            } else {
+                value
+            }
+        }
+        // This function is designed to assign appropriate SSC labels for positioning subtitles based on their length.
+        // In some scenarios where the video stream provides lengthy subtitles that cannot fit within a single line.
+        // Single-line subtitle can be placed in 15th row(most bottom row)
+        // 2 line length subtitles can be placed in 14th and 15th row
+        // 3 line length subtitles can be placed in 13th, 14th and 15th row
+        fn add_needed_scc_labels(
+            buf: &mut String,
+            total_subtitle_count: usize,
+            current_subtitle_count: usize,
+        ) {
+            match total_subtitle_count {
+                // row 15, column 00
+                1 => buf.push_str(" 94e0 94e0"),
+                2 => {
+                    if current_subtitle_count == 1 {
+                        // row 14, column 00
+                        buf.push_str(" 9440 9440");
+                    } else {
+                        // row 15, column 00
+                        buf.push_str(" 94e0 94e0")
+                    }
+                }
+                _ => {
+                    if current_subtitle_count == 1 {
+                        // row 13, column 04
+                        buf.push_str(" 13e0 13e0");
+                    } else if current_subtitle_count == 2 {
+                        // row 14, column 00
+                        buf.push_str(" 9440 9440");
+                    } else {
+                        // row 15, column 00
+                        buf.push_str(" 94e0 94e0")
+                    }
+                }
+            }
+        }
+        if self.is_screen_empty(writer) {
+            return Ok(());
+        }
+
+        if self.time_ms_show + writer.subs_delay < 0 {
+            return Ok(());
+        }
+
+        if self.cc_count == 2 {
+            writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
+        }
+
+        if writer.old_cc_time_end == 0 {
+            writer.old_cc_time_end = self.time_ms_show as i32;
+        }
+
+        let mut buf = String::new();
+        let mut time_show = ccx_boundary_time::get_time(self.time_ms_show);
+        let time_end = ccx_boundary_time::get_time(self.time_ms_hide);
+
+        // Caption overlapping situation
+        match writer.old_cc_time_end.cmp(&(time_show.time_in_ms as i32)) {
+            Ordering::Greater => {
+                // Correct the frame delay
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                buf.push_str(&(get_scc_time_str(time_show) + "\t942c 942c ").to_owned());
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+                // Clear the buffer and start pop on caption
+                buf.push_str("94ae 94ae 9420 9420");
+            }
+            Ordering::Less => {
+                // Clear the screen for new caption
+                let time_to_display = ccx_boundary_time::get_time(writer.old_cc_time_end as i64);
+                buf.push_str(&(get_scc_time_str(time_to_display) + "\t942c 942c \n\n").to_owned());
+                // Correct the frame delay
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                // Clear the buffer and start pop on caption in new time
+                buf.push_str(&(get_scc_time_str(time_show) + "\t94ae 94ae 9420 9420").to_owned());
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+            }
+            Ordering::Equal => {
+                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                buf.push_str(
+                    &(get_scc_time_str(time_show) + "\t942c 942c 94ae 94ae 9420 9420").to_owned(),
+                );
+                time_show.time_in_ms += 1000 / 29.97 as i64;
+            }
+        }
+
+        let total_subtitle_count = self.count_captions_lines_scc();
+        let mut current_subtitle_count = 0;
+
+        for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            if !self.is_row_empty(row_index) {
+                current_subtitle_count += 1;
+                add_needed_scc_labels(&mut buf, total_subtitle_count, current_subtitle_count);
+
+                let (first, last) = self.get_write_interval(row_index);
+                debug!("First: {}, Last: {}", first, last);
+
+                let mut bytes_written = 0;
+                for i in 0..last + 1 {
+                    if bytes_written % 2 == 0 {
+                        buf.push(' ');
+                    }
+                    let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
+                    buf = format!("{}{:x}", buf, adjusted_val);
+                    bytes_written += 1;
+                }
+                // add 0x80 padding and form byte pair if the last byte pair is not form
+                if bytes_written % 2 == 1 {
+                    buf.push_str("80 ");
+                } else {
+                    buf.push(' ');
+                }
+            }
+        }
+
+        // Display caption (942f 942f)
+        buf.push_str("942f 942f \n\n");
+        writer.write_to_file(buf.as_bytes())?;
+
+        writer.old_cc_time_end = time_end.time_in_ms as i32;
         Ok(())
     }
 
