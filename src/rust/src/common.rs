@@ -800,7 +800,7 @@ pub struct CcxOptions {
 }
 
 impl CcxOptions {
-    pub fn to_ctype(&self, options: *mut ccx_s_options) {
+    pub unsafe fn to_ctype(&self, options: *mut ccx_s_options) {
         unsafe {
             (*options).extract = if let Some(value) = self.extract {
                 value

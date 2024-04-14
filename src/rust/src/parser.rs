@@ -4,6 +4,7 @@ use num_integer::Integer;
 use std::convert::TryInto;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
+use std::ptr::addr_of_mut;
 use std::string::String;
 
 use cfg_if::cfg_if;
@@ -132,7 +133,7 @@ where
     }
 }
 
-fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
+unsafe fn process_word_file(filename: &str, list: *mut Vec<String>) -> Result<(), std::io::Error> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
     let mut num = 0;
@@ -154,7 +155,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
         }
 
         if new_len > 0 {
-            list.push(line.trim().to_string());
+            (*list).push(line.trim().to_string());
         }
     }
     Ok(())
@@ -397,7 +398,7 @@ impl CcxOptions {
     }
 
     fn append_file_to_queue(&mut self, filename: &str) -> i32 {
-        if filename.len() == 0 {
+        if filename.is_empty() {
             return 0;
         }
 
@@ -440,7 +441,7 @@ impl CcxOptions {
         }
         if n == -1 {
             // None. No expansion needed
-            return self.append_file_to_queue(&filename);
+            return self.append_file_to_queue(filename);
         }
 
         let mut m: i32 = n;
@@ -494,14 +495,13 @@ impl CcxOptions {
         }
         if let Some(ref files) = args.inputfile {
             for inputfile in files {
-                let rc: i32;
                 let plus_sign = '+';
 
-                if !inputfile.ends_with(plus_sign) {
-                    rc = self.append_file_to_queue(&inputfile);
+                let rc: i32 = if !inputfile.ends_with(plus_sign) {
+                    self.append_file_to_queue(inputfile)
                 } else {
-                    rc = self.add_file_sequence(&mut inputfile.clone());
-                }
+                    self.add_file_sequence(&mut inputfile.clone())
+                };
 
                 if rc < 0 {
                     println!("Fatal: Not enough memory to parse parameters.\n");
@@ -1361,7 +1361,7 @@ impl CcxOptions {
             unsafe {
                 CAPITALIZATION_LIST = get_vector_words(&CAPITALIZED_BUILTIN);
                 if let Some(ref sentence_cap_file) = self.sentence_cap_file {
-                    process_word_file(sentence_cap_file, &mut CAPITALIZATION_LIST)
+                    process_word_file(sentence_cap_file, addr_of_mut!(CAPITALIZATION_LIST))
                         .expect("There was an error processing the capitalization file.\n");
                 }
             }
@@ -1370,7 +1370,7 @@ impl CcxOptions {
             unsafe {
                 PROFANE = get_vector_words(&PROFANE_BUILTIN);
                 if let Some(ref profanityfile) = self.filter_profanity_file {
-                    process_word_file(profanityfile.as_str(), &mut PROFANE)
+                    process_word_file(profanityfile.as_str(), addr_of_mut!(PROFANE))
                         .expect("There was an error processing the profanity file.\n");
                 }
             }

@@ -35,7 +35,7 @@ pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
     for s in &cstr_vec {
         c_char_vec.push(s.as_ptr());
     }
-    let ptr = c_char_vec.as_ptr() as *const *const c_char;
+    let ptr = c_char_vec.as_ptr();
 
     std::mem::forget(cstr_vec);
     std::mem::forget(c_char_vec);
