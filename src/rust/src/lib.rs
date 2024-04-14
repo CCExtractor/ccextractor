@@ -228,7 +228,13 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
                     version(*argv);
                     return ExitCode::WithHelp as _;
                 }
+                ErrorKind::UnknownArgument => {
+                    println!("Unknown Argument");
+                    println!("{}", e);
+                    return 1;
+                }
                 _ => {
+                    println!("{}", e);
                     return 1;
                 }
             }

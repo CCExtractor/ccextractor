@@ -305,7 +305,7 @@ pub enum CcxOutputDateFormat {
 
 impl Default for CcxStreamMode {
     fn default() -> Self {
-        Self::ElementaryOrNotFound
+        Self::Autodetect
     }
 }
 
@@ -327,8 +327,35 @@ pub enum CcxStreamMode {
     // Gxf = 11,
     Mkv = 12,
     Mxf = 13,
-    // Autodetect = 16,
+    Autodetect = 16,
 }
+
+impl CcxStreamMode {
+    pub fn to_ctype(&self) -> ccx_stream_mode_enum {
+        match self {
+            CcxStreamMode::ElementaryOrNotFound => {
+                ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND
+            }
+            CcxStreamMode::Transport => ccx_stream_mode_enum_CCX_SM_TRANSPORT,
+            CcxStreamMode::Program => ccx_stream_mode_enum_CCX_SM_PROGRAM,
+            CcxStreamMode::Asf => ccx_stream_mode_enum_CCX_SM_ASF,
+            CcxStreamMode::McpoodlesRaw => ccx_stream_mode_enum_CCX_SM_MCPOODLESRAW,
+            CcxStreamMode::Rcwt => ccx_stream_mode_enum_CCX_SM_RCWT,
+            // CcxStreamMode::Myth => ccx_stream_mode_enum_CCX_SM_MYTH,
+            CcxStreamMode::Mp4 => ccx_stream_mode_enum_CCX_SM_MP4,
+            #[cfg(feature = "wtv_debug")]
+            CcxStreamMode::HexDump => ccx_stream_mode_enum_CCX_SM_HEX_DUMP,
+            CcxStreamMode::Wtv => ccx_stream_mode_enum_CCX_SM_WTV,
+            #[cfg(feature = "enable_ffmpeg")]
+            CcxStreamMode::Ffmpeg => ccx_stream_mode_enum_CCX_SM_FFMPEG,
+            // CcxStreamMode::Gxf => ccx_stream_mode_enum_CCX_SM_GXF,
+            CcxStreamMode::Mkv => ccx_stream_mode_enum_CCX_SM_MKV,
+            CcxStreamMode::Mxf => ccx_stream_mode_enum_CCX_SM_MXF,
+            CcxStreamMode::Autodetect => ccx_stream_mode_enum_CCX_SM_AUTODETECT,
+        }
+    }
+}
+
 impl Default for CcxCodeType {
     fn default() -> Self {
         Self::None
@@ -337,7 +364,7 @@ impl Default for CcxCodeType {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum CcxCodeType {
-    // Any = 0,
+    Any = 0,
     Teletext = 1,
     Dvb = 2,
     // IsdbCc = 3,
@@ -345,12 +372,25 @@ pub enum CcxCodeType {
     None = 5,
 }
 
+impl CcxCodeType {
+    pub fn to_ctype(&self) -> ccx_code_type {
+        match self {
+            CcxCodeType::Any => ccx_code_type_CCX_CODEC_ANY,
+            CcxCodeType::Teletext => ccx_code_type_CCX_CODEC_TELETEXT,
+            CcxCodeType::Dvb => ccx_code_type_CCX_CODEC_DVB,
+            // CcxCodeType::IsdbCc => ccx_code_type_CCX_CODEC_ISDB_CC,
+            // CcxCodeType::AtscCc => ccx_code_type_CCX_CODEC_ATSC_CC,
+            CcxCodeType::None => ccx_code_type_CCX_CODEC_NONE,
+        }
+    }
+}
+
 impl Default for CcxDemuxerCfg {
     fn default() -> Self {
         Self {
             m2ts: false,
             auto_stream: CcxStreamMode::default(),
-            codec: CcxCodeType::default(),
+            codec: CcxCodeType::Any,
             nocodec: CcxCodeType::default(),
             ts_autoprogram: false,
             ts_allprogram: false,
@@ -385,19 +425,23 @@ pub struct CcxDemuxerCfg {
 impl CcxDemuxerCfg {
     pub fn to_ctype(&self) -> demuxer_cfg {
         demuxer_cfg {
-            m2ts: self.m2ts as _,
-            auto_stream: self.auto_stream as _,
-            codec: self.codec as _,
-            nocodec: self.nocodec as _,
-            ts_autoprogram: self.ts_autoprogram as _,
-            ts_allprogram: self.ts_allprogram as _,
+            m2ts: if self.m2ts { 1 } else { 0 },
+            auto_stream: self.auto_stream.to_ctype(),
+            codec: self.codec.to_ctype(),
+            nocodec: self.nocodec.to_ctype(),
+            ts_autoprogram: if self.ts_autoprogram { 1 } else { 0 },
+            ts_allprogram: if self.ts_allprogram as _ { 1 } else { 0 },
             ts_cappids: self.ts_cappids,
             nb_ts_cappid: self.nb_ts_cappid,
             ts_forced_cappid: self.ts_forced_cappid,
             ts_forced_program: self.ts_forced_program,
-            ts_forced_program_selected: self.ts_forced_program_selected as _,
-            ts_forced_streamtype: self.ts_forced_streamtype,
+            ts_forced_program_selected: if self.ts_forced_program_selected {
+                1
+            } else {
+                0
+            },
             ts_datastreamtype: self.ts_datastreamtype,
+            ts_forced_streamtype: self.ts_forced_streamtype,
         }
     }
 }
