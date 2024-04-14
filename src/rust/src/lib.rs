@@ -241,6 +241,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
     opt.parse_parameters(&args, &mut _tlt_config);
     tlt_config = _tlt_config.to_ctype();
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    _options = &mut opt.to_ctype();
+    opt.to_ctype(_options);
+
     0
 }

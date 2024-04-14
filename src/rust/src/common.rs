@@ -1,5 +1,6 @@
 use crate::bindings::*;
-use std::ffi::CString;
+use crate::utils::string_to_c_char;
+use crate::utils::string_to_c_chars;
 
 #[derive(Debug, Default)]
 pub struct CcxTeletextConfig {
@@ -590,59 +591,61 @@ pub struct CcxEncoderCfg {
 
 impl CcxEncoderCfg {
     pub fn to_ctype(&self) -> encoder_cfg {
-        encoder_cfg {
-            extract: if let Some(value) = self.extract {
-                value
-            } else {
-                0
-            },
-            dtvcc_extract: self.dtvcc_extract as _,
-            gui_mode_reports: self.gui_mode_reports as _,
-            output_filename: get_raw_string(&self.output_filename),
-            write_format: self.write_format.into(),
-            keep_output_closed: self.keep_output_closed as _,
-            force_flush: self.force_flush as _,
-            append_mode: self.append_mode as _,
-            ucla: self.ucla as _,
-            encoding: self.encoding as _,
-            date_format: self.date_format as _,
-            millis_separator: self.millis_separator as _,
-            autodash: self.autodash as _,
-            trim_subs: self.trim_subs as _,
-            sentence_cap: self.sentence_cap as _,
-            splitbysentence: self.splitbysentence as _,
-            #[cfg(feature = "with_libcurl")]
-            curlposturl: get_raw_string(&self.curlposturl.unwrap_or_default()),
-            filter_profanity: self.filter_profanity as _,
-            with_semaphore: self.with_semaphore as _,
-            start_credits_text: get_raw_string(&self.start_credits_text),
-            end_credits_text: get_raw_string(&self.end_credits_text),
-            startcreditsnotbefore: self.startcreditsnotbefore.to_ctype(),
-            startcreditsnotafter: self.startcreditsnotafter.to_ctype(),
-            startcreditsforatleast: self.startcreditsforatleast.to_ctype(),
-            startcreditsforatmost: self.startcreditsforatmost.to_ctype(),
-            endcreditsforatleast: self.endcreditsforatleast.to_ctype(),
-            endcreditsforatmost: self.endcreditsforatmost.to_ctype(),
-            transcript_settings: self.transcript_settings.to_ctype(),
-            send_to_srv: self.send_to_srv as _,
-            no_bom: self.no_bom as _,
-            first_input_file: get_raw_string(&self.first_input_file),
-            multiple_files: self.multiple_files as _,
-            no_font_color: self.no_font_color as _,
-            no_type_setting: self.no_type_setting as _,
-            cc_to_stdout: self.cc_to_stdout as _,
-            line_terminator_lf: self.line_terminator_lf as _,
-            subs_delay: self.subs_delay,
-            program_number: self.program_number,
-            in_format: self.in_format,
-            nospupngocr: self.nospupngocr as _,
-            force_dropframe: self.force_dropframe as _,
-            render_font: get_raw_string(&self.render_font),
-            render_font_italics: get_raw_string(&self.render_font_italics),
-            services_enabled: self.services_enabled.map(|b| if b { 1 } else { 0 }),
-            services_charsets: get_raw_strings(self.services_charsets.clone()),
-            all_services_charset: get_raw_string(&self.all_services_charset),
-            extract_only_708: self.extract_only_708 as _,
+        unsafe {
+            encoder_cfg {
+                extract: if let Some(value) = self.extract {
+                    value
+                } else {
+                    0
+                },
+                dtvcc_extract: self.dtvcc_extract as _,
+                gui_mode_reports: self.gui_mode_reports as _,
+                output_filename: string_to_c_char(&self.output_filename),
+                write_format: self.write_format.into(),
+                keep_output_closed: self.keep_output_closed as _,
+                force_flush: self.force_flush as _,
+                append_mode: self.append_mode as _,
+                ucla: self.ucla as _,
+                encoding: self.encoding as _,
+                date_format: self.date_format as _,
+                millis_separator: self.millis_separator as _,
+                autodash: self.autodash as _,
+                trim_subs: self.trim_subs as _,
+                sentence_cap: self.sentence_cap as _,
+                splitbysentence: self.splitbysentence as _,
+                #[cfg(feature = "with_libcurl")]
+                curlposturl: string_to_c_char(&self.curlposturl.unwrap_or_default()),
+                filter_profanity: self.filter_profanity as _,
+                with_semaphore: self.with_semaphore as _,
+                start_credits_text: string_to_c_char(&self.start_credits_text),
+                end_credits_text: string_to_c_char(&self.end_credits_text),
+                startcreditsnotbefore: self.startcreditsnotbefore.to_ctype(),
+                startcreditsnotafter: self.startcreditsnotafter.to_ctype(),
+                startcreditsforatleast: self.startcreditsforatleast.to_ctype(),
+                startcreditsforatmost: self.startcreditsforatmost.to_ctype(),
+                endcreditsforatleast: self.endcreditsforatleast.to_ctype(),
+                endcreditsforatmost: self.endcreditsforatmost.to_ctype(),
+                transcript_settings: self.transcript_settings.to_ctype(),
+                send_to_srv: self.send_to_srv as _,
+                no_bom: self.no_bom as _,
+                first_input_file: string_to_c_char(&self.first_input_file),
+                multiple_files: self.multiple_files as _,
+                no_font_color: self.no_font_color as _,
+                no_type_setting: self.no_type_setting as _,
+                cc_to_stdout: self.cc_to_stdout as _,
+                line_terminator_lf: self.line_terminator_lf as _,
+                subs_delay: self.subs_delay,
+                program_number: self.program_number,
+                in_format: self.in_format,
+                nospupngocr: self.nospupngocr as _,
+                force_dropframe: self.force_dropframe as _,
+                render_font: string_to_c_char(&self.render_font),
+                render_font_italics: string_to_c_char(&self.render_font_italics),
+                services_enabled: self.services_enabled.map(|b| if b { 1 } else { 0 }),
+                services_charsets: string_to_c_chars(self.services_charsets.clone()),
+                all_services_charset: string_to_c_char(&self.all_services_charset),
+                extract_only_708: self.extract_only_708 as _,
+            }
         }
     }
 }
@@ -752,134 +755,127 @@ pub struct CcxOptions {
     pub translate_key: Option<String>,
 }
 
-fn get_raw_string(str: &str) -> *mut i8 {
-    CString::new(str).unwrap().into_raw()
-}
-
-fn get_raw_strings(strs: Vec<String>) -> *mut *mut i8 {
-    (*(strs
-        .iter()
-        .map(|s| get_raw_string(&s.clone()))
-        .collect::<Vec<_>>()))
-    .as_ptr() as *mut *mut i8
-}
-
 impl CcxOptions {
-    pub fn to_ctype(&self) -> ccx_s_options {
-        ccx_s_options {
-            extract: if let Some(value) = self.extract {
+    pub fn to_ctype(&self, options: *mut ccx_s_options) {
+        unsafe {
+            (*options).extract = if let Some(value) = self.extract {
                 value
             } else {
                 0
-            },
-            no_rollup: self.no_rollup as _,
-            noscte20: self.noscte20 as _,
-            webvtt_create_css: self.webvtt_create_css as _,
-            cc_channel: self.cc_channel.unwrap_or_default(),
-            buffer_input: self.buffer_input as _,
-            nofontcolor: self.nofontcolor as _,
-            write_format: self.write_format.into(),
-            send_to_srv: self.send_to_srv as _,
-            nohtmlescape: self.nohtmlescape as _,
-            notypesetting: self.notypesetting as _,
-            extraction_start: self.extraction_start.to_ctype(),
-            extraction_end: self.extraction_end.to_ctype(),
-            print_file_reports: self.print_file_reports as _,
-            settings_608: self.settings_608.to_ctype(),
-            settings_dtvcc: self.settings_dtvcc.to_ctype(),
-            is_608_enabled: self.is_608_enabled as _,
-            is_708_enabled: self.is_708_enabled as _,
-            millis_separator: self.millis_separator as _,
-            binary_concat: self.binary_concat as _,
-            use_gop_as_pts: self.use_gop_as_pts,
-            fix_padding: self.fix_padding as _,
-            gui_mode_reports: self.gui_mode_reports as _,
-            no_progress_bar: self.no_progress_bar as _,
-            sentence_cap_file: get_raw_string(&self.sentence_cap_file.clone().unwrap_or_default()),
-            live_stream: self.live_stream.unwrap_or_default(),
-            filter_profanity_file: get_raw_string(
-                &self.filter_profanity_file.clone().unwrap_or_default(),
-            ),
-            messages_target: self.messages_target.unwrap_or_default(),
-            timestamp_map: self.timestamp_map as _,
-            dolevdist: self.dolevdist,
-            levdistmincnt: self.levdistmincnt.unwrap_or_default(),
-            levdistmaxpct: self.levdistmaxpct.unwrap_or_default(),
-            investigate_packets: self.investigate_packets as _,
-            fullbin: self.fullbin as _,
-            nosync: self.nosync as _,
-            hauppauge_mode: self.hauppauge_mode as _,
-            wtvconvertfix: self.wtvconvertfix as _,
-            wtvmpeg2: self.wtvmpeg2 as _,
-            auto_myth: self.auto_myth.unwrap_or_default() as _,
-            mp4vidtrack: self.mp4vidtrack as _,
-            extract_chapters: self.extract_chapters as _,
-            usepicorder: self.usepicorder as _,
-            xmltv: self.xmltv.unwrap_or_default() as _,
-            xmltvliveinterval: self.xmltvliveinterval.unwrap_or_default() as _,
-            xmltvoutputinterval: self.xmltvoutputinterval.unwrap_or_default() as _,
-            xmltvonlycurrent: self.xmltvonlycurrent.unwrap_or_default() as _,
-            keep_output_closed: self.keep_output_closed as _,
-            force_flush: self.force_flush as _,
-            append_mode: self.append_mode as _,
-            ucla: self.ucla as _,
-            tickertext: self.tickertext as _,
-            hardsubx: self.hardsubx as _,
-            hardsubx_and_common: self.hardsubx_and_common as _,
-            dvblang: get_raw_string(&self.dvblang.clone().unwrap_or_default()),
-            ocrlang: get_raw_string(&self.ocrlang.clone().unwrap_or_default()),
-            ocr_oem: self.ocr_oem.unwrap_or_default(),
-            ocr_quantmode: self.ocr_quantmode.unwrap_or_default(),
-            mkvlang: get_raw_string(&self.mkvlang.clone().unwrap_or_default()),
-            analyze_video_stream: self.analyze_video_stream as _,
-            hardsubx_ocr_mode: self.hardsubx_ocr_mode.unwrap_or_default(),
-            hardsubx_subcolor: self.hardsubx_subcolor.unwrap_or_default(),
-            hardsubx_min_sub_duration: self.hardsubx_min_sub_duration.unwrap_or_default(),
-            hardsubx_detect_italics: self.hardsubx_detect_italics as _,
-            hardsubx_conf_thresh: self.hardsubx_conf_thresh.unwrap_or_default(),
-            hardsubx_hue: self.hardsubx_hue.unwrap_or_default(),
-            hardsubx_lum_thresh: self.hardsubx_lum_thresh.unwrap_or(0.0),
-            transcript_settings: self.transcript_settings.to_ctype(),
-            date_format: self.date as _,
-            write_format_rewritten: self.write_format_rewritten as _,
-            use_ass_instead_of_ssa: self.use_ass_instead_of_ssa as _,
-            use_webvtt_styling: self.use_webvtt_styling as _,
-            debug_mask: self.debug_mask as _,
-            debug_mask_on_debug: self.debug_mask_on_debug,
-            udpsrc: get_raw_string(&self.udpsrc.clone().unwrap_or_default()),
-            udpaddr: get_raw_string(&self.udpaddr.clone().unwrap_or_default()),
-            udpport: self.udpport.unwrap_or_default(),
-            tcpport: get_raw_string(&self.tcpport.unwrap_or_default().to_string()),
-            tcp_password: get_raw_string(&self.tcp_password.clone().unwrap_or_default()),
-            tcp_desc: get_raw_string(&self.tcp_desc.clone().unwrap_or_default()),
-            srv_addr: get_raw_string(&self.srv_addr.clone().unwrap_or_default()),
-            srv_port: get_raw_string(&self.srv_port.unwrap_or_default().to_string()),
-            noautotimeref: self.noautotimeref as _,
-            input_source: self.input_source as _,
-            output_filename: get_raw_string(&self.output_filename.clone().unwrap_or_default()),
-            inputfile: get_raw_strings(self.inputfile.clone().unwrap_or_default()),
-            num_input_files: self.num_input_files.unwrap_or_default(),
-            demux_cfg: self.demux_cfg.to_ctype(),
-            enc_cfg: self.enc_cfg.to_ctype(),
-            subs_delay: self.subs_delay,
-            cc_to_stdout: self.cc_to_stdout as _,
-            pes_header_to_stdout: self.pes_header_to_stdout as _,
-            ignore_pts_jumps: self.ignore_pts_jumps as _,
-            multiprogram: self.multiprogram as _,
-            out_interval: self.out_interval.unwrap_or_default(),
-            segment_on_key_frames_only: self.segment_on_key_frames_only as _,
+            };
+            (*options).no_rollup = self.no_rollup as _;
+            (*options).noscte20 = self.noscte20 as _;
+            (*options).webvtt_create_css = self.webvtt_create_css as _;
+            (*options).cc_channel = self.cc_channel.unwrap_or_default();
+            (*options).buffer_input = self.buffer_input as _;
+            (*options).nofontcolor = self.nofontcolor as _;
+            (*options).write_format = self.write_format.into();
+            (*options).send_to_srv = self.send_to_srv as _;
+            (*options).nohtmlescape = self.nohtmlescape as _;
+            (*options).notypesetting = self.notypesetting as _;
+            (*options).extraction_start = self.extraction_start.to_ctype();
+            (*options).extraction_end = self.extraction_end.to_ctype();
+            (*options).print_file_reports = self.print_file_reports as _;
+            (*options).settings_608 = self.settings_608.to_ctype();
+            (*options).settings_dtvcc = self.settings_dtvcc.to_ctype();
+            (*options).is_608_enabled = self.is_608_enabled as _;
+            (*options).is_708_enabled = self.is_708_enabled as _;
+            (*options).millis_separator = self.millis_separator as _;
+            (*options).binary_concat = self.binary_concat as _;
+            (*options).use_gop_as_pts = self.use_gop_as_pts;
+            (*options).fix_padding = self.fix_padding as _;
+            (*options).gui_mode_reports = self.gui_mode_reports as _;
+            (*options).no_progress_bar = self.no_progress_bar as _;
+            (*options).sentence_cap_file =
+                string_to_c_char(&self.sentence_cap_file.clone().unwrap_or_default());
+            (*options).live_stream = self.live_stream.unwrap_or_default();
+            (*options).filter_profanity_file =
+                string_to_c_char(&self.filter_profanity_file.clone().unwrap_or_default());
+            (*options).messages_target = self.messages_target.unwrap_or_default();
+            (*options).timestamp_map = self.timestamp_map as _;
+            (*options).dolevdist = self.dolevdist;
+            (*options).levdistmincnt = self.levdistmincnt.unwrap_or_default();
+            (*options).levdistmaxpct = self.levdistmaxpct.unwrap_or_default();
+            (*options).investigate_packets = self.investigate_packets as _;
+            (*options).fullbin = self.fullbin as _;
+            (*options).nosync = self.nosync as _;
+            (*options).hauppauge_mode = self.hauppauge_mode as _;
+            (*options).wtvconvertfix = self.wtvconvertfix as _;
+            (*options).wtvmpeg2 = self.wtvmpeg2 as _;
+            (*options).auto_myth = self.auto_myth.unwrap_or_default() as _;
+            (*options).mp4vidtrack = self.mp4vidtrack as _;
+            (*options).extract_chapters = self.extract_chapters as _;
+            (*options).usepicorder = self.usepicorder as _;
+            (*options).xmltv = self.xmltv.unwrap_or_default() as _;
+            (*options).xmltvliveinterval = self.xmltvliveinterval.unwrap_or_default() as _;
+            (*options).xmltvoutputinterval = self.xmltvoutputinterval.unwrap_or_default() as _;
+            (*options).xmltvonlycurrent = self.xmltvonlycurrent.unwrap_or_default() as _;
+            (*options).keep_output_closed = self.keep_output_closed as _;
+            (*options).force_flush = self.force_flush as _;
+            (*options).append_mode = self.append_mode as _;
+            (*options).ucla = self.ucla as _;
+            (*options).tickertext = self.tickertext as _;
+            (*options).hardsubx = self.hardsubx as _;
+            (*options).hardsubx_and_common = self.hardsubx_and_common as _;
+            (*options).dvblang = string_to_c_char(&self.dvblang.clone().unwrap_or_default());
+            (*options).ocrlang = string_to_c_char(&self.ocrlang.clone().unwrap_or_default());
+            (*options).ocr_oem = self.ocr_oem.unwrap_or_default();
+            (*options).ocr_quantmode = self.ocr_quantmode.unwrap_or_default();
+            (*options).mkvlang = string_to_c_char(&self.mkvlang.clone().unwrap_or_default());
+            (*options).analyze_video_stream = self.analyze_video_stream as _;
+            (*options).hardsubx_ocr_mode = self.hardsubx_ocr_mode.unwrap_or_default();
+            (*options).hardsubx_subcolor = self.hardsubx_subcolor.unwrap_or_default();
+            (*options).hardsubx_min_sub_duration =
+                self.hardsubx_min_sub_duration.unwrap_or_default();
+            (*options).hardsubx_detect_italics = self.hardsubx_detect_italics as _;
+            (*options).hardsubx_conf_thresh = self.hardsubx_conf_thresh.unwrap_or_default();
+            (*options).hardsubx_hue = self.hardsubx_hue.unwrap_or_default();
+            (*options).hardsubx_lum_thresh = self.hardsubx_lum_thresh.unwrap_or(0.0);
+            (*options).transcript_settings = self.transcript_settings.to_ctype();
+            (*options).date_format = self.date as _;
+            (*options).write_format_rewritten = self.write_format_rewritten as _;
+            (*options).use_ass_instead_of_ssa = self.use_ass_instead_of_ssa as _;
+            (*options).use_webvtt_styling = self.use_webvtt_styling as _;
+            (*options).debug_mask = self.debug_mask as _;
+            (*options).debug_mask_on_debug = self.debug_mask_on_debug;
+            (*options).udpsrc = string_to_c_char(&self.udpsrc.clone().unwrap_or_default());
+            (*options).udpaddr = string_to_c_char(&self.udpaddr.clone().unwrap_or_default());
+            (*options).udpport = self.udpport.unwrap_or_default();
+            (*options).tcpport = string_to_c_char(&self.tcpport.unwrap_or_default().to_string());
+            (*options).tcp_password =
+                string_to_c_char(&self.tcp_password.clone().unwrap_or_default());
+            (*options).tcp_desc = string_to_c_char(&self.tcp_desc.clone().unwrap_or_default());
+            (*options).srv_addr = string_to_c_char(&self.srv_addr.clone().unwrap_or_default());
+            (*options).srv_port = string_to_c_char(&self.srv_port.unwrap_or_default().to_string());
+            (*options).noautotimeref = self.noautotimeref as _;
+            (*options).input_source = self.input_source as _;
+            (*options).output_filename =
+                string_to_c_char(&self.output_filename.clone().unwrap_or_default());
+            (*options).inputfile = string_to_c_chars(self.inputfile.clone().unwrap_or_default());
+            (*options).num_input_files = self.num_input_files.unwrap_or_default();
+            (*options).demux_cfg = self.demux_cfg.to_ctype();
+            (*options).enc_cfg = self.enc_cfg.to_ctype();
+            (*options).subs_delay = self.subs_delay;
+            (*options).cc_to_stdout = self.cc_to_stdout as _;
+            (*options).pes_header_to_stdout = self.pes_header_to_stdout as _;
+            (*options).ignore_pts_jumps = self.ignore_pts_jumps as _;
+            (*options).multiprogram = self.multiprogram as _;
+            (*options).out_interval = self.out_interval.unwrap_or_default();
+            (*options).segment_on_key_frames_only = self.segment_on_key_frames_only as _;
             #[cfg(feature = "with_libcurl")]
-            curlposturl: get_raw_string(&self.curlposturl.unwrap_or_default()),
+            {
+                (*options).curlposturl = string_to_c_char(&self.curlposturl.unwrap_or_default());
+            }
             #[cfg(feature = "enable_sharing")]
-            sharing_enabled: self.sharing_enabled as _,
-            #[cfg(feature = "enable_sharing")]
-            sharing_url: get_raw_string(&self.sharing_url.unwrap_or_default()),
-            #[cfg(feature = "enable_sharing")]
-            translate_enabled: self.translate_enabled as _,
-            #[cfg(feature = "enable_sharing")]
-            translate_langs: get_raw_string(&self.translate_langs.unwrap_or_default()),
-            #[cfg(feature = "enable_sharing")]
-            translate_key: get_raw_string(&self.translate_key.unwrap_or_default()),
+            {
+                (*options).sharing_enabled = self.sharing_enabled as _;
+                (*options).sharing_url = string_to_c_char(&self.sharing_url.unwrap_or_default());
+                (*options).translate_enabled = self.translate_enabled as _;
+                (*options).translate_langs =
+                    string_to_c_char(&self.translate_langs.unwrap_or_default());
+                (*options).translate_key =
+                    string_to_c_char(&self.translate_key.unwrap_or_default());
+            }
         }
     }
 }
@@ -991,7 +987,7 @@ pub enum ExitCode {
     // MissingRCWTHeader = 1002,
     // FileCreationFailed = 5,
     // Unsupported = 9,
-    // NotEnoughMemory = 500,
+    NotEnoughMemory = 500,
     // BugBug = 1000,
 }
 

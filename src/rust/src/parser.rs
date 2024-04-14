@@ -1,6 +1,7 @@
 use args::{Args, OutFormat};
 use num_integer::Integer;
 
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::string::String;
@@ -42,6 +43,7 @@ pub static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
 static mut USERCOLOR_RGB: String = String::new();
 pub static mut UTC_REFVALUE: u64 = 0;
 const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
+static mut inputfile_capacity: i32 = 0;
 
 fn to_ms(value: &str) -> CcxBoundaryTime {
     let mut parts = value.rsplit(':');
@@ -394,21 +396,123 @@ impl CcxOptions {
         }
     }
 
-    pub fn parse_parameters(&mut self, args: &Args, tlt_config: &mut CcxTeletextConfig) {
-        if let Some(ref inputfile) = args.inputfile {
-            self.inputfile = Some(inputfile.to_owned());
-            self.num_input_files = Some(inputfile.len() as _);
-        } else {
-            println!("No input file specified\n");
-            std::process::exit(ExitCode::NoInputFiles as i32);
+    fn append_file_to_queue(&mut self, filename: &str) -> i32 {
+        if filename.len() == 0 {
+            return 0;
         }
 
+        let new_size: usize;
+
+        unsafe {
+            if self.num_input_files.unwrap_or(0) >= inputfile_capacity {
+                inputfile_capacity += 10;
+            }
+
+            new_size = inputfile_capacity.try_into().unwrap_or(0);
+
+            if self.inputfile.is_none() {
+                self.inputfile = Some(Vec::with_capacity(new_size));
+            }
+
+            if let Some(ref mut inputfile) = self.inputfile {
+                inputfile.resize(new_size, String::new());
+
+                let index = self.num_input_files.unwrap_or(0) as usize;
+                inputfile[index] = filename.to_string();
+            }
+        }
+
+        self.num_input_files = Some(self.num_input_files.unwrap_or(0) + 1);
+
+        0
+    }
+
+    // Used for adding a sequence of files that are numbered
+    // Ex: filename: video1.mp4 will search for video2.mp4, video3.mp4, ...
+    fn add_file_sequence(&mut self, filename: &mut String) -> i32 {
+        filename.pop();
+        let mut n: i32 = filename.len() as i32 - 1;
+        let bytes = filename.as_bytes();
+
+        // Look for the last digit in filename
+        while n >= 0 && !bytes[n as usize].is_ascii_digit() {
+            n -= 1;
+        }
+        if n == -1 {
+            // None. No expansion needed
+            return self.append_file_to_queue(&filename);
+        }
+
+        let mut m: i32 = n;
+        while m >= 0 && bytes[m as usize].is_ascii_digit() {
+            m -= 1;
+        }
+        m += 1;
+
+        // Here: Significant digits go from filename[m] to filename[n]
+        let num = &filename[(m as usize)..=(n as usize)];
+        let mut i = num.parse::<i32>().unwrap();
+
+        let mut temp;
+        let mut filename = filename.to_string();
+
+        loop {
+            if std::path::Path::new(&filename).exists() {
+                if self.append_file_to_queue(filename.as_str()) != 0 {
+                    return -1;
+                }
+                temp = format!("{}", i + 1);
+                let temp_len = temp.len();
+                let num_len = num.len();
+                if temp_len > num_len {
+                    break;
+                }
+                filename.replace_range(
+                    (m as usize + num_len - temp_len)..(m as usize + num_len),
+                    &temp,
+                );
+                filename.replace_range(
+                    (m as usize)..(m as usize + num_len - temp_len),
+                    &"0".repeat(num_len - temp_len),
+                );
+            } else {
+                break;
+            }
+            i += 1;
+        }
+
+        0
+    }
+
+    pub fn parse_parameters(&mut self, args: &Args, tlt_config: &mut CcxTeletextConfig) {
         if args.stdin {
             unsafe {
                 set_binary_mode();
             }
             self.input_source = CcxDatasource::Stdin;
             self.live_stream = Some(-1);
+        }
+        if let Some(ref files) = args.inputfile {
+            for inputfile in files {
+                let rc: i32;
+                let plus_sign = '+';
+
+                if !inputfile.ends_with(plus_sign) {
+                    rc = self.append_file_to_queue(&inputfile);
+                } else {
+                    rc = self.add_file_sequence(&mut inputfile.clone());
+                }
+
+                if rc < 0 {
+                    println!("Fatal: Not enough memory to parse parameters.\n");
+                    std::process::exit(ExitCode::NotEnoughMemory as i32);
+                }
+            }
+        }
+
+        if self.num_input_files.unwrap_or(0) == 0 {
+            println!("No input file specified\n");
+            std::process::exit(ExitCode::NoInputFiles as i32);
         }
 
         #[cfg(feature = "hardsubx_ocr")]
