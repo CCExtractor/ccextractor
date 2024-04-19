@@ -12,7 +12,7 @@ EIA-708, SO INTERNALLY WE USE THIS TABLE (FOR CONVENIENCE)
 A0-FF -> Group G1 as is - non-English characters and symbols
 */
 
-#if !defined(DISABLE_RUST)
+#if defined(DISABLE_RUST)
 
 unsigned char dtvcc_get_internal_from_G0(unsigned char g0_char)
 {
