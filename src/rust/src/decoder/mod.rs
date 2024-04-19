@@ -3,6 +3,7 @@
 //! Provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
 mod commands;
+mod encoding;
 mod output;
 mod service_decoder;
 mod timing;
