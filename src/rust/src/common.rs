@@ -2,7 +2,7 @@ use crate::bindings::*;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct CcxTeletextConfig {
     pub verbose: bool,
     pub page: u16,
@@ -26,6 +26,35 @@ pub struct CcxTeletextConfig {
     pub nohtmlescape: bool,
     pub millis_separator: char,
     pub latrusmap: bool,
+}
+
+impl Default for CcxTeletextConfig {
+    fn default() -> Self {
+        Self {
+            verbose: true,
+            page: 0,
+            tid: 0,
+            offset: 0.0,
+            bom: true,
+            nonempty: true,
+            user_page: 0,
+            dolevdist: 0,
+            levdistmincnt: 0,
+            levdistmaxpct: 0,
+            extraction_start: CcxBoundaryTime::default(),
+            extraction_end: CcxBoundaryTime::default(),
+            write_format: CcxOutputFormat::default(),
+            gui_mode_reports: false,
+            date_format: CcxOutputDateFormat::default(),
+            noautotimeref: false,
+            send_to_srv: false,
+            encoding: CcxEncodingType::default(),
+            nofontcolor: false,
+            nohtmlescape: false,
+            millis_separator: ',',
+            latrusmap: false,
+        }
+    }
 }
 
 impl CcxTeletextConfig {
