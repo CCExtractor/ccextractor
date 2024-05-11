@@ -102,7 +102,7 @@ impl CcxDecoder608Report {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct CcxDecoder608Settings {
     pub direct_rollup: i32,
     pub force_rollup: i32,
@@ -110,6 +110,19 @@ pub struct CcxDecoder608Settings {
     pub default_color: CcxDecoder608ColorCode,
     pub screens_to_process: i32,
     pub report: Option<CcxDecoder608Report>,
+}
+
+impl Default for CcxDecoder608Settings {
+    fn default() -> Self {
+        Self {
+            direct_rollup: 0,
+            force_rollup: 0,
+            no_rollup: false,
+            default_color: CcxDecoder608ColorCode::Transparent,
+            screens_to_process: -1,
+            report: None,
+        }
+    }
 }
 
 impl CcxDecoder608Settings {
@@ -197,7 +210,7 @@ impl Default for CcxDecoderDtvccSettings {
     fn default() -> Self {
         Self {
             enabled: false,
-            print_file_reports: false,
+            print_file_reports: true,
             no_rollup: false,
             report: None,
             active_services_count: 0,
@@ -261,7 +274,7 @@ impl CcxDecoderDtvccReport {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct CcxEncodersTranscriptFormat {
     pub show_start_time: bool,
     pub show_end_time: bool,
@@ -271,6 +284,21 @@ pub struct CcxEncodersTranscriptFormat {
     pub xds: bool,
     pub use_colors: bool,
     pub is_final: bool,
+}
+
+impl Default for CcxEncodersTranscriptFormat {
+    fn default() -> Self {
+        Self {
+            show_start_time: false,
+            show_end_time: false,
+            show_mode: false,
+            show_cc: false,
+            relative_timestamp: true,
+            xds: false,
+            use_colors: true,
+            is_final: false,
+        }
+    }
 }
 
 impl CcxEncodersTranscriptFormat {
@@ -391,13 +419,13 @@ impl Default for CcxDemuxerCfg {
             m2ts: false,
             auto_stream: CcxStreamMode::default(),
             codec: CcxCodeType::Any,
-            nocodec: CcxCodeType::default(),
+            nocodec: CcxCodeType::None,
             ts_autoprogram: false,
             ts_allprogram: false,
             ts_cappids: [0; 128],
             nb_ts_cappid: 0,
             ts_forced_cappid: 0,
-            ts_forced_program: 0,
+            ts_forced_program: -1,
             ts_forced_program_selected: false,
             ts_datastreamtype: 0,
             ts_forced_streamtype: 0,
@@ -516,7 +544,7 @@ impl From<CcxOutputFormat> for ccx_output_format {
 
 impl Default for CcxEncodingType {
     fn default() -> Self {
-        Self::Unicode
+        Self::Utf8
     }
 }
 
@@ -542,7 +570,7 @@ impl Default for CcxEncoderCfg {
             ucla: false,
             encoding: CcxEncodingType::default(),
             date_format: CcxOutputDateFormat::default(),
-            millis_separator: char::default(),
+            millis_separator: ',',
             autodash: false,
             trim_subs: false,
             sentence_cap: false,
@@ -560,7 +588,7 @@ impl Default for CcxEncoderCfg {
             endcreditsforatmost: CcxBoundaryTime::default(),
             transcript_settings: CcxEncodersTranscriptFormat::default(),
             send_to_srv: false,
-            no_bom: false,
+            no_bom: true,
             first_input_file: String::default(),
             multiple_files: false,
             no_font_color: false,
@@ -569,7 +597,7 @@ impl Default for CcxEncoderCfg {
             line_terminator_lf: false,
             subs_delay: 0,
             program_number: 0,
-            in_format: 0,
+            in_format: 1,
             nospupngocr: false,
             force_dropframe: false,
             render_font: String::default(),
@@ -694,7 +722,7 @@ impl CcxEncoderCfg {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct CcxOptions {
     pub extract: Option<i32>,
     pub no_rollup: bool,
@@ -799,6 +827,114 @@ pub struct CcxOptions {
     pub translate_key: Option<String>,
 }
 
+impl Default for CcxOptions {
+    fn default() -> Self {
+        Self {
+            extract: Some(1),
+            no_rollup: false,
+            noscte20: false,
+            webvtt_create_css: false,
+            cc_channel: Some(1),
+            buffer_input: false,
+            nofontcolor: false,
+            write_format: CcxOutputFormat::Srt,
+            send_to_srv: false,
+            nohtmlescape: false,
+            notypesetting: false,
+            extraction_start: CcxBoundaryTime::default(),
+            extraction_end: CcxBoundaryTime::default(),
+            print_file_reports: false,
+            settings_608: CcxDecoder608Settings::default(),
+            settings_dtvcc: CcxDecoderDtvccSettings::default(),
+            is_608_enabled: false,
+            is_708_enabled: false,
+            millis_separator: char::default(),
+            binary_concat: true,
+            use_gop_as_pts: 0,
+            fix_padding: false,
+            gui_mode_reports: false,
+            no_progress_bar: false,
+            sentence_cap_file: None,
+            live_stream: None,
+            filter_profanity_file: None,
+            messages_target: Some(1),
+            timestamp_map: false,
+            dolevdist: 1,
+            levdistmincnt: Some(2),
+            levdistmaxpct: Some(10),
+            investigate_packets: false,
+            fullbin: false,
+            nosync: false,
+            hauppauge_mode: false,
+            wtvconvertfix: false,
+            wtvmpeg2: false,
+            auto_myth: Some(2),
+            mp4vidtrack: false,
+            extract_chapters: false,
+            usepicorder: false,
+            xmltv: None,
+            xmltvliveinterval: Some(10),
+            xmltvoutputinterval: None,
+            xmltvonlycurrent: None,
+            keep_output_closed: false,
+            force_flush: false,
+            append_mode: false,
+            ucla: false,
+            tickertext: false,
+            hardsubx: false,
+            hardsubx_and_common: false,
+            dvblang: None,
+            ocrlang: None,
+            ocr_oem: Some(-1),
+            ocr_quantmode: Some(1),
+            mkvlang: None,
+            analyze_video_stream: false,
+            hardsubx_ocr_mode: None,
+            hardsubx_subcolor: None,
+            hardsubx_min_sub_duration: Some(0.5),
+            hardsubx_detect_italics: false,
+            hardsubx_conf_thresh: None,
+            hardsubx_hue: None,
+            hardsubx_lum_thresh: Some(95.0),
+            transcript_settings: CcxEncodersTranscriptFormat::default(),
+            date: CcxOutputDateFormat::default(),
+            write_format_rewritten: false,
+            use_ass_instead_of_ssa: false,
+            use_webvtt_styling: false,
+            debug_mask: CcxDebugMessageTypes::GenericNotices,
+            debug_mask_on_debug: 8,
+            udpsrc: None,
+            udpaddr: None,
+            udpport: Some(0),
+            tcpport: None,
+            tcp_password: None,
+            tcp_desc: None,
+            srv_addr: None,
+            srv_port: None,
+            noautotimeref: false,
+            input_source: CcxDatasource::File,
+            output_filename: None,
+            inputfile: None,
+            num_input_files: Some(0),
+            demux_cfg: CcxDemuxerCfg::default(),
+            enc_cfg: CcxEncoderCfg::default(),
+            subs_delay: 0,
+            cc_to_stdout: false,
+            pes_header_to_stdout: false,
+            ignore_pts_jumps: true,
+            multiprogram: false,
+            out_interval: Some(-1),
+            segment_on_key_frames_only: false,
+            curlposturl: None,
+            sharing_enabled: false,
+            sharing_url: None,
+            translate_enabled: false,
+            translate_langs: None,
+            translate_key: None,
+        }
+    }
+}
+
 impl CcxOptions {
     /// # Safety
     ///
@@ -807,12 +943,12 @@ impl CcxOptions {
         (*options).extract = if let Some(value) = self.extract {
             value
         } else {
-            0
+            1
         };
         (*options).no_rollup = self.no_rollup as _;
         (*options).noscte20 = self.noscte20 as _;
         (*options).webvtt_create_css = self.webvtt_create_css as _;
-        (*options).cc_channel = self.cc_channel.unwrap_or_default();
+        (*options).cc_channel = self.cc_channel.unwrap_or(1);
         (*options).buffer_input = self.buffer_input as _;
         (*options).nofontcolor = self.nofontcolor as _;
         (*options).write_format = self.write_format.into();
@@ -837,23 +973,23 @@ impl CcxOptions {
         (*options).live_stream = self.live_stream.unwrap_or_default();
         (*options).filter_profanity_file =
             string_to_c_char(&self.filter_profanity_file.clone().unwrap_or_default());
-        (*options).messages_target = self.messages_target.unwrap_or_default();
+        (*options).messages_target = self.messages_target.unwrap_or(1);
         (*options).timestamp_map = self.timestamp_map as _;
         (*options).dolevdist = self.dolevdist;
-        (*options).levdistmincnt = self.levdistmincnt.unwrap_or_default();
-        (*options).levdistmaxpct = self.levdistmaxpct.unwrap_or_default();
+        (*options).levdistmincnt = self.levdistmincnt.unwrap_or(2);
+        (*options).levdistmaxpct = self.levdistmaxpct.unwrap_or(10);
         (*options).investigate_packets = self.investigate_packets as _;
         (*options).fullbin = self.fullbin as _;
         (*options).nosync = self.nosync as _;
         (*options).hauppauge_mode = self.hauppauge_mode as _;
         (*options).wtvconvertfix = self.wtvconvertfix as _;
         (*options).wtvmpeg2 = self.wtvmpeg2 as _;
-        (*options).auto_myth = self.auto_myth.unwrap_or_default() as _;
+        (*options).auto_myth = self.auto_myth.unwrap_or(2) as _;
         (*options).mp4vidtrack = self.mp4vidtrack as _;
         (*options).extract_chapters = self.extract_chapters as _;
         (*options).usepicorder = self.usepicorder as _;
         (*options).xmltv = self.xmltv.unwrap_or_default() as _;
-        (*options).xmltvliveinterval = self.xmltvliveinterval.unwrap_or_default() as _;
+        (*options).xmltvliveinterval = self.xmltvliveinterval.unwrap_or(10) as _;
         (*options).xmltvoutputinterval = self.xmltvoutputinterval.unwrap_or_default() as _;
         (*options).xmltvonlycurrent = self.xmltvonlycurrent.unwrap_or_default() as _;
         (*options).keep_output_closed = self.keep_output_closed as _;
@@ -865,17 +1001,17 @@ impl CcxOptions {
         (*options).hardsubx_and_common = self.hardsubx_and_common as _;
         (*options).dvblang = string_to_c_char(&self.dvblang.clone().unwrap_or_default());
         (*options).ocrlang = string_to_c_char(&self.ocrlang.clone().unwrap_or_default());
-        (*options).ocr_oem = self.ocr_oem.unwrap_or_default();
-        (*options).ocr_quantmode = self.ocr_quantmode.unwrap_or_default();
+        (*options).ocr_oem = self.ocr_oem.unwrap_or(-1);
+        (*options).ocr_quantmode = self.ocr_quantmode.unwrap_or(1);
         (*options).mkvlang = string_to_c_char(&self.mkvlang.clone().unwrap_or_default());
         (*options).analyze_video_stream = self.analyze_video_stream as _;
         (*options).hardsubx_ocr_mode = self.hardsubx_ocr_mode.unwrap_or_default();
         (*options).hardsubx_subcolor = self.hardsubx_subcolor.unwrap_or_default();
-        (*options).hardsubx_min_sub_duration = self.hardsubx_min_sub_duration.unwrap_or_default();
+        (*options).hardsubx_min_sub_duration = self.hardsubx_min_sub_duration.unwrap_or(0.5);
         (*options).hardsubx_detect_italics = self.hardsubx_detect_italics as _;
         (*options).hardsubx_conf_thresh = self.hardsubx_conf_thresh.unwrap_or_default();
         (*options).hardsubx_hue = self.hardsubx_hue.unwrap_or_default();
-        (*options).hardsubx_lum_thresh = self.hardsubx_lum_thresh.unwrap_or(0.0);
+        (*options).hardsubx_lum_thresh = self.hardsubx_lum_thresh.unwrap_or(95.0);
         (*options).transcript_settings = self.transcript_settings.to_ctype();
         (*options).date_format = self.date as _;
         (*options).write_format_rewritten = self.write_format_rewritten as _;
@@ -904,7 +1040,7 @@ impl CcxOptions {
         (*options).pes_header_to_stdout = self.pes_header_to_stdout as _;
         (*options).ignore_pts_jumps = self.ignore_pts_jumps as _;
         (*options).multiprogram = self.multiprogram as _;
-        (*options).out_interval = self.out_interval.unwrap_or_default();
+        (*options).out_interval = self.out_interval.unwrap_or(-1);
         (*options).segment_on_key_frames_only = self.segment_on_key_frames_only as _;
         #[cfg(feature = "with_libcurl")]
         {
@@ -999,17 +1135,17 @@ impl Default for CcxDecoder608ColorCode {
 
 #[derive(Debug, Copy, Clone)]
 pub enum CcxDecoder608ColorCode {
-    // White = 0,
-    // Green = 1,
-    // Blue = 2,
-    // Cyan = 3,
-    // Red = 4,
-    // Yellow = 5,
-    // Magenta = 6,
+    White = 0,
+    Green = 1,
+    Blue = 2,
+    Cyan = 3,
+    Red = 4,
+    Yellow = 5,
+    Magenta = 6,
     Userdefined = 7,
-    // Black = 8,
-    // Transparent = 9,
-    // Max,
+    Black = 8,
+    Transparent = 9,
+    Max,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -1017,31 +1153,31 @@ pub enum ExitCode {
     NoInputFiles = 2,
     TooManyInputFiles = 3,
     IncompatibleParameters = 4,
-    // UnableToDetermineFileSize = 6,
+    UnableToDetermineFileSize = 6,
     MalformedParameter = 7,
-    // ReadError = 8,
-    // NoCaptions = 10,
+    ReadError = 8,
+    NoCaptions = 10,
     WithHelp = 11,
     NotClassified = 300,
-    // ErrorInCapitalizationFile = 501,
-    // BufferFull = 502,
-    // MissingASFHeader = 1001,
-    // MissingRCWTHeader = 1002,
-    // FileCreationFailed = 5,
-    // Unsupported = 9,
+    ErrorInCapitalizationFile = 501,
+    BufferFull = 502,
+    MissingASFHeader = 1001,
+    MissingRCWTHeader = 1002,
+    FileCreationFailed = 5,
+    Unsupported = 9,
     NotEnoughMemory = 500,
-    // BugBug = 1000,
+    BugBug = 1000,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub enum CCXResult {
-    // Ok = 0,
-    // EAGAIN = -100,
-    // EOF = -101,
-    // EINVAL = -102,
-    // ENOSUPP = -103,
-    // ENOMEM = -104,
-}
+// #[derive(Copy, Clone, Debug)]
+// pub enum CCXResult {
+// Ok = 0,
+// EAGAIN = -100,
+// EOF = -101,
+// EINVAL = -102,
+// ENOSUPP = -103,
+// ENOMEM = -104,
+// }
 
 #[derive(Copy, Clone, Debug)]
 #[allow(dead_code)]
@@ -1070,10 +1206,10 @@ pub enum CcxDebugMessageTypes {
     Time = 4,
     Verbose = 8,
     Decoder608 = 0x10,
-    // Decoder708 = 0x20,
+    Decoder708 = 0x20,
     DecoderXds = 0x40,
     Cbraw = 0x80,
-    // GenericNotices = 0x100,
+    GenericNotices = 0x100,
     Teletext = 0x200,
     Pat = 0x400,
     Pmt = 0x800,
