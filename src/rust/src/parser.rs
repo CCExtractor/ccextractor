@@ -334,7 +334,7 @@ impl CcxOptions {
             let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
-            self.enc_cfg.all_services_charset = charset.to_owned();
+            charset.clone_into(&mut self.enc_cfg.all_services_charset);
             self.enc_cfg.services_charsets = vec![String::new(); CCX_DTVCC_MAX_SERVICES];
 
             for i in 0..CCX_DTVCC_MAX_SERVICES {
@@ -388,7 +388,10 @@ impl CcxOptions {
             self.settings_dtvcc.active_services_count += 1;
 
             if charsets.len() > i && charsets[i].is_some() {
-                self.enc_cfg.services_charsets[svc - 1] = charsets[i].as_ref().unwrap().to_owned();
+                charsets[i]
+                    .as_ref()
+                    .unwrap()
+                    .clone_into(&mut self.enc_cfg.services_charsets[svc - 1]);
             }
         }
 
@@ -768,7 +771,7 @@ impl CcxOptions {
         }
 
         if let Some(ref startcreditstext) = args.startcreditstext {
-            self.enc_cfg.start_credits_text = startcreditstext.clone();
+            self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
@@ -787,7 +790,7 @@ impl CcxOptions {
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
-            self.enc_cfg.end_credits_text = endcreditstext.clone();
+            self.enc_cfg.end_credits_text.clone_from(endcreditstext);
         }
 
         if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
@@ -906,7 +909,7 @@ impl CcxOptions {
                     println!("Invalid default color");
                     std::process::exit(ExitCode::MalformedParameter as i32);
                 }
-                USERCOLOR_RGB = defaultcolor.clone();
+                USERCOLOR_RGB.clone_from(defaultcolor);
                 self.settings_608.default_color = CcxDecoder608ColorCode::Userdefined;
             }
         }
