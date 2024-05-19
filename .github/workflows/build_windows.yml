@@ -3,7 +3,6 @@ name: Build CCExtractor on Windows
 env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
-  VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
 
 on:
   workflow_dispatch:
@@ -31,30 +30,34 @@ jobs:
         uses: microsoft/setup-msbuild@v2.0.0
       - name: Install llvm and clang
         run: choco install llvm gpac
-      - name: Setup vcpkg
-        run: mkdir C:\vcpkg\.cache
-      - name: Cache vcpkg
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}
-      - name: Install dependencies
-        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+      - name: Cache vcpkg
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg
+          key: vcpkg-${{ runner.os }}-x64-windows-static
+
+      - name: Build vcpkg
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg --depth 1 --branch 2024.02.14 --single-branch
+          ./vcpkg/bootstrap-vcpkg.bat
+      - name: Install dependencies
+        run: cd vcpkg && ./vcpkg integrate install && ./vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: C:\vcpkg
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -72,22 +75,24 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v1.3.1
-        with:
-          msbuild-architecture: x64
+        uses: microsoft/setup-msbuild@v2.0.0
       - name: Install llvm and clang
         run: choco install llvm gpac
-      - name: Setup vcpkg
-        run: mkdir C:\vcpkg\.cache
       - name: Cache vcpkg
         id: cache
         uses: actions/cache@v3
         with:
           path: |
-            C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}
+            ${{ github.workspace }}/vcpkg
+          key: vcpkg-${{ runner.os }}-x64-windows-static
+
+      - name: Build vcpkg
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg --depth 1 --branch 2024.02.14 --single-branch
+          ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
-        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: cd vcpkg && ./vcpkg integrate install && ./vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -100,7 +105,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: C:\vcpkg
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
