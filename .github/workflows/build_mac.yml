@@ -79,7 +79,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg@6
     - name: cmake
       run: |
         mkdir build && cd build
