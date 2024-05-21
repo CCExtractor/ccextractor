@@ -25,13 +25,10 @@ pub extern "C" fn dtvcc_get_internal_from_G1(g1_char: u8) -> u8 {
 /// G2: Extended Control Code Set 1
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G2(g2_char: u8) -> u8 {
-    if (0x20..=0x3F).contains(&g2_char) {
-        g2_char - 0x20
-    } else if (0x60..=0x7F).contains(&g2_char) {
-        g2_char + 0x20
-    } else {
-        // Rest unmapped, so we return a blank space
-        0x20
+    match g2_char {
+        0x20..=0x3F => g2_char - 0x20,
+        0x60..=0x7F => g2_char + 0x20,
+        _ => 0x20,
     }
 }
 
