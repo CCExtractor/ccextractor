@@ -540,39 +540,38 @@ impl CcxOptions {
                         std::process::exit(ExitCode::MalformedParameter as i32);
                     }
 
-                    let value = Some(ocr_mode.unwrap() as i32);
-                    self.hardsubx_ocr_mode = value;
+                    self.hardsubx_ocr_mode = ocr_mode.unwrap() as i32;
                 }
 
                 if let Some(ref subcolor) = args.subcolor {
                     match subcolor.as_str() {
                         "white" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::White as i32);
-                            self.hardsubx_hue = Some(0.0);
+                            self.hardsubx_subcolor = HardsubxColorType::White as i32;
+                            self.hardsubx_hue = 0.0;
                         }
                         "yellow" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Yellow as i32);
-                            self.hardsubx_hue = Some(60.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Yellow as i32;
+                            self.hardsubx_hue = 60.0;
                         }
                         "green" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Green as i32);
-                            self.hardsubx_hue = Some(120.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Green as i32;
+                            self.hardsubx_hue = 120.0;
                         }
                         "cyan" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Cyan as i32);
-                            self.hardsubx_hue = Some(180.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Cyan as i32;
+                            self.hardsubx_hue = 180.0;
                         }
                         "blue" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Blue as i32);
-                            self.hardsubx_hue = Some(240.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Blue as i32;
+                            self.hardsubx_hue = 240.0;
                         }
                         "magenta" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Magenta as i32);
-                            self.hardsubx_hue = Some(300.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Magenta as i32;
+                            self.hardsubx_hue = 300.0;
                         }
                         "red" => {
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Red as i32);
-                            self.hardsubx_hue = Some(0.0);
+                            self.hardsubx_subcolor = HardsubxColorType::Red as i32;
+                            self.hardsubx_hue = 0.0;
                         }
                         _ => {
                             let result = subcolor.parse::<f32>();
@@ -587,8 +586,8 @@ impl CcxOptions {
                                 println!("Invalid Hue value");
                                 std::process::exit(ExitCode::MalformedParameter as i32);
                             }
-                            self.hardsubx_subcolor = Some(HardsubxColorType::Custom as i32);
-                            self.hardsubx_hue = Some(hue);
+                            self.hardsubx_subcolor = HardsubxColorType::Custom as i32;
+                            self.hardsubx_hue = hue;
                         }
                     }
                 }
@@ -598,7 +597,7 @@ impl CcxOptions {
                         println!("Invalid minimum subtitle duration");
                         std::process::exit(ExitCode::MalformedParameter as i32);
                     }
-                    self.hardsubx_min_sub_duration = Some(*value);
+                    self.hardsubx_min_sub_duration = *value;
                 }
 
                 if args.detect_italics {
@@ -610,7 +609,7 @@ impl CcxOptions {
                         println!("Invalid confidence threshold, valid values are between 0 & 100");
                         std::process::exit(ExitCode::MalformedParameter as i32);
                     }
-                    self.hardsubx_conf_thresh = Some(*value);
+                    self.hardsubx_conf_thresh = *value;
                 }
 
                 if let Some(ref value) = args.whiteness_thresh {
@@ -618,7 +617,7 @@ impl CcxOptions {
                         println!("Invalid whiteness threshold, valid values are between 0 & 100");
                         std::process::exit(ExitCode::MalformedParameter as i32);
                     }
-                    self.hardsubx_lum_thresh = Some(*value);
+                    self.hardsubx_lum_thresh = *value;
                 }
             }
         } // END OF HARDSUBX
