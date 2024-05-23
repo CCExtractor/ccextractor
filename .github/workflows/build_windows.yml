@@ -22,7 +22,7 @@ on:
 
 jobs:
   build_release:
-    runs-on: windows-2022
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
             ./windows/x64/Release-Full/ccextractorwinfull.exe
             ./windows/x64/Release-Full/*.dll
   build_debug:
-    runs-on: windows-2022
+    runs-on: windows-2019
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
