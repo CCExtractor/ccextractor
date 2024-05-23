@@ -588,7 +588,7 @@ pub enum CcxEncodingType {
 impl Default for CcxEncoderCfg {
     fn default() -> Self {
         Self {
-            extract: None,
+            extract: 1,
             dtvcc_extract: false,
             gui_mode_reports: false,
             output_filename: String::default(),
@@ -641,7 +641,7 @@ impl Default for CcxEncoderCfg {
 
 #[derive(Debug)]
 pub struct CcxEncoderCfg {
-    pub extract: Option<i32>,
+    pub extract: i32,
     pub dtvcc_extract: bool,
     pub gui_mode_reports: bool,
     pub output_filename: String,
@@ -694,11 +694,7 @@ impl CcxEncoderCfg {
     pub fn to_ctype(&self) -> encoder_cfg {
         unsafe {
             encoder_cfg {
-                extract: if let Some(value) = self.extract {
-                    value
-                } else {
-                    0
-                },
+                extract: self.extract,
                 dtvcc_extract: self.dtvcc_extract as _,
                 gui_mode_reports: self.gui_mode_reports as _,
                 output_filename: string_to_c_char(&self.output_filename),
@@ -715,7 +711,11 @@ impl CcxEncoderCfg {
                 sentence_cap: self.sentence_cap as _,
                 splitbysentence: self.splitbysentence as _,
                 #[cfg(feature = "with_libcurl")]
-                curlposturl: string_to_c_char(&self.curlposturl.unwrap_or_default()),
+                curlposturl: if self.curlposturl.is_some() {
+                    string_to_c_char(&self.curlposturl.clone().unwrap())
+                } else {
+                    string_null()
+                },
                 filter_profanity: self.filter_profanity as _,
                 with_semaphore: self.with_semaphore as _,
                 start_credits_text: string_to_c_char(&self.start_credits_text),
@@ -753,11 +753,11 @@ impl CcxEncoderCfg {
 
 #[derive(Debug)]
 pub struct CcxOptions {
-    pub extract: Option<i32>,
+    pub extract: i32,
     pub no_rollup: bool,
     pub noscte20: bool,
     pub webvtt_create_css: bool,
-    pub cc_channel: Option<i32>,
+    pub cc_channel: i32,
     pub buffer_input: bool,
     pub nofontcolor: bool,
     pub write_format: CcxOutputFormat,
@@ -778,27 +778,27 @@ pub struct CcxOptions {
     pub gui_mode_reports: bool,
     pub no_progress_bar: bool,
     pub sentence_cap_file: Option<String>,
-    pub live_stream: Option<i32>,
+    pub live_stream: i32,
     pub filter_profanity_file: Option<String>,
-    pub messages_target: Option<i32>,
+    pub messages_target: i32,
     pub timestamp_map: bool,
     pub dolevdist: i32,
-    pub levdistmincnt: Option<i32>,
-    pub levdistmaxpct: Option<i32>,
+    pub levdistmincnt: i32,
+    pub levdistmaxpct: i32,
     pub investigate_packets: bool,
     pub fullbin: bool,
     pub nosync: bool,
     pub hauppauge_mode: bool,
     pub wtvconvertfix: bool,
     pub wtvmpeg2: bool,
-    pub auto_myth: Option<i8>,
+    pub auto_myth: i32,
     pub mp4vidtrack: bool,
     pub extract_chapters: bool,
     pub usepicorder: bool,
-    pub xmltv: Option<i32>,
-    pub xmltvliveinterval: Option<i32>,
-    pub xmltvoutputinterval: Option<i32>,
-    pub xmltvonlycurrent: Option<i32>,
+    pub xmltv: i32,
+    pub xmltvliveinterval: i32,
+    pub xmltvoutputinterval: i32,
+    pub xmltvonlycurrent: i32,
     pub keep_output_closed: bool,
     pub force_flush: bool,
     pub append_mode: bool,
@@ -808,17 +808,17 @@ pub struct CcxOptions {
     pub hardsubx_and_common: bool,
     pub dvblang: Option<String>,
     pub ocrlang: Option<String>,
-    pub ocr_oem: Option<i32>,
-    pub ocr_quantmode: Option<i32>,
+    pub ocr_oem: i32,
+    pub ocr_quantmode: i32,
     pub mkvlang: Option<String>,
     pub analyze_video_stream: bool,
-    pub hardsubx_ocr_mode: Option<i32>,
-    pub hardsubx_subcolor: Option<i32>,
-    pub hardsubx_min_sub_duration: Option<f32>,
+    pub hardsubx_ocr_mode: i32,
+    pub hardsubx_subcolor: i32,
+    pub hardsubx_min_sub_duration: f32,
     pub hardsubx_detect_italics: bool,
-    pub hardsubx_conf_thresh: Option<f32>,
-    pub hardsubx_hue: Option<f32>,
-    pub hardsubx_lum_thresh: Option<f32>,
+    pub hardsubx_conf_thresh: f32,
+    pub hardsubx_hue: f32,
+    pub hardsubx_lum_thresh: f32,
     pub transcript_settings: CcxEncodersTranscriptFormat,
     pub date: CcxOutputDateFormat,
     pub write_format_rewritten: bool,
@@ -828,7 +828,7 @@ pub struct CcxOptions {
     pub debug_mask_on_debug: i64,
     pub udpsrc: Option<String>,
     pub udpaddr: Option<String>,
-    pub udpport: Option<u32>,
+    pub udpport: u32,
     pub tcpport: Option<u16>,
     pub tcp_password: Option<String>,
     pub tcp_desc: Option<String>,
@@ -838,7 +838,7 @@ pub struct CcxOptions {
     pub input_source: CcxDatasource,
     pub output_filename: Option<String>,
     pub inputfile: Option<Vec<String>>,
-    pub num_input_files: Option<i32>,
+    pub num_input_files: i32,
     pub demux_cfg: CcxDemuxerCfg,
     pub enc_cfg: CcxEncoderCfg,
     pub subs_delay: i64,
@@ -846,7 +846,7 @@ pub struct CcxOptions {
     pub pes_header_to_stdout: bool,
     pub ignore_pts_jumps: bool,
     pub multiprogram: bool,
-    pub out_interval: Option<i32>,
+    pub out_interval: i32,
     pub segment_on_key_frames_only: bool,
     pub curlposturl: Option<String>,
     pub sharing_enabled: bool,
@@ -859,11 +859,11 @@ pub struct CcxOptions {
 impl Default for CcxOptions {
     fn default() -> Self {
         Self {
-            extract: Some(1),
+            extract: 1,
             no_rollup: false,
             noscte20: false,
             webvtt_create_css: false,
-            cc_channel: Some(1),
+            cc_channel: 1,
             buffer_input: false,
             nofontcolor: false,
             write_format: CcxOutputFormat::Srt,
@@ -884,27 +884,27 @@ impl Default for CcxOptions {
             gui_mode_reports: false,
             no_progress_bar: false,
             sentence_cap_file: None,
-            live_stream: None,
+            live_stream: 0,
             filter_profanity_file: None,
-            messages_target: Some(1),
+            messages_target: 1,
             timestamp_map: false,
             dolevdist: 1,
-            levdistmincnt: Some(2),
-            levdistmaxpct: Some(10),
+            levdistmincnt: 2,
+            levdistmaxpct: 10,
             investigate_packets: false,
             fullbin: false,
             nosync: false,
             hauppauge_mode: false,
             wtvconvertfix: false,
             wtvmpeg2: false,
-            auto_myth: Some(2),
+            auto_myth: 2,
             mp4vidtrack: false,
             extract_chapters: false,
             usepicorder: false,
-            xmltv: None,
-            xmltvliveinterval: Some(10),
-            xmltvoutputinterval: None,
-            xmltvonlycurrent: None,
+            xmltv: 0,
+            xmltvliveinterval: 10,
+            xmltvoutputinterval: 0,
+            xmltvonlycurrent: 0,
             keep_output_closed: false,
             force_flush: false,
             append_mode: false,
@@ -914,17 +914,17 @@ impl Default for CcxOptions {
             hardsubx_and_common: false,
             dvblang: None,
             ocrlang: None,
-            ocr_oem: Some(-1),
-            ocr_quantmode: Some(1),
+            ocr_oem: -1,
+            ocr_quantmode: 1,
             mkvlang: None,
             analyze_video_stream: false,
-            hardsubx_ocr_mode: None,
-            hardsubx_subcolor: None,
-            hardsubx_min_sub_duration: Some(0.5),
+            hardsubx_ocr_mode: 0,
+            hardsubx_subcolor: 0,
+            hardsubx_min_sub_duration: 0.5,
             hardsubx_detect_italics: false,
-            hardsubx_conf_thresh: None,
-            hardsubx_hue: None,
-            hardsubx_lum_thresh: Some(95.0),
+            hardsubx_conf_thresh: 0.0,
+            hardsubx_hue: 0.0,
+            hardsubx_lum_thresh: 95.0,
             transcript_settings: CcxEncodersTranscriptFormat::default(),
             date: CcxOutputDateFormat::default(),
             write_format_rewritten: false,
@@ -934,7 +934,7 @@ impl Default for CcxOptions {
             debug_mask_on_debug: 8,
             udpsrc: None,
             udpaddr: None,
-            udpport: Some(0),
+            udpport: 0,
             tcpport: None,
             tcp_password: None,
             tcp_desc: None,
@@ -944,7 +944,7 @@ impl Default for CcxOptions {
             input_source: CcxDatasource::File,
             output_filename: None,
             inputfile: None,
-            num_input_files: Some(0),
+            num_input_files: 0,
             demux_cfg: CcxDemuxerCfg::default(),
             enc_cfg: CcxEncoderCfg::default(),
             subs_delay: 0,
@@ -952,7 +952,7 @@ impl Default for CcxOptions {
             pes_header_to_stdout: false,
             ignore_pts_jumps: true,
             multiprogram: false,
-            out_interval: Some(-1),
+            out_interval: -1,
             segment_on_key_frames_only: false,
             curlposturl: None,
             sharing_enabled: false,
@@ -969,15 +969,11 @@ impl CcxOptions {
     ///
     /// This function is unsafe because it dereferences the pointer passed to it.
     pub unsafe fn to_ctype(&self, options: *mut ccx_s_options) {
-        (*options).extract = if let Some(value) = self.extract {
-            value
-        } else {
-            1
-        };
+        (*options).extract = self.extract;
         (*options).no_rollup = self.no_rollup as _;
         (*options).noscte20 = self.noscte20 as _;
         (*options).webvtt_create_css = self.webvtt_create_css as _;
-        (*options).cc_channel = self.cc_channel.unwrap_or(1);
+        (*options).cc_channel = self.cc_channel;
         (*options).buffer_input = self.buffer_input as _;
         (*options).nofontcolor = self.nofontcolor as _;
         (*options).write_format = self.write_format.into();
@@ -997,30 +993,36 @@ impl CcxOptions {
         (*options).fix_padding = self.fix_padding as _;
         (*options).gui_mode_reports = self.gui_mode_reports as _;
         (*options).no_progress_bar = self.no_progress_bar as _;
-        (*options).sentence_cap_file =
-            string_to_c_char(&self.sentence_cap_file.clone().unwrap_or_default());
-        (*options).live_stream = self.live_stream.unwrap_or_default();
-        (*options).filter_profanity_file =
-            string_to_c_char(&self.filter_profanity_file.clone().unwrap_or_default());
-        (*options).messages_target = self.messages_target.unwrap_or(1);
+
+        if self.sentence_cap_file.is_some() {
+            (*options).sentence_cap_file =
+                string_to_c_char(&self.sentence_cap_file.clone().unwrap());
+        }
+
+        (*options).live_stream = self.live_stream;
+        if self.filter_profanity_file.is_some() {
+            (*options).filter_profanity_file =
+                string_to_c_char(&self.filter_profanity_file.clone().unwrap());
+        }
+        (*options).messages_target = self.messages_target;
         (*options).timestamp_map = self.timestamp_map as _;
         (*options).dolevdist = self.dolevdist;
-        (*options).levdistmincnt = self.levdistmincnt.unwrap_or(2);
-        (*options).levdistmaxpct = self.levdistmaxpct.unwrap_or(10);
+        (*options).levdistmincnt = self.levdistmincnt;
+        (*options).levdistmaxpct = self.levdistmaxpct;
         (*options).investigate_packets = self.investigate_packets as _;
         (*options).fullbin = self.fullbin as _;
         (*options).nosync = self.nosync as _;
         (*options).hauppauge_mode = self.hauppauge_mode as _;
         (*options).wtvconvertfix = self.wtvconvertfix as _;
         (*options).wtvmpeg2 = self.wtvmpeg2 as _;
-        (*options).auto_myth = self.auto_myth.unwrap_or(2) as _;
+        (*options).auto_myth = self.auto_myth;
         (*options).mp4vidtrack = self.mp4vidtrack as _;
         (*options).extract_chapters = self.extract_chapters as _;
         (*options).usepicorder = self.usepicorder as _;
-        (*options).xmltv = self.xmltv.unwrap_or_default() as _;
-        (*options).xmltvliveinterval = self.xmltvliveinterval.unwrap_or(10) as _;
-        (*options).xmltvoutputinterval = self.xmltvoutputinterval.unwrap_or_default() as _;
-        (*options).xmltvonlycurrent = self.xmltvonlycurrent.unwrap_or_default() as _;
+        (*options).xmltv = self.xmltv;
+        (*options).xmltvliveinterval = self.xmltvliveinterval;
+        (*options).xmltvoutputinterval = self.xmltvoutputinterval;
+        (*options).xmltvonlycurrent = self.xmltvonlycurrent;
         (*options).keep_output_closed = self.keep_output_closed as _;
         (*options).force_flush = self.force_flush as _;
         (*options).append_mode = self.append_mode as _;
@@ -1028,19 +1030,25 @@ impl CcxOptions {
         (*options).tickertext = self.tickertext as _;
         (*options).hardsubx = self.hardsubx as _;
         (*options).hardsubx_and_common = self.hardsubx_and_common as _;
-        (*options).dvblang = string_to_c_char(&self.dvblang.clone().unwrap_or_default());
-        (*options).ocrlang = string_to_c_char(&self.ocrlang.clone().unwrap_or_default());
-        (*options).ocr_oem = self.ocr_oem.unwrap_or(-1);
-        (*options).ocr_quantmode = self.ocr_quantmode.unwrap_or(1);
-        (*options).mkvlang = string_to_c_char(&self.mkvlang.clone().unwrap_or_default());
+        if self.dvblang.is_some() {
+            (*options).dvblang = string_to_c_char(&self.dvblang.clone().unwrap());
+        }
+        if self.ocrlang.is_some() {
+            (*options).ocrlang = string_to_c_char(&self.ocrlang.clone().unwrap());
+        }
+        (*options).ocr_oem = self.ocr_oem;
+        (*options).ocr_quantmode = self.ocr_quantmode;
+        if self.mkvlang.is_some() {
+            (*options).mkvlang = string_to_c_char(&self.mkvlang.clone().unwrap());
+        }
         (*options).analyze_video_stream = self.analyze_video_stream as _;
-        (*options).hardsubx_ocr_mode = self.hardsubx_ocr_mode.unwrap_or_default();
-        (*options).hardsubx_subcolor = self.hardsubx_subcolor.unwrap_or_default();
-        (*options).hardsubx_min_sub_duration = self.hardsubx_min_sub_duration.unwrap_or(0.5);
+        (*options).hardsubx_ocr_mode = self.hardsubx_ocr_mode;
+        (*options).hardsubx_subcolor = self.hardsubx_subcolor;
+        (*options).hardsubx_min_sub_duration = self.hardsubx_min_sub_duration;
         (*options).hardsubx_detect_italics = self.hardsubx_detect_italics as _;
-        (*options).hardsubx_conf_thresh = self.hardsubx_conf_thresh.unwrap_or_default();
-        (*options).hardsubx_hue = self.hardsubx_hue.unwrap_or_default();
-        (*options).hardsubx_lum_thresh = self.hardsubx_lum_thresh.unwrap_or(95.0);
+        (*options).hardsubx_conf_thresh = self.hardsubx_conf_thresh;
+        (*options).hardsubx_hue = self.hardsubx_hue;
+        (*options).hardsubx_lum_thresh = self.hardsubx_lum_thresh;
         (*options).transcript_settings = self.transcript_settings.to_ctype();
         (*options).date_format = self.date as _;
         (*options).write_format_rewritten = self.write_format_rewritten as _;
@@ -1048,20 +1056,37 @@ impl CcxOptions {
         (*options).use_webvtt_styling = self.use_webvtt_styling as _;
         (*options).debug_mask = self.debug_mask as _;
         (*options).debug_mask_on_debug = self.debug_mask_on_debug;
-        (*options).udpsrc = string_to_c_char(&self.udpsrc.clone().unwrap_or_default());
-        (*options).udpaddr = string_to_c_char(&self.udpaddr.clone().unwrap_or_default());
-        (*options).udpport = self.udpport.unwrap_or_default();
-        (*options).tcpport = string_to_c_char(&self.tcpport.unwrap_or_default().to_string());
-        (*options).tcp_password = string_to_c_char(&self.tcp_password.clone().unwrap_or_default());
-        (*options).tcp_desc = string_to_c_char(&self.tcp_desc.clone().unwrap_or_default());
-        (*options).srv_addr = string_to_c_char(&self.srv_addr.clone().unwrap_or_default());
-        (*options).srv_port = string_to_c_char(&self.srv_port.unwrap_or_default().to_string());
+        if self.udpsrc.is_some() {
+            (*options).udpsrc = string_to_c_char(&self.udpsrc.clone().unwrap());
+        }
+        if self.udpaddr.is_some() {
+            (*options).udpaddr = string_to_c_char(&self.udpaddr.clone().unwrap());
+        }
+        (*options).udpport = self.udpport;
+        if self.tcpport.is_some() {
+            (*options).tcpport = string_to_c_char(&self.tcpport.unwrap().to_string());
+        }
+        if self.tcp_password.is_some() {
+            (*options).tcp_password = string_to_c_char(&self.tcp_password.clone().unwrap());
+        }
+        if self.tcp_desc.is_some() {
+            (*options).tcp_desc = string_to_c_char(&self.tcp_desc.clone().unwrap());
+        }
+        if self.srv_addr.is_some() {
+            (*options).srv_addr = string_to_c_char(&self.srv_addr.clone().unwrap());
+        }
+        if self.srv_port.is_some() {
+            (*options).srv_port = string_to_c_char(&self.srv_port.unwrap().to_string());
+        }
         (*options).noautotimeref = self.noautotimeref as _;
         (*options).input_source = self.input_source as _;
-        (*options).output_filename =
-            string_to_c_char(&self.output_filename.clone().unwrap_or_default());
-        (*options).inputfile = string_to_c_chars(self.inputfile.clone().unwrap_or_default());
-        (*options).num_input_files = self.num_input_files.unwrap_or_default();
+        if self.output_filename.is_some() {
+            (*options).output_filename = string_to_c_char(&self.output_filename.clone().unwrap());
+        }
+        if self.inputfile.is_some() {
+            (*options).inputfile = string_to_c_chars(self.inputfile.clone().unwrap());
+        }
+        (*options).num_input_files = self.num_input_files;
         (*options).demux_cfg = self.demux_cfg.to_ctype();
         (*options).enc_cfg = self.enc_cfg.to_ctype();
         (*options).subs_delay = self.subs_delay;
@@ -1069,20 +1094,27 @@ impl CcxOptions {
         (*options).pes_header_to_stdout = self.pes_header_to_stdout as _;
         (*options).ignore_pts_jumps = self.ignore_pts_jumps as _;
         (*options).multiprogram = self.multiprogram as _;
-        (*options).out_interval = self.out_interval.unwrap_or(-1);
+        (*options).out_interval = self.out_interval;
         (*options).segment_on_key_frames_only = self.segment_on_key_frames_only as _;
         #[cfg(feature = "with_libcurl")]
         {
-            (*options).curlposturl = string_to_c_char(&self.curlposturl.unwrap_or_default());
+            if self.curlposturl.is_some() {
+                (*options).curlposturl = string_to_c_char(&self.curlposturl.unwrap());
+            }
         }
         #[cfg(feature = "enable_sharing")]
         {
             (*options).sharing_enabled = self.sharing_enabled as _;
-            (*options).sharing_url = string_to_c_char(&self.sharing_url.unwrap_or_default());
+            if self.sharing_url.is_some() {
+                (*options).sharing_url = string_to_c_char(&self.sharing_url.unwrap());
+            }
             (*options).translate_enabled = self.translate_enabled as _;
-            (*options).translate_langs =
-                string_to_c_char(&self.translate_langs.unwrap_or_default());
-            (*options).translate_key = string_to_c_char(&self.translate_key.unwrap_or_default());
+            if self.translate_langs.is_some() {
+                (*options).translate_langs = string_to_c_char(&self.translate_langs.unwrap());
+            }
+            if self.translate_key.is_some() {
+                (*options).translate_key = string_to_c_char(&self.translate_key.unwrap());
+            }
         }
     }
 }

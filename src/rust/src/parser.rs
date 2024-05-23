@@ -240,7 +240,7 @@ impl CcxOptions {
             }
             OutFormat::Report => {
                 self.write_format = CcxOutputFormat::Null;
-                self.messages_target = Some(0);
+                self.messages_target = 0;
                 self.print_file_reports = true;
                 self.demux_cfg.ts_allprogram = true;
             }
@@ -408,7 +408,7 @@ impl CcxOptions {
         let new_size: usize;
 
         unsafe {
-            if self.num_input_files.unwrap_or(0) >= inputfile_capacity {
+            if self.num_input_files >= inputfile_capacity {
                 inputfile_capacity += 10;
             }
 
@@ -421,12 +421,12 @@ impl CcxOptions {
             if let Some(ref mut inputfile) = self.inputfile {
                 inputfile.resize(new_size, String::new());
 
-                let index = self.num_input_files.unwrap_or(0) as usize;
+                let index = self.num_input_files as usize;
                 inputfile[index] = filename.to_string();
             }
         }
 
-        self.num_input_files = Some(self.num_input_files.unwrap_or(0) + 1);
+        self.num_input_files = self.num_input_files + 1;
 
         0
     }
@@ -494,7 +494,7 @@ impl CcxOptions {
                 set_binary_mode();
             }
             self.input_source = CcxDatasource::Stdin;
-            self.live_stream = Some(-1);
+            self.live_stream = -1;
         }
         if let Some(ref files) = args.inputfile {
             for inputfile in files {
@@ -513,7 +513,7 @@ impl CcxOptions {
             }
         }
 
-        if self.num_input_files.unwrap_or(0) == 0 {
+        if self.num_input_files == 0 {
             println!("No input file specified\n");
             std::process::exit(ExitCode::NoInputFiles as i32);
         }
@@ -736,7 +736,7 @@ impl CcxOptions {
                 println!("Invalid quant value");
                 std::process::exit(ExitCode::MalformedParameter as i32);
             }
-            self.ocr_quantmode = Some(*quant);
+            self.ocr_quantmode = *quant;
         }
 
         if args.no_spupngocr {
@@ -748,7 +748,7 @@ impl CcxOptions {
                 println!("Invalid oem value");
                 std::process::exit(ExitCode::MalformedParameter as i32);
             }
-            self.ocr_oem = Some(*oem);
+            self.ocr_oem = *oem;
         }
 
         if let Some(ref lang) = args.mkvlang {
@@ -847,7 +847,7 @@ impl CcxOptions {
         }
 
         if let Some(ref outinterval) = args.outinterval {
-            self.out_interval = Some(*outinterval);
+            self.out_interval = *outinterval;
         }
 
         if args.segmentonkeyonly {
@@ -900,7 +900,7 @@ impl CcxOptions {
         }
 
         if let Some(ref stream) = args.stream {
-            self.live_stream = Some(get_atoi_hex(stream.as_str()));
+            self.live_stream = get_atoi_hex(stream.as_str());
         }
 
         if let Some(ref defaultcolor) = args.defaultcolor {
@@ -930,14 +930,14 @@ impl CcxOptions {
         }
 
         if args.cc2 {
-            self.cc_channel = Some(2);
+            self.cc_channel = 2;
         }
 
         if let Some(ref extract) = args.output_field {
             if *extract == "1" || *extract == "2" {
-                self.extract = Some(get_atoi_hex(extract));
+                self.extract = get_atoi_hex(extract);
             } else if *extract == "both" {
-                self.extract = Some(12);
+                self.extract = 12;
             } else {
                 println!("Invalid output field");
                 std::process::exit(ExitCode::MalformedParameter as i32);
@@ -946,10 +946,8 @@ impl CcxOptions {
         }
 
         if args.stdout {
-            if let Some(messages_target) = self.messages_target {
-                if messages_target == 1 {
-                    self.messages_target = Some(2);
-                }
+            if self.messages_target == 1 {
+                self.messages_target = 2;
             }
             self.cc_to_stdout = true;
         }
@@ -971,7 +969,7 @@ impl CcxOptions {
         }
 
         if args.quiet {
-            self.messages_target = Some(0);
+            self.messages_target = 0;
         }
 
         if args.debug {
@@ -991,10 +989,10 @@ impl CcxOptions {
         }
 
         if let Some(ref levdistmincnt) = args.levdistmincnt {
-            self.levdistmincnt = Some(get_atoi_hex(levdistmincnt.as_str()));
+            self.levdistmincnt = get_atoi_hex(levdistmincnt.as_str());
         }
         if let Some(ref levdistmaxpct) = args.levdistmaxpct {
-            self.levdistmaxpct = Some(get_atoi_hex(levdistmaxpct.as_str()));
+            self.levdistmaxpct = get_atoi_hex(levdistmaxpct.as_str());
         }
 
         if args.eia708 {
@@ -1091,10 +1089,10 @@ impl CcxOptions {
         }
 
         if args.myth {
-            self.auto_myth = Some(1);
+            self.auto_myth = 1;
         }
         if args.no_myth {
-            self.auto_myth = Some(0);
+            self.auto_myth = 0;
         }
 
         if args.wtvconvertfix {
@@ -1174,18 +1172,18 @@ impl CcxOptions {
         }
 
         if let Some(ref xmltv) = args.xmltv {
-            self.xmltv = Some(get_atoi_hex(xmltv.as_str()));
+            self.xmltv = get_atoi_hex(xmltv.as_str());
         }
 
         if let Some(ref xmltvliveinterval) = args.xmltvliveinterval {
-            self.xmltvliveinterval = Some(get_atoi_hex(xmltvliveinterval.as_str()));
+            self.xmltvliveinterval = get_atoi_hex(xmltvliveinterval.as_str());
         }
 
         if let Some(ref xmltvoutputinterval) = args.xmltvoutputinterval {
-            self.xmltvoutputinterval = Some(get_atoi_hex(xmltvoutputinterval.as_str()));
+            self.xmltvoutputinterval = get_atoi_hex(xmltvoutputinterval.as_str());
         }
         if let Some(ref xmltvonlycurrent) = args.xmltvonlycurrent {
-            self.xmltvonlycurrent = Some(get_atoi_hex(xmltvonlycurrent.as_str()));
+            self.xmltvonlycurrent = get_atoi_hex(xmltvonlycurrent.as_str());
         }
 
         if let Some(ref unixts) = args.unixts {
@@ -1246,17 +1244,17 @@ impl CcxOptions {
 
                 self.udpsrc = Some(udp.clone());
                 self.udpaddr = Some(addr.to_owned());
-                self.udpport = Some(port.parse().unwrap());
+                self.udpport = port.parse().unwrap();
             } else if let Some(colon) = udp.find(':') {
                 let addr = &udp[0..colon];
                 let port = get_atoi_hex(&udp[colon + 1..]);
 
                 self.udpsrc = Some(udp.clone());
                 self.udpaddr = Some(addr.to_owned());
-                self.udpport = Some(port);
+                self.udpport = port;
             } else {
                 self.udpaddr = None;
-                self.udpport = Some(udp.parse().unwrap());
+                self.udpport = udp.parse().unwrap();
             }
 
             self.input_source = CcxDatasource::Network;
@@ -1266,8 +1264,8 @@ impl CcxOptions {
             self.send_to_srv = true;
             self.set_output_format_type(OutFormat::Bin);
 
-            self.xmltv = Some(2);
-            self.xmltvliveinterval = Some(2);
+            self.xmltv = 2;
+            self.xmltvliveinterval = 2;
             let mut _addr: String = addr.to_string();
 
             if let Some(saddr) = addr.strip_prefix('[') {
@@ -1385,8 +1383,8 @@ impl CcxOptions {
 
         // Init telexcc redundant options
         tlt_config.dolevdist = self.dolevdist;
-        tlt_config.levdistmincnt = self.levdistmincnt.unwrap_or(0);
-        tlt_config.levdistmaxpct = self.levdistmaxpct.unwrap_or(0);
+        tlt_config.levdistmincnt = self.levdistmincnt;
+        tlt_config.levdistmaxpct = self.levdistmaxpct;
         tlt_config.extraction_start = self.extraction_start.clone();
         tlt_config.extraction_end = self.extraction_end.clone();
         tlt_config.write_format = self.write_format;
@@ -1404,16 +1402,16 @@ impl CcxOptions {
             std::process::exit(ExitCode::NotClassified as i32);
         }
 
-        if self.num_input_files.unwrap_or(0) == 0 && self.input_source == CcxDatasource::File {
+        if self.num_input_files == 0 && self.input_source == CcxDatasource::File {
             std::process::exit(ExitCode::NoInputFiles as i32);
         }
 
-        if self.num_input_files.is_some() && self.live_stream.is_some() {
+        if self.num_input_files != 0 && self.live_stream != 0 {
             println!("Live stream mode only supports one input file");
             std::process::exit(ExitCode::TooManyInputFiles as i32);
         }
 
-        if self.num_input_files.is_some() && self.input_source == CcxDatasource::Network {
+        if self.num_input_files != 0 && self.input_source == CcxDatasource::Network {
             println!("UDP mode is not compatible with input files");
             std::process::exit(ExitCode::TooManyInputFiles as i32);
         }
@@ -1424,7 +1422,7 @@ impl CcxOptions {
             self.buffer_input = true;
         }
 
-        if self.num_input_files.is_some() && self.input_source == CcxDatasource::Tcp {
+        if self.num_input_files != 0 && self.input_source == CcxDatasource::Tcp {
             println!("TCP mode is not compatible with input files");
             std::process::exit(ExitCode::TooManyInputFiles as i32);
         }
@@ -1446,8 +1444,8 @@ impl CcxOptions {
 
         if self.write_format != CcxOutputFormat::Dvdraw
             && self.cc_to_stdout
-            && self.extract.is_some()
-            && self.extract.unwrap() == 12
+            && self.extract != 0
+            && self.extract == 12
         {
             println!(
                 "You can't extract both fields to stdout at the same time in broadcast mode.\n",
@@ -1481,7 +1479,7 @@ impl CcxOptions {
 
         // Initialize some Encoder Configuration
         self.enc_cfg.extract = self.extract;
-        if self.num_input_files.unwrap_or(0) > 0 {
+        if self.num_input_files > 0 {
             self.enc_cfg.multiple_files = true;
             self.enc_cfg.first_input_file = self.inputfile.as_ref().unwrap()[0].to_string();
         }
@@ -1519,7 +1517,7 @@ impl CcxOptions {
         } else if !self.is_608_enabled && self.is_708_enabled {
             // Extract only 708 subs
             // 608 field 1 is enabled by default, disable it
-            self.extract = None;
+            self.extract = 0;
             self.enc_cfg.extract_only_708 = true;
         }
 
@@ -1667,7 +1665,7 @@ pub mod tests {
         let (options, _) = parse_args(&["--stdout", "--quiet", "--no-fontcolor"]);
         assert!(options.cc_to_stdout);
 
-        assert_eq!(options.messages_target.unwrap(), 0);
+        assert_eq!(options.messages_target, 0);
         assert_eq!(options.nofontcolor, true);
     }
 
@@ -1712,7 +1710,7 @@ pub mod tests {
         assert!(options.demux_cfg.ts_autoprogram);
         assert!(options.is_608_enabled);
         assert_eq!(options.write_format, CcxOutputFormat::Transcript);
-        assert_eq!(options.extract.unwrap(), 2);
+        assert_eq!(options.extract, 2);
         assert_eq!(options.enc_cfg.encoding, CcxEncodingType::Latin1);
     }
 
@@ -1841,7 +1839,7 @@ pub mod tests {
     #[test]
     fn options_7() {
         let (options, _) = parse_args(&["--myth"]);
-        assert_eq!(options.auto_myth.unwrap(), 1);
+        assert_eq!(options.auto_myth, 1);
     }
 
     #[test]
@@ -2112,7 +2110,7 @@ pub mod tests {
     fn options_43() {
         let (options, _) = parse_args(&["--xmltv", "1", "--out", "null"]);
 
-        assert_eq!(options.xmltv.unwrap(), 1);
+        assert_eq!(options.xmltv, 1);
         assert_eq!(options.write_format, CcxOutputFormat::Null);
     }
 

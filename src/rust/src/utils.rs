@@ -20,6 +20,10 @@ pub unsafe fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     s.into_raw()
 }
 
+pub unsafe fn string_null() -> *mut c_char {
+    std::ptr::null_mut()
+}
+
 use ::std::os::raw::c_char;
 use std::ffi::CString;
 
