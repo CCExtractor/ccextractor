@@ -20,6 +20,8 @@ pub unsafe fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     s.into_raw()
 }
 
+/// # Safety
+/// The pointer returned has to be deallocated using from_raw() at some point
 pub unsafe fn string_null() -> *mut c_char {
     std::ptr::null_mut()
 }

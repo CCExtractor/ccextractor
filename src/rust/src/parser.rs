@@ -426,7 +426,7 @@ impl CcxOptions {
             }
         }
 
-        self.num_input_files = self.num_input_files + 1;
+        self.num_input_files += 1;
 
         0
     }
