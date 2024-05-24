@@ -4,6 +4,7 @@ env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
+  VCPKG_COMMIT: fba75d09065fcc76a25dcf386b1d00d33f5175af
 
 on:
   workflow_dispatch:
@@ -41,9 +42,9 @@ jobs:
         with:
           path: |
             C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Install dependencies
-        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: vcpkg install
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -87,9 +88,9 @@ jobs:
         with:
           path: |
             C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Install dependencies
-        run: vcpkg install leptonica tesseract ffmpeg --triplet x64-windows-static
+        run: vcpkg install
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
