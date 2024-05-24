@@ -5,7 +5,6 @@ env:
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
   VCPKG_COMMIT: fba75d09065fcc76a25dcf386b1d00d33f5175af
-  VCPKG_ROOT: C:\vcpkg
 
 on:
   workflow_dispatch:
@@ -44,10 +43,15 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+      - name: Build vcpkg
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg --depth 1
+          ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
-          vcpkg install --x-install-root ${{ env.VCPKG_ROOT }}/installed
-        working-directory: ./windows
+          ../vcpkg/vcpkg install --x-install-root ../vcpkg/vcpkg/installed/
+        working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -60,6 +64,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+          VCPKG_ROOT:  ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -91,10 +96,15 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+      - name: Build vcpkg
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/microsoft/vcpkg --depth 1
+          ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
-          vcpkg install --x-install-root ${{ env.VCPKG_ROOT }}/installed
-        working-directory: ./windows
+          ../vcpkg/vcpkg install --x-install-root ../vcpkg/vcpkg/installed/
+        working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -107,6 +117,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+          VCPKG_ROOT:  ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
