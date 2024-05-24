@@ -1,5 +1,6 @@
 0.95 (to be released)
 -----------------
+- Fix: Unexpected behavior of get_write_interval (#1609)
 - Update: Bump rsmpeg to latest version for ffmpeg bindings (#1600)
 - New: Add SCC support for CEA-708 decoder (#1595)
 - Fix: respect `-stdout` even if multiple CC tracks are present in a Matroska input file (#1453)

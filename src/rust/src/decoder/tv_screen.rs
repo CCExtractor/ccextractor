@@ -105,7 +105,8 @@ impl dtvcc_tv_screen {
     /// Returns the bounds in which captions are present
     pub fn get_write_interval(&self, row_index: usize) -> (usize, usize) {
         let mut first = 0;
-        let mut last = CCX_DTVCC_SCREENGRID_COLUMNS as usize - 1;
+        let mut last = 0;
+
         for col in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
             if self.chars[row_index][col].is_set() {
                 first = col;
