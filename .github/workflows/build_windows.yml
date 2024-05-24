@@ -43,8 +43,6 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
-      - name: Install dependencies
-        run: vcpkg install
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -89,8 +87,6 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
-      - name: Install dependencies
-        run: vcpkg install
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
