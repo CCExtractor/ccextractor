@@ -44,7 +44,6 @@ jobs:
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Build vcpkg
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/microsoft/vcpkg --depth 1
           ./vcpkg/bootstrap-vcpkg.bat
@@ -97,7 +96,6 @@ jobs:
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Build vcpkg
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/microsoft/vcpkg --depth 1
           ./vcpkg/bootstrap-vcpkg.bat
