@@ -62,10 +62,8 @@
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=" ..\src\thirdparty\freetype\gzip\ftgzip.c" />
@@ -197,6 +195,7 @@
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
     <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+    <VcpkgEnabled>true</VcpkgEnabled>
   </PropertyGroup>
   <Import Project=" $(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'" Label="Configuration">

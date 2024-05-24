@@ -43,6 +43,10 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+      - name: Install dependencies
+        run: |
+          vcpkg install --x-install-root ${VCPKG_ROOT}/installed
+        working-directory: ./windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -87,28 +91,32 @@ jobs:
           path: |
             C:\vcpkg\.cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+      - name: Install dependencies
+        run: |
+          vcpkg install --x-install-root ${VCPKG_ROOT}/installed
+        working-directory: ./windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: build Debug-Full
-        env:
-          LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
-          LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
-          CARGO_TARGET_DIR: "..\\..\\windows"
-          BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT: C:\vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
-        working-directory: ./windows
-      - name: Display version information
-        run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v4
-        with:
-          name: CCExtractor Windows Debug build
-          path: |
-            ./windows/x64/Debug-Full/ccextractorwinfull.exe
-            ./windows/x64/Debug-Full/ccextractorwinfull.pdb
-            ./windows/x64/Debug-Full/*.dll
+      # - name: build Debug-Full
+      #   env:
+      #     LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
+      #     LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
+      #     CARGO_TARGET_DIR: "..\\..\\windows"
+      #     BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
+      #     VCPKG_ROOT: C:\vcpkg
+      #   run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
+      #   working-directory: ./windows
+      # - name: Display version information
+      #   run: ./ccextractorwinfull.exe --version
+      #   working-directory: ./windows/x64/Debug-Full
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: CCExtractor Windows Debug build
+      #     path: |
+      #       ./windows/x64/Debug-Full/ccextractorwinfull.exe
+      #       ./windows/x64/Debug-Full/ccextractorwinfull.pdb
+      #       ./windows/x64/Debug-Full/*.dll
