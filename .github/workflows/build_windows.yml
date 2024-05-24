@@ -50,7 +50,7 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
-          ../vcpkg/vcpkg install --x-install-root ../vcpkg/vcpkg/installed/
+          ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
         working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
@@ -64,7 +64,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT:  ${{ github.workspace }}/vcpkg
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
@@ -103,7 +103,7 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
-          ../vcpkg/vcpkg install --x-install-root ../vcpkg/vcpkg/installed/
+          ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
         working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
@@ -117,7 +117,7 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-          VCPKG_ROOT:  ${{ github.workspace }}/vcpkg
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
