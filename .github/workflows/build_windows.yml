@@ -45,7 +45,7 @@ jobs:
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Build vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg --depth 1
+          git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
@@ -97,7 +97,7 @@ jobs:
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
       - name: Build vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg --depth 1
+          git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: |
