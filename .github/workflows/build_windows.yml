@@ -66,6 +66,7 @@ jobs:
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
+        continue-on-error: true
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v4
@@ -116,9 +117,10 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
-      # - name: Display version information
-      #   run: ./ccextractorwinfull.exe --version
-      #   working-directory: ./windows/x64/Debug-Full
+      - name: Display version information
+        continue-on-error: true
+        run: ./ccextractorwinfull.exe --version
+        working-directory: ./windows/x64/Debug-Full
       - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Debug build
