@@ -284,11 +284,11 @@
         xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-7.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-58.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
