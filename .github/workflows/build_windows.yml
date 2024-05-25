@@ -66,7 +66,6 @@ jobs:
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
       - name: Display version information
-        continue-on-error: true
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v4
