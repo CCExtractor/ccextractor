@@ -47,6 +47,9 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
+      - name: Install dependencies
+        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+        working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -60,11 +63,11 @@ jobs:
           CARGO_TARGET_DIR: "..\\..\\windows"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64 /p:VcpkgEnableManifest=true
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
-      # - name: Display version information
-      #   run: ./ccextractorwinfull.exe --version
-        # working-directory: ./windows/x64/Release-Full
+      - name: Display version information
+        run: ./ccextractorwinfull.exe --version
+        working-directory: ./windows/x64/Release-Full
       - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Release build
@@ -95,6 +98,9 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
+      - name: Install dependencies
+        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+        working-directory: windows
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
