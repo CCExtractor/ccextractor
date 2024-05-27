@@ -158,6 +158,8 @@ jobs:
         cd ../..
         cp -r ./build ~/ffmpeg_prebuilt
         cd ../..
+    - name: Move ffmpeg to current github.workspace
+      run: cp -r ~/ffmpeg_prebuilt ${{ github.workspace }}/ffmpeg_prebuilt
     - name: cmake
       env:
         FFMPEG_INCLUDE_DIR: ${{ github.workspace }}/ffmpeg_prebuilt/include
