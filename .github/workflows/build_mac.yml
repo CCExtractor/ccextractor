@@ -79,12 +79,96 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg@6
+      run: brew install coreutils pkg-config autoconf automake libtool tesseract leptonica gpac
+    
+    - name: Cache vcpkg
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/ffmpeg_prebuilt
+          ${{ github.workspace }}/x264_prebuilt
+
+    - name: Build x264
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/mirror/x264 --depth 1
+        cd x264
+        mkdir build
+        cd build
+        ../configure \
+          --prefix=${PWD}/build \
+          --disable-cli \
+          --enable-static \
+          --enable-strip \
+          --enable-pic \
+          --disable-asm \
+          --extra-cflags=-mmacosx-version-min=10.9
+        make -j$(nproc)
+        make install
+        cp -r ./build ~/x264_prebuilt
+        cd ../..
+
+    - name: Build FFmpeg dylib
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/ffmpeg/ffmpeg --depth 1 --single-branch --branch release/6.1
+        cd ffmpeg
+        mkdir build
+        cd build
+        ../configure --help
+        CFLAGS="-mmacosx-version-min=10.9" PKG_CONFIG_PATH="${HOME}/x264_prebuilt/lib/pkgconfig" ../configure \
+          --prefix=${PWD}/build \
+          --enable-small \
+          --disable-debug \
+          --disable-programs \
+          --disable-postproc \
+          --disable-doc \
+          --disable-hwaccels \
+          --disable-parsers \
+          --disable-bsfs \
+          --disable-x86asm \
+          --disable-indevs \
+          --disable-outdevs \
+          --disable-devices \
+          --disable-decoders \
+          --enable-decoder=aac,ac3,flac,mp3,hevc,vp8,mpeg4,h263,h264,ass,srt,text \
+          --disable-encoders \
+          --enable-encoder=aac,ac3,flac,libx264,ass,ssa,srt,text,mpeg4 \
+          --disable-filters \
+          --enable-filter=scale \
+          --enable-gpl \
+          --enable-libx264 \
+          --enable-pic
+        make -j$(nproc)
+        make install
+        cd build/lib/
+        cp ~/x264_prebuilt/lib/libx264.a .
+        gcc -shared -o libffmpeg.dylib \
+          -framework CoreFoundation \
+          -framework CoreMedia \
+          -framework CoreVideo \
+          -framework Security \
+          -framework VideoToolbox \
+          -lbz2 \
+          -liconv \
+          -lz \
+          -Wl,-all_load *.a \
+          -mmacosx-version-min=10.9
+        cd ../..
+        cp -r ./build ~/ffmpeg_prebuilt
+        cd ../..
     - name: cmake
+      env:
+        FFMPEG_INCLUDE_DIR: ${{ github.workspace }}/ffmpeg_prebuilt/include
+        FFMPEG_DLL_PATH: ${{ github.workspace }}/ffmpeg_prebuilt/lib/libffmpeg.dylib
       run: |
         mkdir build && cd build
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
+      env:
+        FFMPEG_INCLUDE_DIR: ${{ github.workspace }}/ffmpeg_prebuilt/include
+        FFMPEG_DLL_PATH: ${{ github.workspace }}/ffmpeg_prebuilt/lib/libffmpeg.dylib
       run: |
         make -j$(nproc)
       working-directory: build
