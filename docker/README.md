@@ -39,13 +39,13 @@ To process a local video file, mount a directory containing the input file insid
 
 ```bash
 # Use `-o` to specifying output file
-$ docker run -v /path/to/local/samples:/ CCExtractor/ccextractor input.mp4 -o output.srt
+$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) CCExtractor/ccextractor input.mp4 -o output.srt
 
 # Alternatively use `--stdout` feature
-$ docker run -v /path/to/local/samples:/ CCExtractor/ccextractor input.mp4 --stdout > output.srt
+$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) CCExtractor/ccextractor input.mp4 --stdout > output.srt
 ```
 
-Replace `/path/to/local/files` with the path to the directory containing your input video file, and `input.mp4` with the name of your input file.
+Run this command from where your input video file is present, and change `input.mp4` & `output.srt` with the actual name of files.
 
 2. Enter an interactive environment
 
@@ -53,7 +53,7 @@ If you need to run CCExtractor with additional options or perform other tasks wi
 bash
 
 ```bash
-$ docker run -it --entrypoint='bash' CCExtractor/ccextractor
+$ docker run --rm -it --entrypoint='sh' CCExtractor/ccextractor
 ```
 
 This will start a Bash shell inside the container, allowing you to run CCExtractor commands manually or perform other operations.
