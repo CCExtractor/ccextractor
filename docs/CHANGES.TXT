@@ -1,5 +1,6 @@
 0.95 (to be released)
 -----------------
+- New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)
 - New: Add time units module in lib_ccxr (#1623)
 - New: Add bits and levenshtein module in lib_ccxr (#1627)
 - New: Add constants module in lib_ccxr (#1624) 
