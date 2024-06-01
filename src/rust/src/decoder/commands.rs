@@ -184,3 +184,41 @@ pub fn handle_C3(code: u8, next_code: u8) -> u8 {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::{handle_C2, handle_C3};
+
+    #[test]
+    fn test_handle_C2() {
+        // Case 1: Single-byte control bytes
+        assert_eq!(handle_C2(0), 1);
+        assert_eq!(handle_C2(7), 1);
+
+        // Case 2: two-byte control codes
+        assert_eq!(handle_C2(8), 2);
+        assert_eq!(handle_C2(15), 2);
+
+        // Case 3: three-byte control codes
+        assert_eq!(handle_C2(16), 3);
+        assert_eq!(handle_C2(23), 3);
+
+        // Case 4: four-byte control codes
+        assert_eq!(handle_C2(34), 4);
+    }
+
+    #[test]
+    fn test_handle_C3() {
+        // Case 1: Five-byte control bytes
+        assert_eq!(handle_C3(128, 1), 5);
+        assert_eq!(handle_C3(135, 1), 5);
+
+        // Case 2: Six-byte control codes
+        assert_eq!(handle_C3(136, 1), 6);
+        assert_eq!(handle_C3(143, 1), 6);
+
+        // Case 3: variable length commands
+        assert_eq!(handle_C3(149, 4), 6);
+        assert_eq!(handle_C3(155, 9), 11);
+    }
+}
