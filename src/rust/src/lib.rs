@@ -40,6 +40,13 @@ use std::ffi::CStr;
 
 use crate::common::ExitCode;
 
+#[cfg(test)]
+static mut cb_708: c_int = 0;
+#[cfg(test)]
+static mut cb_field1: c_int = 0;
+#[cfg(test)]
+static mut cb_field2: c_int = 0;
+#[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
