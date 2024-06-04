@@ -15,7 +15,7 @@ use lib_ccxr::{
     util::log::{DebugMessageFlag, ExitCause},
 };
 
-use crate::{bindings::*, utils::is_true};
+use crate::{bindings::*, utils::*};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
@@ -23,6 +23,7 @@ const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
 const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
+const CCX_DTVCC_MAX_SERVICES: usize = 63;
 
 /// Context required for processing 708 data
 pub struct Dtvcc<'a> {
@@ -31,37 +32,92 @@ pub struct Dtvcc<'a> {
     pub services_active: Vec<i32>,
     pub report_enabled: bool,
     pub report: &'a mut ccx_decoder_dtvcc_report,
-    pub decoders: Vec<&'a mut dtvcc_service_decoder>,
+    pub decoders: [Option<Box<dtvcc_service_decoder>>; CCX_DTVCC_MAX_SERVICES],
     pub packet: Vec<u8>,
     pub packet_length: u8,
     pub is_header_parsed: bool,
     pub last_sequence: i32,
-    pub encoder: &'a mut encoder_ctx,
+    pub encoder: *mut encoder_ctx,
     pub no_rollup: bool,
     pub timing: &'a mut ccx_common_timing_ctx,
 }
 
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
-    pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
-        let report = unsafe { &mut *ctx.report };
-        let encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
-        let timing = unsafe { &mut *ctx.timing };
+    pub fn new(opts: &ccx_decoder_dtvcc_settings) -> Self {
+        // closely follows `dtvcc_init` at `src/lib_ccx/ccx_dtvcc.c:82`
 
-        Self {
-            is_active: is_true(ctx.is_active),
-            active_services_count: ctx.active_services_count as u8,
-            services_active: ctx.services_active.to_vec(),
-            report_enabled: is_true(ctx.report_enabled),
+        let is_active = false;
+        let active_services_count = opts.active_services_count as u8;
+        let services_active = opts.services_enabled.to_vec();
+        let report_enabled = is_true(opts.print_file_reports);
+
+        let report = unsafe { &mut *opts.report };
+        report.reset_count = 0;
+
+        // `dtvcc_clear_packet` does the following
+        let packet_length = 0;
+        let is_header_parsed = false;
+        let packet = [0; CCX_DTVCC_MAX_SERVICES].to_vec();
+
+        let last_sequence = CCX_DTVCC_NO_LAST_SEQUENCE;
+        let timing = unsafe { &mut *opts.timing };
+
+        let no_rollup = is_true(opts.no_rollup);
+
+        // unlike C, here the decoders are allocated on the stack as an array.
+        let decoders = {
+            const INIT: Option<Box<dtvcc_service_decoder>> = None;
+            let mut decoders = [INIT; CCX_DTVCC_MAX_SERVICES];
+
+            decoders
+                .iter_mut()
+                .zip(opts.services_enabled)
+                .enumerate()
+                .for_each(|(i, (d, se))| {
+                    if is_false(se) {
+                        return;
+                    }
+
+                    let mut decoder = Box::new(dtvcc_service_decoder {
+                        // we cannot allocate this on the stack as `dtvcc_service_decoder` is a C
+                        // struct cannot be changed trivially
+                        tv: Box::into_raw(Box::new(dtvcc_tv_screen {
+                            cc_count: 0,
+                            service_number: i as i32 + 1,
+                            ..dtvcc_tv_screen::default()
+                        })),
+                        ..dtvcc_service_decoder::default()
+                    });
+
+                    decoder.windows.iter_mut().for_each(|w| {
+                        w.memory_reserved = 0;
+                    });
+
+                    unsafe { dtvcc_windows_reset(decoder.as_mut()) };
+
+                    *d = Some(decoder);
+                });
+
+            decoders
+        };
+
+        let encoder = std::ptr::null_mut();
+
+        Dtvcc {
+            is_active,
+            active_services_count,
+            services_active,
+            report_enabled,
             report,
-            decoders: ctx.decoders.iter_mut().collect(),
-            packet: ctx.current_packet.to_vec(),
-            packet_length: ctx.current_packet_length as u8,
-            is_header_parsed: is_true(ctx.is_current_packet_header_parsed),
-            last_sequence: ctx.last_sequence,
-            encoder,
-            no_rollup: is_true(ctx.no_rollup),
+            packet,
+            packet_length,
+            is_header_parsed,
+            last_sequence,
+            no_rollup,
             timing,
+            encoder,
+            decoders,
         }
     }
     /// Process cc data and add it to the dtvcc packet
@@ -175,7 +231,9 @@ impl<'a> Dtvcc<'a> {
             }
 
             if service_number > 0 && is_true(self.services_active[(service_number - 1) as usize]) {
-                let decoder = &mut self.decoders[(service_number - 1) as usize];
+                let decoder = &mut self.decoders[(service_number - 1) as usize]
+                    .as_mut()
+                    .unwrap();
                 decoder.process_service_block(
                     &self.packet[pos as usize..(pos + block_length) as usize],
                     self.encoder,
