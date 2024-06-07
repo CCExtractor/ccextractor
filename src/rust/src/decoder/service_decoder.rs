@@ -1134,12 +1134,10 @@ impl dtvcc_service_decoder {
         }
 
         window.is_empty = 0;
+
         // Add symbol to window
-        unsafe {
-            window.rows[window.pen_row as usize]
-                .add(window.pen_column as usize)
-                .write(sym);
-        }
+        window.rows[window.pen_row as usize] = Box::into_raw(Box::new(sym));
+
         // "Painting" char by pen - attribs
         window.pen_attribs[window.pen_row as usize][window.pen_column as usize] =
             window.pen_attribs_pattern;
@@ -1220,4 +1218,313 @@ extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_serv
         decoder.screen_print(encoder, timing);
     }
     decoder.flush(encoder);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::utils::get_zero_allocated_obj;
+
+    // -------------------------- C0 Commands-------------------------
+    #[test]
+    fn test_process_cr() {
+        let set_tmp_values = |window: &mut dtvcc_window| {
+            window.is_defined = 1;
+            window.visible = 1;
+            window.row_count = 5;
+            window.col_count = 10;
+            window.pen_row = 2;
+            window.pen_column = 5;
+            window.is_empty = 0;
+        };
+
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 0;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        let mut encoder = encoder_ctx::default();
+        let mut timing = ccx_common_timing_ctx::default();
+        let no_rollup = false;
+
+        // Set temp values of window
+        set_tmp_values(&mut decoder.windows[0]);
+
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        decoder.process_cr(&mut encoder, &mut timing, no_rollup);
+        assert_eq!(decoder.windows[0].pen_row, 3);
+        assert_eq!(decoder.windows[0].pen_column, 0);
+
+        // Set temp values of window
+        set_tmp_values(&mut decoder.windows[0]);
+
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT as i32;
+        decoder.process_cr(&mut encoder, &mut timing, no_rollup);
+        assert_eq!(decoder.windows[0].pen_row, 3);
+        assert_eq!(decoder.windows[0].pen_column, 10);
+
+        // Set temp values of window
+        set_tmp_values(&mut decoder.windows[0]);
+
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM as i32;
+        decoder.process_cr(&mut encoder, &mut timing, no_rollup);
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 6);
+
+        // Set temp values of window
+        set_tmp_values(&mut decoder.windows[0]);
+
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP as i32;
+        decoder.process_cr(&mut encoder, &mut timing, no_rollup);
+        assert_eq!(decoder.windows[0].pen_row, 5);
+        assert_eq!(decoder.windows[0].pen_column, 6);
+    }
+
+    #[test]
+    fn test_process_hcr() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 1;
+        decoder.windows[1].pen_column = 12;
+        decoder.windows[1].pen_row = 1;
+        decoder.windows[1].rows[1] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+        decoder.windows[1].rows[2] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+        decoder.windows[1].memory_reserved = 1;
+
+        decoder.process_hcr();
+
+        assert_eq!(decoder.windows[1].pen_column, 0);
+
+        // Ensuring, it erases all text on the row mentioned by `pen_row`
+        assert_eq!(
+            unsafe { decoder.windows[1].rows[1].as_mut() },
+            Some(&mut dtvcc_symbol::default()),
+        );
+        // Do not clear text for row which is not mentioned by `pen_row`
+        assert_eq!(
+            unsafe { decoder.windows[1].rows[2].as_mut() },
+            Some(&mut dtvcc_symbol { sym: 1, init: 1 }),
+        );
+    }
+
+    #[test]
+    fn test_process_ff() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 1;
+        decoder.windows[1].pen_column = 2;
+        decoder.windows[1].pen_row = 1;
+        decoder.windows[1].memory_reserved = 1;
+        decoder.windows[1].rows[1] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+        decoder.windows[1].rows[2] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+
+        decoder.process_ff();
+
+        assert_eq!(decoder.windows[1].pen_column, 0);
+        assert_eq!(decoder.windows[1].pen_row, 0);
+
+        // Ensuring, it erases all text on the rows
+        // (Doesn't matter for value of pen_column or pen_row..Just delete all text present)
+        assert_eq!(
+            unsafe { decoder.windows[1].rows[1].as_mut() },
+            Some(&mut dtvcc_symbol::default()),
+        );
+        assert_eq!(
+            unsafe { decoder.windows[1].rows[2].as_mut() },
+            Some(&mut dtvcc_symbol::default()),
+        );
+    }
+
+    #[test]
+    fn test_process_bs() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 1;
+
+        // 0 -> dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT
+        decoder.windows[1].attribs.print_direction = 0;
+        decoder.windows[1].pen_column = 3; // > 0
+
+        decoder.process_bs();
+        assert_eq!(decoder.windows[1].pen_column, 2);
+
+        // 1 -> dtvcc_window_pd::DTVCC_WINDOW_PD_RIGHT_LEFT
+        decoder.windows[1].attribs.print_direction = 1;
+        decoder.windows[1].pen_column = 3;
+        decoder.windows[1].col_count = 5;
+
+        decoder.process_bs();
+        assert_eq!(decoder.windows[1].pen_column, 4);
+
+        // 2 -> dtvcc_window_pd::DTVCC_WINDOW_PD_TOP_BOTTOM
+        decoder.windows[1].attribs.print_direction = 2;
+        decoder.windows[1].pen_row = 3;
+
+        decoder.process_bs();
+        assert_eq!(decoder.windows[1].pen_row, 2);
+
+        // 3 -> dtvcc_window_pd::DTVCC_WINDOW_PD_BOTTOM_TOP
+        decoder.windows[1].attribs.print_direction = 3;
+        decoder.windows[1].pen_row = 3;
+        decoder.windows[1].row_count = 5;
+
+        decoder.process_bs();
+        assert_eq!(decoder.windows[1].pen_column, 4);
+
+        // 4..infinite -> Invalid print direction
+        decoder.windows[1].attribs.print_direction = 4;
+    }
+
+    #[test]
+    fn test_process_p16() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        let block = ['a' as u8, 'b' as u8] as [c_uchar; 2];
+
+        decoder.process_p16(&block);
+
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 1);
+        unsafe {
+            assert_eq!(
+                *decoder.windows[0].rows[0],
+                dtvcc_symbol::new_16(block[0], block[1])
+            );
+        }
+    }
+
+    // -------------------------- C1 Commands-------------------------
+
+    // -------------------------- G0, G1 and extended Commands-------------------------
+    #[test]
+    fn test_handle_G0() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        // Case: block[0] == 0x7F
+        let block = [0x7F, 0x61];
+        decoder.handle_G0(&block);
+
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 1);
+        unsafe {
+            assert_eq!(
+                decoder.windows[0].rows[0].read().sym,
+                CCX_DTVCC_MUSICAL_NOTE_CHAR
+            );
+        }
+
+        // Case: block[0] != 0x7F
+        let block = [0x60, 0x61];
+        let return_value = decoder.handle_G0(&block);
+
+        assert_eq!(return_value, 1);
+        unsafe {
+            assert_eq!(decoder.windows[0].rows[0].read().sym, 96);
+        }
+    }
+
+    #[test]
+    fn test_handle_G1() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        let block = [0x7F, 0x61];
+        let return_value = decoder.handle_G1(&block);
+
+        assert_eq!(return_value, 1);
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 1);
+        unsafe {
+            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x7F);
+        }
+    }
+
+    #[test]
+    fn test_handle_extended_char() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        // 0..=0x1F
+        let return_value = decoder.handle_extended_char(&[0x1A, 0x61]);
+        assert_eq!(return_value, 4);
+
+        // 0x20..=0x7F
+        let return_value = decoder.handle_extended_char(&[0x25, 0x61]);
+        assert_eq!(return_value, 1);
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 1);
+        unsafe {
+            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x5);
+        }
+
+        // 0x80..=0x9F
+        let return_value = decoder.handle_extended_char(&[0x86, 0x61]);
+        assert_eq!(return_value, 5);
+
+        // Anyother value > 0x9F (59)
+        let return_value = decoder.handle_extended_char(&[65, 0x61]);
+        assert_eq!(return_value, 1);
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 2);
+        unsafe {
+            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x20);
+        }
+    }
+
+    #[test]
+    fn test_process_character() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let sym = dtvcc_symbol::new(0x41);
+
+        // Undefined window case
+        decoder.windows[0].is_defined = 0;
+        decoder.process_character(sym);
+
+        // No changes occurred
+        assert!(decoder.windows[0].rows[0].is_null());
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 0);
+
+        // Valid window case
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        decoder.process_character(sym);
+
+        // Check changes
+        assert_eq!(decoder.windows[0].pen_row, 0);
+        assert_eq!(decoder.windows[0].pen_column, 1);
+        unsafe {
+            assert_eq!(decoder.windows[0].rows[0].read(), dtvcc_symbol::new(0x41));
+        }
+    }
 }
