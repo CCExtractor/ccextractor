@@ -246,7 +246,6 @@ ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFF
 
 ccextractor_LDFLAGS = $(shell pkg-config --libs gpac)
 GPAC_CPPFLAGS = $(shell pkg-config --cflags gpac)
-FFMPEG_CPPFLAGS = $(shell pkg-config --cflags libavcodec)
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 ccextractor_CPPFLAGS += $(GPAC_CPPFLAGS)
@@ -271,6 +270,14 @@ HARDSUBX_FEATURE_RUST=
 
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
+libavcodec_CFLAGS = $(shell pkg-config --cflags libavcodec)
+libavformat_CFLAGS = $(shell pkg-config --cflags libavformat)
+libavutil_CFALGS = $(shell pkg-config --cflags libavutil)
+libswscale_CFLAGS = $(shell pkg-config --cflags libswscale)
+libavcodec_LIBS = $(shell pkg-config --libs libavcodec)
+libavformat_LIBS = $(shell pkg-config --libs libavformat)
+libavutil_LIBS = $(shell pkg-config --libs libavutil)
+libswscale_LIBS = $(shell pkg-config --libs libswscale)
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
