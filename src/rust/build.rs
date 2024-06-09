@@ -72,6 +72,8 @@ fn main() {
     }
 
     let bindings = builder
+        .derive_default(true)
+        .no_default("dtvcc_pen_attribs|dtvcc_pen_color|dtvcc_symbol")
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

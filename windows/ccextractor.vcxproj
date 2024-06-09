@@ -273,7 +273,7 @@
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
-        call rust.bat "--profile=release-with-debug"</Command>
+        call rust.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
