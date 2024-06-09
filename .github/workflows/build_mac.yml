@@ -76,18 +76,18 @@ jobs:
       run: ./build/ccextractor --version
   cmake_ocr_hardsubx:
     runs-on: macos-latest
+    env:
+      PKG_CONFIG_PATH: /opt/homebrew/opt/ffmpeg@6/lib/pkgconfig:$PKG_CONFIG_PATH
+      FFMPEG_PKG_CONFIG_PATH: /opt/homebrew/opt/ffmpeg@6/lib/pkgconfig
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
       run: brew install coreutils pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg@6
     - name: cmake
       run: |
-        export PKG_CONFIG_PATH=/opt/homebrew/opt/ffmpeg@6/lib/pkgconfig:$PKG_CONFIG_PATH
         mkdir build && cd build
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
-      env:
-        FFMPEG_PKG_CONFIG_PATH: /opt/homebrew/opt/ffmpeg@6/lib/pkgconfig
       run: |
         make -j$(nproc)
       working-directory: build
