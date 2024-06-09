@@ -246,9 +246,11 @@ ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFF
 
 ccextractor_LDFLAGS = $(shell pkg-config --libs gpac)
 GPAC_CPPFLAGS = $(shell pkg-config --cflags gpac)
+FFMPEG_CPPFLAGS = $(shell pkg-config --cflags libavcodec)
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 ccextractor_CPPFLAGS += $(GPAC_CPPFLAGS)
+ccextractor_CPPFLAGS += $(FFMPEG_CPPFLAGS)
 
 ccextractor_LDADD=-lm -lpthread -ldl
 
