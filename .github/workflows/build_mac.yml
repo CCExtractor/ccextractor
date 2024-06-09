@@ -79,6 +79,8 @@ jobs:
     env:
       PKG_CONFIG_PATH: /opt/homebrew/opt/ffmpeg@6/lib/pkgconfig:$PKG_CONFIG_PATH
       FFMPEG_PKG_CONFIG_PATH: /opt/homebrew/opt/ffmpeg@6/lib/pkgconfig
+      FFMPEG_INCLUDE_DIR: /opt/homebrew/opt/ffmpeg@6/include
+      FFMPEG_LIBS_DIR: /opt/homebrew/opt/ffmpeg@6/lib
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
