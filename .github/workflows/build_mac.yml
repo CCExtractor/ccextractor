@@ -165,6 +165,7 @@ jobs:
         FFMPEG_INCLUDE_DIR: ${{ github.workspace }}/ffmpeg_prebuilt/include
         FFMPEG_DLL_PATH: ${{ github.workspace }}/ffmpeg_prebuilt/lib/libffmpeg.dylib
       run: |
+        export PKG_CONFIG_PATH=${{ github.workspace }}/ffmpeg_prebuilt/lib/pkgconfig:$PKG_CONFIG_PATH
         mkdir build && cd build
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
