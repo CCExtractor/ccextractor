@@ -1400,6 +1400,242 @@ mod test {
     }
 
     // -------------------------- C1 Commands-------------------------
+    #[test]
+    fn test_handle_display_windows() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let mut timing = ccx_common_timing_ctx::default();
+
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[2].is_defined = 1;
+        decoder.windows[2].visible = 1; // Window 2 is already visible
+
+        // Test case 1: Display all windows
+        let windows_bitmap = 0b00000111;
+        decoder.handle_display_windows(windows_bitmap, &mut timing);
+
+        assert_eq!(decoder.windows[0].visible, 1);
+        assert_eq!(decoder.windows[1].visible, 0);
+        assert_eq!(decoder.windows[2].visible, 1);
+
+        // Test case 2: Do nothing with the windows
+        let windows_bitmap = 0b00000000;
+        decoder.windows[1].is_defined = 1;
+        decoder.handle_display_windows(windows_bitmap, &mut timing);
+
+        assert_eq!(decoder.windows[0].visible, 1);
+        // Even after window is defined & `windows_bitmap = 0` => it is not visible
+        assert_eq!(decoder.windows[1].visible, 0);
+        assert_eq!(decoder.windows[2].visible, 1);
+    }
+
+    #[test]
+    fn test_handle_define_windows() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let mut timing = ccx_common_timing_ctx::default();
+        let window_id = 1;
+        let test_block = [
+            0b00000111, 0b01000000, 0b00000010, 0b00001010, 0b00111111, 0b00001000,
+        ];
+
+        decoder.handle_define_windows(window_id, &test_block, &mut timing);
+
+        let window = &decoder.windows[window_id as usize];
+
+        assert_eq!(window.number, window_id as i32);
+        assert_eq!(window.priority, 0x7);
+        assert_eq!(window.col_lock, 0x0);
+        assert_eq!(window.row_lock, 0x0);
+        assert_eq!(window.visible, 0x0);
+        assert_eq!(window.anchor_vertical, 64);
+        assert_eq!(window.relative_pos, 0x0);
+        assert_eq!(window.anchor_horizontal, 0x2);
+        assert_eq!(window.row_count, 0xb);
+        assert_eq!(window.anchor_point, 0x0);
+        assert_eq!(window.col_count, 64);
+        assert_eq!(window.pen_style, 0x1);
+        assert_eq!(window.win_style, 0x1);
+        assert_eq!(window.pen_row, 0x0);
+        assert_eq!(window.pen_column, 0x0);
+        assert_eq!(window.is_defined, 1);
+        assert_eq!(window.memory_reserved, 1);
+
+        // Check `Command` has been set or not
+        assert_eq!(window.commands[0], 0b00000111);
+        assert_eq!(window.commands[1], 0b01000000);
+        assert_eq!(window.commands[2], 0b00000010);
+        assert_eq!(window.commands[3], 0b00001010);
+        assert_eq!(window.commands[4], 0b00111111);
+        assert_eq!(window.commands[5], 0b00001000);
+    }
+
+    #[test]
+    fn test_handle_set_pen_attributes() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let test_block = [0b00111000, 0b11010001];
+
+        decoder.current_window = 0;
+        decoder.windows[0].pen_row = 0;
+
+        decoder.handle_set_pen_attributes(&test_block);
+
+        let pen = &decoder.windows[0].pen_attribs_pattern;
+        assert_eq!(pen.pen_size, 0x0);
+        assert_eq!(pen.offset, 0x2);
+        assert_eq!(pen.text_tag, 0x3);
+        assert_eq!(pen.font_tag, 0x1);
+        assert_eq!(pen.edge_type, 0x2);
+        assert_eq!(pen.underline, 0x1);
+        assert_eq!(pen.italic, 0x1);
+    }
+
+    #[test]
+    fn test_handle_set_pen_color() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let test_block = [0b00111111, 0b00111110, 0b00111100];
+
+        decoder.current_window = 0;
+        decoder.windows[0].pen_row = 0;
+
+        decoder.handle_set_pen_color(&test_block);
+
+        let color = &decoder.windows[0].pen_color_pattern;
+        assert_eq!(color.fg_color, 0x3f);
+        assert_eq!(color.fg_opacity, 0x0);
+        assert_eq!(color.bg_color, 0x3e);
+        assert_eq!(color.bg_opacity, 0x0);
+        assert_eq!(color.edge_color, 0x3c);
+    }
+
+    #[test]
+    fn test_handle_set_pen_location() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        let test_block = [0b00001111, 0b00111111];
+        decoder.current_window = 0;
+
+        decoder.handle_set_pen_location(&test_block);
+
+        assert_eq!(decoder.windows[0].pen_row, 0xf);
+        assert_eq!(decoder.windows[0].pen_column, 0x3f);
+    }
+
+    #[test]
+    fn test_handle_set_window_attributes() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 0;
+        let test_block = [
+            0b00111111, // fill_color, fill_opacity
+            0b00111110, // border_color, border_type01
+            0b01010101, // justify, scroll_dir, print_dir, word_wrap, border_type
+            0b01010101, // display_eff, effect_dir, effect_speed
+        ];
+
+        decoder.handle_set_window_attributes(&test_block);
+
+        let window_attribs = &decoder.windows[0].attribs;
+
+        assert_eq!(window_attribs.fill_color, 0x3f);
+        assert_eq!(window_attribs.fill_opacity, 0x0);
+        assert_eq!(window_attribs.border_color, 0x3e);
+        assert_eq!(window_attribs.border_type, 0x0);
+        assert_eq!(window_attribs.justify, 0x1);
+        assert_eq!(window_attribs.scroll_direction, 0x1);
+        assert_eq!(window_attribs.print_direction, 0x1);
+        assert_eq!(window_attribs.word_wrap, 0x1);
+        assert_eq!(window_attribs.display_effect, 0x1);
+        assert_eq!(window_attribs.effect_direction, 0x1);
+        assert_eq!(window_attribs.effect_speed, 0x5);
+    }
+
+    #[test]
+    fn test_handle_set_current_window() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        let window_id = 2;
+        decoder.windows[window_id].is_defined = 1;
+        decoder.current_window = 5;
+
+        decoder.handle_set_current_window(window_id as u8);
+
+        assert_eq!(decoder.current_window, window_id as i32);
+    }
+
+    #[test]
+    fn test_handle_reset() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        // Set random values in decoder
+        decoder.current_window = 0;
+        decoder.windows.iter_mut().for_each(|window| {
+            window.visible = 1;
+            window.is_defined = 1;
+            window.visible = 1;
+            window.commands.fill(1);
+        });
+        decoder.tv = Box::into_raw(get_zero_allocated_obj::<dtvcc_tv_screen>());
+
+        decoder.handle_reset();
+
+        // Test if reset perfectly works or not?
+        assert_eq!(decoder.current_window, -1);
+        decoder.windows.iter_mut().for_each(|window| {
+            assert_eq!(window.visible, 0);
+            assert_eq!(window.is_defined, 0);
+            assert!(window.commands.iter().all(|&c| c == 0));
+        });
+    }
+
+    #[test]
+    fn test_is_window_overlapping() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        // Non-overlapping windows
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].visible = 1;
+        decoder.windows[0].anchor_vertical = 2;
+        decoder.windows[0].anchor_horizontal = 2;
+        decoder.windows[0].row_count = 5;
+        decoder.windows[0].col_count = 10;
+        assert!(!decoder.is_window_overlapping(&decoder.windows[0]));
+
+        decoder.windows[1].is_defined = 1;
+        decoder.windows[1].visible = 1;
+        decoder.windows[1].anchor_vertical = 10;
+        decoder.windows[1].anchor_horizontal = 10;
+        decoder.windows[1].row_count = 3;
+        decoder.windows[1].col_count = 5;
+        assert!(!decoder.is_window_overlapping(&decoder.windows[1]));
+
+        // Overlapping windows
+        decoder.windows[2].is_defined = 1;
+        decoder.windows[2].visible = 1;
+        decoder.windows[2].anchor_vertical = 3;
+        decoder.windows[2].anchor_horizontal = 3;
+        decoder.windows[2].row_count = 3;
+        decoder.windows[2].col_count = 5;
+        decoder.windows[2].priority = 1;
+        assert!(decoder.is_window_overlapping(&decoder.windows[2]));
+
+        decoder.windows[3].is_defined = 1;
+        decoder.windows[3].visible = 1;
+        decoder.windows[3].anchor_vertical = 4;
+        decoder.windows[3].anchor_horizontal = 4;
+        decoder.windows[3].row_count = 3;
+        decoder.windows[3].col_count = 5;
+        decoder.windows[3].priority = 2;
+        assert!(decoder.is_window_overlapping(&decoder.windows[3]));
+    }
+
+    #[test]
+    fn test_has_visible_windows() {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        // Default case - No windows is visible
+        assert!(!decoder.has_visible_windows());
+
+        // Make 1 window visible
+        decoder.windows[0].visible = 1;
+        assert!(decoder.has_visible_windows());
+    }
 
     // -------------------------- G0, G1 and extended Commands-------------------------
     #[test]
