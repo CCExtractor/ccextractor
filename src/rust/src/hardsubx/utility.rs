@@ -88,3 +88,55 @@ pub unsafe extern "C" fn edit_distance(
         &mut dp_array,
     ) as c_int
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_convert_pts_to_ns() {
+        let time_base = AVRational { num: 1, den: 100 };
+        let pts = 42;
+        let expected_ns = 420_000;
+        let result = convert_pts_to_ns(pts, time_base);
+        assert_eq!(result, expected_ns);
+    }
+
+    #[test]
+    fn test_convert_pts_to_ms() {
+        let time_base = AVRational { num: 1, den: 100 };
+        let pts = 42;
+        let expected_ms = 420;
+        let result = convert_pts_to_ms(pts, time_base);
+        assert_eq!(result, expected_ms);
+    }
+
+    #[test]
+    fn test_convert_pts_to_s() {
+        let time_base = AVRational { num: 1, den: 100 };
+        let pts = 42;
+        let expected_s = 0;
+        let result = convert_pts_to_s(pts, time_base);
+        assert_eq!(result, expected_s);
+    }
+
+    #[test]
+    fn test_edit_distance() {
+        unsafe {
+            let word1 = ffi::CString::new("kitten").unwrap().into_raw();
+            let len1 = 6;
+
+            let word2 = ffi::CString::new("sitting").unwrap().into_raw();
+            let len2 = 7;
+
+            let distance = edit_distance(word1, word2, len1, len2);
+
+            // Edit distance between "kitten" and "sitting" is 3
+            assert_eq!(distance, 3);
+
+            // Safety: Deallocate C strings to avoid memory leaks
+            let _ = ffi::CString::from_raw(word1);
+            let _ = ffi::CString::from_raw(word2);
+        }
+    }
+}
