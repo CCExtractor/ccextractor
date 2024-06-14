@@ -47,7 +47,7 @@ fn main() {
 
     std::env::set_var("PKG_CONFIG_ALLOW_SYSTEM_CFLAGS", "1");
     let library = pkg_config::probe_library("libavcodec").expect("Unable to probe `libavcodec`");
-    let library2 = pkg_config::probe_library("leptonica").expect("Unable to probe `leptonica`");
+    let library2 = pkg_config::probe_library("lept").expect("Unable to probe `lept`");
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
