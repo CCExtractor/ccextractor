@@ -29,6 +29,7 @@ num-integer = "0.1.45"
 
 [build-dependencies]
 bindgen = "0.64.0"
+pkg-config = "0.3.30"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]

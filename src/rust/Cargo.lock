@@ -162,6 +162,7 @@ dependencies = [
  "log",
  "num-integer",
  "palette",
+ "pkg-config",
  "rsmpeg",
  "strum",
  "strum_macros",
