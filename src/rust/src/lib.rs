@@ -123,6 +123,11 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
     }
 }
 
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encoder_ctx) {
+    unsafe { (*dtvcc_rust).encoder = encoder };
+}
+
 /// Process cc_data
 ///
 /// # Safety
