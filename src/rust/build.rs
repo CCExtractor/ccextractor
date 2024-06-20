@@ -45,18 +45,9 @@ fn main() {
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
 
-    // std::env::set_var("PKG_CONFIG_ALLOW_SYSTEM_CFLAGS", "1");
-    let library = pkg_config::probe_library("libavcodec").expect("Unable to probe `libavcodec`");
-
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .clang_args(
-            library
-                .include_paths
-                .iter()
-                .map(|path| format!("-I{}", path.to_string_lossy())),
-        )
         .header("wrapper.h");
 
     // enable hardsubx if and only if the feature is on
