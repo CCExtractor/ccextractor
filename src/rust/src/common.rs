@@ -723,8 +723,16 @@ impl CcxEncoderCfg {
                 },
                 filter_profanity: self.filter_profanity as _,
                 with_semaphore: self.with_semaphore as _,
-                start_credits_text: string_to_c_char(&self.start_credits_text),
-                end_credits_text: string_to_c_char(&self.end_credits_text),
+                start_credits_text: if !self.start_credits_text.is_empty() {
+                    string_to_c_char(&self.start_credits_text)
+                } else {
+                    string_null()
+                },
+                end_credits_text: if !self.end_credits_text.is_empty() {
+                    string_to_c_char(&self.end_credits_text)
+                } else {
+                    string_null()
+                },
                 startcreditsnotbefore: self.startcreditsnotbefore.to_ctype(),
                 startcreditsnotafter: self.startcreditsnotafter.to_ctype(),
                 startcreditsforatleast: self.startcreditsforatleast.to_ctype(),
@@ -734,7 +742,11 @@ impl CcxEncoderCfg {
                 transcript_settings: self.transcript_settings.to_ctype(),
                 send_to_srv: self.send_to_srv as _,
                 no_bom: self.no_bom as _,
-                first_input_file: string_to_c_char(&self.first_input_file),
+                first_input_file: if !self.first_input_file.is_empty() {
+                    string_to_c_char(&self.first_input_file)
+                } else {
+                    string_null()
+                },
                 multiple_files: self.multiple_files as _,
                 no_font_color: self.no_font_color as _,
                 no_type_setting: self.no_type_setting as _,
@@ -745,11 +757,23 @@ impl CcxEncoderCfg {
                 in_format: self.in_format,
                 nospupngocr: self.nospupngocr as _,
                 force_dropframe: self.force_dropframe as _,
-                render_font: string_to_c_char(&self.render_font),
-                render_font_italics: string_to_c_char(&self.render_font_italics),
+                render_font: if !self.render_font.is_empty() {
+                    string_to_c_char(&self.render_font)
+                } else {
+                    string_null()
+                },
+                render_font_italics: if !self.render_font_italics.is_empty() {
+                    string_to_c_char(&self.render_font_italics)
+                } else {
+                    string_null()
+                },
                 services_enabled: self.services_enabled.map(|b| if b { 1 } else { 0 }),
                 services_charsets: string_to_c_chars(self.services_charsets.clone()),
-                all_services_charset: string_to_c_char(&self.all_services_charset),
+                all_services_charset: if !self.all_services_charset.is_empty() {
+                    string_to_c_char(&self.all_services_charset)
+                } else {
+                    string_null()
+                },
                 extract_only_708: self.extract_only_708 as _,
             }
         }
