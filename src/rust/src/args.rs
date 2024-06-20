@@ -232,7 +232,7 @@ pub struct Args {
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the
     /// input format correctly. Use this parameter to override the detected
-    #[arg(long, value_name="format",verbatim_doc_comment, help_heading=INPUT_FORMATS)]
+    #[arg(long, alias="in", value_name="format",verbatim_doc_comment, help_heading=INPUT_FORMATS)]
     pub input: Option<InFormat>,
     #[arg(long, hide = true)]
     pub es: bool,
