@@ -270,14 +270,6 @@ HARDSUBX_FEATURE_RUST=
 
 if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
-libavcodec_CFLAGS = $(shell pkg-config --cflags libavcodec)
-libavformat_CFLAGS = $(shell pkg-config --cflags libavformat)
-libavutil_CFLAGS = $(shell pkg-config --cflags libavutil)
-libswscale_CFLAGS = $(shell pkg-config --cflags libswscale)
-libavcodec_LIBS = $(shell pkg-config --libs libavcodec)
-libavformat_LIBS = $(shell pkg-config --libs libavformat)
-libavutil_LIBS = $(shell pkg-config --libs libavutil)
-libswscale_LIBS = $(shell pkg-config --libs libswscale)
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavutil_CFLAGS}
