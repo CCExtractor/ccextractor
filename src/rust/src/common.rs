@@ -1,4 +1,5 @@
 use crate::bindings::*;
+use crate::utils::string_null;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
 
@@ -697,7 +698,11 @@ impl CcxEncoderCfg {
                 extract: self.extract,
                 dtvcc_extract: self.dtvcc_extract as _,
                 gui_mode_reports: self.gui_mode_reports as _,
-                output_filename: string_to_c_char(&self.output_filename),
+                output_filename: if !self.output_filename.is_empty() {
+                    string_to_c_char(&self.output_filename)
+                } else {
+                    string_null()
+                },
                 write_format: self.write_format.into(),
                 keep_output_closed: self.keep_output_closed as _,
                 force_flush: self.force_flush as _,
