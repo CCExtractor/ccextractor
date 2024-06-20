@@ -155,3 +155,4 @@ windows/ccx_rust.lib
 windows/*/debug/*
 windows/*/CACHEDIR.TAG
 windows/.rustc_info.json
+linux/configure~
