@@ -10,4 +10,9 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 dtvcc_ctx *dtvcc_init(ccx_decoder_dtvcc_settings *opts);
 void dtvcc_free(dtvcc_ctx **);
 
-#endif //CCEXTRACTOR_CCX_DTVCC_H
+#ifndef DISABLE_RUST
+extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *settings_dtvcc);
+extern void ccxr_dtvcc_free(void *dtvcc_rust);
+#endif
+
+#endif // CCEXTRACTOR_CCX_DTVCC_H
