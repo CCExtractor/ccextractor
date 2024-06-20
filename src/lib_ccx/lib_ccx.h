@@ -180,6 +180,10 @@ int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex(struct lib_ccx_ctx *ctx, char *filename);
 int rcwt_loop(struct lib_ccx_ctx *ctx);
 
+#ifndef DISABLE_RUST
+void ccxr_dtvcc_set_encoder(void *dtvcc_rust, struct encoder_ctx* encoder);
+#endif
+
 extern int end_of_file;
 
 int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
