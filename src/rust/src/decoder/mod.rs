@@ -47,7 +47,7 @@ impl<'a> Dtvcc<'a> {
     pub fn new(opts: &ccx_decoder_dtvcc_settings) -> Self {
         // closely follows `dtvcc_init` at `src/lib_ccx/ccx_dtvcc.c:82`
 
-        let is_active = false;
+        let is_active = is_true(opts.enabled);
         let active_services_count = opts.active_services_count as u8;
         let services_active = opts.services_enabled.to_vec();
         let report_enabled = is_true(opts.print_file_reports);
