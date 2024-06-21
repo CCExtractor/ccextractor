@@ -23,7 +23,7 @@ const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
 const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
-const CCX_DTVCC_MAX_SERVICES: usize = 63;
+pub const CCX_DTVCC_MAX_SERVICES: usize = 63;
 
 /// Context required for processing 708 data
 pub struct Dtvcc<'a> {
@@ -234,9 +234,10 @@ impl<'a> Dtvcc<'a> {
                 let decoder = &mut self.decoders[(service_number - 1) as usize]
                     .as_mut()
                     .unwrap();
+                let encoder = &mut unsafe { self.encoder.read() };
                 decoder.process_service_block(
                     &self.packet[pos as usize..(pos + block_length) as usize],
-                    self.encoder,
+                    encoder,
                     self.timing,
                     self.no_rollup,
                 );

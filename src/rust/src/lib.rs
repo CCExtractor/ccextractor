@@ -104,7 +104,7 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
             continue;
         }
 
-        let decoder = unsafe { &mut dtvcc.decoders[i].read() };
+        let decoder = &mut dtvcc.decoders[i].to_owned().unwrap();
 
         decoder.windows.iter_mut().for_each(|window| {
             if utils::is_false(window.memory_reserved) {
