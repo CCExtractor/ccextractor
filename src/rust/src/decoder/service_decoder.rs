@@ -7,8 +7,11 @@ use std::{
     os::raw::c_uchar,
 };
 
-use super::commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command};
 use super::window::{PenPreset, WindowPreset};
+use super::{
+    commands::{self, C0CodeSet, C0Command, C1CodeSet, C1Command},
+    Dtvcc,
+};
 use super::{
     CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
     CCX_DTVCC_SCREENGRID_ROWS,
@@ -1198,10 +1201,10 @@ impl dtvcc_service_decoder {
 
 /// Flush service decoder
 #[no_mangle]
-extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_service_decoder) {
+pub extern "C" fn ccxr_flush_decoder(dtvcc_rust: *mut Dtvcc, decoder: *mut dtvcc_service_decoder) {
     debug!("dtvcc_decoder_flush: Flushing decoder");
-    let timing = unsafe { &mut *((*dtvcc).timing) };
-    let encoder = unsafe { &mut *((*dtvcc).encoder as *mut encoder_ctx) };
+    let timing = unsafe { &mut *((*dtvcc_rust).timing) };
+    let encoder = unsafe { &mut *((*dtvcc_rust).encoder as *mut encoder_ctx) };
     let decoder = unsafe { &mut *decoder };
 
     let mut screen_content_changed = false;
