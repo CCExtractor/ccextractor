@@ -10,12 +10,12 @@ mod timing;
 mod tv_screen;
 mod window;
 
+use crate::{bindings::*, utils::*};
 use lib_ccxr::{
     debug, fatal,
     util::log::{DebugMessageFlag, ExitCause},
 };
-
-use crate::{bindings::*, utils::*};
+use service_decoder::ccxr_flush_decoder;
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
@@ -258,6 +258,30 @@ impl<'a> Dtvcc<'a> {
         self.packet_length = 0;
         self.is_header_parsed = false;
         self.packet.iter_mut().for_each(|x| *x = 0);
+    }
+}
+
+#[no_mangle]
+extern "C" fn ccxr_flush_active_decoders(ctx_ptr: *mut lib_cc_decode) {
+    let ctx = unsafe { &mut *ctx_ptr };
+    let dtvcc_rust = unsafe { &mut *(ctx.dtvcc_rust as *mut Dtvcc) };
+
+    if dtvcc_rust.is_active {
+        for i in 0..CCX_DTVCC_MAX_SERVICES {
+            let decoder_opt = &dtvcc_rust.decoders[i];
+            if decoder_opt.is_none() {
+                continue;
+            }
+            let decoder = decoder_opt.to_owned().unwrap();
+
+            if is_true(!dtvcc_rust.services_active[i]) {
+                continue;
+            }
+            if decoder.cc_count > 0 {
+                ctx.current_field = 3;
+                ccxr_flush_decoder(ctx.dtvcc_rust as *mut Dtvcc, Box::into_raw(decoder));
+            }
+        }
     }
 }
 
