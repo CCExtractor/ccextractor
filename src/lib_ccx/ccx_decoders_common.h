@@ -32,4 +32,8 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub);
 void free_encoder_context(struct encoder_ctx *ctx);
 void free_decoder_context(struct lib_cc_decode *ctx);
 void free_subtitle(struct cc_subtitle* sub);
+#ifndef DISABLE_RUST
+void ccxr_flush_active_decoders(struct lib_cc_decode *ctx);
+#endif // !DISABLE_RUST
+
 #endif
