@@ -96,7 +96,7 @@ extern "C" fn ccxr_dtvcc_init<'a>(opts_ptr: *const ccx_decoder_dtvcc_settings) -
 ///     - dtvcc_rust.decoders[i].tv
 #[no_mangle]
 extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
-    let dtvcc = unsafe { dtvcc_rust.read() };
+    let dtvcc = unsafe { &mut *dtvcc_rust };
 
     // closely follows `dtvcc_free` at `src/lib_ccx/ccx_dtvcc.c:126`
     for i in 0..decoder::CCX_DTVCC_MAX_SERVICES {
@@ -104,7 +104,11 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
             continue;
         }
 
-        let decoder = &mut dtvcc.decoders[i].to_owned().unwrap();
+        if dtvcc.decoders[i].is_none() {
+            continue;
+        }
+
+        let decoder = &mut dtvcc.decoders[i].as_mut().unwrap();
 
         decoder.windows.iter_mut().for_each(|window| {
             if utils::is_false(window.memory_reserved) {
