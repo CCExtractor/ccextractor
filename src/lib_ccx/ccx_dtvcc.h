@@ -13,6 +13,7 @@ void dtvcc_free(dtvcc_ctx **);
 #ifndef DISABLE_RUST
 extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *settings_dtvcc);
 extern void ccxr_dtvcc_free(void *dtvcc_rust);
+extern void ccxr_dtvcc_process_data(void *dtvcc_rust, const unsigned char *data);
 #endif
 
 #endif // CCEXTRACTOR_CCX_DTVCC_H

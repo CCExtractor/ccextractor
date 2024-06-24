@@ -417,8 +417,14 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 					continue;
 				}
 				// WARN: otherwise cea-708 will not work
+
+#ifndef DISABLE_RUST
+				ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
+				ccxr_dtvcc_process_data(dec_ctx->dtvcc_rust, (unsigned char *)temp);
+#else
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx;
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+#endif
 				cb_708++;
 			}
 			if (ctx->write_format == CCX_OF_MCC)
