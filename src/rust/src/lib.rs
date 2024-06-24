@@ -132,8 +132,15 @@ extern "C" fn ccxr_dtvcc_set_encoder(dtvcc_rust: *mut Dtvcc, encoder: *mut encod
     unsafe { (*dtvcc_rust).encoder = encoder };
 }
 
-extern "C" fn ccxr_dtvcc_process_data(dtvcc_rust: *mut Dtvcc, data: &[u8]) {
-    unsafe { &mut (*dtvcc_rust) }.process_cc_data(data[0], data[1], data[2], data[3]);
+#[no_mangle]
+extern "C" fn ccxr_dtvcc_process_data(
+    dtvcc_rust: *mut Dtvcc,
+    cc_valid: u8,
+    cc_type: u8,
+    data1: u8,
+    data2: u8,
+) {
+    unsafe { &mut (*dtvcc_rust) }.process_cc_data(cc_valid, cc_type, data1, data2);
 }
 
 /// Process cc_data
