@@ -1204,7 +1204,7 @@ impl dtvcc_service_decoder {
 pub extern "C" fn ccxr_flush_decoder(dtvcc_rust: *mut Dtvcc, decoder: *mut dtvcc_service_decoder) {
     debug!("dtvcc_decoder_flush: Flushing decoder");
     let timing = unsafe { &mut *((*dtvcc_rust).timing) };
-    let encoder = unsafe { &mut *((*dtvcc_rust).encoder as *mut encoder_ctx) };
+    let encoder = unsafe { &mut *((*dtvcc_rust).encoder) };
     let decoder = unsafe { &mut *decoder };
 
     let mut screen_content_changed = false;
