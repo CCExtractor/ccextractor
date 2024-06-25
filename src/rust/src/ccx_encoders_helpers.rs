@@ -35,6 +35,7 @@ pub const CAPITALIZED_BUILTIN: [&str; 29] = [
     "Italy",
     "England",
 ];
+
 pub const PROFANE_BUILTIN: [&str; 25] = [
     "arse",
     "ass",
