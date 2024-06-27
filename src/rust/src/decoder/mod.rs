@@ -279,7 +279,7 @@ extern "C" fn ccxr_flush_active_decoders(ctx_ptr: *mut lib_cc_decode) {
             }
             if decoder.cc_count > 0 {
                 ctx.current_field = 3;
-                ccxr_flush_decoder(ctx.dtvcc_rust as *mut Dtvcc, Box::into_raw(decoder));
+                ccxr_flush_decoder(dtvcc_rust, decoder);
             }
         }
     }
