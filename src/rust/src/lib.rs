@@ -117,14 +117,20 @@ extern "C" fn ccxr_dtvcc_free(dtvcc_rust: *mut Dtvcc) {
 
             // Drop all windows row
             window.rows.iter().for_each(|symbol_ptr| unsafe {
-                symbol_ptr.drop_in_place();
+                drop(Box::from_raw(*symbol_ptr));
             });
 
             window.memory_reserved = 0;
         });
 
-        unsafe { decoder.tv.drop_in_place() };
+        unsafe {
+            drop(Box::from_raw(decoder.tv));
+        };
     }
+
+    unsafe {
+        drop(Box::from_raw(dtvcc));
+    };
 }
 
 #[no_mangle]

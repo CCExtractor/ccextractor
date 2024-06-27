@@ -1200,12 +1200,10 @@ impl dtvcc_service_decoder {
 }
 
 /// Flush service decoder
-#[no_mangle]
-pub extern "C" fn ccxr_flush_decoder(dtvcc_rust: *mut Dtvcc, decoder: *mut dtvcc_service_decoder) {
+pub fn ccxr_flush_decoder(dtvcc_rust: &mut Dtvcc, mut decoder: Box<dtvcc_service_decoder>) {
     debug!("dtvcc_decoder_flush: Flushing decoder");
-    let timing = unsafe { &mut *((*dtvcc_rust).timing) };
-    let encoder = unsafe { &mut *((*dtvcc_rust).encoder) };
-    let decoder = unsafe { &mut *decoder };
+    let timing = &mut dtvcc_rust.timing;
+    let encoder = unsafe { &mut *(dtvcc_rust.encoder) };
 
     let mut screen_content_changed = false;
     for i in 0..CCX_DTVCC_MAX_WINDOWS {

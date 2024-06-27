@@ -17,7 +17,6 @@ made to reuse, not duplicate, as many functions as possible */
 
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
-extern void ccxr_flush_decoder(void *dtvcc_rust, struct dtvcc_service_decoder *decoder);
 #endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */

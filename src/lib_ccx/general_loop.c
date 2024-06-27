@@ -1282,7 +1282,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 #ifndef DISABLE_RUST
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
 #else
-	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx;			   // WARN: otherwise cea-708 will not work
 #endif
 
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
