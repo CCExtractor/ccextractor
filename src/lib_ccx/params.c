@@ -985,14 +985,14 @@ void print_usage(void)
 	mprint("  a .d extension. Each .png file will contain an image representing one caption\n");
 	mprint("  and named subNNNN.png, starting with sub0000.png.\n");
 	mprint("  For example, the command:\n");
-	mprint("      ccextractor -out=spupng input.mpg\n");
+	mprint("      ccextractor --out=spupng input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      input.xml\n");
 	mprint("      input.d/sub0000.png\n");
 	mprint("      input.d/sub0001.png\n");
 	mprint("      ...\n");
 	mprint("  The command:\n");
-	mprint("      ccextractor -out=spupng -o /tmp/output --12 input.mpg\n");
+	mprint("      ccextractor --out=spupng -o /tmp/output --12 input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      /tmp/output_1.xml\n");
 	mprint("      /tmp/output_1.d/sub0000.png\n");
@@ -2940,7 +2940,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
-		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.\n");
+		print_error(opt->gui_mode_reports, "You cannot use --out=spupng with -stdout.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 

@@ -1465,7 +1465,7 @@ impl CcxOptions {
         }
 
         if self.write_format == CcxOutputFormat::Spupng && self.cc_to_stdout {
-            println!("You cannot use -out=spupng with -stdout.\n");
+            println!("You cannot use --out=spupng with -stdout.\n");
             std::process::exit(ExitCode::IncompatibleParameters as i32);
         }
 

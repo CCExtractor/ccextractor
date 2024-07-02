@@ -116,14 +116,14 @@ Notes on spupng output format:
   a .d extension. Each .png file will contain an image representing one caption
   and named subNNNN.png, starting with sub0000.png.
   For example, the command:
-    ccextractor -out=spupng input.mpg
+    ccextractor --out=spupng input.mpg
   will create the files:
     input.xml
     input.d/sub0000.png
     input.d/sub0001.png
     ...
   The command:
-    ccextractor -out=spupng -o /tmp/output --12 input.mpg
+    ccextractor --out=spupng -o /tmp/output --12 input.mpg
   will create the files:
     /tmp/output_1.xml
     /tmp/output_1.d/sub0000.png
