@@ -1891,7 +1891,7 @@ pub mod tests {
 
     #[test]
     fn options_12() {
-        let (options, _) = parse_args(&["--capfile", "/Cargo.toml"]);
+        let (options, _) = parse_args(&["--capfile", "Cargo.toml"]);
 
         assert!(options.enc_cfg.sentence_cap);
         assert_eq!(options.sentence_cap_file.unwrap(), "Cargo.toml");
