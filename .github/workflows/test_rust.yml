@@ -1,4 +1,4 @@
-name: Unit Test Rust sourcecode
+name: Unit Test Rust
 on:
   push:
     paths:
