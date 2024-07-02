@@ -1270,9 +1270,12 @@ impl CcxOptions {
             if let Some(saddr) = addr.strip_prefix('[') {
                 _addr = saddr.to_string();
 
-                let mut br = _addr
-                    .find(']')
-                    .expect("Wrong address format, for IPv6 use [address]:port");
+                let result = _addr.find(']');
+                if result.is_none() {
+                    println!("Wrong address format, for IPv6 use [address]:port\n");
+                    std::process::exit(ExitCode::IncompatibleParameters as i32);
+                }
+                let mut br = result.unwrap();
                 _addr = _addr.replace(']', "");
 
                 self.srv_addr = Some(_addr.clone());
@@ -1361,8 +1364,13 @@ impl CcxOptions {
             unsafe {
                 CAPITALIZATION_LIST = get_vector_words(&CAPITALIZED_BUILTIN);
                 if let Some(ref sentence_cap_file) = self.sentence_cap_file {
-                    process_word_file(sentence_cap_file, addr_of_mut!(CAPITALIZATION_LIST))
-                        .expect("There was an error processing the capitalization file.\n");
+                    let result =
+                        process_word_file(sentence_cap_file, addr_of_mut!(CAPITALIZATION_LIST));
+
+                    if result.is_err() {
+                        println!("There was an error processing the capitalization file.\n");
+                        std::process::exit(ExitCode::ErrorInCapitalizationFile as i32);
+                    }
                 }
             }
         }
@@ -1370,8 +1378,12 @@ impl CcxOptions {
             unsafe {
                 PROFANE = get_vector_words(&PROFANE_BUILTIN);
                 if let Some(ref profanityfile) = self.filter_profanity_file {
-                    process_word_file(profanityfile.as_str(), addr_of_mut!(PROFANE))
-                        .expect("There was an error processing the profanity file.\n");
+                    let result = process_word_file(profanityfile.as_str(), addr_of_mut!(PROFANE));
+
+                    if result.is_err() {
+                        println!("There was an error processing the profanity file.\n");
+                        std::process::exit(ExitCode::ErrorInCapitalizationFile as i32);
+                    }
                 }
             }
         }
@@ -1879,7 +1891,7 @@ pub mod tests {
 
     #[test]
     fn options_12() {
-        let (options, _) = parse_args(&["--capfile", "Cargo.toml"]);
+        let (options, _) = parse_args(&["--capfile", "/Cargo.toml"]);
 
         assert!(options.enc_cfg.sentence_cap);
         assert_eq!(options.sentence_cap_file.unwrap(), "Cargo.toml");
