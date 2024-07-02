@@ -1516,7 +1516,7 @@ impl CcxOptions {
             self.enc_cfg.render_font = DEFAULT_FONT_PATH_ITALICS.to_string();
         }
 
-        if self.output_filename.is_some() && self.multiprogram {
+        if self.output_filename.is_some() && !self.multiprogram {
             self.enc_cfg.output_filename = self.output_filename.clone().unwrap();
         }
 
