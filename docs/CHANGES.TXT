@@ -1,5 +1,6 @@
-0.95 (to be released)
+1.0 (to be released)
 -----------------
+- Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - Fix: Unexpected behavior of get_write_interval (#1609)
 - Update: Bump rsmpeg to latest version for ffmpeg bindings (#1600)
 - New: Add SCC support for CEA-708 decoder (#1595)
