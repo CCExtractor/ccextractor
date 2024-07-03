@@ -23,7 +23,7 @@ leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
 lib_ccxr = { path = "lib_ccxr" }
 
 [build-dependencies]
-bindgen = "0.65.3"
+bindgen = "0.64.0"
 
 [features]
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
