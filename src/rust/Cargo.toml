@@ -20,6 +20,7 @@ rsmpeg = { version = "0.14.2", optional = true, features = [
 ] }
 tesseract-sys = { version = "0.5.14", optional = true, default-features = false }
 leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
+lib_ccxr = { path = "lib_ccxr" }
 
 [build-dependencies]
 bindgen = "0.64.0"
