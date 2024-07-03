@@ -1,5 +1,4 @@
 use crate::bindings::*;
-use crate::utils::string_null;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
 
@@ -103,6 +102,61 @@ pub struct CcxBoundaryTime {
 }
 
 impl CcxBoundaryTime {
+    pub fn start_credits_not_before() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 0,
+            ss: 0,
+            time_in_ms: 0,
+            set: true,
+        }
+    }
+    pub fn start_credits_not_after() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 5,
+            ss: 0,
+            time_in_ms: 300000,
+            set: true,
+        }
+    }
+    pub fn start_credits_for_atleast() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 0,
+            ss: 2,
+            time_in_ms: 2000,
+            set: true,
+        }
+    }
+    pub fn start_credits_for_atmost() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 0,
+            ss: 5,
+            time_in_ms: 5000,
+            set: true,
+        }
+    }
+    pub fn end_credits_for_atleast() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 0,
+            ss: 2,
+            time_in_ms: 2000,
+            set: true,
+        }
+    }
+    pub fn end_credits_for_atmost() -> CcxBoundaryTime {
+        CcxBoundaryTime {
+            hh: 0,
+            mm: 0,
+            ss: 5,
+            time_in_ms: 5000,
+            set: true,
+        }
+    }
+
     pub fn to_ctype(&self) -> ccx_boundary_time {
         ccx_boundary_time {
             hh: self.hh,
@@ -610,12 +664,12 @@ impl Default for CcxEncoderCfg {
             with_semaphore: false,
             start_credits_text: String::default(),
             end_credits_text: String::default(),
-            startcreditsnotbefore: CcxBoundaryTime::default(),
-            startcreditsnotafter: CcxBoundaryTime::default(),
-            startcreditsforatleast: CcxBoundaryTime::default(),
-            startcreditsforatmost: CcxBoundaryTime::default(),
-            endcreditsforatleast: CcxBoundaryTime::default(),
-            endcreditsforatmost: CcxBoundaryTime::default(),
+            startcreditsnotbefore: CcxBoundaryTime::start_credits_not_before(),
+            startcreditsnotafter: CcxBoundaryTime::start_credits_not_after(),
+            startcreditsforatleast: CcxBoundaryTime::start_credits_for_atleast(),
+            startcreditsforatmost: CcxBoundaryTime::start_credits_for_atmost(),
+            endcreditsforatleast: CcxBoundaryTime::end_credits_for_atleast(),
+            endcreditsforatmost: CcxBoundaryTime::end_credits_for_atmost(),
             transcript_settings: CcxEncodersTranscriptFormat::default(),
             send_to_srv: false,
             no_bom: true,
@@ -698,11 +752,7 @@ impl CcxEncoderCfg {
                 extract: self.extract,
                 dtvcc_extract: self.dtvcc_extract as _,
                 gui_mode_reports: self.gui_mode_reports as _,
-                output_filename: if !self.output_filename.is_empty() {
-                    string_to_c_char(&self.output_filename)
-                } else {
-                    string_null()
-                },
+                output_filename: string_to_c_char(&self.output_filename),
                 write_format: self.write_format.into(),
                 keep_output_closed: self.keep_output_closed as _,
                 force_flush: self.force_flush as _,
@@ -716,23 +766,11 @@ impl CcxEncoderCfg {
                 sentence_cap: self.sentence_cap as _,
                 splitbysentence: self.splitbysentence as _,
                 #[cfg(feature = "with_libcurl")]
-                curlposturl: if self.curlposturl.is_some() {
-                    string_to_c_char(&self.curlposturl.clone().unwrap())
-                } else {
-                    string_null()
-                },
+                curlposturl: string_to_c_char(&self.curlposturl.clone().unwrap()),
                 filter_profanity: self.filter_profanity as _,
                 with_semaphore: self.with_semaphore as _,
-                start_credits_text: if !self.start_credits_text.is_empty() {
-                    string_to_c_char(&self.start_credits_text)
-                } else {
-                    string_null()
-                },
-                end_credits_text: if !self.end_credits_text.is_empty() {
-                    string_to_c_char(&self.end_credits_text)
-                } else {
-                    string_null()
-                },
+                start_credits_text: string_to_c_char(&self.start_credits_text),
+                end_credits_text: string_to_c_char(&self.end_credits_text),
                 startcreditsnotbefore: self.startcreditsnotbefore.to_ctype(),
                 startcreditsnotafter: self.startcreditsnotafter.to_ctype(),
                 startcreditsforatleast: self.startcreditsforatleast.to_ctype(),
@@ -742,11 +780,7 @@ impl CcxEncoderCfg {
                 transcript_settings: self.transcript_settings.to_ctype(),
                 send_to_srv: self.send_to_srv as _,
                 no_bom: self.no_bom as _,
-                first_input_file: if !self.first_input_file.is_empty() {
-                    string_to_c_char(&self.first_input_file)
-                } else {
-                    string_null()
-                },
+                first_input_file: string_to_c_char(&self.first_input_file),
                 multiple_files: self.multiple_files as _,
                 no_font_color: self.no_font_color as _,
                 no_type_setting: self.no_type_setting as _,
@@ -757,23 +791,11 @@ impl CcxEncoderCfg {
                 in_format: self.in_format,
                 nospupngocr: self.nospupngocr as _,
                 force_dropframe: self.force_dropframe as _,
-                render_font: if !self.render_font.is_empty() {
-                    string_to_c_char(&self.render_font)
-                } else {
-                    string_null()
-                },
-                render_font_italics: if !self.render_font_italics.is_empty() {
-                    string_to_c_char(&self.render_font_italics)
-                } else {
-                    string_null()
-                },
+                render_font: string_to_c_char(&self.render_font),
+                render_font_italics: string_to_c_char(&self.render_font_italics),
                 services_enabled: self.services_enabled.map(|b| if b { 1 } else { 0 }),
                 services_charsets: string_to_c_chars(self.services_charsets.clone()),
-                all_services_charset: if !self.all_services_charset.is_empty() {
-                    string_to_c_char(&self.all_services_charset)
-                } else {
-                    string_null()
-                },
+                all_services_charset: string_to_c_char(&self.all_services_charset),
                 extract_only_708: self.extract_only_708 as _,
             }
         }
@@ -906,7 +928,7 @@ impl Default for CcxOptions {
             settings_dtvcc: CcxDecoderDtvccSettings::default(),
             is_608_enabled: false,
             is_708_enabled: false,
-            millis_separator: char::default(),
+            millis_separator: ',',
             binary_concat: true,
             use_gop_as_pts: 0,
             fix_padding: false,

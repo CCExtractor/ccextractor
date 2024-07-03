@@ -1388,7 +1388,7 @@ impl CcxOptions {
             }
         }
 
-        if self.demux_cfg.ts_forced_program == -1 {
+        if self.demux_cfg.ts_forced_program != -1 {
             self.demux_cfg.ts_forced_program_selected = true;
         }
 
@@ -1513,7 +1513,7 @@ impl CcxOptions {
         }
 
         if self.enc_cfg.render_font_italics.is_empty() {
-            self.enc_cfg.render_font = DEFAULT_FONT_PATH_ITALICS.to_string();
+            self.enc_cfg.render_font_italics = DEFAULT_FONT_PATH_ITALICS.to_string();
         }
 
         if self.output_filename.is_some() && !self.multiprogram {
