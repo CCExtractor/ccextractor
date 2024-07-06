@@ -169,13 +169,15 @@ fn mkvlang_params_check(lang: &str) {
             _present = char_index;
 
             if _present - initial < 3 || _present - initial > 6 {
-                panic!("language codes should be xxx,xxx,xxx,....\n");
+                println!("language codes should be xxx,xxx,xxx,....\n");
+                std::process::exit(ExitCode::MalformedParameter as i32);
             }
 
             if _present - initial == 6 {
                 let sub_slice = &lang[initial.._present];
                 if !sub_slice.contains('-') {
-                    panic!("language code is not of the form xxx-xx\n");
+                    println!("language code is not of the form xxx-xx\n");
+                    std::process::exit(ExitCode::MalformedParameter as i32);
                 }
             }
 
@@ -194,13 +196,15 @@ fn mkvlang_params_check(lang: &str) {
     }
 
     if _present - initial < 2 || _present - initial > 5 {
-        panic!("last language code should be xxx.\n");
+        println!("last language code should be xxx.\n");
+        std::process::exit(ExitCode::MalformedParameter as i32);
     }
 
     if _present - initial == 5 {
         let sub_slice = &lang[initial.._present];
         if !sub_slice.contains('-') {
-            panic!("last language code is not of the form xxx-xx\n");
+            println!("last language code is not of the form xxx-xx\n");
+            std::process::exit(ExitCode::MalformedParameter as i32);
         }
     }
 }
@@ -379,7 +383,8 @@ impl CcxOptions {
         for (i, service) in services.iter().enumerate() {
             let svc = service.parse::<usize>().unwrap();
             if !(1..=CCX_DTVCC_MAX_SERVICES).contains(&svc) {
-                panic!("[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, CCX_DTVCC_MAX_SERVICES);
+                println!("[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, CCX_DTVCC_MAX_SERVICES);
+                std::process::exit(ExitCode::MalformedParameter as i32);
             }
             self.settings_dtvcc.services_enabled[svc - 1] = true;
             self.enc_cfg.services_enabled[svc - 1] = true;
@@ -396,7 +401,8 @@ impl CcxOptions {
         }
 
         if self.settings_dtvcc.active_services_count == 0 {
-            panic!("[CEA-708] Malformed parameter: no services\n");
+            println!("[CEA-708] Malformed parameter: no services\n");
+            std::process::exit(ExitCode::MalformedParameter as i32);
         }
     }
 
