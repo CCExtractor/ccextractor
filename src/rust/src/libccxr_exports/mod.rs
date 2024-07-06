@@ -11,13 +11,13 @@ use std::convert::TryInto;
 ///
 /// `ccx_options` must not be null and must initialized properly before calling this function.
 #[no_mangle]
-pub extern "C" fn ccxr_init_basic_logger(ccx_options: *const ccx_s_options) {
+pub unsafe extern "C" fn ccxr_init_basic_logger(ccx_options: *const ccx_s_options) {
     if ccx_options.is_null() {
         panic!("ccx_s_options must not be null");
     }
 
     let debug_mask = DebugMessageFlag::from_bits(
-        unsafe { *ccx_options }
+        (*ccx_options)
             .debug_mask
             .try_into()
             .expect("Failed to convert debug_mask to an unsigned integer"),
@@ -25,7 +25,7 @@ pub extern "C" fn ccxr_init_basic_logger(ccx_options: *const ccx_s_options) {
     .expect("Failed to convert debug_mask to a DebugMessageFlag");
 
     let debug_mask_on_debug = DebugMessageFlag::from_bits(
-        unsafe { *ccx_options }
+        (*ccx_options)
             .debug_mask_on_debug
             .try_into()
             .expect("Failed to convert debug_mask_on_debug to an unsigned integer"),

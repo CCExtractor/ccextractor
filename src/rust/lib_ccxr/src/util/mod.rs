@@ -2,4 +2,4 @@
 
 pub mod log;
 
-static VERSION: &'static str = "0.94";
+static VERSION: &str = "0.94";
