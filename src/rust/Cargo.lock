@@ -159,6 +159,7 @@ dependencies = [
  "env_logger",
  "iconv",
  "leptonica-sys",
+ "lib_ccxr",
  "log",
  "num-integer",
  "palette",
@@ -384,6 +385,10 @@ dependencies = [
  "pkg-config",
  "vcpkg",
 ]
+
+[[package]]
+name = "lib_ccxr"
+version = "0.1.0"
 
 [[package]]
 name = "libc"

@@ -26,6 +26,7 @@ strum_macros = "0.25"
 time = "0.3.25"
 cfg-if = "1.0.0"
 num-integer = "0.1.45"
+lib_ccxr = { path = "lib_ccxr" }
 
 [build-dependencies]
 bindgen = "0.64.0"
