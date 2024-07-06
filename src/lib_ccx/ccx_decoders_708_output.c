@@ -367,6 +367,155 @@ void dtvcc_write_sami(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, 
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 }
 
+unsigned char adjust_odd_parity(const unsigned char value)
+{
+	unsigned int i, ones = 0;
+	for (i = 0; i < 8; i++)
+	{
+		if ((value & (1 << i)) != 0)
+		{
+			ones += 1;
+		}
+	}
+	if (ones % 2 == 0)
+	{
+		// make the number of ones always odd
+		return value | 0b10000000;
+	}
+	return value;
+}
+
+void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
+{
+	char *buf = (char *)encoder->buffer;
+	// 18 characters long + 2 new lines
+	memset(buf, 0, 20);
+	sprintf(buf, "Scenarist_SCC V1.0\n\n");
+
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+}
+
+int count_captions_lines_scc(dtvcc_tv_screen *tv)
+{
+	int count = 0;
+	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!dtvcc_is_row_empty(tv, i))
+		{
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/** This function is designed to assign appropriate SSC labels for positioning subtitles based on their length.
+ * In some scenarios where the video stream provides lengthy subtitles that cannot fit within a single line.
+ * Single-line subtitle can be placed in 15th row(most bottom row)
+ * 2 line length subtitles can be placed in 14th and 15th row
+ * 3 line length subtitles can be placed in 13th, 14th and 15th row
+ */
+void add_needed_scc_labels(char *buf, int total_subtitle_count, int current_subtitle_count)
+{
+	switch (total_subtitle_count)
+	{
+		case 1:
+			// row 15, column 00
+			sprintf(buf + strlen(buf), " 94e0 94e0");
+			break;
+		case 2:
+			// 9440: row 14, column 00 | 94e0: row 15, column 00
+			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 9440 9440" : " 94e0 94e0");
+			break;
+		default:
+			// 13e0: row 13, column 04 | 9440: row 14, column 00 | 94e0: row 15, column 00
+			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 13e0 13e0" : (current_subtitle_count == 2 ? " 9440 9440" : " 94e0 94e0"));
+	}
+}
+
+void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
+{
+	dtvcc_tv_screen *tv = decoder->tv;
+
+	if (dtvcc_is_screen_empty(tv, encoder))
+		return;
+
+	if (tv->time_ms_show + encoder->subs_delay < 0)
+		return;
+
+	if (tv->cc_count == 2)
+		dtvcc_write_scc_header(tv, encoder);
+
+	char *buf = (char *)encoder->buffer;
+	struct ccx_boundary_time time_show = get_time(tv->time_ms_show + encoder->subs_delay);
+	// when hiding subtract a frame (1 frame = 34 ms)
+	struct ccx_boundary_time time_end = get_time(tv->time_ms_hide + encoder->subs_delay - 34);
+
+	if (tv->old_cc_time_end > time_show.time_in_ms)
+	{
+		// Correct the frame delay
+		time_show.time_in_ms -= 1000 / 29.97;
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c");
+		time_show.time_in_ms += 1000 / 29.97;
+		// Clear the buffer and start pop on caption
+		sprintf(buf + strlen(buf), "94ae 94ae 9420 9420");
+	}
+	else if (tv->old_cc_time_end < time_show.time_in_ms)
+	{
+		// Clear the screen for new caption
+		struct ccx_boundary_time time_to_display = get_time(tv->old_cc_time_end);
+		print_scc_time(time_to_display, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c \n\n");
+		// Correct the frame delay
+		time_show.time_in_ms -= 1000 / 29.97;
+		// Clear the buffer and start pop on caption in new time
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t94ae 94ae 9420 9420");
+		time_show.time_in_ms += 1000 / 29.97;
+	}
+	else
+	{
+		time_show.time_in_ms -= 1000 / 29.97;
+		print_scc_time(time_show, buf);
+		sprintf(buf + strlen(buf), "\t942c 942c 94ae 94ae 9420 9420");
+		time_show.time_in_ms += 1000 / 29.97;
+	}
+
+	int total_subtitle_count = count_captions_lines_scc(tv);
+	int current_subtitle_count = 0;
+
+	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!dtvcc_is_row_empty(tv, i))
+		{
+			current_subtitle_count++;
+			add_needed_scc_labels(buf, total_subtitle_count, current_subtitle_count);
+
+			int first, last, bytes_written = 0;
+			dtvcc_get_write_interval(tv, i, &first, &last);
+			for (int j = first; j <= last; j++)
+			{
+				if (bytes_written % 2 == 0)
+					sprintf(buf + strlen(buf), " ");
+				sprintf(buf + strlen(buf), "%x", adjust_odd_parity(tv->chars[i][j].sym));
+				bytes_written += 1;
+			}
+			// if byte pair are not even then make it even by adding 0x80 as padding
+			if (bytes_written % 2 == 1)
+				sprintf(buf + strlen(buf), "80 ");
+			else
+				sprintf(buf + strlen(buf), " ");
+		}
+	}
+
+	// Display caption (942f 942f)
+	sprintf(buf + strlen(buf), "942f 942f \n\n");
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+
+	tv->old_cc_time_end = time_end.time_in_ms;
+}
+
 void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
 {
 	switch (encoder->write_format)
@@ -381,6 +530,9 @@ void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struc
 			break;
 		case CCX_OF_SAMI:
 			dtvcc_write_sami(writer, decoder, encoder);
+			break;
+		case CCX_OF_SCC:
+			dtvcc_write_scc(writer, decoder, encoder);
 			break;
 		case CCX_OF_MCC:
 			printf("REALLY BAD... [%s:%d]\n", __FILE__, __LINE__);

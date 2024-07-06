@@ -99,7 +99,7 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 		while (idx < ctx->startbytes_avail - 8)
 		{
 			// Check if we have a valid box
-			if (isValidMP4Box(ctx->startbytes, idx, &nextBoxLocation, &boxScore))
+			if (isValidMP4Box(ctx->startbytes, idx, &nextBoxLocation, &boxScore) && nextBoxLocation > idx)
 			{
 				idx = nextBoxLocation; // If the box is valid, a new box should be found on the next location... Not somewhere in between.
 				if (boxScore > 7)
