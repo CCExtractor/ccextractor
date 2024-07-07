@@ -1,5 +1,6 @@
 0.95 (to be released)
 -----------------
+- New: Add log module in lib_ccxr (#1622)
 - New: Create `lib_ccxr` and `libccxr_exports` (#1621)
 - Fix: Unexpected behavior of get_write_interval (#1609)
 - Update: Bump rsmpeg to latest version for ffmpeg bindings (#1600)
