@@ -89,6 +89,9 @@ int verify_crc32(uint8_t *buf, int len)
 
 int stringztoms(const char *s, struct ccx_boundary_time *bt)
 {
+#ifndef DISABLE_RUST
+	return ccxr_stringztoms(s, bt);
+#endif
 	unsigned ss = 0, mm = 0, hh = 0;
 	int value = -1;
 	int colons = 0;
@@ -133,6 +136,10 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt)
 }
 void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_srttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -142,6 +149,10 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 }
 void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_vtttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -202,6 +213,10 @@ int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsign
 
 void millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
+#ifndef DISABLE_RUST
+	return ccxr_millis_to_date(timestamp, buffer, date_format, millis_separator);
+#endif
+
 	time_t secs;
 	unsigned int millis;
 	char c_temp[80];
