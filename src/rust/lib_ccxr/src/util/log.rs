@@ -365,7 +365,6 @@ impl<'a> CCExtractorLogger {
         if !self.debug_mask.mask().intersects(message_type) {
             return;
         }
-        println!("In if statement");
         let chunked_data = data.chunks(16);
 
         for (id, chunk) in chunked_data.enumerate() {
