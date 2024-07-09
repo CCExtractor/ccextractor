@@ -93,6 +93,8 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 {
 	int ret = 0;
 
+	activity_header(); // Brag about writing it :-)
+
 	// Set logging functions for libraries
 	ccx_common_logging.debug_ftn = &dbg_print;
 	ccx_common_logging.debug_mask = opt->debug_mask;

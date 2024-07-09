@@ -34,13 +34,9 @@
 
 use bitflags::bitflags;
 use std::fmt::Arguments;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::util::VERSION;
-
 static LOGGER: OnceLock<RwLock<CCExtractorLogger>> = OnceLock::new();
-static mut CREDITS_SHOWN: AtomicBool = AtomicBool::new(false);
 
 /// The possible targets for logging messages.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -310,8 +306,6 @@ impl<'a> CCExtractorLogger {
             return;
         }
 
-        activity_header();
-
         self.print(args);
     }
 
@@ -576,17 +570,4 @@ pub fn send_gui(message: GuiXdsMessage) {
     logger()
         .expect("Logger is not yet initialized")
         .send_gui(message)
-}
-
-fn activity_header() {
-    if !unsafe { CREDITS_SHOWN.load(Ordering::Relaxed) } {
-        unsafe { CREDITS_SHOWN.store(true, Ordering::Relaxed) };
-
-        println!(
-            "CCExtractor {}, Carlos Fernandez Sanz, Volker Quetschke.",
-            VERSION
-        );
-        println!("Teletext portions taken from Petr Kutalek's telxcc");
-        println!("--------------------------------------------------------------------------");
-    }
 }
