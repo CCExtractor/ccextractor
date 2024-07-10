@@ -280,8 +280,8 @@ impl<'a> CCExtractorLogger {
     /// Used for logging errors dangerous enough to crash the program instantly.
     pub fn log_fatal(&self, exit_cause: ExitCause, args: &Arguments<'a>) -> ! {
         self.log_error(args);
-        info!("Issues? Open a ticket here");
-        info!("https://github.com/CCExtractor/ccextractor/issues");
+        info!("Issues? Open a ticket here\n");
+        info!("https://github.com/CCExtractor/ccextractor/issues\n");
         std::process::exit(exit_cause.exit_code())
     }
 
@@ -486,7 +486,7 @@ macro_rules! error {
 /// # Examples
 /// ```no_run
 /// # use lib_ccxr::util::log::*;
-/// info!("Processing the header section");
+/// info!("Processing the header section\n");
 /// ```
 #[macro_export]
 macro_rules! info {
