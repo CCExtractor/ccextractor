@@ -3,20 +3,24 @@
 //!
 //! # Conversion Guide
 //!
-//! | From                    | To                         |
-//! |-------------------------|----------------------------|
-//! | `ccx_avc_nal_types`     | [`AvcNalType`]             |
-//! | `ccx_stream_type`       | [`StreamType`]             |
-//! | `ccx_mpeg_descriptor`   | [`MpegDescriptor`]         |
-//! | `ccx_datasource`        | [`DataSource`]             |
-//! | `ccx_output_format`     | [`OutputFormat`]           |
-//! | `ccx_stream_mode_enum`  | [`StreamMode`]             |
-//! | `ccx_bufferdata_type`   | [`BufferdataType`]         |
-//! | `ccx_frame_type`        | [`FrameType`]              |
-//! | `ccx_code_type`         | [`Codec`]                  |
-//! | `cdp_section_type`      | [`CdpSectionType`]         |
-//! | `cc_types[4]`           | [`CCTypes`]                 |
-//! | `language[NB_LANGUAGE]` | [`Language`]               |
+//! | From                           | To                                         |
+//! |--------------------------------|--------------------------------------------|
+//! | `ccx_avc_nal_types`            | [`AvcNalType`]                             |
+//! | `ccx_stream_type`              | [`StreamType`]                             |
+//! | `ccx_mpeg_descriptor`          | [`MpegDescriptor`]                         |
+//! | `ccx_datasource`               | [`DataSource`]                             |
+//! | `ccx_output_format`            | [`OutputFormat`]                           |
+//! | `ccx_stream_mode_enum`         | [`StreamMode`]                             |
+//! | `ccx_bufferdata_type`          | [`BufferdataType`]                         |
+//! | `ccx_frame_type`               | [`FrameType`]                              |
+//! | `ccx_code_type`                | [`Codec`]                                  |
+//! | `cdp_section_type`             | [`CdpSectionType`]                         |
+//! | `cc_types[4]`                  | [`CCTypes`]                                |
+//! | `CCX_TXT_*` macros             | [`CcxTxt`]                                 |
+//! | `language[NB_LANGUAGE]`        | [`Language`]                               |
+//! | `DEF_VAL_*` macros             | [`CreditTiming`]                           |
+//! | `IS_FEASIBLE` macro            | [`Codec::is_feasible`]                     |
+//! | `IS_VALID_TELETEXT_DESC` macro | [`MpegDescriptor::is_valid_teletext_desc`] |
 
 use std::ffi::OsStr;
 
