@@ -77,6 +77,9 @@ static uint32_t crc32_table[] = {
 
 int verify_crc32(uint8_t *buf, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_verify_crc32(buf, len);
+#endif /* ifndef DISABLE_RUST */
 	int i = 0;
 	int32_t crc = -1;
 	for (i = 0; i < len; i++)
@@ -151,6 +154,9 @@ void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 
 int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_levenshtein_dist(s1, s2, s1len, s2len);
+#endif
 	unsigned int x, y, v, lastdiag, olddiag;
 	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
 	for (y = 1; y <= s1len; y++)
@@ -172,6 +178,9 @@ int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, uns
 
 int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_levenshtein_dist_char(s1, s2, s1len, s2len);
+#endif
 	unsigned int x, y, v, lastdiag, olddiag;
 	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
 	for (y = 1; y <= s1len; y++)
