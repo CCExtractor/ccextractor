@@ -288,7 +288,6 @@ void mprint(const char *fmt, ...)
 	va_list args;
 	if (!ccx_options.messages_target)
 		return;
-	activity_header(); // Brag about writing it :-)
 	va_start(args, fmt);
 	if (ccx_options.messages_target == CCX_MESSAGES_STDOUT)
 	{

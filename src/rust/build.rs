@@ -26,6 +26,7 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
+        "ccx_s_options",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
