@@ -6,16 +6,6 @@ You can install the latest build of this image by running `docker pull CCExtract
 
 ## Build
 
-### Pull the published docker image
-
-You can pull the Docker image directly from the dockerhub repository
-
-```bash
-$ docker pull CCExtractor/ccextractor
-```
-
-### Build the Docker Image from Dockerfile
-
 You can build the Docker image directly from the Dockerfile provided in [docker](https://github.com/CCExtractor/ccextractor/tree/master/docker) directory of CCExtractor source
 
 ```bash
@@ -30,7 +20,7 @@ The CCExtractor Docker image can be used in several ways, depending on your need
 
 ```bash
 # General usage
-$ docker run CCExtractor/ccextractor <features>
+$ docker run ccextractor:latest <features>
 ```
 
 1. Process a local file & use `-o` flag
@@ -39,10 +29,10 @@ To process a local video file, mount a directory containing the input file insid
 
 ```bash
 # Use `-o` to specifying output file
-$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) CCExtractor/ccextractor input.mp4 -o output.srt
+$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor:latest input.mp4 -o output.srt
 
 # Alternatively use `--stdout` feature
-$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) CCExtractor/ccextractor input.mp4 --stdout > output.srt
+$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor:latest input.mp4 --stdout > output.srt
 ```
 
 Run this command from where your input video file is present, and change `input.mp4` & `output.srt` with the actual name of files.
@@ -53,7 +43,7 @@ If you need to run CCExtractor with additional options or perform other tasks wi
 bash
 
 ```bash
-$ docker run --rm -it --entrypoint='sh' CCExtractor/ccextractor
+$ docker run --rm -it --entrypoint='sh' ccextractor:latest
 ```
 
 This will start a Bash shell inside the container, allowing you to run CCExtractor commands manually or perform other operations.
@@ -64,7 +54,7 @@ I run help command in image built from `dockerfile`
 
 ```bash
 $ docker build -t ccextractor .
-$ docker run ccextractor --help
+$ docker run --rm ccextractor:latest --help
 ```
 
 This will show the `--help` message of CCExtractor tool
