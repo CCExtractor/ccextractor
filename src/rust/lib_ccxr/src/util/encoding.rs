@@ -398,11 +398,11 @@ impl EncodedString {
     /// # Examples
     /// ```rust
     /// # use lib_ccxr::util::encoding::*;
-    /// let s = EncodedString::from_str("Hi 😀", Encoding::Utf8);
+    /// let s = EncodedString::from_str("Hi 😀", Encoding::Ucs2);
     /// assert_eq!(
     ///     s.to_line21(),
     ///     Line21String::from_vec(
-    ///         vec![0x48, 0x69, 0x20, 0x3f] // "Hi ?"
+    ///         vec![0x48, 0x69, 0x89, 0x3f] // "Hi ?"
     ///     )
     /// )
     /// ```
@@ -561,8 +561,96 @@ impl From<String> for EncodedString {
     }
 }
 
-fn latin1_to_line21(_c: Latin1Char) -> Line21Char {
-    unimplemented!()
+fn latin1_to_line21(c: Latin1Char) -> Line21Char {
+    // Reversed the logic of [`line21_to_latin1`] fn, Could be wrong
+    // But anyway, This function is not used anywhere in C
+
+    match c {
+        0xe1 => 0x2a, // lowercase a, acute accent
+        0xe9 => 0x5c, // lowercase e, acute accent
+        0xed => 0x5e, // lowercase i, acute accent
+        0xf3 => 0x5f, // lowercase o, acute accent
+        0xfa => 0x60, // lowercase u, acute accent
+        0xe7 => 0x7b, // lowercase c with cedilla
+        0xf7 => 0x7c, // division symbol
+        0xd1 => 0x7d, // uppercase N tilde
+        0xf1 => 0x7e, // lowercase n tilde
+        0xae => 0x80, // Registered symbol (R)
+        0xb0 => 0x81, // degree sign
+        0xbd => 0x82, // 1/2 symbol
+        0xbf => 0x83, // Inverted (open) question mark
+        0xa2 => 0x85, // Cents symbol
+        0xa3 => 0x86, // Pounds sterling
+        0xb6 => 0x87, // Music note (pilcrow in Latin-1)
+        0xe0 => 0x88, // lowercase a, grave accent
+        0x20 => 0x89, // transparent space
+        0xe8 => 0x8a, // lowercase e, grave accent
+        0xe2 => 0x8b, // lowercase a, circumflex accent
+        0xea => 0x8c, // lowercase e, circumflex accent
+        0xee => 0x8d, // lowercase i, circumflex accent
+        0xf4 => 0x8e, // lowercase o, circumflex accent
+        0xfb => 0x8f, // lowercase u, circumflex accent
+        0xc1 => 0x90, // capital letter A with acute
+        0xc9 => 0x91, // capital letter E with acute
+        0xd3 => 0x92, // capital letter O with acute
+        0xda => 0x93, // capital letter U with acute
+        0xdc => 0x94, // capital letter U with diaeresis
+        0xfc => 0x95, // lowercase letter U with diaeresis
+        0x27 => 0x96, // apostrophe (note: 0x99 also maps to this)
+        0xa1 => 0x97, // inverted exclamation mark
+        0x2a => 0x98, // asterisk
+        0x2d => 0x9a, // em dash
+        0xa9 => 0x9b, // copyright sign
+        0x2e => 0x9d, // Full stop (.)
+        0x22 => 0x9e, // Quotation mark (note: 0x9f also maps to this)
+        0xc0 => 0xa0, // uppercase A, grave accent
+        0xc2 => 0xa1, // uppercase A, circumflex
+        0xc7 => 0xa2, // uppercase C with cedilla
+        0xc8 => 0xa3, // uppercase E, grave accent
+        0xca => 0xa4, // uppercase E, circumflex
+        0xcb => 0xa5, // capital letter E with diaeresis
+        0xeb => 0xa6, // lowercase letter e with diaeresis
+        0xce => 0xa7, // uppercase I, circumflex
+        0xcf => 0xa8, // uppercase I, with diaeresis
+        0xef => 0xa9, // lowercase i, with diaeresis
+        0xd4 => 0xaa, // uppercase O, circumflex
+        0xd9 => 0xab, // uppercase U, grave accent
+        0xf9 => 0xac, // lowercase u, grave accent
+        0xdb => 0xad, // uppercase U, circumflex
+        0xab => 0xae, // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+        0xbb => 0xaf, // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+        0xc3 => 0xb0, // Uppercase A, tilde
+        0xe3 => 0xb1, // Lowercase a, tilde
+        0xcd => 0xb2, // Uppercase I, acute accent
+        0xcc => 0xb3, // Uppercase I, grave accent
+        0xec => 0xb4, // Lowercase i, grave accent
+        0xd2 => 0xb5, // Uppercase O, grave accent
+        0xf2 => 0xb6, // Lowercase o, grave accent
+        0xd5 => 0xb7, // Uppercase O, tilde
+        0xf5 => 0xb8, // Lowercase o, tilde
+        0x7b => 0xb9, // Open curly brace
+        0x7d => 0xba, // Closing curly brace
+        0x5c => 0xbb, // Backslash
+        0x5e => 0xbc, // Caret
+        0x5f => 0xbd, // Underscore
+        0xa6 => 0xbe, // Pipe (broken bar)
+        0x7e => 0xbf, // Tilde
+        0xc4 => 0xc0, // Uppercase A, umlaut
+        0xe4 => 0xc1, // Lowercase a, umlaut
+        0xd6 => 0xc2, // Uppercase O, umlaut
+        0xf6 => 0xc3, // Lowercase o, umlaut
+        0xdf => 0xc4, // Eszett (sharp S)
+        0xa5 => 0xc5, // Yen symbol
+        0xa4 => 0xc6, // Currency symbol
+        0x7c => 0xc7, // Vertical bar
+        0xc5 => 0xc8, // Uppercase A, ring
+        0xe5 => 0xc9, // Lowercase A, ring
+        0xd8 => 0xca, // Uppercase O, slash
+        0xf8 => 0xcb, // Lowercase o, slash
+        0x00..=0x29 | 0x2b..=0x5b | 0x5d => c as Line21Char,
+        0x5c..=0x7a => c as Line21Char,
+        _ => UNAVAILABLE_CHAR,
+    }
 }
 
 fn line21_to_latin1(c: Line21Char) -> Latin1Char {
@@ -802,10 +890,18 @@ fn line21_to_ucs2(c: Line21Char) -> Ucs2Char {
 }
 
 fn ucs2_to_line21(c: Ucs2Char) -> Line21Char {
-    if c < 0x80 {
-        c as u8
-    } else {
-        UNAVAILABLE_CHAR
+    // Reversed the logic of [`line21_to_ucs2`] fn
+    // This function is not used anywhere in C
+    match c {
+        0x25A0 => 0x7f,
+        0x2122 => 0x84,
+        0x266a => 0x87,
+        0x2120 => 0x9c,
+        0x231c => 0xcc,
+        0x231d => 0xcd,
+        0x231e => 0xce,
+        0x231f => 0xcf,
+        _ => latin1_to_line21(c as Latin1Char),
     }
 }
 
