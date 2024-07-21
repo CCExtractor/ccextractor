@@ -4,7 +4,7 @@
 //! represented by [`Encoding`].
 //! - [`Line 21`](Encoding::Line21) - Used in 608 captions.
 //! - [`Latin-1`](Encoding::Latin1) - ISO/IEC 8859-1.
-//! - [`Ucs2`](Encoding::Ucs2) - UCS-2 code points.
+//! - [`UCS-2`](Encoding::Ucs2) - UCS-2 code points.
 //! - [`UTF-8`](Encoding::Utf8)
 //!
 //! To represent a string in any one of the above encoding, use the following respectively.
@@ -338,12 +338,7 @@ impl From<&str> for Ucs2String {
 
 impl From<&Line21String> for String {
     fn from(value: &Line21String) -> String {
-        value
-            .as_vec()
-            .iter()
-            .map(|&x| line21_to_ucs2(x))
-            .map(ucs2_to_char)
-            .collect()
+        value.as_vec().iter().map(|&c| line21_to_utf8(c)).collect()
     }
 }
 
@@ -567,7 +562,7 @@ impl From<String> for EncodedString {
 }
 
 fn latin1_to_line21(_c: Latin1Char) -> Line21Char {
-    todo!()
+    unimplemented!()
 }
 
 fn line21_to_latin1(c: Line21Char) -> Latin1Char {
@@ -682,7 +677,114 @@ fn line21_to_latin1(c: Line21Char) -> Latin1Char {
 }
 
 fn line21_to_utf8(c: Line21Char) -> char {
-    0x80 as char
+    if c < 0x80 {
+        // Regular line-21 character set, mostly ASCII except these exceptions
+        match c {
+            0x2a => 0xe1 as char, // lowercase a, acute accent
+            0x5c => 0xe9 as char, // lowercase e, acute accent
+            0x5e => 0xed as char, // lowercase i, acute accent
+            0x5f => 0xf3 as char, // lowercase o, acute accent
+            0x60 => 0xfa as char, // lowercase u, acute accent
+            0x7b => 0xe7 as char, // lowercase c with cedilla
+            0x7c => 0xf7 as char, // division symbol
+            0x7d => 0xd1 as char, // uppercase N tilde
+            0x7e => 0xf1 as char, // lowercase n tilde
+            0x7f => '■',          // Solid block
+            _ => c as char,
+        }
+    } else {
+        match c {
+            // THIS BLOCK INCLUDES THE 16 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
+            // THAT COME FROM HI BYTE=0x11 AND LOW BETWEEN 0x30 AND 0x3F
+            0x80 => 0xae as char, // Registered symbol (R)
+            0x81 => 0xb0 as char, // degree sign
+            0x82 => 0xbd as char, // 1/2 symbol
+            0x83 => 0xbf as char, // Inverted (open) question mark
+            0x84 => '™',          // Trademark symbol (TM)
+            0x85 => 0xa2 as char, // Cents symbol
+            0x86 => 0xa3 as char, // Pounds sterling
+            0x87 => 0xb6 as char, // Music note - Not in latin 1, so we use 'pilcrow'
+            0x88 => 0xe0 as char, // lowercase a, grave accent
+            0x89 => 0x20 as char, // transparent space, we make it regular
+            0x8a => 0xe8 as char, // lowercase e, grave accent
+            0x8b => 0xe2 as char, // lowercase a, circumflex accent
+            0x8c => 0xea as char, // lowercase e, circumflex accent
+            0x8d => 0xee as char, // lowercase i, circumflex accent
+            0x8e => 0xf4 as char, // lowercase o, circumflex accent
+            0x8f => 0xfb as char, // lowercase u, circumflex accent
+            // THIS BLOCK INCLUDES THE 32 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
+            // THAT COME FROM HI BYTE=0x12 AND LOW BETWEEN 0x20 AND 0x3F
+            0x90 => 0xc1 as char, // capital letter A with acute
+            0x91 => 0xc9 as char, // capital letter E with acute
+            0x92 => 0xd3 as char, // capital letter O with acute
+            0x93 => 0xda as char, // capital letter U with acute
+            0x94 => 0xdc as char, // capital letter U with diaeresis
+            0x95 => 0xfc as char, // lowercase letter U with diaeresis
+            0x96 => 0x27 as char, // apostrophe
+            0x97 => 0xa1 as char, // inverted exclamation mark
+            0x98 => 0x2a as char, // asterisk
+            0x99 => 0x27 as char, // apostrophe (yes, duped). See CCADI source code.
+            0x9a => 0x2d as char, // em dash
+            0x9b => 0xa9 as char, // copyright sign
+            0x9c => '℠',          // Service Mark
+            0x9d => 0x2e as char, // Full stop (.)
+            0x9e => 0x22 as char, // Quotation mark
+            0x9f => 0x22 as char, // Quotation mark
+            0xa0 => 0xc0 as char, // uppercase A, grave accent
+            0xa1 => 0xc2 as char, // uppercase A, circumflex
+            0xa2 => 0xc7 as char, // uppercase C with cedilla
+            0xa3 => 0xc8 as char, // uppercase E, grave accent
+            0xa4 => 0xca as char, // uppercase E, circumflex
+            0xa5 => 0xcb as char, // capital letter E with diaeresis
+            0xa6 => 0xeb as char, // lowercase letter e with diaeresis
+            0xa7 => 0xce as char, // uppercase I, circumflex
+            0xa8 => 0xcf as char, // uppercase I, with diaeresis
+            0xa9 => 0xef as char, // lowercase i, with diaeresis
+            0xaa => 0xd4 as char, // uppercase O, circumflex
+            0xab => 0xd9 as char, // uppercase U, grave accent
+            0xac => 0xf9 as char, // lowercase u, grave accent
+            0xad => 0xdb as char, // uppercase U, circumflex
+            0xae => 0xab as char, // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+            0xaf => 0xbb as char, // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+            // THIS BLOCK INCLUDES THE 32 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
+            // THAT COME FROM HI BYTE=0x13 AND LOW BETWEEN 0x20 AND 0x3F
+            0xb0 => 0xc3 as char, // Uppercase A, tilde
+            0xb1 => 0xe3 as char, // Lowercase a, tilde
+            0xb2 => 0xcd as char, // Uppercase I, acute accent
+            0xb3 => 0xcc as char, // Uppercase I, grave accent
+            0xb4 => 0xec as char, // Lowercase i, grave accent
+            0xb5 => 0xd2 as char, // Uppercase O, grave accent
+            0xb6 => 0xf2 as char, // Lowercase o, grave accent
+            0xb7 => 0xd5 as char, // Uppercase O, tilde
+            0xb8 => 0xf5 as char, // Lowercase o, tilde
+            0xb9 => 0x7b as char, // Open curly brace
+            0xba => 0x7d as char, // Closing curly brace
+            0xbb => 0x5c as char, // Backslash
+            0xbc => 0x5e as char, // Caret
+            0xbd => 0x5f as char, // Underscore
+            0xbe => 0xa6 as char, // Pipe (broken bar)
+            0xbf => 0x7e as char, // Tilde
+            0xc0 => 0xc4 as char, // Uppercase A, umlaut
+            0xc1 => 0xe3 as char, // Lowercase A, umlaut
+            0xc2 => 0xd6 as char, // Uppercase O, umlaut
+            0xc3 => 0xf6 as char, // Lowercase o, umlaut
+            0xc4 => 0xdf as char, // Eszett (sharp S)
+            0xc5 => 0xa5 as char, // Yen symbol
+            0xc6 => 0xa4 as char, // Currency symbol
+            0xc7 => 0x7c as char, // Vertical bar
+            0xc8 => 0xc5 as char, // Uppercase A, ring
+            0xc9 => 0xe5 as char, // Lowercase A, ring
+            0xca => 0xd8 as char, // Uppercase O, slash
+            0xcb => 0xf8 as char, // Lowercase o, slash
+            0xcc => '⌜',          // Top left corner
+            0xcd => '⌝',          // Top right corner
+            0xce => '⌞',          // Bottom left corner
+            0xcf => '⌟',          // Bottom right corner
+            _ => UNAVAILABLE_CHAR as char, // For those that don't have representation
+                                   // I'll do it eventually, I promise
+                                   // This are weird chars anyway
+        }
+    }
 }
 
 fn line21_to_ucs2(c: Line21Char) -> Ucs2Char {
