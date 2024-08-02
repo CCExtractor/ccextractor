@@ -62,7 +62,7 @@ void net_send_cc() {
 - `lib_ccxr` crate -> **The Idiomatic Rust layer**
 
   - Path: `src/rust/lib_ccxr`
-  - This layer will be the code written as one is supposed to write in idiomatic Rust. It will have complete documentation and tests.
+  - This layer will contain the migrated idiomatic Rust. It will have complete documentation and tests.
 
 - `libccxr_exports` module -> **The C-like Rust layer**
 
