@@ -1,6 +1,11 @@
 1.0 (to be released)
 -----------------
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
+- New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)
+- New: Add time units module in lib_ccxr (#1623)
+- New: Add bits and levenshtein module in lib_ccxr (#1627)
+- New: Add constants module in lib_ccxr (#1624) 
+- New: Add log module in lib_ccxr (#1622)
 - New: Create `lib_ccxr` and `libccxr_exports` (#1621)
 - Fix: Unexpected behavior of get_write_interval (#1609)
 - Update: Bump rsmpeg to latest version for ffmpeg bindings (#1600)

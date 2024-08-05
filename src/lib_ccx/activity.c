@@ -4,7 +4,6 @@ relevant events. */
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 
-static int credits_shown = 0;
 unsigned long net_activity_gui = 0;
 
 /* Print current progress. For percentage, -1 -> streaming mode */
@@ -129,11 +128,7 @@ void activity_report_data_read(void)
 
 void activity_header(void)
 {
-	if (!credits_shown)
-	{
-		credits_shown = 1;
-		mprint("CCExtractor %s, Carlos Fernandez Sanz, Volker Quetschke.\n", VERSION);
-		mprint("Teletext portions taken from Petr Kutalek's telxcc\n");
-		mprint("--------------------------------------------------------------------------\n");
-	}
+	mprint("CCExtractor %s, Carlos Fernandez Sanz, Volker Quetschke.\n", VERSION);
+	mprint("Teletext portions taken from Petr Kutalek's telxcc\n");
+	mprint("--------------------------------------------------------------------------\n");
 }
