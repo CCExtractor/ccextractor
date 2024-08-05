@@ -32,5 +32,9 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: rustfmt
+      - name: Test main module
         run: cargo test
+        working-directory: ./src/rust
+      - name: Test lib_ccxr
+        run: cargo test
+        working-directory: ./src/rust/lib_ccxr
