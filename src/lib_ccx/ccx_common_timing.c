@@ -296,6 +296,34 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 }
 
 /**
+ * SCC Time formatting
+ */
+size_t print_scc_time(struct ccx_boundary_time time, char *buf)
+{
+	char *fmt = "%02u:%02u:%02u;%02u";
+	double frame;
+
+	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * 29.97 / 1000);
+
+	return (size_t)sprintf(buf + time.set, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
+}
+
+struct ccx_boundary_time get_time(LLONG time)
+{
+	if (time < 0) // Avoid loss of data warning with abs()
+		time = -time;
+
+	struct ccx_boundary_time result;
+	result.hh = (unsigned)(time / 1000 / 60 / 60);
+	result.mm = (unsigned)(time / 1000 / 60 - 60 * result.hh);
+	result.ss = (unsigned)(time / 1000 - 60 * (result.mm + 60 * result.hh));
+	result.time_in_ms = time;
+	result.set = (time < 0 ? 1 : 0);
+
+	return result;
+}
+
+/**
  * Fill buffer with a time string using specified format
  * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
  */

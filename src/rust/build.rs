@@ -26,6 +26,7 @@ fn main() {
         "lib_cc_decode",
         "cc_subtitle",
         "ccx_output_format",
+        "ccx_s_options",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -59,6 +60,8 @@ fn main() {
     }
 
     let bindings = builder
+        .derive_default(true)
+        .no_default("dtvcc_pen_attribs|dtvcc_pen_color|dtvcc_symbol")
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

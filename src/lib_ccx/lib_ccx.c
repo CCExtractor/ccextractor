@@ -93,12 +93,18 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 {
 	int ret = 0;
 
+	activity_header(); // Brag about writing it :-)
+
 	// Set logging functions for libraries
 	ccx_common_logging.debug_ftn = &dbg_print;
 	ccx_common_logging.debug_mask = opt->debug_mask;
 	ccx_common_logging.fatal_ftn = &fatal;
 	ccx_common_logging.log_ftn = &mprint;
 	ccx_common_logging.gui_ftn = &activity_library_process;
+
+#ifndef DISABLE_RUST
+	ccxr_init_basic_logger(opt);
+#endif
 
 	struct lib_ccx_ctx *ctx = malloc(sizeof(struct lib_ccx_ctx));
 	if (!ctx)
