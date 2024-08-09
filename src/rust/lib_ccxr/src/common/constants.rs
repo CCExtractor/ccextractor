@@ -314,7 +314,6 @@ pub enum FrameType {
     DFrame,
 }
 
-pub enum Codec {
 #[derive(PartialEq, Eq)]
 pub enum Codec {
     Any,
