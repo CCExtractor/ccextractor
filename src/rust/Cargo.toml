@@ -33,6 +33,14 @@ bindgen = "0.64.0"
 pkg-config = "0.3.30"
 
 [features]
+default = [
+  "enable_sharing",
+  "wtv_debug",
+  "with_libcurl",
+]
+enable_sharing = []
+wtv_debug = []
+with_libcurl = []
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
 
 [profile.release-with-debug]
