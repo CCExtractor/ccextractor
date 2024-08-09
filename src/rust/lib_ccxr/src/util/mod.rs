@@ -4,7 +4,6 @@ pub mod bits;
 pub mod encoding;
 pub mod levenshtein;
 pub mod log;
-pub mod time;
 
 use std::os::raw::c_char;
 
