@@ -4,7 +4,7 @@ use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 
 use lib_ccxr::time::units::*;
-use lib_ccxr::util::{time::*, write_string_into_pointer};
+use lib_ccxr::util::write_string_into_pointer;
 
 /// Rust equivalent for `timestamp_to_srttime` function in C. Uses C-native types as input and
 /// output.
