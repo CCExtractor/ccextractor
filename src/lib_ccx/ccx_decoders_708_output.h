@@ -8,11 +8,11 @@
 void dtvcc_write_done(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
 
 void dtvcc_writer_init(dtvcc_writer_ctx *writer,
-						   char *base_filename,
-						   int program_number,
-						   int service_number,
-						   enum ccx_output_format write_format,
-						   struct encoder_cfg *cfg);
+		       char *base_filename,
+		       int program_number,
+		       int service_number,
+		       enum ccx_output_format write_format,
+		       struct encoder_cfg *cfg);
 void dtvcc_writer_cleanup(dtvcc_writer_ctx *writer);
 void dtvcc_writer_output(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 
@@ -30,6 +30,9 @@ void dtvcc_write_transcript(dtvcc_writer_ctx *writer, dtvcc_service_decoder *dec
 void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
 void dtvcc_write_sami(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
+void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
+void add_needed_scc_labels(char *buf, int total_subtitle_count, int current_subtitle_count);
+void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 
 #endif /*_CCX_DECODERS_708_OUTPUT_H_*/

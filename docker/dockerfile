@@ -1,0 +1,48 @@
+FROM alpine:latest as base
+
+FROM base as builder
+
+RUN apk add --no-cache --update git curl gcc cmake glew glfw \
+  tesseract-ocr-dev leptonica-dev clang-dev llvm-dev make pkgconfig \
+  zlib-dev libpng-dev libjpeg-turbo-dev openssl-dev freetype-dev libxml2-dev
+
+RUN cd && git clone https://github.com/gpac/gpac 
+WORKDIR root/gpac/
+RUN ./configure && make && make install-lib  && cd && rm -rf /root/gpac
+
+WORKDIR /root
+RUN git clone https://github.com/CCExtractor/ccextractor.git 
+RUN apk add bash cargo
+RUN export LIB_CLANG_PATH=$(find / -name 'libclang*.so*' 2>/dev/null | grep -v 'No such file' | head -n 1 | xargs dirname)
+RUN cd /root/ccextractor/linux && ./pre-build.sh && ./build
+
+RUN cp /root/ccextractor/linux/ccextractor /ccextractor && rm -rf ~/ccextractor
+
+FROM base as final
+
+COPY --from=builder /lib/ld-musl-x86_64.so.1 /lib/
+COPY --from=builder /usr/lib/libtesseract.so.5 /usr/lib/
+COPY --from=builder /usr/lib/libleptonica.so.6 /usr/lib/
+COPY --from=builder /usr/local/lib/libgpac.so.12 /usr/local/lib/
+COPY --from=builder /usr/lib/libstdc++.so.6 /usr/lib/
+COPY --from=builder /usr/lib/libgcc_s.so.1 /usr/lib/
+COPY --from=builder /usr/lib/libgomp.so.1 /usr/lib/
+COPY --from=builder /usr/lib/libpng16.so.16 /usr/lib/
+COPY --from=builder /usr/lib/libjpeg.so.8 /usr/lib/
+COPY --from=builder /usr/lib/libgif.so.7 /usr/lib/
+COPY --from=builder /usr/lib/libtiff.so.6 /usr/lib/
+COPY --from=builder /usr/lib/libwebp.so.7 /usr/lib/
+COPY --from=builder /usr/lib/libwebpmux.so.3 /usr/lib/
+COPY --from=builder /lib/libz.so.1 /lib/
+COPY --from=builder /lib/libssl.so.3 /lib/
+COPY --from=builder /lib/libcrypto.so.3 /lib/
+COPY --from=builder /usr/lib/liblzma.so.5 /usr/lib/
+COPY --from=builder /usr/lib/libzstd.so.1 /usr/lib/
+COPY --from=builder /usr/lib/libsharpyuv.so.0 /usr/lib/
+
+COPY --from=builder /ccextractor /
+
+ENTRYPOINT [ "/ccextractor" ]
+
+CMD [ "/ccextractor" ]
+

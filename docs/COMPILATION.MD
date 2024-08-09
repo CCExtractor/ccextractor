@@ -10,6 +10,9 @@ Clone the latest repository from Github
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
+## Docker
+You can now use docker image to build latest source of CCExtractor without any environmental hustle. Follow these [instructions](https://github.com/CCExtractor/ccextractor/tree/master/docker/README.md) for building docker image & usage of it.
+
 ## Linux
 
 1. Make sure all the dependencies are met.
@@ -17,21 +20,23 @@ git clone https://github.com/CCExtractor/ccextractor.git
 Debian:
 
 ```bash
-sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
+sudo apt-get install -y libgpac-dev libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
-RHEL:
+RHEL/Fedora:
 
 ```bash
-yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang gpac-devel
 ```
 
 Arch:
 ```bash
-sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
+
+**Note:** On Ubuntu Version 23.10 (Mantic) and later, `libgpac-dev` isn't available, you should build gpac from source by following the easy build instructions [here](https://github.com/gpac/gpac/wiki/GPAC-Build-Guide-for-Linux)
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
@@ -55,7 +60,7 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./build -debug            # same as ./build_debug
+./build -debug            # same as ./builddebug
 
 # compile with hardsubx
 [Optional] You need to set these environment variables correctly according to your machine,

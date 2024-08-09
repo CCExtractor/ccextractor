@@ -23,6 +23,134 @@ pub enum OutputFormat {
     Scc,
     Ccd,
 }
+//! Provides common constant types throughout the codebase.
+//! Rust equivalent for `ccx_common_constants.c` file in C.
+//!
+//! # Conversion Guide
+//!
+//! | From                           | To                                         |
+//! |--------------------------------|--------------------------------------------|
+//! | `ccx_avc_nal_types`            | [`AvcNalType`]                             |
+//! | `ccx_stream_type`              | [`StreamType`]                             |
+//! | `ccx_mpeg_descriptor`          | [`MpegDescriptor`]                         |
+//! | `ccx_datasource`               | [`DataSource`]                             |
+//! | `ccx_output_format`            | [`OutputFormat`]                           |
+//! | `ccx_stream_mode_enum`         | [`StreamMode`]                             |
+//! | `ccx_bufferdata_type`          | [`BufferdataType`]                         |
+//! | `ccx_frame_type`               | [`FrameType`]                              |
+//! | `ccx_code_type`                | [`Codec`]                                  |
+//! | `cdp_section_type`             | [`CdpSectionType`]                         |
+//! | `cc_types[4]`                  | [`CCTypes`]                                |
+//! | `CCX_TXT_*` macros             | [`CcxTxt`]                                 |
+//! | `language[NB_LANGUAGE]`        | [`Language`]                               |
+//! | `DEF_VAL_*` macros             | [`CreditTiming`]                           |
+//! | `IS_FEASIBLE` macro            | [`Codec::is_feasible`]                     |
+//! | `IS_VALID_TELETEXT_DESC` macro | [`MpegDescriptor::is_valid_teletext_desc`] |
+
+use std::ffi::OsStr;
+
+// RCWT header (11 bytes):
+// byte(s)   value   description (All values below are hex numbers, not
+//                  actual numbers or values
+// 0-2       CCCCED  magic number, for Closed Caption CC Extractor Data
+// 3         CC      Creating program.  Legal values: CC = CC Extractor
+// 4-5       0050    Program version number
+// 6-7       0001    File format version
+// 8-10      000000  Padding, required  :-)
+pub static mut RCWT_HEADER: [u8; 11] = [0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0];
+
+pub const BROADCAST_HEADER: [u8; 4] = [0xff, 0xff, 0xff, 0xff];
+pub const LITTLE_ENDIAN_BOM: [u8; 2] = [0xff, 0xfe];
+pub const UTF8_BOM: [u8; 3] = [0xef, 0xbb, 0xbf];
+pub const DVD_HEADER: [u8; 8] = [0x00, 0x00, 0x01, 0xb2, 0x43, 0x43, 0x01, 0xf8];
+pub const LC1: [u8; 1] = [0x8a];
+pub const LC2: [u8; 1] = [0x8f];
+pub const LC3: [u8; 2] = [0x16, 0xfe];
+pub const LC4: [u8; 2] = [0x1e, 0xfe];
+pub const LC5: [u8; 1] = [0xff];
+pub const LC6: [u8; 1] = [0xfe];
+
+pub const FRAMERATES_VALUES: [f64; 16] = [
+    0.0,
+    24000.0 / 1001.0, // 23.976
+    24.0,
+    25.0,
+    30000.0 / 1001.0, // 29.97
+    30.0,
+    50.0,
+    60000.0 / 1001.0, // 59.94
+    60.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+];
+
+pub const FRAMERATES_TYPES: [&str; 16] = [
+    "00 - forbidden",
+    "01 - 23.976",
+    "02 - 24",
+    "03 - 25",
+    "04 - 29.97",
+    "05 - 30",
+    "06 - 50",
+    "07 - 59.94",
+    "08 - 60",
+    "09 - reserved",
+    "10 - reserved",
+    "11 - reserved",
+    "12 - reserved",
+    "13 - reserved",
+    "14 - reserved",
+    "15 - reserved",
+];
+
+pub const ASPECT_RATIO_TYPES: [&str; 16] = [
+    "00 - forbidden",
+    "01 - 1:1",
+    "02 - 4:3",
+    "03 - 16:9",
+    "04 - 2.21:1",
+    "05 - reserved",
+    "06 - reserved",
+    "07 - reserved",
+    "08 - reserved",
+    "09 - reserved",
+    "10 - reserved",
+    "11 - reserved",
+    "12 - reserved",
+    "13 - reserved",
+    "14 - reserved",
+    "15 - reserved",
+];
+
+pub const PICT_TYPES: [&str; 8] = [
+    "00 - illegal (0)",
+    "01 - I",
+    "02 - P",
+    "03 - B",
+    "04 - illegal (D)",
+    "05 - illegal (5)",
+    "06 - illegal (6)",
+    "07 - illegal (7)",
+];
+
+pub const SLICE_TYPES: [&str; 10] = [
+    "0 - P", "1 - B", "2 - I", "3 - SP", "4 - SI", "5 - P", "6 - B", "7 - I", "8 - SP", "9 - SI",
+];
+
+pub const ONEPASS: usize = 120; // Bytes we can always look ahead without going out of limits
+pub const BUFSIZE: usize = 2048 * 1024 + ONEPASS; // 2 Mb plus the safety pass
+pub const MAX_CLOSED_CAPTION_DATA_PER_PICTURE: usize = 32;
+pub const EIA_708_BUFFER_LENGTH: usize = 2048; // TODO: Find out what the real limit is
+pub const TS_PACKET_PAYLOAD_LENGTH: usize = 184; // From specs
+pub const SUBLINESIZE: usize = 2048; // Max. length of a .srt line - TODO: Get rid of this
+pub const STARTBYTESLENGTH: usize = 1024 * 1024;
+pub const UTF8_MAX_BYTES: usize = 6;
+pub const XMLRPC_CHUNK_SIZE: usize = 64 * 1024; // 64 Kb per chunk, to avoid too many realloc()
 
 // AVC NAL types
 pub enum AvcNalType {
@@ -104,6 +232,7 @@ pub enum MpegDescriptor {
     /* User defined */
     CaptionService = 0x86,
     DataComp = 0xfd,
+    DataComp = 0xfd, // Consider to change DESC to DSC
 }
 
 pub enum DataSource {
@@ -111,6 +240,28 @@ pub enum DataSource {
     Stdin,
     Network,
     Tcp,
+}
+
+/// An enum of all the available formats for the subtitle output.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum OutputFormat {
+    Raw,
+    Srt,
+    Sami,
+    Transcript,
+    Rcwt,
+    Null,
+    SmpteTt,
+    SpuPng,
+    DvdRaw, // See -d at http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
+    WebVtt,
+    SimpleXml,
+    G608,
+    Curl,
+    Ssa,
+    Mcc,
+    Scc,
+    Ccd,
 }
 
 pub enum StreamMode {
@@ -124,6 +275,11 @@ pub enum StreamMode {
     Mp4 = 7,  // mp4, iso-
     #[cfg(feature = "wtv_debug")]
     HexDump = 8, // hexadecimal dump generated by wtvccdump
+    Rcwt = 5, // Raw Captions With Time, not used yet.
+    Myth = 6, // Use the myth loop
+    Mp4 = 7,  // MP4, ISO-
+    #[cfg(feature = "wtv_debug")]
+    HexDump = 8, // Hexadecimal dump generated by wtvccdump
     Wtv = 9,
     #[cfg(feature = "enable_ffmpeg")]
     Ffmpeg = 10,
@@ -144,6 +300,7 @@ pub enum BufferdataType {
     DvbSubtitle,
     IsdbSubtitle,
     /* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
+    /* Buffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
     RawType,
     DvdSubtitle,
 }
@@ -158,6 +315,9 @@ pub enum FrameType {
 }
 
 pub enum Codec {
+#[derive(PartialEq, Eq)]
+pub enum Codec {
+    Any,
     Teletext,
     Dvb,
     IsdbCc,
@@ -179,6 +339,19 @@ pub enum CdpSectionType {
     Data = 0x72,
     SvcInfo = 0x73,
     Footer = 0x74,
+}
+
+pub enum CCTypes {
+    NtscCCF1,
+    NtscCCF2,
+    DtvccPacketData,
+    DtvccPacketStart,
+}
+
+pub enum CcxTxt {
+    Forbidden = 0, // Ignore teletext packets
+    AutoNotYetFound = 1,
+    InUse = 2, // Positive auto-detected, or forced, etc
 }
 
 pub enum Language {
@@ -283,6 +456,15 @@ pub enum Language {
     Yid,
 }
 
+pub enum CreditTiming {
+    StartCreditsNotBefore,
+    StartCreditsNotAfter,
+    StartCreditsForAtLeast,
+    StartCreditsForAtMost,
+    EndCreditsForAtLeast,
+    EndCreditsForAtMost,
+}
+
 impl OutputFormat {
     /// Returns the file extension for the output format if it is a file based format.
     pub fn file_extension(&self) -> Option<&OsStr> {
@@ -304,6 +486,64 @@ impl OutputFormat {
             OutputFormat::Mcc => Some(OsStr::new(".mcc")),
             OutputFormat::Scc => Some(OsStr::new(".scc")),
             OutputFormat::Ccd => Some(OsStr::new(".ccd")),
+        }
+    }
+}
+
+impl Codec {
+    /// Determines whether a specific subtitle codec type should be parsed.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_selected` - The codec selected by the user to be searched in all elementary streams.
+    /// * `user_not_selected` - The codec selected by the user not to be parsed.
+    /// * `feasible` - The codec being tested for feasibility to parse.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the codec should be parsed, `false` otherwise.
+    ///
+    /// # Description
+    ///
+    /// This function is used when you want to find out whether you should parse a specific
+    /// subtitle codec type or not. We ignore the stream if it's not selected, as setting
+    /// a stream as both selected and not selected doesn't make sense.
+    pub fn is_feasible(user_selected: &Codec, user_not_selected: &Codec, feasible: &Codec) -> bool {
+        (*user_selected == Codec::Any && user_not_selected != feasible) || user_selected == feasible
+    }
+}
+
+impl MpegDescriptor {
+    pub fn is_valid_teletext_desc(&self) -> bool {
+        matches!(
+            self,
+            MpegDescriptor::VbiDataDescriptor
+                | MpegDescriptor::VbiTeletextDescriptor
+                | MpegDescriptor::TeletextDescriptor
+        )
+    }
+}
+
+impl CCTypes {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            CCTypes::NtscCCF1 => "NTSC line 21 field 1 closed captions",
+            CCTypes::NtscCCF2 => "NTSC line 21 field 2 closed captions",
+            CCTypes::DtvccPacketData => "DTVCC Channel Packet Data",
+            CCTypes::DtvccPacketStart => "DTVCC Channel Packet Start",
+        }
+    }
+}
+
+impl CreditTiming {
+    pub fn value(&self) -> &str {
+        match self {
+            CreditTiming::StartCreditsNotBefore => "0",
+            CreditTiming::StartCreditsNotAfter => "5:00",
+            CreditTiming::StartCreditsForAtLeast => "2",
+            CreditTiming::StartCreditsForAtMost => "5",
+            CreditTiming::EndCreditsForAtLeast => "2",
+            CreditTiming::EndCreditsForAtMost => "5",
         }
     }
 }

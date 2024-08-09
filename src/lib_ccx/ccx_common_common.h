@@ -43,6 +43,11 @@
 int cc608_parity(unsigned int byte);
 int fdprintf(int fd, const char *fmt, ...);
 void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
+
+#ifndef DISABLE_RUST
+extern void ccxr_millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,unsigned *seconds, unsigned *ms);
+#endif // !DISABLE_RUST
+
 void freep(void *arg);
 void dbg_print(LLONG mask, const char *fmt, ...);
 unsigned char *debug_608_to_ASC(unsigned char *ccdata, int channel);

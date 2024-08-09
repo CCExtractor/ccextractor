@@ -26,6 +26,16 @@ struct ccx_rational
 extern int temp_debug;
 volatile extern sig_atomic_t change_filename_requested;
 
+#ifndef DISABLE_RUST
+extern int ccxr_verify_crc32(uint8_t *buf, int len);
+extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
+extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
+extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
+extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
+extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
+#endif
+
 int levenshtein_dist_char (const char *s1, const char *s2, unsigned s1len, unsigned s2len);
 void init_boundary_time (struct ccx_boundary_time *bt);
 void print_error (int mode, const char *fmt, ...);

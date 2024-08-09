@@ -23,6 +23,7 @@
 		#define STDOUT_FILENO 1
 		#define STDERR_FILENO 2
 		#include "inttypes.h"
+		#undef UINT64_MAX
 		#define UINT64_MAX   _UI64_MAX
 		typedef int socklen_t;
 		typedef int ssize_t;

@@ -29,6 +29,7 @@
 //! | `mprint`, `ccx_common_logging.log_ftn`                                                                                                   | [`info!`]                   |
 //! | `dbg_print`, `ccx_common_logging.debug_ftn`                                                                                              | [`debug!`]                  |
 //! | `activity_library_process`, `ccx_common_logging.gui_ftn`                                                                                 | [`send_gui`]                |
+//! | `ccx_common_logging_gui`                                                                                                                 | [`GuiXdsMessage`]           |
 //! | `dump`                                                                                                                                   | [`hex_dump`]                |
 //! | `dump`                                                                                                                                   | [`hex_dump_with_start_idx`] |
 
@@ -55,38 +56,38 @@ bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct DebugMessageFlag: u16 {
         /// Show information related to parsing the container
-        const PARSE          = 0b0000000000000001;
+        const PARSE          = 0x1;
         /// Show video stream related information
-        const VIDEO_STREAM   = 0b0000000000000010;
+        const VIDEO_STREAM   = 0x2;
         /// Show GOP and PTS timing information
-        const TIME           = 0b0000000000000100;
+        const TIME           = 0x4;
         /// Show lots of debugging output
-        const VERBOSE        = 0b0000000000001000;
+        const VERBOSE        = 0x8;
         /// Show CC-608 decoder debug
-        const DECODER_608    = 0b0000000000010000;
+        const DECODER_608    = 0x10;
         /// Show CC-708 decoder debug
-        const DECODER_708    = 0b0000000000100000;
+        const DECODER_708    = 0x20;
         /// Show XDS decoder debug
-        const DECODER_XDS    = 0b0000000001000000;
+        const DECODER_XDS    = 0x40;
         /// Show Caption blocks with FTS timing
-        const CB_RAW         = 0b0000000010000000;
+        const CB_RAW         = 0x80;
         /// Generic, always displayed even if no debug is selected
-        const GENERIC_NOTICE = 0b0000000100000000;
+        const GENERIC_NOTICE = 0x100;
         /// Show teletext debug
-        const TELETEXT       = 0b0000001000000000;
+        const TELETEXT       = 0x200;
         /// Show Program Allocation Table dump
-        const PAT            = 0b0000010000000000;
+        const PAT            = 0x400;
         /// Show Program Map Table dump
-        const PMT            = 0b0000100000000000;
+        const PMT            = 0x800;
         /// Show Levenshtein distance calculations
-        const LEVENSHTEIN    = 0b0001000000000000;
+        const LEVENSHTEIN    = 0x1000;
         /// Show DVB debug
-        const DVB            = 0b0010000000000000;
+        const DVB            = 0x2000;
         /// Dump defective TS packets
-        const DUMP_DEF       = 0b0100000000000000;
+        const DUMP_DEF       = 0x4000;
         /// Extracted captions sharing service
         #[cfg(feature = "enable_sharing")]
-        const SHARE          = 0b1000000000000000;
+        const SHARE          = 0x8000;
     }
 }
 
@@ -176,7 +177,7 @@ impl DebugMessageMask {
     }
 
     /// Check if the current mode is set to Debug Mode.
-    pub fn debug_mode(&self) -> bool {
+    pub fn is_debug_mode(&self) -> bool {
         self.debug_mode
     }
 
@@ -252,9 +253,9 @@ impl<'a> CCExtractorLogger {
 
     /// Check if the current mode is set to Debug Mode.
     ///
-    /// Similar to [`DebugMessageMask::debug_mode`].
-    pub fn debug_mode(&self) -> bool {
-        self.debug_mask.debug_mode()
+    /// Similar to [`DebugMessageMask::is_debug_mode`].
+    pub fn is_debug_mode(&self) -> bool {
+        self.debug_mask.is_debug_mode()
     }
 
     /// Returns the currently set target for logging messages.
@@ -280,7 +281,8 @@ impl<'a> CCExtractorLogger {
     /// Used for logging errors dangerous enough to crash the program instantly.
     pub fn log_fatal(&self, exit_cause: ExitCause, args: &Arguments<'a>) -> ! {
         self.log_error(args);
-        println!(); // TODO: print end message
+        info!("Issues? Open a ticket here\n");
+        info!("https://github.com/CCExtractor/ccextractor/issues\n");
         std::process::exit(exit_cause.exit_code())
     }
 
@@ -301,8 +303,11 @@ impl<'a> CCExtractorLogger {
     ///
     /// Used for logging extra information about the execution of the program.
     pub fn log_info(&self, args: &Arguments<'a>) {
-        // TODO: call activity_header
-        self.print(&format_args!("{}", args));
+        if self.target == OutputTarget::Quiet {
+            return;
+        }
+
+        self.print(args);
     }
 
     /// Log a debug message. Use [`debug!`] instead.
@@ -310,15 +315,36 @@ impl<'a> CCExtractorLogger {
     /// Used for logging debug messages throughout the program.
     pub fn log_debug(&self, message_type: DebugMessageFlag, args: &Arguments<'a>) {
         if self.debug_mask.mask().intersects(message_type) {
-            self.print(&format_args!("{}", args));
+            self.print(args);
         }
     }
 
     /// Send a message to GUI. Use [`send_gui`] instead.
     ///
     /// Used for sending information related to XDS to the GUI.
-    pub fn send_gui(&self, _message_type: GuiXdsMessage) {
-        todo!()
+    pub fn send_gui(&self, message_type: GuiXdsMessage) {
+        if self.gui_mode {
+            match message_type {
+                GuiXdsMessage::ProgramName(program_name) => {
+                    eprintln!("###XDSPROGRAMNAME#{}", program_name)
+                }
+                GuiXdsMessage::ProgramIdNr {
+                    minute,
+                    hour,
+                    date,
+                    month,
+                } => eprintln!(
+                    "###XDSPROGRAMIDENTIFICATIONNUMBER#{}#{}#{}#{}",
+                    minute, hour, date, month
+                ),
+                GuiXdsMessage::ProgramDescription { line_num, desc } => {
+                    eprintln!("###XDSPROGRAMDESC#{}#{}", line_num, desc)
+                }
+                GuiXdsMessage::CallLetters(current_letters) => {
+                    eprintln!("###XDSNETWORKCALLLETTERS#{}", current_letters)
+                }
+            }
+        }
     }
 
     /// Log a hex dump which is helpful for debugging purposes.
@@ -337,34 +363,35 @@ impl<'a> CCExtractorLogger {
         clear_high_bit: bool,
         start_idx: usize,
     ) {
-        if self.debug_mask.mask().intersects(message_type) {
-            let chunked_data = data.chunks(16);
+        if !self.debug_mask.mask().intersects(message_type) {
+            return;
+        }
+        let chunked_data = data.chunks(16);
 
-            for (id, chunk) in chunked_data.enumerate() {
-                self.print(&format_args!("{:05} | ", id * 16 + start_idx));
-                for x in chunk {
-                    self.print(&format_args!("{:02X} ", x));
-                }
-
-                for _ in 0..(16 - chunk.len()) {
-                    self.print(&format_args!("   "));
-                }
-
-                self.print(&format_args!(" | "));
-
-                for x in chunk {
-                    let c = if x >= &b' ' {
-                        // 0x7F < remove high bit, convenient for visual CC inspection
-                        x & if clear_high_bit { 0x7F } else { 0xFF }
-                    } else {
-                        b' '
-                    };
-
-                    self.print(&format_args!("{}", c as char));
-                }
-
-                self.print(&format_args!("\n"));
+        for (id, chunk) in chunked_data.enumerate() {
+            self.print(&format_args!("{:05} | ", id * 16 + start_idx));
+            for x in chunk {
+                self.print(&format_args!("{:02X} ", x));
             }
+
+            for _ in 0..(16 - chunk.len()) {
+                self.print(&format_args!("   "));
+            }
+
+            self.print(&format_args!(" | "));
+
+            for x in chunk {
+                let c = if x >= &b' ' {
+                    // 0x7F < remove high bit, convenient for visual CC inspection
+                    x & if clear_high_bit { 0x7F } else { 0xFF }
+                } else {
+                    b' '
+                };
+
+                self.print(&format_args!("{}", c as char));
+            }
+
+            self.print(&format_args!("\n"));
         }
     }
 }
@@ -460,7 +487,7 @@ macro_rules! error {
 /// # Examples
 /// ```no_run
 /// # use lib_ccxr::util::log::*;
-/// info!("Processing the header section");
+/// info!("Processing the header section\n");
 /// ```
 #[macro_export]
 macro_rules! info {
