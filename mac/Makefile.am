@@ -249,6 +249,7 @@ GPAC_CPPFLAGS = $(shell pkg-config --cflags gpac)
 
 ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 ccextractor_CPPFLAGS += $(GPAC_CPPFLAGS)
+ccextractor_CPPFLAGS += $(FFMPEG_CPPFLAGS)
 
 ccextractor_LDADD=-lm -lpthread -ldl
 
@@ -271,7 +272,7 @@ if HARDSUBX_IS_ENABLED
 ccextractor_CFLAGS += -DENABLE_HARDSUBX
 ccextractor_CPPFLAGS+= ${libavcodec_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
-ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
+ccextractor_CPPFLAGS+= ${libavutil_CFLAGS}
 ccextractor_CPPFLAGS+= ${libswscale_CFLAGS}
 AV_LIB = ${libavcodec_LIBS}
 AV_LIB += ${libavformat_LIBS}

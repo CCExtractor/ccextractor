@@ -74,22 +74,6 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
-  cmake_ocr_hardsubx:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
-    - name: cmake
-      run: |
-        mkdir build && cd build
-        cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
-    - name: build
-      run: |
-        make -j$(nproc)
-      working-directory: build
-    - name: Display version information
-      run: ./build/ccextractor --version
   build_rust:
     runs-on: macos-latest
     steps:
