@@ -6,10 +6,6 @@
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_isdb.h"
 
-#ifndef DISABLE_RUST
-extern void ccxr_init_basic_logger();
-#endif
-
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
     struct ccx_s_options *opt)
