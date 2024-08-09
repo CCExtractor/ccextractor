@@ -213,7 +213,7 @@ impl CcxOptions {
     fn set_output_format_type(&mut self, out_format: OutFormat) {
         match out_format {
             #[cfg(feature = "with_libcurl")]
-            OutFormat::Curl => options.write_format = CcxOutputFormat::Curl,
+            OutFormat::Curl => self.write_format = CcxOutputFormat::Curl,
             OutFormat::Ass => self.write_format = CcxOutputFormat::Ssa,
             OutFormat::Ccd => self.write_format = CcxOutputFormat::Ccd,
             OutFormat::Scc => self.write_format = CcxOutputFormat::Scc,
@@ -1323,7 +1323,7 @@ impl CcxOptions {
 
         #[cfg(feature = "with_libcurl")]
         if let Some(ref curlposturl) = args.curlposturl {
-            self.curlposturl = curlposturl.to_string();
+            self.curlposturl = Some(curlposturl.to_string());
         }
 
         #[cfg(feature = "enable_sharing")]
@@ -1333,17 +1333,17 @@ impl CcxOptions {
             }
 
             if let Some(ref sharingurl) = args.sharing_url {
-                self.sharing_url = sharingurl.to_string();
+                self.sharing_url = Some(sharingurl.to_string());
             }
 
             if let Some(ref translate) = args.translate {
                 self.translate_enabled = true;
                 self.sharing_enabled = true;
-                self.translate_langs = translate.to_string();
+                self.translate_langs = Some(translate.to_string());
             }
 
             if let Some(ref translateauth) = args.translate_auth {
-                self.translate_key = translateauth.to_string();
+                self.translate_key = Some(translateauth.to_string());
             }
         }
 
@@ -1486,11 +1486,13 @@ impl CcxOptions {
         // Check WITH_LIBCURL
         #[cfg(feature = "with_libcurl")]
         {
-            if self.write_format == CCX_OF_CURL && self.curlposturl.is_none() {
-                Err("You must pass a URL (-curlposturl) if output format is curl\n")
+            if self.write_format == CcxOutputFormat::Curl && self.curlposturl.is_none() {
+                println!("You must pass a URL (--curlposturl) if output format is curl");
+                std::process::exit(ExitCode::MalformedParameter as i32);
             }
-            if self.write_format != CCX_OF_CURL && self.curlposturl.is_some() {
-                Err("-curlposturl requires that the format is curl\n")
+            if self.write_format != CcxOutputFormat::Curl && self.curlposturl.is_some() {
+                println!("--curlposturl requires that the format is curl");
+                std::process::exit(ExitCode::MalformedParameter as i32);
             }
         }
 

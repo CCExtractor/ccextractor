@@ -856,7 +856,7 @@ pub struct Args {
     pub sharing_url: Option<String>,
     #[cfg(feature = "enable_sharing")]
     /// Enables real-time sharing of extracted captions
-    #[arg(long, value="languages", verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
+    #[arg(long, value_name="languages", verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
     pub translate: Option<String>,
     #[cfg(feature = "enable_sharing")]
     /// Set Translation Service authorization data to make translation possible
@@ -957,6 +957,9 @@ pub enum InFormat {
     Mkv,
     /// Material Exchange Format (MXF).
     Mxf,
+    #[cfg(feature = "wtv_debug")]
+    // For WTV Debug mode only
+    Hex,
 }
 
 #[derive(Display, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
