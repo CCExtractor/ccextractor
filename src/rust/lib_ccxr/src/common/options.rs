@@ -6,9 +6,9 @@ use crate::common::{
     DataSource, Language, OutputFormat, SelectCodec, StreamMode, StreamType, DTVCC_MAX_SERVICES,
 };
 use crate::hardsubx::{ColorHue, OcrMode};
+use crate::time::units::{Timestamp, TimestampFormat};
 use crate::util::encoding::Encoding;
 use crate::util::log::OutputTarget;
-use crate::util::time::{Timestamp, TimestampFormat};
 
 pub enum DtvccServiceCharset {
     Same(String),
