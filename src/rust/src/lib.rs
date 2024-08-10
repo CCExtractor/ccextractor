@@ -46,11 +46,15 @@ static mut cb_708: c_int = 0;
 static mut cb_field1: c_int = 0;
 #[cfg(test)]
 static mut cb_field2: c_int = 0;
+
 #[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+}
+
+extern "C" {
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
 }
