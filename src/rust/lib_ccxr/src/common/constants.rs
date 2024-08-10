@@ -269,7 +269,6 @@ pub enum BufferdataType {
     PrivateMpeg2Cc,
     DvbSubtitle,
     IsdbSubtitle,
-    /* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
     /* Buffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
     RawType,
     DvdSubtitle,
