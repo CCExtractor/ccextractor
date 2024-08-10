@@ -1,3 +1,4 @@
+extern crate pkg_config;
 use std::env;
 use std::path::PathBuf;
 
@@ -9,6 +10,8 @@ fn main() {
         "get_fts",
         "printdata",
         "writercwtdata",
+        "version",
+        "set_binary_mode",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -29,6 +32,16 @@ fn main() {
         "ccx_boundary_time",
         "gop_time_code",
         "ccx_s_options",
+        "ccx_s_teletext_config",
+        "ccx_output_format",
+        "ccx_boundary_time",
+        "ccx_output_date_format",
+        "ccx_encoding_type",
+        "ccx_output_date_format",
+        "ccx_decoder_608_settings",
+        "ccx_decoder_608_report",
+        "ccx_output_format",
+        "uint8_t",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]

@@ -14,11 +14,11 @@ url = "2.5.2"
 
 [features]
 default = [
-    "enable_sharing",
-    "wtv_debug",
-    "enable_ffmpeg",
-    "debug",
-    "with_libcurl",
+  "enable_sharing",
+  "wtv_debug",
+  "enable_ffmpeg",
+  "debug",
+  "with_libcurl",
 ]
 enable_sharing = []
 wtv_debug = []
