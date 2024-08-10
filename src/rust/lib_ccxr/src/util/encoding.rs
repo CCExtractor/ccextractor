@@ -647,8 +647,7 @@ fn latin1_to_line21(c: Latin1Char) -> Line21Char {
         0xe5 => 0xc9, // Lowercase A, ring
         0xd8 => 0xca, // Uppercase O, slash
         0xf8 => 0xcb, // Lowercase o, slash
-        0x00..=0x29 | 0x2b..=0x5b | 0x5d => c as Line21Char,
-        0x5c..=0x7a => c as Line21Char,
+        0x00..=0x29 | 0x2b..=0x5b | 0x5d..=0x7a => c as Line21Char,
         _ => UNAVAILABLE_CHAR,
     }
 }

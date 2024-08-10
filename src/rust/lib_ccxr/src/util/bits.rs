@@ -217,7 +217,7 @@ pub fn get_crc32_byte(value: u8) -> u32 {
 pub fn verify_crc32(buf: &[u8]) -> bool {
     let mut crc: i32 = -1;
     for &byte in buf {
-        let expr = (crc >> 24) as u8 ^ (byte & 0xff);
+        let expr = (crc >> 24) as u8 ^ byte;
         crc = (crc << 8) ^ get_crc32_byte(expr) as i32;
     }
     crc == 0
