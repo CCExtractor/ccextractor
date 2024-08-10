@@ -563,7 +563,7 @@ mod test {
 
     #[test]
     fn test_update_time_show() {
-        set_temp_cb_values();
+        set_test_cb_values();
         let mut timing = get_temp_timing_ctx();
         let mut window = dtvcc_window::default();
         window.update_time_show(&mut timing);
@@ -573,7 +573,7 @@ mod test {
 
     #[test]
     fn test_update_time_end() {
-        set_temp_cb_values();
+        set_test_cb_values();
         let mut timing = get_temp_timing_ctx();
         let mut window = dtvcc_window::default();
         window.update_time_hide(&mut timing);
@@ -737,7 +737,7 @@ mod test {
         }
     }
 
-    fn set_temp_cb_values() {
+    fn set_test_cb_values() {
         unsafe {
             cb_708 = 10;
             cb_field1 = 20;
