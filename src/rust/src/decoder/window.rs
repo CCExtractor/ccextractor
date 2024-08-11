@@ -178,24 +178,9 @@ impl dtvcc_window {
                 }
             }
             for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
-                // Set pen attributes to default value
-                self.pen_attribs[row_index][col] = dtvcc_pen_attribs {
-                    pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_STANDART as i32,
-                    offset: 0,
-                    text_tag: dtvcc_pen_text_tag::DTVCC_PEN_TEXT_TAG_UNDEFINED_12 as i32,
-                    font_tag: 0,
-                    edge_type: dtvcc_pen_edge::DTVCC_PEN_EDGE_NONE as i32,
-                    underline: 0,
-                    italic: 0,
-                };
-                // Set pen color to default value
-                self.pen_colors[row_index][col] = dtvcc_pen_color {
-                    fg_color: 0x3F,
-                    fg_opacity: 0,
-                    bg_color: 0,
-                    bg_opacity: 0,
-                    edge_color: 0,
-                };
+                // Set pen color and attributes to default value
+                self.pen_attribs[row_index][col] = dtvcc_pen_attribs::default();
+                self.pen_colors[row_index][col] = dtvcc_pen_color::default();
             }
         }
     }
@@ -545,6 +530,227 @@ impl Default for dtvcc_pen_attribs {
             edge_type: dtvcc_pen_edge::DTVCC_PEN_EDGE_NONE as i32,
             underline: 0,
             italic: 0,
+        }
+    }
+}
+
+impl PartialEq for dtvcc_pen_attribs {
+    fn eq(&self, other: &Self) -> bool {
+        self.pen_size == other.pen_size
+            && self.offset == other.offset
+            && self.text_tag == other.text_tag
+            && self.font_tag == other.font_tag
+            && self.edge_type == other.edge_type
+            && self.underline == other.underline
+            && self.italic == other.italic
+    }
+}
+
+impl PartialEq for dtvcc_pen_color {
+    fn eq(&self, other: &Self) -> bool {
+        self.fg_color == other.fg_color
+            && self.bg_color == other.bg_color
+            && self.fg_opacity == other.fg_opacity
+            && self.edge_color == other.edge_color
+            && self.bg_opacity == other.bg_opacity
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{cb_708, cb_field1, cb_field2};
+
+    #[test]
+    fn test_update_time_show() {
+        set_test_cb_values();
+        let mut timing = get_temp_timing_ctx();
+        let mut window = dtvcc_window::default();
+        window.update_time_show(&mut timing);
+
+        assert_eq!(window.time_ms_show, 501);
+    }
+
+    #[test]
+    fn test_update_time_end() {
+        set_test_cb_values();
+        let mut timing = get_temp_timing_ctx();
+        let mut window = dtvcc_window::default();
+        window.update_time_hide(&mut timing);
+
+        assert!(window.time_ms_hide == 393 || window.time_ms_hide == 427);
+    }
+
+    fn create_window(anchor_point: i32, pts: (i32, i32, i32, i32)) -> dtvcc_window {
+        dtvcc_window {
+            anchor_point,
+            anchor_vertical: pts.0,
+            anchor_horizontal: pts.1,
+            row_count: pts.2,
+            col_count: pts.3,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_get_dimensions() {
+        let pts = (10, 20, 5, 10);
+
+        // Case 1: Top-left anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_LEFT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (10, 15, 20, 30));
+
+        // Case 2: Top-center anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_CENTER as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (10, 15, 10, 25));
+
+        // Case 3: Top-right anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_TOP_RIGHT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (10, 15, 10, 20));
+
+        // Case 4: Middle-left anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_LEFT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (8, 12, 20, 30));
+
+        // Case 5: Middle-center anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_CENTER as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (8, 12, 15, 25));
+
+        // Case 6: Middle-right anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_MIDDLE_RIGHT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (8, 12, 10, 20));
+
+        // Case 7: Bottom-left anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_LEFT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (5, 10, 20, 30));
+
+        // Case 8: Bottom-center anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_CENTER as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (5, 10, 15, 25));
+
+        // Case 9: Bottom-right anchor point
+        let window = create_window(
+            dtvcc_pen_anchor_point::DTVCC_ANCHOR_POINT_BOTTOM_RIGHT as i32,
+            pts,
+        );
+        assert_eq!(window.get_dimensions().unwrap(), (5, 10, 10, 20));
+    }
+
+    #[test]
+    fn test_clear_row() {
+        let mut window = dtvcc_window {
+            memory_reserved: 1,
+            ..Default::default()
+        };
+
+        // Allocate memory for the rows
+        for row in 0..CCX_DTVCC_MAX_ROWS as usize {
+            let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+            let ptr = unsafe { alloc_zeroed(layout.unwrap()) };
+            window.rows[row] = ptr as *mut dtvcc_symbol;
+        }
+
+        window.pen_attribs[2][3] = dtvcc_pen_attribs {
+            pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_SMALL as i32,
+            offset: 10,
+            ..Default::default()
+        };
+        window.pen_colors[2][3] = dtvcc_pen_color {
+            fg_color: 0x12,
+            fg_opacity: 0x34,
+            ..Default::default()
+        };
+
+        window.clear_row(2);
+
+        // Verify the row has been cleared
+        for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
+            assert_eq!(window.pen_attribs[2][col], dtvcc_pen_attribs::default());
+            assert_eq!(window.pen_colors[2][col], dtvcc_pen_color::default());
+        }
+    }
+
+    #[test]
+    fn test_rollup() {
+        let mut window = dtvcc_window::default();
+
+        // Allocate memory for the rows
+        for row in 0..CCX_DTVCC_MAX_ROWS as usize {
+            let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
+            let ptr = unsafe { alloc_zeroed(layout.unwrap()) };
+            window.rows[row] = ptr as *mut dtvcc_symbol;
+        }
+
+        window.pen_attribs[0][0] = dtvcc_pen_attribs {
+            pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_SMALL as i32,
+            offset: 10,
+            ..Default::default()
+        };
+        window.pen_colors[0][0] = dtvcc_pen_color {
+            fg_color: 0x12,
+            fg_opacity: 0x34,
+            ..Default::default()
+        };
+
+        window.pen_attribs[1][1] = dtvcc_pen_attribs {
+            pen_size: dtvcc_pen_size::DTVCC_PEN_SIZE_LARGE as i32,
+            offset: 20,
+            ..Default::default()
+        };
+        window.pen_colors[1][1] = dtvcc_pen_color {
+            fg_color: 0x56,
+            fg_opacity: 0x78,
+            ..Default::default()
+        };
+        window.row_count = 2;
+
+        window.rollup();
+
+        // Verify the rows have been rolled up
+        for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
+            assert_eq!(window.pen_attribs[0][col], window.pen_attribs[1][col]);
+            assert_eq!(window.pen_colors[0][col], window.pen_colors[1][col]);
+        }
+    }
+
+    fn set_test_cb_values() {
+        unsafe {
+            cb_708 = 10;
+            cb_field1 = 20;
+            cb_field2 = 30;
+        }
+    }
+
+    fn get_temp_timing_ctx() -> ccx_common_timing_ctx {
+        ccx_common_timing_ctx {
+            fts_now: 20,
+            fts_global: 40,
+            minimum_fts: 500,
+            ..Default::default()
         }
     }
 }

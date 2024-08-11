@@ -45,7 +45,7 @@ pub enum TimestampFormat {
     ///
     /// # Examples
     /// ```rust
-    /// # use crate::time::units::{Timestamp, TimestampFormat};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampFormat};
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let output = timestamp.to_formatted_time(TimestampFormat::None).unwrap();
     /// assert_eq!(output, "");
@@ -56,7 +56,7 @@ pub enum TimestampFormat {
     ///
     /// # Examples
     /// ```rust
-    /// # use crate::time::units::{Timestamp, TimestampFormat};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampFormat};
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let output = timestamp.to_formatted_time(TimestampFormat::HHMMSS).unwrap();
     /// assert_eq!(output, "01:48:44");
@@ -67,7 +67,7 @@ pub enum TimestampFormat {
     ///
     /// # Examples
     /// ```rust
-    /// # use crate::time::units::{Timestamp, TimestampFormat};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampFormat};
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let output = timestamp.to_formatted_time(
     ///     TimestampFormat::Seconds {
@@ -83,7 +83,7 @@ pub enum TimestampFormat {
     ///
     /// # Examples
     /// ```rust
-    /// # use crate::time::units::{Timestamp, TimestampFormat};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampFormat};
     /// // 11 March 2023 14:53:36.749 in UNIX timestamp.
     /// let timestamp = Timestamp::from_millis(1678546416749);
     /// let output = timestamp.to_formatted_time(
@@ -99,7 +99,7 @@ pub enum TimestampFormat {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::{Timestamp, TimestampFormat};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampFormat};
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let output = timestamp.to_formatted_time(TimestampFormat::HHMMSSFFF).unwrap();
     /// assert_eq!(output, "01:48:44,365");
@@ -155,7 +155,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.millis(), 6524365);
     /// ```
@@ -167,7 +167,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.seconds(), 6524);
     /// ```
@@ -181,7 +181,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.as_sec_millis().unwrap(), (6524, 365));
     /// ```
@@ -199,12 +199,12 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.as_hms_millis().unwrap(), (1, 48, 44, 365));
     /// ```
     /// ```rust
-    /// # use lib_ccxr::util::time::{Timestamp, TimestampError};
+    /// # use lib_ccxr::time::units::{Timestamp, TimestampError};
     /// let timestamp = Timestamp::from_millis(1678546416749);
     /// assert!(matches!(
     ///     timestamp.as_hms_millis().unwrap_err(),
@@ -227,7 +227,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let mut output = String::new();
     /// timestamp.write_srt_time(&mut output);
@@ -243,7 +243,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let mut output = String::new();
     /// timestamp.write_vtt_time(&mut output);
@@ -261,7 +261,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let mut output = String::new();
     /// timestamp.write_hms_millis_time(&mut output, ':');
@@ -283,7 +283,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// let mut output = String::new();
     /// timestamp.write_ctime(&mut output);
@@ -344,7 +344,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.to_srt_time().unwrap(), "01:48:44,365");
     /// ```
@@ -358,7 +358,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.to_vtt_time().unwrap(), "01:48:44.365");
     /// ```
@@ -374,7 +374,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.to_hms_millis_time(':').unwrap(), "01:48:44:365");
     /// ```
@@ -388,7 +388,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(6524365);
     /// assert_eq!(timestamp.to_ctime().unwrap(), "Thu Jan 01 01:48:44 1970");
     /// ```
@@ -411,7 +411,7 @@ impl Timestamp {
     ///
     /// # Examples
     /// ```rust
-    /// # use lib_ccxr::util::time::Timestamp;
+    /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::parse_optional_hhmmss_from_str("01:12:45").unwrap();
     /// assert_eq!(timestamp, Timestamp::from_millis(4_365_000));
     /// ```
@@ -641,5 +641,150 @@ impl GopTimeCode {
             time_code_pictures,
             timestamp,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_timestamp_from_millis() {
+        let ts = Timestamp::from_millis(5000);
+        assert_eq!(ts.millis(), 5000);
+        assert_eq!(ts.seconds(), 5);
+    }
+
+    #[test]
+    fn test_timestamp_from_hms_millis() {
+        let ts = Timestamp::from_hms_millis(1, 30, 45, 500).unwrap();
+        assert_eq!(ts.millis(), 5445500);
+
+        // Out of range case
+        assert!(matches!(
+            Timestamp::from_hms_millis(1, 60, 0, 0),
+            Err(TimestampError::InputOutOfRangeError)
+        ));
+    }
+
+    #[test]
+    fn test_timestamp_as_sec_millis() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.as_sec_millis().unwrap(), (5445, 500));
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.as_sec_millis().unwrap(), (0, 0));
+
+        let ts = Timestamp::from_millis(1000);
+        assert_eq!(ts.as_sec_millis().unwrap(), (1, 0));
+
+        let ts = Timestamp::from_millis(-1000);
+        assert!(ts.as_sec_millis().is_err());
+    }
+
+    #[test]
+    fn test_timestamp_as_hms_millis() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.as_hms_millis().unwrap(), (1, 30, 45, 500));
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.as_hms_millis().unwrap(), (0, 0, 0, 0));
+
+        let ts = Timestamp::from_millis(3600000);
+        assert_eq!(ts.as_hms_millis().unwrap(), (1, 0, 0, 0));
+
+        let ts = Timestamp::from_millis(-1);
+        assert!(ts.as_hms_millis().is_err());
+    }
+
+    #[test]
+    fn test_timestamp_to_srt_time() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.to_srt_time().unwrap(), "01:30:45,500");
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.to_srt_time().unwrap(), "00:00:00,000");
+
+        let ts = Timestamp::from_millis(3661001);
+        assert_eq!(ts.to_srt_time().unwrap(), "01:01:01,001");
+
+        let ts = Timestamp::from_millis(-1);
+        assert!(ts.to_srt_time().is_err());
+    }
+
+    #[test]
+    fn test_timestamp_to_vtt_time() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.to_vtt_time().unwrap(), "01:30:45.500");
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.to_vtt_time().unwrap(), "00:00:00.000");
+
+        let ts = Timestamp::from_millis(3661001);
+        assert_eq!(ts.to_vtt_time().unwrap(), "01:01:01.001");
+
+        let ts = Timestamp::from_millis(-1);
+        assert!(ts.to_vtt_time().is_err());
+    }
+
+    #[test]
+    fn test_timestamp_to_hms_millis_time() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.to_hms_millis_time(':').unwrap(), "01:30:45:500");
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.to_hms_millis_time('.').unwrap(), "00:00:00.000");
+
+        let ts = Timestamp::from_millis(-3661001);
+        assert_eq!(ts.to_hms_millis_time(':').unwrap(), "-01:01:01:001");
+
+        let ts = Timestamp::from_millis(1);
+        assert_eq!(ts.to_hms_millis_time(':').unwrap(), "00:00:00:001");
+    }
+
+    #[test]
+    fn test_timestamp_to_ctime() {
+        let ts = Timestamp::from_millis(5445500);
+        assert_eq!(ts.to_ctime().unwrap(), "Thu Jan 01 01:30:45 1970");
+
+        let ts = Timestamp::from_millis(0);
+        assert_eq!(ts.to_ctime().unwrap(), "Thu Jan 01 00:00:00 1970");
+
+        let ts = Timestamp::from_millis(31536000000); // 1 year later
+        assert_eq!(ts.to_ctime().unwrap(), "Fri Jan 01 00:00:00 1971");
+
+        let ts = Timestamp::from_millis(-1);
+        assert!(ts.to_ctime().is_err());
+    }
+
+    #[test]
+    fn test_timestamp_parse_optional_hhmmss_from_str() {
+        assert_eq!(
+            Timestamp::parse_optional_hhmmss_from_str("01:30:45").unwrap(),
+            Timestamp::from_millis(5445000)
+        );
+        assert_eq!(
+            Timestamp::parse_optional_hhmmss_from_str("30:45").unwrap(),
+            Timestamp::from_millis(1845000)
+        );
+
+        // Error cases
+        assert!(matches!(
+            Timestamp::parse_optional_hhmmss_from_str("01:60:00"),
+            Err(TimestampError::InputOutOfRangeError)
+        ));
+        assert!(matches!(
+            Timestamp::parse_optional_hhmmss_from_str("01:30:45:00"),
+            Err(TimestampError::ParsingError)
+        ));
+    }
+
+    #[test]
+    fn test_timestamp_arithmetic() {
+        let ts1 = Timestamp::from_millis(5000);
+        let ts2 = Timestamp::from_millis(3000);
+        assert_eq!((ts1 + ts2).millis(), 8000);
+        assert_eq!((ts1 - ts2).millis(), 2000);
+        assert_eq!((-ts1).millis(), -5000);
     }
 }
