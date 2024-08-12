@@ -1,5 +1,7 @@
-0.95 (to be released)
+1.0 (to be released)
 -----------------
+- New: Create unit test for rust code (#1615)
+- Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)
 - New: Add time units module in lib_ccxr (#1623)
 - New: Add bits and levenshtein module in lib_ccxr (#1627)
@@ -32,6 +34,7 @@
 - Cleanup: Reduce the amount of Windows build options in the project file
 - Fix: infinite loop in MP4 file type detector.
 - Improvement: Use Corrosion to build Rust code
+- Improvement: Ignore MXF Caption Essence Container version byte to enhance SRT subtitle extraction compatibility
 
 0.94 (2021-12-14)
 -----------------

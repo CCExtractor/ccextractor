@@ -12,27 +12,51 @@
 pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
+pub mod activity;
+pub mod args;
+pub mod ccx_encoders_helpers;
+pub mod common;
 pub mod decoder;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod libccxr_exports;
+pub mod parser;
 pub mod utils;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
-use std::{io::Write, os::raw::c_int};
+use std::{io::Write, os::raw::c_char, os::raw::c_int};
 
+use args::Args;
 use bindings::*;
+use clap::{error::ErrorKind, Parser};
+use common::{CcxOptions, CcxTeletextConfig};
 use decoder::Dtvcc;
 use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
+use std::ffi::CStr;
 
+use crate::common::ExitCode;
+
+#[cfg(test)]
+static mut cb_708: c_int = 0;
+#[cfg(test)]
+static mut cb_field1: c_int = 0;
+#[cfg(test)]
+static mut cb_field2: c_int = 0;
+
+#[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
+}
+
+extern "C" {
+    static mut MPEG_CLOCK_FREQ: c_int;
+    static mut tlt_config: ccx_s_teletext_config;
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -168,5 +192,124 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     unsafe {
         // File will close automatically (due to Drop) once it goes out of scope
         let _file = File::from_raw_handle(handle);
+    }
+}
+
+extern "C" {
+    fn version(location: *const c_char);
+    fn set_binary_mode();
+}
+
+/// # Safety
+/// Safe if argv is a valid pointer
+///
+/// Parse parameters from argv and argc
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_parse_parameters(
+    mut _options: *mut ccx_s_options,
+    argc: c_int,
+    argv: *mut *mut c_char,
+) -> c_int {
+    // Convert argv to Vec<String> and pass it to parse_parameters
+    let args = std::slice::from_raw_parts(argv, argc as usize)
+        .iter()
+        .map(|&arg| {
+            CStr::from_ptr(arg)
+                .to_str()
+                .expect("Invalid UTF-8 sequence in argument")
+                .to_owned()
+        })
+        .collect::<Vec<String>>();
+
+    if args.len() <= 1 {
+        return ExitCode::NoInputFiles as _;
+    }
+
+    let args: Args = match Args::try_parse_from(args) {
+        Ok(args) => args,
+        Err(e) => {
+            // Not all errors are actual errors, some are just help or version
+            // So handle them accordingly
+            match e.kind() {
+                ErrorKind::DisplayHelp => {
+                    // Print the help string
+                    println!("{}", e);
+                    return ExitCode::WithHelp as _;
+                }
+                ErrorKind::DisplayVersion => {
+                    version(*argv);
+                    return ExitCode::WithHelp as _;
+                }
+                ErrorKind::UnknownArgument => {
+                    println!("Unknown Argument");
+                    println!("{}", e);
+                    return 1;
+                }
+                _ => {
+                    println!("{}", e);
+                    return 1;
+                }
+            }
+        }
+    };
+
+    let mut opt = CcxOptions::default();
+    let mut _tlt_config = CcxTeletextConfig::default();
+
+    opt.parse_parameters(&args, &mut _tlt_config);
+    tlt_config = _tlt_config.to_ctype();
+    // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
+    opt.to_ctype(_options);
+
+    0
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_verify_parity() {
+        // Odd parity
+        assert!(verify_parity(0b1010001));
+
+        // Even parity
+        assert!(!verify_parity(0b1000001));
+    }
+
+    #[test]
+    fn test_validate_cc_pair() {
+        // Valid CEA-708 data
+        let mut cc_block = [0x97, 0x1F, 0x3C];
+        assert!(validate_cc_pair(&mut cc_block));
+
+        // Invalid CEA-708 data
+        let mut cc_block = [0x93, 0x1F, 0x3C];
+        assert!(!validate_cc_pair(&mut cc_block));
+
+        // Valid CEA-608 data
+        let mut cc_block = [0x15, 0x2F, 0x7D];
+        assert!(validate_cc_pair(&mut cc_block));
+        // Check for replaced bit when 1st byte doesn't pass parity
+        assert_eq!(cc_block[1], 0x7F);
+
+        // Invalid CEA-608 data
+        let mut cc_block = [0x15, 0x2F, 0x5E];
+        assert!(!validate_cc_pair(&mut cc_block));
+    }
+
+    #[test]
+    fn test_do_cb() {
+        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
+
+        let mut decoder_ctx = lib_cc_decode::default();
+        let cc_block = [0x97, 0x1F, 0x3C];
+
+        assert!(do_cb(&mut decoder_ctx, &mut dtvcc, &cc_block));
+        assert_eq!(decoder_ctx.current_field, 3);
+        assert_eq!(decoder_ctx.cc_stats[3], 1);
+        assert_eq!(decoder_ctx.processed_enough, 0);
+        assert_eq!(unsafe { cb_708 }, 11);
     }
 }
