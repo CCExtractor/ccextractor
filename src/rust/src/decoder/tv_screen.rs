@@ -105,7 +105,8 @@ impl dtvcc_tv_screen {
     /// Returns the bounds in which captions are present
     pub fn get_write_interval(&self, row_index: usize) -> (usize, usize) {
         let mut first = 0;
-        let mut last = CCX_DTVCC_SCREENGRID_COLUMNS as usize - 1;
+        let mut last = 0;
+
         for col in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
             if self.chars[row_index][col].is_set() {
                 first = col;
@@ -618,5 +619,113 @@ impl dtvcc_tv_screen {
                 buf.extend_from_slice(font_tag.as_bytes());
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::utils::get_zero_allocated_obj;
+
+    use super::*;
+
+    #[test]
+    fn test_clear() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_show = 1000;
+        screen.time_ms_hide = 2000;
+        screen.chars = [[dtvcc_symbol { sym: 1, init: 2 }; CCX_DTVCC_SCREENGRID_COLUMNS as usize];
+            CCX_DTVCC_SCREENGRID_ROWS as usize];
+
+        // Clear the screen will clear the chars and timings
+        screen.clear();
+
+        assert_eq!(screen.time_ms_show, -1);
+        assert_eq!(screen.time_ms_hide, -1);
+        for row in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
+            for col in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
+                assert_eq!(screen.chars[row][col], dtvcc_symbol::default());
+            }
+        }
+    }
+
+    #[test]
+    fn test_update_time_show() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_show = -1;
+
+        // Case 1: time_ms_show = -1     -> Update time show
+        screen.update_time_show(2000);
+        assert_eq!(screen.time_ms_show, 2000);
+
+        // Case 2: time_ms_show > time   -> Update time show
+        screen.update_time_show(1000);
+        assert_eq!(screen.time_ms_show, 1000);
+
+        // Case 3: time_ms_show < time   -> Do not update time show
+        screen.update_time_show(2000);
+        assert_eq!(screen.time_ms_show, 1000);
+    }
+
+    #[test]
+    fn test_update_time_hide() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_hide = -1;
+
+        // Case 1: time_ms_show = -1     -> Update time hide
+        screen.update_time_hide(2000);
+        assert_eq!(screen.time_ms_hide, 2000);
+
+        // Case 2: time_ms_show < time   -> Update time hide
+        screen.update_time_hide(3000);
+        assert_eq!(screen.time_ms_hide, 3000);
+
+        // Case 3: time_ms_show > time   -> Do not update time hide
+        screen.update_time_hide(2000);
+        assert_eq!(screen.time_ms_hide, 3000);
+    }
+
+    #[test]
+    fn test_get_write_interval() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.chars[0][2] = dtvcc_symbol::new(0x41);
+        screen.chars[0][3] = dtvcc_symbol::new(0x42);
+        screen.chars[0][4] = dtvcc_symbol::new(0x43);
+        screen.chars[1][4] = dtvcc_symbol::new(0x43);
+
+        // Mulitple row filed
+        assert_eq!(screen.get_write_interval(0), (2, 4));
+        // Single row filed
+        assert_eq!(screen.get_write_interval(1), (4, 4));
+        // Empty rows
+        assert_eq!(screen.get_write_interval(2), (0, 0));
+    }
+
+    #[test]
+    fn test_count_captions_lines_scc() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+
+        // No captions
+        assert_eq!(screen.count_captions_lines_scc(), 0);
+
+        // Set some non-default values
+        screen.chars[0][2] = dtvcc_symbol::new(0x41);
+        screen.chars[1][2] = dtvcc_symbol::new(0x42);
+        screen.chars[2][2] = dtvcc_symbol::new(0x43);
+
+        assert_eq!(screen.count_captions_lines_scc(), 3);
+    }
+
+    #[test]
+    fn test_is_row_empty() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+
+        // Default emty row check
+        assert!(screen.is_row_empty(0));
+        assert!(screen.is_row_empty(1));
+
+        // Non-default emty row check
+        screen.chars[0][0] = dtvcc_symbol::new(0x51);
+        assert!(!screen.is_row_empty(0));
+        assert!(screen.is_row_empty(1));
     }
 }

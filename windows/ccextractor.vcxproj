@@ -62,10 +62,8 @@
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftmodule.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftoption.h" />
     <ClInclude Include="..\src\thirdparty\freetype\include\freetype\config\ftstdlib.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
-    <ClInclude
-      Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\libpng16\*.h" />
+    <ClInclude Include="$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include\zlib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=" ..\src\thirdparty\freetype\gzip\ftgzip.c" />
@@ -188,21 +186,26 @@
   <ItemGroup>
     <None Include=" ..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
-  <PropertyGroup Label=" Globals">
+  <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
     <RootNamespace>ccextractor</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+    <VcpkgEnabled>true</VcpkgEnabled>
   </PropertyGroup>
   <Import Project=" $(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Full|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Full|x64'"
     Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -270,7 +273,7 @@
     </Link>
     <PreBuildEvent>
       <Command>call pre-build.bat
-        call rust.bat</Command>
+        call rust.bat "--profile=release-with-debug"</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
@@ -278,14 +281,14 @@
         xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-57.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-9.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-7.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-58.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
@@ -325,14 +328,14 @@
         xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libgpac.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\OpenSVCDecoder.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\postproc-56.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\postproc-57.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\swresample-4.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avfilter-8.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\swscale-6.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avdevice-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avcodec-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avformat-59.dll" "$(OutDir)"
-        xcopy /y "C:\Program Files\GPAC\avutil-57.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avfilter-9.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\swscale-7.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avdevice-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avcodec-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avformat-60.dll" "$(OutDir)"
+        xcopy /y "C:\Program Files\GPAC\avutil-58.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libsslMD.dll" "$(OutDir)"
         xcopy /y "C:\Program Files\GPAC\libcryptoMD.dll" "$(OutDir)"</Command>
     </PostBuildEvent>

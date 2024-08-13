@@ -127,6 +127,13 @@ int parsedelay(struct ccx_s_options *opt, char *par)
 	return 0;
 }
 
+void set_binary_mode()
+{
+#ifdef WIN32
+	setmode(fileno(stdin), O_BINARY);
+#endif
+}
+
 int append_file_to_queue(struct ccx_s_options *opt, char *filename)
 {
 	if (filename[0] == '\0') // skip files with empty file name (ex : ./ccextractor "")
@@ -995,14 +1002,14 @@ void print_usage(void)
 	mprint("  a .d extension. Each .png file will contain an image representing one caption\n");
 	mprint("  and named subNNNN.png, starting with sub0000.png.\n");
 	mprint("  For example, the command:\n");
-	mprint("      ccextractor -out=spupng input.mpg\n");
+	mprint("      ccextractor --out=spupng input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      input.xml\n");
 	mprint("      input.d/sub0000.png\n");
 	mprint("      input.d/sub0001.png\n");
 	mprint("      ...\n");
 	mprint("  The command:\n");
-	mprint("      ccextractor -out=spupng -o /tmp/output --12 input.mpg\n");
+	mprint("      ccextractor --out=spupng -o /tmp/output --12 input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      /tmp/output_1.xml\n");
 	mprint("      /tmp/output_1.d/sub0000.png\n");
@@ -1262,9 +1269,8 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-") == 0 || strcmp(argv[i], "--stdin") == 0)
 		{
-#ifdef WIN32
-			setmode(fileno(stdin), O_BINARY);
-#endif
+			set_binary_mode();
+
 			opt->input_source = CCX_DS_STDIN;
 			if (!opt->live_stream)
 				opt->live_stream = -1;
@@ -2972,7 +2978,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
-		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.\n");
+		print_error(opt->gui_mode_reports, "You cannot use --out=spupng with -stdout.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 

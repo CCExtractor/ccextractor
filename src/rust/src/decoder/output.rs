@@ -112,3 +112,37 @@ pub fn color_to_hex(color: u8) -> (u8, u8, u8) {
     );
     (red, green, blue)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_write_char() {
+        let mut buf = Vec::new();
+
+        // Write 8-bit symbol
+        let sym = dtvcc_symbol { sym: 0x41, init: 0 };
+        write_char(&sym, &mut buf);
+        assert_eq!(buf, vec![0x41]);
+
+        buf.clear();
+
+        // Write 16-bit symbol
+        let sym = dtvcc_symbol {
+            sym: 0x1234,
+            init: 0,
+        };
+        write_char(&sym, &mut buf);
+        assert_eq!(buf, vec![0x12, 0x34]);
+    }
+
+    #[test]
+    fn test_color_to_hex() {
+        assert_eq!(color_to_hex(0b00_00_00), (0, 0, 0)); // Black
+        assert_eq!(color_to_hex(0b11_11_11), (3, 3, 3)); // White
+        assert_eq!(color_to_hex(0b10_01_00), (2, 1, 0)); // Red
+        assert_eq!(color_to_hex(0b01_10_01), (1, 2, 1)); // Green
+        assert_eq!(color_to_hex(0b00_11_10), (0, 3, 2)); // Blue
+    }
+}

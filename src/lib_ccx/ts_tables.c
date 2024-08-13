@@ -332,7 +332,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 #ifndef ENABLE_OCR
 					if (ccx_options.write_format != CCX_OF_SPUPNG)
 					{
-						mprint("DVB subtitles detected, OCR subsystem not present. Use -out=spupng for graphic output\n");
+						mprint("DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output\n");
 						continue;
 					}
 #endif

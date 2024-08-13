@@ -1,0 +1,23 @@
+[package]
+name = "lib_ccxr"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags = "2.6.0"
+thiserror = "1.0.61"
+time = { version = "0.3.36", features = ["macros", "formatting"] }
+derive_more = "0.99.18"
+
+[features]
+default = [
+  "enable_ffmpeg",
+]
+enable_sharing = []
+wtv_debug = []
+enable_ffmpeg = []
+debug_out = []
+debug = []
+with_libcurl = []

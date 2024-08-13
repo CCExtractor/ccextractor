@@ -17,8 +17,10 @@ CVS
 mac/ccextractor
 linux/ccextractor
 linux/depend
+windows/x86_64-pc-windows-msvc/**
 windows/Debug/**
 windows/Debug-OCR/**
+windows/release-with-debug/**
 windows/Release/**
 windows/Release-Full/**
 windows/Release-OCR/**
@@ -149,7 +151,9 @@ src/rust/CMakeCache.txt
 src/rust/Makefile
 src/rust/cmake_install.cmake
 src/rust/target/
+src/rust/lib_ccxr/target/
 windows/ccx_rust.lib
 windows/*/debug/*
 windows/*/CACHEDIR.TAG
 windows/.rustc_info.json
+linux/configure~

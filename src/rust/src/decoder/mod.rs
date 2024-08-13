@@ -3,6 +3,7 @@
 //! Provides a CEA 708 decoder as defined by ANSI/CTA-708-E R-2018
 
 mod commands;
+mod encoding;
 mod output;
 mod service_decoder;
 mod timing;
@@ -221,5 +222,101 @@ impl Default for dtvcc_symbol {
     /// Create a blank uninitialized symbol
     fn default() -> Self {
         Self { sym: 0, init: 0 }
+    }
+}
+
+impl PartialEq for dtvcc_symbol {
+    fn eq(&self, other: &Self) -> bool {
+        self.sym == other.sym && self.init == other.init
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::utils::get_zero_allocated_obj;
+
+    use super::*;
+
+    #[test]
+    fn test_process_cc_data() {
+        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
+
+        // Case 1:  cc_type = 2
+        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
+        decoder.report = &mut dtvcc_report;
+        decoder.is_header_parsed = true;
+        decoder.is_active = true;
+        decoder.report_enabled = true;
+        decoder.packet = vec![0xC2, 0x23, 0x45, 0x67, 0x00, 0x00];
+        decoder.packet_length = 4;
+
+        decoder.process_cc_data(1, 2, 0x01, 0x02);
+
+        assert_eq!(decoder.report.services[1], 1);
+        assert!(decoder.packet.iter().all(|&ele| ele == 0));
+        assert_eq!(decoder.packet_length, 0);
+
+        // Case 2:  cc_type = 3 with `is_header_parsed = true`
+        decoder.is_header_parsed = true;
+        decoder.packet = vec![0xC2, 0x23, 0x45, 0x67, 0x00, 0x00];
+        decoder.packet_length = 4;
+
+        decoder.process_cc_data(1, 3, 0x01, 0x02);
+
+        assert_eq!(decoder.packet[0], 0x01);
+        assert_eq!(decoder.packet[1], 0x02);
+        assert_eq!(decoder.packet_length, 2);
+
+        // Case 3:  cc_type = 3 with `is_header_parsed = false`
+        decoder.is_header_parsed = false;
+        decoder.packet = vec![0xC2, 0x23, 0x45, 0x67, 0x00, 0x00];
+        decoder.packet_length = 4;
+
+        decoder.process_cc_data(1, 3, 0x01, 0x02);
+
+        assert_eq!(decoder.packet, vec![0xC2, 0x23, 0x45, 0x67, 0x01, 0x02]);
+        assert_eq!(decoder.packet_length, 6);
+        assert_eq!(decoder.is_header_parsed, true);
+    }
+
+    #[test]
+    fn test_process_current_packet() {
+        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
+
+        // Case 1: Without providing last_sequence
+        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
+        decoder.report = &mut dtvcc_report;
+        decoder.packet = vec![0xC2, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
+        decoder.packet_length = 8;
+        decoder.process_current_packet(4);
+
+        assert_eq!(decoder.report.services[1], 1);
+        assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
+
+        // Case 2: With providing last_sequence
+        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
+        decoder.report = &mut dtvcc_report;
+        decoder.packet = vec![0xC7, 0xC2, 0x12, 0x67, 0x29, 0xAB, 0xCD, 0xEF];
+        decoder.packet_length = 8;
+        decoder.last_sequence = 6;
+        decoder.process_current_packet(4);
+
+        assert_eq!(decoder.report.services[6], 1);
+        assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
+
+        // Test case 3: Packet with extended header and multiple service blocks
+        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
+        decoder.report = &mut dtvcc_report;
+        decoder.packet = vec![
+            0xC0, 0xE7, 0x08, 0x02, 0x01, 0x02, 0x07, 0x03, 0x03, 0x04, 0x05,
+        ];
+        decoder.packet_length = 11;
+        decoder.last_sequence = 6;
+        decoder.process_current_packet(6);
+
+        assert_eq!(decoder.report.services[8], 1);
+        assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
     }
 }

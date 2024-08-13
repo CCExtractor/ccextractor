@@ -10,6 +10,9 @@ Clone the latest repository from Github
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
+## Docker
+You can now use docker image to build latest source of CCExtractor without any environmental hustle. Follow these [instructions](https://github.com/CCExtractor/ccextractor/tree/master/docker/README.md) for building docker image & usage of it.
+
 ## Linux
 
 1. Make sure all the dependencies are met.
@@ -20,15 +23,15 @@ Debian:
 sudo apt-get install -y libgpac-dev libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
-RHEL:
+RHEL/Fedora:
 
 ```bash
-yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang gpac-devel
 ```
 
 Arch:
 ```bash
-sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
