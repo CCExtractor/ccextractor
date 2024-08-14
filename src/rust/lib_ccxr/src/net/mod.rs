@@ -31,6 +31,13 @@
 //! | `NO_RESPONCE_INTERVAL`         | [`NO_RESPONSE_INTERVAL`]          |
 //! | `PING_INTERVAL`                | [`PING_INTERVAL`]                 |
 
+mod block;
+pub mod c_functions;
+mod source;
+mod target;
+
+pub use crate::net::{block::*, source::*, target::*};
+
 /// A collective [`Error`](std::error::Error) type that encompasses all the possible error cases
 /// when sending, receiving or parsing data during networking operations.
 #[derive(thiserror::Error, Debug)]
