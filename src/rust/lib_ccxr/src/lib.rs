@@ -4,5 +4,6 @@ pub mod encoder;
 pub mod hardsubx;
 pub mod subtitle;
 pub mod teletext;
+pub mod net;
 pub mod time;
 pub mod util;
