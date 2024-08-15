@@ -1,6 +1,3 @@
-use std::path::PathBuf;
-use std::str::FromStr;
-
 use lib_ccxr::common::Codec;
 use lib_ccxr::common::CommonTimingCtx;
 use lib_ccxr::common::Decoder608Report;
@@ -23,13 +20,8 @@ use lib_ccxr::hardsubx::OcrMode;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
-use lib_ccxr::util::log::DebugMessageFlag;
-use lib_ccxr::util::log::DebugMessageMask;
-use palette::white_point::E;
-use url::Url;
 
 use crate::bindings::*;
-use crate::utils::c_char_to_string;
 use crate::utils::null_pointer;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
