@@ -37,3 +37,37 @@ pub fn levenshtein_dist(s1: &[u64], s2: &[u64]) -> usize {
 pub fn levenshtein_dist_char<T: Copy + PartialEq>(s1: &[T], s2: &[T]) -> usize {
     levenshtein(s1, s2)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_levenshtein() {
+        // Empty slices
+        assert_eq!(levenshtein(&[] as &[i32; 0], &[] as &[i32; 0]), 0);
+
+        // Integers
+        assert_eq!(levenshtein(&[1, 2, 3, 4, 5], &[1, 3, 2, 4, 5, 6]), 3);
+        assert_eq!(levenshtein(&[1, 2, 3], &[1, 2, 3]), 0);
+        assert_eq!(levenshtein(&[], &[1, 2, 3]), 3);
+        assert_eq!(levenshtein(&[1, 2, 3], &[]), 3);
+
+        // Characters
+        assert_eq!(levenshtein(&['a', 'b', 'c'], &['a', 'd', 'c']), 1);
+        assert_eq!(
+            levenshtein(
+                &['k', 'i', 't', 't', 'e', 'n'],
+                &['s', 'i', 't', 't', 'i', 'n', 'g']
+            ),
+            3
+        );
+
+        //Strings or &str
+        assert_eq!(
+            levenshtein(&["hello", "world"], &["hello", "rust", "world"]),
+            1
+        );
+        assert_eq!(levenshtein(&["foo", "bar", "baz"], &["foo", "baz"]), 1);
+    }
+}

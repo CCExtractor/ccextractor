@@ -222,3 +222,49 @@ pub fn verify_crc32(buf: &[u8]) -> bool {
     }
     crc == 0
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_parity() {
+        assert_eq!(get_parity(0), false);
+        assert_eq!(get_parity(1), true);
+        assert_eq!(get_parity(128), true);
+        assert_eq!(get_parity(255), false);
+    }
+
+    #[test]
+    fn test_get_reverse_byte() {
+        assert_eq!(get_reverse_byte(0), 0x00);
+        assert_eq!(get_reverse_byte(1), 0x80);
+        assert_eq!(get_reverse_byte(255), 0xFF);
+        assert_eq!(get_reverse_byte(0b10101010), 0b01010101);
+    }
+
+    #[test]
+    fn test_decode_hamming_8_4() {
+        assert_eq!(decode_hamming_8_4(0x00), Some(0x01));
+        assert_eq!(decode_hamming_8_4(0x01), None);
+        assert_eq!(decode_hamming_8_4(0xFF), Some(0x0e));
+    }
+
+    #[test]
+    fn test_decode_hamming_24_18() {
+        assert_eq!(decode_hamming_24_18(0x00000000), Some(0x00000000));
+        assert_eq!(decode_hamming_24_18(0x00000001), None);
+        assert_eq!(decode_hamming_24_18(0xFFFFFFFF), Some(0x003FFFF));
+        assert_eq!(
+            decode_hamming_24_18(0b101010101010101010101010),
+            Some(0b10101001010100100)
+        );
+    }
+
+    #[test]
+    fn test_get_crc32_byte() {
+        assert_eq!(get_crc32_byte(0), 0x00000000);
+        assert_eq!(get_crc32_byte(1), 0x04c11db7);
+        assert_eq!(get_crc32_byte(255), 0xb1f740b4);
+    }
+}

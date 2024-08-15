@@ -43,6 +43,16 @@ use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
 use std::ffi::CStr;
 
+use crate::common::ExitCode;
+
+#[cfg(test)]
+static mut cb_708: c_int = 0;
+#[cfg(test)]
+static mut cb_field1: c_int = 0;
+#[cfg(test)]
+static mut cb_field2: c_int = 0;
+
+#[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
@@ -256,4 +266,54 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
     _options.from_rust(opt);
 
     0
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_verify_parity() {
+        // Odd parity
+        assert!(verify_parity(0b1010001));
+
+        // Even parity
+        assert!(!verify_parity(0b1000001));
+    }
+
+    #[test]
+    fn test_validate_cc_pair() {
+        // Valid CEA-708 data
+        let mut cc_block = [0x97, 0x1F, 0x3C];
+        assert!(validate_cc_pair(&mut cc_block));
+
+        // Invalid CEA-708 data
+        let mut cc_block = [0x93, 0x1F, 0x3C];
+        assert!(!validate_cc_pair(&mut cc_block));
+
+        // Valid CEA-608 data
+        let mut cc_block = [0x15, 0x2F, 0x7D];
+        assert!(validate_cc_pair(&mut cc_block));
+        // Check for replaced bit when 1st byte doesn't pass parity
+        assert_eq!(cc_block[1], 0x7F);
+
+        // Invalid CEA-608 data
+        let mut cc_block = [0x15, 0x2F, 0x5E];
+        assert!(!validate_cc_pair(&mut cc_block));
+    }
+
+    #[test]
+    fn test_do_cb() {
+        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
+
+        let mut decoder_ctx = lib_cc_decode::default();
+        let cc_block = [0x97, 0x1F, 0x3C];
+
+        assert!(do_cb(&mut decoder_ctx, &mut dtvcc, &cc_block));
+        assert_eq!(decoder_ctx.current_field, 3);
+        assert_eq!(decoder_ctx.cc_stats[3], 1);
+        assert_eq!(decoder_ctx.processed_enough, 0);
+        assert_eq!(unsafe { cb_708 }, 11);
+    }
 }

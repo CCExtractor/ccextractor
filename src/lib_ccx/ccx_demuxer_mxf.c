@@ -12,6 +12,7 @@
 #define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "MXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define log(fmt, ...) ccx_common_logging.log_ftn("MXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
+#define IS_KLV_KEY_ANY_VERSION(x, y) (!memcmp(x, y, 7) && !memcmp(x + 8, y + 8, sizeof(y) - 8))
 
 enum MXFCaptionType
 {
@@ -201,7 +202,7 @@ static int mxf_read_header_partition_pack(struct ccx_demuxer *demux, uint64_t si
 		len += 16;
 		for (j = 0; j < sizeof(mxf_caption_essence_container) / sizeof(*mxf_caption_essence_container); j++)
 		{
-			if (IS_KLV_KEY(essence_ul, mxf_caption_essence_container[j].uid))
+			if (IS_KLV_KEY_ANY_VERSION(essence_ul, mxf_caption_essence_container[j].uid))
 			{
 				ctx->type = mxf_caption_essence_container[j].type;
 			}
