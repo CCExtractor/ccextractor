@@ -13,12 +13,10 @@ use std::ptr::addr_of_mut;
 use std::str::FromStr;
 use std::string::String;
 
+use lib_ccxr::common::*;
+
 use cfg_if::cfg_if;
 
-use lib_ccxr::common::{
-    Codec, DataSource, Decoder608ColorCode, DtvccServiceCharset, Language, Options, OutputFormat,
-    SelectCodec, StreamMode, StreamType, TeletextConfig, TeletextPageNumber, DTVCC_MAX_SERVICES,
-};
 use time::OffsetDateTime;
 
 use crate::args::{self, InFormat};
@@ -519,6 +517,7 @@ impl OptionsExt for Options {
 
         #[cfg(feature = "hardsubx_ocr")]
         {
+            use lib_ccxr::hardsubx::*;
             if args.hardsubx {
                 self.hardsubx = true;
 
@@ -1341,8 +1340,11 @@ impl OptionsExt for Options {
         }
 
         #[cfg(feature = "with_libcurl")]
-        if let Some(ref curlposturl) = args.curlposturl {
-            self.curlposturl = Url::from_str(curlposturl).ok();
+        {
+            use url::Url;
+            if let Some(ref curlposturl) = args.curlposturl {
+                self.curlposturl = Url::from_str(curlposturl).ok();
+            }
         }
 
         #[cfg(feature = "enable_sharing")]
