@@ -324,16 +324,13 @@ impl OptionsExt for Options {
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
             self.enc_cfg.services_charsets = DtvccServiceCharset::Same(charset.to_string());
-            // const ARRAY_REPEAT_VALUE: std::string::String = String::new();
-            // self.enc_cfg.services_charsets =
-            //     DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
-            // for i in 0..DTVCC_MAX_SERVICES {
-            //     self.settings_dtvcc.services_enabled[i] = true;
-            //     self.enc_cfg.services_enabled[i] = true;
-            // }
+            for i in 0..DTVCC_MAX_SERVICES {
+                self.settings_dtvcc.services_enabled[i] = true;
+                self.enc_cfg.services_enabled[i] = true;
+            }
 
-            // self.settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES as _;
+            self.settings_dtvcc.active_services_count = DTVCC_MAX_SERVICES as _;
             return;
         }
 
@@ -383,7 +380,7 @@ impl OptionsExt for Options {
 
             if charsets.len() > i && charsets[i].is_some() {
                 if let DtvccServiceCharset::Unique(unique) = &mut self.enc_cfg.services_charsets {
-                    charsets[i].as_ref().unwrap().clone_from(&&unique[svc - 1]);
+                    unique[svc - 1].clone_from(charsets[i].as_ref().unwrap());
                 }
             }
         }
