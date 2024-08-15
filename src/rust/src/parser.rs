@@ -383,7 +383,7 @@ impl OptionsExt for Options {
 
             if charsets.len() > i && charsets[i].is_some() {
                 if let DtvccServiceCharset::Unique(unique) = &mut self.enc_cfg.services_charsets {
-                    unique[svc - 1] = charsets[i].as_ref().unwrap().clone();
+                    charsets[i].as_ref().unwrap().clone_from(&&unique[svc - 1]);
                 }
             }
         }
@@ -420,7 +420,7 @@ impl OptionsExt for Options {
             if let Some(ref mut inputfile) = self.inputfile {
                 inputfile.resize(new_size, String::new());
 
-                let index = num_input_files as usize;
+                let index = num_input_files;
                 inputfile[index] = filename.to_string();
             }
         }
@@ -1132,13 +1132,13 @@ impl OptionsExt for Options {
 
         if let Some(ref datastreamtype) = args.datastreamtype {
             self.demux_cfg.ts_datastreamtype =
-                StreamType::from_repr(datastreamtype.clone().into()).unwrap_or_default();
+                StreamType::from_repr((*datastreamtype).into()).unwrap_or_default();
             // TODO: Should I panick?
         }
 
         if let Some(ref streamtype) = args.streamtype {
             self.demux_cfg.ts_forced_streamtype =
-                StreamType::from_repr(streamtype.clone().into()).unwrap_or_default();
+                StreamType::from_repr((*streamtype).into()).unwrap_or_default();
         }
 
         if let Some(ref tpage) = args.tpage {
@@ -1217,15 +1217,11 @@ impl OptionsExt for Options {
         }
 
         if args.sects {
-            self.date_format = TimestampFormat::Seconds {
-                millis_separator: millis_separator,
-            };
+            self.date_format = TimestampFormat::Seconds { millis_separator };
         }
 
         if args.datets {
-            self.date_format = TimestampFormat::Date {
-                millis_separator: millis_separator,
-            };
+            self.date_format = TimestampFormat::Date { millis_separator };
         }
 
         if args.teletext {
@@ -1389,7 +1385,7 @@ impl OptionsExt for Options {
             unsafe {
                 CAPITALIZATION_LIST = get_vector_words(&CAPITALIZED_BUILTIN);
                 if self.sentence_cap_file.exists() {
-                    if let Some(ref sentence_cap_file) = self.sentence_cap_file.to_str() {
+                    if let Some(sentence_cap_file) = self.sentence_cap_file.to_str() {
                         let result =
                             process_word_file(sentence_cap_file, addr_of_mut!(CAPITALIZATION_LIST));
 
@@ -1405,7 +1401,7 @@ impl OptionsExt for Options {
             unsafe {
                 PROFANE = get_vector_words(&PROFANE_BUILTIN);
                 if self.filter_profanity_file.exists() {
-                    if let Some(ref profanityfile) = self.filter_profanity_file.to_str() {
+                    if let Some(profanityfile) = self.filter_profanity_file.to_str() {
                         let result = process_word_file(profanityfile, addr_of_mut!(PROFANE));
 
                         if result.is_err() {
@@ -1421,8 +1417,8 @@ impl OptionsExt for Options {
         tlt_config.dolevdist = self.dolevdist;
         tlt_config.levdistmincnt = self.levdistmincnt;
         tlt_config.levdistmaxpct = self.levdistmaxpct;
-        tlt_config.extraction_start = Some(self.extraction_start.clone());
-        tlt_config.extraction_end = Some(self.extraction_end.clone());
+        tlt_config.extraction_start = Some(self.extraction_start);
+        tlt_config.extraction_end = Some(self.extraction_end);
         tlt_config.write_format = self.write_format;
         tlt_config.date_format = self.date_format;
         tlt_config.noautotimeref = self.noautotimeref;

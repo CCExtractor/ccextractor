@@ -170,20 +170,26 @@ pub trait FromC<T> {
 // }
 
 pub trait CType<T> {
+    /// # Safety
+    /// This function is unsafe because it dereferences the pointer passed to it.
     unsafe fn to_ctype(&self) -> T;
 }
 pub trait CType2<T, U> {
+    /// # Safety
+    /// This function is unsafe because it dereferences the pointer passed to it.
     unsafe fn to_ctype(&self, value: U) -> T;
 }
 pub trait FromRust<T> {
-    unsafe fn from_rust(&self, options: T);
+    /// # Safety
+    /// This function is unsafe because it dereferences the pointer passed to it.
+    unsafe fn copy_from_rust(&self, options: T);
 }
 
 impl FromRust<Options> for *mut ccx_s_options {
     /// # Safety
     ///
     /// This function is unsafe because it dereferences the pointer passed to it.
-    unsafe fn from_rust(self: &*mut ccx_s_options, options: Options) {
+    unsafe fn copy_from_rust(self: &*mut ccx_s_options, options: Options) {
         (**self).extract = options.extract as _;
         (**self).no_rollup = options.no_rollup as _;
         (**self).noscte20 = options.noscte20 as _;
@@ -215,7 +221,7 @@ impl FromRust<Options> for *mut ccx_s_options {
 
         if options.sentence_cap_file.try_exists().unwrap_or_default() {
             (**self).sentence_cap_file = string_to_c_char(
-                &options
+                options
                     .sentence_cap_file
                     .clone()
                     .to_str()
@@ -234,7 +240,7 @@ impl FromRust<Options> for *mut ccx_s_options {
             .unwrap_or_default()
         {
             (**self).filter_profanity_file = string_to_c_char(
-                &options
+                options
                     .filter_profanity_file
                     .clone()
                     .to_str()
@@ -275,7 +281,7 @@ impl FromRust<Options> for *mut ccx_s_options {
             (**self).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
         }
         if options.ocrlang.try_exists().unwrap_or_default() {
-            (**self).ocrlang = string_to_c_char(&options.ocrlang.to_str().unwrap());
+            (**self).ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
         }
         (**self).ocr_oem = options.ocr_oem as _;
         (**self).ocr_quantmode = options.ocr_quantmode as _;
@@ -369,19 +375,19 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             _bitfield_2: Default::default(),
             _bitfield_align_1: Default::default(),
             _bitfield_align_2: Default::default(),
-            page: (*self).page.get().page().into(),
+            page: self.user_page,
             tid: 0,
             offset: 0.0,
-            user_page: (*self).user_page,
-            dolevdist: (*self).dolevdist.into(),
-            levdistmincnt: (*self).levdistmincnt.into(),
-            levdistmaxpct: (*self).levdistmaxpct.into(),
-            extraction_start: (*self).extraction_start.to_ctype(),
-            extraction_end: (*self).extraction_end.to_ctype(),
-            write_format: (*self).write_format.to_ctype(),
+            user_page: self.user_page,
+            dolevdist: self.dolevdist.into(),
+            levdistmincnt: self.levdistmincnt.into(),
+            levdistmaxpct: self.levdistmaxpct.into(),
+            extraction_start: self.extraction_start.to_ctype(),
+            extraction_end: self.extraction_end.to_ctype(),
+            write_format: self.write_format.to_ctype(),
             gui_mode_reports: value.gui_mode_reports as _,
-            date_format: (*self).date_format.to_ctype(),
-            noautotimeref: (*self).noautotimeref.into(),
+            date_format: self.date_format.to_ctype(),
+            noautotimeref: self.noautotimeref.into(),
             send_to_srv: value.send_to_srv.into(),
             encoding: value.enc_cfg.encoding.to_ctype(),
             nofontcolor: self.nofontcolor.into(),
@@ -484,7 +490,7 @@ impl CType<u32> for Encoding {
 impl CType<String> for Language {
     /// Convert to C variant of `String`.
     unsafe fn to_ctype(&self) -> String {
-        return self.to_str().to_lowercase();
+        self.to_str().to_lowercase()
     }
 }
 
@@ -729,7 +735,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             in_format: self.in_format,
             nospupngocr: self.nospupngocr as _,
             force_dropframe: self.force_dropframe as _,
-            render_font: string_to_c_char(&self.render_font.to_str().unwrap_or_default()),
+            render_font: string_to_c_char(self.render_font.to_str().unwrap_or_default()),
             render_font_italics: string_to_c_char(
                 self.render_font_italics.to_str().unwrap_or_default(),
             ),
