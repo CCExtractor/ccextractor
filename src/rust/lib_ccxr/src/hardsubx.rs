@@ -29,7 +29,7 @@ impl ColorHue {
             ColorHue::Blue => 240.0,
             ColorHue::Magenta => 300.0,
             ColorHue::Red => 0.0,
-            ColorHue::Custom(hue) => hue.clone(),
+            ColorHue::Custom(hue) => *hue,
         }
     }
 }
