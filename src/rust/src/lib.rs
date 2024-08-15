@@ -227,7 +227,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
         .collect::<Vec<String>>();
 
     if args.len() <= 1 {
-        return ExitCause::NoInputFiles as _;
+        return ExitCause::NoInputFiles.exit_code();
     }
 
     let args: Args = match Args::try_parse_from(args) {
@@ -239,11 +239,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
                 ErrorKind::DisplayHelp => {
                     // Print the help string
                     println!("{}", e);
-                    return ExitCause::WithHelp as _;
+                    return ExitCause::WithHelp.exit_code();
                 }
                 ErrorKind::DisplayVersion => {
                     version(*argv);
-                    return ExitCause::WithHelp as _;
+                    return ExitCause::WithHelp.exit_code();
                 }
                 ErrorKind::UnknownArgument => {
                     println!("Unknown Argument");
