@@ -389,7 +389,7 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             date_format: self.date_format.to_ctype(),
             noautotimeref: self.noautotimeref.into(),
             send_to_srv: value.send_to_srv.into(),
-            encoding: value.enc_cfg.encoding.to_ctype(),
+            encoding: value.enc_cfg.encoding.to_ctype() as _,
             nofontcolor: self.nofontcolor.into(),
             nohtmlescape: self.nohtmlescape.into(),
             millis_separator: self.date_format.millis_separator() as _,
@@ -479,10 +479,10 @@ impl CType<u32> for Encoding {
     /// Convert to C variant of `u32`.
     unsafe fn to_ctype(&self) -> u32 {
         match self {
-            Encoding::Line21 => ccx_encoding_type_CCX_ENC_ASCII,
-            Encoding::Latin1 => ccx_encoding_type_CCX_ENC_LATIN_1,
-            Encoding::Utf8 => ccx_encoding_type_CCX_ENC_UTF_8,
-            Encoding::Ucs2 => ccx_encoding_type_CCX_ENC_UNICODE,
+            Encoding::Line21 => ccx_encoding_type_CCX_ENC_ASCII as _,
+            Encoding::Latin1 => ccx_encoding_type_CCX_ENC_LATIN_1 as _,
+            Encoding::Utf8 => ccx_encoding_type_CCX_ENC_UTF_8 as _,
+            Encoding::Ucs2 => ccx_encoding_type_CCX_ENC_UNICODE as _,
         }
     }
 }
@@ -617,9 +617,9 @@ impl CType<demuxer_cfg> for DemuxerConfig {
     unsafe fn to_ctype(&self) -> demuxer_cfg {
         demuxer_cfg {
             m2ts: self.m2ts as _,
-            auto_stream: self.auto_stream.to_ctype(),
-            codec: self.codec.to_ctype(),
-            nocodec: self.nocodec.to_ctype(),
+            auto_stream: self.auto_stream.to_ctype() as _,
+            codec: self.codec.to_ctype() as _,
+            nocodec: self.nocodec.to_ctype() as _,
             ts_autoprogram: self.ts_autoprogram as _,
             ts_allprogram: self.ts_allprogram as _,
             ts_cappids: self.ts_cappids.to_ctype(),
@@ -637,14 +637,14 @@ impl CType<u32> for SelectCodec {
     unsafe fn to_ctype(&self) -> u32 {
         match self {
             SelectCodec::Some(codec) => match codec {
-                Codec::Teletext => ccx_code_type_CCX_CODEC_TELETEXT,
-                Codec::Dvb => ccx_code_type_CCX_CODEC_DVB,
-                Codec::IsdbCc => ccx_code_type_CCX_CODEC_ISDB_CC,
-                Codec::AtscCc => ccx_code_type_CCX_CODEC_ATSC_CC,
-                Codec::Any => ccx_code_type_CCX_CODEC_ANY,
+                Codec::Teletext => ccx_code_type_CCX_CODEC_TELETEXT as _,
+                Codec::Dvb => ccx_code_type_CCX_CODEC_DVB as _,
+                Codec::IsdbCc => ccx_code_type_CCX_CODEC_ISDB_CC as _,
+                Codec::AtscCc => ccx_code_type_CCX_CODEC_ATSC_CC as _,
+                Codec::Any => ccx_code_type_CCX_CODEC_ANY as _,
             },
-            SelectCodec::None => ccx_code_type_CCX_CODEC_NONE,
-            SelectCodec::All => ccx_code_type_CCX_CODEC_ANY,
+            SelectCodec::None => ccx_code_type_CCX_CODEC_NONE as _,
+            SelectCodec::All => ccx_code_type_CCX_CODEC_ANY as _,
         }
     }
 }
@@ -658,24 +658,26 @@ impl CType<i32> for StreamType {
 impl CType<u32> for StreamMode {
     unsafe fn to_ctype(&self) -> u32 {
         match self {
-            StreamMode::ElementaryOrNotFound => ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND,
-            StreamMode::Transport => ccx_stream_mode_enum_CCX_SM_TRANSPORT,
-            StreamMode::Program => ccx_stream_mode_enum_CCX_SM_PROGRAM,
-            StreamMode::Asf => ccx_stream_mode_enum_CCX_SM_ASF,
-            StreamMode::McpoodlesRaw => ccx_stream_mode_enum_CCX_SM_MCPOODLESRAW,
-            StreamMode::Rcwt => ccx_stream_mode_enum_CCX_SM_RCWT,
-            StreamMode::Myth => ccx_stream_mode_enum_CCX_SM_MYTH,
-            StreamMode::Mp4 => ccx_stream_mode_enum_CCX_SM_MP4,
+            StreamMode::ElementaryOrNotFound => {
+                ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND as _
+            }
+            StreamMode::Transport => ccx_stream_mode_enum_CCX_SM_TRANSPORT as _,
+            StreamMode::Program => ccx_stream_mode_enum_CCX_SM_PROGRAM as _,
+            StreamMode::Asf => ccx_stream_mode_enum_CCX_SM_ASF as _,
+            StreamMode::McpoodlesRaw => ccx_stream_mode_enum_CCX_SM_MCPOODLESRAW as _,
+            StreamMode::Rcwt => ccx_stream_mode_enum_CCX_SM_RCWT as _,
+            StreamMode::Myth => ccx_stream_mode_enum_CCX_SM_MYTH as _,
+            StreamMode::Mp4 => ccx_stream_mode_enum_CCX_SM_MP4 as _,
             #[cfg(feature = "wtv_debug")]
-            StreamMode::HexDump => ccx_stream_mode_enum_CCX_SM_HEX_DUMP,
-            StreamMode::Wtv => ccx_stream_mode_enum_CCX_SM_WTV,
+            StreamMode::HexDump => ccx_stream_mode_enum_CCX_SM_HEX_DUMP as _,
+            StreamMode::Wtv => ccx_stream_mode_enum_CCX_SM_WTV as _,
             #[cfg(feature = "enable_ffmpeg")]
-            StreamMode::Ffmpeg => ccx_stream_mode_enum_CCX_SM_FFMPEG,
-            StreamMode::Gxf => ccx_stream_mode_enum_CCX_SM_GXF,
-            StreamMode::Mkv => ccx_stream_mode_enum_CCX_SM_MKV,
-            StreamMode::Mxf => ccx_stream_mode_enum_CCX_SM_MXF,
-            StreamMode::Autodetect => ccx_stream_mode_enum_CCX_SM_AUTODETECT,
-            _ => ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND,
+            StreamMode::Ffmpeg => ccx_stream_mode_enum_CCX_SM_FFMPEG as _,
+            StreamMode::Gxf => ccx_stream_mode_enum_CCX_SM_GXF as _,
+            StreamMode::Mkv => ccx_stream_mode_enum_CCX_SM_MKV as _,
+            StreamMode::Mxf => ccx_stream_mode_enum_CCX_SM_MXF as _,
+            StreamMode::Autodetect => ccx_stream_mode_enum_CCX_SM_AUTODETECT as _,
+            _ => ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND as _,
         }
     }
 }
