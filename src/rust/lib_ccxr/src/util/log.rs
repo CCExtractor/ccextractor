@@ -40,11 +40,12 @@ use std::sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 static LOGGER: OnceLock<RwLock<CCExtractorLogger>> = OnceLock::new();
 
 /// The possible targets for logging messages.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OutputTarget {
-    Stdout,
-    Stderr,
-    Quiet,
+    #[default]
+    Quiet = 0,
+    Stdout = 1,
+    Stderr = 2,
 }
 
 bitflags! {
@@ -53,7 +54,7 @@ bitflags! {
     /// Each debug message can belong to one or more of these types. The
     /// constants of this struct can be used as bitflags for one message to
     /// belong to more than one type.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    #[derive(Default, Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct DebugMessageFlag: u16 {
         /// Show information related to parsing the container
         const PARSE          = 0x1;
@@ -136,7 +137,7 @@ pub enum GuiXdsMessage<'a> {
 ///
 /// This operates on one of the two modes: Normal Mode and Debug Mode. The mask used when in Debug Mode is a superset
 /// of the mask used when in Normal Mode. One can switch between the two modes by [`DebugMessageMask::set_debug_mode`].
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct DebugMessageMask {
     debug_mode: bool,
     mask_on_normal: DebugMessageFlag,
@@ -188,6 +189,14 @@ impl DebugMessageMask {
         } else {
             self.mask_on_normal
         }
+    }
+    /// Return the mask according to its mode.
+    pub fn normal_mask(&self) -> DebugMessageFlag {
+        self.mask_on_debug
+    }
+    /// Return the mask according to its mode.
+    pub fn debug_mask(&self) -> DebugMessageFlag {
+        self.mask_on_normal
     }
 }
 

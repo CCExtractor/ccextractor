@@ -19,7 +19,7 @@ extern "C" {
 /// Represents a timestamp in milliseconds.
 ///
 /// The number can be negetive.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Add, Sub, Neg)]
+#[derive(Default, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Add, Sub, Neg)]
 pub struct Timestamp {
     millis: i64,
 }
@@ -40,6 +40,7 @@ pub enum TimestampError {
 }
 
 /// Represents the different string formats for [`Timestamp`].
+#[derive(Default, Debug, PartialEq, Clone, Copy)]
 pub enum TimestampFormat {
     /// Format: blank string.
     ///
@@ -50,6 +51,7 @@ pub enum TimestampFormat {
     /// let output = timestamp.to_formatted_time(TimestampFormat::None).unwrap();
     /// assert_eq!(output, "");
     /// ```
+    #[default]
     None,
 
     /// Format: `{hour:02}:{minute:02}:{second:02}`.
@@ -105,6 +107,17 @@ pub enum TimestampFormat {
     /// assert_eq!(output, "01:48:44,365");
     /// ```
     HHMMSSFFF,
+}
+
+impl TimestampFormat {
+    /// Returns the millis_separator for the TimestampFormat
+    pub fn millis_separator(&self) -> char {
+        match self {
+            TimestampFormat::Seconds { millis_separator } => *millis_separator,
+            TimestampFormat::Date { millis_separator } => *millis_separator,
+            _ => ',',
+        }
+    }
 }
 
 impl Timestamp {

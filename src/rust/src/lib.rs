@@ -30,15 +30,18 @@ use std::{io::Write, os::raw::c_char, os::raw::c_int};
 use args::Args;
 use bindings::*;
 use clap::{error::ErrorKind, Parser};
-use common::{CcxOptions, CcxTeletextConfig};
+use common::{CType2, FromRust};
 use decoder::Dtvcc;
+use lib_ccxr::{
+    common::{Options, TeletextConfig},
+    util::log::ExitCause,
+};
+use parser::OptionsExt;
 use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
 use std::ffi::CStr;
-
-use crate::common::ExitCode;
 
 extern "C" {
     static mut cb_708: c_int;
@@ -212,7 +215,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
         .collect::<Vec<String>>();
 
     if args.len() <= 1 {
-        return ExitCode::NoInputFiles as _;
+        return ExitCause::NoInputFiles as _;
     }
 
     let args: Args = match Args::try_parse_from(args) {
@@ -224,11 +227,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
                 ErrorKind::DisplayHelp => {
                     // Print the help string
                     println!("{}", e);
-                    return ExitCode::WithHelp as _;
+                    return ExitCause::WithHelp as _;
                 }
                 ErrorKind::DisplayVersion => {
                     version(*argv);
-                    return ExitCode::WithHelp as _;
+                    return ExitCause::WithHelp as _;
                 }
                 ErrorKind::UnknownArgument => {
                     println!("Unknown Argument");
@@ -243,13 +246,14 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
         }
     };
 
-    let mut opt = CcxOptions::default();
-    let mut _tlt_config = CcxTeletextConfig::default();
+    let mut opt = Options::default();
+    // let mut opt = Options::from_ccx_options(&args);
+    let mut _tlt_config = TeletextConfig::default();
 
     opt.parse_parameters(&args, &mut _tlt_config);
-    tlt_config = _tlt_config.to_ctype();
+    tlt_config = _tlt_config.to_ctype(&opt);
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    opt.to_ctype(_options);
+    _options.from_rust(opt);
 
     0
 }

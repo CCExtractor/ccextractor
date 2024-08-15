@@ -1,10 +1,13 @@
 use std::ffi::OsStr;
 
+use strum_macros::{EnumString, FromRepr};
+
 pub const DTVCC_MAX_SERVICES: usize = 63;
 
 /// An enum of all the available formats for the subtitle output.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum OutputFormat {
+    #[default]
     Raw,
     Srt,
     Sami,
@@ -187,7 +190,9 @@ pub enum AvcNalType {
 }
 
 // MPEG-2 TS stream types
+#[derive(Default, Debug, PartialEq, Eq, FromRepr, Clone, Copy)]
 pub enum StreamType {
+    #[default]
     Unknownstream = 0,
     /*
     The later constants are defined by MPEG-TS standard
@@ -232,14 +237,18 @@ pub enum MpegDescriptor {
     DataComp = 0xfd, // Consider to change DESC to DSC
 }
 
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DataSource {
+    #[default]
     File,
     Stdin,
     Network,
     Tcp,
 }
 
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum StreamMode {
+    #[default]
     ElementaryOrNotFound = 0,
     Transport = 1,
     Program = 2,
@@ -274,16 +283,7 @@ pub enum BufferdataType {
     DvdSubtitle,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum FrameType {
-    ResetOrUnknown,
-    IFrame,
-    PFrame,
-    BFrame,
-    DFrame,
-}
-
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Codec {
     Any,
     Teletext,
@@ -292,9 +292,11 @@ pub enum Codec {
     AtscCc,
 }
 
+#[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum SelectCodec {
     All,
     Some(Codec),
+    #[default]
     None,
 }
 
@@ -322,7 +324,10 @@ pub enum CcxTxt {
     InUse = 2, // Positive auto-detected, or forced, etc
 }
 
+#[derive(Debug, Default, EnumString, Clone, Copy, PartialEq, Eq)]
+#[strum(serialize_all = "lowercase")]
 pub enum Language {
+    #[default]
     Und, // Undefined
     Eng,
     Afr,

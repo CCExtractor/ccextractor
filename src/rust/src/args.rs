@@ -361,14 +361,14 @@ pub struct Args {
     /// by its type (pick the stream that has this type in
     /// the PMT)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub datastreamtype: Option<String>,
+    pub datastreamtype: Option<u16>,
     /// Assume the data is of this type, don't autodetect. This
     /// parameter may be needed if --datapid or --datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub streamtype: Option<String>,
+    pub streamtype: Option<u16>,
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
     /// force the special treatment.
@@ -558,8 +558,8 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub xmltvoutputinterval: Option<String>,
     /// Only print current events for xmltv output.
-    #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub xmltvonlycurrent: Option<String>,
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub xmltvonlycurrent: bool,
     /// Create a .sem file for each output file that is open
     /// and delete it on file close.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -586,7 +586,7 @@ pub struct Args {
     /// 1: Use CCExtractor's internal function (default).
     /// 2: Reduce distinct color count in image for faster results.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub quant: Option<i32>,
+    pub quant: Option<u8>,
     /// Select the OEM mode for Tesseract.
     /// Available modes :
     /// 0: OEM_TESSERACT_ONLY - the fastest mode.
@@ -596,7 +596,7 @@ pub struct Args {
     /// Tesseract v3 : default mode is 0,
     /// Tesseract v4 : default mode is 1.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub oem: Option<i32>,
+    pub oem: Option<u8>,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic
@@ -697,13 +697,13 @@ pub struct Args {
     /// --codec teletext
     ///     select the teletext subtitle from elementary stream
     #[arg(long, verbatim_doc_comment, value_name="value", help_heading=OUTPUT_AFFECTING_CODEC)]
-    pub codec: Option<Codec>,
+    pub codec: Option<CCXCodec>,
     /// --no-codec dvbsub
     ///     ignore dvb subtitle and follow default behaviour
     /// --no-codec teletext
     ///     ignore teletext subtitle
     #[arg(long, verbatim_doc_comment, conflicts_with="codec", value_name="value", help_heading=OUTPUT_AFFECTING_CODEC)]
-    pub no_codec: Option<Codec>,
+    pub no_codec: Option<CCXCodec>,
     /// Write this text as start credits. If there are
     /// several lines, separate them with the
     /// characters \n, for example Line1\nLine 2.
@@ -928,7 +928,7 @@ pub struct Args {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Codec {
+pub enum CCXCodec {
     Dvbsub,
     Teletext,
 }
@@ -1004,6 +1004,7 @@ pub enum OutFormat {
     /// Prints to stdout information about captions in specified input.
     /// Don't produce any file output.
     Report,
+    SimpleXml,
     #[cfg(feature = "with_libcurl")]
     /// POST plain transcription frame-by-frame to a
     /// URL specified by --curlposturl. Don't produce

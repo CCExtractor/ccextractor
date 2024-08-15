@@ -18,6 +18,8 @@
 
 mod constants;
 mod options;
+mod teletext;
 
 pub use constants::*;
 pub use options::*;
+pub use teletext::*;

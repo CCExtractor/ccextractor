@@ -39,11 +39,12 @@
 //! | `utf8_to_latin1_map`                    | [`char_to_ucs2`], [`ucs2_to_latin1`] |
 
 /// Represents the different kinds of encoding that [`EncodedString`] can take.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Default, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Encoding {
     Line21, // Same as `CCX_ENC_ASCII` in C
     Latin1, // Same as `CCX_ENC_LATIN_1` in C
-    Utf8,   // Same as `CCX_ENC_UTF_8` in C
+    #[default]
+    Utf8, // Same as `CCX_ENC_UTF_8` in C
     Ucs2,   // Same as `CCX_ENC_UNICODE` in C
 }
 
