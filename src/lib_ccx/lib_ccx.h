@@ -154,7 +154,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
 
 #ifndef DISABLE_RUST
-extern void ccxr_init_basic_logger(struct ccx_s_options *opts);
+extern void ccxr_init_basic_logger();
 #endif
 
 //ccextractor.c
