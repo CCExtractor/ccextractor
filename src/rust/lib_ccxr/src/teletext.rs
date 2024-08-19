@@ -335,7 +335,7 @@ impl G0LatinNationalSubset {
         let lang_index: u8 = (*self).into();
         Self::G0_LATIN_NATIONAL_SUBSETS_POSITIONS
             .into_iter()
-            .zip(Self::G0_LATIN_NATIONAL_SUBSETS[lang_index as usize].into_iter())
+            .zip(Self::G0_LATIN_NATIONAL_SUBSETS[lang_index as usize])
     }
 }
 
