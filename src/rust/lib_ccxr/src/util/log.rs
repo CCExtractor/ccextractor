@@ -30,6 +30,7 @@
 //! | `dbg_print`, `ccx_common_logging.debug_ftn`                                                                                              | [`debug!`]                  |
 //! | `activity_library_process`, `ccx_common_logging.gui_ftn`                                                                                 | [`send_gui`]                |
 //! | `ccx_common_logging_gui`                                                                                                                 | [`GuiXdsMessage`]           |
+//! | `dump`                                                                                                                                   | [`hex_dump`]                |
 //! | `dump`                                                                                                                                   | [`hex_dump_with_start_idx`] |
 
 use bitflags::bitflags;

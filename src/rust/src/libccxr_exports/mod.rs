@@ -1,14 +1,13 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
+pub mod time;
 use crate::ccx_options;
 use lib_ccxr::util::c_functions::*;
 use lib_ccxr::util::log::*;
+use lib_ccxr::util::{bits::*, levenshtein::*};
+
 use std::convert::TryInto;
 use std::os::raw::{c_char, c_int, c_uint};
-
-mod time;
-
-pub use time::*;
 
 /// Initializes the logger at the rust side.
 ///
