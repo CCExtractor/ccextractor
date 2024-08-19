@@ -259,7 +259,6 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
     };
 
     let mut opt = Options::default();
-    // let mut opt = Options::from_ccx_options(&args);
     let mut _tlt_config = TeletextConfig::default();
 
     opt.parse_parameters(&args, &mut _tlt_config);
