@@ -1636,7 +1636,7 @@ impl<'a> TeletextContext<'a> {
 ///
 /// # Examples
 /// ```
-/// # use lib_ccxr::util::fuzzy_cmp;
+/// # use lib_ccxr::teletext::fuzzy_cmp;
 /// # use lib_ccxr::util::log::*;
 /// # let mask = DebugMessageMask::new(DebugMessageFlag::LEVENSHTEIN, DebugMessageFlag::LEVENSHTEIN);
 /// # set_logger(CCExtractorLogger::new(OutputTarget::Quiet, mask, false));
