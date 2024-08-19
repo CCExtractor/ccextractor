@@ -3,8 +3,8 @@
 //! NOTE: This module is incomplete and a lot of work is still left.
 
 use crate::common::Language;
+use crate::time::units::Timestamp;
 use crate::util::encoding::EncodedString;
-use crate::util::time::Timestamp;
 
 /// Represents the different formats in which subtitle data could be stored.
 ///

@@ -39,10 +39,11 @@ use std::sync::RwLock;
 
 use crate::common::OutputFormat;
 use crate::subtitle::Subtitle;
+use crate::time::units::{Timestamp, TimestampFormat};
+use crate::util::bits::{decode_hamming_24_18, decode_hamming_8_4, get_parity};
 use crate::util::encoding::{Ucs2Char, Ucs2String};
+use crate::util::levenshtein::levenshtein;
 use crate::util::log::{debug, info, logger, DebugMessageFlag};
-use crate::util::time::{Timestamp, TimestampFormat};
-use crate::util::{decode_hamming_24_18, decode_hamming_8_4, levenshtein, parity};
 
 /// UTC referential value.
 ///
@@ -453,7 +454,7 @@ impl G0Charset {
     /// Return the equivalent UCS-2 character for the given teletext character based on the current
     /// character set.
     pub fn ucs2_char(&self, telx_char: u8) -> Ucs2Char {
-        if parity(telx_char) {
+        if get_parity(telx_char) {
             debug!(msg_type = DebugMessageFlag::TELETEXT; "- Unrecoverable data error; PARITY({:02x})\n", telx_char);
             return 0x20;
         }

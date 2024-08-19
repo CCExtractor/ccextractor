@@ -55,13 +55,13 @@ extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
-    static mut ccx_options: ccx_s_options;
 }
 
 #[allow(dead_code)]
 extern "C" {
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
+    static mut ccx_options: ccx_s_options;
 }
 
 /// Initialize env logger with custom format, using stdout as target
