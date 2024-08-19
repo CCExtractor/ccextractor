@@ -486,7 +486,7 @@ impl CType<demuxer_cfg> for DemuxerConfig {
             ts_cappids: self.ts_cappids.to_ctype(),
             nb_ts_cappid: self.ts_cappids.len() as _,
             ts_forced_cappid: self.ts_forced_cappid as _,
-            ts_forced_program: self.ts_forced_program.unwrap_or_default() as _,
+            ts_forced_program: self.ts_forced_program.unwrap_or(-1) as _,
             ts_forced_program_selected: self.ts_forced_program.is_some() as _,
             ts_datastreamtype: self.ts_datastreamtype.to_ctype() as _,
             ts_forced_streamtype: self.ts_forced_streamtype.to_ctype() as _,

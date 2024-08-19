@@ -157,7 +157,7 @@ pub enum DtvccServiceCharset {
 }
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DemuxerConfig {
     /// Regular TS or M2TS
     pub m2ts: bool,
@@ -175,11 +175,29 @@ pub struct DemuxerConfig {
     /// If 1, never mess with the selected PID
     pub ts_forced_cappid: bool,
     /// Specific program to process in TS files, if a forced program is given
-    pub ts_forced_program: Option<u32>,
+    pub ts_forced_program: Option<i32>,
     /// User WANTED stream type (i.e. use the stream that has this type)
     pub ts_datastreamtype: StreamType,
     /// User selected (forced) stream type
     pub ts_forced_streamtype: StreamType,
+}
+
+impl Default for DemuxerConfig {
+    fn default() -> Self {
+        Self {
+            m2ts: false,
+            auto_stream: StreamMode::default(),
+            codec: SelectCodec::Some(super::Codec::Any),
+            nocodec: SelectCodec::None,
+            ts_autoprogram: false,
+            ts_allprogram: false,
+            ts_cappids: Vec::new(),
+            ts_forced_cappid: false,
+            ts_forced_program: None,
+            ts_datastreamtype: StreamType::default(),
+            ts_forced_streamtype: StreamType::default(),
+        }
+    }
 }
 
 impl Default for EncoderConfig {
