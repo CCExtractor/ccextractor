@@ -724,31 +724,52 @@ pub struct TeletextPage {
 }
 
 /// Settings required to contruct a [`TeletextContext`].
-#[allow(dead_code)]
+#[derive(Debug)]
 pub struct TeletextConfig {
     /// should telxcc logging be verbose?
-    verbose: bool,
+    pub verbose: bool,
     /// teletext page containing cc we want to filter
-    page: Cell<TeletextPageNumber>,
+    pub page: Cell<TeletextPageNumber>,
     /// Page selected by user, which MIGHT be different to `page` depending on autodetection stuff
-    user_page: u16,
+    pub user_page: u16,
     /// false = Don't attempt to correct errors
-    dolevdist: bool,
+    pub dolevdist: bool,
     /// Means 2 fails or less is "the same"
-    levdistmincnt: u8,
+    pub levdistmincnt: u8,
     /// Means 10% or less is also "the same"
-    levdistmaxpct: u8,
+    pub levdistmaxpct: u8,
     /// Segment we actually process
-    extraction_start: Option<Timestamp>,
+    pub extraction_start: Option<Timestamp>,
     /// Segment we actually process
-    extraction_end: Option<Timestamp>,
-    write_format: OutputFormat,
-    date_format: TimestampFormat,
+    pub extraction_end: Option<Timestamp>,
+    pub write_format: OutputFormat,
+    pub date_format: TimestampFormat,
     /// Do NOT set time automatically?
-    noautotimeref: bool,
-    nofontcolor: bool,
-    nohtmlescape: bool,
-    latrusmap: bool,
+    pub noautotimeref: bool,
+    pub nofontcolor: bool,
+    pub nohtmlescape: bool,
+    pub latrusmap: bool,
+}
+
+impl Default for TeletextConfig {
+    fn default() -> Self {
+        Self {
+            verbose: true,
+            page: TeletextPageNumber(0).into(),
+            user_page: 0,
+            dolevdist: false,
+            levdistmincnt: 0,
+            levdistmaxpct: 0,
+            extraction_start: None,
+            extraction_end: None,
+            write_format: OutputFormat::default(),
+            date_format: TimestampFormat::default(),
+            noautotimeref: false,
+            nofontcolor: false,
+            nohtmlescape: false,
+            latrusmap: false,
+        }
+    }
 }
 
 /// Represents the possible states that [`TeletextContext`] can be in.

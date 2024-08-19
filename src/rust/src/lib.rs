@@ -32,10 +32,7 @@ use bindings::*;
 use clap::{error::ErrorKind, Parser};
 use common::{CType2, FromRust};
 use decoder::Dtvcc;
-use lib_ccxr::{
-    common::{Options, TeletextConfig},
-    util::log::ExitCause,
-};
+use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
 use parser::OptionsExt;
 use utils::is_true;
 

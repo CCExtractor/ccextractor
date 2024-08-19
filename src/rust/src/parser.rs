@@ -1,4 +1,5 @@
 use args::{Args, OutFormat};
+use lib_ccxr::teletext::{TeletextConfig, TeletextPageNumber};
 use lib_ccxr::time::units::{Timestamp, TimestampFormat};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputTarget};
