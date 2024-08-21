@@ -1193,7 +1193,7 @@ impl OptionsExt for Options {
 
         if let Some(ref datastreamtype) = args.datastreamtype {
             if let Some(streamType) =
-                StreamType::from_repr(get_atoi_hex::<usize>(&*datastreamtype.to_string()).into())
+                StreamType::from_repr(get_atoi_hex::<usize>(&datastreamtype.to_string()))
             {
                 self.demux_cfg.ts_datastreamtype = streamType;
             } else {
@@ -1206,7 +1206,7 @@ impl OptionsExt for Options {
 
         if let Some(ref streamtype) = args.streamtype {
             if let Some(streamType) =
-                StreamType::from_repr(get_atoi_hex::<usize>(&*streamtype.to_string()).into())
+                StreamType::from_repr(get_atoi_hex::<usize>(&streamtype.to_string()))
             {
                 self.demux_cfg.ts_forced_streamtype = streamType;
             } else {
