@@ -1192,14 +1192,29 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref datastreamtype) = args.datastreamtype {
-            self.demux_cfg.ts_datastreamtype =
-                StreamType::from_repr((*datastreamtype).into()).unwrap_or_default();
-            // TODO: Should I panick?
+            if let Some(streamType) =
+                StreamType::from_repr(get_atoi_hex::<usize>(&*datastreamtype.to_string()).into())
+            {
+                self.demux_cfg.ts_datastreamtype = streamType;
+            } else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid data stream type"
+                );
+            }
         }
 
         if let Some(ref streamtype) = args.streamtype {
-            self.demux_cfg.ts_forced_streamtype =
-                StreamType::from_repr((*streamtype).into()).unwrap_or_default();
+            if let Some(streamType) =
+                StreamType::from_repr(get_atoi_hex::<usize>(&*streamtype.to_string()).into())
+            {
+                self.demux_cfg.ts_forced_streamtype = streamType;
+            } else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid stream type"
+                );
+            }
         }
 
         if let Some(ref tpage) = args.tpage {
@@ -1391,7 +1406,6 @@ impl OptionsExt for Options {
 
         if let Some(ref font) = args.font {
             self.enc_cfg.render_font = PathBuf::from_str(font).unwrap_or_default();
-            // TODO: Check if Panic on wrong path
         }
 
         if let Some(ref italics) = args.italics {
@@ -2003,7 +2017,7 @@ pub mod tests {
     fn options_9() {
         let (options, _) = parse_args(&[
             "--datastreamtype",
-            "2",
+            "0x2",
             "--streamtype",
             "2",
             "--no-autotimeref",

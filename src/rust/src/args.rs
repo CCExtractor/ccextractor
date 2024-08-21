@@ -361,14 +361,14 @@ pub struct Args {
     /// by its type (pick the stream that has this type in
     /// the PMT)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub datastreamtype: Option<u16>,
+    pub datastreamtype: Option<String>,
     /// Assume the data is of this type, don't autodetect. This
     /// parameter may be needed if --datapid or --datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub streamtype: Option<u16>,
+    pub streamtype: Option<String>,
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
     /// force the special treatment.
