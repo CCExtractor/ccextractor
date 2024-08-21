@@ -1,3 +1,4 @@
+pub mod activity;
 pub mod common;
 pub mod hardsubx;
 pub mod subtitle;

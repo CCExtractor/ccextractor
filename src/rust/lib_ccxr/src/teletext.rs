@@ -41,6 +41,7 @@ use crate::common::OutputFormat;
 use crate::subtitle::Subtitle;
 use crate::time::units::{Timestamp, TimestampFormat};
 use crate::util::bits::{decode_hamming_24_18, decode_hamming_8_4, get_parity};
+use crate::util::encoders_helper::telx_correct_case;
 use crate::util::encoding::{Ucs2Char, Ucs2String};
 use crate::util::levenshtein::levenshtein;
 use crate::util::log::{debug, info, logger, DebugMessageFlag};
@@ -879,7 +880,7 @@ impl<'a> TeletextContext<'a> {
     ///
     /// This method will convert the first character of a sentence to uppercase and the rest of the
     /// characters to lowercase.
-    fn telx_case_fix(&mut self) {
+    fn telx_case_fix(&mut self, capitalization_list: &[String]) {
         let page_buffer_cur = match self.page_buffer_cur.as_mut() {
             None => return,
             Some(p) => p,
@@ -916,7 +917,7 @@ impl<'a> TeletextContext<'a> {
 
         *page_buffer_cur = fixed_string;
 
-        todo!() // TODO: telx_correct_case(page_buffer_cur);
+        telx_correct_case(page_buffer_cur, capitalization_list);
     }
 
     /// Reset the page buffers and return its contents in the form of a [`Subtitle`].
@@ -938,7 +939,7 @@ impl<'a> TeletextContext<'a> {
         ))
     }
 
-    fn process_page(&mut self) -> Option<Subtitle> {
+    fn process_page(&mut self, capitalization_list: &[String]) -> Option<Subtitle> {
         let mut ans = None;
 
         if self
@@ -1170,7 +1171,7 @@ impl<'a> TeletextContext<'a> {
         }
 
         if self.sentence_cap {
-            self.telx_case_fix()
+            self.telx_case_fix(capitalization_list)
         }
 
         match self.config.write_format {
@@ -1241,6 +1242,7 @@ impl<'a> TeletextContext<'a> {
         packet: &TeletextPacketPayload,
         timestamp: Timestamp,
         subtitles: &mut Vec<Subtitle>,
+        capitalization_list: &[String],
     ) {
         // variable names conform to ETS 300 706, chapter 7.1.2
         let address = (decode_hamming_8_4(packet.address[1]).unwrap() << 4)
@@ -1362,7 +1364,7 @@ impl<'a> TeletextContext<'a> {
                 if self.page_buffer.hide_timestamp > timestamp {
                     self.page_buffer.hide_timestamp = Timestamp::from_millis(0);
                 }
-                if let Some(sub) = self.process_page() {
+                if let Some(sub) = self.process_page(capitalization_list) {
                     subtitles.push(sub);
                 }
                 self.de_ctr = 0;
@@ -1593,7 +1595,7 @@ impl<'a> TeletextContext<'a> {
     }
 
     /// Consumes the [`TeletextContext`] and appends the pending extracted subtitles in `subtitles`.
-    pub fn close(mut self, subtitles: Option<&mut Vec<Subtitle>>) {
+    pub fn close(mut self, subtitles: Option<&mut Vec<Subtitle>>, capitalization_list: &[String]) {
         info!(
             "\nTeletext decoder: {} packets processed \n",
             self.tlt_packet_counter
@@ -1616,7 +1618,7 @@ impl<'a> TeletextContext<'a> {
                     }
                     // this time we do not subtract any frames, there will be no more frames
                     self.page_buffer.hide_timestamp = self.last_timestamp;
-                    if let Some(sub) = self.process_page() {
+                    if let Some(sub) = self.process_page(capitalization_list) {
                         subtitles.push(sub);
                     }
                 }

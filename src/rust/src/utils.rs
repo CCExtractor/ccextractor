@@ -44,21 +44,21 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 
 pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
-    let mut cstr_vec: Vec<CString> = vec![];
-    for s in strs {
-        let cstr = CString::new(s.as_str()).unwrap();
-        cstr_vec.push(cstr);
-    }
-    cstr_vec.shrink_to_fit();
+    let cstr_vec: Vec<CString> = strs
+        .iter()
+        .map(|s| CString::new(s.as_str()).unwrap())
+        .collect();
+    let c_char_vec: Vec<*mut c_char> = cstr_vec
+        .iter()
+        .map(|s| {
+            if s.as_bytes().is_empty() {
+                null_pointer()
+            } else {
+                s.as_ptr() as *mut c_char
+            }
+        })
+        .collect();
 
-    let mut c_char_vec: Vec<*const c_char> = vec![];
-    for s in &cstr_vec {
-        if s.as_bytes().is_empty() {
-            c_char_vec.push(null_pointer());
-            continue;
-        }
-        c_char_vec.push(s.as_ptr());
-    }
     let ptr = c_char_vec.as_ptr();
 
     std::mem::forget(cstr_vec);

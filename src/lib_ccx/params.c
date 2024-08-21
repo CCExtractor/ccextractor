@@ -601,7 +601,7 @@ void print_usage(void)
 	mprint("                       white). This causes all output in .srt/.smi/.vtt\n");
 	mprint("                       files to have a font tag, which makes the files\n");
 	mprint("                       larger. Add the color you want in RGB, such as\n");
-	mprint("                       --dc #FF0000 for red.\n");
+	mprint("                       --defaultcolor #FF0000 for red.\n");
 	mprint("         --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint("                       ALL CAPS in subtitles.\n");
 	mprint("        --capfile file: Add the contents of 'file' to the list of words\n");

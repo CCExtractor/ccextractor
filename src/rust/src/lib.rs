@@ -12,9 +12,8 @@
 pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
-pub mod activity;
+
 pub mod args;
-pub mod ccx_encoders_helpers;
 pub mod common;
 pub mod decoder;
 #[cfg(feature = "hardsubx_ocr")]
@@ -56,6 +55,8 @@ extern "C" {
 
 #[allow(dead_code)]
 extern "C" {
+    static mut usercolor_rgb: [c_int; 8];
+    static mut FILEBUFFERSIZE: c_int;
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
@@ -208,11 +209,8 @@ extern "C" {
 ///
 /// Parse parameters from argv and argc
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_parse_parameters(
-    mut _options: *mut ccx_s_options,
-    argc: c_int,
-    argv: *mut *mut c_char,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_char) -> c_int {
+    ccxr_init_logger();
     // Convert argv to Vec<String> and pass it to parse_parameters
     let args = std::slice::from_raw_parts(argv, argc as usize)
         .iter()
@@ -246,25 +244,33 @@ pub unsafe extern "C" fn ccxr_parse_parameters(
                 ErrorKind::UnknownArgument => {
                     println!("Unknown Argument");
                     println!("{}", e);
-                    return 1;
+                    return ExitCause::MalformedParameter.exit_code();
                 }
                 _ => {
                     println!("{}", e);
-                    return 1;
+                    return ExitCause::Failure.exit_code();
                 }
             }
         }
     };
 
+    let mut capitalization_list: Vec<String> = Vec::new();
+    let mut profane: Vec<String> = Vec::new();
+
     let mut opt = Options::default();
     let mut _tlt_config = TeletextConfig::default();
 
-    opt.parse_parameters(&args, &mut _tlt_config);
+    opt.parse_parameters(
+        &args,
+        &mut _tlt_config,
+        &mut capitalization_list,
+        &mut profane,
+    );
     tlt_config = _tlt_config.to_ctype(&opt);
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    _options.copy_from_rust(opt);
+    ccx_options.copy_from_rust(opt);
 
-    0
+    ExitCause::Ok.exit_code()
 }
 
 #[cfg(test)]

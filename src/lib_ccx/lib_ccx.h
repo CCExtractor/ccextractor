@@ -162,7 +162,7 @@ void print_end_msg(void);
 
 //params.c
 #ifndef DISABLE_RUST
-extern int ccxr_parse_parameters(struct ccx_s_options *opt, int argc, char *argv[]);
+extern int ccxr_parse_parameters(int argc, char *argv[]);
 #endif
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void print_usage (void);

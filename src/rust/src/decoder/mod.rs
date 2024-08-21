@@ -10,9 +10,12 @@ mod timing;
 mod tv_screen;
 mod window;
 
-use crate::{bindings::*, utils::is_true};
+use lib_ccxr::{
+    debug, fatal,
+    util::log::{DebugMessageFlag, ExitCause},
+};
 
-use log::{debug, warn};
+use crate::{bindings::*, utils::is_true};
 
 const CCX_DTVCC_MAX_PACKET_LENGTH: u8 = 128;
 const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
@@ -71,10 +74,10 @@ impl<'a> Dtvcc<'a> {
             // type 0 and 1 are for CEA 608 data and are handled before calling this function
             // valid types for CEA 708 data are only 2 and 3
             2 => {
-                debug!("dtvcc_process_data: DTVCC Channel Packet Data");
+                debug!( msg_type = DebugMessageFlag::DECODER_708; "dtvcc_process_data: DTVCC Channel Packet Data");
                 if cc_valid == 1 && self.is_header_parsed {
                     if self.packet_length > 253 {
-                        warn!("dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
+                        debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_data: Warning: Legal packet size exceeded (1), data not added.");
                     } else {
                         self.add_data_to_packet(data1, data2);
 
@@ -95,13 +98,13 @@ impl<'a> Dtvcc<'a> {
                 }
             }
             3 => {
-                debug!("dtvcc_process_data: DTVCC Channel Packet Start");
+                debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_data: DTVCC Channel Packet Start");
                 if cc_valid == 1 {
                     if self.packet_length > (CCX_DTVCC_MAX_PACKET_LENGTH - 1) {
-                        warn!("dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
+                        debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_data: Warning: Legal packet size exceeded (2), data not added.");
                     } else {
                         if self.is_header_parsed {
-                            warn!("dtvcc_process_data: Warning: Incorrect packet length specified. Packet will be skipped.");
+                            debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_data: Warning: Incorrect packet length specified. Packet will be skipped.");
                             self.clear_packet();
                         }
                         self.add_data_to_packet(data1, data2);
@@ -109,7 +112,7 @@ impl<'a> Dtvcc<'a> {
                     }
                 }
             }
-            _ => warn!(
+            _ => fatal!(cause = ExitCause::Bug;
                 "dtvcc_process_data: shouldn't be here - cc_type: {}",
                 cc_type
             ),
@@ -126,6 +129,7 @@ impl<'a> Dtvcc<'a> {
     pub fn process_current_packet(&mut self, len: u8) {
         let seq = (self.packet[0] & 0xC0) >> 6;
         debug!(
+            msg_type = DebugMessageFlag::DECODER_708;
             "dtvcc_process_current_packet: Sequence: {}, packet length: {}",
             seq, len
         );
@@ -138,7 +142,7 @@ impl<'a> Dtvcc<'a> {
         if self.last_sequence != CCX_DTVCC_NO_LAST_SEQUENCE
             && (self.last_sequence + 1) % 4 != seq as i32
         {
-            warn!("dtvcc_process_current_packet: Unexpected sequence number, it is {} but should be {}", seq, (self.last_sequence +1) % 4);
+            debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_current_packet: Unexpected sequence number, it is {} but should be {}", seq, (self.last_sequence +1) % 4);
         }
         self.last_sequence = seq as i32;
 
@@ -146,7 +150,7 @@ impl<'a> Dtvcc<'a> {
         while pos < len {
             let mut service_number = (self.packet[pos as usize] & 0xE0) >> 5; // 3 more significant bits
             let block_length = self.packet[pos as usize] & 0x1F; // 5 less significant bits
-            debug!("dtvcc_process_current_packet: Standard header Service number: {}, Block length: {}", service_number, block_length);
+            debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_current_packet: Standard header Service number: {}, Block length: {}", service_number, block_length);
 
             if service_number == 7 {
                 // There is an extended header
@@ -154,7 +158,7 @@ impl<'a> Dtvcc<'a> {
                 pos += 1;
                 service_number = self.packet[pos as usize] & 0x3F; // 6 more significant bits
                 if service_number > 7 {
-                    warn!("dtvcc_process_current_packet: Illegal service number in extended header: {}", service_number);
+                    debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_current_packet: Illegal service number in extended header: {}", service_number);
                 }
             }
 
@@ -187,7 +191,7 @@ impl<'a> Dtvcc<'a> {
 
         if len < 128 && self.packet[pos as usize] != 0 {
             // Null header is mandatory if there is room
-            warn!("dtvcc_process_current_packet: Warning: Null header expected but not found.");
+            debug!(msg_type = DebugMessageFlag::DECODER_708;"dtvcc_process_current_packet: Warning: Null header expected but not found.");
         }
     }
     /// Clear current packet

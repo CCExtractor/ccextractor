@@ -472,7 +472,7 @@ pub struct Args {
     /// white). This causes all output in .srt/.smi/.vtt
     /// files to have a font tag, which makes the files
     /// larger. Add the color you want in RGB, such as
-    /// --dc #FF0000 for red.
+    /// --defaultcolor #FF0000 for red.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate

@@ -11,6 +11,7 @@
 //! | `levenshtein_dist`, levenshtein_dist_char` | [`levenshtein`](levenshtein()) |
 
 pub mod bits;
+pub mod encoders_helper;
 pub mod encoding;
 pub mod levenshtein;
 pub mod log;
