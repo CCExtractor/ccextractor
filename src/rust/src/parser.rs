@@ -23,13 +23,12 @@ use time::OffsetDateTime;
 
 use crate::args::CCXCodec;
 use crate::args::{self, InFormat};
-use crate::{usercolor_rgb, FILEBUFFERSIZE};
 
 cfg_if! {
     if #[cfg(test)] {
-        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ};
+        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
     } else {
-        use crate::{set_binary_mode, MPEG_CLOCK_FREQ};
+        use crate::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
     }
 }
 
@@ -54,6 +53,12 @@ fn set_usercolor_rgb(color: &str) {
     rgb[7] = 0;
     unsafe {
         usercolor_rgb = rgb;
+    }
+}
+
+fn set_mpeg_clock_freq(freq: i32) {
+    unsafe {
+        MPEG_CLOCK_FREQ = freq as _;
     }
 }
 
@@ -869,9 +874,7 @@ impl OptionsExt for Options {
         }
 
         if args.mpeg90090 {
-            unsafe {
-                MPEG_CLOCK_FREQ = 90090;
-            }
+            set_mpeg_clock_freq(90090);
         }
         if args.no_scte20 {
             self.noscte20 = true;
@@ -1657,6 +1660,8 @@ pub mod tests {
     #[no_mangle]
     pub unsafe extern "C" fn set_binary_mode() {}
     pub static mut MPEG_CLOCK_FREQ: u64 = 0;
+    pub static mut FILEBUFFERSIZE: i32 = 0;
+    pub static mut usercolor_rgb: [i32; 8] = [0; 8];
 
     fn parse_args(args: &[&str]) -> (Options, TeletextConfig) {
         let mut common_args = vec!["./ccextractor", "input_file"];

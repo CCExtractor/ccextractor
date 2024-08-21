@@ -237,12 +237,20 @@ impl PartialEq for dtvcc_symbol {
 
 #[cfg(test)]
 mod test {
+    use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+
     use crate::utils::get_zero_allocated_obj;
 
     use super::*;
 
     #[test]
     fn test_process_cc_data() {
+        set_logger(CCExtractorLogger::new(
+            OutputTarget::Stdout,
+            DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
+            false,
+        ))
+        .ok();
         let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
@@ -286,6 +294,12 @@ mod test {
 
     #[test]
     fn test_process_current_packet() {
+        set_logger(CCExtractorLogger::new(
+            OutputTarget::Stdout,
+            DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
+            false,
+        ))
+        .ok();
         let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 

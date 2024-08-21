@@ -210,7 +210,6 @@ extern "C" {
 /// Parse parameters from argv and argc
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_char) -> c_int {
-    ccxr_init_logger();
     // Convert argv to Vec<String> and pass it to parse_parameters
     let args = std::slice::from_raw_parts(argv, argc as usize)
         .iter()
