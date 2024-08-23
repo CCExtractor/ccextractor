@@ -395,8 +395,11 @@ void print_usage(void)
 	mprint("            --tcp-description description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
 	mprint("Options that affect what will be processed:\n");
-	mprint("      --output-field 1 / 2 / both: Output Field 1 data, Field 2 data, or both\n");
-	mprint("                       (DEFAULT is 1)\n");
+	mprint("      --output-field 1 / 2 / both:\n");
+	mprint("                       				Values: 1 = Output Field 1\n");
+	mprint("                       						2 = Output Field 2\n");
+	mprint("                       						both = Both Output Field 1 and 2\n");
+	mprint("                       				Defaults to 1\n");
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
 	mprint("                 --cc2: When in srt/sami mode, process captions in channel 2\n");
@@ -992,7 +995,7 @@ void print_usage(void)
 	mprint("      input.d/sub0001.png\n");
 	mprint("      ...\n");
 	mprint("  The command:\n");
-	mprint("      ccextractor --out=spupng -o /tmp/output --12 input.mpg\n");
+	mprint("      ccextractor --out=spupng -o /tmp/output --output-field both input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      /tmp/output_1.xml\n");
 	mprint("      /tmp/output_1.d/sub0000.png\n");
@@ -2111,7 +2114,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				opt->extract = strcmp(argv[i], "both") == 0 ? 12 : atoi_hex(argv[i]);
 				if (opt->extract != 1 && opt->extract != 2 && opt->extract != 12)
 				{
-					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 or 2 or both.\n");
+					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 , 2 , 12 / both.\n");
 				}
 				opt->is_608_enabled = 1;
 				continue;

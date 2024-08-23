@@ -361,9 +361,9 @@ pub struct Options {
     pub settings_608: Decoder608Settings,
     /// Same for 708 decoder
     pub settings_dtvcc: DecoderDtvccSettings,
-    /// Is 608 enabled by explicitly using flags(-1,-2,-12)
+    /// Is 608 enabled by explicitly using flags(--output-field 1 / 2 / both)
     pub is_608_enabled: bool,
-    /// Is 708 enabled by explicitly using flags(-svc)
+    /// Is 708 enabled by explicitly using flags(--svc)
     pub is_708_enabled: bool,
 
     /// Disabled by -ve or --videoedited

@@ -123,7 +123,7 @@ Notes on spupng output format:
     input.d/sub0001.png
     ...
   The command:
-    ccextractor --out=spupng -o /tmp/output --12 input.mpg
+    ccextractor --out=spupng -o /tmp/output --output-field both input.mpg
   will create the files:
     /tmp/output_1.xml
     /tmp/output_1.d/sub0000.png
@@ -205,8 +205,11 @@ pub struct Args {
     /// captions e.g. channel name or file name
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_description: Option<String>,
-    /// Output field1 data, field2 data, or both
-    #[arg(long, value_name="1/2/both", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    /// Values: 1 = Output Field 1
+    ///         2 = Output Field 2
+    ///         both = Both Output Field 1 and 2
+    /// Defaults to 1
+    #[arg(long, value_name="field", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub output_field: Option<String>,
     /// Use --append to prevent overwriting of existing files. The output will be
     /// appended instead.

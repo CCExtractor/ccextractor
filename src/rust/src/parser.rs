@@ -990,7 +990,7 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref extract) = args.output_field {
-            if *extract == "1" || *extract == "2" {
+            if *extract == "1" || *extract == "2" || *extract == "12" {
                 self.extract = get_atoi_hex(extract);
             } else if *extract == "both" {
                 self.extract = 12;
