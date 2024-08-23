@@ -795,10 +795,20 @@ impl OptionsExt for Options {
             if !(0..=2).contains(oem) {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
-                   "Invalid oem value"
+                   "--oem must be between 0 and 2"
                 );
             }
-            self.ocr_oem = *oem;
+            self.ocr_oem = *oem as _;
+        }
+
+        if let Some(ref psm) = args.psm {
+            if !(0..=13).contains(psm) {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "--psm must be between 0 and 13"
+                );
+            }
+            self.psm = *psm as _;
         }
 
         if let Some(ref lang) = args.mkvlang {

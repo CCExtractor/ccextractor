@@ -149,6 +149,7 @@ impl FromRust<Options> for ccx_s_options {
             self.ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
         }
         self.ocr_oem = options.ocr_oem as _;
+        self.psm = options.psm as _;
         self.ocr_quantmode = options.ocr_quantmode as _;
         if let Some(mkvlang) = options.mkvlang {
             self.mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
