@@ -111,7 +111,7 @@ pub struct DecoderDtvccSettings {
     pub timing: CommonTimingCtx,
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Decoder608Settings {
     pub direct_rollup: i32,
     pub force_rollup: i32,
@@ -119,6 +119,18 @@ pub struct Decoder608Settings {
     pub default_color: Decoder608ColorCode,
     pub screens_to_process: i32,
     pub report: Option<Decoder608Report>,
+}
+impl Default for Decoder608Settings {
+    fn default() -> Self {
+        Self {
+            direct_rollup: 0,
+            force_rollup: 0,
+            no_rollup: false,
+            default_color: Decoder608ColorCode::Transparent,
+            screens_to_process: -1,
+            report: None,
+        }
+    }
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -442,7 +454,7 @@ pub struct Options {
     /// The name of the .traineddata file to be loaded with tesseract
     pub ocrlang: PathBuf,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
-    pub ocr_oem: u8,
+    pub ocr_oem: i8,
     /// How to quantize the bitmap before passing to to tesseract
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
@@ -528,7 +540,7 @@ impl Default for Options {
             no_rollup: Default::default(),
             noscte20: Default::default(),
             webvtt_create_css: Default::default(),
-            cc_channel: Default::default(),
+            cc_channel: 1,
             buffer_input: Default::default(),
             nofontcolor: Default::default(),
             nohtmlescape: Default::default(),
@@ -550,21 +562,21 @@ impl Default for Options {
             filter_profanity_file: Default::default(),
             messages_target: Default::default(),
             timestamp_map: Default::default(),
-            dolevdist: Default::default(),
-            levdistmincnt: Default::default(),
-            levdistmaxpct: Default::default(),
+            dolevdist: true,
+            levdistmincnt: 2,
+            levdistmaxpct: 10,
             investigate_packets: Default::default(),
             fullbin: Default::default(),
             nosync: Default::default(),
             hauppauge_mode: Default::default(),
             wtvconvertfix: Default::default(),
             wtvmpeg2: Default::default(),
-            auto_myth: Default::default(),
+            auto_myth: None,
             mp4vidtrack: Default::default(),
             extract_chapters: Default::default(),
             usepicorder: Default::default(),
             xmltv: Default::default(),
-            xmltvliveinterval: Default::default(),
+            xmltvliveinterval: Timestamp::from_millis(10000),
             xmltvoutputinterval: Default::default(),
             xmltvonlycurrent: Default::default(),
             keep_output_closed: Default::default(),
@@ -576,16 +588,16 @@ impl Default for Options {
             hardsubx_and_common: Default::default(),
             dvblang: Default::default(),
             ocrlang: Default::default(),
-            ocr_oem: Default::default(),
+            ocr_oem: -1,
             ocr_quantmode: 1,
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
             hardsubx_ocr_mode: Default::default(),
-            hardsubx_min_sub_duration: Default::default(),
+            hardsubx_min_sub_duration: Timestamp::from_millis(500),
             hardsubx_detect_italics: Default::default(),
             hardsubx_conf_thresh: Default::default(),
             hardsubx_hue: Default::default(),
-            hardsubx_lum_thresh: Default::default(),
+            hardsubx_lum_thresh: 95.0,
             transcript_settings: Default::default(),
             date_format: Default::default(),
             send_to_srv: Default::default(),
@@ -602,7 +614,7 @@ impl Default for Options {
             srv_addr: Default::default(),
             srv_port: Default::default(),
             noautotimeref: Default::default(),
-            input_source: Default::default(),
+            input_source: DataSource::default(),
             output_filename: Default::default(),
             inputfile: Default::default(),
             demux_cfg: Default::default(),
@@ -612,7 +624,7 @@ impl Default for Options {
             pes_header_to_stdout: Default::default(),
             ignore_pts_jumps: Default::default(),
             multiprogram: Default::default(),
-            out_interval: Default::default(),
+            out_interval: -1,
             segment_on_key_frames_only: Default::default(),
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,

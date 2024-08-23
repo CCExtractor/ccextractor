@@ -795,10 +795,10 @@ impl OptionsExt for Options {
             if !(0..=2).contains(oem) {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
-                   "Invalid oem value"
+                   "oem value should be between 0 and 2"
                 );
             }
-            self.ocr_oem = *oem;
+            self.ocr_oem = *oem as _;
         }
 
         if let Some(ref lang) = args.mkvlang {
