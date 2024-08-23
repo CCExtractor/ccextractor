@@ -53,16 +53,15 @@ pub extern "C" fn ccxr_millis_to_date(
     let mut s = String::new();
     let timestamp = Timestamp::from_millis(timestamp as i64);
     let date_format = match date_format {
-        ccx_output_date_format_ODF_NONE => TimestampFormat::None,
-        ccx_output_date_format_ODF_HHMMSS => TimestampFormat::HHMMSS,
-        ccx_output_date_format_ODF_HHMMSSMS => TimestampFormat::HHMMSSFFF,
-        ccx_output_date_format_ODF_SECONDS => TimestampFormat::Seconds {
+        ccx_output_date_format::ODF_NONE => TimestampFormat::None,
+        ccx_output_date_format::ODF_HHMMSS => TimestampFormat::HHMMSS,
+        ccx_output_date_format::ODF_HHMMSSMS => TimestampFormat::HHMMSSFFF,
+        ccx_output_date_format::ODF_SECONDS => TimestampFormat::Seconds {
             millis_separator: millis_separator as u8 as char,
         },
-        ccx_output_date_format_ODF_DATE => TimestampFormat::Date {
+        ccx_output_date_format::ODF_DATE => TimestampFormat::Date {
             millis_separator: millis_separator as u8 as char,
         },
-        _ => TimestampFormat::None,
     };
 
     let _ = millis_to_date(timestamp, &mut s, date_format);

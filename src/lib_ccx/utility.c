@@ -9,6 +9,13 @@
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 volatile sig_atomic_t change_filename_requested = 0;
 
+#ifndef DISABLE_RUST
+extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
+extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
+extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
+#endif
+
 static uint32_t crc32_table[] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
     0x130476dc, 0x17c56b6b, 0x1a864db2, 0x1e475005,
@@ -92,7 +99,8 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt)
 #ifndef DISABLE_RUST
 	return ccxr_stringztoms(s, bt);
 #endif
-	unsigned ss = 0, mm = 0, hh = 0;
+	unsigned ss = 0,
+		 mm = 0, hh = 0;
 	int value = -1;
 	int colons = 0;
 	const char *c = s;

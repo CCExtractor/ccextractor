@@ -1,10 +1,13 @@
 use std::io;
 use std::io::Write;
 
-use crate::common::CcxOptions;
+use lib_ccxr::common::Options;
 
-impl CcxOptions {
-    pub fn activity_report_version(&mut self) {
+pub trait ActivityExt {
+    fn activity_report_version(&mut self);
+}
+impl ActivityExt for Options {
+    fn activity_report_version(&mut self) {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             let version = env!("CARGO_PKG_VERSION");

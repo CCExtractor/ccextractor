@@ -45,7 +45,6 @@ pub unsafe extern "C" fn ccxr_init_basic_logger(ccx_options: *const ccx_s_option
         2 => OutputTarget::Quiet,
         _ => panic!("incorrect value for messages_target"),
     };
-
     set_logger(CCExtractorLogger::new(
         messages_target,
         mask,
