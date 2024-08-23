@@ -753,7 +753,15 @@ impl CcxOptions {
                 println!("Invalid oem value");
                 std::process::exit(ExitCode::MalformedParameter as i32);
             }
-            self.ocr_oem = *oem;
+            self.ocr_oem = *oem as _;
+        }
+
+        if let Some(ref psm) = args.psm {
+            if !(0..=13).contains(psm) {
+                println!("--psm must be between 0 and 13");
+                std::process::exit(ExitCode::MalformedParameter as i32);
+            }
+            self.psm = *psm as _;
         }
 
         if let Some(ref lang) = args.mkvlang {

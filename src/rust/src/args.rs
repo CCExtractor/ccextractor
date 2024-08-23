@@ -596,7 +596,26 @@ pub struct Args {
     /// Tesseract v3 : default mode is 0,
     /// Tesseract v4 : default mode is 1.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    pub oem: Option<i32>,
+    pub oem: Option<u8>,
+    /// Select the PSM mode for Tesseract.
+    /// Available Page segmentation modes:
+    /// 0    Orientation and script detection (OSD) only.
+    /// 1    Automatic page segmentation with OSD.
+    /// 2    Automatic page segmentation, but no OSD, or OCR.
+    /// 3    Fully automatic page segmentation, but no OSD. (Default)
+    /// 4    Assume a single column of text of variable sizes.
+    /// 5    Assume a single uniform block of vertically aligned text.
+    /// 6    Assume a single uniform block of text.
+    /// 7    Treat the image as a single text line.
+    /// 8    Treat the image as a single word.
+    /// 9    Treat the image as a single word in a circle.
+    /// 10    Treat the image as a single character.
+    /// 11    Sparse text. Find as much text as possible in no particular order.
+    /// 12    Sparse text with OSD.
+    /// 13    Raw line. Treat the image as a single text line,
+    /// bypassing hacks that are Tesseract-specific.
+    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub psm: Option<u8>,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic
