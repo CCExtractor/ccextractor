@@ -425,6 +425,8 @@ pub struct Options {
     pub ocrlang: PathBuf,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
     pub ocr_oem: u8,
+    /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
+    pub psm: i32,
     /// How to quantize the bitmap before passing to to tesseract
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
