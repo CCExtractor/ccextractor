@@ -94,7 +94,7 @@ impl<'a> Dtvcc<'a> {
                         w.memory_reserved = 0;
                     });
 
-                    unsafe { dtvcc_windows_reset(decoder.as_mut()) };
+                    decoder.handle_reset();
 
                     *d = Some(decoder);
                 });
@@ -334,8 +334,8 @@ mod test {
             false,
         ))
         .ok();
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
-        let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
+        let mut dtvcc_settings = get_zero_allocated_obj::<ccx_decoder_dtvcc_settings>();
+        let mut decoder = Dtvcc::new(&mut dtvcc_settings);
 
         // Case 1:  cc_type = 2
         let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
@@ -383,8 +383,8 @@ mod test {
             false,
         ))
         .ok();
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
-        let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
+        let mut dtvcc_settings = get_zero_allocated_obj::<ccx_decoder_dtvcc_settings>();
+        let mut decoder = Dtvcc::new(&mut dtvcc_settings);
 
         // Case 1: Without providing last_sequence
         let mut dtvcc_report = ccx_decoder_dtvcc_report::default();

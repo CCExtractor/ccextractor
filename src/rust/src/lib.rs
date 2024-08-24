@@ -350,6 +350,10 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
 
 #[cfg(test)]
 mod test {
+    use std::ffi::c_void;
+
+    use utils::get_zero_allocated_obj;
+
     use super::*;
 
     #[test]
@@ -384,13 +388,18 @@ mod test {
 
     #[test]
     fn test_do_cb() {
-        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
-        let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
+        // Setting up `Dtvcc` & `lib_cc_decode`
+        let mut dtvcc_settings = get_zero_allocated_obj::<ccx_decoder_dtvcc_settings>();
+        dtvcc_settings.report = Box::into_raw(Box::new(ccx_decoder_dtvcc_report::default()));
+        println!("THK");
+        let dtvcc = Dtvcc::new(&mut dtvcc_settings);
 
+        println!("THK");
         let mut decoder_ctx = lib_cc_decode::default();
+        decoder_ctx.dtvcc_rust = Box::into_raw(Box::new(dtvcc)) as *mut c_void;
         let cc_block = [0x97, 0x1F, 0x3C];
 
-        assert!(do_cb(&mut decoder_ctx, &mut dtvcc, &cc_block));
+        assert!(do_cb(&mut decoder_ctx, &cc_block));
         assert_eq!(decoder_ctx.current_field, 3);
         assert_eq!(decoder_ctx.cc_stats[3], 1);
         assert_eq!(decoder_ctx.processed_enough, 0);
