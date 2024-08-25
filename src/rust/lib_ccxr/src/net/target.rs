@@ -114,7 +114,7 @@ impl<'a> SendTarget<'a> {
         info!(
             "Connected to {}:{}\n",
             send_target.config.target_addr,
-            send_target.config.port.unwrap_or_else(|| DEFAULT_TCP_PORT)
+            send_target.config.port.unwrap_or(DEFAULT_TCP_PORT)
         );
 
         send_target
