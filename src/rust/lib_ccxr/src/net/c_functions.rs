@@ -1,6 +1,6 @@
 //! Provides pure Rust equivalent functions for some functions in `networking.c`.
 
-use crate::{fatal, net::*};
+use crate::net::*;
 
 use std::sync::RwLock;
 
