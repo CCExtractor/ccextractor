@@ -563,7 +563,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             extract: self.extract as _,
             dtvcc_extract: self.dtvcc_extract as _,
             gui_mode_reports: self.gui_mode_reports as _,
-            output_filename: unsafe { string_to_c_char(&self.output_filename) },
+            output_filename: string_to_c_char(&self.output_filename),
             write_format: self.write_format.to_ctype(),
             keep_output_closed: self.keep_output_closed as _,
             force_flush: self.force_flush as _,

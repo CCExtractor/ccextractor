@@ -25,7 +25,7 @@ pub unsafe fn c_char_to_string(c: *const ::std::os::raw::c_char) -> Option<Strin
 /// function to convert Rust literals to C strings to be passed into functions
 /// # Safety
 /// The pointer returned has to be deallocated using from_raw() at some point
-pub unsafe fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
+pub fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     if a.is_empty() {
         return null_pointer();
     }
@@ -40,31 +40,16 @@ pub fn null_pointer<T>() -> *mut T {
     std::ptr::null_mut()
 }
 
-use std::ffi::CString;
 use std::os::raw::c_char;
 
 pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
-    let cstr_vec: Vec<CString> = strs
-        .iter()
-        .map(|s| CString::new(s.as_str()).unwrap())
-        .collect();
-    let c_char_vec: Vec<*mut c_char> = cstr_vec
-        .iter()
-        .map(|s| {
-            if s.as_bytes().is_empty() {
-                null_pointer()
-            } else {
-                s.as_ptr() as *mut c_char
-            }
-        })
-        .collect();
-
-    let ptr = c_char_vec.as_ptr();
-
-    std::mem::forget(cstr_vec);
-    std::mem::forget(c_char_vec);
-
-    ptr as *mut *mut c_char
+    let mut c_strs: Vec<*mut c_char> = Vec::new();
+    for s in strs {
+        c_strs.push(string_to_c_char(&s));
+    }
+    let ptr = c_strs.as_mut_ptr();
+    std::mem::forget(c_strs);
+    ptr
 }
 
 /// This function creates a new object of type `T` and fills it with zeros.
