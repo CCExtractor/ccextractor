@@ -250,10 +250,8 @@ pub trait BlockStream {
             return Ok(false);
         }
 
-        if data.len() > 0 {
-            if self.send(data)? != data.len() {
-                return Ok(false);
-            }
+        if data.len() > 0 && self.send(data)? != data.len() {
+            return Ok(false);
         }
 
         if self.send(END_MARKER.as_bytes())? != END_MARKER.len() {
