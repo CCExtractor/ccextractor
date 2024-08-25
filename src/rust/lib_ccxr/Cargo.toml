@@ -6,10 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+num_enum = "0.7.3"
+socket2 = "0.5.7"
 bitflags = "2.6.0"
 thiserror = "1.0.61"
 time = { version = "0.3.36", features = ["macros", "formatting"] }
-derive_more = "0.99.18"
+derive_more = { version = "1.0.0", features = ["full"] }
 url = "2.5.2"
 strum = "0.26.3"
 strum_macros = "0.26.4"
