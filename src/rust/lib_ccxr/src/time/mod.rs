@@ -20,4 +20,5 @@
 //! | `gop_accepted`                            | [`GopTimeCode::did_rollover`] + some additional logic |
 //! | `calculate_ms_gop_time`                   | [`GopTimeCode::new`], [`GopTimeCode::timestamp`]      |
 
+pub mod timing;
 pub mod units;
