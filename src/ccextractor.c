@@ -449,6 +449,10 @@ int main(int argc, char *argv[])
 	// See docs/ccextractor.cnf.sample for more info.
 
 #ifndef DISABLE_RUST
+	ccxr_init_basic_logger();
+#endif
+
+#ifndef DISABLE_RUST
 	int compile_ret = ccxr_parse_parameters(argc, argv);
 #else
 	int compile_ret = parse_parameters(api_options, argc, argv);
