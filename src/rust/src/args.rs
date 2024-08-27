@@ -123,7 +123,7 @@ Notes on spupng output format:
     input.d/sub0001.png
     ...
   The command:
-    ccextractor --out=spupng -o /tmp/output --12 input.mpg
+    ccextractor --out=spupng -o /tmp/output --output-field both input.mpg
   will create the files:
     /tmp/output_1.xml
     /tmp/output_1.d/sub0000.png
@@ -205,8 +205,11 @@ pub struct Args {
     /// captions e.g. channel name or file name
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_description: Option<String>,
-    /// Output field1 data, field2 data, or both
-    #[arg(long, value_name="1/2/both", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    /// Values: 1 = Output Field 1
+    ///         2 = Output Field 2
+    ///         both = Both Output Field 1 and 2
+    /// Defaults to 1
+    #[arg(long, value_name="field", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub output_field: Option<String>,
     /// Use --append to prevent overwriting of existing files. The output will be
     /// appended instead.
@@ -361,14 +364,14 @@ pub struct Args {
     /// by its type (pick the stream that has this type in
     /// the PMT)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub datastreamtype: Option<u16>,
+    pub datastreamtype: Option<String>,
     /// Assume the data is of this type, don't autodetect. This
     /// parameter may be needed if --datapid or --datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
-    pub streamtype: Option<u16>,
+    pub streamtype: Option<String>,
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
     /// force the special treatment.
@@ -472,7 +475,7 @@ pub struct Args {
     /// white). This causes all output in .srt/.smi/.vtt
     /// files to have a font tag, which makes the files
     /// larger. Add the color you want in RGB, such as
-    /// --dc #FF0000 for red.
+    /// --defaultcolor #FF0000 for red.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate

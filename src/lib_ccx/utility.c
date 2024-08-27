@@ -10,6 +10,9 @@ int temp_debug = 0; // This is a convenience variable used to enable/disable deb
 volatile sig_atomic_t change_filename_requested = 0;
 
 #ifndef DISABLE_RUST
+extern int ccxr_verify_crc32(uint8_t *buf, int len);
+extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
+extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
 extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
 extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
 extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
@@ -86,7 +89,8 @@ int verify_crc32(uint8_t *buf, int len)
 {
 #ifndef DISABLE_RUST
 	return ccxr_verify_crc32(buf, len);
-#endif /* ifndef DISABLE_RUST */
+#endif
+
 	int i = 0;
 	int32_t crc = -1;
 	for (i = 0; i < len; i++)
@@ -99,8 +103,8 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt)
 #ifndef DISABLE_RUST
 	return ccxr_stringztoms(s, bt);
 #endif
-	unsigned ss = 0,
-		 mm = 0, hh = 0;
+
+	unsigned ss = 0, mm = 0, hh = 0;
 	int value = -1;
 	int colons = 0;
 	const char *c = s;
@@ -176,6 +180,7 @@ int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, uns
 #ifndef DISABLE_RUST
 	return ccxr_levenshtein_dist(s1, s2, s1len, s2len);
 #endif
+
 	unsigned int x, y, v, lastdiag, olddiag;
 	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
 	for (y = 1; y <= s1len; y++)

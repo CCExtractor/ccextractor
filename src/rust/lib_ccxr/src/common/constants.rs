@@ -143,6 +143,7 @@ pub const SLICE_TYPES: [&str; 10] = [
     "0 - P", "1 - B", "2 - I", "3 - SP", "4 - SI", "5 - P", "6 - B", "7 - I", "8 - SP", "9 - SI",
 ];
 
+pub const CCX_DECODER_608_SCREEN_WIDTH: usize = 32;
 pub const ONEPASS: usize = 120; // Bytes we can always look ahead without going out of limits
 pub const BUFSIZE: usize = 2048 * 1024 + ONEPASS; // 2 Mb plus the safety pass
 pub const MAX_CLOSED_CAPTION_DATA_PER_PICTURE: usize = 32;

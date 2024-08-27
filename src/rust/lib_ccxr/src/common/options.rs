@@ -8,7 +8,7 @@ use crate::common::{
 use crate::hardsubx::{ColorHue, OcrMode};
 use crate::time::units::{Timestamp, TimestampFormat};
 use crate::util::encoding::Encoding;
-use crate::util::log::{DebugMessageMask, OutputTarget};
+use crate::util::log::{DebugMessageFlag, DebugMessageMask, OutputTarget};
 use crate::util::time::stringztoms;
 
 #[derive(Debug, Clone)]
@@ -111,7 +111,7 @@ pub struct DecoderDtvccSettings {
     pub timing: CommonTimingCtx,
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Decoder608Settings {
     pub direct_rollup: i32,
     pub force_rollup: i32,
@@ -119,6 +119,18 @@ pub struct Decoder608Settings {
     pub default_color: Decoder608ColorCode,
     pub screens_to_process: i32,
     pub report: Option<Decoder608Report>,
+}
+impl Default for Decoder608Settings {
+    fn default() -> Self {
+        Self {
+            direct_rollup: 0,
+            force_rollup: 0,
+            no_rollup: false,
+            default_color: Decoder608ColorCode::Transparent,
+            screens_to_process: -1,
+            report: None,
+        }
+    }
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -157,7 +169,7 @@ pub enum DtvccServiceCharset {
 }
 
 #[allow(dead_code)]
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DemuxerConfig {
     /// Regular TS or M2TS
     pub m2ts: bool,
@@ -175,11 +187,29 @@ pub struct DemuxerConfig {
     /// If 1, never mess with the selected PID
     pub ts_forced_cappid: bool,
     /// Specific program to process in TS files, if a forced program is given
-    pub ts_forced_program: Option<u32>,
+    pub ts_forced_program: Option<i32>,
     /// User WANTED stream type (i.e. use the stream that has this type)
     pub ts_datastreamtype: StreamType,
     /// User selected (forced) stream type
     pub ts_forced_streamtype: StreamType,
+}
+
+impl Default for DemuxerConfig {
+    fn default() -> Self {
+        Self {
+            m2ts: false,
+            auto_stream: StreamMode::Autodetect,
+            codec: SelectCodec::Some(super::Codec::Any),
+            nocodec: SelectCodec::None,
+            ts_autoprogram: false,
+            ts_allprogram: false,
+            ts_cappids: Vec::new(),
+            ts_forced_cappid: false,
+            ts_forced_program: None,
+            ts_datastreamtype: StreamType::Unknownstream,
+            ts_forced_streamtype: StreamType::Unknownstream,
+        }
+    }
 }
 
 impl Default for EncoderConfig {
@@ -320,7 +350,7 @@ pub struct EncoderConfig {
 }
 
 /// Options from user parameters
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct Options {
     /// Extract 1st, 2nd or both fields. Can be 1, 2 or 12 respectively.
     pub extract: u8,
@@ -335,17 +365,17 @@ pub struct Options {
     pub nohtmlescape: bool,
     pub notypesetting: bool,
     /// The start of the segment we actually process
-    pub extraction_start: Timestamp,
+    pub extraction_start: Option<Timestamp>,
     /// The end of the segment we actually process
-    pub extraction_end: Timestamp,
+    pub extraction_end: Option<Timestamp>,
     pub print_file_reports: bool,
     /// Contains the settings for the 608 decoder.
     pub settings_608: Decoder608Settings,
     /// Same for 708 decoder
     pub settings_dtvcc: DecoderDtvccSettings,
-    /// Is 608 enabled by explicitly using flags(-1,-2,-12)
+    /// Is 608 enabled by explicitly using flags(--output-field 1 / 2 / both)
     pub is_608_enabled: bool,
-    /// Is 708 enabled by explicitly using flags(-svc)
+    /// Is 708 enabled by explicitly using flags(--svc)
     pub is_708_enabled: bool,
 
     /// Disabled by -ve or --videoedited
@@ -424,7 +454,7 @@ pub struct Options {
     /// The name of the .traineddata file to be loaded with tesseract
     pub ocrlang: PathBuf,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
-    pub ocr_oem: u8,
+    pub ocr_oem: i8,
     /// How to quantize the bitmap before passing to to tesseract
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
@@ -501,4 +531,111 @@ pub struct Options {
     pub translate_langs: Option<String>,
     #[cfg(feature = "enable_sharing")]
     pub translate_key: Option<String>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            extract: 1,
+            no_rollup: Default::default(),
+            noscte20: Default::default(),
+            webvtt_create_css: Default::default(),
+            cc_channel: 1,
+            buffer_input: Default::default(),
+            nofontcolor: Default::default(),
+            nohtmlescape: Default::default(),
+            notypesetting: Default::default(),
+            extraction_start: Default::default(),
+            extraction_end: Default::default(),
+            print_file_reports: Default::default(),
+            settings_608: Default::default(),
+            settings_dtvcc: Default::default(),
+            is_608_enabled: Default::default(),
+            is_708_enabled: Default::default(),
+            binary_concat: true,
+            use_gop_as_pts: Default::default(),
+            fix_padding: Default::default(),
+            gui_mode_reports: Default::default(),
+            no_progress_bar: Default::default(),
+            sentence_cap_file: Default::default(),
+            live_stream: Some(Timestamp::default()),
+            filter_profanity_file: Default::default(),
+            messages_target: Default::default(),
+            timestamp_map: Default::default(),
+            dolevdist: true,
+            levdistmincnt: 2,
+            levdistmaxpct: 10,
+            investigate_packets: Default::default(),
+            fullbin: Default::default(),
+            nosync: Default::default(),
+            hauppauge_mode: Default::default(),
+            wtvconvertfix: Default::default(),
+            wtvmpeg2: Default::default(),
+            auto_myth: None,
+            mp4vidtrack: Default::default(),
+            extract_chapters: Default::default(),
+            usepicorder: Default::default(),
+            xmltv: Default::default(),
+            xmltvliveinterval: Timestamp::from_millis(10000),
+            xmltvoutputinterval: Default::default(),
+            xmltvonlycurrent: Default::default(),
+            keep_output_closed: Default::default(),
+            force_flush: Default::default(),
+            append_mode: Default::default(),
+            ucla: Default::default(),
+            tickertext: Default::default(),
+            hardsubx: Default::default(),
+            hardsubx_and_common: Default::default(),
+            dvblang: Default::default(),
+            ocrlang: Default::default(),
+            ocr_oem: -1,
+            ocr_quantmode: 1,
+            mkvlang: Default::default(),
+            analyze_video_stream: Default::default(),
+            hardsubx_ocr_mode: Default::default(),
+            hardsubx_min_sub_duration: Timestamp::from_millis(500),
+            hardsubx_detect_italics: Default::default(),
+            hardsubx_conf_thresh: Default::default(),
+            hardsubx_hue: Default::default(),
+            hardsubx_lum_thresh: 95.0,
+            transcript_settings: Default::default(),
+            date_format: Default::default(),
+            send_to_srv: Default::default(),
+            write_format: OutputFormat::Srt,
+            write_format_rewritten: Default::default(),
+            use_ass_instead_of_ssa: Default::default(),
+            use_webvtt_styling: Default::default(),
+            udpsrc: Default::default(),
+            udpaddr: Default::default(),
+            udpport: Default::default(),
+            tcpport: Default::default(),
+            tcp_password: Default::default(),
+            tcp_desc: Default::default(),
+            srv_addr: Default::default(),
+            srv_port: Default::default(),
+            noautotimeref: Default::default(),
+            input_source: DataSource::default(),
+            output_filename: Default::default(),
+            inputfile: Default::default(),
+            demux_cfg: Default::default(),
+            enc_cfg: Default::default(),
+            subs_delay: Default::default(),
+            cc_to_stdout: Default::default(),
+            pes_header_to_stdout: Default::default(),
+            ignore_pts_jumps: Default::default(),
+            multiprogram: Default::default(),
+            out_interval: -1,
+            segment_on_key_frames_only: Default::default(),
+            debug_mask: DebugMessageMask::new(
+                DebugMessageFlag::GENERIC_NOTICE,
+                DebugMessageFlag::VERBOSE,
+            ),
+            curlposturl: Default::default(),
+            sharing_enabled: Default::default(),
+            sharing_url: Default::default(),
+            translate_enabled: Default::default(),
+            translate_langs: Default::default(),
+            translate_key: Default::default(),
+        }
+    }
 }

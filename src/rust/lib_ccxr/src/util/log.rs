@@ -42,8 +42,8 @@ static LOGGER: OnceLock<RwLock<CCExtractorLogger>> = OnceLock::new();
 /// The possible targets for logging messages.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OutputTarget {
-    #[default]
     Quiet = 0,
+    #[default]
     Stdout = 1,
     Stderr = 2,
 }
@@ -190,13 +190,13 @@ impl DebugMessageMask {
             self.mask_on_normal
         }
     }
-    /// Return the mask according to its mode.
+    /// Return the mask on normal
     pub fn normal_mask(&self) -> DebugMessageFlag {
-        self.mask_on_debug
-    }
-    /// Return the mask according to its mode.
-    pub fn debug_mask(&self) -> DebugMessageFlag {
         self.mask_on_normal
+    }
+    /// Return the mask on debug
+    pub fn debug_mask(&self) -> DebugMessageFlag {
+        self.mask_on_debug
     }
 }
 
