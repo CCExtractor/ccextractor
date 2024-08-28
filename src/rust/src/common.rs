@@ -69,7 +69,7 @@ impl FromRust<Options> for ccx_s_options {
         self.settings_dtvcc = options.settings_dtvcc.to_ctype();
         self.is_608_enabled = options.is_608_enabled as _;
         self.is_708_enabled = options.is_708_enabled as _;
-        self.millis_separator = options.date_format.millis_separator() as _;
+        self.millis_separator = options.millis_separator() as _;
         self.binary_concat = options.binary_concat as _;
         self.use_gop_as_pts = if let Some(usegops) = options.use_gop_as_pts {
             if usegops {
@@ -257,7 +257,7 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             encoding: value.enc_cfg.encoding.to_ctype() as _,
             nofontcolor: self.nofontcolor.into(),
             nohtmlescape: self.nohtmlescape.into(),
-            millis_separator: self.date_format.millis_separator() as _,
+            millis_separator: value.millis_separator() as _,
             latrusmap: self.latrusmap.into(),
         };
         config.set_verbose(self.verbose.into());
@@ -571,7 +571,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             ucla: self.ucla as _,
             encoding: self.encoding as _,
             date_format: self.date_format.to_ctype(),
-            millis_separator: self.date_format.millis_separator() as _,
+            millis_separator: self.millis_separator() as _,
             autodash: self.autodash as _,
             trim_subs: self.trim_subs as _,
             sentence_cap: self.sentence_cap as _,
