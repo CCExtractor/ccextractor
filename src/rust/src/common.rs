@@ -628,10 +628,10 @@ impl CType<encoder_cfg> for EncoderConfig {
 
 impl CType<word_list> for Vec<String> {
     unsafe fn to_ctype(&self) -> word_list {
-        return word_list {
+        word_list {
             words: string_to_c_chars(self.clone()),
             len: self.len(),
             capacity: self.capacity(),
-        };
+        }
     }
 }
