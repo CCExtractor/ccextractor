@@ -1,7 +1,7 @@
 use std::convert::TryInto;
+use std::ffi::c_int;
 use std::fmt::Write;
 use std::num::TryFromIntError;
-use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use derive_more::{Add, Neg, Sub};
