@@ -1,3 +1,5 @@
+#![allow(clippy::useless_conversion)]
+
 use std::convert::TryInto;
 use std::ffi::{c_char, c_int, c_long, CStr};
 
@@ -272,7 +274,7 @@ unsafe fn apply_timing_info() {
     timing_info.total_frames_count = FrameCount::new(total_frames_count.into());
     timing_info.gop_time = generate_gop_time_code(gop_time);
     timing_info.first_gop_time = generate_gop_time_code(first_gop_time);
-    timing_info.fts_at_gop_start = Timestamp::from_millis(fts_at_gop_start);
+    timing_info.fts_at_gop_start = Timestamp::from_millis(fts_at_gop_start.into());
     timing_info.gop_rollover = gop_rollover != 0;
     timing_info.timing_settings.disable_sync_check = timing_settings.disable_sync_check != 0;
     timing_info.timing_settings.no_sync = timing_settings.no_sync != 0;
@@ -383,7 +385,7 @@ pub unsafe extern "C" fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, p
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
-    c::add_current_pts(&mut context, MpegClockTick::new(pts));
+    c::add_current_pts(&mut context, MpegClockTick::new(pts.into()));
 
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
@@ -399,7 +401,7 @@ pub unsafe extern "C" fn ccxr_set_current_pts(ctx: *mut ccx_common_timing_ctx, p
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
-    c::set_current_pts(&mut context, MpegClockTick::new(pts));
+    c::set_current_pts(&mut context, MpegClockTick::new(pts.into()));
 
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
@@ -452,7 +454,7 @@ pub unsafe extern "C" fn ccxr_get_fts(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis()
+    ans.millis().try_into().unwrap()
 }
 
 /// Rust equivalent for `get_fts_max` function in C. Uses C-native types as input and output.
@@ -470,7 +472,7 @@ pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis()
+    ans.millis().try_into().unwrap()
 }
 
 /// Rust equivalent for `print_mstime_static` function in C. Uses C-native types as input and output.
@@ -480,7 +482,7 @@ pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_
 /// `buf` must not be null. It must have sufficient length to hold the time in string form.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_print_mstime_static(mstime: c_long, buf: *mut c_char) -> *mut c_char {
-    let time = Timestamp::from_millis(mstime);
+    let time = Timestamp::from_millis(mstime.into());
     let ans = c::print_mstime_static(time, ':');
     write_string_into_pointer(buf, &ans);
     buf
