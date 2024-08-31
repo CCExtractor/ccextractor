@@ -397,6 +397,18 @@ impl Timestamp {
         Ok(s)
     }
 
+    /// SCC time formatting
+    pub fn to_scc_time(&self) -> Result<String, TimestampError> {
+        let mut result = String::new();
+
+        let (h, m, s, _) = self.as_hms_millis()?;
+        let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * 29.97 / 1000.0;
+
+        write!(result, "{:02}:{:02}:{:02};{:02}", h, m, s, frame)?;
+
+        Ok(result)
+    }
+
     /// Returns a formatted [`Timestamp`] using ctime's format.
     ///
     /// # Examples
