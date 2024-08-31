@@ -31,6 +31,7 @@ fn main() {
         "ccx_output_format",
         "ccx_boundary_time",
         "gop_time_code",
+        "ccx_common_timing_settings_t",
         "ccx_s_options",
         "ccx_s_teletext_config",
         "ccx_output_format",

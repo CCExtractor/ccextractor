@@ -24,7 +24,6 @@ pub mod utils;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
-use std::{io::Write, os::raw::c_char, os::raw::c_int};
 
 use args::Args;
 use bindings::*;
@@ -37,7 +36,11 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
-use std::ffi::CStr;
+use std::{
+    ffi::CStr,
+    io::Write,
+    os::raw::{c_char, c_double, c_int, c_long, c_uint},
+};
 
 #[cfg(test)]
 static mut cb_708: c_int = 0;
@@ -60,6 +63,15 @@ extern "C" {
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
+    static mut pts_big_change: c_uint;
+    static mut current_fps: c_double;
+    static mut frames_since_ref_time: c_int;
+    static mut total_frames_count: c_uint;
+    static mut gop_time: gop_time_code;
+    static mut first_gop_time: gop_time_code;
+    static mut fts_at_gop_start: c_long;
+    static mut gop_rollover: c_int;
+    static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
 }
 
 /// Initialize env logger with custom format, using stdout as target
