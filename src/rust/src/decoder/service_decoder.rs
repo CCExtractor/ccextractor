@@ -1385,7 +1385,7 @@ mod test {
         decoder.windows[0].col_count = 4;
         decoder.windows[0].attribs.print_direction =
             dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
-        let block = ['a' as u8, 'b' as u8] as [c_uchar; 2];
+        let block = [b'a', b'b'] as [c_uchar; 2];
 
         decoder.process_p16(&block);
 

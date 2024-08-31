@@ -289,7 +289,7 @@ mod test {
 
         assert_eq!(decoder.packet, vec![0xC2, 0x23, 0x45, 0x67, 0x01, 0x02]);
         assert_eq!(decoder.packet_length, 6);
-        assert_eq!(decoder.is_header_parsed, true);
+        assert!(decoder.is_header_parsed);
     }
 
     #[test]
