@@ -34,15 +34,12 @@ fn main() {
         "ccx_common_timing_settings_t",
         "ccx_s_options",
         "ccx_s_teletext_config",
-        "ccx_output_format",
-        "ccx_boundary_time",
         "ccx_output_date_format",
         "ccx_encoding_type",
-        "ccx_output_date_format",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
-        "ccx_output_format",
         "uint8_t",
+        "word_list",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]

@@ -639,3 +639,23 @@ impl Default for Options {
         }
     }
 }
+
+impl Options {
+    pub fn millis_separator(&self) -> char {
+        if self.ucla {
+            '.'
+        } else {
+            self.date_format.millis_separator()
+        }
+    }
+}
+
+impl EncoderConfig {
+    pub fn millis_separator(&self) -> char {
+        if self.ucla {
+            '.'
+        } else {
+            self.date_format.millis_separator()
+        }
+    }
+}

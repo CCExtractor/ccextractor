@@ -6,7 +6,6 @@
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_608.h"
 #include "ccx_encoders_common.h"
-#include <png.h>
 
 extern struct word_list capitalization_list;
 extern struct word_list profane;
@@ -14,6 +13,13 @@ extern const char *capitalized_builtin[];
 extern const char *profane_builtin[];
 
 extern unsigned char usercolor_rgb[8];
+
+struct word_list
+{
+	char **words;
+	size_t len;
+	size_t capacity;
+};
 
 struct ccx_encoders_helpers_settings_t
 {
@@ -43,6 +49,4 @@ void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, c
 
 void ccx_encoders_helpers_perform_shellsort_words(void);
 void ccx_encoders_helpers_setup(enum ccx_encoding_type encoding, int no_font_color, int no_type_setting, int trim_subs);
-
-int mapclut_paletee(png_color *palette, png_byte *alpha, uint32_t *clut, uint8_t depth);
 #endif
