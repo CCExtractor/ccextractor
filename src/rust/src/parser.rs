@@ -803,8 +803,10 @@ impl OptionsExt for Options {
 
         if let Some(ref psm) = args.psm {
             if !(0..=13).contains(psm) {
-                println!("--psm must be between 0 and 13");
-                std::process::exit(ExitCode::MalformedParameter as i32);
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "--psm must be between 0 and 13"
+                );
             }
             self.psm = *psm as _;
         }
