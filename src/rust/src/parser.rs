@@ -1222,11 +1222,9 @@ impl OptionsExt for Options {
             tlt_config.page = Cell::new(TeletextPageNumber::from(tlt_config.user_page));
         }
 
-        let mut millis_separator = ',';
         // Red Hen/ UCLA Specific stuff
         if args.ucla {
             self.ucla = true;
-            millis_separator = '.';
             self.enc_cfg.no_bom = true;
 
             if !self.transcript_settings.is_final {
@@ -1291,11 +1289,15 @@ impl OptionsExt for Options {
         }
 
         if args.sects {
-            self.date_format = TimestampFormat::Seconds { millis_separator };
+            self.date_format = TimestampFormat::Seconds {
+                millis_separator: ',',
+            };
         }
 
         if args.datets {
-            self.date_format = TimestampFormat::Date { millis_separator };
+            self.date_format = TimestampFormat::Date {
+                millis_separator: ',',
+            };
         }
 
         if args.teletext {

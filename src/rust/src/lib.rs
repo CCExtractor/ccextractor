@@ -29,7 +29,7 @@ use std::{io::Write, os::raw::c_char, os::raw::c_int};
 use args::Args;
 use bindings::*;
 use clap::{error::ErrorKind, Parser};
-use common::{CType2, FromRust};
+use common::{CType, CType2, FromRust};
 use decoder::Dtvcc;
 use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
 use parser::OptionsExt;
@@ -60,6 +60,8 @@ extern "C" {
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
+    static mut capitalization_list: word_list;
+    static mut profane: word_list;
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -253,8 +255,8 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
         }
     };
 
-    let mut capitalization_list: Vec<String> = Vec::new();
-    let mut profane: Vec<String> = Vec::new();
+    let mut _capitalization_list: Vec<String> = Vec::new();
+    let mut _profane: Vec<String> = Vec::new();
 
     let mut opt = Options::default();
     let mut _tlt_config = TeletextConfig::default();
@@ -262,12 +264,20 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     opt.parse_parameters(
         &args,
         &mut _tlt_config,
-        &mut capitalization_list,
-        &mut profane,
+        &mut _capitalization_list,
+        &mut _profane,
     );
     tlt_config = _tlt_config.to_ctype(&opt);
+
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
     ccx_options.copy_from_rust(opt);
+
+    if !_capitalization_list.is_empty() {
+        capitalization_list = _capitalization_list.to_ctype();
+    }
+    if !_profane.is_empty() {
+        profane = _profane.to_ctype();
+    }
 
     ExitCause::Ok.exit_code()
 }
