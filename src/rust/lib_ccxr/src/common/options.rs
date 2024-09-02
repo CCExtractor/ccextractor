@@ -454,7 +454,7 @@ pub struct Options {
     /// The name of the .traineddata file to be loaded with tesseract
     pub ocrlang: PathBuf,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
-    pub ocr_oem: u8,
+    pub ocr_oem: i8,
     /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
     pub psm: i32,
     /// How to quantize the bitmap before passing to to tesseract
