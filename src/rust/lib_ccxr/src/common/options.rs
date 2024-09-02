@@ -591,6 +591,7 @@ impl Default for Options {
             dvblang: Default::default(),
             ocrlang: Default::default(),
             ocr_oem: -1,
+            psm: 3,
             ocr_quantmode: 1,
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
