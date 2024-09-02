@@ -14,9 +14,9 @@ use lib_ccxr::common::OutputFormat;
 use lib_ccxr::common::SelectCodec;
 use lib_ccxr::common::StreamMode;
 use lib_ccxr::common::StreamType;
-use lib_ccxr::common::TeletextConfig;
 use lib_ccxr::hardsubx::ColorHue;
 use lib_ccxr::hardsubx::OcrMode;
+use lib_ccxr::teletext::TeletextConfig;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
@@ -43,45 +43,49 @@ pub trait CType2<T, U> {
 pub trait FromRust<T> {
     /// # Safety
     /// This function is unsafe because it dereferences the pointer passed to it.
-    unsafe fn copy_from_rust(&self, options: T);
+    unsafe fn copy_from_rust(&mut self, options: T);
 }
 
-impl FromRust<Options> for *mut ccx_s_options {
+impl FromRust<Options> for ccx_s_options {
     /// # Safety
     ///
     /// This function is unsafe because it dereferences the pointer passed to it.
-    unsafe fn copy_from_rust(self: &*mut ccx_s_options, options: Options) {
-        (**self).extract = options.extract as _;
-        (**self).no_rollup = options.no_rollup as _;
-        (**self).noscte20 = options.noscte20 as _;
-        (**self).webvtt_create_css = options.webvtt_create_css as _;
-        (**self).cc_channel = options.cc_channel as _;
-        (**self).buffer_input = options.buffer_input as _;
-        (**self).nofontcolor = options.nofontcolor as _;
-        (**self).write_format = options.write_format.to_ctype();
-        (**self).send_to_srv = options.send_to_srv as _;
-        (**self).nohtmlescape = options.nohtmlescape as _;
-        (**self).notypesetting = options.notypesetting as _;
-        (**self).extraction_start = options.extraction_start.to_ctype();
-        (**self).extraction_end = options.extraction_end.to_ctype();
-        (**self).print_file_reports = options.print_file_reports as _;
-        (**self).settings_608 = options.settings_608.to_ctype();
-        (**self).settings_dtvcc = options.settings_dtvcc.to_ctype();
-        (**self).is_608_enabled = options.is_608_enabled as _;
-        (**self).is_708_enabled = options.is_708_enabled as _;
-        (**self).millis_separator = options.date_format.millis_separator() as _;
-        (**self).binary_concat = options.binary_concat as _;
-        (**self).use_gop_as_pts = if let Some(usegops) = options.use_gop_as_pts {
-            usegops as _
+    unsafe fn copy_from_rust(self: &mut ccx_s_options, options: Options) {
+        self.extract = options.extract as _;
+        self.no_rollup = options.no_rollup as _;
+        self.noscte20 = options.noscte20 as _;
+        self.webvtt_create_css = options.webvtt_create_css as _;
+        self.cc_channel = options.cc_channel as _;
+        self.buffer_input = options.buffer_input as _;
+        self.nofontcolor = options.nofontcolor as _;
+        self.write_format = options.write_format.to_ctype();
+        self.send_to_srv = options.send_to_srv as _;
+        self.nohtmlescape = options.nohtmlescape as _;
+        self.notypesetting = options.notypesetting as _;
+        self.extraction_start = options.extraction_start.to_ctype();
+        self.extraction_end = options.extraction_end.to_ctype();
+        self.print_file_reports = options.print_file_reports as _;
+        self.settings_608 = options.settings_608.to_ctype();
+        self.settings_dtvcc = options.settings_dtvcc.to_ctype();
+        self.is_608_enabled = options.is_608_enabled as _;
+        self.is_708_enabled = options.is_708_enabled as _;
+        self.millis_separator = options.millis_separator() as _;
+        self.binary_concat = options.binary_concat as _;
+        self.use_gop_as_pts = if let Some(usegops) = options.use_gop_as_pts {
+            if usegops {
+                1
+            } else {
+                -1
+            }
         } else {
-            -1
+            0
         };
-        (**self).fix_padding = options.fix_padding as _;
-        (**self).gui_mode_reports = options.gui_mode_reports as _;
-        (**self).no_progress_bar = options.no_progress_bar as _;
+        self.fix_padding = options.fix_padding as _;
+        self.gui_mode_reports = options.gui_mode_reports as _;
+        self.no_progress_bar = options.no_progress_bar as _;
 
         if options.sentence_cap_file.try_exists().unwrap_or_default() {
-            (**self).sentence_cap_file = string_to_c_char(
+            self.sentence_cap_file = string_to_c_char(
                 options
                     .sentence_cap_file
                     .clone()
@@ -90,7 +94,7 @@ impl FromRust<Options> for *mut ccx_s_options {
             );
         }
 
-        (**self).live_stream = if let Some(live_stream) = options.live_stream {
+        self.live_stream = if let Some(live_stream) = options.live_stream {
             live_stream.seconds() as _
         } else {
             -1
@@ -100,7 +104,7 @@ impl FromRust<Options> for *mut ccx_s_options {
             .try_exists()
             .unwrap_or_default()
         {
-            (**self).filter_profanity_file = string_to_c_char(
+            self.filter_profanity_file = string_to_c_char(
                 options
                     .filter_profanity_file
                     .clone()
@@ -108,122 +112,122 @@ impl FromRust<Options> for *mut ccx_s_options {
                     .unwrap_or_default(),
             );
         }
-        (**self).messages_target = options.messages_target as _;
-        (**self).timestamp_map = options.timestamp_map as _;
-        (**self).dolevdist = options.dolevdist.into();
-        (**self).levdistmincnt = options.levdistmincnt as _;
-        (**self).levdistmaxpct = options.levdistmaxpct as _;
-        (**self).investigate_packets = options.investigate_packets as _;
-        (**self).fullbin = options.fullbin as _;
-        (**self).nosync = options.nosync as _;
-        (**self).hauppauge_mode = options.hauppauge_mode as _;
-        (**self).wtvconvertfix = options.wtvconvertfix as _;
-        (**self).wtvmpeg2 = options.wtvmpeg2 as _;
-        (**self).auto_myth = if let Some(auto_myth) = options.auto_myth {
+        self.messages_target = options.messages_target as _;
+        self.timestamp_map = options.timestamp_map as _;
+        self.dolevdist = options.dolevdist.into();
+        self.levdistmincnt = options.levdistmincnt as _;
+        self.levdistmaxpct = options.levdistmaxpct as _;
+        self.investigate_packets = options.investigate_packets as _;
+        self.fullbin = options.fullbin as _;
+        self.nosync = options.nosync as _;
+        self.hauppauge_mode = options.hauppauge_mode as _;
+        self.wtvconvertfix = options.wtvconvertfix as _;
+        self.wtvmpeg2 = options.wtvmpeg2 as _;
+        self.auto_myth = if let Some(auto_myth) = options.auto_myth {
             auto_myth as _
         } else {
-            -1
+            2
         };
-        (**self).mp4vidtrack = options.mp4vidtrack as _;
-        (**self).extract_chapters = options.extract_chapters as _;
-        (**self).usepicorder = options.usepicorder as _;
-        (**self).xmltv = options.xmltv as _;
-        (**self).xmltvliveinterval = options.xmltvliveinterval.seconds() as _;
-        (**self).xmltvoutputinterval = options.xmltvoutputinterval.seconds() as _;
-        (**self).xmltvonlycurrent = options.xmltvonlycurrent.into();
-        (**self).keep_output_closed = options.keep_output_closed as _;
-        (**self).force_flush = options.force_flush as _;
-        (**self).append_mode = options.append_mode as _;
-        (**self).ucla = options.ucla as _;
-        (**self).tickertext = options.tickertext as _;
-        (**self).hardsubx = options.hardsubx as _;
-        (**self).hardsubx_and_common = options.hardsubx_and_common as _;
+        self.mp4vidtrack = options.mp4vidtrack as _;
+        self.extract_chapters = options.extract_chapters as _;
+        self.usepicorder = options.usepicorder as _;
+        self.xmltv = options.xmltv as _;
+        self.xmltvliveinterval = options.xmltvliveinterval.seconds() as _;
+        self.xmltvoutputinterval = options.xmltvoutputinterval.seconds() as _;
+        self.xmltvonlycurrent = options.xmltvonlycurrent.into();
+        self.keep_output_closed = options.keep_output_closed as _;
+        self.force_flush = options.force_flush as _;
+        self.append_mode = options.append_mode as _;
+        self.ucla = options.ucla as _;
+        self.tickertext = options.tickertext as _;
+        self.hardsubx = options.hardsubx as _;
+        self.hardsubx_and_common = options.hardsubx_and_common as _;
         if let Some(dvblang) = options.dvblang {
-            (**self).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
+            self.dvblang = string_to_c_char(dvblang.to_ctype().as_str());
         }
         if options.ocrlang.try_exists().unwrap_or_default() {
-            (**self).ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
+            self.ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
         }
-        (**self).ocr_oem = options.ocr_oem as _;
-        (**self).ocr_quantmode = options.ocr_quantmode as _;
+        self.ocr_oem = options.ocr_oem as _;
+        self.ocr_quantmode = options.ocr_quantmode as _;
         if let Some(mkvlang) = options.mkvlang {
-            (**self).mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
+            self.mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
         }
-        (**self).analyze_video_stream = options.analyze_video_stream as _;
-        (**self).hardsubx_ocr_mode = options.hardsubx_ocr_mode.to_ctype();
-        (**self).hardsubx_subcolor = options.hardsubx_hue.to_ctype();
-        (**self).hardsubx_min_sub_duration = options.hardsubx_min_sub_duration.seconds() as _;
-        (**self).hardsubx_detect_italics = options.hardsubx_detect_italics as _;
-        (**self).hardsubx_conf_thresh = options.hardsubx_conf_thresh as _;
-        (**self).hardsubx_hue = options.hardsubx_hue.get_hue() as _;
-        (**self).hardsubx_lum_thresh = options.hardsubx_lum_thresh as _;
-        (**self).transcript_settings = options.transcript_settings.to_ctype();
-        (**self).date_format = options.date_format.to_ctype();
-        (**self).write_format_rewritten = options.write_format_rewritten as _;
-        (**self).use_ass_instead_of_ssa = options.use_ass_instead_of_ssa as _;
-        (**self).use_webvtt_styling = options.use_webvtt_styling as _;
-        (**self).debug_mask = options.debug_mask.normal_mask().bits() as _;
-        (**self).debug_mask_on_debug = options.debug_mask.debug_mask().bits() as _;
+        self.analyze_video_stream = options.analyze_video_stream as _;
+        self.hardsubx_ocr_mode = options.hardsubx_ocr_mode.to_ctype();
+        self.hardsubx_subcolor = options.hardsubx_hue.to_ctype();
+        self.hardsubx_min_sub_duration = options.hardsubx_min_sub_duration.seconds() as _;
+        self.hardsubx_detect_italics = options.hardsubx_detect_italics as _;
+        self.hardsubx_conf_thresh = options.hardsubx_conf_thresh as _;
+        self.hardsubx_hue = options.hardsubx_hue.get_hue() as _;
+        self.hardsubx_lum_thresh = options.hardsubx_lum_thresh as _;
+        self.transcript_settings = options.transcript_settings.to_ctype();
+        self.date_format = options.date_format.to_ctype();
+        self.write_format_rewritten = options.write_format_rewritten as _;
+        self.use_ass_instead_of_ssa = options.use_ass_instead_of_ssa as _;
+        self.use_webvtt_styling = options.use_webvtt_styling as _;
+        self.debug_mask = options.debug_mask.normal_mask().bits() as _;
+        self.debug_mask_on_debug = options.debug_mask.debug_mask().bits() as _;
         if options.udpsrc.is_some() {
-            (**self).udpsrc = string_to_c_char(&options.udpsrc.clone().unwrap());
+            self.udpsrc = string_to_c_char(&options.udpsrc.clone().unwrap());
         }
         if options.udpaddr.is_some() {
-            (**self).udpaddr = string_to_c_char(&options.udpaddr.clone().unwrap());
+            self.udpaddr = string_to_c_char(&options.udpaddr.clone().unwrap());
         }
-        (**self).udpport = options.udpport as _;
+        self.udpport = options.udpport as _;
         if options.tcpport.is_some() {
-            (**self).tcpport = string_to_c_char(&options.tcpport.unwrap().to_string());
+            self.tcpport = string_to_c_char(&options.tcpport.unwrap().to_string());
         }
         if options.tcp_password.is_some() {
-            (**self).tcp_password = string_to_c_char(&options.tcp_password.clone().unwrap());
+            self.tcp_password = string_to_c_char(&options.tcp_password.clone().unwrap());
         }
         if options.tcp_desc.is_some() {
-            (**self).tcp_desc = string_to_c_char(&options.tcp_desc.clone().unwrap());
+            self.tcp_desc = string_to_c_char(&options.tcp_desc.clone().unwrap());
         }
         if options.srv_addr.is_some() {
-            (**self).srv_addr = string_to_c_char(&options.srv_addr.clone().unwrap());
+            self.srv_addr = string_to_c_char(&options.srv_addr.clone().unwrap());
         }
         if options.srv_port.is_some() {
-            (**self).srv_port = string_to_c_char(&options.srv_port.unwrap().to_string());
+            self.srv_port = string_to_c_char(&options.srv_port.unwrap().to_string());
         }
-        (**self).noautotimeref = options.noautotimeref as _;
-        (**self).input_source = options.input_source as _;
+        self.noautotimeref = options.noautotimeref as _;
+        self.input_source = options.input_source as _;
         if options.output_filename.is_some() {
-            (**self).output_filename = string_to_c_char(&options.output_filename.clone().unwrap());
+            self.output_filename = string_to_c_char(&options.output_filename.clone().unwrap());
         }
         if options.inputfile.is_some() {
-            (**self).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
-            (**self).num_input_files = options.inputfile.as_ref().unwrap().len() as _;
+            self.inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
+            self.num_input_files = options.inputfile.iter().filter(|s| !s.is_empty()).count() as _;
         }
-        (**self).demux_cfg = options.demux_cfg.to_ctype();
-        (**self).enc_cfg = options.enc_cfg.to_ctype();
-        (**self).subs_delay = options.subs_delay.millis();
-        (**self).cc_to_stdout = options.cc_to_stdout as _;
-        (**self).pes_header_to_stdout = options.pes_header_to_stdout as _;
-        (**self).ignore_pts_jumps = options.ignore_pts_jumps as _;
-        (**self).multiprogram = options.multiprogram as _;
-        (**self).out_interval = options.out_interval;
-        (**self).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
+        self.demux_cfg = options.demux_cfg.to_ctype();
+        self.enc_cfg = options.enc_cfg.to_ctype();
+        self.subs_delay = options.subs_delay.millis();
+        self.cc_to_stdout = options.cc_to_stdout as _;
+        self.pes_header_to_stdout = options.pes_header_to_stdout as _;
+        self.ignore_pts_jumps = options.ignore_pts_jumps as _;
+        self.multiprogram = options.multiprogram as _;
+        self.out_interval = options.out_interval;
+        self.segment_on_key_frames_only = options.segment_on_key_frames_only as _;
         #[cfg(feature = "with_libcurl")]
         {
             if options.curlposturl.is_some() {
-                (**self).curlposturl =
+                self.curlposturl =
                     string_to_c_char(&options.curlposturl.as_ref().unwrap_or_default().as_str());
             }
         }
         #[cfg(feature = "enable_sharing")]
         {
-            (**self).sharing_enabled = options.sharing_enabled as _;
+            self.sharing_enabled = options.sharing_enabled as _;
             if options.sharing_url.is_some() {
-                (**self).sharing_url =
+                self.sharing_url =
                     string_to_c_char(&options.sharing_url.as_ref().unwrap().as_str());
             }
-            (**self).translate_enabled = options.translate_enabled as _;
+            self.translate_enabled = options.translate_enabled as _;
             if options.translate_langs.is_some() {
-                (**self).translate_langs = string_to_c_char(&options.translate_langs.unwrap());
+                self.translate_langs = string_to_c_char(&options.translate_langs.unwrap());
             }
             if options.translate_key.is_some() {
-                (**self).translate_key = string_to_c_char(&options.translate_key.unwrap());
+                self.translate_key = string_to_c_char(&options.translate_key.unwrap());
             }
         }
     }
@@ -253,7 +257,7 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             encoding: value.enc_cfg.encoding.to_ctype() as _,
             nofontcolor: self.nofontcolor.into(),
             nohtmlescape: self.nohtmlescape.into(),
-            millis_separator: self.date_format.millis_separator() as _,
+            millis_separator: value.millis_separator() as _,
             latrusmap: self.latrusmap.into(),
         };
         config.set_verbose(self.verbose.into());
@@ -486,7 +490,7 @@ impl CType<demuxer_cfg> for DemuxerConfig {
             ts_cappids: self.ts_cappids.to_ctype(),
             nb_ts_cappid: self.ts_cappids.len() as _,
             ts_forced_cappid: self.ts_forced_cappid as _,
-            ts_forced_program: self.ts_forced_program.unwrap_or_default() as _,
+            ts_forced_program: self.ts_forced_program.unwrap_or(-1) as _,
             ts_forced_program_selected: self.ts_forced_program.is_some() as _,
             ts_datastreamtype: self.ts_datastreamtype.to_ctype() as _,
             ts_forced_streamtype: self.ts_forced_streamtype.to_ctype() as _,
@@ -559,7 +563,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             extract: self.extract as _,
             dtvcc_extract: self.dtvcc_extract as _,
             gui_mode_reports: self.gui_mode_reports as _,
-            output_filename: unsafe { string_to_c_char(&self.output_filename) },
+            output_filename: string_to_c_char(&self.output_filename),
             write_format: self.write_format.to_ctype(),
             keep_output_closed: self.keep_output_closed as _,
             force_flush: self.force_flush as _,
@@ -567,7 +571,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             ucla: self.ucla as _,
             encoding: self.encoding as _,
             date_format: self.date_format.to_ctype(),
-            millis_separator: self.date_format.millis_separator() as _,
+            millis_separator: self.millis_separator() as _,
             autodash: self.autodash as _,
             trim_subs: self.trim_subs as _,
             sentence_cap: self.sentence_cap as _,
@@ -618,6 +622,16 @@ impl CType<encoder_cfg> for EncoderConfig {
                 null_pointer()
             },
             extract_only_708: self.extract_only_708 as _,
+        }
+    }
+}
+
+impl CType<word_list> for Vec<String> {
+    unsafe fn to_ctype(&self) -> word_list {
+        word_list {
+            words: string_to_c_chars(self.clone()),
+            len: self.len(),
+            capacity: self.capacity(),
         }
     }
 }

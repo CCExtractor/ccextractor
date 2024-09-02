@@ -1,5 +1,8 @@
 use args::{Args, OutFormat};
+use lib_ccxr::activity::ActivityExt;
+use lib_ccxr::teletext::{TeletextConfig, TeletextPageNumber, UTC_REFVALUE};
 use lib_ccxr::time::units::{Timestamp, TimestampFormat};
+use lib_ccxr::util::encoders_helper::{add_builtin_capitalization, add_builtin_profane};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputTarget};
 use lib_ccxr::util::time::stringztoms;
@@ -9,27 +12,23 @@ use std::convert::TryInto;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
-use std::ptr::addr_of_mut;
 use std::str::FromStr;
 use std::string::String;
 
-use lib_ccxr::common::*;
+use lib_ccxr::{common::*, fatal};
 
 use cfg_if::cfg_if;
 
 use time::OffsetDateTime;
 
+use crate::args::CCXCodec;
 use crate::args::{self, InFormat};
-use crate::ccx_encoders_helpers::{
-    CAPITALIZATION_LIST, CAPITALIZED_BUILTIN, PROFANE, PROFANE_BUILTIN,
-};
-use crate::{activity::ActivityExt, args::CCXCodec};
 
 cfg_if! {
     if #[cfg(test)] {
-        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ};
+        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
     } else {
-        use crate::{set_binary_mode, MPEG_CLOCK_FREQ};
+        use crate::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
     }
 }
 
@@ -46,22 +45,25 @@ cfg_if! {
     }
 }
 
-pub static mut FILEBUFFERSIZE: i64 = 1024 * 1024 * 16;
-static mut USERCOLOR_RGB: String = String::new();
-pub static mut UTC_REFVALUE: u64 = 0;
-const CCX_DECODER_608_SCREEN_WIDTH: u16 = 32;
-static mut inputfile_capacity: i32 = 0;
-
-fn get_vector_words(string_array: &[&str]) -> Vec<String> {
-    let mut vector = Vec::new();
-    for string in string_array {
-        vector.push(String::from(*string));
+fn set_usercolor_rgb(color: &str) {
+    let mut rgb: [i32; 8] = [0; 8];
+    for (i, item) in color.chars().enumerate() {
+        rgb[i] = item as i32;
     }
-    vector
+    rgb[7] = 0;
+    unsafe {
+        usercolor_rgb = rgb;
+    }
 }
 
-fn atol(bufsize: &str) -> i64 {
-    let mut val = bufsize[0..bufsize.len() - 1].parse::<i64>().unwrap();
+fn set_mpeg_clock_freq(freq: i32) {
+    unsafe {
+        MPEG_CLOCK_FREQ = freq as _;
+    }
+}
+
+fn atol(bufsize: &str) -> i32 {
+    let mut val = bufsize[0..bufsize.len() - 1].parse::<i32>().unwrap();
     let size = bufsize
         .to_string()
         .to_uppercase()
@@ -96,13 +98,15 @@ where
     match atoi_hex(s) {
         Ok(val) => val,
         Err(_) => {
-            println!("Malformed parameter: {}", s);
-            std::process::exit(ExitCause::MalformedParameter.exit_code());
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "Malformed parameter: {}",s
+            );
         }
     }
 }
 
-unsafe fn process_word_file(filename: &str, list: *mut Vec<String>) -> Result<(), std::io::Error> {
+fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
     let mut num = 0;
@@ -115,7 +119,7 @@ unsafe fn process_word_file(filename: &str, list: *mut Vec<String>) -> Result<()
         }
 
         let new_len = line.trim().len();
-        if new_len > CCX_DECODER_608_SCREEN_WIDTH as usize {
+        if new_len > CCX_DECODER_608_SCREEN_WIDTH {
             println!(
                 "Word in line {} too long, max = {} characters.",
                 num, CCX_DECODER_608_SCREEN_WIDTH
@@ -124,7 +128,7 @@ unsafe fn process_word_file(filename: &str, list: *mut Vec<String>) -> Result<()
         }
 
         if new_len > 0 {
-            (*list).push(line.trim().to_string());
+            list.push(line.trim().to_string());
         }
     }
     Ok(())
@@ -138,15 +142,19 @@ fn mkvlang_params_check(lang: &str) {
             _present = char_index;
 
             if _present - initial < 3 || _present - initial > 6 {
-                println!("language codes should be xxx,xxx,xxx,....\n");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "language codes should be xxx,xxx,xxx,....\n"
+                );
             }
 
             if _present - initial == 6 {
                 let sub_slice = &lang[initial.._present];
                 if !sub_slice.contains('-') {
-                    println!("language code is not of the form xxx-xx\n");
-                    std::process::exit(ExitCause::MalformedParameter.exit_code());
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "language codes should be xxx,xxx,xxx,....\n"
+                    );
                 }
             }
 
@@ -165,16 +173,30 @@ fn mkvlang_params_check(lang: &str) {
     }
 
     if _present - initial < 2 || _present - initial > 5 {
-        println!("last language code should be xxx.\n");
-        std::process::exit(ExitCause::MalformedParameter.exit_code());
+        fatal!(
+            cause = ExitCause::MalformedParameter;
+            "last language code should be xxx.\n"
+        );
     }
 
     if _present - initial == 5 {
         let sub_slice = &lang[initial.._present];
         if !sub_slice.contains('-') {
-            println!("last language code is not of the form xxx-xx\n");
-            std::process::exit(ExitCause::MalformedParameter.exit_code());
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "last language code is not of the form xxx-xx\n"
+            );
         }
+    }
+}
+
+fn get_file_buffer_size() -> i32 {
+    unsafe { FILEBUFFERSIZE }
+}
+
+fn set_file_buffer_size(size: i32) {
+    unsafe {
+        FILEBUFFERSIZE = size;
     }
 }
 
@@ -184,9 +206,15 @@ pub trait OptionsExt {
     fn set_input_format_type(&mut self, input_format: InFormat);
     fn set_input_format(&mut self, args: &Args);
     fn parse_708_services(&mut self, s: &str);
-    fn append_file_to_queue(&mut self, filename: &str) -> i32;
-    fn add_file_sequence(&mut self, filename: &mut String) -> i32;
-    fn parse_parameters(&mut self, args: &Args, tlt_config: &mut TeletextConfig);
+    fn append_file_to_queue(&mut self, filename: &str, inputfile_capacity: &mut i32) -> i32;
+    fn add_file_sequence(&mut self, filename: &mut String, inputfile_capacity: &mut i32) -> i32;
+    fn parse_parameters(
+        &mut self,
+        args: &Args,
+        tlt_config: &mut TeletextConfig,
+        capitalization_list: &mut Vec<String>,
+        profane: &mut Vec<String>,
+    );
     fn is_inputfile_empty(&self) -> bool;
 }
 
@@ -313,8 +341,10 @@ impl OptionsExt for Options {
         } else if args.wtv {
             self.set_input_format_type(InFormat::Wtv);
         } else {
-            println!("Unknown input file format: {}\n", args.input.unwrap());
-            std::process::exit(ExitCause::MalformedParameter.exit_code());
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+               "Unknown input file format: {}\n", args.input.unwrap()
+            );
         }
     }
 
@@ -323,8 +353,17 @@ impl OptionsExt for Options {
             let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
-            self.enc_cfg.services_charsets = DtvccServiceCharset::Same(charset.to_string());
 
+            if charset.is_empty() {
+                self.enc_cfg.services_charsets = DtvccServiceCharset::Unique(
+                    vec![String::new(); DTVCC_MAX_SERVICES]
+                        .into_boxed_slice()
+                        .try_into()
+                        .unwrap(),
+                );
+            } else {
+                self.enc_cfg.services_charsets = DtvccServiceCharset::Same(charset.to_string());
+            }
             for i in 0..DTVCC_MAX_SERVICES {
                 self.settings_dtvcc.services_enabled[i] = true;
                 self.enc_cfg.services_enabled[i] = true;
@@ -369,8 +408,10 @@ impl OptionsExt for Options {
         for (i, service) in services.iter().enumerate() {
             let svc = service.parse::<usize>().unwrap();
             if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
-                println!("[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, DTVCC_MAX_SERVICES);
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, DTVCC_MAX_SERVICES
+                );
             }
             self.settings_dtvcc.services_enabled[svc - 1] = true;
             self.enc_cfg.services_enabled[svc - 1] = true;
@@ -386,40 +427,38 @@ impl OptionsExt for Options {
         }
 
         if self.settings_dtvcc.active_services_count == 0 {
-            println!("[CEA-708] Malformed parameter: no services\n");
-            std::process::exit(ExitCause::MalformedParameter.exit_code());
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+               "[CEA-708] Malformed parameter: no services\n"
+            );
         }
     }
 
-    fn append_file_to_queue(&mut self, filename: &str) -> i32 {
+    fn append_file_to_queue(&mut self, filename: &str, inputfile_capacity: &mut i32) -> i32 {
         if filename.is_empty() {
             return 0;
         }
 
-        let new_size: usize;
+        let num_input_files = if let Some(ref inputfile) = self.inputfile {
+            inputfile.len()
+        } else {
+            0
+        };
+        if num_input_files >= *inputfile_capacity as _ {
+            *inputfile_capacity += 10;
+        }
 
-        unsafe {
-            let num_input_files = if let Some(ref inputfile) = self.inputfile {
-                inputfile.len()
-            } else {
-                0
-            };
-            if num_input_files >= inputfile_capacity as _ {
-                inputfile_capacity += 10;
-            }
+        let new_size = (*inputfile_capacity).try_into().unwrap_or(0);
 
-            new_size = inputfile_capacity.try_into().unwrap_or(0);
+        if self.inputfile.is_none() {
+            self.inputfile = Some(Vec::with_capacity(new_size));
+        }
 
-            if self.inputfile.is_none() {
-                self.inputfile = Some(Vec::with_capacity(new_size));
-            }
+        if let Some(ref mut inputfile) = self.inputfile {
+            inputfile.resize(new_size, String::new());
 
-            if let Some(ref mut inputfile) = self.inputfile {
-                inputfile.resize(new_size, String::new());
-
-                let index = num_input_files;
-                inputfile[index] = filename.to_string();
-            }
+            let index = num_input_files;
+            inputfile[index] = filename.to_string();
         }
 
         0
@@ -427,7 +466,7 @@ impl OptionsExt for Options {
 
     // Used for adding a sequence of files that are numbered
     // Ex: filename: video1.mp4 will search for video2.mp4, video3.mp4, ...
-    fn add_file_sequence(&mut self, filename: &mut String) -> i32 {
+    fn add_file_sequence(&mut self, filename: &mut String, inputfile_capacity: &mut i32) -> i32 {
         filename.pop();
         let mut n: i32 = filename.len() as i32 - 1;
         let bytes = filename.as_bytes();
@@ -438,7 +477,7 @@ impl OptionsExt for Options {
         }
         if n == -1 {
             // None. No expansion needed
-            return self.append_file_to_queue(filename);
+            return self.append_file_to_queue(filename, inputfile_capacity);
         }
 
         let mut m: i32 = n;
@@ -456,7 +495,7 @@ impl OptionsExt for Options {
 
         loop {
             if std::path::Path::new(&filename).exists() {
-                if self.append_file_to_queue(filename.as_str()) != 0 {
+                if self.append_file_to_queue(filename.as_str(), inputfile_capacity) != 0 {
                     return -1;
                 }
                 temp = format!("{}", i + 1);
@@ -482,7 +521,13 @@ impl OptionsExt for Options {
         0
     }
 
-    fn parse_parameters(&mut self, args: &Args, tlt_config: &mut TeletextConfig) {
+    fn parse_parameters(
+        &mut self,
+        args: &Args,
+        tlt_config: &mut TeletextConfig,
+        capitalization_list: &mut Vec<String>,
+        profane: &mut Vec<String>,
+    ) {
         if args.stdin {
             unsafe {
                 set_binary_mode();
@@ -490,26 +535,31 @@ impl OptionsExt for Options {
             self.input_source = DataSource::Stdin;
             self.live_stream = None;
         }
+        let mut inputfile_capacity = 0;
         if let Some(ref files) = args.inputfile {
             for inputfile in files {
                 let plus_sign = '+';
 
                 let rc: i32 = if !inputfile.ends_with(plus_sign) {
-                    self.append_file_to_queue(inputfile)
+                    self.append_file_to_queue(inputfile, &mut inputfile_capacity)
                 } else {
-                    self.add_file_sequence(&mut inputfile.clone())
+                    self.add_file_sequence(&mut inputfile.clone(), &mut inputfile_capacity)
                 };
 
                 if rc < 0 {
-                    println!("Fatal: Not enough memory to parse parameters.\n");
-                    std::process::exit(ExitCause::NotEnoughMemory.exit_code());
+                    fatal!(
+                        cause = ExitCause::NotEnoughMemory;
+                       "Fatal: Not enough memory to parse parameters.\n"
+                    );
                 }
             }
         }
 
         if self.inputfile.is_none() {
-            println!("No input file specified\n");
-            std::process::exit(ExitCause::NoInputFiles.exit_code());
+            fatal!(
+                cause = ExitCause::NoInputFiles;
+               "No input file specified\n"
+            );
         }
 
         #[cfg(feature = "hardsubx_ocr")]
@@ -531,8 +581,10 @@ impl OptionsExt for Options {
                     };
 
                     if ocr_mode.is_none() {
-                        println!("Invalid OCR mode");
-                        std::process::exit(ExitCause::MalformedParameter.exit_code());
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid OCR mode"
+                        );
                     }
 
                     self.hardsubx_ocr_mode = ocr_mode.unwrap_or_default();
@@ -564,15 +616,19 @@ impl OptionsExt for Options {
                         _ => {
                             let result = subcolor.parse::<f64>();
                             if result.is_err() {
-                                println!("Invalid Hue value");
-                                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                                fatal!(
+                                    cause = ExitCause::MalformedParameter;
+                                   "Invalid Hue value"
+                                );
                             }
 
                             let hue: f64 = result.unwrap();
 
                             if hue <= 0.0 || hue > 360.0 {
-                                println!("Invalid Hue value");
-                                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                                fatal!(
+                                    cause = ExitCause::MalformedParameter;
+                                   "Invalid Hue value"
+                                );
                             }
                             self.hardsubx_hue = ColorHue::Custom(hue);
                         }
@@ -581,8 +637,10 @@ impl OptionsExt for Options {
 
                 if let Some(ref value) = args.min_sub_duration {
                     if *value == 0.0 {
-                        println!("Invalid minimum subtitle duration");
-                        std::process::exit(ExitCause::MalformedParameter.exit_code());
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid minimum subtitle duration"
+                        );
                     }
                     self.hardsubx_min_sub_duration = Timestamp::from_millis((1000.0 * *value) as _);
                 }
@@ -593,16 +651,20 @@ impl OptionsExt for Options {
 
                 if let Some(ref value) = args.conf_thresh {
                     if !(0.0..=100.0).contains(value) {
-                        println!("Invalid confidence threshold, valid values are between 0 & 100");
-                        std::process::exit(ExitCause::MalformedParameter.exit_code());
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid confidence threshold, valid values are between 0 & 100"
+                        );
                     }
                     self.hardsubx_conf_thresh = *value as _;
                 }
 
                 if let Some(ref value) = args.whiteness_thresh {
                     if !(0.0..=100.0).contains(value) {
-                        println!("Invalid whiteness threshold, valid values are between 0 & 100");
-                        std::process::exit(ExitCause::MalformedParameter.exit_code());
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid whiteness threshold, valid values are between 0 & 100"
+                        );
                     }
                     self.hardsubx_lum_thresh = *value as _;
                 }
@@ -634,12 +696,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref buffersize) = args.buffersize {
-            unsafe {
-                FILEBUFFERSIZE = atol(buffersize);
+            set_file_buffer_size(atol(buffersize));
 
-                if FILEBUFFERSIZE < 8 {
-                    FILEBUFFERSIZE = 8; // Otherwise crashes are guaranteed at least in MythTV
-                }
+            if get_file_buffer_size() < 8 {
+                set_file_buffer_size(8); // Otherwise crashes are guaranteed at least in MythTV
             }
         }
 
@@ -719,8 +779,10 @@ impl OptionsExt for Options {
 
         if let Some(ref quant) = args.quant {
             if !(0..=2).contains(quant) {
-                println!("Invalid quant value");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid quant value"
+                );
             }
             self.ocr_quantmode = *quant;
         }
@@ -731,8 +793,10 @@ impl OptionsExt for Options {
 
         if let Some(ref oem) = args.oem {
             if !(0..=2).contains(oem) {
-                println!("Invalid oem value");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "oem value should be between 0 and 2"
+                );
             }
             self.ocr_oem = *oem as _;
         }
@@ -818,9 +882,7 @@ impl OptionsExt for Options {
         }
 
         if args.mpeg90090 {
-            unsafe {
-                MPEG_CLOCK_FREQ = 90090;
-            }
+            set_mpeg_clock_freq(90090);
         }
         if args.no_scte20 {
             self.noscte20 = true;
@@ -906,14 +968,14 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref defaultcolor) = args.defaultcolor {
-            unsafe {
-                if defaultcolor.len() != 7 || !defaultcolor.starts_with('#') {
-                    println!("Invalid default color");
-                    std::process::exit(ExitCause::MalformedParameter.exit_code());
-                }
-                USERCOLOR_RGB.clone_from(defaultcolor);
-                self.settings_608.default_color = Decoder608ColorCode::Userdefined;
+            if defaultcolor.len() != 7 || !defaultcolor.starts_with('#') {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid default color"
+                );
             }
+            set_usercolor_rgb(defaultcolor);
+            self.settings_608.default_color = Decoder608ColorCode::Userdefined;
         }
 
         if let Some(ref delay) = args.delay {
@@ -925,10 +987,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = stringztoms(startat.clone().as_str()).unwrap();
+            self.extraction_start = Some(stringztoms(startat.clone().as_str()).unwrap());
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = stringztoms(endat.clone().as_str()).unwrap();
+            self.extraction_end = Some(stringztoms(endat.clone().as_str()).unwrap());
         }
 
         if args.cc2 {
@@ -936,13 +998,15 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref extract) = args.output_field {
-            if *extract == "1" || *extract == "2" {
+            if *extract == "1" || *extract == "2" || *extract == "12" {
                 self.extract = get_atoi_hex(extract);
             } else if *extract == "both" {
                 self.extract = 12;
             } else {
-                println!("Invalid output field");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid output field"
+                );
             }
             self.is_608_enabled = true;
         }
@@ -1136,14 +1200,29 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref datastreamtype) = args.datastreamtype {
-            self.demux_cfg.ts_datastreamtype =
-                StreamType::from_repr((*datastreamtype).into()).unwrap_or_default();
-            // TODO: Should I panick?
+            if let Some(streamType) =
+                StreamType::from_repr(get_atoi_hex::<usize>(&datastreamtype.to_string()))
+            {
+                self.demux_cfg.ts_datastreamtype = streamType;
+            } else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid data stream type"
+                );
+            }
         }
 
         if let Some(ref streamtype) = args.streamtype {
-            self.demux_cfg.ts_forced_streamtype =
-                StreamType::from_repr((*streamtype).into()).unwrap_or_default();
+            if let Some(streamType) =
+                StreamType::from_repr(get_atoi_hex::<usize>(&streamtype.to_string()))
+            {
+                self.demux_cfg.ts_forced_streamtype = streamType;
+            } else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid stream type"
+                );
+            }
         }
 
         if let Some(ref tpage) = args.tpage {
@@ -1151,11 +1230,9 @@ impl OptionsExt for Options {
             tlt_config.page = Cell::new(TeletextPageNumber::from(tlt_config.user_page));
         }
 
-        let mut millis_separator = ',';
         // Red Hen/ UCLA Specific stuff
         if args.ucla {
             self.ucla = true;
-            millis_separator = '.';
             self.enc_cfg.no_bom = true;
 
             if !self.transcript_settings.is_final {
@@ -1215,18 +1292,20 @@ impl OptionsExt for Options {
             if t == 0 {
                 t = OffsetDateTime::now_utc().unix_timestamp() as u64;
             }
-            unsafe {
-                UTC_REFVALUE = t;
-            }
+            *UTC_REFVALUE.write().unwrap() = t as u64;
             self.noautotimeref = true;
         }
 
         if args.sects {
-            self.date_format = TimestampFormat::Seconds { millis_separator };
+            self.date_format = TimestampFormat::Seconds {
+                millis_separator: ',',
+            };
         }
 
         if args.datets {
-            self.date_format = TimestampFormat::Date { millis_separator };
+            self.date_format = TimestampFormat::Date {
+                millis_separator: ',',
+            };
         }
 
         if args.teletext {
@@ -1254,8 +1333,10 @@ impl OptionsExt for Options {
                     self.transcript_settings.use_colors = chars[6] == '1';
                 }
             } else {
-                println!("Invalid customtxt value. It must be 7 digits long");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "Invalid customtxt value. It must be 7 digits long"
+                );
             }
         }
 
@@ -1296,8 +1377,10 @@ impl OptionsExt for Options {
 
                 let result = _addr.find(']');
                 if result.is_none() {
-                    println!("Wrong address format, for IPv6 use [address]:port\n");
-                    std::process::exit(ExitCause::IncompatibleParameters.exit_code());
+                    fatal!(
+                        cause = ExitCause::IncompatibleParameters;
+                       "Wrong address format, for IPv6 use [address]:port\n"
+                    );
                 }
                 let mut br = result.unwrap();
                 _addr = _addr.replace(']', "");
@@ -1333,7 +1416,6 @@ impl OptionsExt for Options {
 
         if let Some(ref font) = args.font {
             self.enc_cfg.render_font = PathBuf::from_str(font).unwrap_or_default();
-            // TODO: Check if Panic on wrong path
         }
 
         if let Some(ref italics) = args.italics {
@@ -1370,8 +1452,10 @@ impl OptionsExt for Options {
         }
 
         if self.demux_cfg.auto_stream == StreamMode::Mp4 && self.input_source == DataSource::Stdin {
-            println!("MP4 requires an actual file, it's not possible to read from a stream, including stdin.");
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+               "MP4 requires an actual file, it's not possible to read from a stream, including stdin."
+            );
         }
 
         if self.extract_chapters {
@@ -1387,32 +1471,28 @@ impl OptionsExt for Options {
         }
 
         if self.enc_cfg.sentence_cap {
-            unsafe {
-                CAPITALIZATION_LIST = get_vector_words(&CAPITALIZED_BUILTIN);
-                if self.sentence_cap_file.exists() {
-                    if let Some(sentence_cap_file) = self.sentence_cap_file.to_str() {
-                        let result =
-                            process_word_file(sentence_cap_file, addr_of_mut!(CAPITALIZATION_LIST));
+            add_builtin_capitalization(capitalization_list);
 
-                        if result.is_err() {
-                            println!("There was an error processing the capitalization file.\n");
-                            std::process::exit(ExitCause::ErrorInCapitalizationFile.exit_code());
-                        }
+            if self.sentence_cap_file.exists() {
+                if let Some(sentence_cap_file) = self.sentence_cap_file.to_str() {
+                    if process_word_file(sentence_cap_file, capitalization_list).is_err() {
+                        fatal!(
+                            cause = ExitCause::ErrorInCapitalizationFile;
+                           "There was an error processing the capitalization file.\n"
+                        );
                     }
                 }
             }
         }
         if self.enc_cfg.filter_profanity {
-            unsafe {
-                PROFANE = get_vector_words(&PROFANE_BUILTIN);
-                if self.filter_profanity_file.exists() {
-                    if let Some(profanityfile) = self.filter_profanity_file.to_str() {
-                        let result = process_word_file(profanityfile, addr_of_mut!(PROFANE));
-
-                        if result.is_err() {
-                            println!("There was an error processing the profanity file.\n");
-                            std::process::exit(ExitCause::ErrorInCapitalizationFile.exit_code());
-                        }
+            add_builtin_profane(profane);
+            if self.filter_profanity_file.exists() {
+                if let Some(filter_profanity_file) = self.filter_profanity_file.to_str() {
+                    if process_word_file(filter_profanity_file, profane).is_err() {
+                        fatal!(
+                            cause = ExitCause::ErrorInCapitalizationFile;
+                           "There was an error processing the profanity file.\n"
+                        );
                     }
                 }
             }
@@ -1422,8 +1502,8 @@ impl OptionsExt for Options {
         tlt_config.dolevdist = self.dolevdist;
         tlt_config.levdistmincnt = self.levdistmincnt;
         tlt_config.levdistmaxpct = self.levdistmaxpct;
-        tlt_config.extraction_start = Some(self.extraction_start);
-        tlt_config.extraction_end = Some(self.extraction_end);
+        tlt_config.extraction_start = self.extraction_start;
+        tlt_config.extraction_end = self.extraction_end;
         tlt_config.write_format = self.write_format;
         tlt_config.date_format = self.date_format;
         tlt_config.noautotimeref = self.noautotimeref;
@@ -1432,22 +1512,31 @@ impl OptionsExt for Options {
 
         // teletext page number out of range
         if tlt_config.user_page != 0 && (tlt_config.user_page < 100 || tlt_config.user_page > 899) {
-            println!("Teletext page number out of range (100-899)");
-            std::process::exit(ExitCause::NotClassified.exit_code());
+            fatal!(
+                cause = ExitCause::NotClassified;
+               "Teletext page number out of range (100-899)"
+            );
         }
 
         if self.is_inputfile_empty() && self.input_source == DataSource::File {
-            std::process::exit(ExitCause::NoInputFiles.exit_code());
+            fatal!(
+                cause = ExitCause::NoInputFiles;
+                "No input file specified\n"
+            );
         }
 
         if !self.is_inputfile_empty() && self.live_stream.unwrap_or_default().millis() != 0 {
-            println!("Live stream mode only supports one input file");
-            std::process::exit(ExitCause::TooManyInputFiles.exit_code());
+            fatal!(
+                cause = ExitCause::TooManyInputFiles;
+               "Live stream mode only supports one input file"
+            );
         }
 
         if !self.is_inputfile_empty() && self.input_source == DataSource::Network {
-            println!("UDP mode is not compatible with input files");
-            std::process::exit(ExitCause::TooManyInputFiles.exit_code());
+            fatal!(
+                cause = ExitCause::TooManyInputFiles;
+               "UDP mode is not compatible with input files"
+            );
         }
 
         if self.input_source == DataSource::Network || self.input_source == DataSource::Tcp {
@@ -1455,23 +1544,29 @@ impl OptionsExt for Options {
         }
 
         if !self.is_inputfile_empty() && self.input_source == DataSource::Tcp {
-            println!("TCP mode is not compatible with input files");
-            std::process::exit(ExitCause::TooManyInputFiles.exit_code());
+            fatal!(
+                cause = ExitCause::TooManyInputFiles;
+                "TCP mode is not compatible with input files"
+            );
         }
 
         if self.demux_cfg.auto_stream == StreamMode::McpoodlesRaw
             && self.write_format == OutputFormat::Raw
         {
-            println!("-in=raw can only be used if the output is a subtitle file.");
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+                "-in=raw can only be used if the output is a subtitle file."
+            );
         }
 
         if self.demux_cfg.auto_stream == StreamMode::Rcwt
             && self.write_format == OutputFormat::Rcwt
             && self.output_filename.is_none()
         {
-            println!("CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n");
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+                "CCExtractor's binary format can only be used simultaneously for input and\noutput if the output file name is specified given with -o.\n"
+            );
         }
 
         if self.write_format != OutputFormat::DvdRaw
@@ -1479,33 +1574,38 @@ impl OptionsExt for Options {
             && self.extract != 0
             && self.extract == 12
         {
-            println!(
-                "You can't extract both fields to stdout at the same time in broadcast mode.\n",
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+                "You can't extract both fields to stdout at the same time in broadcast mode.\n"
             );
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
         }
 
         if self.write_format == OutputFormat::SpuPng && self.cc_to_stdout {
-            println!("You cannot use --out=spupng with -stdout.\n");
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+                "You cannot use --out=spupng with -stdout.\n"
+            );
         }
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::Utf8 {
             self.enc_cfg.encoding = Encoding::Utf8;
             println!("Note: Output format is WebVTT, forcing UTF-8");
-            std::process::exit(ExitCause::IncompatibleParameters.exit_code());
         }
 
         // Check WITH_LIBCURL
         #[cfg(feature = "with_libcurl")]
         {
             if self.write_format == OutputFormat::Curl && self.curlposturl.is_none() {
-                println!("You must pass a URL (--curlposturl) if output format is curl");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "You must pass a URL (--curlposturl) if output format is curl"
+                );
             }
             if self.write_format != OutputFormat::Curl && self.curlposturl.is_some() {
-                println!("--curlposturl requires that the format is curl");
-                std::process::exit(ExitCause::MalformedParameter.exit_code());
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                  "--curlposturl requires that the format is curl"
+                );
             }
         }
 
@@ -1584,6 +1684,8 @@ pub mod tests {
     #[no_mangle]
     pub unsafe extern "C" fn set_binary_mode() {}
     pub static mut MPEG_CLOCK_FREQ: u64 = 0;
+    pub static mut FILEBUFFERSIZE: i32 = 0;
+    pub static mut usercolor_rgb: [i32; 8] = [0; 8];
 
     fn parse_args(args: &[&str]) -> (Options, TeletextConfig) {
         let mut common_args = vec!["./ccextractor", "input_file"];
@@ -1596,7 +1698,15 @@ pub mod tests {
             ..Default::default()
         };
 
-        options.parse_parameters(&args, &mut tlt_config);
+        let mut capitalization_list: Vec<String> = vec![];
+        let mut profane: Vec<String> = vec![];
+
+        options.parse_parameters(
+            &args,
+            &mut tlt_config,
+            &mut capitalization_list,
+            &mut profane,
+        );
         (options, tlt_config)
     }
 
@@ -1917,7 +2027,7 @@ pub mod tests {
     fn options_9() {
         let (options, _) = parse_args(&[
             "--datastreamtype",
-            "2",
+            "0x2",
             "--streamtype",
             "2",
             "--no-autotimeref",
@@ -1958,9 +2068,7 @@ pub mod tests {
     fn options_13() {
         let (options, _) = parse_args(&["--unixts", "5", "--out", "txt"]);
 
-        unsafe {
-            assert_eq!(UTC_REFVALUE, 5);
-        }
+        assert_eq!(*(UTC_REFVALUE.read().unwrap()), 5);
 
         assert_eq!(options.write_format, OutputFormat::Transcript);
     }
@@ -2025,9 +2133,7 @@ pub mod tests {
     fn options_20() {
         let (_, _) = parse_args(&["--buffersize", "1M"]);
 
-        unsafe {
-            assert_eq!(FILEBUFFERSIZE, 1024 * 1024);
-        }
+        assert_eq!(get_file_buffer_size(), 1024 * 1024);
     }
 
     #[test]
@@ -2062,7 +2168,7 @@ pub mod tests {
     fn options_25() {
         let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
 
-        assert_eq!(options.extraction_start.seconds(), 4);
+        assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
     }
 
     #[test]

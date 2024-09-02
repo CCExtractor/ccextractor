@@ -1,7 +1,7 @@
 use std::io;
 use std::io::Write;
 
-use lib_ccxr::common::Options;
+use crate::common::Options;
 
 pub trait ActivityExt {
     fn activity_report_version(&mut self);
