@@ -35,6 +35,7 @@
 - Fix: infinite loop in MP4 file type detector.
 - Improvement: Use Corrosion to build Rust code
 - Improvement: Ignore MXF Caption Essence Container version byte to enhance SRT subtitle extraction compatibility
+- New: Add tesseract page segmentation modes control with `--psm` flag
 
 0.94 (2021-12-14)
 -----------------

@@ -801,6 +801,16 @@ impl OptionsExt for Options {
             self.ocr_oem = *oem as _;
         }
 
+        if let Some(ref psm) = args.psm {
+            if !(0..=13).contains(psm) {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                   "--psm must be between 0 and 13"
+                );
+            }
+            self.psm = *psm as _;
+        }
+
         if let Some(ref lang) = args.mkvlang {
             self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
             let str = lang.as_str();

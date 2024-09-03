@@ -455,6 +455,8 @@ pub struct Options {
     pub ocrlang: PathBuf,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
     pub ocr_oem: i8,
+    /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
+    pub psm: i32,
     /// How to quantize the bitmap before passing to to tesseract
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
@@ -589,6 +591,7 @@ impl Default for Options {
             dvblang: Default::default(),
             ocrlang: Default::default(),
             ocr_oem: -1,
+            psm: 3,
             ocr_quantmode: 1,
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
