@@ -38,7 +38,7 @@ impl Default for EncodersTranscriptFormat {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum FrameType {
     #[default]
     ResetOrUnknown = 0,

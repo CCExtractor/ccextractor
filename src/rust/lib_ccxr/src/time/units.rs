@@ -1,7 +1,7 @@
 use std::convert::TryInto;
+use std::ffi::c_int;
 use std::fmt::Write;
 use std::num::TryFromIntError;
-use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use derive_more::{Add, Neg, Sub};
@@ -395,6 +395,18 @@ impl Timestamp {
         let mut s = String::new();
         self.write_hms_millis_time(&mut s, sep)?;
         Ok(s)
+    }
+
+    /// SCC time formatting
+    pub fn to_scc_time(&self) -> Result<String, TimestampError> {
+        let mut result = String::new();
+
+        let (h, m, s, _) = self.as_hms_millis()?;
+        let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * 29.97 / 1000.0;
+
+        write!(result, "{:02}:{:02}:{:02};{:02}", h, m, s, frame)?;
+
+        Ok(result)
     }
 
     /// Returns a formatted [`Timestamp`] using ctime's format.

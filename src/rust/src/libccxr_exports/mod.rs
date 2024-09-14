@@ -6,7 +6,7 @@ use lib_ccxr::util::log::*;
 use lib_ccxr::util::{bits::*, levenshtein::*};
 
 use std::convert::TryInto;
-use std::os::raw::{c_char, c_int, c_uint};
+use std::ffi::{c_char, c_int, c_uint};
 
 /// Initializes the logger at the rust side.
 ///
