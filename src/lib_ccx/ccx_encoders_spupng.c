@@ -186,7 +186,38 @@ void write_sputag_close(struct spupng_t *sp)
 }
 void write_spucomment(struct spupng_t *sp, const char *str)
 {
-	fprintf(sp->fpxml, "<!--\n%s\n-->\n", str);
+	fprintf(sp->fpxml, "<!--\n");
+
+	const char *p = str;
+	const char *last_safe_pos = str; // Track the last safe position to flush
+
+	while (*p)
+	{
+
+		if (*p == '-' && *(p + 1) == '-')
+		{
+
+			if (p > last_safe_pos)
+			{
+				fwrite(last_safe_pos, 1, p - last_safe_pos, sp->fpxml);
+			}
+
+			fputc('-', sp->fpxml);
+			p += 2;
+			last_safe_pos = p;
+		}
+		else
+		{
+			p++;
+		}
+	}
+
+	if (p > last_safe_pos)
+	{
+		fwrite(last_safe_pos, 1, p - last_safe_pos, sp->fpxml);
+	}
+
+	fprintf(sp->fpxml, "\n-->\n");
 }
 
 char *get_spupng_filename(void *ctx)
