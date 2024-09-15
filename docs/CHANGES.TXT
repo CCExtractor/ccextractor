@@ -36,6 +36,7 @@
 - Improvement: Use Corrosion to build Rust code
 - Improvement: Ignore MXF Caption Essence Container version byte to enhance SRT subtitle extraction compatibility
 - New: Add tesseract page segmentation modes control with `--psm` flag
+-Fix : Sanitize XML comment to prevent invalid token errors
 
 0.94 (2021-12-14)
 -----------------
