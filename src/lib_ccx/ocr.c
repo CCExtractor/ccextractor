@@ -7,6 +7,7 @@
 #include "ccx_common_constants.h"
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
+#include "ccx_encoders_spupng.h"
 #include "ocr.h"
 #undef OCR_DEBUG
 
