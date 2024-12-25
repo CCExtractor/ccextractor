@@ -279,9 +279,7 @@ pub extern "C" fn ccxr_next_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
     if bs.is_null() {
         return 0;
     }
-    unsafe {
-        (*bs).next_bits(bnum).unwrap_or_default()
-    }
+    unsafe { (*bs).next_bits(bnum).unwrap_or_default() }
 }
 
 #[no_mangle]
@@ -289,9 +287,7 @@ pub extern "C" fn ccxr_read_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
     if bs.is_null() {
         return 0;
     }
-    unsafe {
-        (*bs).read_bits(bnum).unwrap_or_default()
-    }
+    unsafe { (*bs).read_bits(bnum).unwrap_or_default() }
 }
 
 #[no_mangle]
@@ -362,9 +358,7 @@ pub extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut Bitstream<'static>) -> 
     if bs.is_null() {
         return 0;
     }
-    unsafe {
-        (*bs).read_exp_golomb_unsigned().unwrap_or_default()
-    }
+    unsafe { (*bs).read_exp_golomb_unsigned().unwrap_or_default() }
 }
 
 #[no_mangle]
@@ -372,9 +366,7 @@ pub extern "C" fn ccxr_read_exp_golomb(bs: *mut Bitstream<'static>) -> i64 {
     if bs.is_null() {
         return 0;
     }
-    unsafe {
-        (*bs).read_exp_golomb().unwrap_or_default()
-    }
+    unsafe { (*bs).read_exp_golomb().unwrap_or_default() }
 }
 
 #[no_mangle]
