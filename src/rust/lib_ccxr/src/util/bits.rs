@@ -229,10 +229,10 @@ mod tests {
 
     #[test]
     fn test_get_parity() {
-        assert_eq!(get_parity(0), false);
-        assert_eq!(get_parity(1), true);
-        assert_eq!(get_parity(128), true);
-        assert_eq!(get_parity(255), false);
+        assert!(!get_parity(0));
+        assert!(get_parity(1));
+        assert!(get_parity(128));
+        assert!(!get_parity(255));
     }
 
     #[test]
