@@ -64,7 +64,7 @@ impl<'a> Bitstream<'a> {
         let mut res = 0u64;
         let mut bits_to_read = bnum;
 
-        if vbit < 1 || vbit > 8 {
+        if !(1..=8).contains(&vbit) {
             return Err(BitstreamError::IllegalBitPosition(vbit));
         }
 
@@ -280,10 +280,7 @@ pub extern "C" fn ccxr_next_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
         return 0;
     }
     unsafe {
-        match (*bs).next_bits(bnum) {
-            Ok(val) => val,
-            Err(_) => 0,
-        }
+        (*bs).next_bits(bnum).unwrap_or_default()
     }
 }
 
@@ -293,10 +290,7 @@ pub extern "C" fn ccxr_read_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
         return 0;
     }
     unsafe {
-        match (*bs).read_bits(bnum) {
-            Ok(val) => val,
-            Err(_) => 0,
-        }
+        (*bs).read_bits(bnum).unwrap_or_default()
     }
 }
 
@@ -369,10 +363,7 @@ pub extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut Bitstream<'static>) -> 
         return 0;
     }
     unsafe {
-        match (*bs).read_exp_golomb_unsigned() {
-            Ok(val) => val,
-            Err(_) => 0,
-        }
+        (*bs).read_exp_golomb_unsigned().unwrap_or_default()
     }
 }
 
@@ -382,10 +373,7 @@ pub extern "C" fn ccxr_read_exp_golomb(bs: *mut Bitstream<'static>) -> i64 {
         return 0;
     }
     unsafe {
-        match (*bs).read_exp_golomb() {
-            Ok(val) => val,
-            Err(_) => 0,
-        }
+        (*bs).read_exp_golomb().unwrap_or_default()
     }
 }
 
