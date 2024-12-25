@@ -39,20 +39,20 @@
 
 #define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
 	{                                                                                        \
-		cb = (cb1)-128;                                                                  \
-		cr = (cr1)-128;                                                                  \
+		cb = (cb1) - 128;                                                                \
+		cr = (cr1) - 128;                                                                \
 		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
 		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
 			ONE_HALF;                                                                \
 		b_add = FIX(1.77200 * 255.0 / 224.0) * cb + ONE_HALF;                            \
 	}
 
-#define YUV_TO_RGB2_CCIR(r, g, b, y1)               \
-	{                                           \
-		y = ((y1)-16) * FIX(255.0 / 219.0); \
-		r = cm[(y + r_add) >> SCALEBITS];   \
-		g = cm[(y + g_add) >> SCALEBITS];   \
-		b = cm[(y + b_add) >> SCALEBITS];   \
+#define YUV_TO_RGB2_CCIR(r, g, b, y1)                 \
+	{                                             \
+		y = ((y1) - 16) * FIX(255.0 / 219.0); \
+		r = cm[(y + r_add) >> SCALEBITS];     \
+		g = cm[(y + g_add) >> SCALEBITS];     \
+		b = cm[(y + b_add) >> SCALEBITS];     \
 	}
 
 #define times4(x) x, x, x, x
