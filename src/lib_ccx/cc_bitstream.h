@@ -1,7 +1,6 @@
 #ifndef _BITSTREAM_
 #define _BITSTREAM_
 
-
 // The structure holds the current position in the bitstream.
 // pos points to the current byte position and bpos counts the
 // bits left unread at the current byte pos. No bit read means
@@ -25,6 +24,9 @@ struct bitstream
 	// increased by the calling function, or not.
 	unsigned char *_i_pos;
 	int _i_bpos;
+#ifndef DISABLE_RUST
+	void *rust_bs;  // Pointer to Rust's Bitstream struct
+#endif
 };
 
 #define read_u8(bstream) (uint8_t)bitstream_get_num(bstream,1,1)
