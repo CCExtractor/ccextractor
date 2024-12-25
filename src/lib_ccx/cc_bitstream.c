@@ -3,6 +3,21 @@
 // Hold functions to read streams on a bit or byte oriented basis
 // plus some data related helper functions.
 
+#ifndef DISABLE_RUST
+extern void* ccxr_init_bitstream(const uint8_t *start, const uint8_t *end);
+extern void ccxr_free_bitstream(void *bs);
+extern uint64_t ccxr_next_bits(void *bs, uint32_t bnum);
+extern uint64_t ccxr_read_bits(void *bs, uint32_t bnum);
+extern int ccxr_skip_bits(void *bs, uint32_t bnum);
+extern int ccxr_is_byte_aligned(const void *bs);
+extern void ccxr_make_byte_aligned(void *bs);
+extern const uint8_t* ccxr_next_bytes(void *bs, size_t bynum);
+extern const uint8_t* ccxr_read_bytes(void *bs, size_t bynum);
+extern uint64_t ccxr_read_exp_golomb_unsigned(void *bs);
+extern int64_t ccxr_read_exp_golomb(void *bs);
+extern uint8_t ccxr_reverse8(uint8_t data);
+#endif
+
 // Guidelines for all bitsream functions:
 // * No function shall advance the pointer past the end marker
 // * If bitstream.bitsleft < 0 do not attempt any read access,
@@ -12,6 +27,16 @@
 // Initialize bitstream
 int init_bitstream(struct bitstream *bstr, unsigned char *start, unsigned char *end)
 {
+#ifndef DISABLE_RUST
+	void *rust_bs = ccxr_init_bitstream(start, end);
+	if (!rust_bs)
+	{
+		mprint("init_bitstream: bitstream has negative length!");
+		return 1;
+	}
+	bstr->rust_bs = rust_bs;
+#endif
+
 	bstr->pos = start;
 	bstr->bpos = 8;
 	bstr->end = end;
@@ -35,6 +60,9 @@ int init_bitstream(struct bitstream *bstr, unsigned char *start, unsigned char *
 // there are not enough bits left in the bitstream.
 uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 {
+#ifndef DISABLE_RUST
+	return ccxr_next_bits(bstr->rust_bs, bnum);
+#else
 	uint64_t res = 0;
 
 	if (bnum > 64)
@@ -99,12 +127,16 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 	bstr->_i_pos = vpos;
 
 	return res;
+#endif
 }
 
 // Read bnum bits from bitstream bstr with the most significant
 // bit read first. A 64 bit unsigned integer is returned.
 uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 {
+#ifndef DISABLE_RUST
+	return ccxr_read_bits(bstr->rust_bs, bnum);
+#else
 	uint64_t res = next_bits(bstr, bnum);
 
 	// Special case for reading zero bits. Also abort when not enough
@@ -117,6 +149,7 @@ uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 	bstr->pos = bstr->_i_pos;
 
 	return res;
+#endif
 }
 
 // This function will advance the bitstream by bnum bits, if possible.
@@ -124,6 +157,9 @@ uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 // Return TRUE when successful, otherwise FALSE
 int skip_bits(struct bitstream *bstr, unsigned bnum)
 {
+#ifndef DISABLE_RUST
+	return ccxr_skip_bits(bstr->rust_bs, bnum);
+#else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In skip_bits: bitstream length cannot be negative!");
@@ -153,6 +189,7 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 		bstr->pos += 1;
 	}
 	return 1;
+#endif
 }
 
 // Return TRUE if the current position in the bitstream is on a byte
@@ -160,6 +197,9 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 // a byte, otherwise return FALSE
 int is_byte_aligned(struct bitstream *bstr)
 {
+#ifndef DISABLE_RUST
+	return ccxr_is_byte_aligned(bstr->rust_bs);
+#else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In is_byte_aligned: bitstream length can not be negative!");
@@ -175,11 +215,15 @@ int is_byte_aligned(struct bitstream *bstr)
 		return 1;
 	else
 		return 0;
+#endif
 }
 
 // Move bitstream to next byte border. Adjust bitsleft.
 void make_byte_aligned(struct bitstream *bstr)
 {
+#ifndef DISABLE_RUST
+	ccxr_make_byte_aligned(bstr->rust_bs);
+#else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In make_byte_aligned: bitstream length can not be negative!");
@@ -208,6 +252,7 @@ void make_byte_aligned(struct bitstream *bstr)
 	bstr->bitsleft = 0LL + 8 * (bstr->end - bstr->pos - 1) + bstr->bpos;
 
 	return;
+#endif
 }
 
 // Return pointer to first of bynum bytes from the bitstream if the
@@ -217,6 +262,9 @@ void make_byte_aligned(struct bitstream *bstr)
 // This function does not advance the bitstream pointer.
 unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 {
+#ifndef DISABLE_RUST
+	return (unsigned char *)ccxr_next_bytes(bstr->rust_bs, bynum);
+#else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In next_bytes: bitstream length can not be negative!");
@@ -238,6 +286,7 @@ unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 	bstr->_i_pos = bstr->pos + bynum;
 
 	return bstr->pos;
+#endif
 }
 
 // Return pointer to first of bynum bytes from the bitstream if the
@@ -247,6 +296,9 @@ unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 // This function does advance the bitstream pointer.
 unsigned char *read_bytes(struct bitstream *bstr, unsigned bynum)
 {
+#ifndef DISABLE_RUST
+	return (unsigned char *)ccxr_read_bytes(bstr->rust_bs, bynum);
+#else
 	unsigned char *res = next_bytes(bstr, bynum);
 
 	// Advance the bitstream when a read was possible
@@ -256,6 +308,7 @@ unsigned char *read_bytes(struct bitstream *bstr, unsigned bynum)
 		bstr->pos = bstr->_i_pos;
 	}
 	return res;
+#endif
 }
 
 // Return an integer number with "bytes" precision from the current
@@ -301,6 +354,9 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 // Read unsigned Exp-Golomb code from bitstream
 uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 {
+#ifndef DISABLE_RUST
+	return ccxr_read_exp_golomb_unsigned(bstr->rust_bs);
+#else
 	uint64_t res = 0;
 	int zeros = 0;
 
@@ -310,11 +366,15 @@ uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 	res = (0x01 << zeros) - 1 + read_bits(bstr, zeros);
 
 	return res;
+#endif
 }
 
 // Read signed Exp-Golomb code from bitstream
 int64_t read_exp_golomb(struct bitstream *bstr)
 {
+#ifndef DISABLE_RUST
+	return ccxr_read_exp_golomb(bstr->rust_bs);
+#else
 	int64_t res = 0;
 
 	res = read_exp_golomb_unsigned(bstr);
@@ -325,6 +385,7 @@ int64_t read_exp_golomb(struct bitstream *bstr)
 	res = (res / 2 + (res % 2 ? 1 : 0)) * (res % 2 ? 1 : -1);
 
 	return res;
+#endif
 }
 
 // Read unsigned integer with bnum bits length.  Basically an
@@ -349,6 +410,9 @@ int64_t read_int(struct bitstream *bstr, unsigned bnum)
 // Return the value with the bit order reversed.
 uint8_t reverse8(uint8_t data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_reverse8(data);
+#else
 	uint8_t res = 0;
 
 	for (int k = 0; k < 8; k++)
@@ -358,4 +422,5 @@ uint8_t reverse8(uint8_t data)
 	}
 
 	return res;
+#endif
 }
