@@ -4,15 +4,15 @@
 // plus some data related helper functions.
 
 #ifndef DISABLE_RUST
-extern void* ccxr_init_bitstream(const uint8_t *start, const uint8_t *end);
+extern void *ccxr_init_bitstream(const uint8_t *start, const uint8_t *end);
 extern void ccxr_free_bitstream(void *bs);
 extern uint64_t ccxr_next_bits(void *bs, uint32_t bnum);
 extern uint64_t ccxr_read_bits(void *bs, uint32_t bnum);
 extern int ccxr_skip_bits(void *bs, uint32_t bnum);
 extern int ccxr_is_byte_aligned(const void *bs);
 extern void ccxr_make_byte_aligned(void *bs);
-extern const uint8_t* ccxr_next_bytes(void *bs, size_t bynum);
-extern const uint8_t* ccxr_read_bytes(void *bs, size_t bynum);
+extern const uint8_t *ccxr_next_bytes(void *bs, size_t bynum);
+extern const uint8_t *ccxr_read_bytes(void *bs, size_t bynum);
 extern uint64_t ccxr_read_exp_golomb_unsigned(void *bs);
 extern int64_t ccxr_read_exp_golomb(void *bs);
 extern uint8_t ccxr_reverse8(uint8_t data);

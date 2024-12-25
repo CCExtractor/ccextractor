@@ -48,7 +48,9 @@ impl<'a> Bitstream<'a> {
         }
 
         // Calculate remaining bits
-        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
+        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8
+            + self.bpos as i64
+            - bnum as i64;
         if self.bits_left < 0 {
             return Ok(0);
         }
@@ -72,8 +74,12 @@ impl<'a> Bitstream<'a> {
             }
 
             let current_byte = self.pos[vpos];
-            res |= if (current_byte & (1 << (vbit - 1))) != 0 { 1 } else { 0 };
-            
+            res |= if (current_byte & (1 << (vbit - 1))) != 0 {
+                1
+            } else {
+                0
+            };
+
             vbit -= 1;
             bits_to_read -= 1;
 
@@ -114,7 +120,9 @@ impl<'a> Bitstream<'a> {
             return Ok(false);
         }
 
-        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
+        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8
+            + self.bpos as i64
+            - bnum as i64;
         if self.bits_left < 0 {
             return Ok(false);
         }
@@ -161,7 +169,8 @@ impl<'a> Bitstream<'a> {
             self.current_pos += 1;
         }
 
-        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64;
+        self.bits_left =
+            (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64;
         Ok(())
     }
 
@@ -171,7 +180,9 @@ impl<'a> Bitstream<'a> {
             return Ok(None);
         }
 
-        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64 - (bynum * 8) as i64;
+        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8
+            + self.bpos as i64
+            - (bynum * 8) as i64;
 
         if !self.is_byte_aligned()? || self.bits_left < 0 || bynum < 1 {
             return Ok(None);
@@ -180,7 +191,9 @@ impl<'a> Bitstream<'a> {
         self._i_bpos = 8;
         self._i_pos = self.current_pos + bynum;
 
-        Ok(Some(&self.pos[self.current_pos..min(self.current_pos + bynum, self.pos.len())]))
+        Ok(Some(
+            &self.pos[self.current_pos..min(self.current_pos + bynum, self.pos.len())],
+        ))
     }
 
     pub fn read_bytes(&mut self, bynum: usize) -> Result<Option<&[u8]>, BitstreamError> {
@@ -193,17 +206,19 @@ impl<'a> Bitstream<'a> {
             return Ok(None);
         }
 
-        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8 + self.bpos as i64 - (bynum * 8) as i64;
+        self.bits_left = (self.pos.len() as i64 - self.current_pos as i64 - 1) * 8
+            + self.bpos as i64
+            - (bynum * 8) as i64;
         if self.bits_left < 0 {
             return Ok(None);
         }
 
         let new_pos = self.current_pos + bynum;
         let slice = &self.pos[self.current_pos..min(new_pos, self.pos.len())];
-        
+
         self.bpos = 8;
         self.current_pos = new_pos;
-        
+
         Ok(Some(slice))
     }
 
@@ -245,7 +260,7 @@ pub extern "C" fn ccxr_init_bitstream(start: *const u8, end: *const u8) -> *mut 
         let slice = std::slice::from_raw_parts(start, len);
         match Bitstream::new(slice) {
             Ok(bs) => Box::into_raw(Box::new(bs)),
-            Err(_) => std::ptr::null_mut()
+            Err(_) => std::ptr::null_mut(),
         }
     }
 }
@@ -267,7 +282,7 @@ pub extern "C" fn ccxr_next_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
     unsafe {
         match (*bs).next_bits(bnum) {
             Ok(val) => val,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -280,7 +295,7 @@ pub extern "C" fn ccxr_read_bits(bs: *mut Bitstream<'static>, bnum: u32) -> u64 
     unsafe {
         match (*bs).read_bits(bnum) {
             Ok(val) => val,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -294,7 +309,7 @@ pub extern "C" fn ccxr_skip_bits(bs: *mut Bitstream<'static>, bnum: u32) -> i32 
         match (*bs).skip_bits(bnum) {
             Ok(true) => 1,
             Ok(false) => 0,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -308,7 +323,7 @@ pub extern "C" fn ccxr_is_byte_aligned(bs: *const Bitstream<'static>) -> i32 {
         match (*bs).is_byte_aligned() {
             Ok(true) => 1,
             Ok(false) => 0,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -330,7 +345,7 @@ pub extern "C" fn ccxr_next_bytes(bs: *mut Bitstream<'static>, bynum: usize) -> 
     unsafe {
         match (*bs).next_bytes(bynum) {
             Ok(Some(bytes)) => bytes.as_ptr(),
-            _ => std::ptr::null()
+            _ => std::ptr::null(),
         }
     }
 }
@@ -343,7 +358,7 @@ pub extern "C" fn ccxr_read_bytes(bs: *mut Bitstream<'static>, bynum: usize) -> 
     unsafe {
         match (*bs).read_bytes(bynum) {
             Ok(Some(bytes)) => bytes.as_ptr(),
-            _ => std::ptr::null()
+            _ => std::ptr::null(),
         }
     }
 }
@@ -356,7 +371,7 @@ pub extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut Bitstream<'static>) -> 
     unsafe {
         match (*bs).read_exp_golomb_unsigned() {
             Ok(val) => val,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -369,7 +384,7 @@ pub extern "C" fn ccxr_read_exp_golomb(bs: *mut Bitstream<'static>) -> i64 {
     unsafe {
         match (*bs).read_exp_golomb() {
             Ok(val) => val,
-            Err(_) => 0
+            Err(_) => 0,
         }
     }
 }
@@ -394,7 +409,7 @@ mod tests {
     fn test_read_bits() {
         let data = vec![0b10101010];
         let mut bs = Bitstream::new(&data).unwrap();
-        
+
         assert_eq!(bs.read_bits(1).unwrap(), 1);
         assert_eq!(bs.read_bits(1).unwrap(), 0);
         assert_eq!(bs.read_bits(1).unwrap(), 1);
@@ -404,11 +419,11 @@ mod tests {
     fn test_byte_alignment() {
         let data = vec![0xFF];
         let mut bs = Bitstream::new(&data).unwrap();
-        
+
         assert!(bs.is_byte_aligned().unwrap());
         bs.read_bits(1).unwrap();
         assert!(!bs.is_byte_aligned().unwrap());
         bs.make_byte_aligned().unwrap();
         assert!(bs.is_byte_aligned().unwrap());
     }
-} 
+}
