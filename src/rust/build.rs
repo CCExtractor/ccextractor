@@ -2,7 +2,13 @@ extern crate pkg_config;
 use std::env;
 use std::path::PathBuf;
 
-fn main() {
+const RUSTIFIED_ENUMS: &[&str] = &[
+    "dtvcc_(window|pen)_.*",
+    "ccx_output_format",
+    "ccx_output_date_format",
+];
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut allowlist_functions = Vec::new();
     allowlist_functions.extend_from_slice(&[
         ".*(?i)_?dtvcc_.*",
@@ -13,7 +19,7 @@ fn main() {
         "version",
         "set_binary_mode",
     ]);
-
+    
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_functions.extend_from_slice(&[
         "edit_distance",
@@ -21,7 +27,7 @@ fn main() {
         "av_rescale_q",
         "mprint",
     ]);
-
+    
     let mut allowlist_types = Vec::new();
     allowlist_types.extend_from_slice(&[
         ".*(?i)_?dtvcc_.*",
@@ -41,54 +47,49 @@ fn main() {
         "uint8_t",
         "word_list",
     ]);
-
+    
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
-
+    
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h");
-
+    
     // enable hardsubx if and only if the feature is on
     #[cfg(feature = "hardsubx_ocr")]
     {
         builder = builder.clang_arg("-DENABLE_HARDSUBX");
     }
-
+    
     // Tell cargo to invalidate the built crate whenever any of the
     // included header files changed.
     builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks));
-
+    
     for type_name in allowlist_types {
         builder = builder.allowlist_type(type_name);
     }
-
+    
     for fn_name in allowlist_functions {
         builder = builder.allowlist_function(fn_name);
     }
-
+    
     for rust_enum in RUSTIFIED_ENUMS {
         builder = builder.rustified_enum(rust_enum);
     }
-
+    
     let bindings = builder
         .derive_default(true)
         .no_default("dtvcc_pen_attribs|dtvcc_pen_color|dtvcc_symbol")
         // Finish the builder and generate the bindings.
         .generate()
-        // Unwrap the Result and panic on failure.
-        .expect("Unable to generate bindings");
-
+        // Convert to Result
+        .map_err(|e| format!("Unable to generate bindings: {}", e))?;
     // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_path = PathBuf::from(env::var("OUT_DIR")?);
     bindings
         .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+        .map_err(|e| format!("Couldn't write bindings: {}", e))?;
+    
+    Ok(())
 }
-
-const RUSTIFIED_ENUMS: &[&str] = &[
-    "dtvcc_(window|pen)_.*",
-    "ccx_output_format",
-    "ccx_output_date_format",
-];
