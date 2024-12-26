@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "version",
         "set_binary_mode",
     ]);
+    
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_functions.extend_from_slice(&[
         "edit_distance",
@@ -26,6 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "av_rescale_q",
         "mprint",
     ]);
+    
     let mut allowlist_types = Vec::new();
     allowlist_types.extend_from_slice(&[
         ".*(?i)_?dtvcc_.*",
@@ -45,29 +47,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "uint8_t",
         "word_list",
     ]);
+    
     #[cfg(feature = "hardsubx_ocr")]
     allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
+    
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h");
+    
     // enable hardsubx if and only if the feature is on
     #[cfg(feature = "hardsubx_ocr")]
     {
         builder = builder.clang_arg("-DENABLE_HARDSUBX");
     }
+    
     // Tell cargo to invalidate the built crate whenever any of the
     // included header files changed.
     builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks));
+    
     for type_name in allowlist_types {
         builder = builder.allowlist_type(type_name);
     }
+    
     for fn_name in allowlist_functions {
         builder = builder.allowlist_function(fn_name);
     }
+    
     for rust_enum in RUSTIFIED_ENUMS {
         builder = builder.rustified_enum(rust_enum);
     }
+    
     let bindings = builder
         .derive_default(true)
         .no_default("dtvcc_pen_attribs|dtvcc_pen_color|dtvcc_symbol")
