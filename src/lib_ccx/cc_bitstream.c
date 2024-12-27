@@ -4,17 +4,15 @@
 // plus some data related helper functions.
 
 #ifndef DISABLE_RUST
-extern void *ccxr_init_bitstream(const uint8_t *start, const uint8_t *end);
-extern void ccxr_free_bitstream(void *bs);
-extern uint64_t ccxr_next_bits(void *bs, uint32_t bnum);
-extern uint64_t ccxr_read_bits(void *bs, uint32_t bnum);
-extern int ccxr_skip_bits(void *bs, uint32_t bnum);
-extern int ccxr_is_byte_aligned(const void *bs);
-extern void ccxr_make_byte_aligned(void *bs);
-extern const uint8_t *ccxr_next_bytes(void *bs, size_t bynum);
-extern const uint8_t *ccxr_read_bytes(void *bs, size_t bynum);
-extern uint64_t ccxr_read_exp_golomb_unsigned(void *bs);
-extern int64_t ccxr_read_exp_golomb(void *bs);
+extern uint64_t ccxr_next_bits(struct bitstream bs, uint32_t bnum);
+extern uint64_t ccxr_read_bits(struct bitstream bs, uint32_t bnum);
+extern int ccxr_skip_bits(struct bitstream bs, uint32_t bnum);
+extern int ccxr_is_byte_aligned(struct bitstream bs);
+extern void ccxr_make_byte_aligned(struct bitstream bs);
+extern const uint8_t *ccxr_next_bytes(struct bitstream bs, size_t bynum);
+extern const uint8_t *ccxr_read_bytes(struct bitstream bs, size_t bynum);
+extern uint64_t ccxr_read_exp_golomb_unsigned(struct bitstream bs);
+extern int64_t ccxr_read_exp_golomb(struct bitstream bs);
 extern uint8_t ccxr_reverse8(uint8_t data);
 #endif
 
@@ -27,16 +25,6 @@ extern uint8_t ccxr_reverse8(uint8_t data);
 // Initialize bitstream
 int init_bitstream(struct bitstream *bstr, unsigned char *start, unsigned char *end)
 {
-#ifndef DISABLE_RUST
-	void *rust_bs = ccxr_init_bitstream(start, end);
-	if (!rust_bs)
-	{
-		mprint("init_bitstream: bitstream has negative length!");
-		return 1;
-	}
-	bstr->rust_bs = rust_bs;
-#endif
-
 	bstr->pos = start;
 	bstr->bpos = 8;
 	bstr->end = end;
@@ -61,7 +49,7 @@ int init_bitstream(struct bitstream *bstr, unsigned char *start, unsigned char *
 uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 {
 #ifndef DISABLE_RUST
-	return ccxr_next_bits(bstr->rust_bs, bnum);
+	return ccxr_next_bits(*bstr, bnum);
 #else
 	uint64_t res = 0;
 
@@ -135,7 +123,7 @@ uint64_t next_bits(struct bitstream *bstr, unsigned bnum)
 uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 {
 #ifndef DISABLE_RUST
-	return ccxr_read_bits(bstr->rust_bs, bnum);
+	return ccxr_read_bits(*bstr, bnum);
 #else
 	uint64_t res = next_bits(bstr, bnum);
 
@@ -158,7 +146,7 @@ uint64_t read_bits(struct bitstream *bstr, unsigned bnum)
 int skip_bits(struct bitstream *bstr, unsigned bnum)
 {
 #ifndef DISABLE_RUST
-	return ccxr_skip_bits(bstr->rust_bs, bnum);
+	return ccxr_skip_bits(*bstr, bnum);
 #else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
@@ -198,7 +186,7 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 int is_byte_aligned(struct bitstream *bstr)
 {
 #ifndef DISABLE_RUST
-	return ccxr_is_byte_aligned(bstr->rust_bs);
+	return ccxr_is_byte_aligned(*bstr);
 #else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
@@ -222,7 +210,7 @@ int is_byte_aligned(struct bitstream *bstr)
 void make_byte_aligned(struct bitstream *bstr)
 {
 #ifndef DISABLE_RUST
-	ccxr_make_byte_aligned(bstr->rust_bs);
+	ccxr_make_byte_aligned(*bstr);
 #else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
@@ -263,7 +251,7 @@ void make_byte_aligned(struct bitstream *bstr)
 unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 {
 #ifndef DISABLE_RUST
-	return (unsigned char *)ccxr_next_bytes(bstr->rust_bs, bynum);
+	return (unsigned char *)ccxr_next_bytes(*bstr, bynum);
 #else
 	// Sanity check
 	if (bstr->end - bstr->pos < 0)
@@ -297,7 +285,7 @@ unsigned char *next_bytes(struct bitstream *bstr, unsigned bynum)
 unsigned char *read_bytes(struct bitstream *bstr, unsigned bynum)
 {
 #ifndef DISABLE_RUST
-	return (unsigned char *)ccxr_read_bytes(bstr->rust_bs, bynum);
+	return (unsigned char *)ccxr_read_bytes(*bstr, bynum);
 #else
 	unsigned char *res = next_bytes(bstr, bynum);
 
@@ -355,7 +343,7 @@ uint64_t bitstream_get_num(struct bitstream *bstr, unsigned bytes, int advance)
 uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 {
 #ifndef DISABLE_RUST
-	return ccxr_read_exp_golomb_unsigned(bstr->rust_bs);
+	return ccxr_read_exp_golomb_unsigned(*bstr);
 #else
 	uint64_t res = 0;
 	int zeros = 0;
@@ -373,7 +361,7 @@ uint64_t read_exp_golomb_unsigned(struct bitstream *bstr)
 int64_t read_exp_golomb(struct bitstream *bstr)
 {
 #ifndef DISABLE_RUST
-	return ccxr_read_exp_golomb(bstr->rust_bs);
+	return ccxr_read_exp_golomb(*bstr);
 #else
 	int64_t res = 0;
 
