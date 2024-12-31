@@ -9,8 +9,8 @@
 /// 80-9F -> Characters that are in the G2 group in 60-7F
 ///          (there are several blank characters here, that's OK)
 /// A0-FF -> Group G1 as is - non-English characters and symbols
-
-// NOTE: Same as `lib_ccx/ccx_decoder_708_encoding.c` file
+///
+/// NOTE: Same as `lib_ccx/ccx_decoder_708_encoding.c` file
 
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G0(g0_char: u8) -> u8 {
