@@ -1362,8 +1362,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 {
 	if (ccx_options.write_format_rewritten)
 	{
-		mprint(MATROSKA_WARNING "You are using -out=<format>, but Matroska parser extract subtitles in a recorded format\n");
-		mprint("-out=<format> will be ignored\n");
+		mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
+		mprint("--out=<format> will be ignored\n");
 	}
 
 	// Don't need generated input file

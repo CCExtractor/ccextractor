@@ -127,6 +127,13 @@ int parsedelay(struct ccx_s_options *opt, char *par)
 	return 0;
 }
 
+void set_binary_mode()
+{
+#ifdef WIN32
+	setmode(fileno(stdin), O_BINARY);
+#endif
+}
+
 int append_file_to_queue(struct ccx_s_options *opt, char *filename)
 {
 	if (filename[0] == '\0') // skip files with empty file name (ex : ./ccextractor "")
@@ -388,8 +395,11 @@ void print_usage(void)
 	mprint("            --tcp-description description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
 	mprint("Options that affect what will be processed:\n");
-	mprint("      --output-field 1 / 2 / both: Output Field 1 data, Field 2 data, or both\n");
-	mprint("                       (DEFAULT is 1)\n");
+	mprint("      --output-field 1 / 2 / both:\n");
+	mprint("                       				Values: 1 = Output Field 1\n");
+	mprint("                       						2 = Output Field 2\n");
+	mprint("                       						both = Both Output Field 1 and 2\n");
+	mprint("                       				Defaults to 1\n");
 	mprint("Use --append to prevent overwriting of existing files. The output will be\n");
 	mprint("      appended instead.\n");
 	mprint("                 --cc2: When in srt/sami mode, process captions in channel 2\n");
@@ -594,7 +604,7 @@ void print_usage(void)
 	mprint("                       white). This causes all output in .srt/.smi/.vtt\n");
 	mprint("                       files to have a font tag, which makes the files\n");
 	mprint("                       larger. Add the color you want in RGB, such as\n");
-	mprint("                       --dc #FF0000 for red.\n");
+	mprint("                       --defaultcolor #FF0000 for red.\n");
 	mprint("         --sentencecap: Sentence capitalization. Use if you hate\n");
 	mprint("                       ALL CAPS in subtitles.\n");
 	mprint("        --capfile file: Add the contents of 'file' to the list of words\n");
@@ -669,6 +679,23 @@ void print_usage(void)
 	mprint("                       Default value depends on the tesseract version linked :\n");
 	mprint("                       Tesseract v3 : default mode is 0,\n");
 	mprint("                       Tesseract v4 : default mode is 1.\n");
+	mprint("                 --psm: Select the PSM mode for Tesseract.\n");
+	mprint("                       Available Page segmentation modes:\n");
+	mprint("                       0    Orientation and script detection (OSD) only.\n");
+	mprint("                       1    Automatic page segmentation with OSD.\n");
+	mprint("                       2    Automatic page segmentation, but no OSD, or OCR.\n");
+	mprint("                       3    Fully automatic page segmentation, but no OSD. (Default)\n");
+	mprint("                       4    Assume a single column of text of variable sizes.\n");
+	mprint("                       5    Assume a single uniform block of vertically aligned text.\n");
+	mprint("                       6    Assume a single uniform block of text.\n");
+	mprint("                       7    Treat the image as a single text line.\n");
+	mprint("                       8    Treat the image as a single word.\n");
+	mprint("                       9    Treat the image as a single word in a circle.\n");
+	mprint("                       10    Treat the image as a single character.\n");
+	mprint("                       11    Sparse text. Find as much text as possible in no particular order.\n");
+	mprint("                       12    Sparse text with OSD.\n");
+	mprint("                       13    Raw line. Treat the image as a single text line,\n");
+	mprint("                       bypassing hacks that are Tesseract-specific.\n");
 	mprint("             --mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");
@@ -978,14 +1005,14 @@ void print_usage(void)
 	mprint("  a .d extension. Each .png file will contain an image representing one caption\n");
 	mprint("  and named subNNNN.png, starting with sub0000.png.\n");
 	mprint("  For example, the command:\n");
-	mprint("      ccextractor -out=spupng input.mpg\n");
+	mprint("      ccextractor --out=spupng input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      input.xml\n");
 	mprint("      input.d/sub0000.png\n");
 	mprint("      input.d/sub0001.png\n");
 	mprint("      ...\n");
 	mprint("  The command:\n");
-	mprint("      ccextractor -out=spupng -o /tmp/output --12 input.mpg\n");
+	mprint("      ccextractor --out=spupng -o /tmp/output --output-field both input.mpg\n");
 	mprint("  will create the files:\n");
 	mprint("      /tmp/output_1.xml\n");
 	mprint("      /tmp/output_1.d/sub0000.png\n");
@@ -1245,9 +1272,8 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (strcmp(argv[i], "-") == 0 || strcmp(argv[i], "--stdin") == 0)
 		{
-#ifdef WIN32
-			setmode(fileno(stdin), O_BINARY);
-#endif
+			set_binary_mode();
+
 			opt->input_source = CCX_DS_STDIN;
 			if (!opt->live_stream)
 				opt->live_stream = -1;
@@ -1687,6 +1713,27 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--oem has no argument.\n");
 			}
 		}
+		if (strcmp(argv[i], "--psm") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+
+				char *str = (char *)malloc(sizeof(argv[i]));
+				sprintf(str, "%s", argv[i]);
+				opt->psm = atoi(str);
+				if (opt->psm < 0 || opt->psm > 13)
+				{
+					fatal(EXIT_MALFORMED_PARAMETER, "--psm must be between 0 and 13\n");
+				}
+
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "--psm has no argument.\n");
+			}
+		}
 		if (strcmp(argv[i], "--mkvlang") == 0)
 		{
 			if (i < argc - 1)
@@ -2105,7 +2152,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				opt->extract = strcmp(argv[i], "both") == 0 ? 12 : atoi_hex(argv[i]);
 				if (opt->extract != 1 && opt->extract != 2 && opt->extract != 12)
 				{
-					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 or 2 or both.\n");
+					fatal(EXIT_MALFORMED_PARAMETER, "--output-field only accepts 1 , 2 , 12 / both.\n");
 				}
 				opt->is_608_enabled = 1;
 				continue;
@@ -2934,7 +2981,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	}
 	if (opt->write_format == CCX_OF_SPUPNG && opt->cc_to_stdout)
 	{
-		print_error(opt->gui_mode_reports, "You cannot use -out=spupng with -stdout.\n");
+		print_error(opt->gui_mode_reports, "You cannot use --out=spupng with -stdout.\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
 

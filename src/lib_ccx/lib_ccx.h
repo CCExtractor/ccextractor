@@ -153,10 +153,17 @@ struct lib_ccx_ctx
 struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries( struct lib_ccx_ctx **ctx);
 
+#ifndef DISABLE_RUST
+extern void ccxr_init_basic_logger();
+#endif
+
 //ccextractor.c
 void print_end_msg(void);
 
 //params.c
+#ifndef DISABLE_RUST
+extern int ccxr_parse_parameters(int argc, char *argv[]);
+#endif
 int parse_parameters (struct ccx_s_options *opt, int argc, char *argv[]);
 void print_usage (void);
 int atoi_hex (char *s);

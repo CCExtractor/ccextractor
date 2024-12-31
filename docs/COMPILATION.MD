@@ -10,6 +10,9 @@ Clone the latest repository from Github
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
+## Docker
+You can now use docker image to build latest source of CCExtractor without any environmental hustle. Follow these [instructions](https://github.com/CCExtractor/ccextractor/tree/master/docker/README.md) for building docker image & usage of it.
+
 ## Linux
 
 1. Make sure all the dependencies are met.

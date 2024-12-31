@@ -7,6 +7,7 @@
 #include "ccx_common_constants.h"
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
+#include "ccx_encoders_spupng.h"
 #include "ocr.h"
 #undef OCR_DEBUG
 
@@ -176,6 +177,9 @@ void *init_ocr(int lang_index)
 		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
+
+	// set PSM mode
+	TessBaseAPISetPageSegMode(ctx->api, ccx_options.psm);
 
 	free(pars_vec);
 	free(pars_values);

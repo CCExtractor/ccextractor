@@ -15,15 +15,31 @@ log = "0.4.0"
 env_logger = "0.8.4"
 iconv = "0.1.1"
 palette = "0.6.0"
-rsmpeg = { version = "0.14.2", optional = true, features = [
-  "link_system_ffmpeg",
+rsmpeg = { version = "0.14.1", optional = true, features = [
+    "link_system_ffmpeg",
 ] }
 tesseract-sys = { version = "0.5.14", optional = true, default-features = false }
-leptonica-sys = { version = "0.4.3", optional = true, default-features = false }
+leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
+clap = { version = "4.4.4", features = ["derive"] }
+strum = "0.25"
+strum_macros = "0.25"
+time = "0.3.25"
+cfg-if = "1.0.0"
+num-integer = "0.1.45"
 lib_ccxr = { path = "lib_ccxr" }
+url = "2.5.2"
 
 [build-dependencies]
 bindgen = "0.64.0"
+pkg-config = "0.3.30"
 
 [features]
+enable_sharing = []
+wtv_debug = []
+enable_ffmpeg = []
+with_libcurl = []
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true

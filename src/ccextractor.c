@@ -187,6 +187,7 @@ int api_start(struct ccx_s_options api_options)
 				if (!api_options.use_gop_as_pts)	// If !0 then the user selected something
 					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
 				ccx_common_timing_settings.is_elementary_stream = 1;
+				break;
 			case CCX_SM_TRANSPORT:
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
@@ -425,6 +426,7 @@ int api_start(struct ccx_s_options api_options)
 		mprint("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint("something is broken it will be fixed. Thanks\n");
 	}
+
 	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
 
@@ -446,7 +448,15 @@ int main(int argc, char *argv[])
 	// If "ccextractor.cnf" is present, takes options from it.
 	// See docs/ccextractor.cnf.sample for more info.
 
+#ifndef DISABLE_RUST
+	ccxr_init_basic_logger();
+#endif
+
+#ifndef DISABLE_RUST
+	int compile_ret = ccxr_parse_parameters(argc, argv);
+#else
 	int compile_ret = parse_parameters(api_options, argc, argv);
+#endif
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{

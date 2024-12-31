@@ -26,6 +26,9 @@ int fdprintf(int fd, const char *fmt, ...)
 void millis_to_time(LLONG milli, unsigned *hours, unsigned *minutes,
 		    unsigned *seconds, unsigned *ms)
 {
+#ifndef DISABLE_RUST
+	return ccxr_millis_to_time(milli, hours, minutes, seconds, ms);
+#endif /* ifndef DISABLE_RUST */
 	// LLONG milli = (LLONG) ((ccblock*1000)/29.97);
 	*ms = (unsigned)(milli % 1000); // milliseconds
 	milli = (milli - *ms) / 1000;	// Remainder, in seconds

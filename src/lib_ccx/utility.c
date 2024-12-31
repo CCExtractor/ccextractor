@@ -9,6 +9,16 @@
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 volatile sig_atomic_t change_filename_requested = 0;
 
+#ifndef DISABLE_RUST
+extern int ccxr_verify_crc32(uint8_t *buf, int len);
+extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
+extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
+extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
+extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
+extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
+extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
+#endif
+
 static uint32_t crc32_table[] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
     0x130476dc, 0x17c56b6b, 0x1a864db2, 0x1e475005,
@@ -77,6 +87,10 @@ static uint32_t crc32_table[] = {
 
 int verify_crc32(uint8_t *buf, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_verify_crc32(buf, len);
+#endif
+
 	int i = 0;
 	int32_t crc = -1;
 	for (i = 0; i < len; i++)
@@ -86,6 +100,10 @@ int verify_crc32(uint8_t *buf, int len)
 
 int stringztoms(const char *s, struct ccx_boundary_time *bt)
 {
+#ifndef DISABLE_RUST
+	return ccxr_stringztoms(s, bt);
+#endif
+
 	unsigned ss = 0, mm = 0, hh = 0;
 	int value = -1;
 	int colons = 0;
@@ -130,6 +148,10 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt)
 }
 void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_srttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -139,6 +161,10 @@ void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 }
 void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 {
+#ifndef DISABLE_RUST
+	return ccxr_timestamp_to_vtttime(timestamp, buffer);
+#endif
+
 	uint64_t p = timestamp;
 	uint8_t h = (uint8_t)(p / 3600000);
 	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
@@ -151,6 +177,10 @@ void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 
 int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_levenshtein_dist(s1, s2, s1len, s2len);
+#endif
+
 	unsigned int x, y, v, lastdiag, olddiag;
 	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
 	for (y = 1; y <= s1len; y++)
@@ -172,6 +202,9 @@ int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, uns
 
 int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_levenshtein_dist_char(s1, s2, s1len, s2len);
+#endif
 	unsigned int x, y, v, lastdiag, olddiag;
 	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
 	for (y = 1; y <= s1len; y++)
@@ -193,6 +226,10 @@ int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsign
 
 void millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
+#ifndef DISABLE_RUST
+	return ccxr_millis_to_date(timestamp, buffer, date_format, millis_separator);
+#endif
+
 	time_t secs;
 	unsigned int millis;
 	char c_temp[80];
@@ -288,7 +325,6 @@ void mprint(const char *fmt, ...)
 	va_list args;
 	if (!ccx_options.messages_target)
 		return;
-	activity_header(); // Brag about writing it :-)
 	va_start(args, fmt);
 	if (ccx_options.messages_target == CCX_MESSAGES_STDOUT)
 	{

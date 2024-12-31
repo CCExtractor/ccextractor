@@ -27,7 +27,7 @@ void init_options(struct ccx_s_options *options)
 
 	options->extract = 1;		   // Extract 1st field only (primary language)
 	options->cc_channel = 1;	   // Channel we want to dump in srt mode
-	options->binary_concat = 1;	   // Disabled by -ve or --videoedited
+	options->binary_concat = 1;	   // Disabled by --videoedited
 	options->use_gop_as_pts = 0;	   // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	options->fix_padding = 0;	   // Replace 0000 with 8080 in HDTV (needed for some cards)
 	options->gui_mode_reports = 0;	   // If 1, output in stderr progress updates so the GUI can grab them
@@ -72,6 +72,7 @@ void init_options(struct ccx_s_options *options)
 	options->dvblang = NULL;	  // By default, autodetect DVB language
 	options->ocrlang = NULL;	  // By default, autodetect .traineddata file
 	options->ocr_oem = -1;		  // By default, OEM mode depends on the tesseract version
+	options->psm = 3;		  // Default PSM mode (3 is the default tesseract as well)
 	options->ocr_quantmode = 1;	  // CCExtractor's internal
 	options->mkvlang = NULL;	  // By default, all the languages are extracted
 	options->ignore_pts_jumps = 1;
