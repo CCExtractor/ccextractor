@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libnanomsg-dev
     - uses: actions/checkout@v4
     - name: build
       run: ./build
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libnanomsg-dev
     - uses: actions/checkout@v4
     - name: run autogen
       run: ./autogen.sh
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libnanomsg-dev
     - uses: actions/checkout@v4
     - name: cmake
       run: mkdir build && cd build && cmake ../src
@@ -78,7 +78,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
+      run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm libnanomsg-dev
     - name: cmake
       run: |
         mkdir build && cd build
