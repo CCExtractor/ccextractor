@@ -52,7 +52,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
 		../src/thirdparty/freetype/type42/type42.c \
 		../src/thirdparty/freetype/winfonts/winfnt.c"
 BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE"
-BLD_LINKER="-lm -liconv -lpthread -ldl `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors gpac`"
+BLD_LINKER="-lm -liconv -lpthread -ldl -lnanomsg `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors gpac`"
 [[ $1 = "OCR" ]] && BLD_LINKER="$BLD_LINKER `pkg-config --libs --silence-errors tesseract` `pkg-config --libs --silence-errors lept`"
 
 ./pre-build.sh
