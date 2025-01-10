@@ -140,12 +140,12 @@ void spunpg_free(struct spupng_t *sp)
 }
 void sanitize_and_write_comment(FILE *fpxml, const char *input_file) 
 {
-    char sanitized_file[300]; 
-    int j = 0;
-
-    for (int i = 0; input_file[i] != '\0' && j < sizeof(sanitized_file) - 1; i++) {
-        if (input_file[i] == '-') {
-            
+	char sanitized_file[300]; 
+	int j = 0;
+	for (int i = 0; input_file[i] != '\0' && j < sizeof(sanitized_file) - 1; i++) 
+	{
+        if (input_file[i] == '-') 
+		{
             if (input_file[i + 1] == '-') 
 			{
                 sanitized_file[j++] = ' '; 
