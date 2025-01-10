@@ -12,7 +12,7 @@ asf_data asf_data_container;
 // For ASF parsing
 // 0, 1, 2, 3 means none, BYTE, WORD, DWORD
 #define ASF_TypeLength(A) (A == 3 ? 4 : A)
-
+get
 uint32_t asf_readval(void *val, int ltype)
 {
 	uint32_t rval;
@@ -72,7 +72,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	// Except for the first call of this function we will reenter
 	// the Data Packet loop below.
 	int reentry = 1;
-
+	End of
 	// Variables for Header Object
 	int64_t data_packets_count = 0;
 	int broadcast_flag = 0;
@@ -561,7 +561,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		dbg_print(CCX_DMT_PARSE, "Number of data packets: %ld\n", (long)asf_data_container.TotalDataPackets);
 
 		reentry = 0; // Make sure we read the Data Packet Headers
-	}		     // End of if (firstcall)
+	}// End of if (firstcall)
 	firstcall = 0;
 
 	// Start loop over Data Packets
