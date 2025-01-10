@@ -72,7 +72,6 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	// Except for the first call of this function we will reenter
 	// the Data Packet loop below.
 	int reentry = 1;
-	End of
 	// Variables for Header Object
 	int64_t data_packets_count = 0;
 	int broadcast_flag = 0;

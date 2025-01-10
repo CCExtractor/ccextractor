@@ -5,7 +5,6 @@
 #include "ccx_common_option.h"
 #include "activity.h"
 #include "utility.h"
-
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 volatile sig_atomic_t change_filename_requested = 0;
 
