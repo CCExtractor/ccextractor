@@ -169,12 +169,12 @@ fprintf(fpxml, "<!-- %s -->\n", sanitized_file);
 
 void spupng_write_header(struct spupng_t *sp, int multiple_files, char *first_input_file)
 {
-    fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
+fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
 
-    if (multiple_files)
-    {
-        sanitize_and_write_comment(sp->fpxml, first_input_file);
-    }
+if (multiple_files)
+{
+	sanitize_and_write_comment(sp->fpxml, first_input_file);
+}
 }
 
 
