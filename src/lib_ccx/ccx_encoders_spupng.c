@@ -144,23 +144,23 @@ void sanitize_and_write_comment(FILE *fpxml, const char *input_file)
 	int j = 0;
 	for (int i = 0; input_file[i] != '\0' && j < sizeof(sanitized_file) - 1; i++) 
 	{
-        if (input_file[i] == '-') 
+    if (input_file[i] == '-') 
+	{
+		if (input_file[i + 1] == '-') 
 		{
-            if (input_file[i + 1] == '-') 
-			{
-                sanitized_file[j++] = ' '; 
-                i++; 
-            } 
-			else 
-			{
-                sanitized_file[j++] = input_file[i];
-            }
-        } 
+			sanitized_file[j++] = ' '; 
+			i++; 
+		} 
 		else 
 		{
-            sanitized_file[j++] = input_file[i];
-        }
-    }
+			sanitized_file[j++] = input_file[i];
+		}
+	} 
+	else 
+	{
+		sanitized_file[j++] = input_file[i];
+	}
+	}
     sanitized_file[j] = '\0'; 
 
     fprintf(fpxml, "<!-- %s -->\n", sanitized_file);
