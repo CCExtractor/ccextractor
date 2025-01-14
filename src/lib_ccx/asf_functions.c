@@ -12,7 +12,7 @@ asf_data asf_data_container;
 // For ASF parsing
 // 0, 1, 2, 3 means none, BYTE, WORD, DWORD
 #define ASF_TypeLength(A) (A == 3 ? 4 : A)
-get
+
 uint32_t asf_readval(void *val, int ltype)
 {
 	uint32_t rval;
