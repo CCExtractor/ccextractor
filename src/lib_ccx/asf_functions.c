@@ -37,7 +37,7 @@ uint32_t asf_readval(void *val, int ltype)
 	}
 	return rval;
 }
-
+ 
 char *gui_data_string(void *val)
 {
 	static char sbuf[40];
@@ -72,7 +72,6 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	// Except for the first call of this function we will reenter
 	// the Data Packet loop below.
 	int reentry = 1;
-
 	// Variables for Header Object
 	int64_t data_packets_count = 0;
 	int broadcast_flag = 0;
@@ -561,7 +560,7 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		dbg_print(CCX_DMT_PARSE, "Number of data packets: %ld\n", (long)asf_data_container.TotalDataPackets);
 
 		reentry = 0; // Make sure we read the Data Packet Headers
-	}		     // End of if (firstcall)
+	}// End of if (firstcall)
 	firstcall = 0;
 
 	// Start loop over Data Packets

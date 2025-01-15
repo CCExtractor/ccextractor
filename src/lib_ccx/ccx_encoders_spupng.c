@@ -140,11 +140,40 @@ void spunpg_free(struct spupng_t *sp)
 	free(sp);
 }
 
+void sanitize_and_write_comment(FILE *fpxml, char *input_file) 
+{
+    char sanitized_file[300]; 
+    int j = 0;
+
+    for (int i = 0; input_file[i] != '\0' && j < sizeof(sanitized_file) - 1; i++) 
+    {
+        if (input_file[i] == '-') 
+        {
+            if (input_file[i + 1] == '-') 
+            {
+                sanitized_file[j++] = ' '; 
+                i++; 
+            } 
+            else 
+            {
+                sanitized_file[j++] = input_file[i];
+            }
+        } 
+        else 
+        {
+            sanitized_file[j++] = input_file[i];
+        }
+    }
+
+    sanitized_file[j] = '\0'; 
+    fprintf(fpxml, "<!-- %s -->\n", sanitized_file);
+}
+
 void spupng_write_header(struct spupng_t *sp, int multiple_files, char *first_input_file)
 {
-	fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
+    fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
 	if (multiple_files)
-		fprintf(sp->fpxml, "<!-- %s -->\n", first_input_file);
+        sanitize_and_write_comment(sp->fpxml, first_input_file);
 }
 
 void spupng_write_footer(struct spupng_t *sp)
