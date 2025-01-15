@@ -40,7 +40,7 @@
 #define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
 	{                                                                                        \
 		cb = (cb1)-128;                                                                  \
-		cr = (cr1)-128;                                                                  \
+		cr = (cr1)-128;                                                                   \
 		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
 		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
 			ONE_HALF;                                                                \

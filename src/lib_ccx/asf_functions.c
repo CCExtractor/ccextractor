@@ -37,7 +37,7 @@ uint32_t asf_readval(void *val, int ltype)
 	}
 	return rval;
 }
-
+ 
 char *gui_data_string(void *val)
 {
 	static char sbuf[40];
