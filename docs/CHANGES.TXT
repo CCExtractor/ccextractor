@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- Improvement: Changed Bindgen 0.64.0 -> 0.69.4 in src/Cargo.toml,Cargo.lock (as issue 1608 proposed)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)

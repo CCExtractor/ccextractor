@@ -30,7 +30,7 @@ lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.2"
 
 [build-dependencies]
-bindgen = "0.64.0"
+bindgen = "0.69.4"
 pkg-config = "0.3.30"
 
 [features]
