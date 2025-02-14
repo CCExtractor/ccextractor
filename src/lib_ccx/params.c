@@ -472,7 +472,17 @@ void print_usage(void)
 	mprint("                                 in specified input. Don't produce any file\n");
 	mprint("                                 output\n\n");
 	mprint("       --srt, --dvdraw, --sami, --webvtt, --txt, --ttxt and --null can be used as shorts.\n\n");
-
+	
+	mprint("\nSubtitle Extraction:\n");
+    
+	mprint("  By default, ccextractor now extracts both CEA-608 and CEA-708 subtitles\n");
+    mprint("  if they are present in the input. This results in two output files: one\n");
+    mprint("  for CEA-608 and one for CEA-708.\n\n");
+    mprint("  To extract only CEA-608 subtitles, use -1, -2, or -12.\n");
+    mprint("  To extract only CEA-708 subtitles, use -svc.\n");
+    mprint("  To extract both CEA-608 and CEA-708 subtitles, use both -1/-2/-12 and -svc.\n");
+    mprint("\n");
+	
 	mprint("Options that affect how input files will be processed.\n");
 
 	mprint("       --goptime: Use GOP for timing instead of PTS. This only applies\n");
