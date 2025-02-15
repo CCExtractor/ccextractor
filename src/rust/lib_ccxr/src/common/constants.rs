@@ -246,6 +246,18 @@ pub enum DataSource {
     Network,
     Tcp,
 }
+impl From<u32> for DataSource {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => DataSource::File,
+            1 => DataSource::Stdin,
+            2 => DataSource::Network,
+            3 => DataSource::Tcp,
+            _ => DataSource::File, // Default or fallback case
+        }
+    }
+}
+
 
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum StreamMode {
@@ -625,5 +637,10 @@ impl Language {
             Language::Vie => "vie",
             Language::Yid => "yid",
         }
+    }
+}
+impl PartialEq for BufferdataType {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
     }
 }
