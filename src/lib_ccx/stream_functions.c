@@ -438,7 +438,6 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 		  *headerlength, hskip + 9, payloadlength);
 
 	return payloadlength;
-#endif
 }
 
 /*
