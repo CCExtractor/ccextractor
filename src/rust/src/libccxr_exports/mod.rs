@@ -93,3 +93,8 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
     ans.try_into()
         .expect("Failed to convert the levenshtein distance to C int")
 }
+
+#[no_mangle]
+pub extern "C" fn ccxr_detect_stream_type(ctx: &mut CcxDemuxer) {
+    detect_stream_type(ctx: &mut CcxDemuxer)
+}

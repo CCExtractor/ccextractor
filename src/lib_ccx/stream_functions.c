@@ -12,8 +12,14 @@
 #include "ccx_gxf.h"
 #include "ccx_demuxer_mxf.h"
 
+extern void ccxr_detect_stream_type(ctx: &mut CcxDemuxer);
+
 void detect_stream_type(struct ccx_demuxer *ctx)
 {
+	#ifndef DISABLE_RUST
+        return ccxr_detect_stream_type(ctx: &mut CcxDemuxer); // Use the Rust implementation
+    #else
+    // Original C code
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found
 	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
 
@@ -431,6 +437,7 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 		  *headerlength, hskip + 9, payloadlength);
 
 	return payloadlength;
+	#endif
 }
 
 /*
