@@ -95,6 +95,8 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
 }
 
 #[no_mangle]
-pub extern "C" fn ccxr_detect_stream_type(ctx: &mut CcxDemuxer) {
-    detect_stream_type(ctx: &mut CcxDemuxer)
+pub extern "C" fn ccxr_detect_stream_type(ctx: *mut CcxDemuxer) {
+    unsafe {
+        detect_stream_type(&mut *ctx);
+    }
 }

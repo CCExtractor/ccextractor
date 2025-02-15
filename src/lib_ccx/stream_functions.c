@@ -12,14 +12,14 @@
 #include "ccx_gxf.h"
 #include "ccx_demuxer_mxf.h"
 
-extern void ccxr_detect_stream_type(ctx: &mut CcxDemuxer);
+extern void ccxr_detect_stream_type(struct ccx_demuxer *ctx);
 
 void detect_stream_type(struct ccx_demuxer *ctx)
 {
-	#ifndef DISABLE_RUST
-        return ccxr_detect_stream_type(ctx: &mut CcxDemuxer); // Use the Rust implementation
-    #else
-    // Original C code
+#ifndef DISABLE_RUST
+	ccxr_detect_stream_type(ctx); // Use the Rust implementation
+#else
+	// Original C code
 	ctx->stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND; // Not found
 	ctx->startbytes_avail = (int)buffered_read_opt(ctx, ctx->startbytes, STARTBYTESLENGTH);
 
@@ -222,6 +222,7 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 	}
 	// Don't use STARTBYTESLENGTH. It might be longer than the file length!
 	return_to_buffer(ctx, ctx->startbytes, ctx->startbytes_avail);
+#endif
 }
 
 int detect_myth(struct ccx_demuxer *ctx)
@@ -437,7 +438,7 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 		  *headerlength, hskip + 9, payloadlength);
 
 	return payloadlength;
-	#endif
+#endif
 }
 
 /*

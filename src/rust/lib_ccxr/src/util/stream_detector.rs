@@ -67,7 +67,12 @@ fn ccx_mxf_init(ctx: &mut CcxDemuxer) -> Option<()> {
     None
 }
 
-fn is_valid_mp4_box(buffer: &[u8], position: usize, next_box_location: &mut usize, box_score: &mut i32) -> bool {
+fn is_valid_mp4_box(
+    buffer: &[u8],
+    position: usize,
+    next_box_location: &mut usize,
+    box_score: &mut i32,
+) -> bool {
     // Implement the MP4 box validation logic here
     false
 }
@@ -76,7 +81,7 @@ fn return_to_buffer(ctx: &mut CcxDemuxer, buffer: &[u8], length: usize) {
     // Implement the return to buffer logic here
 }
 
-fn detect_stream_type(ctx: &mut CcxDemuxer) {
+pub fn detect_stream_type(ctx: &mut CcxDemuxer) {
     ctx.stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
     ctx.startbytes_avail = match buffered_read_opt(ctx, &mut ctx.startbytes, STARTBYTESLENGTH) {
         Ok(n) => n,
@@ -87,14 +92,25 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
     };
 
     if ctx.startbytes_avail >= 4 {
-        if ctx.startbytes[0] == 0x30 && ctx.startbytes[1] == 0x26 && ctx.startbytes[2] == 0xb2 && ctx.startbytes[3] == 0x75 {
+        if ctx.startbytes[0] == 0x30
+            && ctx.startbytes[1] == 0x26
+            && ctx.startbytes[2] == 0xb2
+            && ctx.startbytes[3] == 0x75
+        {
             ctx.stream_mode = CCX_SM_ASF;
         }
     }
 
     if ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx.startbytes_avail >= 4 {
-        if (ctx.startbytes[0] == 0x1a && ctx.startbytes[1] == 0x45 && ctx.startbytes[2] == 0xdf && ctx.startbytes[3] == 0xa3) ||
-           (ctx.startbytes[0] == 0x18 && ctx.startbytes[1] == 0x53 && ctx.startbytes[2] == 0x80 && ctx.startbytes[3] == 0x67) {
+        if (ctx.startbytes[0] == 0x1a
+            && ctx.startbytes[1] == 0x45
+            && ctx.startbytes[2] == 0xdf
+            && ctx.startbytes[3] == 0xa3)
+            || (ctx.startbytes[0] == 0x18
+                && ctx.startbytes[1] == 0x53
+                && ctx.startbytes[2] == 0x80
+                && ctx.startbytes[3] == 0x67)
+        {
             ctx.stream_mode = CCX_SM_MKV;
         }
     }
@@ -107,24 +123,38 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     if ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx.startbytes_avail >= 4 {
-        if ctx.startbytes[0] == 0xb7 && ctx.startbytes[1] == 0xd8 && ctx.startbytes[2] == 0x00 && ctx.startbytes[3] == 0x20 {
+        if ctx.startbytes[0] == 0xb7
+            && ctx.startbytes[1] == 0xd8
+            && ctx.startbytes[2] == 0x00
+            && ctx.startbytes[3] == 0x20
+        {
             ctx.stream_mode = CCX_SM_WTV;
         }
     }
 
     if ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx.startbytes_avail >= 11 {
-        if ctx.startbytes[0] == 0xCC && ctx.startbytes[1] == 0xCC && ctx.startbytes[2] == 0xED && ctx.startbytes[8] == 0 && ctx.startbytes[9] == 0 && ctx.startbytes[10] == 0 {
+        if ctx.startbytes[0] == 0xCC
+            && ctx.startbytes[1] == 0xCC
+            && ctx.startbytes[2] == 0xED
+            && ctx.startbytes[8] == 0
+            && ctx.startbytes[9] == 0
+            && ctx.startbytes[10] == 0
+        {
             ctx.stream_mode = CCX_SM_RCWT;
         }
     }
 
-    if (ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || true /* ccx_options.print_file_reports */) && ctx.startbytes_avail >= 4 {
+    if (ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND || true/* ccx_options.print_file_reports */)
+        && ctx.startbytes_avail >= 4
+    {
         let mut idx = 0;
         let mut next_box_location = 0;
         let mut box_score = 0;
 
         while idx < ctx.startbytes_avail - 8 {
-            if is_valid_mp4_box(&ctx.startbytes, idx, &mut next_box_location, &mut box_score) && next_box_location > idx {
+            if is_valid_mp4_box(&ctx.startbytes, idx, &mut next_box_location, &mut box_score)
+                && next_box_location > idx
+            {
                 idx = next_box_location;
                 if box_score > 7 {
                     break;
@@ -151,8 +181,15 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
     if ctx.stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND {
         if ctx.startbytes_avail > 188 * 8 {
             for i in 0..188 {
-                if ctx.startbytes[i] == 0x47 && ctx.startbytes[i + 188] == 0x47 && ctx.startbytes[i + 188 * 2] == 0x47 && ctx.startbytes[i + 188 * 3] == 0x47 &&
-                   ctx.startbytes[i + 188 * 4] == 0x47 && ctx.startbytes[i + 188 * 5] == 0x47 && ctx.startbytes[i + 188 * 6] == 0x47 && ctx.startbytes[i + 188 * 7] == 0x47 {
+                if ctx.startbytes[i] == 0x47
+                    && ctx.startbytes[i + 188] == 0x47
+                    && ctx.startbytes[i + 188 * 2] == 0x47
+                    && ctx.startbytes[i + 188 * 3] == 0x47
+                    && ctx.startbytes[i + 188 * 4] == 0x47
+                    && ctx.startbytes[i + 188 * 5] == 0x47
+                    && ctx.startbytes[i + 188 * 6] == 0x47
+                    && ctx.startbytes[i + 188 * 7] == 0x47
+                {
                     ctx.startbytes_pos = i;
                     ctx.stream_mode = CCX_SM_TRANSPORT;
                     ctx.m2ts = 0;
@@ -167,8 +204,15 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
             }
 
             for i in 0..192 {
-                if ctx.startbytes[i + 4] == 0x47 && ctx.startbytes[i + 4 + 192] == 0x47 && ctx.startbytes[i + 192 * 2 + 4] == 0x47 && ctx.startbytes[i + 192 * 3 + 4] == 0x47 &&
-                   ctx.startbytes[i + 192 * 4 + 4] == 0x47 && ctx.startbytes[i + 192 * 5 + 4] == 0x47 && ctx.startbytes[i + 192 * 6 + 4] == 0x47 && ctx.startbytes[i + 192 * 7 + 4] == 0x47 {
+                if ctx.startbytes[i + 4] == 0x47
+                    && ctx.startbytes[i + 4 + 192] == 0x47
+                    && ctx.startbytes[i + 192 * 2 + 4] == 0x47
+                    && ctx.startbytes[i + 192 * 3 + 4] == 0x47
+                    && ctx.startbytes[i + 192 * 4 + 4] == 0x47
+                    && ctx.startbytes[i + 192 * 5 + 4] == 0x47
+                    && ctx.startbytes[i + 192 * 6 + 4] == 0x47
+                    && ctx.startbytes[i + 192 * 7 + 4] == 0x47
+                {
                     ctx.startbytes_pos = i;
                     ctx.stream_mode = CCX_SM_TRANSPORT;
                     ctx.m2ts = 1;
@@ -183,7 +227,11 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
             }
 
             for i in 0..(ctx.startbytes_avail.min(50000) - 3) {
-                if ctx.startbytes[i] == 0x00 && ctx.startbytes[i + 1] == 0x00 && ctx.startbytes[i + 2] == 0x01 && ctx.startbytes[i + 3] == 0xBA {
+                if ctx.startbytes[i] == 0x00
+                    && ctx.startbytes[i + 1] == 0x00
+                    && ctx.startbytes[i + 2] == 0x01
+                    && ctx.startbytes[i + 3] == 0xBA
+                {
                     ctx.startbytes_pos = i;
                     ctx.stream_mode = CCX_SM_PROGRAM;
                     break;
@@ -194,7 +242,11 @@ fn detect_stream_type(ctx: &mut CcxDemuxer) {
                 println!("detect_stream_type: detected as PS");
             }
 
-            if ctx.startbytes[0] == b'T' && ctx.startbytes[1] == b'i' && ctx.startbytes[2] == b'V' && ctx.startbytes[3] == b'o' {
+            if ctx.startbytes[0] == b'T'
+                && ctx.startbytes[1] == b'i'
+                && ctx.startbytes[2] == b'V'
+                && ctx.startbytes[3] == b'o'
+            {
                 println!("detect_stream_type: detected as Tivo PS");
                 ctx.startbytes_pos = 187;
                 ctx.stream_mode = CCX_SM_PROGRAM;
