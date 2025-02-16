@@ -95,7 +95,7 @@ if [ "$WITHOUT_RUST" = true ]; then
     echo "Building without rust files..."
     BLD_FLAGS="$BLD_FLAGS -DDISABLE_RUST"
 else 
-    BLD_LINKER="$BLD_LINKER ./libccx_rust.a"
+    BLD_LINKER="$BLD_LINKER ./libccx_rust.a -lnanomsg"
     echo "Checking for cargo..."
     if ! [ -x "$(command -v cargo)" ]; then
         echo 'Error: cargo is not installed.' >&2
