@@ -993,7 +993,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d);
+	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
 	int ret;
 	int caps = 0;
 
