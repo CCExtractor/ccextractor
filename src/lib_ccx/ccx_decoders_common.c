@@ -219,7 +219,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 			default:
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "In do_cb: Impossible value for cc_type, Please file a bug report on GitHub.\n");
 		} // switch (cc_type)
-	}	  // cc_valid
+	} // cc_valid
 	else
 	{
 		dbg_print(CCX_DMT_CBRAW, "    ..   ..   ..\n");
