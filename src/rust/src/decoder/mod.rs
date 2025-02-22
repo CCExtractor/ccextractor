@@ -213,7 +213,7 @@ impl dtvcc_symbol {
     }
     /// Create a new 16 bit symbol
     pub fn new_16(data1: u8, data2: u8) -> Self {
-        let sym = (data1 as u16) << 8 | data2 as u16;
+        let sym = ((data1 as u16) << 8) | data2 as u16;
         Self { init: 1, sym }
     }
     /// Check if symbol is initialized
