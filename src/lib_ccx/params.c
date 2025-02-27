@@ -535,6 +535,7 @@ void print_usage(void)
 	mprint("      --datastreamtype: Instead of selecting the stream by its PID, select it\n");
 	mprint("                       by its type (pick the stream that has this type in\n");
 	mprint("                       the PMT)\n");
+	mprint("    -lt, --list-tracks: List all tracks found in the input file and exit\n");
 	mprint("          --streamtype: Assume the data is of this type, don't autodetect. This\n");
 	mprint("                       parameter may be needed if --datapid or -datastreamtype\n");
 	mprint("                       is used and CCExtractor cannot determine how to process\n");
@@ -1618,7 +1619,14 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "--codec has no argument.\n");
 			}
 		}
-
+		//list tracks in the file
+		if (strcmp(argv[i], "--list-tracks") == 0 || strcmp(argv[i], "-lt") == 0)
+		{
+			opt->cc_to_stdout = 1;
+			opt->list_tracks_only = 1;
+			continue;
+		}
+		
 		/*user specified subtitle to be selected */
 		if (strcmp(argv[i], "--no-codec") == 0)
 		{

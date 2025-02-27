@@ -40,149 +40,163 @@ void print_end_msg(void)
 
 int api_start(struct ccx_s_options api_options)
 {
-	struct lib_ccx_ctx *ctx = NULL;	      // Context for libs
-	struct lib_cc_decode *dec_ctx = NULL; // Context for decoder
-	int ret = 0, tmp = 0;
-	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
+    struct lib_ccx_ctx *ctx = NULL;	      // Context for libs
+    struct lib_cc_decode *dec_ctx = NULL; // Context for decoder
+    int ret = 0, tmp = 0;
+    enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 
 #if defined(ENABLE_OCR) && defined(_WIN32)
-	setMsgSeverity(LEPT_MSG_SEVERITY);
+    setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
-	// Initialize CCExtractor libraries
-	ctx = init_libraries(&api_options);
+    // Initialize CCExtractor libraries
+    ctx = init_libraries(&api_options);
 
-	if (!ctx)
-	{
-		if (errno == ENOMEM)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, could not initialize libraries\n");
-		else if (errno == EINVAL)
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
-		else if (errno == EPERM)
-			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Operation not permitted.\n");
-		else if (errno == EACCES)
-			fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Permission denied\n");
-		else
-			fatal(EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n", errno);
-	}
+    if (!ctx)
+    {
+        if (errno == ENOMEM)
+            fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory, could not initialize libraries\n");
+        else if (errno == EINVAL)
+            fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid option to CCextractor Library\n");
+        else if (errno == EPERM)
+            fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Operation not permitted.\n");
+        else if (errno == EACCES)
+            fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Unable to create output file: Permission denied\n");
+        else
+            fatal(EXIT_NOT_CLASSIFIED, "Unable to create Library Context %d\n", errno);
+    }
 
 #ifdef ENABLE_HARDSUBX
-	if (api_options.hardsubx)
-	{
-		// Perform burned in subtitle extraction
-		hardsubx(&api_options, ctx);
-		return 0;
-	}
+    if (api_options.hardsubx)
+    {
+        // Perform burned in subtitle extraction
+        hardsubx(&api_options, ctx);
+        return 0;
+    }
 #endif
 
 #ifdef WITH_LIBCURL
-	curl_global_init(CURL_GLOBAL_ALL);
+    curl_global_init(CURL_GLOBAL_ALL);
 
-	/* get a curl handle */
-	curl = curl_easy_init();
-	if (!curl)
-	{
-		curl_global_cleanup(); // Must be done even on init fail
-		fatal(EXIT_NOT_CLASSIFIED, "Unable to init curl.");
-	}
+    /* get a curl handle */
+    curl = curl_easy_init();
+    if (!curl)
+    {
+        curl_global_cleanup(); // Must be done even on init fail
+        fatal(EXIT_NOT_CLASSIFIED, "Unable to init curl.");
+    }
 #endif
 
-	int show_myth_banner = 0;
+    int show_myth_banner = 0;
 
-	params_dump(ctx);
+    // Only show params dump if we're not just listing tracks
+    // if (!api_options.list_tracks_only)
+    params_dump(ctx);
 
-	// default teletext page
-	if (tlt_config.page > 0)
-	{
-		// dec to BCD, magazine pages numbers are in BCD (ETSI 300 706)
-		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
-	}
+    // default teletext page
+    if (tlt_config.page > 0)
+    {
+        // dec to BCD, magazine pages numbers are in BCD (ETSI 300 706)
+        tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
+    }
 
-	if (api_options.transcript_settings.xds)
-	{
-		if (api_options.write_format != CCX_OF_TRANSCRIPT)
-		{
-			api_options.transcript_settings.xds = 0;
-			mprint("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
-		}
-	}
+    if (api_options.transcript_settings.xds)
+    {
+        if (api_options.write_format != CCX_OF_TRANSCRIPT)
+        {
+            api_options.transcript_settings.xds = 0;
+            mprint("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
+        }
+    }
 
-	time_t start, final;
-	time(&start);
+    time_t start, final;
+    time(&start);
 
-	if (api_options.binary_concat)
-	{
-		ctx->total_inputsize = get_total_file_size(ctx);
-		if (ctx->total_inputsize < 0)
-		{
-			switch (ctx->total_inputsize)
-			{
-				case -1 * ENOENT:
-					fatal(EXIT_NO_INPUT_FILES, "Failed to open one of the input file(s): File does not exist.");
-				case -1 * EACCES:
-					fatal(EXIT_READ_ERROR, "Failed to open input file: Unable to access");
-				case -1 * EINVAL:
-					fatal(EXIT_READ_ERROR, "Failed to open input file: Invalid opening flag.");
-				case -1 * EMFILE:
-					fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open input file: Too many files are open.");
-				default:
-					fatal(EXIT_READ_ERROR, "Failed to open input file: Reason unknown");
-			}
-		}
-	}
+    if (api_options.binary_concat)
+    {
+        ctx->total_inputsize = get_total_file_size(ctx);
+        if (ctx->total_inputsize < 0)
+        {
+            switch (ctx->total_inputsize)
+            {
+                case -1 * ENOENT:
+                    fatal(EXIT_NO_INPUT_FILES, "Failed to open one of the input file(s): File does not exist.");
+                case -1 * EACCES:
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Unable to access");
+                case -1 * EINVAL:
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Invalid opening flag.");
+                case -1 * EMFILE:
+                    fatal(EXIT_TOO_MANY_INPUT_FILES, "Failed to open input file: Too many files are open.");
+                default:
+                    fatal(EXIT_READ_ERROR, "Failed to open input file: Reason unknown");
+            }
+        }
+    }
 
 #ifndef _WIN32
-	signal_ctx = ctx;
-	m_signal(SIGINT, sigint_handler);
-	m_signal(SIGTERM, sigterm_handler);
-	m_signal(SIGUSR1, sigusr1_handler);
+    signal_ctx = ctx;
+    m_signal(SIGINT, sigint_handler);
+    m_signal(SIGTERM, sigterm_handler);
+    m_signal(SIGUSR1, sigusr1_handler);
 #endif
-	terminate_asap = 0;
+    terminate_asap = 0;
 
 #ifdef ENABLE_SHARING
-	if (api_options.translate_enabled && ctx->num_input_files > 1)
-	{
-		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
-		api_options.translate_enabled = 0;
-		api_options.sharing_enabled = 0;
-	}
-	if (api_options.translate_enabled)
-	{
-		mprint("[share] launching translate service\n");
-		ccx_share_launch_translator(api_options.translate_langs, api_options.translate_key);
-	}
+    if (api_options.translate_enabled && ctx->num_input_files > 1)
+    {
+        mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
+        api_options.translate_enabled = 0;
+        api_options.sharing_enabled = 0;
+    }
+    if (api_options.translate_enabled)
+    {
+        mprint("[share] launching translate service\n");
+        ccx_share_launch_translator(api_options.translate_langs, api_options.translate_key);
+    }
 #endif // ENABLE_SHARING
-	ret = 0;
-	while (switch_to_next_file(ctx, 0))
-	{
-		prepare_for_new_file(ctx);
+    ret = 0;
+    while (switch_to_next_file(ctx, 0))
+    {
+        prepare_for_new_file(ctx);
 #ifdef ENABLE_SHARING
-		if (api_options.sharing_enabled)
-			ccx_share_start(ctx->basefilename);
+        if (api_options.sharing_enabled)
+            ccx_share_start(ctx->basefilename);
 #endif // ENABLE_SHARING
 
-		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
-		// Disable sync check for raw formats - they have the right timeline.
-		// Also true for bin formats, but -nosync might have created a
-		// broken timeline for debug purposes.
-		// Disable too in MP4, specs doesn't say that there can't be a jump
-		switch (stream_mode)
-		{
-			case CCX_SM_MCPOODLESRAW:
-			case CCX_SM_RCWT:
-			case CCX_SM_MP4:
+        stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
+        
+        // Check if we're listing tracks and we have an MKV file
+        if (api_options.list_tracks_only && stream_mode == CCX_SM_MKV)
+        {
+            // Simplified processing for track listing
+            // mprint("\nCCExtractor Track Listing\n");
+            // mprint("------------------------\n");
+            ret = matroska_loop(ctx);
+            return ret;
+        }
+        
+        // Disable sync check for raw formats - they have the right timeline.
+        // Also true for bin formats, but -nosync might have created a
+        // broken timeline for debug purposes.
+        // Disable too in MP4, specs doesn't say that there can't be a jump
+        switch (stream_mode)
+        {
+            case CCX_SM_MCPOODLESRAW:
+            case CCX_SM_RCWT:
+            case CCX_SM_MP4:
 #ifdef WTV_DEBUG
-			case CCX_SM_HEX_DUMP:
+            case CCX_SM_HEX_DUMP:
 #endif
-				ccx_common_timing_settings.disable_sync_check = 1;
-				break;
-			default:
-				break;
-		}
-		/* -----------------------------------------------------------------
-		MAIN LOOP
-		----------------------------------------------------------------- */
-		switch (stream_mode)
-		{
+                ccx_common_timing_settings.disable_sync_check = 1;
+                break;
+            default:
+                break;
+        }
+        
+        /* -----------------------------------------------------------------
+        MAIN LOOP
+        ----------------------------------------------------------------- */
+        switch (stream_mode)
+        {
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!api_options.use_gop_as_pts)	// If !0 then the user selected something
 					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
@@ -470,6 +484,11 @@ int main(int argc, char *argv[])
 	else if (compile_ret != EXIT_OK)
 	{
 		exit(compile_ret);
+	}
+	if (api_options->list_tracks_only)
+	{
+		// Disable all logger output except for our specific track listing
+		ccx_common_logging.debug_mask = 0;
 	}
 
 	int start_ret = api_start(*api_options);
