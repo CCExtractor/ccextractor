@@ -384,6 +384,8 @@ pub struct Options {
     pub use_gop_as_pts: Option<bool>,
     /// Replace 0000 with 8080 in HDTV (needed for some cards)
     pub fix_padding: bool,
+    /// If true, only list tracks, don't process them
+    pub list_tracks_only: bool,
     /// If true, output in stderr progress updates so the GUI can grab them
     pub gui_mode_reports: bool,
     /// If true, suppress the output of the progress to stdout
@@ -565,6 +567,7 @@ impl Default for Options {
             messages_target: Default::default(),
             timestamp_map: Default::default(),
             dolevdist: true,
+            list_tracks_only: false,
             levdistmincnt: 2,
             levdistmaxpct: 10,
             investigate_packets: Default::default(),

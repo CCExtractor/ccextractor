@@ -538,264 +538,347 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		}
 
 */
+
 int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
-	int mp4_ret = 0;
-	GF_ISOFile *f;
-	u32 i, j, track_count, avc_track_count, cc_track_count;
-	struct cc_subtitle dec_sub;
-	struct lib_cc_decode *dec_ctx = NULL;
-	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+    int mp4_ret = 0;
+    GF_ISOFile *f;
+    u32 i, j, track_count, avc_track_count, cc_track_count;
+    struct cc_subtitle dec_sub;
+    struct lib_cc_decode *dec_ctx = NULL;
+    struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
-	dec_ctx = update_decoder_list(ctx);
+    dec_ctx = update_decoder_list(ctx);
 
-	if (enc_ctx)
-		enc_ctx->timing = dec_ctx->timing;
+    if (enc_ctx)
+        enc_ctx->timing = dec_ctx->timing;
 
-	memset(&dec_sub, 0, sizeof(dec_sub));
-	mprint("Opening \'%s\': ", file);
+    memset(&dec_sub, 0, sizeof(dec_sub));
+    
+    // Only show opening message if not in list_tracks mode
+    if (!ccx_options.list_tracks_only)
+        mprint("Opening \'%s\': ", file);
+        
 #ifdef MP4_DEBUG
-	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
+    gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
 #endif
 
-	if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
-	{
-		mprint("Failed to open input file (gf_isom_open() returned error)\n");
-		free(dec_ctx->xds_ctx);
-		return -2;
-	}
+    if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
+    {
+        mprint("Failed to open input file (gf_isom_open() returned error)\n");
+        free(dec_ctx->xds_ctx);
+        return -2;
+    }
 
-	mprint("ok\n");
+    if (!ccx_options.list_tracks_only)
+        mprint("ok\n");
 
-	track_count = gf_isom_get_track_count(f);
+    track_count = gf_isom_get_track_count(f);
+    avc_track_count = 0;
+    cc_track_count = 0;
 
-	avc_track_count = 0;
-	cc_track_count = 0;
+    // First pass: count tracks by type
+    for (i = 0; i < track_count; i++)
+    {
+        const u32 type = gf_isom_get_media_type(f, i + 1);
+        const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+        
+        if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
+            cc_track_count++;
+        if (type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
+            avc_track_count++;
+    }
 
-	for (i = 0; i < track_count; i++)
-	{
-		const u32 type = gf_isom_get_media_type(f, i + 1);
-		const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
-		mprint("Track %d, type=%c%c%c%c subtype=%c%c%c%c\n", i + 1, (unsigned char)(type >> 24 % 0x100),
-		       (unsigned char)((type >> 16) % 0x100), (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
-		       (unsigned char)(subtype >> 24 % 0x100),
-		       (unsigned char)((subtype >> 16) % 0x100), (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
-		if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
-			cc_track_count++;
-		if (type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
-			avc_track_count++;
-	}
+    // If in track listing mode, show track information and exit
+    if (ccx_options.list_tracks_only)
+    {
+        mprint("\n");
+        mprint("Available tracks in input file:\n");
+        mprint("------------------------------\n");
+        
+        for (i = 0; i < track_count; i++)
+        {
+            const u32 type = gf_isom_get_media_type(f, i + 1);
+            const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+            
+            mprint("Track %d: ", i + 1);
+            
+            // Get descriptive track type
+            if (type == GF_ISOM_MEDIA_VISUAL)
+            {
+                if (subtype == GF_ISOM_SUBTYPE_AVC_H264)
+                    mprint("Type: H.264 Video");
+                else if (subtype == GF_ISOM_SUBTYPE_XDVB)
+                    mprint("Type: XDVB Video");
+                else
+                    mprint("Type: Video");
+            }
+            else if (type == GF_ISOM_MEDIA_AUDIO)
+            {
+                mprint("Type: Audio");
+            }
+            else if (type == GF_ISOM_MEDIA_CLOSED_CAPTION)
+            {
+                if (subtype == GF_QT_SUBTYPE_C608)
+                    mprint("Type: CEA-608 Closed Caption");
+                else if (subtype == GF_ISOM_SUBTYPE_C708)
+                    mprint("Type: CEA-708 Closed Caption");
+                else
+                    mprint("Type: Closed Caption");
+            }
+            else if (type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
+            {
+                if (subtype == GF_ISOM_SUBTYPE_TX3G)
+                    mprint("Type: TX3G Subtitle");
+                else if (subtype == GF_ISOM_SUBTYPE_TEXT)
+                    mprint("Type: Text Subtitle");
+                else
+                    mprint("Type: Subtitle");
+            }
+            else
+            {
+                mprint("Type: Other (%c%c%c%c/%c%c%c%c)", 
+                    (unsigned char)(type >> 24 % 0x100),
+                    (unsigned char)((type >> 16) % 0x100), 
+                    (unsigned char)((type >> 8) % 0x100), 
+                    (unsigned char)(type % 0x100),
+                    (unsigned char)(subtype >> 24 % 0x100),
+                    (unsigned char)((subtype >> 16) % 0x100),
+                    (unsigned char)((subtype >> 8) % 0x100), 
+                    (unsigned char)(subtype % 0x100));
+            }
+            
+            mprint("\n");
+        }
+        
+        mprint("\nTrack listing completed. Exiting as requested.\n");
+        gf_isom_close(f);
+        freep(&dec_ctx->xds_ctx);
+        return 0;
+    }
 
-	mprint("MP4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);
+    // Regular processing for normal mode follows
 
-	for (i = 0; i < track_count; i++)
-	{
-		const u32 type = gf_isom_get_media_type(f, i + 1);
-		const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
-		mprint("Processing track %d, type=%c%c%c%c subtype=%c%c%c%c\n", i + 1,
-		       (unsigned char)(type >> 24 % 0x100), (unsigned char)((type >> 16) % 0x100),
-		       (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
-		       (unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
-		       (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
+    for (i = 0; i < track_count; i++)
+    {
+        const u32 type = gf_isom_get_media_type(f, i + 1);
+        const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+        mprint("Track %d, type=%c%c%c%c subtype=%c%c%c%c\n", i + 1, (unsigned char)(type >> 24 % 0x100),
+            (unsigned char)((type >> 16) % 0x100), (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
+            (unsigned char)(subtype >> 24 % 0x100),
+            (unsigned char)((subtype >> 16) % 0x100), (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
+    }
 
-		const u64 track_type = MEDIA_TYPE(type, subtype);
+    mprint("MP4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);
 
-		switch (track_type)
-		{
-			case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_XDVB): // vide:xdvb
-				if (cc_track_count && !cfg->mp4vidtrack)
-					continue;
-				// If there are multiple tracks, change fd for different tracks
-				if (avc_track_count > 1)
-				{
-					switch_output_file(ctx, enc_ctx, i);
-				}
-				if (process_xdvb_track(ctx, file, f, i + 1, &dec_sub) != 0)
-				{
-					mprint("Error on process_xdvb_track()\n");
-					free(dec_ctx->xds_ctx);
-					return -3;
-				}
-				if (dec_sub.got_output)
-				{
-					mp4_ret = 1;
-					encode_sub(enc_ctx, &dec_sub);
-					dec_sub.got_output = 0;
-				}
-				break;
+    for (i = 0; i < track_count; i++)
+    {
+        const u32 type = gf_isom_get_media_type(f, i + 1);
+        const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+        mprint("Processing track %d, type=%c%c%c%c subtype=%c%c%c%c\n", i + 1,
+            (unsigned char)(type >> 24 % 0x100), (unsigned char)((type >> 16) % 0x100),
+            (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
+            (unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
+            (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
 
-			case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_AVC_H264): // vide:avc1
-				if (cc_track_count && !cfg->mp4vidtrack)
-					continue;
-				// If there are multiple tracks, change fd for different tracks
-				if (avc_track_count > 1)
-				{
-					switch_output_file(ctx, enc_ctx, i);
-				}
-				GF_AVCConfig *cnf = gf_isom_avc_config_get(f, i + 1, 1);
-				if (cnf != NULL)
-				{
-					for (j = 0; j < gf_list_count(cnf->sequenceParameterSets); j++)
-					{
-						GF_AVCConfigSlot *seqcnf = (GF_AVCConfigSlot *)gf_list_get(cnf->sequenceParameterSets, j);
-						do_NAL(enc_ctx, dec_ctx, (unsigned char *)seqcnf->data, seqcnf->size, &dec_sub);
-					}
-					gf_odf_avc_cfg_del(cnf);
-				}
-				if (process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0)
-				{
-					mprint("Error on process_avc_track()\n");
-					free(dec_ctx->xds_ctx);
-					return -3;
-				}
-				if (dec_sub.got_output)
-				{
-					mp4_ret = 1;
-					encode_sub(enc_ctx, &dec_sub);
-					dec_sub.got_output = 0;
-				}
-				break;
+        const u64 track_type = MEDIA_TYPE(type, subtype);
 
-			default:
-				if (type != GF_ISOM_MEDIA_CLOSED_CAPTION && type != GF_ISOM_MEDIA_SUBT && type != GF_ISOM_MEDIA_TEXT)
-					break; // ignore non cc track
+        switch (track_type)
+        {
+            case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_XDVB): // vide:xdvb
+                if (cc_track_count && !cfg->mp4vidtrack)
+                    continue;
+                // If there are multiple tracks, change fd for different tracks
+                if (avc_track_count > 1)
+                {
+                    switch_output_file(ctx, enc_ctx, i);
+                }
+                if (process_xdvb_track(ctx, file, f, i + 1, &dec_sub) != 0)
+                {
+                    mprint("Error on process_xdvb_track()\n");
+                    free(dec_ctx->xds_ctx);
+                    return -3;
+                }
+                if (dec_sub.got_output)
+                {
+                    mp4_ret = 1;
+                    encode_sub(enc_ctx, &dec_sub);
+                    dec_sub.got_output = 0;
+                }
+                break;
 
-				if (avc_track_count && cfg->mp4vidtrack)
-					continue;
-				// If there are multiple tracks, change fd for different tracks
-				if (cc_track_count > 1)
-				{
-					switch_output_file(ctx, enc_ctx, i);
-				}
-				unsigned num_samples = gf_isom_get_sample_count(f, i + 1);
+            case MEDIA_TYPE(GF_ISOM_MEDIA_VISUAL, GF_ISOM_SUBTYPE_AVC_H264): // vide:avc1
+                if (cc_track_count && !cfg->mp4vidtrack)
+                    continue;
+                // If there are multiple tracks, change fd for different tracks
+                if (avc_track_count > 1)
+                {
+                    switch_output_file(ctx, enc_ctx, i);
+                }
+                GF_AVCConfig *cnf = gf_isom_avc_config_get(f, i + 1, 1);
+                if (cnf != NULL)
+                {
+                    for (j = 0; j < gf_list_count(cnf->sequenceParameterSets); j++)
+                    {
+                        GF_AVCConfigSlot *seqcnf = (GF_AVCConfigSlot *)gf_list_get(cnf->sequenceParameterSets, j);
+                        do_NAL(enc_ctx, dec_ctx, (unsigned char *)seqcnf->data, seqcnf->size, &dec_sub);
+                    }
+                    gf_odf_avc_cfg_del(cnf);
+                }
+                if (process_avc_track(ctx, file, f, i + 1, &dec_sub) != 0)
+                {
+                    mprint("Error on process_avc_track()\n");
+                    free(dec_ctx->xds_ctx);
+                    return -3;
+                }
+                if (dec_sub.got_output)
+                {
+                    mp4_ret = 1;
+                    encode_sub(enc_ctx, &dec_sub);
+                    dec_sub.got_output = 0;
+                }
+                break;
 
-				u32 ProcessingStreamDescriptionIndex = 0; // Current track we are processing, 0 = we don't know yet
-				u32 timescale = gf_isom_get_media_timescale(f, i + 1);
+            default:
+                if (type != GF_ISOM_MEDIA_CLOSED_CAPTION && type != GF_ISOM_MEDIA_SUBT && type != GF_ISOM_MEDIA_TEXT)
+                    break; // ignore non cc track
+
+                if (avc_track_count && cfg->mp4vidtrack)
+                    continue;
+                // If there are multiple tracks, change fd for different tracks
+                if (cc_track_count > 1)
+                {
+                    switch_output_file(ctx, enc_ctx, i);
+                }
+                unsigned num_samples = gf_isom_get_sample_count(f, i + 1);
+
+                u32 ProcessingStreamDescriptionIndex = 0; // Current track we are processing, 0 = we don't know yet
+                u32 timescale = gf_isom_get_media_timescale(f, i + 1);
 #ifdef MP4_DEBUG
-				unsigned num_streams = gf_isom_get_sample_description_count(f, i + 1);
-				u64 duration = gf_isom_get_media_duration(f, i + 1);
-				mprint("%u streams\n", num_streams);
-				mprint("%u sample counts\n", num_samples);
-				mprint("%u timescale\n", (unsigned)timescale);
-				mprint("%u duration\n", (unsigned)duration);
+                unsigned num_streams = gf_isom_get_sample_description_count(f, i + 1);
+                u64 duration = gf_isom_get_media_duration(f, i + 1);
+                mprint("%u streams\n", num_streams);
+                mprint("%u sample counts\n", num_samples);
+                mprint("%u timescale\n", (unsigned)timescale);
+                mprint("%u duration\n", (unsigned)duration);
 #endif
-				for (unsigned k = 0; k < num_samples; k++)
-				{
-					u32 StreamDescriptionIndex;
-					GF_ISOSample *sample = gf_isom_get_sample(f, i + 1, k + 1, &StreamDescriptionIndex);
-					if (ProcessingStreamDescriptionIndex && ProcessingStreamDescriptionIndex != StreamDescriptionIndex)
-					{
-						mprint("This sample seems to have more than one description. This isn't supported yet.\n");
-						mprint("Submitting this video file will help add support to this case.\n");
-						break;
-					}
-					if (!ProcessingStreamDescriptionIndex)
-						ProcessingStreamDescriptionIndex = StreamDescriptionIndex;
-					if (sample == NULL)
-						continue;
+                for (unsigned k = 0; k < num_samples; k++)
+                {
+                    u32 StreamDescriptionIndex;
+                    GF_ISOSample *sample = gf_isom_get_sample(f, i + 1, k + 1, &StreamDescriptionIndex);
+                    if (ProcessingStreamDescriptionIndex && ProcessingStreamDescriptionIndex != StreamDescriptionIndex)
+                    {
+                        mprint("This sample seems to have more than one description. This isn't supported yet.\n");
+                        mprint("Submitting this video file will help add support to this case.\n");
+                        break;
+                    }
+                    if (!ProcessingStreamDescriptionIndex)
+                        ProcessingStreamDescriptionIndex = StreamDescriptionIndex;
+                    if (sample == NULL)
+                        continue;
 #ifdef MP4_DEBUG
-					mprint("Data length: %lu\n", sample->dataLength);
-					const LLONG timestamp = (LLONG)((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
+                    mprint("Data length: %lu\n", sample->dataLength);
+                    const LLONG timestamp = (LLONG)((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
 #endif
-					set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset) * MPEG_CLOCK_FREQ / timescale);
-					set_fts(dec_ctx->timing);
+                    set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset) * MPEG_CLOCK_FREQ / timescale);
+                    set_fts(dec_ctx->timing);
 
-					int atomStart = 0;
-					// Process Atom by Atom
-					while (atomStart < sample->dataLength)
-					{
-						char *data = sample->data + atomStart;
-						size_t atom_length = -1;
-						switch (track_type)
-						{
-							case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TX3G): // text:tx3g
-							case MEDIA_TYPE(GF_ISOM_MEDIA_SUBT, GF_ISOM_SUBTYPE_TX3G): // sbtl:tx3g (they're the same)
-								atom_length = process_tx3g(ctx, enc_ctx, dec_ctx,
-											   &dec_sub, &mp4_ret,
-											   data, sample->dataLength, 0);
-								break;
-							case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_QT_SUBTYPE_C608):   // clcp:c608
-							case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_ISOM_SUBTYPE_C708): // clcp:c708
-								atom_length = process_clcp(ctx, enc_ctx, dec_ctx,
-											   &dec_sub, &mp4_ret, subtype,
-											   data, sample->dataLength);
-								break;
-							case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TEXT): // text:text
-							{
-								static int unsupported_reported = 0;
-								if (!unsupported_reported)
-								{
-									mprint("\ntext:text not yet supported, see\n");
-									mprint("https://developer.apple.com/library/mac/documentation/quicktime/qtff/QTFFChap3/qtff3.html\n");
-									mprint("If you want to work on a PR.\n");
-									unsupported_reported = 1;
-								}
-								break;
-							}
+                    int atomStart = 0;
+                    // Process Atom by Atom
+                    while (atomStart < sample->dataLength)
+                    {
+                        char *data = sample->data + atomStart;
+                        size_t atom_length = -1;
+                        switch (track_type)
+                        {
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TX3G): // text:tx3g
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_SUBT, GF_ISOM_SUBTYPE_TX3G): // sbtl:tx3g (they're the same)
+                                atom_length = process_tx3g(ctx, enc_ctx, dec_ctx,
+                                               &dec_sub, &mp4_ret,
+                                               data, sample->dataLength, 0);
+                                break;
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_QT_SUBTYPE_C608):   // clcp:c608
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_ISOM_SUBTYPE_C708): // clcp:c708
+                                atom_length = process_clcp(ctx, enc_ctx, dec_ctx,
+                                               &dec_sub, &mp4_ret, subtype,
+                                               data, sample->dataLength);
+                                break;
+                            case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TEXT): // text:text
+                            {
+                                static int unsupported_reported = 0;
+                                if (!unsupported_reported)
+                                {
+                                    mprint("\ntext:text not yet supported, see\n");
+                                    mprint("https://developer.apple.com/library/mac/documentation/quicktime/qtff/QTFFChap3/qtff3.html\n");
+                                    mprint("If you want to work on a PR.\n");
+                                    unsupported_reported = 1;
+                                }
+                                break;
+                            }
 
-							default:
-								// See https://gpac.wp.imt.fr/2014/09/04/subtitling-with-gpac/ for more possible types
-								mprint("\nUnsupported track type \"%c%c%c%c:%c%c%c%c\". Please report.\n",
-								       (unsigned char)(type >> 24 % 0x100), (unsigned char)((type >> 16) % 0x100),
-								       (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
-								       (unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
-								       (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
-						}
-						if (atom_length == -1)
-							break; // error happened or process of the sample is finished
-						atomStart += atom_length;
-					}
-					free(sample->data);
-					free(sample);
+                            default:
+                                // See https://gpac.wp.imt.fr/2014/09/04/subtitling-with-gpac/ for more possible types
+                                mprint("\nUnsupported track type \"%c%c%c%c:%c%c%c%c\". Please report.\n",
+                                       (unsigned char)(type >> 24 % 0x100), (unsigned char)((type >> 16) % 0x100),
+                                       (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
+                                       (unsigned char)(subtype >> 24 % 0x100), (unsigned char)((subtype >> 16) % 0x100),
+                                       (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
+                        }
+                        if (atom_length == -1)
+                            break; // error happened or process of the sample is finished
+                        atomStart += atom_length;
+                    }
+                    free(sample->data);
+                    free(sample);
 
-					// End of change
-					int progress = (int)((k * 100) / num_samples);
-					if (ctx->last_reported_progress != progress)
-					{
-						int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
-						activity_progress(progress, cur_sec / 60, cur_sec % 60);
-						ctx->last_reported_progress = progress;
-					}
-				}
+                    // End of change
+                    int progress = (int)((k * 100) / num_samples);
+                    if (ctx->last_reported_progress != progress)
+                    {
+                        int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+                        activity_progress(progress, cur_sec / 60, cur_sec % 60);
+                        ctx->last_reported_progress = progress;
+                    }
+                }
 
-				// Encode the last subtitle
-				if (subtype == GF_ISOM_SUBTYPE_TX3G)
-				{
-					process_tx3g(ctx, enc_ctx, dec_ctx,
-						     &dec_sub, &mp4_ret,
-						     NULL, 0, 1);
-				}
+                // Encode the last subtitle
+                if (subtype == GF_ISOM_SUBTYPE_TX3G)
+                {
+                    process_tx3g(ctx, enc_ctx, dec_ctx,
+                             &dec_sub, &mp4_ret,
+                             NULL, 0, 1);
+                }
 
-				int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
-				activity_progress(100, cur_sec / 60, cur_sec % 60);
-		}
-	}
+                int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+                activity_progress(100, cur_sec / 60, cur_sec % 60);
+        }
+    }
 
-	freep(&dec_ctx->xds_ctx);
+    freep(&dec_ctx->xds_ctx);
 
-	mprint("\nClosing media: ");
-	gf_isom_close(f);
-	f = NULL;
-	mprint("ok\n");
+    mprint("\nClosing media: ");
+    gf_isom_close(f);
+    f = NULL;
+    mprint("ok\n");
 
-	if (avc_track_count)
-		mprint("Found %d AVC track(s). ", avc_track_count);
-	else
-		mprint("Found no AVC track(s). ");
+    if (avc_track_count)
+        mprint("Found %d AVC track(s). ", avc_track_count);
+    else
+        mprint("Found no AVC track(s). ");
 
-	if (cc_track_count)
-		mprint("Found %d CC track(s).\n", cc_track_count);
-	else
-		mprint("Found no dedicated CC track(s).\n");
+    if (cc_track_count)
+        mprint("Found %d CC track(s).\n", cc_track_count);
+    else
+        mprint("Found no dedicated CC track(s).\n");
 
-	ctx->freport.mp4_cc_track_cnt = cc_track_count;
+    ctx->freport.mp4_cc_track_cnt = cc_track_count;
 
-	if ((dec_ctx->write_format == CCX_OF_MCC) && (dec_ctx->saw_caption_block == CCX_TRUE))
-	{
-		mp4_ret = 1;
-	}
+    if ((dec_ctx->write_format == CCX_OF_MCC) && (dec_ctx->saw_caption_block == CCX_TRUE))
+    {
+        mp4_ret = 1;
+    }
 
-	return mp4_ret;
+    return mp4_ret;
 }
 
 int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)

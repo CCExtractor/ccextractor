@@ -62,6 +62,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).webvtt_create_css = options.webvtt_create_css as _;
     (*ccx_s_options).cc_channel = options.cc_channel as _;
     (*ccx_s_options).buffer_input = options.buffer_input as _;
+    (*ccx_s_options).list_tracks_only = options.list_tracks_only as _;
     (*ccx_s_options).nofontcolor = options.nofontcolor as _;
     (*ccx_s_options).write_format = options.write_format.to_ctype();
     (*ccx_s_options).send_to_srv = options.send_to_srv as _;

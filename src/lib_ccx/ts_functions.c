@@ -982,3 +982,60 @@ int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 
 	return ret;
 }
+
+void list_ts_tracks(struct lib_ccx_ctx *ctx)
+{
+    struct ccx_demuxer *ctx_demux = ctx->demux_ctx;
+    int i;
+    
+    mprint("\n");
+    mprint("Available tracks in input file:\n");
+    mprint("------------------------------\n");
+    
+    // Display program information
+    for (i = 0; i < ctx_demux->nb_program; i++)
+    {
+        struct program_info *pinfo = &ctx_demux->pinfo[i];
+        
+        if (pinfo->program_number == -1)
+            continue;
+        
+        mprint("Program: %d\n", pinfo->program_number);
+        
+        // PCR PID
+        if (pinfo->pcr_pid)
+        {
+            mprint("  PCR: PID: %u\n", pinfo->pcr_pid);
+        }
+        
+        // Find caption tracks by searching through PIDs
+        for (int j = 0; j <= MAX_PSI_PID; j++)
+        {
+            if (ctx_demux->PIDs_programs[j] && 
+                ctx_demux->PIDs_programs[j]->program_number == pinfo->program_number)
+            {
+                struct cap_info *cinfo = get_cinfo(ctx_demux, j);
+                if (cinfo)
+                {
+                    char *stream_type_name = get_buffer_type_str(cinfo);
+                    
+                    mprint("  Track %d: Type: %s, PID: %u\n",
+                           j,
+                           stream_type_name ? stream_type_name : "Subtitle/Caption",
+                           j);
+                    
+                    if (stream_type_name)
+                        free(stream_type_name);
+                }
+            }
+        }
+    }
+    
+    if (ctx_demux->nb_program == 0 || 
+        (ctx_demux->nb_program == 1 && ctx_demux->pinfo[0].program_number == -1))
+    {
+        mprint("No program information found in the stream.\n");
+    }
+    
+    mprint("\nTrack listing completed. Exiting as requested.\n");
+}

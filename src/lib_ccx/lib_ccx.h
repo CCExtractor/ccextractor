@@ -246,6 +246,7 @@ void parse_EPG_packet (struct lib_ccx_ctx *ctx);
 void EPG_free(struct lib_ccx_ctx *ctx);
 char* EPG_DVB_decode_string(uint8_t *in, size_t size);
 void parse_SDT(struct ccx_demuxer *ctx);
+void list_ts_tracks(struct lib_ccx_ctx *ctx);
 
 // ts_info.c
 int get_video_stream(struct ccx_demuxer *ctx);
