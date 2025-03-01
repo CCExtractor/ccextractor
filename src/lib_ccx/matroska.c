@@ -1359,95 +1359,94 @@ FILE *create_file(struct lib_ccx_ctx *ctx)
 
 void print_track_list(struct matroska_ctx *mkv_ctx)
 {
-    mprint("\n");
-    mprint("Available tracks in input file:\n");
-    mprint("------------------------------\n");
+	mprint("\n");
+	mprint("Available tracks in input file:\n");
+	mprint("------------------------------\n");
 
-    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
-    {
-        struct matroska_sub_track *track = mkv_ctx->sub_tracks[i];
-        
-        mprint("Track %d: Type: Subtitle, Language: %s, Codec: %s\n",
-               (int)track->track_number,
-               track->lang ? track->lang : "unknown",
-               track->codec_id_string ? track->codec_id_string : "unknown");
-    }
+	for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+	{
+		struct matroska_sub_track *track = mkv_ctx->sub_tracks[i];
 
-    // Print video track if found
-    if (mkv_ctx->avc_track_number > -1)
-    {
-        mprint("Track %d: Type: Video\n", (int)mkv_ctx->avc_track_number);
-    }
+		mprint("Track %d: Type: Subtitle, Language: %s, Codec: %s\n",
+		       (int)track->track_number,
+		       track->lang ? track->lang : "unknown",
+		       track->codec_id_string ? track->codec_id_string : "unknown");
+	}
 
-    mprint("\n");
+	// Print video track if found
+	if (mkv_ctx->avc_track_number > -1)
+	{
+		mprint("Track %d: Type: Video\n", (int)mkv_ctx->avc_track_number);
+	}
+
+	mprint("\n");
 }
-
 
 int matroska_loop(struct lib_ccx_ctx *ctx)
 {
-    // If we're just listing tracks, completely disable ALL output during parsing
-    int original_debug_mask = 0;
-    if (ccx_options.list_tracks_only) 
-    {
-        original_debug_mask = ccx_common_logging.debug_mask;
-        ccx_common_logging.debug_mask = 0;
-    }
-    else if (ccx_options.write_format_rewritten)
-    {
-        mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
-        mprint("--out=<format> will be ignored\n");
-    }
+	// If we're just listing tracks, completely disable ALL output during parsing
+	int original_debug_mask = 0;
+	if (ccx_options.list_tracks_only)
+	{
+		original_debug_mask = ccx_common_logging.debug_mask;
+		ccx_common_logging.debug_mask = 0;
+	}
+	else if (ccx_options.write_format_rewritten)
+	{
+		mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
+		mprint("--out=<format> will be ignored\n");
+	}
 
-    // Don't need generated input file
-    // Will read bytes by FILE*
-    close_input_file(ctx);
+	// Don't need generated input file
+	// Will read bytes by FILE*
+	close_input_file(ctx);
 
-    struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
-    mkv_ctx->ctx = ctx;
-    mkv_ctx->sub_tracks_count = 0;
-    mkv_ctx->sentence_count = 0;
-    mkv_ctx->current_second = 0;
-    mkv_ctx->filename = ctx->inputfile[ctx->current_file];
-    mkv_ctx->file = create_file(ctx);
-    mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
-    // EIA-608
-    memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
-    mkv_ctx->avc_track_number = -1;
+	struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
+	mkv_ctx->ctx = ctx;
+	mkv_ctx->sub_tracks_count = 0;
+	mkv_ctx->sentence_count = 0;
+	mkv_ctx->current_second = 0;
+	mkv_ctx->filename = ctx->inputfile[ctx->current_file];
+	mkv_ctx->file = create_file(ctx);
+	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
+	// EIA-608
+	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
+	mkv_ctx->avc_track_number = -1;
 
-    matroska_parse(mkv_ctx);
-    
-    // Check if we're just listing tracks
-    if (ccx_options.list_tracks_only)
-    {
-        // Restore output capabilities for our specific output
-        ccx_common_logging.debug_mask = original_debug_mask;
-        
-        // Print tracks in a clean format
-        print_track_list(mkv_ctx);
-        
-        // Cleanup and exit early
-        matroska_free_all(mkv_ctx);
-        // mprint("\nTrack listing completed. Exiting as requested.\n");
-        return 0;
-    }
+	matroska_parse(mkv_ctx);
 
-    // 100% done
-    activity_progress(100, (int)(mkv_ctx->current_second / 60),
-              (int)(mkv_ctx->current_second % 60));
+	// Check if we're just listing tracks
+	if (ccx_options.list_tracks_only)
+	{
+		// Restore output capabilities for our specific output
+		ccx_common_logging.debug_mask = original_debug_mask;
 
-    matroska_save_all(mkv_ctx, ccx_options.mkvlang);
-    int sentence_count = mkv_ctx->sentence_count;
-    matroska_free_all(mkv_ctx);
+		// Print tracks in a clean format
+		print_track_list(mkv_ctx);
 
-    mprint("\n\n");
+		// Cleanup and exit early
+		matroska_free_all(mkv_ctx);
+		// mprint("\nTrack listing completed. Exiting as requested.\n");
+		return 0;
+	}
 
-    // Support only one AVC track by now
-    if (mkv_ctx->avc_track_number > -1)
-        mprint("Found AVC track. ");
-    else
-        mprint("Found no AVC track. ");
+	// 100% done
+	activity_progress(100, (int)(mkv_ctx->current_second / 60),
+			  (int)(mkv_ctx->current_second % 60));
 
-    if (mkv_ctx->dec_sub.got_output)
-        return 1;
-    return sentence_count;
+	matroska_save_all(mkv_ctx, ccx_options.mkvlang);
+	int sentence_count = mkv_ctx->sentence_count;
+	matroska_free_all(mkv_ctx);
+
+	mprint("\n\n");
+
+	// Support only one AVC track by now
+	if (mkv_ctx->avc_track_number > -1)
+		mprint("Found AVC track. ");
+	else
+		mprint("Found no AVC track. ");
+
+	if (mkv_ctx->dec_sub.got_output)
+		return 1;
+	return sentence_count;
 }

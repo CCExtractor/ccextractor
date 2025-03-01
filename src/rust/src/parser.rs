@@ -674,7 +674,7 @@ impl OptionsExt for Options {
         if args.chapters {
             self.extract_chapters = true;
         }
-        
+
         if args.list_tracks {
             self.list_tracks_only = true;
         }
