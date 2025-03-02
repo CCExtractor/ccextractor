@@ -16,6 +16,7 @@ pkg_check_modules (GPAC REQUIRED gpac)
 set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
 set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
 
+
 if (WITH_FFMPEG)
     find_package(PkgConfig)
 

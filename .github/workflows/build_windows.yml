@@ -15,7 +15,7 @@ on:
       - "**.h"
       - "windows/**"
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
     paths:
       - ".github/workflows/build_windows.yml"
       - "**.c"

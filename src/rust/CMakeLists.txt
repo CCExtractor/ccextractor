@@ -13,6 +13,12 @@ else()
     set(PROFILE "release")
 endif()
 
+if(WITH_SHARING)
+    set(FEATURES "enable_sharing")
+else()
+    set(FEATURES "")
+endif()
+
 if(WITH_OCR AND WITH_HARDSUBX)
     set(FEATURES "hardsubx_ocr")
 else()

@@ -212,7 +212,7 @@ endif (PKG_CONFIG_FOUND AND WITH_OCR)
 
 if (PKG_CONFIG_FOUND AND WITH_SHARING)
 
-  pkg_check_modules (NANOMSG REQUIRED libnanomsg)
+  pkg_check_modules (NANOMSG REQUIRED nanomsg)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
 
   include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/")
@@ -251,6 +251,9 @@ endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 
+
+
+
 ########################################################
 # Build with Rust library
 ########################################################
@@ -261,6 +264,7 @@ if (PKG_CONFIG_FOUND AND NOT WITHOUT_RUST)
 else ()
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
 endif (PKG_CONFIG_FOUND AND NOT WITHOUT_RUST)
+
 
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
