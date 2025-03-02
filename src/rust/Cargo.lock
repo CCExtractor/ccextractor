@@ -160,6 +160,7 @@ dependencies = [
  "iconv",
  "leptonica-sys",
  "lib_ccxr",
+ "libc",
  "log",
  "num-integer",
  "palette",
@@ -469,6 +470,7 @@ dependencies = [
  "bitflags 2.6.0",
  "crc32fast",
  "derive_more",
+ "libc",
  "num_enum",
  "strum 0.26.3",
  "strum_macros 0.26.4",
@@ -479,9 +481,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.158"
+version = "0.2.169"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
+checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
 
 [[package]]
 name = "libloading"
