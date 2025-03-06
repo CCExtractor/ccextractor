@@ -105,7 +105,7 @@ typedef unsigned long  ulg;
 #  define OS_CODE  0x05
 #endif
 
-#if defined(MACOS) || defined(TARGET_OS_MAC)
+#if defined(__APPLE__) || defined(__MACH__)
 #  define OS_CODE  0x07
 #  if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
 #    include <unix.h> /* for fdopen */

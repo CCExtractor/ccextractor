@@ -193,10 +193,10 @@ pub fn decode_hamming_24_18(mut value: u32) -> Option<u32> {
     }
 
     Some(
-        (value & 0x000004) >> 2
-            | (value & 0x000070) >> 3
-            | (value & 0x007f00) >> 4
-            | (value & 0x7f0000) >> 5,
+        ((value & 0x000004) >> 2)
+            | ((value & 0x000070) >> 3)
+            | ((value & 0x007f00) >> 4)
+            | ((value & 0x7f0000) >> 5),
     )
 }
 
