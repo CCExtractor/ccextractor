@@ -282,7 +282,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     tlt_config = _tlt_config.to_ctype(&opt);
 
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    ccx_options.copy_from_rust(opt);
+    // Avoid causing a "mutable reference to mutable static" warning by operating on a temporary
+    // local variable and assigning the final value to the static ccx_options.
+    let mut temp_cxx_options = ccx_s_options::default();
+    temp_cxx_options.copy_from_rust(opt);
+    ccx_options = temp_cxx_options;
 
     if !_capitalization_list.is_empty() {
         capitalization_list = _capitalization_list.to_ctype();
