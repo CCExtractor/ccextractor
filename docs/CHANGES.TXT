@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- Added Support to just show list of subtitle tracks in the file.
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)

@@ -851,7 +851,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		ctx->out[0].filename = NULL;
 		ctx->out[0].with_semaphore = 0;
 		ctx->out[0].semaphore_filename = NULL;
-		mprint("Sending captions to stdout.\n");
+		// mprint("Sending captions to stdout.\n");
 	}
 
 	if (cfg->send_to_srv == CCX_TRUE)
