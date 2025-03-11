@@ -164,7 +164,11 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 			break;
 
 		// The following \n keeps the progress percentage from being overwritten.
-		mprint("\n\r-----------------------------------------------------------------\n");
+		if (!ccx_options.list_tracks_only)
+		{
+			// The following \n keeps the progress percentage from being overwritten.
+			mprint("\n\r-----------------------------------------------------------------\n");
+		}
 		mprint("\rOpening file: %s\n", ctx->inputfile[ctx->current_file]);
 		ret = ctx->demux_ctx->open(ctx->demux_ctx, ctx->inputfile[ctx->current_file]);
 		if (ret < 0)
