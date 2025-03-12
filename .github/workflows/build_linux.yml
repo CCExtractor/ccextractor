@@ -23,7 +23,7 @@ on:
     - 'src/rust/**'
 jobs:
   build_shell:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev
