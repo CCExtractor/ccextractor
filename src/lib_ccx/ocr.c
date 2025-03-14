@@ -9,7 +9,6 @@
 #include "ccx_encoders_helpers.h"
 #include "ccx_encoders_spupng.h"
 #include "ocr.h"
-#undef OCR_DEBUG
 
 struct ocrCtx
 {
@@ -686,7 +685,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		TessResultIteratorDelete(ri);
 	}
 	// End Color Detection
-	freep(&text_out);
 	boxDestroy(&crop_points);
 
 	pixDestroy(&pix);
@@ -1062,7 +1060,13 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 			len += strlen(rect->ocr_text);
 	}
 	if (len <= 0)
+	{
+		for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+		{
+			freep(&rect->ocr_text);
+		}
 		return NULL;
+	}
 	else
 	{
 		str = malloc(len + 1 + 10); // Extra space for possible trailing '/n's at the end of tesseract UTF8 text
@@ -1076,7 +1080,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 		if (!rect->ocr_text)
 			continue;
 		add_ocrtext2str(str, rect->ocr_text, context->encoded_crlf, context->encoded_crlf_length);
-		free(rect->ocr_text);
+		freep(&rect->ocr_text);
 	}
 	return str;
 }
