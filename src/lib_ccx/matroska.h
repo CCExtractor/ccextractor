@@ -120,6 +120,7 @@
 /* Misc ids */
 #define MATROSKA_VOID 0xEC
 #define MATROSKA_CRC32 0xBF
+#define MATROSKA_SEGMENT_TRACK_LANGUAGE_IETF 0x22B59D
 
 /* DEFENCE FROM THE FOOL - deprecated IDs */
 #define MATROSKA_SEGMENT_TRACK_TRACK_TIMECODE_SCALE 0x23314F
@@ -214,6 +215,7 @@ struct matroska_avc_frame {
 struct matroska_sub_track {
     char* header;   // Style header for ASS/SSA (and other) subtitles
     char* lang;
+    char *lang_ietf;    //IETF language tag (BCP47)
     ULLONG track_number;
     ULLONG lang_index;
     enum matroska_track_subtitle_codec_id codec_id;
