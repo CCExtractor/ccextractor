@@ -162,7 +162,7 @@ pub struct Args {
     pub pesheader: bool,
     /// Write the DVB subtitle debug traces to console.
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
-    pub debugdvdsub: bool,
+    pub debugdvbsub: bool,
     /// Ignore PTS jumps (default).
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub ignoreptsjumps: bool,

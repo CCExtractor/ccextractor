@@ -1024,7 +1024,7 @@ impl OptionsExt for Options {
             self.pes_header_to_stdout = true;
         }
 
-        if args.debugdvdsub {
+        if args.debugdvbsub {
             self.debug_mask =
                 DebugMessageMask::new(DebugMessageFlag::DVB, DebugMessageFlag::VERBOSE);
         }
