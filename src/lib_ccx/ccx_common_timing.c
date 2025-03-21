@@ -314,6 +314,7 @@ LLONG get_fts(struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
+
 LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 {
 #ifndef DISABLE_RUST

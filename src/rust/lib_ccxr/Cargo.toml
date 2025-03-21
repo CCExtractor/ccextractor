@@ -15,6 +15,12 @@ strum = "0.26.3"
 strum_macros = "0.26.4"
 crc32fast = "1.4.2"
 num_enum = "0.6.1"
+libc = "0.2.169"
+nanomsg = { version = "0.7.2" }
+prost = "0.13.4"
+prost-types = "0.13.4"
+lazy_static = "1.5.0"
+nanomsg-sys = "0.7.2"
 
 [features]
 default = [
