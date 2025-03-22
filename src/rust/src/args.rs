@@ -359,6 +359,9 @@ pub struct Args {
     /// the first one we find that contains a suitable stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub autoprogram: bool,
+    /// List tracks in input file and exit
+    #[arg(long = "list-tracks", help_heading = OPTION_AFFECT_PROCESSED)]
+    pub list_tracks: bool,
     /// Uses multiple programs from the same input stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub multiprogram: bool,

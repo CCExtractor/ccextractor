@@ -276,6 +276,7 @@ void save_sub_track(struct matroska_ctx* mkv_ctx, struct matroska_sub_track* tra
 void free_sub_track(struct matroska_sub_track* track);
 void matroska_save_all(struct matroska_ctx* mkv_ctx,char* lang);
 void matroska_free_all(struct matroska_ctx* mkv_ctx);
+void print_track_list(struct matroska_ctx *mkv_ctx);
 void matroska_parse(struct matroska_ctx* mkv_ctx);
 FILE* create_file(struct lib_ccx_ctx *ctx);
 
