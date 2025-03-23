@@ -92,13 +92,13 @@ pub unsafe fn vbi3_raw_decoder_debug(rd: *mut Vbi3RawDecoder, enable: bool) -> b
         }
     }
 
-    if (*rd).n_sp_lines == n_lines {
+    if (*rd)._sp_lines == n_lines {
         return r;
     }
 
     vbi_free((*rd).sp_lines as *mut c_void);
     (*rd).sp_lines = std::ptr::null_mut();
-    (*rd).n_sp_lines = 0;
+    (*rd)._sp_lines = 0;
 
     if n_lines > 0 {
         (*rd).sp_lines = libc::calloc(
@@ -109,7 +109,7 @@ pub unsafe fn vbi3_raw_decoder_debug(rd: *mut Vbi3RawDecoder, enable: bool) -> b
             return false;
         }
 
-        (*rd).n_sp_lines = n_lines;
+        (*rd)._sp_lines = n_lines;
     }
 
     r
@@ -2359,6 +2359,7 @@ pub unsafe fn sample(
         (*points).index = (((raw as usize - raw as usize) as u32) * 256 + i) as u32;
         (*points).level = raw0;
         (*points).thresh = tr;
+        let _points1 = points;
         points = points.add(1);
     }
 }

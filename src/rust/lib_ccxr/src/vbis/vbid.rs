@@ -1,6 +1,5 @@
-use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulonglong, c_void};
-use std::ptr::null_mut;
-use std::ptr::*;
+use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_void};
+
 
 use libc::FILE;
 extern crate libc;
@@ -66,7 +65,7 @@ pub const VBI_SLICED_2xCAPTION_525: u32 = 0x00000080;
 
 pub const DEF_THR_FRAC: u32 = 9;
 pub const LP_AVG: u32 = 4;
-const RAW_DECODER_PATTERN_DUMP: bool = false;
+pub const RAW_DECODER_PATTERN_DUMP: bool = false;
 pub const VBI_SLICED_TELETEXT_BD_525: u32 = 0x00000200;
 
 #[repr(C)]
@@ -688,32 +687,32 @@ pub type VbiLogMask = c_uint;
 // #[derive(Copy)]
 #[repr(C)]
 pub struct Vbi3RawDecoder {
-    sampling: VbiSamplingPar,
-    services: VbiServiceSet,
-    log: VbiLogHook,
-    debug: VbiBool,
-    n_jobs: c_uint,
-    n_sp_lines: c_uint,
-    readjust: c_int,
-    pattern: *mut c_int,
-    jobs: [_Vbi3RawDecoderJob; _VBI3_RAW_DECODER_MAX_JOBS],
-    sp_lines: *mut _Vbi3RawDecoderSpLine,
+    pub sampling: VbiSamplingPar,
+    pub services: VbiServiceSet,
+    pub log: VbiLogHook,
+    pub debug: VbiBool,
+    pub n_jobs: c_uint,
+    pub _sp_lines: c_uint,
+    pub readjust: c_int,
+    pub pattern: *mut c_int,
+    pub jobs: [_Vbi3RawDecoderJob; _VBI3_RAW_DECODER_MAX_JOBS],
+    pub sp_lines: *mut _Vbi3RawDecoderSpLine,
 }
 
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct VbiLogHook {
-    fn_: Option<fn(*mut c_void, VbiLogMask, &str)>,
-    user_data: *mut c_void,
-    mask: VbiLogMask,
+    pub fn_: Option<fn(*mut c_void, VbiLogMask, &str)>,
+    pub user_data: *mut c_void,
+    pub mask: VbiLogMask,
 }
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct _Vbi3RawDecoderJob {
-    id: VbiServiceSet,
-    slicer: Vbi3BitSlicer,
+    pub id: VbiServiceSet,
+    pub slicer: Vbi3BitSlicer,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -752,10 +751,10 @@ pub struct Vbi3BitSlicer {
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct Vbi3BitSlicerPoint {
-    kind: Vbi3BitSlicerBit,
-    index: c_uint,
-    level: c_uint,
-    thresh: c_uint,
+    pub kind: Vbi3BitSlicerBit,
+    pub index: c_uint,
+    pub level: c_uint,
+    pub thresh: c_uint,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -768,8 +767,8 @@ pub enum Vbi3BitSlicerBit {
 
 #[repr(C)]
 pub struct _Vbi3RawDecoderSpLine {
-    points: [Vbi3BitSlicerPoint; 512],
-    n_points: c_uint,
+    pub points: [Vbi3BitSlicerPoint; 512],
+    pub n_points: c_uint,
 }
 
 #[repr(C)]
