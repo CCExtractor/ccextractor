@@ -4,6 +4,16 @@
 #include "utility.h"
 #include "limits.h"
 
+#ifndef DISABLE_RUST
+
+extern int ccxr_isdb_set_global_time(struct lib_cc_decode *dec_ctx, uint64_t timestamp);
+extern void ccxr_delete_isdb_decoder(void **isdb_ctx);
+extern void *ccxr_init_isdb_decoder(void);
+extern int ccxr_isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, int size, struct cc_subtitle *sub);
+extern int ccxr_isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf_size, struct cc_subtitle *sub);
+
+#endif
+
 // #define DEBUG
 // #define COMMAND_DEBUG
 
@@ -281,6 +291,9 @@ typedef struct
  */
 void delete_isdb_decoder(void **isdb_ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_delete_isdb_decoder(isdb_ctx);
+#else
 	ISDBSubContext *ctx = *isdb_ctx;
 	struct ISDBText *text = NULL;
 	struct ISDBText *text1 = NULL;
@@ -298,6 +311,7 @@ void delete_isdb_decoder(void **isdb_ctx)
 		free(text);
 	}
 	freep(isdb_ctx);
+#endif
 }
 
 static void init_layout(ISDBSubLayout *ls)
@@ -312,6 +326,9 @@ static void init_layout(ISDBSubLayout *ls)
 
 void *init_isdb_decoder(void)
 {
+#ifndef DISABLE_RUST
+	return ccxr_init_isdb_decoder();
+#else
 	ISDBSubContext *ctx;
 
 	ctx = malloc(sizeof(ISDBSubContext));
@@ -326,6 +343,7 @@ void *init_isdb_decoder(void)
 	ctx->current_state.rollup_mode = 0;
 	init_layout(&ctx->current_state.layout_state);
 	return ctx;
+#endif
 }
 
 /**
@@ -1328,6 +1346,9 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
  */
 int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_isdb_parse_data_group(codec_ctx, buf, 0, sub);
+#else
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
 	int id = (*buf >> 2);
@@ -1393,10 +1414,14 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 	buf += 2;
 
 	return buf - buf_pivot;
+#endif
 }
 
 int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf_size, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_isdbsub_decode(dec_ctx, buf, buf_size, sub);
+#else
 	const uint8_t *header_end = NULL;
 	int ret = 0;
 	ISDBSubContext *ctx = dec_ctx->private_data;
@@ -1421,10 +1446,16 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 		return -1;
 
 	return 1;
+#endif
 }
+
 int isdb_set_global_time(struct lib_cc_decode *dec_ctx, uint64_t timestamp)
 {
+#ifndef DISABLE_RUST
+	return ccxr_isdb_set_global_time(dec_ctx, timestamp);
+#else
 	ISDBSubContext *ctx = dec_ctx->private_data;
 	ctx->timestamp = timestamp;
 	return CCX_OK;
+#endif
 }

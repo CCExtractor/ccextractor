@@ -1,5 +1,6 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
+pub mod isdb;
 pub mod time;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;
