@@ -17,7 +17,6 @@ made to reuse, not duplicate, as many functions as possible */
 
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
-extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
 #endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -232,7 +231,11 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_free(lctx->dtvcc_rust);
+#else
 	dtvcc_free(&lctx->dtvcc);
+#endif
 	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
@@ -261,8 +264,12 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->no_rollup = setting->no_rollup;
 	ctx->noscte20 = setting->noscte20;
 
+#ifndef DISABLE_RUST
+	ctx->dtvcc_rust = ccxr_dtvcc_init(setting->settings_dtvcc);
+#else
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
+#endif
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
 	{
@@ -441,6 +448,9 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
+#ifndef DISABLE_RUST
+	ccxr_flush_active_decoders(ctx);
+#else
 	if (ctx->dtvcc->is_active)
 	{
 		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
@@ -451,14 +461,11 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (decoder->cc_count > 0)
 			{
 				ctx->current_field = 3;
-#ifndef DISABLE_RUST
-				ccxr_flush_decoder(ctx->dtvcc, decoder);
-#else
 				dtvcc_decoder_flush(ctx->dtvcc, decoder);
-#endif
 			}
 		}
 	}
+#endif
 }
 struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
