@@ -143,7 +143,7 @@ pub unsafe fn vbi_raw_decoder_init(rd: *mut VbiRawDecoder) {
 pub unsafe fn vbi3_raw_decoder_new(sp: *const VbiSamplingPar) -> *mut Vbi3RawDecoder {
     let rd = libc::malloc(std::mem::size_of::<Vbi3RawDecoder>()) as *mut Vbi3RawDecoder;
     if rd.is_null() {
-        *errno() = libc::ENOMEM;
+        eprintln!("Error: Out of memory"); // replacement for errno()
         return std::ptr::null_mut();
     }
 
@@ -155,13 +155,9 @@ pub unsafe fn vbi3_raw_decoder_new(sp: *const VbiSamplingPar) -> *mut Vbi3RawDec
     rd
 }
 
-#[inline]
-pub unsafe fn errno() -> *mut c_int {
-    libc::__error()
-}
-
 pub fn init_decoder_vbi(cfg: Option<&CcxDecoderVbiCfg>) -> Option<*mut CcxDecoderVbiCtx> {
-    let vbi = unsafe { libc::malloc(std::mem::size_of::<CcxDecoderVbiCtx>()) as *mut CcxDecoderVbiCtx };
+    let vbi =
+        unsafe { libc::malloc(std::mem::size_of::<CcxDecoderVbiCtx>()) as *mut CcxDecoderVbiCtx };
     if vbi.is_null() {
         return None;
     }
@@ -203,7 +199,7 @@ pub unsafe fn debug(log: &mut VbiLogHook, fmt: &str, args: std::fmt::Arguments) 
         debug_fn(
             CCX_DMT_PARSE as i64,
             format!("VBI:{}:{}: {}\0", std::module_path!(), line!(), fmt).as_ptr() as *const i8,
-            args
+            args,
         );
     }
 }
@@ -212,7 +208,7 @@ pub unsafe fn log(hook: &mut VbiLogHook, fmt: &str, args: std::fmt::Arguments) {
     if let Some(log_fn) = ccx_common_logging.log_ftn {
         log_fn(
             format!("VBI:{}: {}\0", line!(), fmt).as_ptr() as *const i8,
-            args
+            args,
         );
     }
 }
@@ -221,7 +217,7 @@ pub unsafe fn warning(hook: &mut VbiLogHook, fmt: &str, args: std::fmt::Argument
     if let Some(log_fn) = ccx_common_logging.log_ftn {
         log_fn(
             format!("VBI:{}: {}\0", line!(), fmt).as_ptr() as *const i8,
-            args
+            args,
         );
     }
 }
@@ -237,10 +233,7 @@ pub unsafe fn info(log: &mut VbiLogHook, fmt: &str, args: std::fmt::Arguments) {
 pub fn vbi_pixfmt_bpp(fmt: VbiPixfmt) -> i32 {
     match fmt {
         VbiPixfmt::Yuv420 => 1,
-        VbiPixfmt::Rgba32Le
-        | VbiPixfmt::Rgba32Be
-        | VbiPixfmt::Bgra32Le
-        | VbiPixfmt::Bgra32Be => 4,
+        VbiPixfmt::Rgba32Le | VbiPixfmt::Rgba32Be | VbiPixfmt::Bgra32Le | VbiPixfmt::Bgra32Be => 4,
         VbiPixfmt::Rgb24 | VbiPixfmt::Bgr24 => 3,
         _ => 2,
     }
@@ -298,45 +291,43 @@ pub unsafe fn _vbi_sampling_par_valid_log(
 
     if (VBI_VIDEOSTD_SET_525_60 & videostd_set) != 0 {
         if (VBI_VIDEOSTD_SET_625_50 & videostd_set) != 0 {
-            info(log, "Ambiguous videostd_set 0x{:x}.", format_args!("{:x}", videostd_set));
+            info(
+                log,
+                "Ambiguous videostd_set 0x{:x}.",
+                format_args!("{:x}", videostd_set),
+            );
             return CCX_FALSE;
         }
 
-        if (*sp).start[0] != 0
-            && !range_check((*sp).start[0], (*sp).count[0], 1, 262)
-        {
+        if (*sp).start[0] != 0 && !range_check((*sp).start[0], (*sp).count[0], 1, 262) {
             goto_bad_range(log, sp);
             return CCX_FALSE;
         }
 
-        if (*sp).start[1] != 0
-            && !range_check((*sp).start[1], (*sp).count[1], 263, 525)
-        {
+        if (*sp).start[1] != 0 && !range_check((*sp).start[1], (*sp).count[1], 263, 525) {
             goto_bad_range(log, sp);
             return CCX_FALSE;
         }
     } else if (VBI_VIDEOSTD_SET_625_50 & videostd_set) != 0 {
-        if (*sp).start[0] != 0
-            && !range_check((*sp).start[0], (*sp).count[0], 1, 311)
-        {
+        if (*sp).start[0] != 0 && !range_check((*sp).start[0], (*sp).count[0], 1, 311) {
             goto_bad_range(log, sp);
             return CCX_FALSE;
         }
 
-        if (*sp).start[1] != 0
-            && !range_check((*sp).start[1], (*sp).count[1], 312, 625)
-        {
+        if (*sp).start[1] != 0 && !range_check((*sp).start[1], (*sp).count[1], 312, 625) {
             goto_bad_range(log, sp);
             return CCX_FALSE;
         }
     } else {
-        info(log, "Ambiguous videostd_set 0x{:x}.", format_args!("{:x}", videostd_set));
+        info(
+            log,
+            "Ambiguous videostd_set 0x{:x}.",
+            format_args!("{:x}", videostd_set),
+        );
         return CCX_FALSE;
     }
 
-    if (*sp).interlaced != 0
-        && ((*sp).count[0] != (*sp).count[1] || (*sp).count[0] == 0)
-    {
+    if (*sp).interlaced != 0 && ((*sp).count[0] != (*sp).count[1] || (*sp).count[0] == 0) {
         info(
             log,
             "Line counts {}, {} must be equal and non-zero when raw VBI data is interlaced.",
@@ -353,10 +344,10 @@ unsafe fn goto_bad_samples(log: &mut VbiLogHook, sp: *const VbiSamplingPar) {
         log,
         "bytes_per_line value {} is no multiple of the sample size {}.",
         format_args!(
-            "{}, {}", 
-            (*sp).bytes_per_line, 
+            "{}, {}",
+            (*sp).bytes_per_line,
             vbi_pixfmt_bpp((*sp).sampling_format)
-        )
+        ),
     );
 }
 
@@ -372,7 +363,7 @@ unsafe fn goto_bad_range(log: &mut VbiLogHook, sp: *const VbiSamplingPar) {
             (*sp).start[1],
             (*sp).start[1] + (*sp).count[1] - 1,
             (*sp).count[1]
-        )
+        ),
     );
 }
 
@@ -418,7 +409,10 @@ pub unsafe fn vbi3_raw_decoder_set_sampling_par(
     vbi3_raw_decoder_add_services(rd, services, strict)
 }
 
-pub unsafe fn _vbi3_raw_decoder_init(rd: *mut Vbi3RawDecoder, sp: *const VbiSamplingPar) -> VbiBool {
+pub unsafe fn _vbi3_raw_decoder_init(
+    rd: *mut Vbi3RawDecoder,
+    sp: *const VbiSamplingPar,
+) -> VbiBool {
     std::ptr::write_bytes(rd, 0, 1);
 
     vbi3_raw_decoder_reset(rd);
@@ -535,8 +529,16 @@ pub unsafe fn vbi3_bit_slicer_set_params(
 
     (*bs).sample_format = sample_format;
 
-    let c_mask = if cri_bits == 32 { !0 } else { (1 << cri_bits) - 1 };
-    let f_mask = if frc_bits == 32 { !0 } else { (1 << frc_bits) - 1 };
+    let c_mask = if cri_bits == 32 {
+        !0
+    } else {
+        (1 << cri_bits) - 1
+    };
+    let f_mask = if frc_bits == 32 {
+        !0
+    } else {
+        (1 << frc_bits) - 1
+    };
 
     let mut oversampling = 4;
     let mut skip = 0;
@@ -698,7 +700,7 @@ pub unsafe extern "C" fn bit_slicer_Y8(
         raw0sum = raw0sum + *raw.add(bps << LP_AVG) - *raw;
         raw = raw.add(bps);
         (*bs).thresh = (*bs).thresh.wrapping_add(
-            ((raw0 as i32 - tr as i32) * (raw0sum as i32 - raw0 as i32).abs()) as u32
+            ((raw0 as i32 - tr as i32) * (raw0sum as i32 - raw0 as i32).abs()) as u32,
         );
 
         b = if raw0 as u32 >= tr { 1 } else { 0 };
@@ -947,7 +949,9 @@ pub unsafe extern "C" fn bit_slicer_YUYV(
         let tr = (*bs).thresh >> thresh_frac;
         let raw0 = *raw;
         let raw1 = *raw.add(bpp) - raw0;
-        (*bs).thresh = (*bs).thresh.wrapping_add(((raw0 as i32 - tr as i32) * (raw1 as i32).abs()) as u32);
+        (*bs).thresh = (*bs)
+            .thresh
+            .wrapping_add(((raw0 as i32 - tr as i32) * (raw1 as i32).abs()) as u32);
         let mut t = (raw0 as u32) * OVERSAMPLING;
 
         for _ in 0..OVERSAMPLING {
@@ -1091,7 +1095,8 @@ pub unsafe fn vbi3_raw_decoder_add_services(
             (*par).payload,
             (*par).bit_rate,
             (*par).modulation.clone(),
-        ) == CCX_FALSE {
+        ) == CCX_FALSE
+        {
             assert!(false, "bit_slicer_set_params failed");
         }
 
@@ -1099,12 +1104,21 @@ pub unsafe fn vbi3_raw_decoder_add_services(
         let mut count = [0; 2];
         lines_containing_data(&mut start, &mut count, sp, par);
 
-        if add_job_to_pattern(rd, job.offset_from((*rd).jobs.as_mut_ptr()) as i32, start.as_ptr(), count.as_ptr()) == CCX_FALSE
+        if add_job_to_pattern(
+            rd,
+            job.offset_from((*rd).jobs.as_mut_ptr()) as i32,
+            start.as_ptr(),
+            count.as_ptr(),
+        ) == CCX_FALSE
         {
             error(
                 &mut (*rd).log,
                 "Out of decoder pattern space for service 0x{:08x} ({}).",
-                format_args!("{:08x}, {}", (*par).id, std::ffi::CStr::from_ptr((*par).label).to_string_lossy()),
+                format_args!(
+                    "{:08x}, {}",
+                    (*par).id,
+                    std::ffi::CStr::from_ptr((*par).label).to_string_lossy()
+                ),
             );
             par = par.add(1);
             continue;
@@ -1132,10 +1146,14 @@ pub unsafe fn add_job_to_pattern(
     let mut job_num = job_num + 1; // index into rd->jobs, 0 means no job
 
     let scan_lines = (*rd).sampling.count[0] + (*rd).sampling.count[1];
-    let pattern_end = (*rd).pattern.add(scan_lines as usize * _VBI3_RAW_DECODER_MAX_WAYS);
+    let pattern_end = (*rd)
+        .pattern
+        .add(scan_lines as usize * _VBI3_RAW_DECODER_MAX_WAYS);
 
     for field in 0..2 {
-        let mut pattern = (*rd).pattern.add((*start.add(field) as usize) * _VBI3_RAW_DECODER_MAX_WAYS);
+        let mut pattern = (*rd)
+            .pattern
+            .add((*start.add(field) as usize) * _VBI3_RAW_DECODER_MAX_WAYS);
 
         // For each line where we may find the data.
         for _ in 0..*count.add(field) {
@@ -1173,7 +1191,9 @@ pub unsafe fn add_job_to_pattern(
     }
 
     for field in 0..2 {
-        let mut pattern = (*rd).pattern.add((*start.add(field) as usize) * _VBI3_RAW_DECODER_MAX_WAYS);
+        let mut pattern = (*rd)
+            .pattern
+            .add((*start.add(field) as usize) * _VBI3_RAW_DECODER_MAX_WAYS);
 
         // For each line where we may find the data.
         for _ in 0..*count.add(field) {
@@ -1414,14 +1434,11 @@ pub unsafe fn _vbi_sampling_par_permit_service(
     CCX_TRUE
 }
 
-
 // Implement Sync for VbiServicePar since it contains primitive types and pointers
 // that don't mutate
 unsafe impl Sync for VbiServicePar {}
 
-
-
-pub static _VBI_SERVICE_TABLE: [VbiServicePar; 19+1] = [
+pub static _VBI_SERVICE_TABLE: [VbiServicePar; 19 + 1] = [
     VbiServicePar {
         id: VBI_SLICED_TELETEXT_A,
         label: b"Teletext System A\0".as_ptr() as *const c_char,
@@ -1800,12 +1817,7 @@ pub fn decode_vbi(
     }
 }
 
-
-pub unsafe fn vbi_raw_decode(
-    rd: *mut VbiRawDecoder,
-    raw: *mut u8,
-    out: *mut VbiSliced,
-) -> u32 {
+pub unsafe fn vbi_raw_decode(rd: *mut VbiRawDecoder, raw: *mut u8, out: *mut VbiSliced) -> u32 {
     assert!(!rd.is_null());
     assert!(!raw.is_null());
     assert!(!out.is_null());
@@ -1967,7 +1979,11 @@ pub unsafe fn dump_pattern_line(rd: *const Vbi3RawDecoder, row: u32, fp: *mut li
 
     for i in 0.._VBI3_RAW_DECODER_MAX_WAYS {
         let pos = row as usize * _VBI3_RAW_DECODER_MAX_WAYS + i;
-        libc::fprintf(fp, b"%02x \0".as_ptr() as *const i8, *((*rd).pattern.add(pos) as *const u8) as libc::c_int);
+        libc::fprintf(
+            fp,
+            b"%02x \0".as_ptr() as *const i8,
+            *((*rd).pattern.add(pos) as *const u8) as libc::c_int,
+        );
     }
 
     libc::fputc(b'\n' as i32, fp);
@@ -2001,7 +2017,13 @@ pub unsafe fn decode_pattern(
         if j > 0 {
             let job = &(*rd).jobs[(j - 1) as usize];
 
-            if !slice(rd, sliced, job as *const _Vbi3RawDecoderJob as *mut _Vbi3RawDecoderJob, i, raw) {
+            if !slice(
+                rd,
+                sliced,
+                job as *const _Vbi3RawDecoderJob as *mut _Vbi3RawDecoderJob,
+                i,
+                raw,
+            ) {
                 pat = pat.add(1);
                 continue; // No match, try next data service
             }
@@ -2052,11 +2074,7 @@ pub unsafe fn decode_pattern(
 
 // should call already defined rust function do_cb from c code
 extern "C" {
-    pub fn do_cb(
-        ctx: *mut LibCcDecode,
-        cc_block: *const u8,
-        sub: *mut CcSubtitle,
-    ) -> i32;
+    pub fn do_cb(ctx: *mut LibCcDecode, cc_block: *const u8, sub: *mut CcSubtitle) -> i32;
 }
 
 pub unsafe fn slice(
@@ -2071,9 +2089,21 @@ pub unsafe fn slice(
             &mut (*job).slicer,
             (*sliced).data.as_mut_ptr(),
             std::mem::size_of_val(&(*sliced).data) as u32,
-            (*rd).sp_lines.add(i as usize).as_mut().unwrap().points.as_mut_ptr(),
+            (*rd)
+                .sp_lines
+                .add(i as usize)
+                .as_mut()
+                .unwrap()
+                .points
+                .as_mut_ptr(),
             &mut (*rd).sp_lines.add(i as usize).as_mut().unwrap().n_points,
-            (*rd).sp_lines.add(i as usize).as_ref().unwrap().points.len() as u32,
+            (*rd)
+                .sp_lines
+                .add(i as usize)
+                .as_ref()
+                .unwrap()
+                .points
+                .len() as u32,
             raw,
         ) != 0;
     } else {
@@ -2162,17 +2192,35 @@ pub unsafe fn core(
     for mut i in (0..(*bs).cri_samples).rev() {
         let tr = (*bs).thresh >> DEF_THR_FRAC;
         let raw0 = green(raw, (*bs).sample_format as u32, &*bs);
-        let mut raw1 = green(raw.add((*bs).bytes_per_sample as usize), (*bs).sample_format as u32, &*bs);
-        raw1 = raw1.wrapping_sub(raw0);
-        (*bs).thresh = (*bs).thresh.wrapping_add(
-            ((raw0 as i32 - tr as i32) * (raw1 as i32).abs()) as u32,
+        let mut raw1 = green(
+            raw.add((*bs).bytes_per_sample as usize),
+            (*bs).sample_format as u32,
+            &*bs,
         );
+        raw1 = raw1.wrapping_sub(raw0);
+        (*bs).thresh = (*bs)
+            .thresh
+            .wrapping_add(((raw0 as i32 - tr as i32) * (raw1 as i32).abs()) as u32);
         let mut t = raw0 * 4; // oversampling
 
         for _ in 0..4 {
             let oversampling = 4; // Define oversampling with an appropriate value
             let collect_points = true; // Define collect_points with an appropriate value
-            cri(bs, buffer, points, n_points, t, raw, raw_start, &mut cl, &mut c, &mut b1, tr, oversampling, collect_points);
+            cri(
+                bs,
+                buffer,
+                points,
+                n_points,
+                t,
+                raw,
+                raw_start,
+                &mut cl,
+                &mut c,
+                &mut b1,
+                tr,
+                oversampling,
+                collect_points,
+            );
         }
 
         raw = raw.add((*bs).bytes_per_sample as usize);
@@ -2251,7 +2299,11 @@ pub unsafe fn cri(
     *b1 = b;
 
     if oversampling > 1 {
-        t += green(raw.add((*bs).bytes_per_sample as usize), (*bs).sample_format as u32, &*bs);
+        t += green(
+            raw.add((*bs).bytes_per_sample as usize),
+            (*bs).sample_format as u32,
+            &*bs,
+        );
     }
 
     CCX_FALSE
@@ -2285,7 +2337,15 @@ pub unsafe fn payload(
         3 => {
             // Bitwise, LSB first
             for j in 0..(*bs).payload {
-                sample(bs, points, n_points, Vbi3BitSlicerBit::PAYLOAD_BIT, i, raw, tr);
+                sample(
+                    bs,
+                    points,
+                    n_points,
+                    Vbi3BitSlicerBit::PAYLOAD_BIT,
+                    i,
+                    raw,
+                    tr,
+                );
                 c = (c >> 1) + ((*raw >= tr as u8) as u32 * 128);
                 i += (*bs).step;
                 if (j & 7) == 7 {
@@ -2298,7 +2358,15 @@ pub unsafe fn payload(
         2 => {
             // Bitwise, MSB first
             for j in 0..(*bs).payload {
-                sample(bs, points, n_points, Vbi3BitSlicerBit::PAYLOAD_BIT, i, raw, tr);
+                sample(
+                    bs,
+                    points,
+                    n_points,
+                    Vbi3BitSlicerBit::PAYLOAD_BIT,
+                    i,
+                    raw,
+                    tr,
+                );
                 c = c * 2 + ((*raw >= tr as u8) as u32);
                 i += (*bs).step;
                 if (j & 7) == 7 {
@@ -2312,7 +2380,15 @@ pub unsafe fn payload(
             // Octets, LSB first
             for _ in 0..(*bs).payload {
                 for k in 0..8 {
-                    sample(bs, points, n_points, Vbi3BitSlicerBit::PAYLOAD_BIT, i, raw, tr);
+                    sample(
+                        bs,
+                        points,
+                        n_points,
+                        Vbi3BitSlicerBit::PAYLOAD_BIT,
+                        i,
+                        raw,
+                        tr,
+                    );
                     c += ((*raw >= tr as u8) as u32) << k;
                     i += (*bs).step;
                 }
@@ -2324,7 +2400,15 @@ pub unsafe fn payload(
             // Octets, MSB first
             for _ in 0..(*bs).payload {
                 for _ in 0..8 {
-                    sample(bs, points, n_points, Vbi3BitSlicerBit::PAYLOAD_BIT, i, raw, tr);
+                    sample(
+                        bs,
+                        points,
+                        n_points,
+                        Vbi3BitSlicerBit::PAYLOAD_BIT,
+                        i,
+                        raw,
+                        tr,
+                    );
                     c = c * 2 + ((*raw >= tr as u8) as u32);
                     i += (*bs).step;
                 }
@@ -2390,7 +2474,6 @@ pub unsafe fn vbi3_bit_slicer_slice(
     }
 }
 
-
 pub static mut CB_FIELD1: i64 = 0;
 pub static mut CB_FIELD2: i64 = 0;
 pub static mut CB_708: i64 = 0;
@@ -2405,4 +2488,3 @@ pub unsafe fn get_fts(ctx: *mut CcxCommonTimingCtx, current_field: i32) -> i64 {
         }
     }
 }
-
