@@ -5,3 +5,5 @@ pub mod subtitle;
 pub mod teletext;
 pub mod time;
 pub mod util;
+
+pub mod vbis;

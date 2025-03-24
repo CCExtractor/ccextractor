@@ -188,7 +188,7 @@ _vbi_service_table [] = {
 		/* No useful FRC, but a six bit CRC */
 		0,
 	}, {
-#endif
+#endif 
 		VBI_SLICED_CAPTION_525_F1,
 		"Closed Caption 525, field 1",
 		VBI_VIDEOSTD_SET_525_60,
