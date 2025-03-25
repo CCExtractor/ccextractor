@@ -1,12 +1,14 @@
 #![allow(unexpected_cfgs)]
 
-use crate::ccx_options;
+use std::sync::{LazyLock, Mutex};
 use crate::demuxer::demuxer::{CcxDemuxer, STARTBYTESLENGTH};
 use crate::file_functions::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::gxf::{ccx_gxf_init, ccx_gxf_probe};
-use lib_ccxr::common::StreamMode;
+use lib_ccxr::common::{Options, StreamMode};
 use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
 use lib_ccxr::fatal;
+pub static CCX_OPTIONS: LazyLock<Mutex<Options>> =
+    LazyLock::new(|| Mutex::new(Options::default()));
 
 /// Rust equivalent of the `ccx_stream_mp4_box` array.
 #[derive(Debug)]
@@ -37,6 +39,8 @@ pub static CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
 pub unsafe fn detect_stream_type(
     ctx: &mut CcxDemuxer,
 ) {
+    let mut ccx_options = CCX_OPTIONS.lock().unwrap();
+
     // Not found
     ctx.stream_mode = StreamMode::ElementaryOrNotFound;
 
@@ -132,7 +136,7 @@ pub unsafe fn detect_stream_type(
         }
     }
     // MP4 check. "Still not found" or we want file reports.
-    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound || ccx_options.print_file_reports != 0)
+    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound || ccx_options.print_file_reports != false)
         && ctx.startbytes_avail >= 4
     {
         let mut idx = 0usize;

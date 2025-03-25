@@ -4,14 +4,7 @@ use crate::decoder::xds::XdsContext;
 const MAXBFRAMES: usize = 50;
 const SORTBUF: usize = 2 * MAXBFRAMES + 1;
 
-// #define CCX_OK       0
-// #define CCX_FALSE    0
-// #define CCX_TRUE     1
-// #define CCX_EAGAIN  -100
-// #define CCX_EOF     -101
-// #define CCX_EINVAL  -102
-// #define CCX_ENOSUPP -103
-// #define CCX_ENOMEM  -104
+
 
 pub const CCX_OK: i32 = 0;
 pub const CCX_FALSE: i32 = 0;
@@ -134,4 +127,75 @@ pub struct LibCcDecode {
     // DVB subtitle related
     pub ocr_quantmode: i32,
     pub prev: *mut LibCcDecode,
+}
+impl Default for LibCcDecode {
+    fn default() -> Self {
+        LibCcDecode {
+            cc_stats: [0; 4],
+            saw_caption_block: 0,
+            processed_enough: 0,
+            context_cc608_field_1: std::ptr::null_mut(),
+            context_cc608_field_2: std::ptr::null_mut(),
+            no_rollup: 0,
+            noscte20: 0,
+            fix_padding: 0,
+            write_format: lib_ccxr::common::OutputFormat::Raw,
+            extraction_start: None,
+            extraction_end: None,
+            subs_delay: 0,
+            extract: 0,
+            fullbin: 0,
+            in_bufferdatatype: lib_ccxr::common::BufferdataType::Unknown,
+            hauppauge_mode: 0,
+            frames_since_last_gop: 0,
+            saw_gop_header: 0,
+            max_gop_length: 0,
+            last_gop_length: 0,
+            total_pulldownfields: 0,
+            total_pulldownframes: 0,
+            program_number: 0,
+            list: crate::demuxer::demuxer::HList::default(),
+            timing: std::ptr::null_mut(),
+            codec: lib_ccxr::common::Codec::Dvb,
+            has_ccdata_buffered: 0,
+            is_alloc: 0,
+            avc_ctx: std::ptr::null_mut(),
+            private_data: std::ptr::null_mut(),
+            current_hor_size: 0,
+            current_vert_size: 0,
+            current_aspect_ratio: 0,
+            current_frame_rate: 0,
+            no_bitstream_error: 0,
+            saw_seqgoppic: 0,
+            in_pic_data: 0,
+            current_progressive_sequence: 0,
+            current_pulldownfields: 0,
+            temporal_reference: 0,
+            picture_coding_type: lib_ccxr::common::FrameType::ResetOrUnknown,
+            num_key_frames: 0,
+            picture_structure: 0,
+            repeat_first_field: 0,
+            progressive_frame: 0,
+            pulldownfields: 0,
+            top_field_first: 0,
+            stat_numuserheaders: 0,
+            stat_dvdccheaders: 0,
+            stat_scte20ccheaders: 0,
+            stat_replay5000headers: 0,
+            stat_replay4000headers: 0,
+            stat_dishheaders: 0,
+            stat_hdtv: 0,
+            stat_divicom: 0,
+            false_pict_header: 0,
+            current_field: 0,
+            maxtref: 0,
+            cc_data_count: [0; SORTBUF],
+            cc_fts: [0; SORTBUF],
+            cc_data_pkts: [[0; 10 * 31 * 3 + 1]; SORTBUF],
+            anchor_seq_number: 0,
+            xds_ctx: std::ptr::null_mut(),
+            ocr_quantmode: 0,
+            prev: std::ptr::null_mut(),
+        }
+    }
 }
