@@ -2,6 +2,7 @@ use lib_ccxr::common::{Decoder608Report, DecoderDtvccReport, OutputFormat};
 use crate::demuxer::demuxer::{CcxDemuxer, DecodersCommonSettings, EITProgram, HList, PSI_buffer};
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct FileReport {
     pub width: u32,
     pub height: u32,
@@ -11,9 +12,9 @@ pub struct FileReport {
     pub data_from_708: *mut DecoderDtvccReport, // Pointer to DecoderDtvccReport
     pub mp4_cc_track_cnt: u32,
 }
-
+#[derive(Debug)]
 #[repr(C)]
-pub struct LibCcxCtx {
+pub struct LibCcxCtx<'a> {
     // Common data for both loops
     pub pesheaderbuf: *mut u8, // unsigned char* -> raw pointer
     pub inputsize: i64,        // LLONG -> i64
@@ -73,7 +74,7 @@ pub struct LibCcxCtx {
     pub multiprogram: i32, // Multi-program support
     pub write_format: OutputFormat, // Output format
 
-    pub demux_ctx: *mut CcxDemuxer, // Pointer to demux context
+    pub demux_ctx: *mut CcxDemuxer<'a>, // Pointer to demux context
     pub enc_ctx_head: HList, // Linked list for encoding contexts
     pub mp4_cfg: Mp4Cfg, // MP4 configuration struct
     pub out_interval: i32, // Output interval
@@ -81,6 +82,75 @@ pub struct LibCcxCtx {
     pub segment_counter: i32, // Segment counter
     pub system_start_time: i64, // System start time
 }
+
+impl<'a> LibCcxCtx<'a> {
+    pub(crate) fn default() -> Self {
+        LibCcxCtx {
+            pesheaderbuf: Box::into_raw(Box::new(0u8)),
+            inputsize: 0,
+            total_inputsize: 0,
+            total_past: 0,
+            last_reported_progress: 0,
+            stat_numuserheaders: 0,
+            stat_dvdccheaders: 0,
+            stat_scte20ccheaders: 0,
+            stat_replay5000headers: 0,
+            stat_replay4000headers: 0,
+            stat_dishheaders: 0,
+            stat_hdtv: 0,
+            stat_divicom: 0,
+            false_pict_header: 0,
+            dec_global_setting: Box::into_raw(Box::new(DecodersCommonSettings::default())),
+            dec_ctx_head: HList::default(),
+            rawmode: 0,
+            cc_to_stdout: 0,
+            pes_header_to_stdout: 0,
+            dvb_debug_traces_to_stdout: 0,
+            ignore_pts_jumps: 0,
+            subs_delay: 0,
+            startcredits_displayed: 0,
+            end_credits_displayed: 0,
+            last_displayed_subs_ms: 0,
+            screens_to_process: 0,
+            basefilename: Box::into_raw(Box::new(0u8)),
+            extension: Box::into_raw(Box::new(0u8)),
+            current_file: -1,
+            inputfile: Vec::new(),
+            num_input_files: 0,
+            teletext_warning_shown: 0,
+            epg_inited: 0,
+            epg_buffers: Box::into_raw(Box::new(PSI_buffer::default())),
+            eit_programs: std::ptr::null_mut(),
+            // eit_programs: Box::into_raw(Box::new(EITProgram::default())),
+            eit_current_events: Box::into_raw(Box::new(0)),
+            atsc_source_pg_map: Box::into_raw(Box::new(0)),
+            epg_last_output: 0,
+            epg_last_live_output: 0,
+            freport: FileReport {
+                width: 0,
+                height: 0,
+                aspect_ratio: 0,
+                frame_rate: 0,
+                data_from_608: Box::into_raw(Box::new(Decoder608Report::default())),
+                data_from_708: Box::into_raw(Box::new(DecoderDtvccReport::default())),
+                mp4_cc_track_cnt: 0,
+            },
+            hauppauge_mode: 0,
+            live_stream: 0,
+            binary_concat: 0,
+            multiprogram: 0,
+            write_format: OutputFormat::default(),
+            demux_ctx: Box::into_raw(Box::new(CcxDemuxer::default())),
+            enc_ctx_head: HList::default(),
+            mp4_cfg: Mp4Cfg { mp4vidtrack: 0 },
+            out_interval: 0,
+            segment_on_key_frames_only: 0,
+            segment_counter: 0,
+            system_start_time: 0,
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Mp4Cfg {
