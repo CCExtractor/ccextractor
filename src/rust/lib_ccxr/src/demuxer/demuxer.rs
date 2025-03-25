@@ -1,17 +1,17 @@
 #![allow(non_camel_case_types)]
 #![allow(unexpected_cfgs)]
 
-use crate::decoder::common_structs::LibCcDecode;
+use crate::demuxer::common_structs::LibCcDecode;
 use crate::demuxer::lib_ccx::{FileReport, LibCcxCtx};
 use crate::demuxer::stream_functions::{detect_myth, detect_stream_type};
-use crate::file_functions::FILEBUFFERSIZE;
-use lib_ccxr::activity::ActivityExt;
-use lib_ccxr::common::{BufferdataType, Codec, Decoder608Settings, DecoderDtvccSettings, OutputFormat, SelectCodec, StreamMode, StreamType};
-use lib_ccxr::common::{DataSource, Options};
-use lib_ccxr::time::Timestamp;
-use lib_ccxr::util::log::ExitCause;
-use lib_ccxr::{common, fatal, info};
-use std::ffi::{CStr, CString};
+use crate::file_functions::file_functions::FILEBUFFERSIZE;
+use crate::activity::ActivityExt;
+use crate::common::{BufferdataType, Codec, Decoder608Settings, DecoderDtvccSettings, OutputFormat, SelectCodec, StreamMode, StreamType};
+use crate::common::{DataSource, Options};
+use crate::time::Timestamp;
+use crate::util::log::ExitCause;
+use crate::{common, fatal, info};
+use std::ffi::CStr;
 use std::fs::File;
 use std::io::{Seek, SeekFrom};
 use std::os::fd::{FromRawFd, IntoRawFd};
@@ -178,9 +178,9 @@ pub unsafe fn get_sib_stream_by_type(program: *mut CapInfo, codec_type: Codec) -
 }
 
 
-pub fn list_empty(head: &mut HList) -> bool {
-    head.next.is_null() && head.prev.is_null()
-}
+// pub fn list_empty(head: &mut HList) -> bool {
+//     head.next.is_null() && head.prev.is_null()
+// }
 pub unsafe fn get_best_sib_stream(program: *mut CapInfo) -> *mut CapInfo {
     let mut info = get_sib_stream_by_type(program, Codec::Teletext);
     if !info.is_null() {
@@ -208,6 +208,16 @@ pub struct PSI_buffer {
     pub buffer: *mut u8,
     pub buffer_length: u32,
     pub ccounter: u32,
+}
+impl Default for PSI_buffer {
+    fn default() -> Self {
+        PSI_buffer {
+            prev_ccounter: 0,
+            buffer: Box::into_raw(Box::new(0u8)),
+            buffer_length: 0,
+            ccounter: 0,
+        }
+    }
 }
 
 impl PSI_buffer {
@@ -599,7 +609,7 @@ pub struct DemuxerData {
     pub program_number: i32,
     pub stream_pid: i32,
     pub codec: Codec,                // ccx_code_type maps to Codec
-    pub bufferdatatype: lib_ccxr::common::BufferdataType, // ccx_bufferdata_type maps to BufferDataType
+    pub bufferdatatype: crate::common::BufferdataType, // ccx_bufferdata_type maps to BufferDataType
     pub buffer: *mut u8,
     pub len: usize,
     pub rollover_bits: u32,          // Tracks PTS rollover
@@ -1018,7 +1028,7 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
             // print_cc_report(ctx, ptr::null_mut()); //TODO
         }
         let mut program = demux_ctx.cinfo_tree.pg_stream.next;
-        while program != &demux_ctx.cinfo_tree.pg_stream as *const _ as *mut _  && !program.is_null() {
+        while program != &demux_ctx.cinfo_tree.pg_stream as *const _ as *mut _ && !program.is_null() {
             let program_ptr = program as *mut CapInfo;
             println!("//////// Program #{}: ////////", (*program_ptr).program_number);
 
@@ -1068,19 +1078,125 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
 }
 
 
-unsafe fn get_desc_placeholder(_index: usize) -> *const i8 {
+pub unsafe fn get_desc_placeholder(_index: usize) -> *const i8 {
     b"Unknown\0".as_ptr() as *const i8
+}
+pub fn freep<T>(ptr: &mut *mut T) {
+    unsafe {
+        if !ptr.is_null() {
+            let _ = Box::from_raw(*ptr);
+            *ptr = std::ptr::null_mut();
+        }
+    }
+}
+
+pub fn list_empty(head: &HList) -> bool {
+    unsafe { head.next == head as *const HList as *mut HList }
+}
+
+pub fn list_entry<T>(ptr: *mut HList, offset: usize) -> *mut T {
+    (ptr as *mut u8).wrapping_sub(offset) as *mut T
+}
+
+pub unsafe fn list_del(entry: &mut HList) {
+    if entry.prev.is_null() && entry.next.is_null() {
+        return;
+    }
+
+    if !entry.prev.is_null() {
+        (*entry.prev).next = entry.next;
+    }
+    if !entry.next.is_null() {
+        (*entry.next).prev = entry.prev;
+    }
+
+    entry.next = std::ptr::null_mut();
+    entry.prev = std::ptr::null_mut();
+}
+
+pub unsafe fn list_add(new_entry: &mut HList, head: &mut HList) {
+    new_entry.next = head.next;
+    new_entry.prev = head as *mut HList;
+
+    if !head.next.is_null() {
+        (*head.next).prev = new_entry as *mut HList;
+    }
+    head.next = new_entry as *mut HList;
+}
+
+pub fn init_list_head(head: &mut HList) {
+    head.next = head as *mut HList;
+    head.prev = head as *mut HList;
+}
+
+// Updated dinit_cap for new CapInfo structure
+pub unsafe fn dinit_cap(ctx: &mut CcxDemuxer) {
+    // Calculate offset of all_stream within CapInfo
+    let offset = {
+        let mut dummy = CapInfo::default();
+        dummy.pid = 0;
+        dummy.all_stream = HList::default();
+        dummy.sib_head = HList::default();
+        dummy.sib_stream = HList::default();
+        dummy.pg_stream = HList::default();
+        &dummy.all_stream as *const HList as usize - &dummy as *const CapInfo as usize
+    };
+
+    // Process all_stream list
+    while !list_empty(&ctx.cinfo_tree.all_stream) {
+        let current = ctx.cinfo_tree.all_stream.next;
+        let entry = list_entry::<CapInfo>(current, offset);
+
+        // Remove from list before processing
+        list_del(current.as_mut().unwrap());
+
+        // Free resources
+        freep(&mut (*entry).capbuf);
+        freep(&mut (*entry).codec_private_data);
+        let _ = Box::from_raw(entry);
+    }
+
+    // Reinitialize all relevant list heads
+    init_list_head(&mut ctx.cinfo_tree.all_stream);
+    init_list_head(&mut ctx.cinfo_tree.sib_stream);
+    init_list_head(&mut ctx.cinfo_tree.pg_stream);
+}
+
+// ccx_demuxer_delete remains similar
+unsafe fn ccx_demuxer_delete(ctx: &mut *mut CcxDemuxer) {
+    if ctx.is_null() || (*ctx).is_null() {
+        return;
+    }
+
+    let lctx = &mut **ctx;
+    dinit_cap(lctx);
+    freep(&mut lctx.last_pat_payload);
+
+    for pid_buffer in lctx.PID_buffers.iter_mut() {
+        if !pid_buffer.is_null() {
+            freep(&mut (**pid_buffer).buffer);
+            freep(pid_buffer);
+        }
+    }
+
+    for pid_prog in lctx.PIDs_programs.iter_mut() {
+        freep(pid_prog);
+    }
+
+    freep(&mut lctx.filebuffer);
+    let _ = Box::from_raw(*ctx);
+    *ctx = std::ptr::null_mut();
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget};
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::os::fd::AsRawFd;
-    use super::*;
-    use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget};
-    use std::sync::Once;
     use std::slice;
+    use std::sync::Once;
     use tempfile::NamedTempFile;
     static INIT: Once = Once::new();
 
@@ -1314,12 +1430,6 @@ mod tests {
         assert!(result.is_null());
     }
     //Tests for list_empty
-    #[test]
-    fn test_list_empty_empty() {
-        let mut head = HList::default();
-        let result = list_empty(&mut head);
-        assert!(result);
-    }
     #[test]
     fn test_list_empty_not_empty() {
         let mut head = HList::default();
@@ -1659,4 +1769,186 @@ mod tests {
         print_file_report(&mut ctx);
         // Ensure that nothing panics.
     }
+
+
+    // Tests for ccx_demuxer_delete
+    fn create_capinfo() -> *mut CapInfo {
+        Box::into_raw(Box::new(CapInfo {
+            all_stream: HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            },
+            capbuf: Box::into_raw(Box::new(0u8)),
+            ..Default::default()
+        }))
+    }
+
+    #[test]
+    fn test_list_operations() {
+        let mut head = HList {
+            next: std::ptr::null_mut(),
+            prev: std::ptr::null_mut(),
+        };
+        init_list_head(&mut head);
+        assert!(list_empty(&mut head));
+
+        // Test list insertion/deletion
+        unsafe {
+            let cap = create_capinfo();
+            list_add(&mut (*cap).all_stream, &mut head);
+            assert!(!list_empty(&mut head));
+
+            list_del(&mut (*cap).all_stream);
+            assert!(list_empty(&mut head));
+
+            let _ = Box::from_raw(cap);
+        }
+    }
+    // static inline void __list_add(struct list_head *elem,
+    // struct list_head *prev,
+    // struct list_head *next)
+    // {
+    // next->prev = elem;
+    // elem->next = next;
+    // elem->prev = prev;
+    // prev->next = elem;
+    // }
+
+    unsafe fn list_add(new_entry: &mut HList, head: &mut HList) {
+        // Link new entry between head and head.next
+        new_entry.next = head.next;
+        new_entry.prev = head as *mut HList;
+
+        // Update existing nodes' links
+        if !head.next.is_null() {
+            (*head.next).prev = new_entry as *mut HList;
+        }
+
+        // Finalize head's new link
+        head.next = new_entry as *mut HList;
+    }
+    #[test]
+    fn test_list_add() {
+        let mut head = HList {
+            next: std::ptr::null_mut(),
+            prev: std::ptr::null_mut(),
+        };
+        init_list_head(&mut head);
+
+        unsafe {
+            let mut entry1 = HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            };
+            let mut entry2 = HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            };
+
+            list_add(&mut entry1, &mut head);
+            assert_eq!(head.next, &mut entry1 as *mut HList);
+            assert_eq!(entry1.prev, &mut head as *mut HList);
+            assert_eq!(entry1.next, &mut head as *mut HList);
+
+            list_add(&mut entry2, &mut head);
+            assert_eq!(head.next, &mut entry2 as *mut HList);
+            assert_eq!(entry2.prev, &mut head as *mut HList);
+            assert_eq!(entry2.next, &mut entry1 as *mut HList);
+            assert_eq!(entry1.prev, &mut entry2 as *mut HList);
+        }
+    }
+    fn create_test_capinfo() -> *mut CapInfo {
+        Box::into_raw(Box::new(CapInfo {
+            pid: 123,
+            program_number: 1,
+            stream: StreamType::default(),
+            codec: Codec::AtscCc,
+            capbuf: Box::into_raw(Box::new(0u8)),
+            capbufsize: 1024,
+            capbuflen: 0,
+            saw_pesstart: 0,
+            prev_counter: 0,
+            codec_private_data: std::ptr::null_mut(),
+            ignore: 0,
+            all_stream: HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            },
+            sib_head: HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            },
+            sib_stream: HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            },
+            pg_stream: HList {
+                next: std::ptr::null_mut(),
+                prev: std::ptr::null_mut(),
+            },
+        }))
+    }
+
+    #[test]
+    fn test_dinit_cap_safety() {
+        let mut ctx = Box::new(CcxDemuxer {
+            cinfo_tree: CapInfo {
+                pid: 0,
+                program_number: 0,
+                stream: StreamType::default(),
+                codec: Codec::Dvb,
+                capbufsize: 0,
+                capbuf: std::ptr::null_mut(),
+                capbuflen: 0,
+                saw_pesstart: 0,
+                prev_counter: 0,
+                codec_private_data: std::ptr::null_mut(),
+                ignore: 0,
+                all_stream: HList {
+                    next: std::ptr::null_mut(),
+                    prev: std::ptr::null_mut(),
+                },
+                sib_head: HList {
+                    next: std::ptr::null_mut(),
+                    prev: std::ptr::null_mut(),
+                },
+                sib_stream: HList {
+                    next: std::ptr::null_mut(),
+                    prev: std::ptr::null_mut(),
+                },
+                pg_stream: HList {
+                    next: std::ptr::null_mut(),
+                    prev: std::ptr::null_mut(),
+                },
+            },
+            ..Default::default()
+        });
+
+        // Properly initialize list heads
+        init_list_head(&mut ctx.cinfo_tree.all_stream);
+        init_list_head(&mut ctx.cinfo_tree.sib_stream);
+        init_list_head(&mut ctx.cinfo_tree.pg_stream);
+
+        unsafe {
+            // Add test entries
+            let cap1 = create_test_capinfo();
+            list_add(&mut (*cap1).all_stream, &mut ctx.cinfo_tree.all_stream);
+
+            let cap2 = create_test_capinfo();
+            list_add(&mut (*cap2).all_stream, &mut ctx.cinfo_tree.all_stream);
+
+            // Convert to raw pointer for demuxer
+            let mut ctx_ptr = Box::into_raw(ctx);
+
+            dinit_cap(&mut *ctx_ptr);
+
+            // Verify cleanup
+            assert!(list_empty(&(*ctx_ptr).cinfo_tree.all_stream));
+            assert_eq!((*ctx_ptr).cinfo_tree.all_stream.next, &mut (*ctx_ptr).cinfo_tree.all_stream as *mut HList);
+
+            // Cleanup context
+            let _ = Box::from_raw(ctx_ptr);
+        }
+    }
+
 }
