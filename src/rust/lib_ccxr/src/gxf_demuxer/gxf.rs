@@ -3,21 +3,21 @@
 #![allow(unused_doc_comments)]
 
 use std::cmp::PartialEq;
-use crate::decoder::common_structs::*;
+use crate::demuxer::common_structs::*;
 use crate::demuxer::demuxer::{CcxDemuxer, DemuxerData};
-use crate::file_functions::*;
-use lib_ccxr::util::log::{debug, DebugMessageFlag};
+use crate::file_functions::file_functions::*;
+use crate::util::log::{debug, DebugMessageFlag};
 use std::convert::TryFrom;
 use std::ptr;
 use std::slice;
-use lib_ccxr::info;
+use crate::info;
 
 const STR_LEN: u32 = 256;
 const CLOSED_CAP_DID: u8 = 0x61;
 const CLOSED_C708_SDID: u8 = 0x01;
 const CLOSED_C608_SDID: u8 = 0x02;
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
-use lib_ccxr::common::{BufferdataType, Codec};
+use crate::common::{BufferdataType, Codec};
 use libc::{ntohl, ntohs};
 
 macro_rules! dbg {

@@ -1,4 +1,4 @@
-use lib_ccxr::common::{Decoder608Report, DecoderDtvccReport, OutputFormat};
+use crate::common::{Decoder608Report, DecoderDtvccReport, OutputFormat};
 use crate::demuxer::demuxer::{CcxDemuxer, DecodersCommonSettings, EITProgram, HList, PSI_buffer};
 
 #[repr(C)]

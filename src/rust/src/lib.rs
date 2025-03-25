@@ -21,10 +21,6 @@ pub mod hardsubx;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
-pub mod file_functions;
-pub mod gxf_demuxer;
-pub mod demuxer;
-
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
 

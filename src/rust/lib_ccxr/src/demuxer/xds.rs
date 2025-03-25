@@ -32,7 +32,7 @@ pub struct XdsContext {
     pub cur_xds_payload: *mut u8, // Pointer to the current XDS payload
     pub cur_xds_payload_length: i32, // Length of the current XDS payload
     pub cur_xds_packet_type: i32, // Current XDS packet type
-    pub timing: *mut lib_ccxr::time::TimingContext, // Pointer to timing context
+    pub timing: *mut crate::time::TimingContext, // Pointer to timing context
 
     pub current_ar_start: u32, // Current AR start time
     pub current_ar_end: u32, // Current AR end time
