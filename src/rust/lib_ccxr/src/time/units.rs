@@ -19,6 +19,7 @@ extern "C" {
 /// Represents a timestamp in milliseconds.
 ///
 /// The number can be negetive.
+#[repr(C)]
 #[derive(Default, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Add, Sub, Neg)]
 pub struct Timestamp {
     millis: i64,
@@ -478,6 +479,7 @@ impl Timestamp {
 /// Represent the number of clock ticks as defined in Mpeg standard.
 ///
 /// This number can never be negetive.
+#[repr(C)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Add, Sub)]
 pub struct MpegClockTick(i64);
 
@@ -508,6 +510,7 @@ impl MpegClockTick {
 /// Represents the number of frames.
 ///
 /// This number can never be negetive.
+#[repr(C)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Add, Sub)]
 pub struct FrameCount(u64);
 

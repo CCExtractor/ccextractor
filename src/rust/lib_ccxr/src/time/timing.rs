@@ -14,6 +14,7 @@ pub static GLOBAL_TIMING_INFO: RwLock<GlobalTimingInfo> = RwLock::new(GlobalTimi
 pub const DEFAULT_FRAME_RATE: f64 = 30000.0 / 1001.0;
 
 /// Represents the status of [`TimingContext::current_pts`] and [`TimingContext::min_pts`]
+#[repr(C)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PtsSet {
     No = 0,
@@ -33,7 +34,8 @@ pub enum CaptionField {
 ///
 /// [`GlobalTimingInfo`] serves a similar purpose. The only difference is that its lifetime is
 /// global.
-#[derive(Debug)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TimingContext {
     pub pts_set: PtsSet,
     /// if true then don't adjust again.

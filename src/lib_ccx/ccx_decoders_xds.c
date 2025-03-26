@@ -4,6 +4,78 @@
 #include "ccx_common_common.h"
 #include "utility.h"
 
+#ifndef DISABLE_RUST
+
+extern struct ccx_decoders_xds_context *ccxr_ccx_decoders_xds_init_library(
+    struct ccx_common_timing_ctx timing,
+    int xds_write_to_file);
+
+extern int ccxr_write_xds_string(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    const char *p,
+    size_t len);
+
+extern void ccxr_xdsprint(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    const char *_fmt,
+    va_list args);
+
+extern void ccxr_clear_xds_buffer(
+    struct ccx_decoders_xds_context *ctx,
+    int64_t num);
+
+extern int64_t ccxr_how_many_used(
+    const struct ccx_decoders_xds_context *ctx);
+
+extern void ccxr_process_xds_bytes(
+    struct ccx_decoders_xds_context *ctx,
+    uint8_t hi,
+    int64_t lo);
+
+extern void ccxr_xds_do_copy_generation_management_system(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    uint8_t c1,
+    uint8_t c2);
+
+extern void ccxr_xds_do_content_advisory(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    uint8_t c1,
+    uint8_t c2);
+
+extern int64_t ccxr_xds_do_private_data(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx);
+
+extern int64_t ccxr_xds_do_misc(
+    const struct ccx_decoders_xds_context *ctx);
+
+extern int64_t ccxr_xds_do_current_and_future(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx);
+
+extern void ccxr_do_end_of_xds(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    int64_t expected_checksum);
+
+extern int64_t ccxr_xds_do_channel(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx);
+
+extern void ccxr_xds_debug_test(
+    struct ccx_decoders_xds_context *ctx,
+    struct cc_subtitle *sub);
+
+extern void ccxr_xds_cea608_test(
+    struct ccx_decoders_xds_context *ctx,
+    struct cc_subtitle *sub);
+
+#endif
+
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
 static const char *XDSclasses[] =
@@ -80,6 +152,9 @@ static const char *XDSProgramTypes[] =
 
 struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file)
 {
+#ifndef DISABLE_RUST
+	return ccxr_ccx_decoders_xds_init_library(*timing, xds_write_to_file);
+#else
 	int i;
 	struct ccx_decoders_xds_context *ctx = NULL;
 
@@ -121,10 +196,14 @@ struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common
 	ctx->xds_write_to_file = xds_write_to_file;
 
 	return ctx;
+#endif
 }
 
 int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, char *p, size_t len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_write_xds_string(sub, ctx, p, len);
+#else
 	struct eia608_screen *data = NULL;
 	data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
 	if (!data)
@@ -151,10 +230,18 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 	}
 
 	return 0;
+#endif
 }
 
 void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, const char *fmt, ...)
 {
+#ifndef DISABLE_RUST
+	va_list ap;
+	va_start(ap, fmt);
+	ccxr_xdsprint(sub, ctx, fmt, ap);
+	va_end(ap);
+#else
+
 	if (!ctx->xds_write_to_file)
 		return;
 	/* Guess we need no more than 100 bytes. */
@@ -192,17 +279,25 @@ void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, con
 			p = np;
 		}
 	}
+#endif
 }
 
 void xds_debug_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_debug_test(ctx, sub);
+#else
 	process_xds_bytes(ctx, 0x05, 0x02);
 	process_xds_bytes(ctx, 0x20, 0x20);
 	do_end_of_xds(sub, ctx, 0x2a);
+#endif
 }
 
 void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_cea608_test(ctx, sub);
+#else
 	/* This test is the sample data that comes in CEA-608. It sets the program name
 	   to be "Star Trek". The checksum is 0x1d and the validation must succeed. */
 	process_xds_bytes(ctx, 0x01, 0x03);
@@ -214,28 +309,40 @@ void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *s
 	process_xds_bytes(ctx, 0x02, 0x03);
 	process_xds_bytes(ctx, 0x6b, 0x00);
 	do_end_of_xds(sub, ctx, 0x1d);
+#endif
 }
 
 int how_many_used(struct ccx_decoders_xds_context *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_how_many_used(ctx);
+#else
 	int c = 0;
 	for (int i = 0; i < NUM_XDS_BUFFERS; i++)
 		if (ctx->xds_buffers[i].in_use)
 			c++;
 	return c;
+#endif
 }
 
 void clear_xds_buffer(struct ccx_decoders_xds_context *ctx, int num)
 {
+#ifndef DISABLE_RUST
+	ccxr_clear_xds_buffer(ctx, num);
+#else
 	ctx->xds_buffers[num].in_use = 0;
 	ctx->xds_buffers[num].xds_class = -1;
 	ctx->xds_buffers[num].xds_type = -1;
 	ctx->xds_buffers[num].used_bytes = 0;
 	memset(ctx->xds_buffers[num].bytes, 0, NUM_BYTES_PER_PACKET);
+#endif
 }
 
 void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char hi, int lo)
 {
+#ifndef DISABLE_RUST
+	ccxr_process_xds_bytes(ctx, hi, lo);
+#else
 	int is_new;
 	if (!ctx)
 		return;
@@ -305,12 +412,17 @@ void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes++] = lo;
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes] = 0;
 	}
+#endif
 }
+
 /**
  * ctx XDS context can be NULL, if user don't want to write xds in transcript
  */
 void xds_do_copy_generation_management_system(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned c1, unsigned c2)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_copy_generation_management_system(sub, ctx, c1, c2);
+#else
 	static unsigned last_c1 = -1, last_c2 = -1;
 	static char copy_permited[256];
 	static char aps[256];
@@ -364,10 +476,14 @@ void xds_do_copy_generation_management_system(struct cc_subtitle *sub, struct cc
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", copy_permited);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", aps);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", rcd);
+#endif
 }
 
 void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned c1, unsigned c2)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_content_advisory(sub, ctx, c1, c2);
+#else
 	static unsigned last_c1 = -1, last_c2 = -1;
 	static char age[256];
 	static char content[256];
@@ -477,10 +593,14 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 
 	if (changed && !supported)
 		ccx_common_logging.log_ftn("XDS: Unsupported ContentAdvisory encoding, please submit sample.\n");
+#endif
 }
 
 int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_current_and_future(sub, ctx);
+#else
 	int was_proc = 0;
 
 	char *str = malloc(1024);
@@ -727,10 +847,14 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 
 	free(str);
 	return was_proc;
+#endif
 }
 
 int xds_do_channel(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_channel(sub, ctx);
+#else
 	int was_proc = 0;
 	if (!ctx)
 		return CCX_EINVAL;
@@ -790,10 +914,14 @@ int xds_do_channel(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 			break;
 	}
 	return was_proc;
+#endif
 }
 
 int xds_do_private_data(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_private_data(sub, ctx);
+#else
 	char *str;
 	int i;
 
@@ -810,10 +938,14 @@ int xds_do_private_data(struct cc_subtitle *sub, struct ccx_decoders_xds_context
 	xdsprint(sub, ctx, str);
 	free(str);
 	return 1;
+#endif
 }
 
 int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_xds_do_misc(ctx);
+#else
 	int was_proc = 0;
 	if (!ctx)
 		return CCX_EINVAL;
@@ -853,10 +985,15 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 			break;
 	}
 	return was_proc;
+#endif
 }
 
 void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum)
 {
+#ifndef DISABLE_RUST
+	ccxr_do_end_of_xds(sub, ctx, expected_checksum);
+#else
+
 	int cs = 0;
 	int i;
 
@@ -935,4 +1072,5 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		dump(CCX_DMT_DECODER_XDS, ctx->cur_xds_payload, ctx->cur_xds_payload_length, 0, 0);
 	}
 	clear_xds_buffer(ctx, ctx->cur_xds_buffer_idx);
+#endif
 }
