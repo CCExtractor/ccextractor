@@ -82,7 +82,6 @@ pub struct LibCcxCtx<'a> {
     pub segment_counter: i32, // Segment counter
     pub system_start_time: i64, // System start time
 }
-
 impl<'a> LibCcxCtx<'a> {
     pub(crate) fn default() -> Self {
         LibCcxCtx {
@@ -148,6 +147,12 @@ impl<'a> LibCcxCtx<'a> {
             segment_counter: 0,
             system_start_time: 0,
         }
+    }
+}
+
+impl<'a> Default for LibCcxCtx<'a>{
+    fn default() -> Self {
+        Self::default()
     }
 }
 

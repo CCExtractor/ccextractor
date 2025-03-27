@@ -1,9 +1,10 @@
 #![allow(unexpected_cfgs)]
+#![allow(unused_mut)]
 
-use crate::demuxer::demuxer::*;
-use crate::demuxer::lib_ccx::*;
 use crate::activity::{update_net_activity_gui, ActivityExt, NET_ACTIVITY_GUI};
 use crate::common::{DataSource, Options};
+use crate::demuxer::demuxer::*;
+use crate::demuxer::lib_ccx::*;
 use crate::fatal;
 use crate::time::Timestamp;
 use crate::util::log::ExitCause;
@@ -19,7 +20,7 @@ use std::sync::{LazyLock, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{ptr, slice};
 
-pub static mut terminate_asap: bool = false;
+pub static mut TERMINATE_ASAP: bool = false; //TODO convert to Mutex
 pub const FILEBUFFERSIZE: usize = 1024 * 1024 * 16; // 16 Mbytes no less. Minimize number of real read calls()
 // lazy_static! {
 //     pub static ref CcxOptions: Mutex<Options> = Mutex::new(Options::default());
@@ -33,7 +34,7 @@ pub static CCX_OPTIONS: LazyLock<Mutex<Options>> =
 
 
 /// This function checks that the current file position matches the expected value.
-/// The logic and comments have been kept exactly the same as in the C code.
+#[allow(unused_variables)]
 pub fn position_sanity_check(ctx: &mut CcxDemuxer) {
     #[cfg(feature = "sanity_check")]
     {
@@ -134,7 +135,7 @@ can be done */
 pub unsafe fn switch_to_next_file(ctx: &mut LibCcxCtx, bytes_in_buffer: i64) -> i32 {
     let mut ccx_options = CCX_OPTIONS.lock().unwrap();
 
-    let mut ret = 0;
+    let mut ret;
 
     // 1. Initial reset condition (matching C logic exactly)
     if ctx.current_file == -1 || ccx_options.binary_concat == false {
@@ -142,6 +143,7 @@ pub unsafe fn switch_to_next_file(ctx: &mut LibCcxCtx, bytes_in_buffer: i64) -> 
     }
 
     // 2. Handle special input sources
+    #[allow(deref_nullptr)]
     match DataSource::from(ccx_options.input_source) {
         DataSource::Stdin | DataSource::Network | DataSource::Tcp => {
             ret = (*ctx.demux_ctx).open(*ptr::null());
@@ -243,7 +245,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
     position_sanity_check(ctx);
 
     // If live stream is active, update seconds.
-    if let Some(ts) = unsafe { ccx_options.live_stream } {
+    if let Some(ts) = ccx_options.live_stream {
         if ts.millis() > 0 {
             seconds = SystemTime::now();
         }
@@ -251,14 +253,17 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
 
     // Create one File instance from the raw file descriptor.
     // This instance will be used throughout the function.
+    if ctx.infd == -1 {
+        return 0;
+    }
     let mut file = ManuallyDrop::new(File::from_raw_fd(ctx.infd));
 
     // If buffering is enabled or there is data in filebuffer.
-    if unsafe { ccx_options.buffer_input } || (ctx.filebuffer_pos < ctx.bytesinbuffer) {
+    if ccx_options.buffer_input || (ctx.filebuffer_pos < ctx.bytesinbuffer) {
         let mut eof = ctx.infd == -1;
 
-        while (!eof || unsafe { ccx_options.live_stream.unwrap().millis() } > 0) && bytes > 0 {
-            if unsafe { terminate_asap } {
+        while (!eof || ccx_options.live_stream.unwrap().millis() > 0) && bytes > 0 {
+            if unsafe { TERMINATE_ASAP } {
                 break;
             }
             if eof {
@@ -268,8 +273,9 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
             let ready = ctx.bytesinbuffer.saturating_sub(ctx.filebuffer_pos);
             if ready == 0 {
                 // We really need to read more.
-                if !unsafe { ccx_options.buffer_input } {
+                if !ccx_options.buffer_input {
                     // No buffering desired: do direct I/O.
+                    #[allow(unused)]
                     let mut i: isize = 0;
                     loop {
                         if !buffer.is_empty() {
@@ -290,11 +296,10 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                             let np = (&mut file).seek(SeekFrom::Current(bytes as i64)).unwrap() as i64;
                             i = (np - op) as isize;
                         }
-                        if i == 0 && unsafe { ccx_options.live_stream.unwrap().millis() != 0 } {
-                            if unsafe { ccx_options.input_source } == DataSource::Stdin {
-                                unsafe {
-                                    ccx_options.live_stream = Some(Timestamp::from_millis(0));
-                                }
+                        if i == 0 && ccx_options.live_stream.unwrap().millis() != 0 {
+                            if ccx_options.input_source == DataSource::Stdin {
+                                ccx_options.live_stream = Some(Timestamp::from_millis(0));
+
                                 break;
                             } else {
                                 sleepandchecktimeout(seconds.duration_since(UNIX_EPOCH).unwrap().as_secs());
@@ -303,8 +308,8 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                             copied += i as usize;
                             bytes = bytes.saturating_sub(i as usize);
                         }
-                        if (i != 0 || unsafe { ccx_options.live_stream.unwrap().millis() != 0 } ||
-                            (unsafe { ccx_options.binary_concat } &&
+                        if (i != 0 || ccx_options.live_stream.unwrap().millis() != 0 ||
+                            (ccx_options.binary_concat &&
                                 switch_to_next_file(ctx.parent.as_mut().unwrap(), copied as i64) != 0))
                             && bytes > 0
                         {
@@ -326,7 +331,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                     keep,
                 );
                 // Read more data into filebuffer after the kept bytes.
-                let mut read_buf = std::slice::from_raw_parts_mut(
+                let mut read_buf = slice::from_raw_parts_mut(
                     ctx.filebuffer.add(keep),
                     FILEBUFFERSIZE - keep,
                 );
@@ -334,7 +339,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                     Ok(n) => n as isize,
                     Err(_) => fatal!(cause = ExitCause::NoInputFiles; "Error reading input stream!\n"),
                 };
-                if unsafe { terminate_asap } {
+                if unsafe { TERMINATE_ASAP } {
                     break;
                 }
                 //TODO logic here is a bit diffrent and needs to be updated after net_tcp_read and net_udp_read is implemented in the net module
@@ -342,9 +347,9 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                     fatal!(cause = ExitCause::NoInputFiles; "Error reading input stream!\n");
                 }
                 if i == 0 {
-                    if unsafe { ccx_options.live_stream.unwrap().millis() > 0 }
+                    if ccx_options.live_stream.unwrap().millis() > 0
                         || ctx.parent.as_mut().unwrap().inputsize <= origin_buffer_size as i64
-                        || !(unsafe { ccx_options.binary_concat } &&
+                        || !(ccx_options.binary_concat &&
                         switch_to_next_file(ctx.parent.as_mut().unwrap(), copied as i64) != 0)
                     {
                         eof = true;
@@ -367,7 +372,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                 ctx.filebuffer_pos += copy as u32;
                 bytes = bytes.saturating_sub(copy);
                 copied += copy;
-                buffer = std::slice::from_raw_parts_mut(
+                buffer = slice::from_raw_parts_mut(
                     buffer.as_mut_ptr().add(copy),
                     buffer.len().saturating_sub(copy),
                 );
@@ -383,12 +388,12 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                         Ok(n) => { i = n as isize; }
                         Err(_) => { i = -1; }
                     }
-                    i != 0 || unsafe { ccx_options.live_stream.unwrap().millis() != 0 }
-                        || (unsafe { ccx_options.binary_concat } && ctx.parent.is_some() &&
+                    i != 0 || ccx_options.live_stream.unwrap().millis() != 0
+                        || (ccx_options.binary_concat && ctx.parent.is_some() &&
                         switch_to_next_file(ctx.parent.as_mut().unwrap(), copied as i64) != 0)
                 })
             {
-                if unsafe { terminate_asap } {
+                if unsafe { TERMINATE_ASAP } {
                     break;
                 }
                 if i == -1 {
@@ -398,7 +403,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
                 } else {
                     copied += i as usize;
                     bytes = bytes.saturating_sub(i as usize);
-                    buffer = std::slice::from_raw_parts_mut(
+                    buffer = slice::from_raw_parts_mut(
                         buffer.as_mut_ptr().add(i as usize),
                         buffer.len().saturating_sub(i as usize),
                     );
@@ -408,7 +413,7 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
         }
         // Seek without a buffer.
         while bytes > 0 && ctx.infd != -1 {
-            if unsafe { terminate_asap } {
+            if unsafe { TERMINATE_ASAP } {
                 break;
             }
             let op = (&mut file).seek(SeekFrom::Current(0)).unwrap() as i64;
@@ -430,10 +435,10 @@ pub unsafe fn buffered_read_opt(ctx: &mut CcxDemuxer, mut buffer: &mut [u8], mut
             }
             bytes = bytes.saturating_sub(copied);
             if copied == 0 {
-                if unsafe { ccx_options.live_stream.unwrap().millis() != 0 } {
+                if ccx_options.live_stream.unwrap().millis() != 0 {
                     sleepandchecktimeout(seconds.duration_since(UNIX_EPOCH).unwrap().as_secs());
                 } else {
-                    if unsafe { ccx_options.binary_concat } {
+                    if ccx_options.binary_concat {
                         switch_to_next_file(ctx.parent.as_mut().unwrap(), 0);
                     } else {
                         break;
@@ -637,13 +642,10 @@ mod tests {
     use super::*;
     use crate::common::{Codec, StreamMode};
     use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
-    use std::fs::File;
-    use std::io::{Seek, SeekFrom, Write};
-    use std::os::fd::FromRawFd;
+    // use std::io::{Seek, SeekFrom, Write};
     use std::os::unix::io::IntoRawFd;
-    use std::sync::Once;
     use std::slice;
-    use tempfile::tempfile;
+    use std::sync::Once;
 
     static INIT: Once = Once::new();
 
@@ -699,26 +701,26 @@ mod tests {
     #[test]
     fn test_ccx_options_default() {
         // let mut ccx_options = CcxOptions.lock().unwrap();
-        unsafe {
-            let mut ccx_options = CCX_OPTIONS.lock().unwrap();
+        {
+            let ccx_options = CCX_OPTIONS.lock().unwrap();
 
-            unsafe { println!("{:?}", ccx_options); }
+            { println!("{:?}", ccx_options); }
         }
     }
     #[test]
     fn test_sleepandchecktimeout_stdin() {
-        unsafe {
+        {
             {
                 let mut ccx_options = CCX_OPTIONS.lock().unwrap();
                 ccx_options.input_source = DataSource::Stdin;
                 ccx_options.live_stream = Some(Timestamp::from_millis(1000));
             } // The lock is dropped here.
 
-            let start = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
+            let start = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            sleepandchecktimeout(start);
+            unsafe { sleepandchecktimeout(start); }
 
             // Now, re-lock to verify the changes.
             let ccx_options = CCX_OPTIONS.lock().unwrap();
@@ -726,11 +728,12 @@ mod tests {
         }
     }
     // #[test] // Uncomment to run
+    #[allow(unused)]
     fn test_switch_to_next_file_success() {
         unsafe {
             initialize_logger();
             // Create a demuxer and leak its pointer.
-            let mut demuxer = Box::from(CcxDemuxer::default());
+            let demuxer = Box::from(CcxDemuxer::default());
             let demuxer_ptr = Box::into_raw(demuxer);
             let mut ctx = LibCcxCtx::default();
 
@@ -770,7 +773,7 @@ mod tests {
     #[test]
     fn test_switch_to_next_file_failure() {
         unsafe {
-            let mut demuxer = Box::from(CcxDemuxer::default());
+            let demuxer = Box::from(CcxDemuxer::default());
             let demuxer_ptr = Box::into_raw(demuxer);
             let mut ctx = LibCcxCtx::default();
             ctx.current_file = 0;
@@ -797,9 +800,10 @@ mod tests {
     }
 
     // #[test]
+    #[allow(unused)]
     fn test_binary_concat_mode() {
         unsafe {
-            let mut demuxer = Box::from(CcxDemuxer::default());
+            let demuxer = Box::from(CcxDemuxer::default());
             let demuxer_ptr = Box::into_raw(demuxer);
             let mut ctx = LibCcxCtx::default();
 
@@ -807,7 +811,7 @@ mod tests {
             ctx.num_input_files = 2;
             ctx.inputfile = vec!["/home/file1.ts".to_string(), "/home/file2.ts".to_string()]; // replace with actual paths
             ctx.demux_ctx = demuxer_ptr;
-            unsafe { (*demuxer_ptr).infd = 3; } // Mark the demuxer as "open"
+            { (*demuxer_ptr).infd = 3; } // Mark the demuxer as "open"
             ctx.inputsize = 500;
             ctx.total_past = 1000;
             // Reset global options.
@@ -825,7 +829,7 @@ mod tests {
             println!("ccx binary concat: {:?}", CCX_OPTIONS.lock().unwrap().binary_concat);
             switch_to_next_file(&mut ctx, 0);
             assert_eq!(ctx.total_past, 1500); // 1000 + 500
-            assert_eq!(unsafe { (*ctx.demux_ctx).past }, 0);
+            assert_eq!({ (*ctx.demux_ctx).past }, 0);
 
             // Cleanup
             let _ = Box::from_raw(demuxer_ptr);
@@ -857,14 +861,14 @@ mod tests {
     #[test]
     fn test_buffered_read_opt_buffered_mode() {
         initialize_logger();
-        unsafe {
+        {
             let mut ccx_options = CCX_OPTIONS.lock().unwrap();
             // Set options to use buffering.
             ccx_options.buffer_input = true;
             ccx_options.live_stream = Some(Timestamp::from_millis(0));
             ccx_options.input_source = DataSource::File;
             ccx_options.binary_concat = false;
-            // terminate_asap = false;
+            // TERMINATE_ASAP = false;
         }
         // Create a temp file with known content.
         let content = b"Hello, Rust buffered read!";
@@ -909,19 +913,19 @@ mod tests {
         assert_eq!(&out_buf1, content);
 
         // Free the allocated filebuffer.
-        unsafe { Box::from_raw(filebuffer) };
+        unsafe { let _ = Box::from_raw(filebuffer); };
     }
 
     #[test]
     fn test_buffered_read_opt_direct_mode() {
-        unsafe {
+        {
             let mut ccx_options = CCX_OPTIONS.lock().unwrap();
             // Set options to disable buffering.
             ccx_options.buffer_input = false;
             ccx_options.live_stream = Some(Timestamp::from_millis(0));
             ccx_options.input_source = DataSource::File;
             ccx_options.binary_concat = false;
-            // terminate_asap = false;
+            // TERMINATE_ASAP = false;
         }
         let content = b"Direct read test.";
         let fd = create_temp_file_with_content(content);
@@ -965,7 +969,7 @@ mod tests {
     #[test]
     fn test_buffered_read_opt_empty_file() {
         initialize_logger();
-        unsafe {
+        {
             let mut opts = CCX_OPTIONS.lock().unwrap();
             // Use buffering.
             opts.buffer_input = true;
@@ -995,14 +999,14 @@ mod tests {
         assert_eq!(&out_buf1, content);
 
         // Clean up allocated filebuffer.
-        unsafe { Box::from_raw(filebuffer) };
+        unsafe { let _ = Box::from_raw(filebuffer); };
     }
 
 
     #[test]
     fn test_buffered_read_opt_seek_without_buffer() {
         initialize_logger();
-        unsafe {
+        {
             let mut opts = CCX_OPTIONS.lock().unwrap();
             // Disable buffering.
             opts.buffer_input = false;
@@ -1018,7 +1022,7 @@ mod tests {
         ctx.infd = fd;
         ctx.past = 0;
         // In this branch, the filebuffer is not used.
-        ctx.filebuffer = std::ptr::null_mut();
+        ctx.filebuffer = ptr::null_mut();
         ctx.filebuffer_start = 0;
         ctx.filebuffer_pos = 0;
         ctx.bytesinbuffer = 0;
@@ -1066,7 +1070,7 @@ mod tests {
         }
         assert_eq!(ctx.filebuffer_pos, 0);
         // Clean up the filebuffer.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
 
     // Test 2: When filebuffer_pos > 0 (discarding old bytes).
@@ -1095,7 +1099,7 @@ mod tests {
             assert_eq!(&out[2..], &[]);
         }
         // Clean up.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
 
 
@@ -1130,7 +1134,7 @@ mod tests {
             assert_eq!(&out[3..7], expected);
         }
         // Clean up.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
     //buffered_read tests
     // Helper: create a dummy CcxDemuxer with a preallocated filebuffer.
@@ -1157,7 +1161,7 @@ mod tests {
         // filebuffer_pos should be advanced.
         assert_eq!(ctx.filebuffer_pos, data_len);
         // Clean up.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
 
     #[test]
@@ -1178,7 +1182,7 @@ mod tests {
         // Expect that the file content is read.
         assert_eq!(read_bytes, content.len());
         assert_eq!(&out_buf, content);
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
 
     // Test C: When gui_mode_reports is enabled and input_source is Network.
@@ -1206,7 +1210,7 @@ mod tests {
         assert_eq!(read_bytes, content.len());
         assert_eq!(&out_buf, content);
         // Check that NET_ACTIVITY_GUI has been incremented.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)) };
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); };
     }
     // Tests for buffered_read_byte
 
@@ -1252,7 +1256,8 @@ mod tests {
     // Test 3: When no available data in filebuffer, forcing call to buffered_read_opt.
     #[test]
     fn test_buffered_read_byte_no_available() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"a";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1297,7 +1302,8 @@ mod tests {
     // Test 5: When filebuffer is empty, forcing buffered_read_opt for each byte.
     #[test]
     fn test_buffered_get_be16_from_opt() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"Network buffered read test!";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1336,7 +1342,8 @@ mod tests {
     }
     #[test]
     fn test_buffered_get_byte_no_available() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"Network buffered read test!";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1375,7 +1382,8 @@ mod tests {
     }
     #[test]
     fn test_buffered_get_be32_from_opt() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"Network buffered read test!";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1415,10 +1423,11 @@ mod tests {
     }
     #[test]
     fn test_buffered_get_le16_from_opt() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"Network buffered read test!";
-        let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
+        let fd = create_temp_file_with_content(content);
         ctx.infd = fd;
         // Force no available data.
         ctx.bytesinbuffer = 0;
@@ -1455,13 +1464,14 @@ mod tests {
     }
     #[test]
     fn test_buffered_get_le16_null_ctx() {
-        let value = unsafe { buffered_get_le16(std::ptr::null_mut()) };
+        let value = unsafe { buffered_get_le16(ptr::null_mut()) };
         assert_eq!(value, 0);
     }
 
     #[test]
     fn test_buffered_get_le32_from_opt() {
-        let mut ctx = create_ccx_demuxer_with_buffer();
+        #[allow(unused_variables)]
+        let ctx = create_ccx_demuxer_with_buffer();
         let content = b"Network buffered read test!";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1512,7 +1522,7 @@ mod tests {
     // Test 6: When ctx is null.
     #[test]
     fn test_buffered_skip_null_ctx() {
-        let result = unsafe { buffered_skip(std::ptr::null_mut(), 10) };
+        let result = unsafe { buffered_skip(ptr::null_mut(), 10) };
         assert_eq!(result, 0);
     }
 }

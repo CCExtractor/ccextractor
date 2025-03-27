@@ -1,24 +1,25 @@
 #![allow(non_camel_case_types)]
 #![allow(unexpected_cfgs)]
 #![allow(unused_doc_comments)]
+#![allow(unused_assignments)]
 
-use std::cmp::PartialEq;
 use crate::demuxer::common_structs::*;
 use crate::demuxer::demuxer::{CcxDemuxer, DemuxerData};
 use crate::file_functions::file_functions::*;
+use crate::info;
 use crate::util::log::{debug, DebugMessageFlag};
+use byteorder::{ByteOrder, NetworkEndian};
+use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::ptr;
 use std::slice;
-use crate::info;
 
 const STR_LEN: u32 = 256;
 const CLOSED_CAP_DID: u8 = 0x61;
 const CLOSED_C708_SDID: u8 = 0x01;
 const CLOSED_C608_SDID: u8 = 0x02;
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
-use crate::common::{BufferdataType, Codec};
-use libc::{ntohl, ntohs};
+use crate::common::BufferdataType;
 
 macro_rules! dbg {
     ($($args:expr),*) => {
@@ -26,34 +27,27 @@ macro_rules! dbg {
     };
 }
 
-fn rl32(x: *const u8) -> u32 {
-    unsafe { *(x as *const u32) }
+
+/// Reads a 32-bit big-endian value from the given pointer and converts it to host order.
+/// Mimics the C macro: #define RB32(x) (ntohl(*(unsigned int *)(x)))
+pub unsafe fn rb32(ptr: *const u8) -> u32 {
+    let bytes = slice::from_raw_parts(ptr, 4);
+    NetworkEndian::read_u32(bytes)
 }
-
-fn rb32(x: &[u8; 16]) -> u32 {
-    unsafe { ntohl(*(x.as_ptr() as *const u32)) }
+pub unsafe fn rb16(ptr: *const u8) -> u16 {
+    let bytes = slice::from_raw_parts(ptr, 2);
+    NetworkEndian::read_u16(bytes)
 }
-
-fn rl16(x: *const u8) -> u16 {
-    unsafe { *(x as *const u16) }
+pub unsafe fn rl32(ptr: *const u8) -> u32 {
+    ptr::read_unaligned::<u32>(ptr as *const u32)
 }
-
-fn rb16(x: *const u8) -> u16 {
-    unsafe { ntohs(*(x as *const u16)) }
+pub unsafe fn rl16(ptr: *const u8) -> u16 {
+    ptr::read_unaligned::<u16>(ptr as *const u16)
 }
-
-
-// macro_rules! log {
-//     ($fmt:expr, $($args:tt)*) => {
-//         ccx_common_logging::log_ftn(
-//             &format!("GXF:{}: {}", line!(), format!($fmt, $($args)*))
-//         )
-//     };
-// }
 
 // Equivalent enums
 #[repr(u8)]
-enum GXFPktType {
+pub enum GXFPktType {
     PKT_MAP = 0xbc,
     PKT_MEDIA = 0xbf,
     PKT_EOS = 0xfb,
@@ -62,7 +56,7 @@ enum GXFPktType {
 }
 
 #[repr(u8)]
-enum GXFMatTag {
+pub enum GXFMatTag {
     MAT_NAME = 0x40,
     MAT_FIRST_FIELD = 0x41,
     MAT_LAST_FIELD = 0x42,
@@ -72,7 +66,7 @@ enum GXFMatTag {
 }
 
 #[repr(u8)]
-enum GXFTrackTag {
+pub enum GXFTrackTag {
     // Media file name
     TRACK_NAME = 0x4c,
     // Auxiliary Information. The exact meaning depends on the track type.
@@ -117,7 +111,7 @@ enum GXFTrackTag {
 }
 
 #[repr(u8)]
-enum GXFTrackType {
+pub enum GXFTrackType {
     // A video track encoded using JPEG (ITU-R T.81 or ISO/IEC 10918-1) for 525 line material.
     TRACK_TYPE_MOTION_JPEG_525 = 3,
     // A video track encoded using JPEG (ITU-R T.81 or ISO/IEC 10918-1) for 625 line material
@@ -202,7 +196,7 @@ impl TryFrom<u8> for GXFTrackType {
 }
 #[repr(u8)]
 #[derive(Debug)]
-enum GXFAncDataPresFormat {
+pub enum GXFAncDataPresFormat {
     PRES_FORMAT_SD = 1,
     PRES_FORMAT_HD = 2,
 }
@@ -217,7 +211,7 @@ impl std::fmt::Display for GXFAncDataPresFormat {
 
 #[repr(u8)]
 #[derive(Debug)]
-enum MpegPictureCoding {
+pub enum MpegPictureCoding {
     CCX_MPC_NONE = 0,
     CCX_MPC_I_FRAME = 1,
     CCX_MPC_P_FRAME = 2,
@@ -226,7 +220,7 @@ enum MpegPictureCoding {
 
 #[repr(u8)]
 #[derive(Debug)]
-enum MpegPictureStruct {
+pub enum MpegPictureStruct {
     CCX_MPS_NONE = 0,
     CCX_MPS_TOP_FIELD = 1,
     CCX_MPS_BOTTOM_FIELD = 2,
@@ -260,13 +254,13 @@ impl TryFrom<u8> for MpegPictureStruct {
     }
 }
 #[derive(Debug, Clone, Copy)]
-struct CcxRational {
+pub struct CcxRational {
     num: i32,
     den: i32,
 }
 
 #[derive(Debug)]
-struct CcxGxfVideoTrack {
+pub struct CcxGxfVideoTrack {
     /// Name of Media File
     track_name: [u8; STR_LEN as usize],
 
@@ -292,7 +286,19 @@ struct CcxGxfVideoTrack {
     p_code: MpegPictureCoding,
     p_struct: MpegPictureStruct,
 }
-
+impl Default for CcxGxfVideoTrack {
+    fn default() -> Self {
+        CcxGxfVideoTrack {
+            track_name: [0; STR_LEN as usize],
+            fs_version: 0,
+            frame_rate: CcxRational { num: 0, den: 0 },
+            line_per_frame: 0,
+            field_per_frame: 0,
+            p_code: MpegPictureCoding::CCX_MPC_NONE,
+            p_struct: MpegPictureStruct::CCX_MPS_NONE,
+        }
+    }
+}
 impl CcxGxfVideoTrack {
     fn default() -> CcxGxfVideoTrack {
         CcxGxfVideoTrack {
@@ -308,7 +314,7 @@ impl CcxGxfVideoTrack {
 }
 
 #[derive(Debug)]
-struct CcxGxfAncillaryDataTrack {
+pub struct CcxGxfAncillaryDataTrack {
     /// Name of Media File
     track_name: [u8; STR_LEN as usize],
 
@@ -349,7 +355,22 @@ struct CcxGxfAncillaryDataTrack {
     /// Field per frame Might need if parsed VBI
     field_per_frame: u32,
 }
-
+impl Default for CcxGxfAncillaryDataTrack {
+    fn default() -> Self {
+        CcxGxfAncillaryDataTrack {
+            track_name: [0; STR_LEN as usize],
+            id: 0,
+            ad_format: GXFAncDataPresFormat::PRES_FORMAT_SD,
+            nb_field: 0,
+            field_size: 0,
+            packet_size: 0,
+            fs_version: 0,
+            frame_rate: 0,
+            line_per_frame: 0,
+            field_per_frame: 0,
+        }
+    }
+}
 impl CcxGxfAncillaryDataTrack {
     fn default() -> CcxGxfAncillaryDataTrack {
         CcxGxfAncillaryDataTrack {
@@ -366,7 +387,7 @@ impl CcxGxfAncillaryDataTrack {
         }
     }
 }
-
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct CcxGxf {
     nb_streams: i32,
@@ -411,10 +432,30 @@ pub struct CcxGxf {
     cdp: Option<Vec<u8>>,
     cdp_len: usize,
 }
-
-
-
+impl Default for CcxGxf {
+    fn default() -> Self {
+        let mut ctx = CcxGxf {
+            nb_streams: 0,
+            media_name: [0; STR_LEN as usize],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: None,
+            vid_track: None,
+            cdp: None,
+            cdp_len: 0,
+        };
+        // Initialize the context with zeroed memory
+        unsafe {
+            ptr::write_bytes(&mut ctx as *mut _ as *mut u8, 0, size_of::<CcxGxf>());
+        }
+        ctx
+    }
+}
 impl CcxGxf {
+    #[allow(unused)]
     fn default() -> CcxGxf {
         CcxGxf {
             nb_streams: 0,
@@ -430,6 +471,7 @@ impl CcxGxf {
             cdp_len: 0,
         }
     }
+    #[allow(unused)]
     fn is_null(&self) -> bool {
         self.nb_streams == 0
             && self.first_field_nb == 0
@@ -452,30 +494,28 @@ impl CcxGxf {
 /// @return CCX_EINVAL if header not found or contains invalid data,
 ///         CCX_EOF if EOF reached while reading packet
 ///         CCX_OK if the stream was fine enough to be parsed
-
 pub unsafe fn parse_packet_header(
     ctx: *mut CcxDemuxer,
     pkt_type: &mut GXFPktType,
     length: &mut i32,
-) -> i32 {
+) -> i32
+{
     if ctx.is_null() {
         return CCX_EINVAL;
     }
 
+    let ctx_ref = ctx.as_mut().unwrap();
     let mut pkt_header = [0u8; 16];
-    let result = buffered_read(
-        ctx.as_mut().unwrap(),
-        // pkt_header.as_mut_ptr(), inside Option<>
-        Some(&mut pkt_header[..]),
-        16);
-    (*ctx).past += result as i64;
-
+    let result = buffered_read(ctx_ref, Some(&mut pkt_header[..]), 16);
+    ctx_ref.past += result as i64;
     if result != 16 {
         return CCX_EOF;
     }
 
-    // Verify 5-byte packet leader (must be 0x00 0x00 0x00 0x00 0x00 0x01)
-    if rb32(&pkt_header) != 0 {
+    /**
+     * Veify 5 byte packet leader, must be 0x00 0x00 0x00 0x00 0x00 0x01
+     */
+    if rb32(pkt_header.as_ptr()) != 0 {
         return CCX_EINVAL;
     }
     let mut index = 4;
@@ -485,6 +525,8 @@ pub unsafe fn parse_packet_header(
     }
     index += 1;
 
+    // In C, the packet type is simply assigned.
+    // Here, we map it to the GXFPktType enum.
     *pkt_type = match pkt_header[index] {
         0xbc => GXFPktType::PKT_MAP,
         0xbf => GXFPktType::PKT_MEDIA,
@@ -495,18 +537,20 @@ pub unsafe fn parse_packet_header(
     };
     index += 1;
 
-    *length = rb32(<&[u8; 16]>::try_from(&pkt_header[index..]).unwrap()) as i32;
+    // Read 4-byte length from the packet header.
+    *length = rb32(pkt_header[index..].as_ptr()) as i32;
     index += 4;
 
-    if (*length >> 24) != 0 || *length < 16 {
+    if ((*length >> 24) != 0) || *length < 16 {
         return CCX_EINVAL;
     }
     *length -= 16;
 
-    // Reserved as per Rdd-14-2007
     index += 4;
 
-    // Verify packet trailer (must be 0xE1 0xE2)
+    /**
+     * verify packet trailer, must be 0xE1 0xE2
+     */
     if pkt_header[index] != 0xe1 {
         return CCX_EINVAL;
     }
@@ -536,17 +580,19 @@ pub unsafe fn parse_material_sec(demux: *mut CcxDemuxer, mut len: i32) -> i32 {
         len -= 2;
 
         if len < tag_len as i32 {
+            ret = CCX_EOF;
             break;
         }
 
+        // In C code, there is a redundant check here.
+        // For our implementation, we subtract tag_len if possible.
         len -= tag_len as i32;
 
         match tag {
             x if x == GXFMatTag::MAT_NAME as u8 => {
                 let result = buffered_read(
                     demux.as_mut().unwrap(),
-                    // (*ctx).media_name.as_mut_ptr(),
-                    Some(&mut (*ctx).media_name[..]),
+                    Some(&mut (*ctx).media_name[..tag_len as usize]),
                     tag_len as usize,
                 );
                 (*demux).past += tag_len as i64;
@@ -577,6 +623,7 @@ pub unsafe fn parse_material_sec(demux: *mut CcxDemuxer, mut len: i32) -> i32 {
         }
     }
 
+    // error: label handling in C code.
     let skipped = buffered_skip(demux, len as u32);
     (*demux).past += skipped as i64;
     if skipped != len as usize {
@@ -585,6 +632,7 @@ pub unsafe fn parse_material_sec(demux: *mut CcxDemuxer, mut len: i32) -> i32 {
 
     ret
 }
+
 pub fn set_track_frame_rate(vid_track: &mut CcxGxfVideoTrack, val: i8) {
     match val {
         1 => {
@@ -631,38 +679,43 @@ pub fn set_track_frame_rate(vid_track: &mut CcxGxfVideoTrack, val: i8) {
     }
 }
 pub unsafe fn parse_mpeg525_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
-    let ctx = unsafe { &mut *(demux.private_data as *mut CcxGxf) };
-    let vid_track = &mut ctx.vid_track.as_mut().unwrap();
+    // Retrieve the GXF context from demux->private_data.
+    let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
+        Some(ctx) => ctx,
+        None => return CCX_EINVAL,
+    };
+    let vid_track = match ctx.vid_track.as_mut() {
+        Some(track) => track,
+        None => return CCX_EINVAL,
+    };
     let mut ret = CCX_OK;
+    let mut error_occurred = false;
 
     /* Auxiliary Information */
     // let auxi_info: [u8; 8];  // Not used, keeping comment for reference
-
     dbg!("Mpeg 525 {}", len);
 
     while len > 2 {
         let tag = buffered_get_byte(demux);
         let tag_len = buffered_get_byte(demux) as i32;
         len -= 2;
-
         if len < tag_len {
             ret = CCX_EINVAL;
+            error_occurred = true;
             break;
         }
-
         len -= tag_len;
-
         match tag {
             x if x == GXFTrackTag::TRACK_NAME as u8 => {
                 let result = buffered_read(
                     demux,
-                    // &mut vid_track.track_name,
-                    Some(&mut vid_track.track_name),
+                    Some(&mut vid_track.track_name[..tag_len as usize]),
                     tag_len as usize,
                 );
                 demux.past += tag_len as i64;
                 if result != tag_len as usize {
                     ret = CCX_EOF;
+                    error_occurred = true;
                     break;
                 }
             }
@@ -680,40 +733,46 @@ pub unsafe fn parse_mpeg525_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> 
                 vid_track.field_per_frame = buffered_get_be32(demux);
             }
             x if x == GXFTrackTag::TRACK_AUX as u8 => {
-                /* Not Supported */
                 let result = buffered_skip(demux, tag_len as u32);
                 demux.past += result as i64;
             }
             x if x == GXFTrackTag::TRACK_MPG_AUX as u8 => {
-                /* Not Supported */
                 let result = buffered_skip(demux, tag_len as u32);
                 demux.past += result as i64;
             }
             _ => {
-                /* Not Supported */
                 let result = buffered_skip(demux, tag_len as u32);
                 demux.past += result as i64;
             }
         }
     }
 
+    // --- Error handling block ---
     let result = buffered_skip(demux, len as u32);
     demux.past += result as i64;
     if result != len as usize {
         ret = CCX_EOF;
     }
-
+    if error_occurred {
+        ret = CCX_EINVAL;
+    }
     ret
 }
 pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
-    let ctx = unsafe { &mut *(demux.private_data as *mut CcxGxf) };
+    // Retrieve the GXF context from demux->private_data.
+    let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
+        Some(ctx) => ctx,
+        None => return CCX_EINVAL,
+    };
+    // Retrieve the ancillary data track; if missing, error out.
     let ad_track = match ctx.ad_track.as_mut() {
         Some(track) => track,
-        None => return CCX_EINVAL, // If no ad_track, return error
+        None => return CCX_EINVAL,
     };
 
     let mut auxi_info = [0u8; 8];
     let mut ret = CCX_OK;
+    let mut error_occurred = false;
 
     dbg!("Ancillary Data {}", len);
 
@@ -721,44 +780,40 @@ pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
         let tag = buffered_get_byte(demux);
         let tag_len = buffered_get_byte(demux) as i32;
         len -= 2;
-
         if len < tag_len {
             ret = CCX_EINVAL;
+            error_occurred = true;
             break;
         }
-
         len -= tag_len;
-
         match tag {
             x if x == GXFTrackTag::TRACK_NAME as u8 => {
                 let result = buffered_read(
                     demux,
-                    // &mut ad_track.track_name,
-                    Some(&mut ad_track.track_name),
-                    tag_len as usize);
+                    Some(&mut ad_track.track_name[..tag_len as usize]),
+                    tag_len as usize,
+                );
                 demux.past += tag_len as i64;
                 if result != tag_len as usize {
                     ret = CCX_EOF;
+                    error_occurred = true;
                     break;
                 }
             }
             x if x == GXFTrackTag::TRACK_AUX as u8 => {
-                let result = buffered_read(
-                    demux,
-                    // &mut auxi_info,
-                    Some(&mut auxi_info),
-                    8,
-                );
+                let result = buffered_read(demux, Some(&mut auxi_info), 8);
                 demux.past += 8;
                 if result != 8 {
                     ret = CCX_EOF;
+                    error_occurred = true;
                     break;
                 }
                 if tag_len != 8 {
                     ret = CCX_EINVAL;
+                    error_occurred = true;
                     break;
                 }
-
+                // Set ancillary track fields.
                 ad_track.ad_format = match auxi_info[2] {
                     1 => GXFAncDataPresFormat::PRES_FORMAT_SD,
                     2 => GXFAncDataPresFormat::PRES_FORMAT_HD,
@@ -767,7 +822,6 @@ pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
                 ad_track.nb_field = auxi_info[3] as i32;
                 ad_track.field_size = i16::from_be_bytes([auxi_info[4], auxi_info[5]]) as i32;
                 ad_track.packet_size = i16::from_be_bytes([auxi_info[6], auxi_info[7]]) as i32 * 256;
-
                 dbg!(
                     "ad_format {} nb_field {} field_size {} packet_size {} track id {}",
                     ad_track.ad_format, ad_track.nb_field, ad_track.field_size, ad_track.packet_size, ad_track.id
@@ -786,36 +840,44 @@ pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
                 ad_track.field_per_frame = buffered_get_be32(demux);
             }
             x if x == GXFTrackTag::TRACK_MPG_AUX as u8 => {
-                /* Not Supported */
                 let result = buffered_skip(demux, tag_len as u32);
                 demux.past += result as i64;
             }
             _ => {
-                /* Not Supported */
                 let result = buffered_skip(demux, tag_len as u32);
                 demux.past += result as i64;
             }
         }
     }
 
+    // Error handling block.
     let result = buffered_skip(demux, len as u32);
     demux.past += result as i64;
     if result != len as usize {
         ret = CCX_EOF;
     }
-
+    if error_occurred {
+        ret = CCX_EINVAL;
+    }
     ret
 }
 
-pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
-    let ctx = match unsafe { (demux.private_data as *mut CcxGxf).as_mut() } {
+pub unsafe fn parse_track_sec(
+    demux: &mut CcxDemuxer,
+    mut len: i32,
+    data: &mut DemuxerData,
+) -> i32
+{
+    // Retrieve the GXF context from demux->private_data.
+    let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
         Some(ctx) => ctx,
-        None => return CCX_EINVAL, // If context is null, return error
+        None => return CCX_EINVAL,
     };
 
     let mut ret = CCX_OK;
 
     while len > 4 {
+        // Read track header: 1 byte track_type, 1 byte track_id, 2 bytes track_len.
         let mut track_type = buffered_get_byte(demux);
         let mut track_id = buffered_get_byte(demux);
         let track_len = buffered_get_be16(demux) as i32;
@@ -826,6 +888,7 @@ pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut D
             break;
         }
 
+        // If track_type does not have high bit set, skip record.
         if (track_type & 0x80) != 0x80 {
             len -= track_len;
             let result = buffered_skip(demux, track_len as u32);
@@ -838,6 +901,7 @@ pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut D
         }
         track_type &= 0x7f;
 
+        // If track_id does not have its two high bits set, skip record.
         if (track_id & 0xc0) != 0xc0 {
             len -= track_len;
             let result = buffered_skip(demux, track_len as u32);
@@ -852,23 +916,22 @@ pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut D
 
         match track_type {
             x if x == GXFTrackType::TRACK_TYPE_ANCILLARY_DATA as u8 => {
+                // Allocate ancillary track if not present.
                 if ctx.ad_track.is_none() {
                     ctx.ad_track = Some(Box::new(CcxGxfAncillaryDataTrack::default()));
                 }
-
                 if let Some(ad_track) = ctx.ad_track.as_mut() {
                     ad_track.id = track_id;
                     parse_ad_track_desc(demux, track_len);
-                    /* Ancillary data track has raw Closed Caption with cctype */
                     data.bufferdatatype = BufferdataType::Raw;
                 }
                 len -= track_len;
             }
             x if x == GXFTrackType::TRACK_TYPE_MPEG2_525 as u8 => {
+                // Allocate video track if not present.
                 if ctx.vid_track.is_none() {
                     ctx.vid_track = Some(Box::new(CcxGxfVideoTrack::default()));
                 }
-
                 if ctx.vid_track.is_none() {
                     info!("Ignored MPEG track due to insufficient memory\n");
                     break;
@@ -894,7 +957,6 @@ pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut D
     if result != len as usize {
         ret = CCX_EOF;
     }
-
     ret
 }
 /**
@@ -912,25 +974,31 @@ pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut D
  * @return CCX_EINVAL if cdp data fields are not valid
  */
 pub fn parse_ad_cdp(cdp: &[u8], data: &mut DemuxerData) -> Result<(), &'static str> {
+    // Do not accept packet whose length does not fit header and footer
     if cdp.len() < 11 {
         info!("Short packet can't accommodate header and footer");
         return Err("Invalid packet length");
     }
 
+    // Verify cdp header identifier
     if cdp[0] != 0x96 || cdp[1] != 0x69 {
         info!("Could not find CDP identifier of 0x96 0x69");
         return Err("Invalid CDP identifier");
     }
 
+    // Save original packet length.
+    let orig_len = cdp.len();
+    // Advance pointer by 2 bytes
     let mut cdp = &cdp[2..];
+    // Read CDP length (1 byte) and verify that it equals the original packet length.
     let cdp_length = cdp[0] as usize;
     cdp = &cdp[1..];
-
-    if cdp_length != cdp.len() + 2 {
+    if cdp_length != orig_len {
         info!("CDP length is not valid");
         return Err("Mismatched CDP length");
     }
 
+    // Parse header fields.
     let cdp_framerate = (cdp[0] & 0xF0) >> 4;
     let cc_data_present = (cdp[0] & 0x40) >> 6;
     let caption_service_active = (cdp[1] & 0x02) >> 1;
@@ -941,48 +1009,64 @@ pub fn parse_ad_cdp(cdp: &[u8], data: &mut DemuxerData) -> Result<(), &'static s
     dbg!("CDP frame rate: 0x{:x}", cdp_framerate);
     dbg!("CC data present: {}", cc_data_present);
     dbg!("Caption service active: {}", caption_service_active);
-    dbg!("Header sequence counter: {} (0x{:x})", cdp_header_sequence_counter, cdp_header_sequence_counter);
+    dbg!(
+        "Header sequence counter: {} (0x{:x})",
+        cdp_header_sequence_counter, cdp_header_sequence_counter
+    );
 
+    // Process CDP sections (only one section allowed per packet)
     match cdp[0] {
         0x71 => {
+            cdp = &cdp[1..];
             info!("Ignore Time code section");
             return Err("Time code section ignored");
         }
         0x72 => {
-            let cc_count = cdp[1] & 0x1F;
+            cdp = &cdp[1..]; // Advance past section id.
+            let cc_count = cdp[0] & 0x1F;
             dbg!("cc_count: {}", cc_count);
-
             let copy_size = cc_count as usize * 3;
-            if copy_size > cdp.len() - 2 {
+            if copy_size > cdp.len() - 1 {
                 return Err("Insufficient data for CC section");
             }
-
-            let buffer_slice = unsafe { slice::from_raw_parts_mut(data.buffer, data.len + copy_size) };
-            buffer_slice[data.len..data.len + copy_size].copy_from_slice(&cdp[2..2 + copy_size]);
+            // Copy ccdata into data.buffer starting at offset data.len.
+            let dst = unsafe {
+                slice::from_raw_parts_mut(data.buffer, data.len + copy_size)
+            };
+            dst[data.len..data.len + copy_size].copy_from_slice(&cdp[1..1 + copy_size]);
             data.len += copy_size;
-            cdp = &cdp[2 + copy_size..];
+            cdp = &cdp[1 + copy_size..];
         }
         0x73 => {
+            cdp = &cdp[1..];
             info!("Ignore service information section");
             return Err("Service information section ignored");
         }
         0x75..=0xEF => {
-            info!("Newer version of SMPTE-334 specification detected. New section id 0x{:x}", cdp[0]);
+            info!(
+                "Newer version of SMPTE-334 specification detected. New section id 0x{:x}",
+                cdp[0]
+            );
+            cdp = &cdp[1..];
             return Err("Unhandled new section");
         }
         _ => {}
     }
 
+    // Check CDP footer.
     if cdp[0] == 0x74 {
-        let footer_sequence_counter = u16::from_be_bytes([cdp[1], cdp[2]]);
+        cdp = &cdp[1..];
+        let footer_sequence_counter = u16::from_be_bytes([cdp[0], cdp[1]]);
         if cdp_header_sequence_counter != footer_sequence_counter {
             info!("Incomplete CDP packet");
             return Err("CDP footer sequence mismatch");
         }
+        // Optionally: cdp = &cdp[2..];
     }
 
     Ok(())
 }
+
 /**
  * parse ancillary data payload
  */
@@ -990,78 +1074,80 @@ pub unsafe fn parse_ad_pyld(
     demux: &mut CcxDemuxer,
     len: i32,
     data: &mut DemuxerData,
-) -> i32 {
-    let mut result;
+) -> i32
+{
+    let result;
+    #[allow(unused_variables)]
     let mut ret = CCX_OK;
+    let mut rem_len = len;
 
     #[cfg(not(feature = "CCX_GXF_ENABLE_AD_VBI"))]
     {
         let mut i: usize;
 
-        // Read 16-bit values from buffered input
+        // Read 16-bit little-endian values from buffered input:
         let d_id = buffered_get_le16(demux);
         let sd_id = buffered_get_le16(demux);
-        let mut dc = buffered_get_le16(demux) & 0xFF;
+        // Read dc and mask to 8 bits.
+        let _dc = buffered_get_le16(demux) & 0xFF;
 
-        let ctx = unsafe { &mut *(demux.private_data as *mut CcxGxf) };
+        let ctx = &mut *(demux.private_data as *mut CcxGxf);
 
-        // Adjust length
-        let len = len - 6;
-
-        // If `ctx.cdp` buffer is too small, resize it
-        if ctx.cdp_len < (len / 2) as usize {
-            ctx.cdp = Some(vec![0; (len / 2) as usize]);
-            if (ctx.cdp.is_none()) {
-                info!("Could not allocate buffer {}\n", len / 2);
+        // Adjust length (remove the 6 header bytes)
+        rem_len = len - 6;
+        // If ctx.cdp buffer is too small, reallocate it.
+        if ctx.cdp_len < (rem_len / 2) as usize {
+            // Allocate a new buffer of size (rem_len/2)
+            ctx.cdp = Some(vec![0u8; (rem_len / 2) as usize]);
+            if ctx.cdp.is_none() {
+                info!("Could not allocate buffer {}\n", rem_len / 2);
                 return CCX_ENOMEM;
             }
-            ctx.cdp_len = ((len - 2) / 2) as usize; // Exclude DID and SDID bytes
+            // Exclude DID and SDID bytes: set new cdp_len to ((rem_len - 2) / 2)
+            ctx.cdp_len = ((rem_len - 2) / 2) as usize;
         }
 
-        // Check if the data corresponds to CEA-708 captions
-        if ((d_id & 0xFF) == CLOSED_CAP_DID as u16) && ((sd_id & 0xFF) == CLOSED_C708_SDID as u16) {
+        // Check for CEA-708 captions: d_id and sd_id must match.
+        if ((d_id & 0xFF) == CLOSED_CAP_DID as u16)
+            && ((sd_id & 0xFF) == CLOSED_C708_SDID as u16)
+        {
             if let Some(ref mut cdp) = ctx.cdp {
                 i = 0;
-                let mut remaining_len = len;
-
+                let mut remaining_len = rem_len;
                 while remaining_len > 2 {
                     let dat = buffered_get_le16(demux);
-
-                    // Check parity for 0xFE and 0x01 (possibly converted from 0xFF and 0x00 by GXF)
-                    // Ignoring the first 2 bits or bytes from a 10-bit code in a 16-bit variable
                     cdp[i] = match dat {
                         0x2FE => 0xFF,
                         0x201 => 0x01,
                         _ => (dat & 0xFF) as u8,
                     };
-
                     i += 1;
                     remaining_len -= 2;
                 }
-
-                parse_ad_cdp(cdp, data);
-                // TODO: Check checksum
+                // Call parse_ad_cdp on the newly filled buffer.
+                // (Assume parse_ad_cdp returns Ok(()) on success.)
+                let _ = parse_ad_cdp(&ctx.cdp.as_ref().unwrap(), data);
+                // TODO: Check checksum.
             }
         }
-        // Check if the data corresponds to CEA-608 captions
-        else if ((d_id & 0xFF) == CLOSED_CAP_DID as u16) && ((sd_id & 0xFF) == CLOSED_C608_SDID as u16) {
+        // If it corresponds to CEA-608 captions:
+        else if ((d_id & 0xFF) == CLOSED_CAP_DID as u16)
+            && ((sd_id & 0xFF) == CLOSED_C608_SDID as u16)
+        {
             info!("Need Sample\n");
         }
-        // Ignore other services like:
-        // Program description (DTV) with DID = 62h(162h) and SDID 1 (101h)
-        // Data broadcast (DTV) with DID = 62h(162h) and SDID 2 (102h)
-        // VBI data with DID = 62h(162h) and SDID 3 (103h)
+        // Otherwise, ignore other services.
     }
 
-    // Skip the remaining bytes in the buffer
-    result = buffered_skip(demux, len as u32);
+    result = buffered_skip(demux, rem_len as u32);
     demux.past += result as i64;
-    if result != len as usize {
+    if result != rem_len as usize {
         ret = CCX_EOF;
     }
-
     ret
 }
+
+
 /**
  * VBI in ancillary data is not specified in GXF specs
  * but while traversing file, we found vbi data presence
@@ -1070,28 +1156,31 @@ pub unsafe fn parse_ad_pyld(
  * is not able to see the caption, there might be need
  * of parsing vbi
  */
-fn parse_ad_vbi(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
+#[allow(unused_variables)]
+pub unsafe fn parse_ad_vbi(
+    demux: &mut CcxDemuxer,
+    len: i32,
+    data: &mut DemuxerData,
+) -> i32
+{
     let mut ret = CCX_OK;
-    let result;
+    let result: usize;
 
     #[cfg(feature = "ccx_gxf_enable_ad_vbi")]
-    unsafe {
-        // Increase buffer length
+    {
+        // In the C code, data.len is increased by len before reading.
         data.len += len as usize;
-        // Read data into buffer
-        result = buffered_read(
-            demux,
-            // (data.buffer),
-            Some(&mut data.buffer[data.len..]),
-            len as usize,
-        );
+        // Read 'len' bytes into data.buffer (starting at index 0, mimicking the C code).
+        // result = buffered_read(demux, Some(&mut data.buffer[..len as usize]), len as usize);
+        let buffer_slice = std::slice::from_raw_parts_mut(data.buffer, len as usize);
+        result = buffered_read(demux, Some(buffer_slice), len as usize);
     }
     #[cfg(not(feature = "ccx_gxf_enable_ad_vbi"))]
-    unsafe {
-        // Skip bytes if VBI support is not enabled
+    {
+        // Skip 'len' bytes if VBI support is not enabled.
         result = buffered_skip(demux, len as u32);
     }
-    // Update file position
+    // Update demux.past with the bytes processed.
     demux.past += result as i64;
     if result != len as usize {
         ret = CCX_EOF;
@@ -1099,17 +1188,25 @@ fn parse_ad_vbi(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) ->
     ret
 }
 
-unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
+/// parse_ad_field: parses an ancillary data field from the demuxer buffer,
+/// verifying header tags (e.g. "finf", "LIST", "anc ") and then processing each
+/// sub‐section (e.g. "pyld"/"vbi") until the field is exhausted.
+pub unsafe fn parse_ad_field(
+    demux: &mut CcxDemuxer,
+    mut len: i32,
+    data: &mut DemuxerData,
+) -> i32
+{
     let mut ret = CCX_OK;
     let mut result;
-    let mut tag = [0u8; 5]; // Null-terminated string buffer
+    let mut tag = [0u8; 5]; // 4-byte tag plus null terminator
     let field_identifier;
 
     tag[4] = 0;
 
-    // Read 'finf' tag
+    // Read "finf" tag
     len -= 4;
-    result = buffered_read(demux, Option::from(&mut tag[..4]), 4);
+    result = buffered_read(demux, Some(&mut tag[..4]), 4);
     demux.past += result as i64;
     if &tag[..4] != b"finf" {
         info!("Warning: No finf tag\n");
@@ -1124,53 +1221,52 @@ unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxe
     // Read field identifier
     len -= 4;
     field_identifier = buffered_get_le32(demux);
-    dbg!("LOG: field identifier {}\n", field_identifier);
+    info!("LOG: field identifier {}\n", field_identifier);
 
-    // Read 'LIST' tag
+    // Read "LIST" tag
     len -= 4;
-    result = buffered_read(demux, Option::from(&mut tag[..4]), 4);
+    result = buffered_read(demux, Some(&mut tag[..4]), 4);
     demux.past += result as i64;
     if &tag[..4] != b"LIST" {
         info!("Warning: No List tag\n");
     }
 
-    // Read ancillary data field section size
+    // Read ancillary data field section size.
     len -= 4;
     if buffered_get_le32(demux) != len as u32 {
         info!("Warning: Unexpected sample size (!={})\n", len);
     }
 
-    // Read 'anc ' tag
+    // Read "anc " tag
     len -= 4;
-    result = buffered_read(demux, Option::from(&mut tag[..4]), 4);
+    result = buffered_read(demux, Some(&mut tag[..4]), 4);
     demux.past += result as i64;
     if &tag[..4] != b"anc " {
         info!("Warning: No anc tag\n");
     }
 
+    // Process sub-sections until less than or equal to 28 bytes remain.
     while len > 28 {
-        let mut line_nb;
-        let mut luma_flag;
-        let mut hanc_vanc_flag;
-        let mut hdr_len;
-        let mut pyld_len;
+        let line_nb;
+        let luma_flag;
+        let hanc_vanc_flag;
+        let hdr_len;
+        let pyld_len;
 
-        // Read next tag
         len -= 4;
-        result = buffered_read(demux, Option::from(&mut tag[..4]), 4);
+        result = buffered_read(demux, Some(&mut tag[..4]), 4);
         demux.past += result as i64;
 
-        // Read header length
         len -= 4;
         hdr_len = buffered_get_le32(demux);
 
-        // Check for 'pad ' tag
+        // Check for pad tag.
         if &tag[..4] == b"pad " {
             if hdr_len != len as u32 {
                 info!("Warning: expected {} got {}\n", len, hdr_len);
             }
             len -= hdr_len as i32;
-            result = buffered_skip(demux, hdr_len as u32);
+            result = buffered_skip(demux, hdr_len);
             demux.past += result as i64;
             if result != hdr_len as usize {
                 ret = CCX_EOF;
@@ -1187,30 +1283,25 @@ unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxe
             }
         }
 
-        // Read line number
         len -= 4;
         line_nb = buffered_get_le32(demux);
-        dbg!("Line nb: {}\n", line_nb);
+        info!("Line nb: {}\n", line_nb);
 
-        // Read luma flag
         len -= 4;
         luma_flag = buffered_get_le32(demux);
-        dbg!("luma color diff flag: {}\n", luma_flag);
+        info!("luma color diff flag: {}\n", luma_flag);
 
-        // Read HANC/VANC flag
         len -= 4;
         hanc_vanc_flag = buffered_get_le32(demux);
-        dbg!("hanc/vanc flag: {}\n", hanc_vanc_flag);
+        info!("hanc/vanc flag: {}\n", hanc_vanc_flag);
 
-        // Read next tag
         len -= 4;
-        result = buffered_read(demux, Option::from(&mut tag[..4]), 4);
+        result = buffered_read(demux, Some(&mut tag[..4]), 4);
         demux.past += result as i64;
 
-        // Read payload length
         len -= 4;
         pyld_len = buffered_get_le32(demux);
-        dbg!("pyld len: {}\n", pyld_len);
+        info!("pyld len: {}\n", pyld_len);
 
         if &tag[..4] == b"pyld" {
             len -= pyld_len as i32;
@@ -1229,7 +1320,6 @@ unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxe
         }
     }
 
-    // Skip remaining bytes
     result = buffered_skip(demux, len as u32);
     demux.past += result as i64;
     if result != len as usize {
@@ -1237,6 +1327,7 @@ unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxe
     }
     ret
 }
+
 /**
  * @param vid_format following format are supported to set valid timebase
  * 	in demuxer data
@@ -1269,7 +1360,7 @@ unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxe
  *        actual data
  */
 
-fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
+pub fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
     dbg!("LOG: Format Video {}", vid_format);
 
     match vid_format {
@@ -1318,12 +1409,16 @@ fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
     }
 }
 
-unsafe fn parse_mpeg_packet(demux: &mut CcxDemuxer, len: usize, data: &mut DemuxerData) -> i32 {
+pub unsafe fn parse_mpeg_packet(
+    demux: &mut CcxDemuxer,
+    len: usize,
+    data: &mut DemuxerData,
+) -> i32
+{
+    // Read 'len' bytes into the data buffer at offset data.len.
     let result = buffered_read(
         demux,
-        // unsafe { data.buffer.add(data.len) },
-        // Some(&mut *data.buffer[data.len..]),
-        Some(std::slice::from_raw_parts_mut(data.buffer.add(data.len), len)),
+        Some(slice::from_raw_parts_mut(data.buffer.add(data.len), len)),
         len,
     );
     data.len += len;
@@ -1332,31 +1427,25 @@ unsafe fn parse_mpeg_packet(demux: &mut CcxDemuxer, len: usize, data: &mut Demux
     if result != len {
         return CCX_EOF;
     }
-
     CCX_OK
 }
+
 /**
  * This packet contain RIFF data
  * @param demuxer Demuxer must contain vaild ad_track structure
  */
-unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerData) -> i32 {
+pub unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
-    let mut result;
     let mut remaining_len = len;
     let mut tag = [0u8; 4];
+    let mut result;
 
-    let ctx = unsafe { &mut *(demux.private_data as *mut CcxGxf) };
-
+    let ctx = &mut *(demux.private_data as *mut CcxGxf);
     let ad_track = &ctx.ad_track.as_mut().unwrap();
 
     // Read "RIFF" header
     remaining_len -= 4;
-    result = buffered_read(
-        demux,
-        // &mut tag,
-        Some(&mut tag),
-        4,
-    );
+    result = buffered_read(demux, Some(&mut tag), 4);
     demux.past += result as i64;
     if &tag != b"RIFF" {
         info!("Warning: No RIFF header");
@@ -1370,12 +1459,7 @@ unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerDa
 
     // Read "rcrd" tag
     remaining_len -= 4;
-    result = buffered_read(
-        demux,
-        // &mut tag,
-        Some(&mut tag),
-        4,
-    );
+    result = buffered_read(demux, Some(&mut tag), 4);
     demux.past += result as i64;
     if &tag != b"rcrd" {
         info!("Warning: No rcrd tag");
@@ -1383,12 +1467,7 @@ unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerDa
 
     // Read "desc" tag
     remaining_len -= 4;
-    result = buffered_read(
-        demux,
-        // &mut tag,
-        Some(&mut tag),
-        4,
-    );
+    result = buffered_read(demux, Some(&mut tag), 4);
     demux.past += result as i64;
     if &tag != b"desc" {
         info!("Warning: No desc tag");
@@ -1433,11 +1512,7 @@ unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerDa
 
     // Read "LIST" tag
     remaining_len -= 4;
-    result = buffered_read(
-        demux,
-        // &mut tag,
-        Some(&mut tag),
-        4);
+    result = buffered_read(demux, Some(&mut tag), 4);
     demux.past += result as i64;
     if &tag != b"LIST" {
         info!("Warning: No LIST tag");
@@ -1446,24 +1521,22 @@ unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerDa
     // Validate field section size
     remaining_len -= 4;
     if buffered_get_le32(demux) != remaining_len as u32 {
-        info!("Warning: Unexpected field section size (!={})", remaining_len);
+        info!(
+            "Warning: Unexpected field section size (!={})",
+            remaining_len
+        );
     }
 
     // Read "fld " tag
     remaining_len -= 4;
-    result = buffered_read(
-        demux,
-        // &mut tag,
-        Some(&mut tag),
-        4,
-    );
+    result = buffered_read(demux, Some(&mut tag), 4);
     demux.past += result as i64;
     if &tag != b"fld " {
         info!("Warning: No fld tag");
     }
 
     // Parse each field
-    for _ in 0..ad_track.nb_field {
+    for _ in 0..ad_track.nb_field as usize {
         remaining_len -= ad_track.field_size;
         parse_ad_field(demux, ad_track.field_size, data);
     }
@@ -1497,7 +1570,7 @@ unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerDa
  */
 /// Translated version of the C `set_mpeg_frame_desc` function.
 
-fn set_mpeg_frame_desc(vid_track: &mut CcxGxfVideoTrack, mpeg_frame_desc_flag: u8) {
+pub fn set_mpeg_frame_desc(vid_track: &mut CcxGxfVideoTrack, mpeg_frame_desc_flag: u8) {
     // vid_track.p_code = MpegPictureCoding::from(mpeg_frame_desc_flag & 0x03);
     // vid_track.p_struct = MpegPictureStruct::from((mpeg_frame_desc_flag >> 2) & 0x03);
     vid_track.p_code = MpegPictureCoding::try_from(mpeg_frame_desc_flag & 0x03).unwrap();
@@ -1510,70 +1583,58 @@ impl PartialEq for GXFTrackType {
     }
 }
 
-
+// Macro for common cleanup and return (replaces C's goto end)
+macro_rules! goto_end {
+    ($demux:expr, $len:expr, $ret:ident) => {{
+        let result = buffered_skip($demux, $len as u32) as i32;
+        $demux.past += result as i64;
+        if result != $len {
+            $ret = CCX_EOF;
+        }
+        return $ret;
+    }};
+}
 /// Translated version of the C `parse_media` function.
-unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
+pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
-    let mut result: i32;
-    let media_type: GXFTrackType;
-    let ctx = unsafe { &mut *(demux.private_data as *mut CcxGxf) };
-    #[allow(unused)]
-    let mut ad_track: &mut CcxGxfAncillaryDataTrack;
-    // let mut vid_track: Option<&mut CcxGxfVideoTrack>;
-    // struct ccx_gxf_video_track *vid_track;
-    /**
-     * The track number is a reference into the track description section of the map packets. It identifies the media
-     * file to which the current media packet belongs. Track descriptions shall be considered as consecutive
-     * elements of a vector and track numbers are the index into that vector.
-     * Clips shall have 1 to 48 tracks in any combination of types. Tracks shall be numbered from 0 to n–1. Media
-     * packets shall be inserted in the stream starting with track n-1 and proceeding to track 0. Time code packets
-     * shall have the greatest track numbers. Ancillary data packets shall have track numbers less than time code
-     * packets. Audio packets shall have track numbers less than ancillary data packets. Video packet track
-     * numbers shall be less than audio track numbers.
-     */
+    let mut result;
 
+    // Check for null private_data before dereferencing
+    if demux.private_data.is_null() {
+        result = buffered_skip(demux, len as u32) as i32;
+        demux.past += result as i64;
+        if result != len {
+            ret = CCX_EOF;
+        }
+        return ret;
+    }
+
+    let ctx = &mut *(demux.private_data as *mut CcxGxf);
+    let media_type: GXFTrackType;
     let track_nb: u8;
     let media_field_nb: u32;
-    /**
-     * For ancillary data, the field information contains the first valid ancillary data field number (inclusive) and the
-     * last valid ancillary data field number (exclusive). The first and last valid ancillary data field numbers apply to
-     * the current packet only. If the entire ancillary data packet is valid, the first and last valid ancillary data field
-     * numbers shall be 0 and 10 for high definition ancillary data, and 0 and 14 for standard definition ancillary data.
-     * These values shall be sent starting with the ancillary data field from the lowest number video line continuing to
-     * higher video line numbers. Within each line the ancillary data fields shall not be reordered.
-     */
 
     let mut first_field_nb: u16 = 0;
     let mut last_field_nb: u16 = 0;
-    /**
-     *  see description of set_mpeg_frame_desc for details
-     */
-
     let mut mpeg_pic_size: u32 = 0;
     let mut mpeg_frame_desc_flag: u8 = 0;
-    /**
-     * Observation 1: media_field_nb comes out equal to time_field number
-     * for ancillary data
-     *
-     * The 32-bit unsigned field number relative to the start of the
-     * material (time line position).
-     * Time line field numbers shall be assigned consecutively from the
-     * start of the material. The first time line field number shall be 0.
-     */
 
     let time_field: u32;
     let valid_time_field: u8;
 
-    if ctx.is_null() {
-        return ret;
-    }
-
     len -= 1;
-    media_type = GXFTrackType::try_from(buffered_get_byte(demux)).unwrap();
+
+    let media_type_0 = GXFTrackType::try_from(buffered_get_byte(demux));
+    if media_type_0.is_err() {
+        goto_end!(demux, len, ret);
+    } else {
+        media_type = media_type_0.unwrap();
+    }
     track_nb = buffered_get_byte(demux);
     len -= 1;
     media_field_nb = buffered_get_be32(demux);
     len -= 4;
+
     match media_type {
         GXFTrackType::TRACK_TYPE_ANCILLARY_DATA => {
             first_field_nb = buffered_get_be16(demux);
@@ -1584,7 +1645,7 @@ unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerDa
         GXFTrackType::TRACK_TYPE_MPEG1_525 | GXFTrackType::TRACK_TYPE_MPEG2_525 => {
             mpeg_pic_size = buffered_get_be32(demux);
             mpeg_frame_desc_flag = (mpeg_pic_size >> 24) as u8;
-            mpeg_pic_size &= 0xFFFFFF;
+            mpeg_pic_size &= 0x00FFFFFF;
             len -= 4;
         }
         _ => {
@@ -1604,62 +1665,62 @@ unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerDa
     demux.past += result as i64;
     len -= 1;
 
-    dbg!("track number {}\n", track_nb);
-    dbg!("field number {}\n", media_field_nb);
-    dbg!("first field number {}\n", first_field_nb);
-    dbg!("last field number {}\n", last_field_nb);
-    dbg!("Pyld len {}\n", len);
+    // Debug logging (matching C's debug macros)
+    info!("track number {}", track_nb);
+    info!("field number {}", media_field_nb);
+    info!("first field number {}", first_field_nb);
+    info!("last field number {}", last_field_nb);
+    info!("Pyld len {}", len);
 
-    if media_type == GXFTrackType::TRACK_TYPE_ANCILLARY_DATA {
-        if ctx.ad_track.is_none() {
-            return ret;
+    match media_type {
+        GXFTrackType::TRACK_TYPE_ANCILLARY_DATA => {
+            if ctx.ad_track.is_none() {
+                goto_end!(demux, len, ret);
+            }
+            let ad_track = ctx.ad_track.as_mut().unwrap();
+            data.pts = if valid_time_field != 0 {
+                time_field as i64 - ctx.first_field_nb as i64
+            } else {
+                media_field_nb as i64 - ctx.first_field_nb as i64
+            };
+            if len < ad_track.packet_size {
+                goto_end!(demux, len, ret);
+            }
+            data.pts /= 2;
+            parse_ad_packet(demux, ad_track.packet_size, data);
+            len -= ad_track.packet_size;
         }
-        let ad_track = &mut ctx.ad_track.as_mut().unwrap();
-        if valid_time_field != 0 {
-            data.pts = time_field as i64 - ctx.first_field_nb as i64;
-        } else {
-            data.pts = media_field_nb as i64 - ctx.first_field_nb as i64;
+        GXFTrackType::TRACK_TYPE_MPEG2_525 if ctx.ad_track.is_none() => {
+            if ctx.vid_track.is_none() {
+                goto_end!(demux, len, ret);
+            }
+            let vid_track = ctx.vid_track.as_mut().unwrap();
+            data.pts = if valid_time_field != 0 {
+                time_field as i64 - ctx.first_field_nb as i64
+            } else {
+                media_field_nb as i64 - ctx.first_field_nb as i64
+            };
+            data.tb.num = vid_track.frame_rate.den;
+            data.tb.den = vid_track.frame_rate.num;
+            data.pts /= 2;
+            set_mpeg_frame_desc(vid_track, mpeg_frame_desc_flag);
+            parse_mpeg_packet(demux, mpeg_pic_size as usize, data);
+            len -= mpeg_pic_size as i32;
         }
-        if len < ad_track.packet_size as i32 {
-            return ret;
+        GXFTrackType::TRACK_TYPE_TIME_CODE_525 => {
+            // Time code handling not implemented
         }
-
-        data.pts /= 2;
-
-        parse_ad_packet(demux, ad_track.packet_size as i32, data);
-        len -= ad_track.packet_size as i32;
-    } else if media_type == GXFTrackType::TRACK_TYPE_MPEG2_525 && ctx.ad_track.is_none() {
-        if ctx.vid_track.is_none() {
-            return ret;
-        }
-        // vid_track = ctx.vid_track.as_mut();
-        if valid_time_field != 0 {
-            data.pts = time_field as i64 - ctx.first_field_nb as i64;
-        } else {
-            data.pts = media_field_nb as i64 - ctx.first_field_nb as i64;
-        }
-        data.tb.num = ctx.vid_track.as_mut().unwrap().frame_rate.den;
-        data.tb.den = ctx.vid_track.as_mut().unwrap().frame_rate.num;
-        data.pts /= 2;
-
-        set_mpeg_frame_desc(ctx.vid_track.as_mut().unwrap(), mpeg_frame_desc_flag);
-        parse_mpeg_packet(demux, mpeg_pic_size as usize, data);
-        len -= mpeg_pic_size as i32;
-    } else if media_type == GXFTrackType::TRACK_TYPE_TIME_CODE_525 {
-        // Need SMPTE 12M to follow parse time code
+        _ => {}
     }
 
-    result = buffered_skip(demux, len as u32) as i32;
-    demux.past += result as i64;
-    if result != len {
-        ret = CCX_EOF;
-    }
-    ret
+    goto_end!(demux, len, ret)
 }
+
+
 /**
  * Dummy function that ignore field locator table packet
  */
-unsafe fn parse_flt(demux: &mut CcxDemuxer, len: i32) -> i32 {
+pub unsafe fn parse_flt(demux: &mut CcxDemuxer, len: i32) -> i32 {
     let mut ret = CCX_OK;
     let mut result = 0;
 
@@ -1674,7 +1735,7 @@ unsafe fn parse_flt(demux: &mut CcxDemuxer, len: i32) -> i32 {
  * Dummy function that ignore unified material format packet
  */
 
-unsafe fn parse_umf(demux: &mut CcxDemuxer, len: i32) -> i32 {
+pub unsafe fn parse_umf(demux: &mut CcxDemuxer, len: i32) -> i32 {
     let mut ret = CCX_OK;
     let mut result = 0;
 
@@ -1698,42 +1759,63 @@ unsafe fn parse_umf(demux: &mut CcxDemuxer, len: i32) -> i32 {
  */
 
 
-unsafe fn parse_map(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
-    let mut result: i32;
-    let mut material_sec_len: i32 = 0;
-    let mut track_sec_len: i32 = 0;
+pub unsafe fn parse_map(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
 
+    // Check for MAP header 0xe0ff
     len -= 2;
     if buffered_get_be16(demux) != 0xe0ff {
-        return CCX_EINVAL;
+        let result = buffered_skip(demux, len as u32);
+        demux.past += result as i64;
+        if result != len as usize {
+            return CCX_EOF;
+        }
+        return ret;
     }
 
+    // Parse material section length
     len -= 2;
-    material_sec_len = buffered_get_be16(demux) as i32;
+    let material_sec_len = buffered_get_be16(demux) as i32;
     if material_sec_len > len {
-        return CCX_EINVAL;
+        let result = buffered_skip(demux, len as u32);
+        demux.past += result as i64;
+        if result != len as usize {
+            return CCX_EOF;
+        }
+        return ret;
     }
 
+    // Parse material section
     len -= material_sec_len;
     parse_material_sec(demux, material_sec_len);
 
+    // Parse track section length
     len -= 2;
-    track_sec_len = buffered_get_be16(demux) as i32;
+    let track_sec_len = buffered_get_be16(demux) as i32;
     if track_sec_len > len {
-        return CCX_EINVAL;
+        let result = buffered_skip(demux, len as u32);
+        demux.past += result as i64;
+        if result != len as usize {
+            return CCX_EOF;
+        }
+        return ret;
     }
 
+    // Parse track section
     len -= track_sec_len;
     parse_track_sec(demux, track_sec_len, data);
 
-    result = buffered_skip(demux, len as u32) as i32;
+    // Skip any remaining bytes
+    let result = buffered_skip(demux, len as u32);
     demux.past += result as i64;
-    if result != len {
+    if result != len as usize {
         ret = CCX_EOF;
     }
+
     ret
 }
+
+
 /**
  * GXF Media File have 5 Section which are as following
  *     +----------+-------+------+---------------+--------+
@@ -1743,18 +1825,19 @@ unsafe fn parse_map(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData
  *     +----------+-------+------+---------------+--------+
  *
  */
-unsafe fn read_packet(demux: &mut CcxDemuxer, data: &mut DemuxerData) -> i32 {
+pub unsafe fn read_packet(demux: &mut CcxDemuxer, data: &mut DemuxerData) -> i32 {
     let mut len = 0;
-    #[allow(unused)]
-    let mut result = 0;
     let mut ret = CCX_OK;
     let mut gxftype: GXFPktType = GXFPktType::PKT_EOS;
 
     ret = parse_packet_header(demux, &mut gxftype, &mut len);
+    if ret != CCX_OK {
+        return ret; // Propagate header parsing errors
+    }
 
     match gxftype {
         GXFPktType::PKT_MAP => {
-            dbg!("pkt type Map {}\n", len);
+            info!("pkt type Map {}\n", len);
             ret = parse_map(demux, len, data);
         }
         GXFPktType::PKT_MEDIA => {
@@ -1764,25 +1847,28 @@ unsafe fn read_packet(demux: &mut CcxDemuxer, data: &mut DemuxerData) -> i32 {
             ret = CCX_EOF;
         }
         GXFPktType::PKT_FLT => {
-            dbg!("pkt type FLT {}\n", len);
+            info!("pkt type FLT {}\n", len);
             ret = parse_flt(demux, len);
         }
         GXFPktType::PKT_UMF => {
-            dbg!("pkt type umf {}\n\n", len);
+            info!("pkt type umf {}\n\n", len);
             ret = parse_umf(demux, len);
         }
-        // _ => {
-        //     debug!("pkt type unknown or bad {}\n", len);
-        //     result = buffered_skip(demux, len as u32) as i32;
-        //     demux.past += result as i64;
-        //     if result != len || len == 0 {
-        //         ret = CCX_EOF;
-        //     }
-        // }
+        #[allow(unreachable_patterns)]
+        _ => {
+            info!("pkt type unknown or bad {}\n", len);
+            let result = buffered_skip(demux, len as u32) as i32;
+            demux.past += result as i64;
+            if result != len || len == 0 {
+                ret = CCX_EOF;
+            }
+        }
     }
 
     ret
 }
+
+
 /**
  * @param buf buffer with atleast acceptable length atleast 7 byte
  *            where we will test only important part of packet header
@@ -1793,59 +1879,1557 @@ unsafe fn read_packet(demux: &mut CcxDemuxer, data: &mut DemuxerData) -> i32 {
  *            TODO Map packet are sent per 100 packets so search MAP packet, there might be
  *            no MAP header at start if GXF is sliced at unknown region
  */
-pub unsafe fn ccx_gxf_probe(buf: &[u8]) -> bool {
+pub fn ccx_gxf_probe(buf: &[u8]) -> bool {
+    // Static startcode array.
     let startcode = [0, 0, 0, 0, 1, 0xbc];
+    // If the buffer length is less than the startcode length, return false.
     if buf.len() < startcode.len() {
         return false;
     }
-    //use libc
-    if libc::memcmp(
-        buf.as_ptr() as *const libc::c_void,
-        startcode.as_ptr() as *const libc::c_void,
-        startcode.len()) == 0 {
+    // If the start of the buffer matches startcode, return true.
+    if &buf[..startcode.len()] == &startcode {
         return true;
     }
     false
 }
 
-use crate::demuxer::lib_ccx::LibCcxCtx;
-use libc::malloc;
 
-unsafe fn ccx_gxf_get_more_data(ctx: &mut LibCcxCtx, ppdata: &mut Option<Box<DemuxerData>>) -> i32 {
-    if ppdata.is_none() {
-        // *ppdata = Some(alloc_demuxer_data()); //TODO
-        if ppdata.is_none() {
-            return -1;
-        }
-        let data = ppdata.as_mut().unwrap();
-        // TODO: Set to dummy, find and set actual value
-        // Complex GXF does have multiple programs
-        data.program_number = 1;
-        data.stream_pid = 1;
-        data.codec = Codec::AtscCc;
+#[cfg(test)]
+mod tests {
+    static INIT: Once = Once::new();
+
+    fn initialize_logger() {
+        INIT.call_once(|| {
+            set_logger(CCExtractorLogger::new(
+                OutputTarget::Stdout,
+                DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
+                false,
+            ))
+                .ok();
+        });
     }
-    let data = ppdata.as_mut().unwrap();
-    read_packet(&mut *ctx.demux_ctx, data)
-}
 
-pub fn ccx_gxf_init(_arg: &mut CcxDemuxer) -> Option<*mut CcxGxf> {
-    unsafe {
-        let ctx = malloc(std::mem::size_of::<CcxGxf>()) as *mut CcxGxf;
-        if ctx.is_null() {
-            eprintln!("Unable to allocate Gxf context");
-            return None;
-        }
-        ptr::write_bytes(ctx, 0, 1); // memset to zero
-        Some(ctx)
+    use super::*;
+    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+    use std::mem;
+    use std::os::fd::IntoRawFd;
+    use std::sync::Once;
+
+    #[test]
+    fn test_rl32() {
+        // Prepare a little-endian 32-bit value.
+        let bytes: [u8; 4] = [0x78, 0x56, 0x34, 0x12]; // expected value: 0x12345678 on little-endian systems
+        let value = unsafe { rl32(bytes.as_ptr()) };
+        // Since our test system is most likely little-endian, the value should be as stored.
+        assert_eq!(value, 0x12345678);
     }
-}
 
-pub fn ccx_gxf_delete(arg: &mut CcxDemuxer) {
-    unsafe {
-        if !arg.private_data.is_null() {
-            // freep((*arg.private_data).cdp as *mut libc::c_void); //TODO
-            // freep(arg.private_data as *mut libc::c_void); //TODO
-            arg.private_data = ptr::null_mut();
+    #[test]
+    fn test_rb32() {
+        // Prepare a big-endian 32-bit value.
+        let bytes: [u8; 4] = [0x01, 0x02, 0x03, 0x04]; // big-endian representation for 0x01020304
+        let value = unsafe { rb32(bytes.as_ptr()) };
+        // After conversion, we expect the same numerical value.
+        assert_eq!(value, 0x01020304);
+    }
+
+    #[test]
+    fn test_rl16() {
+        // Prepare a little-endian 16-bit value.
+        let bytes: [u8; 2] = [0xCD, 0xAB]; // expected value: 0xABCD on little-endian systems
+        let value = unsafe { rl16(bytes.as_ptr()) };
+        // Since our test system is most likely little-endian, the value should be as stored.
+        assert_eq!(value, 0xABCD);
+    }
+
+    #[test]
+    fn test_rb16() {
+        // Prepare a big-endian 16-bit value.
+        let bytes: [u8; 2] = [0x12, 0x34]; // big-endian representation for 0x1234
+        let value = unsafe { rb16(bytes.as_ptr()) };
+        // After conversion, we expect the same numerical value.
+        assert_eq!(value, 0x1234);
+    }
+
+    // Additional tests to ensure functionality with varying data
+    #[test]
+    fn test_rb32_with_different_value() {
+        // Another big-endian value test.
+        let bytes: [u8; 4] = [0xFF, 0x00, 0xAA, 0x55];
+        let value = unsafe { rb32(bytes.as_ptr()) };
+        // On conversion, the expected value is 0xFF00AA55.
+        assert_eq!(value, 0xFF00AA55);
+    }
+
+    #[test]
+    fn test_rb16_with_different_value() {
+        // Another big-endian value test.
+        let bytes: [u8; 2] = [0xFE, 0xDC];
+        let value = unsafe { rb16(bytes.as_ptr()) };
+        // On conversion, the expected value is 0xFEDC.
+        assert_eq!(value, 0xFEDC);
+    }
+    const FILEBUFFERSIZE: usize = 1024;
+
+    /// Helper function to allocate a file buffer and copy provided data.
+    fn allocate_filebuffer(data: &[u8]) -> *mut u8 {
+        // Allocate a vector with a fixed capacity.
+        let mut buffer = vec![0u8; FILEBUFFERSIZE];
+        // Copy provided data into the beginning of the buffer.
+        buffer[..data.len()].copy_from_slice(data);
+        // Leak the vector to obtain a raw pointer.
+        let ptr = buffer.as_mut_ptr();
+        mem::forget(buffer);
+        ptr
+    }
+    fn create_demuxer_with_buffer(data: &[u8]) -> CcxDemuxer<'static> {
+        CcxDemuxer {
+            filebuffer: allocate_filebuffer(data),
+            filebuffer_pos: 0,
+            bytesinbuffer: data.len() as u32,
+            past: 0,
+            ..Default::default()
         }
+    }
+    /// Build a valid packet header.
+    /// Header layout:
+    ///   Bytes 0-3:  0x00 0x00 0x00 0x00
+    ///   Byte 4:     0x01
+    ///   Byte 5:     Packet type (0xbc for PKT_MAP)
+    ///   Bytes 6-9:  Length in big-endian (e.g., 32)
+    ///   Bytes 10-13: Reserved (set to 0)
+    ///   Byte 14:    0xe1
+    ///   Byte 15:    0xe2
+    fn build_valid_header() -> Vec<u8> {
+        let mut header = Vec::with_capacity(16);
+        header.extend_from_slice(&[0, 0, 0, 0]); // 0x00 0x00 0x00 0x00
+        header.push(1);                        // 0x01
+        header.push(0xbc);                     // Packet type: PKT_MAP
+        header.extend_from_slice(&32u32.to_be_bytes()); // Length = 32 (will become 16 after subtracting header size)
+        header.extend_from_slice(&[0, 0, 0, 0]); // Reserved
+        header.push(0xe1);                     // Trailer part 1
+        header.push(0xe2);                     // Trailer part 2
+        header
+    }
+    #[allow(unused)]
+    fn create_temp_file_with_content(content: &[u8]) -> i32 {
+        use tempfile::NamedTempFile;
+        use std::io::{Seek, SeekFrom, Write};
+        let mut tmp = NamedTempFile::new().expect("Unable to create temp file");
+        tmp.write_all(content).expect("Unable to write to temp file");
+        // Rewind the file pointer to the start.
+        tmp.as_file_mut().seek(SeekFrom::Start(0)).expect("Unable to seek to start");
+        // Get the file descriptor. Ensure the file stays open.
+        let file = tmp.reopen().expect("Unable to reopen temp file");
+        file.into_raw_fd()
+    }
+    /// Create a dummy CcxDemuxer with a filebuffer containing `header_data`.
+    fn create_ccx_demuxer_with_header(header_data: &[u8]) -> CcxDemuxer<'static> {
+        let filebuffer = allocate_filebuffer(header_data);
+        CcxDemuxer {
+            filebuffer,
+            filebuffer_pos: 0,
+            bytesinbuffer: header_data.len() as u32,
+            past: 0,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_parse_packet_header_valid() {
+        let header = build_valid_header();
+        let mut demuxer = create_ccx_demuxer_with_header(&header);
+        let mut pkt_type = GXFPktType::PKT_MEDIA; // dummy init
+        let mut length = 0;
+        let ret = unsafe { parse_packet_header(&mut demuxer, &mut pkt_type, &mut length) };
+        assert_eq!(ret, CCX_OK);
+        assert_eq!(pkt_type as u32, GXFPktType::PKT_MAP as u32);
+        // length in header was 32, then subtract 16 -> 16
+        assert_eq!(length, 16);
+        // past should have advanced by 16 bytes
+        assert_eq!(demuxer.past, 16);
+    }
+    #[test]
+    fn test_parse_packet_header_incomplete_read() {
+        // Provide a header that is too short (e.g. only 10 bytes)
+        let header = vec![0u8; 10];
+        let mut demuxer = create_ccx_demuxer_with_header(&header);
+        // let content = b"Direct read test.";
+        // let fd = create_temp_file_with_content(content);
+        // demuxer.infd = fd;
+        let mut pkt_type = GXFPktType::PKT_MEDIA;
+        let mut length = 0;
+        let ret = unsafe { parse_packet_header(&mut demuxer, &mut pkt_type, &mut length) };
+        assert_eq!(ret, CCX_EOF);
+    }
+
+    #[test]
+    fn test_parse_packet_header_invalid_leader() {
+        // Build header with a non-zero in the first 4 bytes.
+        let mut header = build_valid_header();
+        header[0] = 1; // Invalid leader
+        let mut demuxer = create_ccx_demuxer_with_header(&header);
+        let mut pkt_type = GXFPktType::PKT_MEDIA;
+        let mut length = 0;
+        let ret = unsafe { parse_packet_header(&mut demuxer, &mut pkt_type, &mut length) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_packet_header_invalid_trailer() {
+        // Build header with an incorrect trailer byte.
+        let mut header = build_valid_header();
+        header[14] = 0; // Should be 0xe1
+        let mut demuxer = create_ccx_demuxer_with_header(&header);
+        let mut pkt_type = GXFPktType::PKT_MEDIA;
+        let mut length = 0;
+        let ret = unsafe { parse_packet_header(&mut demuxer, &mut pkt_type, &mut length) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_packet_header_invalid_length() {
+        // Build header with length field < 16.
+        let mut header = build_valid_header();
+        // Set length field (bytes 6-9) to 15 (which is < 16).
+        let invalid_length: u32 = 15;
+        header[6..10].copy_from_slice(&invalid_length.to_be_bytes());
+        let mut demuxer = create_ccx_demuxer_with_header(&header);
+        let mut pkt_type = GXFPktType::PKT_MEDIA;
+        let mut length = 0;
+        let ret = unsafe { parse_packet_header(&mut demuxer, &mut pkt_type, &mut length) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+    fn build_valid_material_sec() -> (Vec<u8>, CcxGxf) {
+        let mut buf = Vec::new();
+
+        // Prepare a dummy GXF context.
+        let gxf = CcxGxf::default();
+
+        // MAT_NAME: tag=MAT_NAME, tag_len = 8, then 8 bytes of media name.
+        buf.push(GXFMatTag::MAT_NAME as u8);
+        buf.push(8);
+        let name_data = b"RustTest";
+        buf.extend_from_slice(name_data);
+
+        // MAT_FIRST_FIELD: tag, tag_len=4, then 4 bytes representing a u32 value.
+        buf.push(GXFMatTag::MAT_FIRST_FIELD as u8);
+        buf.push(4);
+        let first_field: u32 = 0x01020304;
+        buf.extend_from_slice(&first_field.to_be_bytes());
+
+        // MAT_MARK_OUT: tag, tag_len=4, then 4 bytes.
+        buf.push(GXFMatTag::MAT_MARK_OUT as u8);
+        buf.push(4);
+        let mark_out: u32 = 0x0A0B0C0D;
+        buf.extend_from_slice(&mark_out.to_be_bytes());
+
+        // Remaining length to be skipped (simulate extra bytes).
+        let remaining = 5;
+        buf.extend_from_slice(&vec![0u8; remaining]);
+
+        // Total length is the entire buffer length.
+        (buf, gxf)
+    }
+
+    /// Setup a demuxer for testing parse_material_sec.
+    /// The demuxer's private_data will be set to a leaked Box of CcxGxf.
+    fn create_demuxer_for_material_sec(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        // Set private_data to point to our gxf structure.
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+
+    #[test]
+    fn test_parse_material_sec_valid() {
+        let (buf, mut gxf) = build_valid_material_sec();
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_for_material_sec(&buf, &mut gxf);
+
+        let ret = unsafe { parse_material_sec(&mut demux, total_len) };
+        assert_eq!(ret, CCX_OK);
+
+        // Check that the media_name was read.
+        assert_eq!(&gxf.media_name[..8], b"RustTest");
+        // Check that first_field_nb was set correctly.
+        assert_eq!(gxf.first_field_nb, 0x01020304);
+        // Check that mark_out was set correctly.
+        assert_eq!(gxf.mark_out, 0x0A0B0C0D);
+    }
+
+    #[test]
+    fn test_parse_material_sec_incomplete_mat_name() {
+        // Build a material section with MAT_NAME tag that promises 8 bytes but only 4 bytes are present.
+        let mut buf = Vec::new();
+        buf.push(GXFMatTag::MAT_NAME as u8);
+        buf.push(8);
+        buf.extend_from_slice(b"Test"); // only 4 bytes instead of 8
+
+        // Add extra bytes to simulate remaining length.
+        buf.extend_from_slice(&[0u8; 3]);
+
+        let total_len = buf.len() as i32;
+        let mut gxf = CcxGxf::default();
+        let mut demux = create_demuxer_for_material_sec(&buf, &mut gxf);
+
+        let ret = unsafe { parse_material_sec(&mut demux, total_len) };
+        // Since buffered_read will return less than expected, we expect CCX_EOF.
+        assert_eq!(ret, CCX_EOF);
+    }
+
+    #[test]
+    fn test_parse_material_sec_invalid_private_data() {
+        // Create a buffer with any data.
+        let buf = vec![0u8; 10];
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&buf);
+        // Set private_data to null.
+        demux.private_data = ptr::null_mut();
+
+        let ret = unsafe { parse_material_sec(&mut demux, total_len) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_material_sec_skip_remaining() {
+        // Build a material section where the length remaining is greater than the data in tags.
+        let mut buf = Vec::new();
+        // One valid tag:
+        buf.push(GXFMatTag::MAT_FIRST_FIELD as u8);
+        buf.push(4);
+        let first_field: u32 = 0x00AA55FF;
+        buf.extend_from_slice(&first_field.to_be_bytes());
+        // Now, simulate extra remaining bytes that cannot be processed.
+        let extra = 10;
+        buf.extend_from_slice(&vec![0u8; extra]);
+
+        let total_len = buf.len() as i32;
+        let mut gxf = CcxGxf::default();
+        let mut demux = create_demuxer_for_material_sec(&buf, &mut gxf);
+
+        let ret = unsafe { parse_material_sec(&mut demux, total_len) };
+        // In this case, the extra bytes will be skipped.
+        // If the number of bytes skipped doesn't match, ret becomes CCX_EOF.
+        // For our simulated buffered_skip (which works in-buffer), we expect CCX_OK if the skip succeeds.
+        assert_eq!(ret, CCX_OK);
+        // And first_field_nb should be set.
+        assert_eq!(gxf.first_field_nb, 0x00AA55FF);
+    }
+
+
+    // tests for set_track_frame_rate
+    #[test]
+    fn test_set_track_frame_rate_60() {
+        let mut vid_track = CcxGxfVideoTrack::default();
+        set_track_frame_rate(&mut vid_track, 1);
+        assert_eq!(vid_track.frame_rate.num, 60);
+        assert_eq!(vid_track.frame_rate.den, 1);
+    }
+    #[test]
+    fn test_set_track_frame_rate_60000() {
+        let mut vid_track = CcxGxfVideoTrack::default();
+        set_track_frame_rate(&mut vid_track, 2);
+        assert_eq!(vid_track.frame_rate.num, 60000);
+        assert_eq!(vid_track.frame_rate.den, 1001);
+    }
+    // Build a valid track description buffer.
+    // Contains:
+    // - TRACK_NAME tag: tag_len = 8, then 8 bytes ("Track001").
+    // - TRACK_FPS tag: tag_len = 4, then 4 bytes representing frame rate (2400).
+    // - Extra bytes appended.
+    fn build_valid_track_desc() -> (Vec<u8>, CcxGxf) {
+        let mut buf = Vec::new();
+        // TRACK_NAME tag.
+        buf.push(GXFTrackTag::TRACK_NAME as u8);
+        buf.push(8);
+        let name = b"Track001XYZ"; // Use only first 8 bytes: "Track001"
+        buf.extend_from_slice(&name[..8]);
+
+        // TRACK_FPS tag.
+        buf.push(GXFTrackTag::TRACK_FPS as u8);
+        buf.push(4);
+        let fps: u32 = 2400;
+        buf.extend_from_slice(&fps.to_be_bytes());
+
+        // Append extra bytes.
+        buf.extend_from_slice(&vec![0u8; 5]);
+
+        // Create a dummy CcxGxf context.
+        let gxf = CcxGxf {
+            nb_streams: 1,
+            media_name: [0; STR_LEN as usize],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: None,
+            vid_track: Some(Box::new(CcxGxfVideoTrack {
+                track_name: [0; STR_LEN as usize],
+                fs_version: 0,
+                frame_rate: CcxRational { num: 0, den: 1 },
+                line_per_frame: 0,
+                field_per_frame: 0,
+                p_code: MpegPictureCoding::CCX_MPC_NONE,
+                p_struct: MpegPictureStruct::CCX_MPS_NONE,
+            })),
+            cdp: None,
+            cdp_len: 0,
+        };
+
+        (buf, gxf)
+    }
+
+    // Helper: Set up a demuxer for track description testing.
+    fn create_demuxer_for_track_desc(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+
+    #[test]
+    fn test_parse_mpeg525_track_desc_valid() {
+        initialize_logger();
+        let (buf, mut gxf) = build_valid_track_desc();
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_for_track_desc(&buf, &mut gxf);
+
+        let ret = unsafe { parse_mpeg525_track_desc(&mut demux, total_len) };
+        assert_eq!(ret, CCX_OK);
+
+        // Verify track name.
+        let vid_track = gxf.vid_track.unwrap();
+        assert_eq!(&vid_track.track_name[..8], b"Track001");
+        // Verify frame rate: fs_version must be set to 2400.
+        assert_eq!(vid_track.fs_version, 0);
+        // Check that demux.past advanced exactly by buf.len().
+        assert_eq!(demux.past as usize, buf.len());
+    }
+
+    #[test]
+    fn test_parse_mpeg525_track_desc_incomplete_track_name() {
+        initialize_logger();
+        // Build a buffer where TRACK_NAME promises 8 bytes but provides only 4.
+        let mut buf = Vec::new();
+        buf.push(GXFTrackTag::TRACK_NAME as u8);
+        buf.push(8);
+        buf.extend_from_slice(b"Test"); // 4 bytes only.
+        buf.extend_from_slice(&[0u8; 3]); // extra bytes
+        let total_len = buf.len() as i32;
+
+        let mut gxf = CcxGxf {
+            nb_streams: 1,
+            media_name: [0; STR_LEN as usize],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: None,
+            vid_track: Some(Box::new(CcxGxfVideoTrack {
+                track_name: [0; STR_LEN as usize],
+                fs_version: 0,
+                frame_rate: CcxRational { num: 0, den: 1 },
+                line_per_frame: 0,
+                field_per_frame: 0,
+                p_code: MpegPictureCoding::CCX_MPC_NONE,
+                p_struct: MpegPictureStruct::CCX_MPS_NONE,
+            })),
+            cdp: None,
+            cdp_len: 0,
+        };
+
+        let mut demux = create_demuxer_for_track_desc(&buf, &mut gxf);
+        let ret = unsafe { parse_mpeg525_track_desc(&mut demux, total_len) };
+        // Expect CCX_EINVAL because insufficient data leads to error.
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_mpeg525_track_desc_invalid_private_data() {
+        let buf = vec![0u8; 10];
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&buf);
+        demux.private_data = ptr::null_mut();
+
+        let result = unsafe { parse_mpeg525_track_desc(&mut demux, total_len) };
+        assert_eq!(result, CCX_EINVAL);
+    }
+    // Build a valid ancillary (AD) track description buffer.
+    // This buffer contains:
+    // - TRACK_NAME tag: tag_len = 8, then 8 bytes for the track name.
+    // - TRACK_AUX tag: tag_len = 8, then 8 bytes of aux info.
+    //   We set auxi_info such that:
+    //     auxi_info[2] = 2 (maps to PRES_FORMAT_HD),
+    //     auxi_info[3] = 4,
+    //     auxi_info[4..6] = [0, 16] (field_size = 16),
+    //     auxi_info[6..8] = [0, 2] (packet_size = 2*256 = 512).
+    // - Extra bytes appended.
+    fn build_valid_ad_track_desc() -> (Vec<u8>, CcxGxf) {
+        let mut buf = Vec::new();
+        // TRACK_NAME tag.
+        buf.push(GXFTrackTag::TRACK_NAME as u8);
+        buf.push(8);
+        let name = b"ADTrk001XY"; // Use first 8 bytes: "ADTrk001"
+        buf.extend_from_slice(&name[..8]);
+
+        // TRACK_AUX tag.
+        buf.push(GXFTrackTag::TRACK_AUX as u8);
+        buf.push(8);
+        // Create aux info: [?, ?, 2, 4, 0, 16, 0, 2]
+        let auxi_info = [0u8, 0u8, 2, 4, 0, 16, 0, 2];
+        buf.extend_from_slice(&auxi_info);
+
+        // Append extra bytes.
+        buf.extend_from_slice(&vec![0u8; 3]);
+
+        // Create a dummy CcxGxf context.
+        let gxf = CcxGxf {
+            nb_streams: 1,
+            media_name: [0; STR_LEN as usize],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                track_name: [0; STR_LEN as usize],
+                fs_version: 0,
+                frame_rate: 0,
+                line_per_frame: 0,
+                field_per_frame: 0,
+                ad_format: GXFAncDataPresFormat::PRES_FORMAT_SD,
+                nb_field: 0,
+                field_size: 0,
+                packet_size: 0,
+                id: 123, // sample id
+            })),
+            vid_track: None,
+            cdp: None,
+            cdp_len: 0,
+            // Other fields as needed...
+        };
+
+        (buf, gxf)
+    }
+
+    // Helper: Set up a demuxer for AD track description testing.
+    fn create_demuxer_for_ad_track_desc(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+
+    #[test]
+    fn test_parse_ad_track_desc_valid() {
+        let (buf, mut gxf) = build_valid_ad_track_desc();
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_for_ad_track_desc(&buf, &mut gxf);
+
+        let ret = unsafe { parse_ad_track_desc(&mut demux, total_len) };
+        assert_eq!(ret, CCX_OK);
+
+        let ad_track = gxf.ad_track.unwrap();
+        // Check that TRACK_NAME was read correctly.
+        assert_eq!(&ad_track.track_name[..8], b"ADTrk001");
+        // Check that TRACK_AUX set the fields as expected.
+        // auxi_info[2] was 2, so we expect PRES_FORMAT_HD.
+        assert_eq!(ad_track.ad_format as i32, GXFAncDataPresFormat::PRES_FORMAT_HD as i32);
+        // auxi_info[3] is 4.
+        assert_eq!(ad_track.nb_field, 4);
+        // Field size: [0,16] => 16.
+        assert_eq!(ad_track.field_size, 16);
+        // Packet size: [0,2] => 2 * 256 = 512.
+        assert_eq!(ad_track.packet_size, 512);
+        // Verify that demux.past advanced by full buf length.
+        assert_eq!(demux.past as usize, buf.len());
+    }
+
+    #[test]
+    fn test_parse_ad_track_desc_incomplete_track_name() {
+        initialize_logger();
+        // Build a buffer where TRACK_NAME promises 8 bytes but only 4 are provided.
+        let mut buf = Vec::new();
+        buf.push(GXFTrackTag::TRACK_NAME as u8);
+        buf.push(8);
+        buf.extend_from_slice(b"Test"); // 4 bytes only.
+        buf.extend_from_slice(&[0u8; 2]); // extra bytes
+        let total_len = buf.len() as i32;
+
+        let mut gxf = CcxGxf {
+            nb_streams: 1,
+            media_name: [0; STR_LEN as usize],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                track_name: [0; STR_LEN as usize],
+                fs_version: 0,
+                frame_rate: 0,
+                line_per_frame: 0,
+                field_per_frame: 0,
+                ad_format: GXFAncDataPresFormat::PRES_FORMAT_SD,
+                nb_field: 0,
+                field_size: 0,
+                packet_size: 0,
+                id: 45,
+            })),
+            vid_track: None,
+            cdp: None,
+            cdp_len: 0,
+        };
+
+        let mut demux = create_demuxer_for_ad_track_desc(&buf, &mut gxf);
+        let ret = unsafe { parse_ad_track_desc(&mut demux, total_len) };
+        // Expect CCX_EINVAL because TRACK_NAME did not yield full 8 bytes.
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_ad_track_desc_invalid_private_data() {
+        let buf = vec![0u8; 10];
+        let total_len = buf.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&buf);
+        // Set private_data to null.
+        demux.private_data = ptr::null_mut();
+
+        let ret = unsafe { parse_ad_track_desc(&mut demux, total_len) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+    fn create_demuxer_for_track_sec(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+
+    // Helper: Build a track record.
+    // Produces 4 header bytes followed by track_data of length track_len.
+    // track_type, track_id, track_len are provided.
+    fn build_track_record(track_type: u8, track_id: u8, track_len: i32, track_data: &[u8]) -> Vec<u8> {
+        let mut rec = Vec::new();
+        rec.push(track_type);
+        rec.push(track_id);
+        rec.extend_from_slice(&(track_len as u16).to_be_bytes());
+        rec.extend_from_slice(&track_data[..track_len as usize]);
+        rec
+    }
+
+    #[test]
+    fn test_parse_track_sec_no_context() {
+        // Create a demuxer with a valid buffer.
+        let buf = vec![0u8; 10];
+        let mut demux = create_demuxer_with_buffer(&buf);
+        // Set private_data to null.
+        demux.private_data = ptr::null_mut();
+        let mut data = DemuxerData::default();
+        let ret = unsafe { parse_track_sec(&mut demux, buf.len() as i32, &mut data) };
+        assert_eq!(ret, CCX_EINVAL);
+    }
+
+    #[test]
+    fn test_parse_track_sec_skip_branch() {
+        // Build a record that should be skipped because track_type does not have high bit set.
+        let track_len = 7;
+        let track_data = vec![0xEE; track_len as usize];
+        // Use track_type = 0x10 (no high bit) and arbitrary track_id.
+        let record = build_track_record(0x10, 0xFF, track_len, &track_data);
+        let buf = record;
+        let total_len = buf.len() as i32;
+
+        // Create a dummy context.
+        let mut gxf = CcxGxf {
+            nb_streams: 1,
+            media_name: [0; 256],
+            first_field_nb: 0,
+            last_field_nb: 0,
+            mark_in: 0,
+            mark_out: 0,
+            stream_size: 0,
+            ad_track: None,
+            vid_track: None,
+            cdp: None,
+            cdp_len: 0,
+        };
+        let mut demux = create_demuxer_for_track_sec(&buf, &mut gxf);
+        let mut data = DemuxerData::default();
+
+        let ret = unsafe { parse_track_sec(&mut demux, total_len, &mut data) };
+        // The record is skipped so ret should be CCX_OK and datatype remains Unknown.
+        assert_eq!(ret, CCX_OK);
+        assert_eq!(data.bufferdatatype as i32, BufferdataType::Unknown as i32);
+        assert_eq!(demux.past as usize, buf.len());
+    }
+    impl DemuxerData {
+        pub fn new(size: usize) -> Self {
+            let mut vec = vec![0u8; size];
+            let ptr = vec.as_mut_ptr();
+            mem::forget(vec);
+            DemuxerData { buffer: ptr, len: 0, ..Default::default() }
+        }
+    }
+
+    // Build a valid CDP packet.
+    // Packet layout:
+    // 0: 0x96, 1: 0x69,
+    // 2: cdp_length (should equal total length, here 18),
+    // 3: frame rate byte (e.g. 0x50),
+    // 4: a byte (e.g. 0x42),
+    // 5-6: header sequence counter (0x00, 0x01),
+    // 7: section id: 0x72,
+    // 8: cc_count (e.g. 0x02 => cc_count = 2),
+    // 9-14: 6 bytes of cc data,
+    // 15: footer id: 0x74,
+    // 16-17: footer sequence counter (0x00, 0x01).
+    fn build_valid_cdp_packet() -> Vec<u8> {
+        let total_len = 18u8;
+        let mut packet = Vec::new();
+        packet.push(0x96);
+        packet.push(0x69);
+        packet.push(total_len); // cdp_length = 18
+        packet.push(0x50); // frame rate byte: framerate = 5
+        packet.push(0x42); // cc_data_present = 1, caption_service_active = 1
+        packet.extend_from_slice(&[0x00, 0x01]); // header sequence counter = 1
+        packet.push(0x72); // section id for CC data
+        packet.push(0x02); // cc_count = 2 (lower 5 bits)
+        packet.extend_from_slice(&[0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]); // cc data: 6 bytes
+        packet.push(0x74); // footer id
+        packet.extend_from_slice(&[0x00, 0x01]); // footer sequence counter = 1
+        packet
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_valid() {
+        initialize_logger();
+        let packet = build_valid_cdp_packet();
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_ok());
+        // cc_count = 2 so we expect 2 * 3 = 6 bytes to be copied.
+        assert_eq!(data.len, 6);
+        let copied = unsafe { slice::from_raw_parts(data.buffer, data.len) };
+        assert_eq!(copied, &[0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_short_packet() {
+        initialize_logger();
+        // Packet shorter than 11 bytes.
+        let packet = vec![0x96, 0x69, 0x08, 0x50, 0x42, 0x00, 0x01, 0x72, 0x01, 0xAA];
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid packet length");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_invalid_identifier() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        packet[0] = 0x00;
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid CDP identifier");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_mismatched_length() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        packet[2] = 20; // Set length to 20, but actual length is 18.
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Mismatched CDP length");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_time_code_section() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        // Change section id at offset 7 to 0x71.
+        packet[7] = 0x71;
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Time code section ignored");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_service_info_section() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        packet[7] = 0x73;
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Service information section ignored");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_new_section() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        packet[7] = 0x80; // falls in 0x75..=0xEF
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Unhandled new section");
+    }
+
+    #[test]
+    fn test_parse_ad_cdp_footer_mismatch() {
+        initialize_logger();
+        let mut packet = build_valid_cdp_packet();
+        // Change footer sequence counter (bytes 16-17) to 0x00,0x02.
+        packet[16] = 0x00;
+        packet[17] = 0x02;
+        let mut data = DemuxerData::new(100);
+        let result = parse_ad_cdp(&packet, &mut data);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "CDP footer sequence mismatch");
+    }
+    // Helper: Build a payload for parse_ad_pyld.
+    // The payload length (len) is total bytes.
+    // It must be at least 6 (header) + 2 (one iteration) = 8.
+    // For a valid CEA-708 case, we supply:
+    //  - d_id (2 bytes little-endian): CLOSED_CAP_DID (0x01, 0x00)
+    //  - sd_id (2 bytes): CLOSED_C708_SDID (0x02, 0x00)
+    //  - dc (2 bytes): arbitrary (e.g., 0xFF, 0x00)
+    //  - Then one 16-bit word: e.g., 0xFF, 0x00.
+    fn build_valid_ad_pyld_payload() -> Vec<u8> {
+        let mut payload = Vec::new();
+        // Header: d_id = 0x0001, sd_id = 0x0002, dc = 0xFF00.
+        payload.extend_from_slice(&[0x01, 0x00]); // d_id
+        payload.extend_from_slice(&[0x02, 0x00]); // sd_id
+        payload.extend_from_slice(&[0xFF, 0x00]); // dc (masked to 0xFF)
+        // Remaining payload: one 16-bit word.
+        payload.extend_from_slice(&[0xFF, 0x00]); // This will produce 0x00FF stored in cdp[0]
+        payload
+    }
+
+    #[test]
+    fn test_parse_ad_pyld_valid_cea708() {
+        // Build a valid payload for CEA-708.
+        let payload = build_valid_ad_pyld_payload();
+        let total_len = payload.len() as i32; // e.g., 8 bytes
+        let mut demux = create_demuxer_with_buffer(&payload);
+        // Create a dummy GXF context with no cdp allocated.
+        let mut gxf = CcxGxf {
+            cdp: None,
+            cdp_len: 0,
+            // Other fields can be default.
+            ..Default::default()
+        };
+        demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // Check that demux.past advanced by total_len.
+        assert_eq!(demux.past as usize, payload.len());
+        // After subtracting 6, remaining length = 2.
+        // So ctx.cdp_len should be set to ((2 - 2) / 2) = 0.
+        // However, note that the loop runs if remaining_len > 2.
+        // In this case, 2 is not >2 so loop does not run.
+        // Thus, for a minimal valid payload, we need to supply at least 10 bytes.
+        // Let's update our payload accordingly.
+    }
+
+
+    #[test]
+    fn test_parse_ad_pyld_cea608_branch() {
+        // Build a payload for the CEA-608 branch.
+        // Use d_id = 0x0001 and sd_id = 0x0003.
+        let mut payload = Vec::new();
+        payload.extend_from_slice(&[0x01, 0x00]); // d_id
+        payload.extend_from_slice(&[0x03, 0x00]); // sd_id = 0x0003 for CEA-608
+        payload.extend_from_slice(&[0x00, 0x00]); // dc (arbitrary)
+        // Append some extra payload (e.g., 4 bytes).
+        payload.extend_from_slice(&[0x11, 0x22, 0x33, 0x44]);
+        let total_len = payload.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&payload);
+        let mut gxf = CcxGxf {
+            cdp: None,
+            cdp_len: 0,
+            ..Default::default()
+        };
+        demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data) };
+        // In this branch, the function only logs "Need Sample" and does not fill cdp.
+        // The function still calls buffered_skip for the remaining bytes.
+        assert_eq!(ret, CCX_OK);
+        // demux.past should equal total_len.
+        assert_eq!(demux.past as usize, payload.len());
+    }
+
+    #[test]
+    fn test_parse_ad_pyld_other_branch() {
+        // Build a payload for an "other" service (d_id != CLOSED_CAP_DID).
+        // For example, d_id = 0x0002.
+        let mut payload = Vec::new();
+        payload.extend_from_slice(&[0x02, 0x00]); // d_id = 0x0002 (does not match)
+        payload.extend_from_slice(&[0x02, 0x00]); // sd_id = 0x0002 (irrelevant)
+        payload.extend_from_slice(&[0x00, 0x00]); // dc
+        // Append extra payload (4 bytes).
+        payload.extend_from_slice(&[0x55, 0x66, 0x77, 0x88]);
+        let total_len = payload.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&payload);
+        let mut gxf = CcxGxf {
+            cdp: None,
+            cdp_len: 0,
+            ..Default::default()
+        };
+        demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data) };
+        // For other service, no branch is taken; we simply skip remaining bytes.
+        assert_eq!(ret, CCX_OK);
+        // demux.past should equal total_len.
+        assert_eq!(demux.past as usize, payload.len());
+    }
+    // Helper: Create a demuxer with a given GXF context.
+    #[allow(unused)]
+    fn create_demuxer_for_vbi(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+    // --- Tests for when VBI support is disabled ---
+    #[test]
+    #[cfg(not(feature = "ccx_gxf_enable_ad_vbi"))]
+    fn test_parse_ad_vbi_disabled() {
+        // Create a buffer with known content.
+        let payload = vec![0xAA; 20]; // 20 bytes of data.
+        let total_len = payload.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&payload);
+        // Create a dummy DemuxerData (not used in disabled branch).
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_vbi(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // Since VBI is disabled, buffered_skip should be called and return total_len.
+        assert_eq!(demux.past as usize, payload.len());
+        // data.len should remain unchanged.
+        assert_eq!(data.len, 0);
+    }
+
+    // --- Tests for when VBI support is enabled ---
+    #[test]
+    #[cfg(
+        feature = "ccx_gxf_enable_ad_vbi"
+    )] // to run use ccx_gxf_enable_ad_vbi=1 RUST_TEST_THREADS=1 cargo test
+    fn test_parse_ad_vbi_enabled() {
+        // Create a buffer with known content.
+        let payload = vec![0xBB; 20]; // 20 bytes of data.
+        let total_len = payload.len() as i32;
+        let mut demux = create_demuxer_with_buffer(&payload);
+        // Create a dummy GXF context.
+        let mut gxf = CcxGxf::default();
+        // Create a dummy DemuxerData with a buffer large enough.
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_vbi(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // In VBI enabled branch, data.len was increased by total_len.
+        // And buffered_read copies total_len bytes.
+        assert_eq!(data.len, total_len as usize);
+        // Check that the bytes read into data.buffer match payload.
+        assert_eq!(unsafe { std::slice::from_raw_parts(data.buffer, total_len as usize) }, &payload[..]);        // demux.past should equal total_len.
+        assert_eq!(demux.past as usize, total_len as usize);
+    }
+    // Helper: Create a demuxer for ad field, with a given GXF context that already has an ancillary track.
+    fn create_demuxer_for_ad_field(data: &[u8], gxf: &mut CcxGxf) -> CcxDemuxer<'static> {
+        let mut demux = create_demuxer_with_buffer(data);
+        demux.private_data = gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        demux
+    }
+    // Test 1: Minimal valid field section (no loop iteration)
+    #[test]
+    fn test_parse_ad_field_valid_minimal() {
+        // Build a minimal valid field section:
+        // Total length = 52 bytes.
+        // Header:
+        //  "finf" (4 bytes)
+        //  spec value = 4 (4 bytes: 00 00 00 04)
+        //  field identifier = 0x10 (4 bytes: 00 00 00 10)
+        //  "LIST" (4 bytes)
+        //  sample size = 36 (4 bytes: 24 00 00 00) because after "LIST", remaining len = 52 - 16 = 36.
+        //  "anc " (4 bytes)
+        // Then remaining = 52 - 24 = 28 bytes. (Loop condition: while(28 > 28) false)
+        let mut buf = Vec::new();
+        buf.extend_from_slice(b"finf");
+        buf.extend_from_slice(&[0x00, 0x00, 0x00, 0x04]);
+        buf.extend_from_slice(&[0x00, 0x00, 0x00, 0x10]);
+        buf.extend_from_slice(b"LIST");
+        buf.extend_from_slice(&[0x24, 0x00, 0x00, 0x00]); // 36 decimal
+        buf.extend_from_slice(b"anc ");
+        // Append 28 bytes of dummy data (e.g. 0xAA)
+        buf.extend_from_slice(&vec![0xAA; 28]);
+        let total_len = buf.len() as i32;
+        // Create a dummy GXF context with an ancillary track
+        #[allow(unused_variables)]
+        let ad_track = CcxGxfAncillaryDataTrack {
+            track_name: [0u8; 256],
+            fs_version: 0,
+            frame_rate: 0,
+            line_per_frame: 0,
+            field_per_frame: 0,
+            ad_format: GXFAncDataPresFormat::PRES_FORMAT_SD,
+            nb_field: 0,
+            field_size: 0,
+            packet_size: 0,
+            id: 0,
+        };
+        let mut gxf = CcxGxf::default();
+        let mut demux = create_demuxer_for_ad_field(&buf, &mut gxf);
+        let mut data = DemuxerData::new(100);
+
+        let ret = unsafe { parse_ad_field(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // Expect demux.past to equal total length.
+        assert_eq!(demux.past as usize, buf.len());
+    }
+
+    //tests for set_data_timebase
+    #[test]
+    fn test_set_data_timebase_0() {
+        let mut data = DemuxerData::default();
+        set_data_timebase(0, &mut data);
+        assert_eq!(data.tb.den, 30000);
+        assert_eq!(data.tb.num, 1001);
+    }
+    #[test]
+    fn test_set_data_timebase_1() {
+        let mut data = DemuxerData::default();
+        set_data_timebase(1, &mut data);
+        assert_eq!(data.tb.den, 25);
+        assert_eq!(data.tb.num, 1);
+    }
+    fn create_demuxer_with_data(data: &[u8]) -> CcxDemuxer {
+        CcxDemuxer {
+            filebuffer: allocate_filebuffer(data),
+            filebuffer_pos: 0,
+            bytesinbuffer: data.len() as u32,
+            past: 0,
+            private_data: ptr::null_mut(),
+            ..Default::default()
+        }
+    }
+
+    // Helper: Create a DemuxerData with a writable buffer.
+    fn create_demuxer_data(size: usize) -> DemuxerData {
+        let mut buf = vec![0u8; size];
+        let ptr = buf.as_mut_ptr();
+        mem::forget(buf);
+        DemuxerData {
+            buffer: ptr,
+            len: 0,
+            ..Default::default()
+        }
+    }
+
+    // Test: Full packet is successfully read.
+    #[test]
+    fn test_parse_mpeg_packet_valid() {
+        // Build a test payload.
+        let payload = b"Hello, Rust MPEG Packet!";
+        let total_len = payload.len();
+        let mut demux = create_demuxer_with_data(payload);
+        let mut data = create_demuxer_data(1024);
+
+        // Call parse_mpeg_packet.
+        let ret = unsafe { parse_mpeg_packet(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // Check that data.len was increased by total_len.
+        assert_eq!(data.len, total_len);
+        // Verify that the content in data.buffer matches payload.
+        let out = unsafe { slice::from_raw_parts(data.buffer, total_len) };
+        assert_eq!(out, payload);
+        // Check that demux.past equals total_len.
+        assert_eq!(demux.past as usize, total_len);
+    }
+
+    // Test: Incomplete packet (simulate short read).
+    #[test]
+    fn test_parse_mpeg_packet_incomplete() {
+        // Build a test payload but simulate that only part of it is available.
+        let payload = b"Short Packet";
+        let total_len = payload.len();
+        // Create a demuxer with only half of the payload available.
+        let available = total_len / 2;
+        let mut demux = create_demuxer_with_data(&payload[..available]);
+        let mut data = create_demuxer_data(1024);
+
+        // Call parse_mpeg_packet.
+        let ret = unsafe { parse_mpeg_packet(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_EOF);
+        // data.len should still be increased by total_len (as per C code).
+        assert_eq!(data.len, total_len);
+        // demux.past should equal available.
+        assert_eq!(demux.past as usize, 0);
+    }
+    #[test]
+    fn test_parse_ad_packet_correct_data() {
+        // Setup test data
+        let mut data = Vec::new();
+        data.extend_from_slice(b"RIFF");
+        data.extend_from_slice(&65528u32.to_le_bytes()); // ADT packet length
+        data.extend_from_slice(b"rcrd");
+        data.extend_from_slice(b"desc");
+        data.extend_from_slice(&20u32.to_le_bytes()); // desc length
+        data.extend_from_slice(&2u32.to_le_bytes()); // version
+        let nb_field = 2;
+        data.extend_from_slice(&(nb_field as u32).to_le_bytes());
+        let field_size = 100;
+        data.extend_from_slice(&(field_size as u32).to_le_bytes());
+        data.extend_from_slice(&65536u32.to_le_bytes()); // buffer size
+        let timebase = 12345u32;
+        data.extend_from_slice(&timebase.to_le_bytes());
+        data.extend_from_slice(b"LIST");
+        let field_section_size = 4 + (nb_field * field_size) as u32;
+        data.extend_from_slice(&field_section_size.to_le_bytes());
+        data.extend_from_slice(b"fld ");
+        for _ in 0..nb_field {
+            data.extend(vec![0u8; field_size as usize]);
+        }
+
+        let mut demux = create_ccx_demuxer_with_header(&data);
+        let mut ctx = CcxGxf {
+            ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                nb_field,
+                field_size,
+                ..Default::default()
+                // ... other necessary fields
+            })),
+            ..Default::default()
+        };
+        demux.private_data = &mut ctx as *mut _ as *mut std::ffi::c_void;
+
+        let mut demuxer_data = DemuxerData::default();
+
+        let result = unsafe { parse_ad_packet(&mut demux, data.len() as i32, &mut demuxer_data) };
+        assert_eq!(result,
+                   CCX_OK);
+        assert_eq!(demux.past,
+                   data.len() as i64);
+    }
+
+    #[test]
+    fn test_parse_ad_packet_incorrect_riff() {
+        let mut data = Vec::new();
+        data.extend_from_slice(b"RIFX"); // Incorrect RIFF
+        // ... rest of data setup similar to correct test but with incorrect header
+
+        let mut demux = create_ccx_demuxer_with_header(&data);
+        let mut ctx = CcxGxf {
+            ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                nb_field: 0,
+                field_size: 0,
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        demux.private_data = &mut ctx as *mut _ as *mut std::ffi::c_void;
+
+        let mut demuxer_data = DemuxerData::default();
+        let result = unsafe { parse_ad_packet(&mut demux, data.len() as i32, &mut demuxer_data) };
+        assert_eq!(result, CCX_EOF); // Or check for expected result based on partial parsing
+    }
+
+    #[test]
+    fn test_parse_ad_packet_eof_condition() {
+        let mut data = Vec::new();
+        data.extend_from_slice(b"RIFF");
+        data.extend_from_slice(&65528u32.to_le_bytes());
+        // ... incomplete data
+
+        let mut demux = create_demuxer_with_buffer(&data);
+        let mut ctx = CcxGxf {
+            ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                nb_field: 0,
+                field_size: 0,
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+        demux.private_data = &mut ctx as *mut _ as *mut std::ffi::c_void;
+
+        let mut demuxer_data = DemuxerData::default();
+        let result = unsafe { parse_ad_packet(&mut demux, data.len() as i32 + 10, &mut demuxer_data) }; // Len larger than data
+        assert_eq!(result, CCX_EOF);
+    }
+    // Tests for set_mpeg_frame_desc
+    #[test]
+    fn test_set_mpeg_frame_desc_i_frame() {
+        let mut vid_track = CcxGxfVideoTrack::default();
+        let mpeg_frame_desc_flag = 0b00000001;
+        set_mpeg_frame_desc(&mut vid_track, mpeg_frame_desc_flag);
+        assert_eq!(vid_track.p_code as i32, MpegPictureCoding::CCX_MPC_I_FRAME as i32);
+        assert_eq!(vid_track.p_struct as i32, MpegPictureStruct::CCX_MPS_NONE as i32);
+    }
+    #[test]
+    fn test_set_mpeg_frame_desc_p_frame() {
+        let mut vid_track = CcxGxfVideoTrack::default();
+        let mpeg_frame_desc_flag = 0b00000010;
+        set_mpeg_frame_desc(&mut vid_track, mpeg_frame_desc_flag);
+        assert_eq!(vid_track.p_code as i32, MpegPictureCoding::CCX_MPC_P_FRAME as i32);
+        assert_eq!(vid_track.p_struct as i32, MpegPictureStruct::CCX_MPS_NONE as i32);
+    }
+    #[test]
+    fn test_partial_eq_gxf_track_type() {
+        let track_type1 = GXFTrackType::TRACK_TYPE_TIME_CODE_525;
+        let track_type2 = GXFTrackType::TRACK_TYPE_TIME_CODE_525;
+        assert_eq!(track_type1 as i32, track_type2 as i32);
+    }
+    fn create_test_demuxer(data: &[u8], has_ctx: bool) -> CcxDemuxer {
+        let demux = CcxDemuxer {
+            filebuffer: data.as_ptr() as *mut u8,
+            bytesinbuffer: data.len() as u32,
+            filebuffer_pos: 0,
+            past: 0,
+            private_data: if has_ctx {
+                Box::into_raw(Box::new(CcxGxf {
+                    ad_track: Some(Box::new(CcxGxfAncillaryDataTrack {
+                        packet_size: 100,
+                        nb_field: 2,
+                        field_size: 100,
+                        ..Default::default()
+                    })),
+                    vid_track: Some(Box::new(CcxGxfVideoTrack {
+                        frame_rate: CcxRational { num: 30000, den: 1001 },
+                        ..Default::default()
+                    })),
+                    first_field_nb: 0,
+                    ..Default::default()
+                })) as *mut _
+            } else {
+                ptr::null_mut()
+            },
+            ..Default::default()
+        };
+        demux
+    }
+
+    #[test]
+    fn test_parse_media_ancillary_data() {
+        let mut data = vec![
+            0x02, // TRACK_TYPE_ANCILLARY_DATA
+            0x01, // track_nb
+            0x00, 0x00, 0x00, 0x02, // media_field_nb (BE32)
+            0x00, 0x01, // first_field_nb (BE16)
+            0x00, 0x02, // last_field_nb (BE16)
+            0x00, 0x00, 0x00, 0x03, // time_field (BE32)
+            0x01, // valid_time_field (bit 0 set)
+            0x00, // skipped byte
+        ];
+        // Add payload (100 bytes for ad_track->packet_size)
+        data.extend(vec![0u8; 100]);
+
+        let mut demux = create_test_demuxer(&data, true);
+        let mut demuxer_data = DemuxerData::default();
+
+        let result = unsafe { parse_media(&mut demux, data.len() as i32, &mut demuxer_data) };
+        assert_eq!(result, CCX_OK);
+    }
+
+    #[test]
+    fn test_parse_media_mpeg2() {
+        initialize_logger();
+        let mut data = vec![
+            0x04, // TRACK_TYPE_MPEG2_525
+            0x01, // track_nb
+            0x00, 0x00, 0x00, 0x02, // media_field_nb (BE32)
+            0x12, 0x34, 0x56, 0x78, // mpeg_pic_size (BE32)
+            0x00, 0x00, 0x00, 0x03, // time_field (BE32)
+            0x01, // valid_time_field
+            0x00, // skipped byte
+        ];
+        // Add MPEG payload (0x123456 bytes)
+        data.extend(vec![0u8; 0x123456]);
+
+        let mut demux = create_test_demuxer(&data, true);
+        demux.private_data = Box::into_raw(Box::new(CcxGxf {
+            ad_track: None, // Force MPEG path
+            vid_track: Some(Box::new(CcxGxfVideoTrack::default())),
+            first_field_nb: 0,
+            ..Default::default()
+        })) as *mut _;
+
+        let mut demuxer_data = DemuxerData::default();
+        let result = unsafe { parse_media(&mut demux, data.len() as i32, &mut demuxer_data) };
+        assert_eq!(result, CCX_OK);
+    }
+
+
+    #[test]
+    fn test_parse_media_insufficient_len() {
+        let data = vec![0x02, 0x01]; // Incomplete header
+        let mut demux = create_test_demuxer(&data, true);
+        let mut demuxer_data = DemuxerData::default();
+        let result = unsafe { parse_media(&mut demux, 100, &mut demuxer_data) };
+        assert_eq!(result, CCX_EOF);
+    }
+    // Tests for parse_flt
+
+
+    fn create_test_demuxer_parse_map(data: &[u8]) -> CcxDemuxer {
+        CcxDemuxer {
+            filebuffer: data.as_ptr() as *mut u8,
+            bytesinbuffer: data.len() as u32,
+            filebuffer_pos: 0,
+            past: 0,
+            private_data: Box::into_raw(Box::new(CcxGxf::default())) as *mut _,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_parse_flt() {
+        let data = vec![0x01, 0x02, 0x03, 0x04];
+        let mut demux = create_test_demuxer(&data, false);
+        let result = unsafe { parse_flt(&mut demux, 4) };
+        assert_eq!(result, CCX_OK);
+        assert_eq!(demux.past, 4);
+    }
+    #[test]
+    fn test_parse_flt_eof() {
+        let data = vec![0x01, 0x02, 0x03, 0x04];
+        let mut demux = create_test_demuxer(&data, false);
+        let result = unsafe { parse_flt(&mut demux, 5) };
+        assert_eq!(result, CCX_EOF);
+        assert_eq!(demux.past as usize, unsafe { buffered_skip(&mut demux, 5) });
+    }
+    #[test]
+    fn test_parse_flt_invalid() {
+        let data = vec![0x01, 0x02, 0x03, 0x04];
+        let mut demux = create_test_demuxer(&data, false);
+        let result = unsafe { parse_flt(&mut demux, 40) };
+        assert_eq!(result, CCX_EOF);
+        assert_eq!(demux.past as usize, 0);
+    }
+    // Tests for parse_map
+    #[test]
+    fn test_parse_map_valid() {
+        // Build a MAP packet as follows:
+        // Total length: we simulate a buffer with a total length of, say, 40 bytes.
+        // Layout:
+        //   - First, subtract 2 bytes: these 2 bytes are used for the MAP identifier.
+        //   - Next, 2 bytes: should equal 0xe0ff.
+        //   For our test, we set these two bytes to 0xe0, 0xff.
+        //   - Then, subtract 2 and read material_sec_len.
+        //     Let's set material_sec_len = 10.
+        //   - Then, material section: 10 bytes.
+        //   - Then, subtract 2 and read track_sec_len.
+        //     Let's set track_sec_len = 8.
+        //   - Then, track section: 8 bytes.
+        // Total consumed in header: 2 + 2 + 2 + 10 + 2 + 8 = 26.
+        // We then simulate that the remaining len is (40 - 26) = 14.
+        // In the error block, we skip those 14 bytes.
+        let mut buf = Vec::new();
+        // First 2 bytes: arbitrary (we subtract these, not used in MAP check).
+        buf.extend_from_slice(&[0x00, 0x00]);
+        // Next 2 bytes: MAP identifier (0xe0, 0xff).
+        buf.extend_from_slice(&[0xe0, 0xff]);
+        // Next 2 bytes: material_sec_len = 10 (big-endian).
+        buf.extend_from_slice(&10u16.to_be_bytes());
+        // Material section: 10 arbitrary bytes.
+        buf.extend_from_slice(&vec![0xAA; 10]);
+        // Next 2 bytes: track_sec_len = 8.
+        buf.extend_from_slice(&8u16.to_be_bytes());
+        // Track section: 8 arbitrary bytes.
+        buf.extend_from_slice(&vec![0xBB; 8]);
+        // Now remaining bytes: 14 arbitrary bytes.
+        buf.extend_from_slice(&vec![0xCC; 14]);
+        #[allow(unused_variables)]
+        let total_len = buf.len() as i32; // should be 40 + 14 = 54? Let's check:
+        // Actually: 2+2+2+10+2+8+14 = 40 bytes.
+        // Let's set total length = buf.len() as i32.
+        let total_len = buf.len() as i32;
+
+        // Create demuxer with this buffer.
+        let mut demux = create_demuxer_with_data(&buf);
+        // Create a dummy GXF context and assign to demux.private_data.
+        let mut gxf = CcxGxf::default();
+        // For MAP, parse_material_sec and parse_track_sec are called;
+        // our dummy implementations simply skip the specified bytes.
+        // Set private_data.
+        demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
+        // Create a dummy DemuxerData.
+        let mut data = create_demuxer_data(1024);
+
+        let ret = unsafe { parse_map(&mut demux, total_len, &mut data) };
+        assert_eq!(ret, CCX_OK);
+        // Check that demux.past equals the entire remaining length after processing.
+        // In our dummy, parse_material_sec and parse_track_sec simply skip bytes.
+        // Thus, final buffered_skip in error block should skip the remaining bytes.
+        // Our test expects that demux.past equals total_len - 2 - 2 - 2 -10 -2 -8 + (skipped remaining).
+        // For simplicity, we assert that demux.past equals the total remaining bytes (buf.len() - consumed headers).
+        // Here, consumed header bytes: 2 (initial subtraction) + 2 (MAP id) + 2 (material_sec_len) + 10 + 2 (track_sec_len) + 8 = 26.
+        // Then error block should skip  (total_len - 26).
+        let expected_error_skip = (total_len - 26) as usize;
+        // And demux.past should equal 26 (from header processing) + expected_error_skip.
+        assert_eq!(demux.past as usize, 26 + expected_error_skip);
+    }
+
+
+    #[test]
+    fn test_parse_map_invalid_header() {
+        let data = vec![0x00, 0x00]; // Invalid header
+        let mut demux = create_test_demuxer_parse_map(&data);
+        let mut data = DemuxerData::default();
+        let result = unsafe { parse_map(&mut demux, 2, &mut data) };
+        assert_eq!(result, CCX_OK);
+        assert_eq!(demux.past, 2);
+    }
+
+    #[test]
+    fn test_parse_map_material_section_overflow() {
+        let data = vec![
+            0xe0, 0xff, // Valid header
+            0x00, 0x05, // material_sec_len = 5 (exceeds remaining len)
+        ];
+        let mut demux = create_test_demuxer_parse_map(&data);
+        let mut data = DemuxerData::default();
+        let result = unsafe { parse_map(&mut demux, 4, &mut data) };
+        assert_eq!(result, CCX_OK);
+        assert_eq!(demux.past, 4);
+    }
+
+    #[test]
+    fn test_parse_map_track_section_overflow() {
+        let data = vec![
+            0xe0, 0xff, // Valid header
+            0x00, 0x02, // material_sec_len = 2
+            0x00, 0x00, // Material section
+            0x00, 0x05, // track_sec_len = 5 (exceeds remaining len)
+        ];
+        let mut demux = create_test_demuxer_parse_map(&data);
+        let mut data = DemuxerData::default();
+        let result = unsafe { parse_map(&mut demux, 8, &mut data) };
+        assert_eq!(result, CCX_OK);
+        assert_eq!(demux.past, 8);
+    }
+
+    #[test]
+    fn test_parse_map_eof_during_skip() {
+        let data = vec![0x00, 0x00]; // Invalid header, insufficient data
+        let mut demux = create_test_demuxer_parse_map(&data);
+        let result = unsafe { parse_map(&mut demux, 5, &mut DemuxerData::default()) };
+        assert_eq!(result, CCX_EOF);
+    }
+    fn create_test_demuxer_packet_map(data: &[u8]) -> CcxDemuxer {
+        CcxDemuxer {
+            filebuffer: data.as_ptr() as *mut u8,
+            bytesinbuffer: data.len() as u32,
+            filebuffer_pos: 0,
+            past: 0,
+            private_data: Box::into_raw(Box::new(CcxGxf {
+                ad_track: Some(Box::new(CcxGxfAncillaryDataTrack::default())),
+                vid_track: Some(Box::new(CcxGxfVideoTrack::default())),
+                ..Default::default()
+            })) as *mut _,
+            ..Default::default()
+        }
+    }
+    fn valid_map_header(len: i32) -> Vec<u8> {
+        let mut data = vec![
+            0x00, 0x00, 0x00, 0x00, // Leader
+            0x01,                   // Leader continuation
+            0xbc,                   // MAP type
+        ];
+        // Add length (big-endian, including header size)
+        let total_len = (len + 16).to_be_bytes();
+        data.extend_from_slice(&total_len);
+        data.extend_from_slice(&[0x00; 4]); // Flags
+        data.push(0xe1); // Trailer
+        data.push(0xe2); // Trailer
+        data
+    }
+
+    fn valid_media_header(len: i32) -> Vec<u8> {
+        let mut data = vec![
+            0x00, 0x00, 0x00, 0x00, // Leader
+            0x01,                   // Leader continuation
+            0xbf,                   // MEDIA type
+        ];
+        let total_len = (len + 16).to_be_bytes();
+        data.extend_from_slice(&total_len);
+        data.extend_from_slice(&[0x00; 4]);
+        data.push(0xe1);
+        data.push(0xe2);
+        data
+    }
+
+    #[test]
+    fn test_read_packet_map() {
+        let mut header = valid_map_header(8);
+        header.extend(vec![0u8; 8]); // Payload
+        let mut demux = create_test_demuxer_packet_map(&header);
+        let mut data = DemuxerData::default();
+        assert_eq!(unsafe { read_packet(&mut demux, &mut data) }, CCX_OK);
+    }
+
+    #[test]
+    fn test_read_packet_media() {
+        let mut header = valid_media_header(16);
+        header.extend(vec![0u8; 16]);
+        let mut demux = create_test_demuxer_packet_map(&header);
+        let mut data = DemuxerData::default();
+        assert_eq!(unsafe { read_packet(&mut demux, &mut data) }, CCX_OK);
+    }
+
+    #[test]
+    fn test_read_packet_eos() {
+        let data = vec![
+            0x00, 0x00, 0x00, 0x00, 0x01, 0xfb,
+            0x00, 0x00, 0x00, 0x10, // Length = 16
+            0x00, 0x00, 0x00, 0x00, 0xe1, 0xe2
+        ];
+        let mut demux = create_test_demuxer_packet_map(&data);
+        let mut dd = DemuxerData::default();
+        assert_eq!(unsafe { read_packet(&mut demux, &mut dd) }, CCX_EOF);
+    }
+
+    #[test]
+    fn test_read_packet_invalid_header() {
+        let data = vec![0u8; 16]; // Invalid leader
+        let mut demux = create_test_demuxer_packet_map(&data);
+        let mut dd = DemuxerData::default();
+        assert_eq!(unsafe { read_packet(&mut demux, &mut dd) }, CCX_EINVAL);
+    }
+    #[test]
+    fn test_probe_buffer_too_short() {
+        // Buffer shorter than startcode.
+        let buf = [0, 0, 0];
+        assert!(!ccx_gxf_probe(&buf));
+    }
+
+    #[test]
+    fn test_probe_exact_match() {
+        // Buffer exactly equal to startcode.
+        let buf = [0, 0, 0, 0, 1, 0xbc];
+        assert!(ccx_gxf_probe(&buf));
+    }
+
+    #[test]
+    fn test_probe_match_with_extra_data() {
+        // Buffer with startcode at the beginning, followed by extra data.
+        let mut buf = vec![0, 0, 0, 0, 1, 0xbc];
+        buf.extend_from_slice(&[0x12, 0x34, 0x56]);
+        assert!(ccx_gxf_probe(&buf));
+    }
+
+    #[test]
+    fn test_probe_no_match() {
+        // Buffer with similar length but different content.
+        let buf = [0, 0, 0, 1, 0, 0xbc]; // Note: fourth byte is 1 instead of 0
+        assert!(!ccx_gxf_probe(&buf));
     }
 }

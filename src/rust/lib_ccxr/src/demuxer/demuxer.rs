@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)]
 #![allow(unexpected_cfgs)]
+#![allow(unused_mut)]
 
 use crate::demuxer::common_structs::LibCcDecode;
 use crate::demuxer::lib_ccx::{FileReport, LibCcxCtx};
@@ -59,7 +60,7 @@ pub struct ProgramInfo {
     pub pid: i32,
     pub program_number: i32,
     pub initialized_ocr: i32, // Avoid initializing the OCR more than once
-    pub analysed_PMT_once: u8, // 1-bit field
+    pub analysed_pmt_once: u8, // 1-bit field
     pub version: u8,
     pub saved_section: [u8; 1021],
     pub crc: i32,
@@ -152,11 +153,11 @@ pub unsafe extern "C" fn is_decoder_processed_enough(ctx: *mut LibCcxCtx) -> i32
 
 pub unsafe fn get_sib_stream_by_type(program: *mut CapInfo, codec_type: Codec) -> *mut CapInfo {
     if program.is_null() {
-        return ptr::null_mut();
+        return null_mut();
     }
     // Compute the offset of the `sib_stream` field within CapInfo.
     let offset = {
-        let dummy = std::mem::MaybeUninit::<CapInfo>::uninit();
+        let dummy = mem::MaybeUninit::<CapInfo>::uninit();
         let base_ptr = dummy.as_ptr() as usize;
         let member_ptr = &(*dummy.as_ptr()).sib_stream as *const _ as usize;
         member_ptr - base_ptr
@@ -174,7 +175,7 @@ pub unsafe fn get_sib_stream_by_type(program: *mut CapInfo, codec_type: Codec) -
         }
         current = (*current).next;
     }
-    ptr::null_mut()
+    null_mut()
 }
 
 
@@ -197,7 +198,7 @@ pub unsafe fn get_best_sib_stream(program: *mut CapInfo) -> *mut CapInfo {
         return info;
     }
 
-    std::ptr::null_mut()
+    null_mut()
 }
 
 // Constants
@@ -293,7 +294,7 @@ impl DecodersCommonSettings {
 // PMT_entry Struct
 pub struct PMT_entry {
     pub program_number: u32,
-    pub elementary_PID: u32,
+    pub elementary_pid: u32,
     pub stream_type: StreamType, // ccx_stream_type maps to StreamType
     pub printable_stream_type: u32,
 }
@@ -344,6 +345,7 @@ pub struct EITProgram {
 }
 
 impl EITProgram {
+    #[allow(dead_code)]
     pub(crate) fn default() -> EITProgram {
         EITProgram {
             array_len: 0,
@@ -410,14 +412,14 @@ pub struct CcxDemuxer<'a> {
     pub last_global_timestamp: i64,
     pub global_timestamp_inited: i32,
 
-    pub PID_buffers: Vec<*mut PSI_buffer>,
-    pub PIDs_seen: Vec<i32>,
+    pub pid_buffers: Vec<*mut PSI_buffer>,
+    pub pids_seen: Vec<i32>,
 
     pub stream_id_of_each_pid: Vec<u8>,
     pub min_pts: Vec<u64>,
-    pub have_PIDs: Vec<i32>,
-    pub num_of_PIDs: i32,
-    pub PIDs_programs: Vec<*mut PMT_entry>,
+    pub have_pids: Vec<i32>,
+    pub num_of_pids: i32,
+    pub pids_programs: Vec<*mut PMT_entry>,
     pub freport: CcxDemuxReport,
 
     // Hauppauge support
@@ -443,21 +445,6 @@ pub struct CcxDemuxer<'a> {
     // pub parent: *mut std::ffi::c_void,
     pub parent: Option<&'a mut LibCcxCtx<'a>>,    // Demuxer Context
     pub private_data: *mut std::ffi::c_void,
-    // pub print_cfg: Option<extern "C" fn(ctx: *mut CcxDemuxer)>,
-    // pub reset: Option<extern "C" fn(ctx: *mut CcxDemuxer)>,
-    // pub close: Option<extern "C" fn(ctx: *mut CcxDemuxer)>,
-    // pub open: Option<extern "C" fn(ctx: *mut CcxDemuxer, file_name: *const u8) -> i32>,
-    // pub is_open: Option<extern "C" fn(ctx: *mut CcxDemuxer) -> i32>,
-    // pub get_stream_mode: Option<extern "C" fn(ctx: *mut CcxDemuxer) -> i32>,
-    // pub get_filesize: Option<extern "C" fn(ctx: *mut CcxDemuxer) -> i64>,
-
-    // pub reset: fn(&mut CcxDemuxer),
-    // pub print_cfg: fn(&CcxDemuxer),
-    // pub close: unsafe fn(&mut CcxDemuxer),
-    // pub open: unsafe fn(&mut CcxDemuxer, &str) -> i32,
-    // pub is_open: fn(&CcxDemuxer) -> bool,
-    // pub get_stream_mode: fn(&CcxDemuxer) -> i32,
-    // pub get_filesize: fn(&CcxDemuxer, *mut CcxDemuxer) -> i64,
     pub reset: fn(&mut CcxDemuxer<'a>),
     pub print_cfg: fn(&CcxDemuxer<'a>),
     pub close: unsafe fn(&mut CcxDemuxer<'a>),
@@ -470,7 +457,7 @@ pub struct CcxDemuxer<'a> {
 
 impl<'a> Default for CcxDemuxer<'a> {
     fn default() -> Self {
-        unsafe {
+        {
             CcxDemuxer {
                 m2ts: 0,
                 stream_mode: StreamMode::default(),  // Assuming StreamMode has a Default implementation
@@ -504,14 +491,14 @@ impl<'a> Default for CcxDemuxer<'a> {
                 last_global_timestamp: 0,
                 global_timestamp_inited: 0,
 
-                PID_buffers: vec![null_mut(); MAX_PSI_PID],
-                PIDs_seen: vec![0; MAX_PID],
+                pid_buffers: vec![null_mut(); MAX_PSI_PID],
+                pids_seen: vec![0; MAX_PID],
 
                 stream_id_of_each_pid: vec![0; MAX_PSI_PID + 1],
                 min_pts: vec![0; MAX_PSI_PID + 1],
-                have_PIDs: vec![0; MAX_PSI_PID + 1],
-                num_of_PIDs: 0,
-                PIDs_programs: vec![null_mut(); MAX_PID],
+                have_pids: vec![0; MAX_PSI_PID + 1],
+                num_of_pids: 0,
+                pids_programs: vec![null_mut(); MAX_PID],
                 freport: CcxDemuxReport::default(),  // Assuming CcxDemuxReport has a Default implementation
                 // Hauppauge support
                 hauppauge_warning_shown: 0,
@@ -553,7 +540,7 @@ impl Default for ProgramInfo {
             pid: -1,
             program_number: 0,
             initialized_ocr: 0,
-            analysed_PMT_once: 0,
+            analysed_pmt_once: 0,
             version: 0,
             saved_section: [0; 1021], // Initialize saved_section to zeroes
             crc: 0,
@@ -573,11 +560,11 @@ impl Default for CapInfo {
             stream: StreamType::default(),
             codec: Codec::Dvb,
             capbufsize: 0,
-            capbuf: std::ptr::null_mut(),
+            capbuf: null_mut(),
             capbuflen: 0,
             saw_pesstart: 0,
             prev_counter: 0,
-            codec_private_data: std::ptr::null_mut(),
+            codec_private_data: null_mut(),
             ignore: 0,
 
             // Initialize lists to empty or default states
@@ -609,7 +596,7 @@ pub struct DemuxerData {
     pub program_number: i32,
     pub stream_pid: i32,
     pub codec: Codec,                // ccx_code_type maps to Codec
-    pub bufferdatatype: crate::common::BufferdataType, // ccx_bufferdata_type maps to BufferDataType
+    pub bufferdatatype: BufferdataType, // ccx_bufferdata_type maps to BufferDataType
     pub buffer: *mut u8,
     pub len: usize,
     pub rollover_bits: u32,          // Tracks PTS rollover
@@ -617,6 +604,23 @@ pub struct DemuxerData {
     pub tb: CcxRational,             // Corresponds to ccx_rational
     pub next_stream: *mut DemuxerData,
     pub next_program: *mut DemuxerData,
+}
+impl Default for DemuxerData {
+    fn default() -> Self {
+        DemuxerData {
+            program_number: 0,
+            stream_pid: 0,
+            codec: Codec::Dvb,
+            bufferdatatype: BufferdataType::Unknown,
+            buffer: null_mut(),
+            len: 0,
+            rollover_bits: 0,
+            pts: 0,
+            tb: CcxRational { num: 0, den: 0 },
+            next_stream: null_mut(),
+            next_program: null_mut(),
+        }
+    }
 }
 
 pub fn init_file_buffer(ctx: &mut CcxDemuxer) -> i32 {
@@ -636,22 +640,22 @@ pub fn init_file_buffer(ctx: &mut CcxDemuxer) -> i32 {
 }
 impl<'a> CcxDemuxer<'a> {
     pub fn reset(&mut self) {
-        unsafe {
+        {
             self.startbytes_pos = 0;
             self.startbytes_avail = 0;
-            self.num_of_PIDs = 0;
-            // Fill have_PIDs with -1 for (MAX_PSI_PID+1) elements.
+            self.num_of_pids = 0;
+            // Fill have_pids with -1 for (MAX_PSI_PID+1) elements.
             let len_have = MAX_PSI_PID + 1;
-            if self.have_PIDs.len() < len_have {
-                self.have_PIDs.resize(len_have, -1);
+            if self.have_pids.len() < len_have {
+                self.have_pids.resize(len_have, -1);
             } else {
-                self.have_PIDs[..len_have].fill(-1);
+                self.have_pids[..len_have].fill(-1);
             }
-            // Fill PIDs_seen with 0 for MAX_PID elements.
-            if self.PIDs_seen.len() < MAX_PID {
-                self.PIDs_seen.resize(MAX_PID, 0);
+            // Fill pids_seen with 0 for MAX_PID elements.
+            if self.pids_seen.len() < MAX_PID {
+                self.pids_seen.resize(MAX_PID, 0);
             } else {
-                self.PIDs_seen[..MAX_PID].fill(0);
+                self.pids_seen[..MAX_PID].fill(0);
             }
             // Set each min_pts[i] to u64::MAX for i in 0..=MAX_PSI_PID.
             for i in 0..=MAX_PSI_PID {
@@ -663,11 +667,11 @@ impl<'a> CcxDemuxer<'a> {
             } else {
                 self.stream_id_of_each_pid[..len_have].fill(0);
             }
-            // Fill PIDs_programs with null for MAX_PID elements.
-            if self.PIDs_programs.len() < MAX_PID {
-                self.PIDs_programs.resize(MAX_PID, ptr::null_mut());
+            // Fill pids_programs with null for MAX_PID elements.
+            if self.pids_programs.len() < MAX_PID {
+                self.pids_programs.resize(MAX_PID, null_mut());
             } else {
-                self.PIDs_programs[..MAX_PID].fill(ptr::null_mut());
+                self.pids_programs[..MAX_PID].fill(null_mut());
             }
         }
     }
@@ -724,7 +728,7 @@ impl<'a> CcxDemuxer<'a> {
             DataSource::Stdin => {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
-                        unsafe {
+                        {
                             print_file_report(&mut *self.parent.as_mut().unwrap());
                         }
                     }
@@ -737,7 +741,7 @@ impl<'a> CcxDemuxer<'a> {
             DataSource::Network => {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
-                        unsafe {
+                        {
                             print_file_report(&mut *self.parent.as_mut().unwrap());
                         }
                     }
@@ -753,7 +757,7 @@ impl<'a> CcxDemuxer<'a> {
             DataSource::Tcp => {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
-                        unsafe {
+                        {
                             print_file_report(&mut *self.parent.as_mut().unwrap());
                         }
                     }
@@ -856,12 +860,10 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
     // If current or length is negative, return -1.
     // (This check is somewhat redundant because seek returns Result<u64, _>,
     //  but we keep it for exact logic parity with the C code.)
-    if current < 0 || length < 0 {
-        let _ = file.into_raw_fd();
-        return -1;
-    }
+
 
     // Restore the file position: equivalent to LSEEK(in, current, SEEK_SET);
+    #[allow(unused_variables)]
     let ret = match file.seek(SeekFrom::Start(current)) {
         Ok(pos) => pos,
         Err(_) => {
@@ -870,10 +872,6 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
         }
     };
 
-    if ret < 0 {
-        let _ = file.into_raw_fd();
-        return -1;
-    }
 
     // Return the fd back to its original owner.
     let _ = file.into_raw_fd();
@@ -951,7 +949,7 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
     unsafe {
         let mut ccx_options = CCX_OPTIONS.lock().unwrap();
 
-        let mut dec_ctx: *mut LibCcDecode = ptr::null_mut();
+        let mut dec_ctx: *mut LibCcDecode = null_mut();
         let demux_ctx = &mut *ctx.demux_ctx;
 
         println!("File: ");
@@ -982,14 +980,14 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
                 println!("Program Count: {}", demux_ctx.freport.program_cnt);
                 println!("Program Numbers: ");
                 for i in 0..demux_ctx.nb_program {
-                    println!("{}", demux_ctx.pinfo[i as usize].program_number);
+                    println!("{}", demux_ctx.pinfo[i].program_number);
                 }
                 println!();
                 for i in 0..65536 {
-                    if demux_ctx.PIDs_programs[i as usize].is_null() {
+                    if demux_ctx.pids_programs[i as usize].is_null() {
                         continue;
                     }
-                    println!("PID: {}, Program: {}, ", i, (*demux_ctx.PIDs_programs[i as usize]).program_number);
+                    println!("PID: {}, Program: {}, ", i, (*demux_ctx.pids_programs[i as usize]).program_number);
                     let mut j = 0;
                     while j < SUB_STREAMS_CNT {
                         if demux_ctx.freport.dvb_sub_pid[j] == i as u32 {
@@ -1003,7 +1001,7 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
                         j += 1;
                     }
                     if j == SUB_STREAMS_CNT {
-                        let idx = (*demux_ctx.PIDs_programs[i as usize]).printable_stream_type as usize;
+                        let idx = (*demux_ctx.pids_programs[i as usize]).printable_stream_type as usize;
                         let desc = CStr::from_ptr(get_desc_placeholder(idx))
                             .to_str()
                             .unwrap_or("Unknown");
@@ -1072,8 +1070,8 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
         }
 
         // Instead of freep(&ctx->freport.data_from_608);
-        ctx.freport.data_from_608 = ptr::null_mut();
-        std::ptr::write_bytes(&mut ctx.freport as *mut FileReport, 0, 1);
+        ctx.freport.data_from_608 = null_mut();
+        ptr::write_bytes(&mut ctx.freport as *mut FileReport, 0, 1);
     }
 }
 
@@ -1085,13 +1083,13 @@ pub fn freep<T>(ptr: &mut *mut T) {
     unsafe {
         if !ptr.is_null() {
             let _ = Box::from_raw(*ptr);
-            *ptr = std::ptr::null_mut();
+            *ptr = null_mut();
         }
     }
 }
 
 pub fn list_empty(head: &HList) -> bool {
-    unsafe { head.next == head as *const HList as *mut HList }
+    head.next == head as *const HList as *mut HList
 }
 
 pub fn list_entry<T>(ptr: *mut HList, offset: usize) -> *mut T {
@@ -1110,8 +1108,8 @@ pub unsafe fn list_del(entry: &mut HList) {
         (*entry.next).prev = entry.prev;
     }
 
-    entry.next = std::ptr::null_mut();
-    entry.prev = std::ptr::null_mut();
+    entry.next = null_mut();
+    entry.prev = null_mut();
 }
 
 pub unsafe fn list_add(new_entry: &mut HList, head: &mut HList) {
@@ -1163,6 +1161,7 @@ pub unsafe fn dinit_cap(ctx: &mut CcxDemuxer) {
 }
 
 // ccx_demuxer_delete remains similar
+#[allow(unused)]
 unsafe fn ccx_demuxer_delete(ctx: &mut *mut CcxDemuxer) {
     if ctx.is_null() || (*ctx).is_null() {
         return;
@@ -1172,20 +1171,20 @@ unsafe fn ccx_demuxer_delete(ctx: &mut *mut CcxDemuxer) {
     dinit_cap(lctx);
     freep(&mut lctx.last_pat_payload);
 
-    for pid_buffer in lctx.PID_buffers.iter_mut() {
+    for pid_buffer in lctx.pid_buffers.iter_mut() {
         if !pid_buffer.is_null() {
             freep(&mut (**pid_buffer).buffer);
             freep(pid_buffer);
         }
     }
 
-    for pid_prog in lctx.PIDs_programs.iter_mut() {
+    for pid_prog in lctx.pids_programs.iter_mut() {
         freep(pid_prog);
     }
 
     freep(&mut lctx.filebuffer);
     let _ = Box::from_raw(*ctx);
-    *ctx = std::ptr::null_mut();
+    *ctx = null_mut();
 }
 
 #[cfg(test)]
@@ -1201,7 +1200,7 @@ mod tests {
     static INIT: Once = Once::new();
 
     fn initialize_logger() {
-        crate::demuxer::demuxer::tests::INIT.call_once(|| {
+        INIT.call_once(|| {
             set_logger(CCExtractorLogger::new(
                 OutputTarget::Stdout,
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
@@ -1248,13 +1247,13 @@ mod tests {
         assert_eq!(demuxer.offset_global_timestamp, 0);
         assert_eq!(demuxer.last_global_timestamp, 0);
         assert_eq!(demuxer.global_timestamp_inited, 0);
-        assert_eq!(demuxer.PID_buffers.len(), MAX_PSI_PID);
-        assert_eq!(demuxer.PIDs_seen.len(), MAX_PID);
+        assert_eq!(demuxer.pid_buffers.len(), MAX_PSI_PID);
+        assert_eq!(demuxer.pids_seen.len(), MAX_PID);
         assert_eq!(demuxer.stream_id_of_each_pid.len(), MAX_PSI_PID + 1);
         assert_eq!(demuxer.min_pts.len(), MAX_PSI_PID + 1);
-        assert_eq!(demuxer.have_PIDs.len(), MAX_PSI_PID + 1);
-        assert_eq!(demuxer.num_of_PIDs, 0);
-        assert_eq!(demuxer.PIDs_programs.len(), MAX_PID);
+        assert_eq!(demuxer.have_pids.len(), MAX_PSI_PID + 1);
+        assert_eq!(demuxer.num_of_pids, 0);
+        assert_eq!(demuxer.pids_programs.len(), MAX_PID);
         assert_eq!(demuxer.hauppauge_warning_shown, 0);
         assert_eq!(demuxer.multi_stream_per_prog, 0);
         assert_eq!(demuxer.last_pat_payload, null_mut());
@@ -1274,7 +1273,7 @@ mod tests {
     fn new_lib_cc_decode(processed_enough: i32) -> Box<LibCcDecode> {
         Box::new(LibCcDecode {
             processed_enough,
-            list: HList { next: ptr::null_mut(), prev: ptr::null_mut() },
+            list: HList { next: null_mut(), prev: null_mut() },
             ..Default::default()
         })
     }
@@ -1283,7 +1282,7 @@ mod tests {
     // Returns a Vec of Box<LibCcDecode> (to keep ownership) and sets up the links.
     fn build_decoder_list(nodes: &mut [Box<LibCcDecode>]) -> *mut HList {
         if nodes.is_empty() {
-            return ptr::null_mut();
+            return null_mut();
         }
         // Let head be the address of dec_ctx_head in LibCcxCtx.
         // For simplicity, we simulate this by using the list field of the first node as head.
@@ -1316,7 +1315,7 @@ mod tests {
         // Manually set the list pointers in ctx to our head.
         // Now call the function.
         let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut LibCcxCtx) };
-        assert!(result != 0);
+        assert_ne!(result, 0);
     }
 
     #[test]
@@ -1349,6 +1348,7 @@ mod tests {
         let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut LibCcxCtx) };
         assert_eq!(result, 0);
     }
+    #[allow(unused)]
 
     fn new_cap_info(codec: Codec) -> Box<CapInfo> {
         Box::new(CapInfo {
@@ -1403,8 +1403,8 @@ mod tests {
     #[test]
     fn test_get_sib_stream_by_type_found() {
         let mut program = CapInfo::default();
-        let mut sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
-        let mut sib2 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
+        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
+        let sib2 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
         let mut siblings = vec![sib1, sib2];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
@@ -1417,7 +1417,7 @@ mod tests {
     #[test]
     fn test_get_sib_stream_by_type_not_found() {
         let mut program = CapInfo::default();
-        let mut sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
+        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
@@ -1426,7 +1426,7 @@ mod tests {
 
     #[test]
     fn test_get_sib_stream_by_type_null_program() {
-        let result = unsafe { get_sib_stream_by_type(ptr::null_mut(), Codec::Dvb) };
+        let result = unsafe { get_sib_stream_by_type(null_mut(), Codec::Dvb) };
         assert!(result.is_null());
     }
     //Tests for list_empty
@@ -1444,7 +1444,7 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_teletext() {
         let mut program = CapInfo::default();
-        let mut sib1 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
+        let sib1 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1456,7 +1456,7 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_dvb() {
         let mut program = CapInfo::default();
-        let mut sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
+        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1468,7 +1468,7 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_atsc() {
         let mut program = CapInfo::default();
-        let mut sib1 = Box::new(CapInfo { codec: Codec::AtscCc, ..Default::default() });
+        let sib1 = Box::new(CapInfo { codec: Codec::AtscCc, ..Default::default() });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1479,20 +1479,20 @@ mod tests {
     }
     #[test]
     fn test_get_best_sib_stream_null() {
-        let result = unsafe { get_best_sib_stream(ptr::null_mut()) };
+        let result = unsafe { get_best_sib_stream(null_mut()) };
         assert!(result.is_null());
     }
     fn dummy_demuxer<'a>() -> CcxDemuxer<'a> {
         CcxDemuxer {
-            filebuffer: ptr::null_mut(),
+            filebuffer: null_mut(),
             filebuffer_start: 999,
             filebuffer_pos: 999,
             bytesinbuffer: 999,
-            have_PIDs: vec![],
-            PIDs_seen: vec![],
+            have_pids: vec![],
+            pids_seen: vec![],
             min_pts: vec![0; MAX_PSI_PID + 1],
             stream_id_of_each_pid: vec![],
-            PIDs_programs: vec![],
+            pids_programs: vec![],
             // Other fields are default.
             ..Default::default()
         }
@@ -1503,7 +1503,7 @@ mod tests {
     #[test]
     fn test_init_file_buffer_allocates_if_null() {
         let mut ctx = dummy_demuxer();
-        ctx.filebuffer = ptr::null_mut();
+        ctx.filebuffer = null_mut();
         let res = init_file_buffer(&mut ctx);
         assert_eq!(res, 0);
         assert!(!ctx.filebuffer.is_null());
@@ -1515,7 +1515,7 @@ mod tests {
     #[test]
     fn test_init_file_buffer_does_not_reallocate_if_nonnull() {
         let mut ctx = dummy_demuxer();
-        let mut buf = vec![1u8; FILEBUFFERSIZE].into_boxed_slice();
+        let buf = vec![1u8; FILEBUFFERSIZE].into_boxed_slice();
         ctx.filebuffer = Box::into_raw(buf) as *mut u8;
         ctx.bytesinbuffer = 123;
         let res = init_file_buffer(&mut ctx);
@@ -1524,7 +1524,7 @@ mod tests {
         // bytesinbuffer remains unchanged.
         assert_eq!(ctx.bytesinbuffer, 123);
         // Clean up.
-        unsafe { Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); }
+        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); }
     }
 
     // --------- Tests for ccx_demuxer_reset ---------
@@ -1534,23 +1534,23 @@ mod tests {
         let mut ctx = dummy_demuxer();
         ctx.startbytes_pos = 42;
         ctx.startbytes_avail = 99;
-        ctx.num_of_PIDs = 123;
-        ctx.have_PIDs = vec![0; MAX_PSI_PID + 1];
-        ctx.PIDs_seen = vec![1; MAX_PID];
+        ctx.num_of_pids = 123;
+        ctx.have_pids = vec![0; MAX_PSI_PID + 1];
+        ctx.pids_seen = vec![1; MAX_PID];
         ctx.min_pts = vec![0; MAX_PSI_PID + 1];
         ctx.stream_id_of_each_pid = vec![5; MAX_PSI_PID + 1];
-        ctx.PIDs_programs = vec![ptr::null_mut(); MAX_PID];
+        ctx.pids_programs = vec![null_mut(); MAX_PID];
         (ctx.reset)(&mut ctx);
         assert_eq!(ctx.startbytes_pos, 0);
         assert_eq!(ctx.startbytes_avail, 0);
-        assert_eq!(ctx.num_of_PIDs, 0);
-        assert!(ctx.have_PIDs.iter().all(|&x| x == -1));
-        assert!(ctx.PIDs_seen.iter().all(|&x| x == 0));
+        assert_eq!(ctx.num_of_pids, 0);
+        assert!(ctx.have_pids.iter().all(|&x| x == -1));
+        assert!(ctx.pids_seen.iter().all(|&x| x == 0));
         for &val in ctx.min_pts.iter() {
             assert_eq!(val, u64::MAX);
         }
         assert!(ctx.stream_id_of_each_pid.iter().all(|&x| x == 0));
-        assert!(ctx.PIDs_programs.iter().all(|&p| p.is_null()));
+        assert!(ctx.pids_programs.iter().all(|&p| p.is_null()));
     }
     #[test]
     fn test_open_close_file() {
@@ -1606,10 +1606,11 @@ mod tests {
             demuxer.close();
         }
     }
-    #[test]
+    // #[test]
+    #[allow(unused)]
     fn test_open_ccx_demuxer() {
         let mut demuxer = CcxDemuxer::default();
-        let file_name = "/home/artemis/testing/ccextractor/src/cmake-build-debug/Makefile"; // Replace with actual file name
+        let file_name = ""; // Replace with actual file name
         let result = unsafe { demuxer.open(file_name) };
         assert_eq!(result, 0);
         assert_eq!(demuxer.infd, 3);
@@ -1718,7 +1719,7 @@ mod tests {
             pinfo.program_number = 101;
             (*ctx.demux_ctx).pinfo = vec![pinfo];
             (*ctx.demux_ctx).freport.program_cnt = 1;
-            // For testing, leave PIDs_programs as all null.
+            // For testing, leave pids_programs as all null.
         }
         ctx
     }
@@ -1775,8 +1776,8 @@ mod tests {
     fn create_capinfo() -> *mut CapInfo {
         Box::into_raw(Box::new(CapInfo {
             all_stream: HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             },
             capbuf: Box::into_raw(Box::new(0u8)),
             ..Default::default()
@@ -1786,8 +1787,8 @@ mod tests {
     #[test]
     fn test_list_operations() {
         let mut head = HList {
-            next: std::ptr::null_mut(),
-            prev: std::ptr::null_mut(),
+            next: null_mut(),
+            prev: null_mut(),
         };
         init_list_head(&mut head);
         assert!(list_empty(&mut head));
@@ -1830,19 +1831,19 @@ mod tests {
     #[test]
     fn test_list_add() {
         let mut head = HList {
-            next: std::ptr::null_mut(),
-            prev: std::ptr::null_mut(),
+            next: null_mut(),
+            prev: null_mut(),
         };
         init_list_head(&mut head);
 
         unsafe {
             let mut entry1 = HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             };
             let mut entry2 = HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             };
 
             list_add(&mut entry1, &mut head);
@@ -1868,23 +1869,23 @@ mod tests {
             capbuflen: 0,
             saw_pesstart: 0,
             prev_counter: 0,
-            codec_private_data: std::ptr::null_mut(),
+            codec_private_data: null_mut(),
             ignore: 0,
             all_stream: HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             },
             sib_head: HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             },
             sib_stream: HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             },
             pg_stream: HList {
-                next: std::ptr::null_mut(),
-                prev: std::ptr::null_mut(),
+                next: null_mut(),
+                prev: null_mut(),
             },
         }))
     }
@@ -1898,27 +1899,27 @@ mod tests {
                 stream: StreamType::default(),
                 codec: Codec::Dvb,
                 capbufsize: 0,
-                capbuf: std::ptr::null_mut(),
+                capbuf: null_mut(),
                 capbuflen: 0,
                 saw_pesstart: 0,
                 prev_counter: 0,
-                codec_private_data: std::ptr::null_mut(),
+                codec_private_data: null_mut(),
                 ignore: 0,
                 all_stream: HList {
-                    next: std::ptr::null_mut(),
-                    prev: std::ptr::null_mut(),
+                    next: null_mut(),
+                    prev: null_mut(),
                 },
                 sib_head: HList {
-                    next: std::ptr::null_mut(),
-                    prev: std::ptr::null_mut(),
+                    next: null_mut(),
+                    prev: null_mut(),
                 },
                 sib_stream: HList {
-                    next: std::ptr::null_mut(),
-                    prev: std::ptr::null_mut(),
+                    next: null_mut(),
+                    prev: null_mut(),
                 },
                 pg_stream: HList {
-                    next: std::ptr::null_mut(),
-                    prev: std::ptr::null_mut(),
+                    next: null_mut(),
+                    prev: null_mut(),
                 },
             },
             ..Default::default()
@@ -1950,5 +1951,4 @@ mod tests {
             let _ = Box::from_raw(ctx_ptr);
         }
     }
-
 }
