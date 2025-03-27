@@ -5,3 +5,7 @@ pub mod subtitle;
 pub mod teletext;
 pub mod time;
 pub mod util;
+pub mod avc_functions;
+pub mod file_functions;
+pub mod demuxer;
+pub mod gxf_demuxer;
