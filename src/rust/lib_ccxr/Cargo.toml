@@ -15,10 +15,10 @@ strum = "0.26.3"
 strum_macros = "0.26.4"
 crc32fast = "1.4.2"
 num_enum = "0.6.1"
-libc = "0.2.169"
 tempfile = "3.19.1"
 memoffset = "0.9.1"
 palette = "0.7.6"
+byteorder = "1.5.0"
 
 [features]
 default = [

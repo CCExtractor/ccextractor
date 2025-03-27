@@ -27,7 +27,7 @@ cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.2"
-libc = "0.2.169"
+palette = "0.7.6"
 
 [build-dependencies]
 bindgen = "0.64.0"

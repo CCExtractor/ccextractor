@@ -1,10 +1,6 @@
 use lib_ccxr::demuxer::demuxer::{ccx_demuxer_get_file_size, ccx_demuxer_get_stream_mode, ccx_demuxer_print_cfg, dinit_cap, freep, CcxDemuxer};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_longlong};
-use std::ptr;
-
-// Assuming these types and functions are defined elsewhere.
-use log::info;
 
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_reset(ctx: *mut CcxDemuxer) {
@@ -101,8 +97,8 @@ pub unsafe extern "C" fn ccxr_demuxer_delete(ctx: *mut *mut CcxDemuxer) {
     dinit_cap(lctx);
     freep(&mut lctx.last_pat_payload);
 
-    // Iterate through PID_buffers and free each buffer and the container.
-    for pid_buffer in lctx.PID_buffers.iter_mut() {
+    // Iterate through pid_buffers and free each buffer and the container.
+    for pid_buffer in lctx.pid_buffers.iter_mut() {
         if !pid_buffer.is_null() {
             // Free the inner buffer if present.
             freep(&mut (**pid_buffer).buffer);
@@ -111,8 +107,8 @@ pub unsafe extern "C" fn ccxr_demuxer_delete(ctx: *mut *mut CcxDemuxer) {
         }
     }
 
-    // Iterate through PIDs_programs and free each entry.
-    for pid_prog in lctx.PIDs_programs.iter_mut() {
+    // Iterate through pids_programs and free each entry.
+    for pid_prog in lctx.pids_programs.iter_mut() {
         freep(pid_prog);
     }
 

@@ -29,6 +29,32 @@
 #define log(fmt, ...) ccx_common_logging.log_ftn("GXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 
 #undef CCX_GXF_ENABLE_AD_VBI
+
+#ifndef DISABLE_RUST
+int ccxr_parse_packet_header(struct ccx_demuxer *ctx, struct GXFPktType *type, int *length);
+int ccxr_parse_material_sec(struct ccx_demuxer *demux, int len);
+int ccxr_parse_mpeg525_track_desc(struct ccx_demuxer *demux, int len);
+int ccxr_parse_ad_track_desc(struct ccx_demuxer *demux, int len);
+void ccxr_set_track_frame_rate(struct ccx_gxf_video_track *vid_track, int8_t val);
+int ccxr_parse_track_sec(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+int ccxr_parse_ad_cdp(const unsigned char *cdp, size_t len, struct demuxer_data *data);
+int ccxr_parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+int ccxr_parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+int ccxr_parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+void ccxr_set_data_timebase(int32_t vid_format, struct demuxer_data *data);
+int ccxr_parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+int ccxr_parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+void ccxr_set_mpeg_frame_desc(struct ccx_gxf_video_track *vid_track, unsigned char mpeg_frame_desc_flag);
+int ccxr_parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *data);
+int ccxr_parse_flt(struct ccx_demuxer *ctx, int len);
+int ccxr_parse_umf(struct ccx_demuxer *ctx, int len);
+int ccxr_parse_map(struct ccx_demuxer *ctx, int len, struct demuxer_data *data);
+int ccxr_read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data);
+int ccxr_gxf_probe(const unsigned char *buf, int len);
+#endif
+
+
+
 typedef enum
 {
 	PKT_MAP = 0xbc,
@@ -337,6 +363,9 @@ struct ccx_gxf
  */
 static int parse_packet_header(struct ccx_demuxer *ctx, GXFPktType *type, int *length)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_packet_header(ctx, type, length);
+#else
 	unsigned char pkt_header[16];
 	int index = 0;
 	long long result;
@@ -384,10 +413,14 @@ static int parse_packet_header(struct ccx_demuxer *ctx, GXFPktType *type, int *l
 	index++;
 
 	return CCX_OK;
+#endif
 }
 
 static int parse_material_sec(struct ccx_demuxer *demux, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_material_sec(demux, len);
+#else
 	struct ccx_gxf *ctx = demux->private_data;
 	int result;
 	int ret = CCX_OK;
@@ -452,10 +485,14 @@ error:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 static void set_track_frame_rate(struct ccx_gxf_video_track *vid_track, int8_t val)
 {
+#ifndef DISABLE_RUST
+	ccxr_set_track_frame_rate(vid_track, val);
+#else
 	switch (val)
 	{
 		case 1:
@@ -498,9 +535,13 @@ static void set_track_frame_rate(struct ccx_gxf_video_track *vid_track, int8_t v
 			/* Do nothing in case of no frame rate */
 			break;
 	}
+#endif
 }
 static int parse_mpeg525_track_desc(struct ccx_demuxer *demux, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_mpeg525_track_desc(demux, len);
+#else
 	struct ccx_gxf *ctx = demux->private_data;
 	struct ccx_gxf_video_track *vid_track = ctx->vid_track;
 	int result;
@@ -566,10 +607,14 @@ error:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_track_desc(demux, len);
+#else
 	struct ccx_gxf *ctx = demux->private_data;
 	struct ccx_gxf_ancillary_data_track *ad_track = ctx->ad_track;
 	int result;
@@ -658,10 +703,14 @@ error:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 static int parse_track_sec(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_track_sec(demux, len, data);
+#else
 	int result;
 	int ret = CCX_OK;
 	struct ccx_gxf *ctx = demux->private_data;
@@ -762,6 +811,7 @@ error:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -781,7 +831,9 @@ error:
 
 int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 {
-
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_cdp(cdp, len, data);
+#else
 	int ret = CCX_OK;
 	uint16_t cdp_length;
 	uint16_t cdp_framerate;
@@ -896,6 +948,7 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	}
 
 	return ret;
+#endif
 }
 
 /**
@@ -903,6 +956,9 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
  */
 static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_pyld(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 #ifndef CCX_GXF_ENABLE_AD_VBI
@@ -975,6 +1031,7 @@ error:
 		ret = CCX_EOF;
 
 	return ret;
+#endif
 }
 
 /**
@@ -987,6 +1044,9 @@ error:
  */
 static int parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_vbi(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 
@@ -1000,10 +1060,14 @@ static int parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data 
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_field(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 	char tag[5];
@@ -1131,6 +1195,7 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1166,6 +1231,9 @@ static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_dat
  */
 static void set_data_timebase(int32_t vid_format, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	ccxr_set_data_timebase(vid_format, data);
+#else
 	debug("LOG:Format Video %d\n", vid_format);
 
 	switch (vid_format)
@@ -1218,10 +1286,14 @@ static void set_data_timebase(int32_t vid_format, struct demuxer_data *data)
 		default:
 			break;
 	}
+#endif
 }
 
 static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_mpeg_packet(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 
@@ -1231,6 +1303,7 @@ static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1239,6 +1312,9 @@ static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_
  */
 static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_ad_packet(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 	int i;
@@ -1334,6 +1410,7 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1357,11 +1434,18 @@ static int parse_ad_packet(struct ccx_demuxer *demux, int len, struct demuxer_da
  */
 static void set_mpeg_frame_desc(struct ccx_gxf_video_track *vid_track, unsigned char mpeg_frame_desc_flag)
 {
+#ifndef DISABLE_RUST
+	ccxr_set_mpeg_frame_desc(vid_track, mpeg_frame_desc_flag);
+#else
 	vid_track->p_code = mpeg_frame_desc_flag & 0x03;
 	vid_track->p_struct = (mpeg_frame_desc_flag >> 2) & 0x03;
+#endif
 }
 static int parse_media(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_media(demux, len, data);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 	GXFTrackType media_type;
@@ -1515,6 +1599,7 @@ end:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1522,6 +1607,9 @@ end:
  */
 static int parse_flt(struct ccx_demuxer *ctx, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_flt(ctx, len);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 
@@ -1530,6 +1618,7 @@ static int parse_flt(struct ccx_demuxer *ctx, int len)
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1537,6 +1626,9 @@ static int parse_flt(struct ccx_demuxer *ctx, int len)
  */
 static int parse_umf(struct ccx_demuxer *ctx, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_umf(ctx, len);
+#else
 	int ret = CCX_OK;
 	int result = 0;
 
@@ -1545,6 +1637,7 @@ static int parse_umf(struct ccx_demuxer *ctx, int len)
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 /**
  * Its this function duty to use len length buffer from demuxer
@@ -1559,6 +1652,9 @@ static int parse_umf(struct ccx_demuxer *ctx, int len)
  */
 static int parse_map(struct ccx_demuxer *ctx, int len, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_parse_map(ctx, len, data);
+#else
 	int result = 0;
 	int material_sec_len = 0;
 	int track_sec_len = 0;
@@ -1589,6 +1685,7 @@ error:
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+#endif
 }
 
 /**
@@ -1603,6 +1700,9 @@ error:
 
 static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
 {
+#ifndef DISABLE_RUST
+	return ccxr_read_packet(ctx, data);
+#else
 	int len = 0;
 	int result = 0;
 	int ret;
@@ -1639,6 +1739,7 @@ static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
 	}
 
 	return ret;
+#endif
 }
 
 /**
@@ -1653,6 +1754,9 @@ static int read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data)
  */
 int ccx_gxf_probe(unsigned char *buf, int len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_gxf_probe(buf, len);
+#else
 	static const uint8_t startcode[] = {0, 0, 0, 0, 1, 0xbc};
 	if (len < sizeof(startcode))
 		return CCX_FALSE;
@@ -1660,6 +1764,7 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 	if (!memcmp(buf, startcode, sizeof(startcode)))
 		return CCX_TRUE;
 	return CCX_FALSE;
+#endif
 }
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)

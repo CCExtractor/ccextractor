@@ -3,7 +3,7 @@
 use std::sync::{LazyLock, Mutex};
 use crate::demuxer::demuxer::{CcxDemuxer, STARTBYTESLENGTH};
 use crate::file_functions::file_functions::{buffered_read_opt, return_to_buffer};
-use crate::gxf_demuxer::gxf::{ccx_gxf_init, ccx_gxf_probe};
+use crate::gxf_demuxer::gxf::{ccx_gxf_probe, CcxGxf};
 use crate::common::{Options, StreamMode};
 use crate::util::log::{debug, info, DebugMessageFlag, ExitCause};
 use crate::fatal;
@@ -39,6 +39,7 @@ pub static CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
 pub unsafe fn detect_stream_type(
     ctx: &mut CcxDemuxer,
 ) {
+    #[allow(unused_mut)]
     let mut ccx_options = CCX_OPTIONS.lock().unwrap();
 
     // Not found
@@ -90,7 +91,8 @@ pub unsafe fn detect_stream_type(
     if ctx.stream_mode == StreamMode::ElementaryOrNotFound {
         if ccx_gxf_probe(&ctx.startbytes) == true {
             ctx.stream_mode = StreamMode::Gxf;
-            ctx.private_data = ccx_gxf_init(ctx).unwrap() as *mut std::ffi::c_void;
+            // ctx.private_data = CcxGxf::default() as *mut std::ffi::c_void;
+            ctx.private_data = Box::into_raw(Box::new(CcxGxf::default())) as *mut core::ffi::c_void;
         }
     }
 
