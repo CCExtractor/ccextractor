@@ -53,8 +53,6 @@ int ccxr_read_packet(struct ccx_demuxer *ctx, struct demuxer_data *data);
 int ccxr_gxf_probe(const unsigned char *buf, int len);
 #endif
 
-
-
 typedef enum
 {
 	PKT_MAP = 0xbc,

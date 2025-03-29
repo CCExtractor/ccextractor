@@ -2,13 +2,16 @@
 #![allow(unexpected_cfgs)]
 #![allow(unused_mut)]
 
+use crate::activity::ActivityExt;
+use crate::common::{
+    BufferdataType, Codec, Decoder608Settings, DecoderDtvccSettings, OutputFormat, SelectCodec,
+    StreamMode, StreamType,
+};
+use crate::common::{DataSource, Options};
 use crate::demuxer::common_structs::LibCcDecode;
 use crate::demuxer::lib_ccx::{FileReport, LibCcxCtx};
 use crate::demuxer::stream_functions::{detect_myth, detect_stream_type};
 use crate::file_functions::file_functions::FILEBUFFERSIZE;
-use crate::activity::ActivityExt;
-use crate::common::{BufferdataType, Codec, Decoder608Settings, DecoderDtvccSettings, OutputFormat, SelectCodec, StreamMode, StreamType};
-use crate::common::{DataSource, Options};
 use crate::time::Timestamp;
 use crate::util::log::ExitCause;
 use crate::{common, fatal, info};
@@ -21,8 +24,7 @@ use std::ptr::{null_mut, NonNull};
 use std::sync::{LazyLock, Mutex};
 use std::{mem, ptr};
 
-pub static CCX_OPTIONS: LazyLock<Mutex<Options>> =
-    LazyLock::new(|| Mutex::new(Options::default()));
+pub static CCX_OPTIONS: LazyLock<Mutex<Options>> = LazyLock::new(|| Mutex::new(Options::default()));
 
 // Constants
 pub const SUB_STREAMS_CNT: usize = 10;
@@ -59,7 +61,7 @@ pub struct CcxRational {
 pub struct ProgramInfo {
     pub pid: i32,
     pub program_number: i32,
-    pub initialized_ocr: i32, // Avoid initializing the OCR more than once
+    pub initialized_ocr: i32,  // Avoid initializing the OCR more than once
     pub analysed_pmt_once: u8, // 1-bit field
     pub version: u8,
     pub saved_section: [u8; 1021],
@@ -107,7 +109,8 @@ pub struct CapInfo {
 
 // HList (Hyperlinked List)
 #[derive(Debug)]
-pub struct HList { // A lot of the HList struct is not implemented yet
+pub struct HList {
+    // A lot of the HList struct is not implemented yet
     pub next: *mut HList,
     pub prev: *mut HList,
 }
@@ -177,7 +180,6 @@ pub unsafe fn get_sib_stream_by_type(program: *mut CapInfo, codec_type: Codec) -
     }
     null_mut()
 }
-
 
 // pub fn list_empty(head: &mut HList) -> bool {
 //     head.next.is_null() && head.prev.is_null()
@@ -302,7 +304,7 @@ pub struct PMT_entry {
 #[derive(Debug, Clone, Copy)]
 pub struct EPGRating {
     pub country_code: [u8; 4], // char[4] -> fixed-size array of bytes
-    pub age: u8, // uint8_t -> u8
+    pub age: u8,               // uint8_t -> u8
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -316,22 +318,22 @@ pub struct EPGEvent {
     pub free_ca_mode: u8,
 
     pub iso_639_language_code: [u8; 4], // char[4] -> fixed-size array
-    pub event_name: *mut u8, // char* -> raw pointer
+    pub event_name: *mut u8,            // char* -> raw pointer
     pub text: *mut u8,
 
     pub extended_iso_639_language_code: [u8; 4], // char[4] -> fixed-size array
-    pub extended_text: *mut u8, // char* -> raw pointer
+    pub extended_text: *mut u8,                  // char* -> raw pointer
 
     pub has_simple: u8, // uint8_t -> u8
 
     pub ratings: *mut EPGRating, // struct EPG_rating* -> raw pointer
-    pub num_ratings: u32, // uint32_t -> u32
+    pub num_ratings: u32,        // uint32_t -> u32
 
     pub categories: *mut u8, // uint8_t* -> raw pointer
     pub num_categories: u32, // uint32_t -> u32
 
     pub service_id: u16, // uint16_t -> u16
-    pub count: i64, // long long int -> i64
+    pub count: i64,      // long long int -> i64
 
     pub live_output: u8, // uint8_t -> u8 (boolean flag)
 }
@@ -340,7 +342,7 @@ const EPG_MAX_EVENTS: usize = 60 * 24 * 7; // Define the max event constant
 
 #[repr(C)]
 pub struct EITProgram {
-    pub array_len: u32, // uint32_t -> u32
+    pub array_len: u32,                         // uint32_t -> u32
     pub epg_events: [EPGEvent; EPG_MAX_EVENTS], // struct EPG_event[EPG_MAX_EVENTS] -> fixed-size array
 }
 
@@ -379,8 +381,8 @@ impl EITProgram {
 // ccx_demuxer Struct
 pub struct CcxDemuxer<'a> {
     pub m2ts: i32,
-    pub stream_mode: StreamMode,      // ccx_stream_mode_enum maps to StreamMode
-    pub auto_stream: StreamMode,     // ccx_stream_mode_enum maps to StreamMode
+    pub stream_mode: StreamMode, // ccx_stream_mode_enum maps to StreamMode
+    pub auto_stream: StreamMode, // ccx_stream_mode_enum maps to StreamMode
     // pub startbytes: [u8; STARTBYTESLENGTH],
     pub startbytes: Vec<u8>,
     pub startbytes_pos: u32,
@@ -402,8 +404,8 @@ pub struct CcxDemuxer<'a> {
     pub cinfo_tree: CapInfo,
 
     // File Handles
-    pub infd: i32,      // Descriptor number for input
-    pub past: i64,      // Position in file, equivalent to ftell()
+    pub infd: i32, // Descriptor number for input
+    pub past: i64, // Position in file, equivalent to ftell()
 
     // Global timestamps
     pub global_timestamp: i64,
@@ -431,9 +433,9 @@ pub struct CcxDemuxer<'a> {
     pub last_pat_length: u32,
 
     pub filebuffer: *mut u8,
-    pub filebuffer_start: i64,      // Position of buffer start relative to file
-    pub filebuffer_pos: u32,       // Position of pointer relative to buffer start
-    pub bytesinbuffer: u32,        // Number of bytes in buffer
+    pub filebuffer_start: i64, // Position of buffer start relative to file
+    pub filebuffer_pos: u32,   // Position of pointer relative to buffer start
+    pub bytesinbuffer: u32,    // Number of bytes in buffer
 
     pub warning_program_not_found_shown: i32,
 
@@ -443,7 +445,7 @@ pub struct CcxDemuxer<'a> {
     pub ffmpeg_ctx: *mut std::ffi::c_void,
 
     // pub parent: *mut std::ffi::c_void,
-    pub parent: Option<&'a mut LibCcxCtx<'a>>,    // Demuxer Context
+    pub parent: Option<&'a mut LibCcxCtx<'a>>, // Demuxer Context
     pub private_data: *mut std::ffi::c_void,
     pub reset: fn(&mut CcxDemuxer<'a>),
     pub print_cfg: fn(&CcxDemuxer<'a>),
@@ -452,7 +454,6 @@ pub struct CcxDemuxer<'a> {
     pub is_open: fn(&CcxDemuxer<'a>) -> bool,
     pub get_stream_mode: fn(&CcxDemuxer<'a>) -> i32,
     pub get_filesize: fn(&CcxDemuxer<'a>, &mut CcxDemuxer) -> i64,
-
 }
 
 impl<'a> Default for CcxDemuxer<'a> {
@@ -460,8 +461,8 @@ impl<'a> Default for CcxDemuxer<'a> {
         {
             CcxDemuxer {
                 m2ts: 0,
-                stream_mode: StreamMode::default(),  // Assuming StreamMode has a Default implementation
-                auto_stream: StreamMode::default(),  // Assuming StreamMode has a Default implementation
+                stream_mode: StreamMode::default(), // Assuming StreamMode has a Default implementation
+                auto_stream: StreamMode::default(), // Assuming StreamMode has a Default implementation
                 startbytes: vec![0; STARTBYTESLENGTH],
                 startbytes_pos: 0,
                 startbytes_avail: 0,
@@ -478,7 +479,7 @@ impl<'a> Default for CcxDemuxer<'a> {
 
                 // Subtitle codec type
                 codec: Codec::Dvb,
-                nocodec: Codec::Dvb,  // Assuming Codec has a Default implementation
+                nocodec: Codec::Dvb, // Assuming Codec has a Default implementation
 
                 cinfo_tree: CapInfo::default(),
 
@@ -499,7 +500,7 @@ impl<'a> Default for CcxDemuxer<'a> {
                 have_pids: vec![0; MAX_PSI_PID + 1],
                 num_of_pids: 0,
                 pids_programs: vec![null_mut(); MAX_PID],
-                freport: CcxDemuxReport::default(),  // Assuming CcxDemuxReport has a Default implementation
+                freport: CcxDemuxReport::default(), // Assuming CcxDemuxReport has a Default implementation
                 // Hauppauge support
                 hauppauge_warning_shown: 0,
 
@@ -546,7 +547,7 @@ impl Default for ProgramInfo {
             crc: 0,
             valid_crc: 0,
             name: [0; MAX_PROGRAM_NAME_LEN], // Initialize name to zeroes
-            pcr_pid: -1, // -1 indicates pcr_pid is not available
+            pcr_pid: -1,                     // -1 indicates pcr_pid is not available
             got_important_streams_min_pts: [0; Stream_Type::Count as usize], // Initialize to zeroes
             has_all_min_pts: 0,
         }
@@ -595,13 +596,13 @@ impl<'a> CcxDemuxer<'a> {
 pub struct DemuxerData {
     pub program_number: i32,
     pub stream_pid: i32,
-    pub codec: Codec,                // ccx_code_type maps to Codec
+    pub codec: Codec,                   // ccx_code_type maps to Codec
     pub bufferdatatype: BufferdataType, // ccx_bufferdata_type maps to BufferDataType
     pub buffer: *mut u8,
     pub len: usize,
-    pub rollover_bits: u32,          // Tracks PTS rollover
+    pub rollover_bits: u32, // Tracks PTS rollover
     pub pts: i64,
-    pub tb: CcxRational,             // Corresponds to ccx_rational
+    pub tb: CcxRational, // Corresponds to ccx_rational
     pub next_stream: *mut DemuxerData,
     pub next_program: *mut DemuxerData,
 }
@@ -697,7 +698,6 @@ impl<'a> CcxDemuxer<'a> {
     }
 }
 
-
 impl<'a> CcxDemuxer<'a> {
     pub unsafe fn open(&mut self, file_name: &str) -> i32 {
         let ccx_options = CCX_OPTIONS.lock().unwrap();
@@ -781,7 +781,9 @@ impl<'a> CcxDemuxer<'a> {
         if self.auto_stream == StreamMode::Autodetect {
             detect_stream_type(self);
             match self.stream_mode {
-                StreamMode::ElementaryOrNotFound => info!("\rFile seems to be an elementary stream"),
+                StreamMode::ElementaryOrNotFound => {
+                    info!("\rFile seems to be an elementary stream")
+                }
                 StreamMode::Transport => info!("\rFile seems to be a transport stream"),
                 StreamMode::Program => info!("\rFile seems to be a program stream"),
                 StreamMode::Asf => info!("\rFile seems to be an ASF"),
@@ -805,9 +807,14 @@ impl<'a> CcxDemuxer<'a> {
 
         // MythTV detection logic
         match ccx_options.auto_myth {
-            Some(false) => { self.stream_mode = StreamMode::Myth; }
+            Some(false) => {
+                self.stream_mode = StreamMode::Myth;
+            }
             Some(true) => {
-                if matches!(self.stream_mode, StreamMode::ElementaryOrNotFound | StreamMode::Program) {
+                if matches!(
+                    self.stream_mode,
+                    StreamMode::ElementaryOrNotFound | StreamMode::Program
+                ) {
                     if detect_myth(self) != 0 {
                         self.stream_mode = StreamMode::Myth;
                     }
@@ -816,17 +823,14 @@ impl<'a> CcxDemuxer<'a> {
             _ => {}
         }
 
-
         0
     }
 }
-
 
 /// This function returns the file size for a given demuxer.
 /// Translated from the C function `ccx_demuxer_get_file_size`.
 /// LLONG is `int64_t`, so we use `i64` in Rust.
 pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
-
     // Get the file descriptor from ctx.
     let in_fd = ctx.infd;
     if in_fd < 0 {
@@ -861,7 +865,6 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
     // (This check is somewhat redundant because seek returns Result<u64, _>,
     //  but we keep it for exact logic parity with the C code.)
 
-
     // Restore the file position: equivalent to LSEEK(in, current, SEEK_SET);
     #[allow(unused_variables)]
     let ret = match file.seek(SeekFrom::Start(current)) {
@@ -872,12 +875,10 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
         }
     };
 
-
     // Return the fd back to its original owner.
     let _ = file.into_raw_fd();
     length as i64
 }
-
 
 /// Translated from the C function `ccx_demuxer_get_stream_mode`.
 /// Returns the current stream mode.
@@ -939,7 +940,11 @@ pub fn ccx_demuxer_print_cfg(ctx: &CcxDemuxer) {
 
 //////////////////////////////////////////////////////////////////////////////////
 fn y_n(count: i32) -> &'static str {
-    if count != 0 { "YES" } else { "NO" }
+    if count != 0 {
+        "YES"
+    } else {
+        "NO"
+    }
 }
 
 /// Translated version of the C `print_file_report` function, preserving structure
@@ -987,7 +992,11 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
                     if demux_ctx.pids_programs[i as usize].is_null() {
                         continue;
                     }
-                    println!("PID: {}, Program: {}, ", i, (*demux_ctx.pids_programs[i as usize]).program_number);
+                    println!(
+                        "PID: {}, Program: {}, ",
+                        i,
+                        (*demux_ctx.pids_programs[i as usize]).program_number
+                    );
                     let mut j = 0;
                     while j < SUB_STREAMS_CNT {
                         if demux_ctx.freport.dvb_sub_pid[j] == i as u32 {
@@ -1001,7 +1010,8 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
                         j += 1;
                     }
                     if j == SUB_STREAMS_CNT {
-                        let idx = (*demux_ctx.pids_programs[i as usize]).printable_stream_type as usize;
+                        let idx =
+                            (*demux_ctx.pids_programs[i as usize]).printable_stream_type as usize;
                         let desc = CStr::from_ptr(get_desc_placeholder(idx))
                             .to_str()
                             .unwrap_or("Unknown");
@@ -1026,9 +1036,13 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
             // print_cc_report(ctx, ptr::null_mut()); //TODO
         }
         let mut program = demux_ctx.cinfo_tree.pg_stream.next;
-        while program != &demux_ctx.cinfo_tree.pg_stream as *const _ as *mut _ && !program.is_null() {
+        while program != &demux_ctx.cinfo_tree.pg_stream as *const _ as *mut _ && !program.is_null()
+        {
             let program_ptr = program as *mut CapInfo;
-            println!("//////// Program #{}: ////////", (*program_ptr).program_number);
+            println!(
+                "//////// Program #{}: ////////",
+                (*program_ptr).program_number
+            );
 
             println!("DVB Subtitles: ");
             let mut info = get_sib_stream_by_type(program_ptr, Codec::Dvb);
@@ -1048,11 +1062,12 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
                 continue;
             }
             // dec_ctx = update_decoder_list_cinfo(ctx, best_info); // TODO
-            if (*dec_ctx).in_bufferdatatype == BufferdataType::Pes &&
-                (demux_ctx.stream_mode == StreamMode::Transport ||
-                    demux_ctx.stream_mode == StreamMode::Program ||
-                    demux_ctx.stream_mode == StreamMode::Asf ||
-                    demux_ctx.stream_mode == StreamMode::Wtv) {
+            if (*dec_ctx).in_bufferdatatype == BufferdataType::Pes
+                && (demux_ctx.stream_mode == StreamMode::Transport
+                    || demux_ctx.stream_mode == StreamMode::Program
+                    || demux_ctx.stream_mode == StreamMode::Asf
+                    || demux_ctx.stream_mode == StreamMode::Wtv)
+            {
                 println!("Width: {}", (*dec_ctx).current_hor_size);
                 println!("Height: {}", (*dec_ctx).current_vert_size);
                 let ar_idx = (*dec_ctx).current_aspect_ratio as usize;
@@ -1064,9 +1079,15 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
             program = (*program).next;
         }
 
-        println!("MPEG-4 Timed Text: {}", y_n(ctx.freport.mp4_cc_track_cnt as i32));
+        println!(
+            "MPEG-4 Timed Text: {}",
+            y_n(ctx.freport.mp4_cc_track_cnt as i32)
+        );
         if ctx.freport.mp4_cc_track_cnt != 0 {
-            println!("MPEG-4 Timed Text tracks count: {}", ctx.freport.mp4_cc_track_cnt);
+            println!(
+                "MPEG-4 Timed Text tracks count: {}",
+                ctx.freport.mp4_cc_track_cnt
+            );
         }
 
         // Instead of freep(&ctx->freport.data_from_608);
@@ -1074,7 +1095,6 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
         ptr::write_bytes(&mut ctx.freport as *mut FileReport, 0, 1);
     }
 }
-
 
 pub unsafe fn get_desc_placeholder(_index: usize) -> *const i8 {
     b"Unknown\0".as_ptr() as *const i8
@@ -1190,7 +1210,9 @@ unsafe fn ccx_demuxer_delete(ctx: &mut *mut CcxDemuxer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget};
+    use crate::util::log::{
+        set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget,
+    };
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::os::fd::AsRawFd;
@@ -1206,7 +1228,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-                .ok();
+            .ok();
         });
     }
     #[test]
@@ -1273,7 +1295,10 @@ mod tests {
     fn new_lib_cc_decode(processed_enough: i32) -> Box<LibCcDecode> {
         Box::new(LibCcDecode {
             processed_enough,
-            list: HList { next: null_mut(), prev: null_mut() },
+            list: HList {
+                next: null_mut(),
+                prev: null_mut(),
+            },
             ..Default::default()
         })
     }
@@ -1321,10 +1346,7 @@ mod tests {
     #[test]
     fn test_is_decoder_processed_enough_false_no_decoder() {
         // multiprogram == false, but no decoder has processed_enough true.
-        let mut decoders: Vec<Box<LibCcDecode>> = vec![
-            new_lib_cc_decode(0),
-            new_lib_cc_decode(0),
-        ];
+        let mut decoders: Vec<Box<LibCcDecode>> = vec![new_lib_cc_decode(0), new_lib_cc_decode(0)];
         let head = build_decoder_list(&mut decoders);
         let mut ctx = LibCcxCtx::default();
         ctx.dec_ctx_head.next = head;
@@ -1337,9 +1359,7 @@ mod tests {
     #[test]
     fn test_is_decoder_processed_enough_false_multiprogram() {
         // Even if a decoder is processed enough, if multiprogram is true, should return false.
-        let mut decoders: Vec<Box<LibCcDecode>> = vec![
-            new_lib_cc_decode(1),
-        ];
+        let mut decoders: Vec<Box<LibCcDecode>> = vec![new_lib_cc_decode(1)];
         let head = build_decoder_list(&mut decoders);
         let mut ctx = LibCcxCtx::default();
         ctx.dec_ctx_head.next = head;
@@ -1399,15 +1419,21 @@ mod tests {
         }
     }
 
-
     #[test]
     fn test_get_sib_stream_by_type_found() {
         let mut program = CapInfo::default();
-        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
-        let sib2 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
+        let sib1 = Box::new(CapInfo {
+            codec: Codec::Dvb,
+            ..Default::default()
+        });
+        let sib2 = Box::new(CapInfo {
+            codec: Codec::Teletext,
+            ..Default::default()
+        });
         let mut siblings = vec![sib1, sib2];
         build_capinfo_list(&mut program, &mut siblings);
-        let result = unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
+        let result =
+            unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
         assert!(!result.is_null());
         unsafe {
             assert_eq!((*result).codec, Codec::Teletext);
@@ -1417,10 +1443,14 @@ mod tests {
     #[test]
     fn test_get_sib_stream_by_type_not_found() {
         let mut program = CapInfo::default();
-        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
+        let sib1 = Box::new(CapInfo {
+            codec: Codec::Dvb,
+            ..Default::default()
+        });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
-        let result = unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
+        let result =
+            unsafe { get_sib_stream_by_type(&mut program as *mut CapInfo, Codec::Teletext) };
         assert!(result.is_null());
     }
 
@@ -1444,7 +1474,10 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_teletext() {
         let mut program = CapInfo::default();
-        let sib1 = Box::new(CapInfo { codec: Codec::Teletext, ..Default::default() });
+        let sib1 = Box::new(CapInfo {
+            codec: Codec::Teletext,
+            ..Default::default()
+        });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1456,7 +1489,10 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_dvb() {
         let mut program = CapInfo::default();
-        let sib1 = Box::new(CapInfo { codec: Codec::Dvb, ..Default::default() });
+        let sib1 = Box::new(CapInfo {
+            codec: Codec::Dvb,
+            ..Default::default()
+        });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1468,7 +1504,10 @@ mod tests {
     #[test]
     fn test_get_best_sib_stream_atsc() {
         let mut program = CapInfo::default();
-        let sib1 = Box::new(CapInfo { codec: Codec::AtscCc, ..Default::default() });
+        let sib1 = Box::new(CapInfo {
+            codec: Codec::AtscCc,
+            ..Default::default()
+        });
         let mut siblings = vec![sib1];
         build_capinfo_list(&mut program, &mut siblings);
         let result = unsafe { get_best_sib_stream(&mut program as *mut CapInfo) };
@@ -1524,7 +1563,9 @@ mod tests {
         // bytesinbuffer remains unchanged.
         assert_eq!(ctx.bytesinbuffer, 123);
         // Clean up.
-        unsafe { let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE)); }
+        unsafe {
+            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+        }
     }
 
     // --------- Tests for ccx_demuxer_reset ---------
@@ -1616,12 +1657,14 @@ mod tests {
         assert_eq!(demuxer.infd, 3);
     }
 
-
     /// Helper: Create a temporary file with the given content and return its file descriptor.
     fn create_temp_file_with_content(content: &[u8]) -> (NamedTempFile, i32, u64) {
         let mut tmpfile = NamedTempFile::new().expect("Failed to create temp file");
         tmpfile.write_all(content).expect("Failed to write content");
-        let metadata = tmpfile.as_file().metadata().expect("Failed to get metadata");
+        let metadata = tmpfile
+            .as_file()
+            .metadata()
+            .expect("Failed to get metadata");
         let size = metadata.len();
 
         // Get the raw file descriptor.
@@ -1652,7 +1695,10 @@ mod tests {
         demuxer.infd = -1;
         let get_filesize = demuxer.get_filesize;
         let ret = get_filesize(&CcxDemuxer::default(), &mut demuxer);
-        assert_eq!(ret, -1, "File size should be -1 for an invalid file descriptor");
+        assert_eq!(
+            ret, -1,
+            "File size should be -1 for an invalid file descriptor"
+        );
     }
 
     /// Test that the file position is restored after calling ccx_demuxer_get_file_size.
@@ -1662,10 +1708,16 @@ mod tests {
         let (tmpfile, fd, _size) = create_temp_file_with_content(content);
 
         // Open the file (using OpenOptions to allow seeking).
-        let mut file = OpenOptions::new().read(true).write(true).open(tmpfile.path()).expect("Failed to open file");
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(tmpfile.path())
+            .expect("Failed to open file");
         // Move the file cursor to a nonzero position.
         file.seek(SeekFrom::Start(5)).expect("Failed to seek");
-        let pos_before = file.seek(SeekFrom::Current(0)).expect("Failed to get current position");
+        let pos_before = file
+            .seek(SeekFrom::Current(0))
+            .expect("Failed to get current position");
 
         // Create a demuxer with the same file descriptor.
         let mut demuxer = CcxDemuxer::default();
@@ -1676,8 +1728,13 @@ mod tests {
         let _ = get_filesize(&CcxDemuxer::default(), &mut demuxer);
 
         // After calling the function, the file position should be restored.
-        let pos_after = file.seek(SeekFrom::Current(0)).expect("Failed to get current position");
-        assert_eq!(pos_before, pos_after, "File position should be restored after calling get_file_size");
+        let pos_after = file
+            .seek(SeekFrom::Current(0))
+            .expect("Failed to get current position");
+        assert_eq!(
+            pos_before, pos_after,
+            "File position should be restored after calling get_file_size"
+        );
     }
     // Tests for ccx_demuxer_get_stream_mode
     #[test]
@@ -1770,7 +1827,6 @@ mod tests {
         print_file_report(&mut ctx);
         // Ensure that nothing panics.
     }
-
 
     // Tests for ccx_demuxer_delete
     fn create_capinfo() -> *mut CapInfo {
@@ -1945,7 +2001,10 @@ mod tests {
 
             // Verify cleanup
             assert!(list_empty(&(*ctx_ptr).cinfo_tree.all_stream));
-            assert_eq!((*ctx_ptr).cinfo_tree.all_stream.next, &mut (*ctx_ptr).cinfo_tree.all_stream as *mut HList);
+            assert_eq!(
+                (*ctx_ptr).cinfo_tree.all_stream.next,
+                &mut (*ctx_ptr).cinfo_tree.all_stream as *mut HList
+            );
 
             // Cleanup context
             let _ = Box::from_raw(ctx_ptr);

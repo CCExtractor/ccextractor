@@ -14,6 +14,7 @@ crate-type = ["staticlib"]
 log = "0.4.26"
 env_logger = "0.8.4"
 iconv = "0.1.1"
+palette = "0.6.1"
 rsmpeg = { version = "0.14.2", optional = true, features = [
     "link_system_ffmpeg",
 ] }
@@ -26,8 +27,7 @@ time = "0.3.39"
 cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
-url = "2.5.2"
-palette = "0.7.6"
+url = "2.5.4"
 
 [build-dependencies]
 bindgen = "0.64.0"

@@ -1,10 +1,8 @@
-use crate::time::Timestamp;
 use crate::demuxer::xds::XdsContext;
+use crate::time::Timestamp;
 
 const MAXBFRAMES: usize = 50;
 const SORTBUF: usize = 2 * MAXBFRAMES + 1;
-
-
 
 pub const CCX_OK: i32 = 0;
 pub const CCX_FALSE: i32 = 0;
@@ -31,9 +29,9 @@ pub struct LibCcDecode {
     pub write_format: crate::common::OutputFormat, // 0 = Raw, 1 = srt, 2 = SMI
     pub extraction_start: Option<Timestamp>,
     pub extraction_end: Option<Timestamp>, // Segment we actually process
-    pub subs_delay: i64, // ms to delay (or advance) subs
-    pub extract: i32, // Extract 1st, 2nd or both fields
-    pub fullbin: i32, // Disable pruning of padding cc blocks
+    pub subs_delay: i64,                   // ms to delay (or advance) subs
+    pub extract: i32,                      // Extract 1st, 2nd or both fields
+    pub fullbin: i32,                      // Disable pruning of padding cc blocks
     // TODO when cc_subtitle completed
     // pub dec_sub: cc_subtitle,
     pub in_bufferdatatype: crate::common::BufferdataType,
