@@ -258,7 +258,6 @@ impl From<u32> for DataSource {
     }
 }
 
-
 #[derive(Default, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum StreamMode {
     #[default]

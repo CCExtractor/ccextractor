@@ -1,14 +1,13 @@
 #![allow(unexpected_cfgs)]
 
-use std::sync::{LazyLock, Mutex};
+use crate::common::{Options, StreamMode};
 use crate::demuxer::demuxer::{CcxDemuxer, STARTBYTESLENGTH};
+use crate::fatal;
 use crate::file_functions::file_functions::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::gxf::{ccx_gxf_probe, CcxGxf};
-use crate::common::{Options, StreamMode};
 use crate::util::log::{debug, info, DebugMessageFlag, ExitCause};
-use crate::fatal;
-pub static CCX_OPTIONS: LazyLock<Mutex<Options>> =
-    LazyLock::new(|| Mutex::new(Options::default()));
+use std::sync::{LazyLock, Mutex};
+pub static CCX_OPTIONS: LazyLock<Mutex<Options>> = LazyLock::new(|| Mutex::new(Options::default()));
 
 /// Rust equivalent of the `ccx_stream_mp4_box` array.
 #[derive(Debug)]
@@ -18,27 +17,73 @@ pub struct CcxStreamMp4Box {
 }
 
 pub static CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
-    CcxStreamMp4Box { box_type: *b"ftyp", score: 6 },  // File type
-    CcxStreamMp4Box { box_type: *b"pdin", score: 1 },  // Progressive download info
-    CcxStreamMp4Box { box_type: *b"moov", score: 5 },  // Container for all metadata
-    CcxStreamMp4Box { box_type: *b"moof", score: 4 },  // Movie fragment
-    CcxStreamMp4Box { box_type: *b"mfra", score: 1 },  // Movie fragment random access
-    CcxStreamMp4Box { box_type: *b"mdat", score: 2 },  // Media data container
-    CcxStreamMp4Box { box_type: *b"free", score: 1 },  // Free space
-    CcxStreamMp4Box { box_type: *b"skip", score: 1 },  // Free space
-    CcxStreamMp4Box { box_type: *b"meta", score: 1 },  // Metadata
-    CcxStreamMp4Box { box_type: *b"wide", score: 1 },  // Boxes > 2^32 bytes
-    CcxStreamMp4Box { box_type: *b"void", score: 1 },  // Assume free space
-    CcxStreamMp4Box { box_type: *b"meco", score: 1 },  // Additional metadata container
-    CcxStreamMp4Box { box_type: *b"styp", score: 1 },  // Segment type
-    CcxStreamMp4Box { box_type: *b"sidx", score: 1 },  // Segment index
-    CcxStreamMp4Box { box_type: *b"ssix", score: 1 },  // Subsegment index
-    CcxStreamMp4Box { box_type: *b"prft", score: 1 },  // Producer reference time
+    CcxStreamMp4Box {
+        box_type: *b"ftyp",
+        score: 6,
+    }, // File type
+    CcxStreamMp4Box {
+        box_type: *b"pdin",
+        score: 1,
+    }, // Progressive download info
+    CcxStreamMp4Box {
+        box_type: *b"moov",
+        score: 5,
+    }, // Container for all metadata
+    CcxStreamMp4Box {
+        box_type: *b"moof",
+        score: 4,
+    }, // Movie fragment
+    CcxStreamMp4Box {
+        box_type: *b"mfra",
+        score: 1,
+    }, // Movie fragment random access
+    CcxStreamMp4Box {
+        box_type: *b"mdat",
+        score: 2,
+    }, // Media data container
+    CcxStreamMp4Box {
+        box_type: *b"free",
+        score: 1,
+    }, // Free space
+    CcxStreamMp4Box {
+        box_type: *b"skip",
+        score: 1,
+    }, // Free space
+    CcxStreamMp4Box {
+        box_type: *b"meta",
+        score: 1,
+    }, // Metadata
+    CcxStreamMp4Box {
+        box_type: *b"wide",
+        score: 1,
+    }, // Boxes > 2^32 bytes
+    CcxStreamMp4Box {
+        box_type: *b"void",
+        score: 1,
+    }, // Assume free space
+    CcxStreamMp4Box {
+        box_type: *b"meco",
+        score: 1,
+    }, // Additional metadata container
+    CcxStreamMp4Box {
+        box_type: *b"styp",
+        score: 1,
+    }, // Segment type
+    CcxStreamMp4Box {
+        box_type: *b"sidx",
+        score: 1,
+    }, // Segment index
+    CcxStreamMp4Box {
+        box_type: *b"ssix",
+        score: 1,
+    }, // Subsegment index
+    CcxStreamMp4Box {
+        box_type: *b"prft",
+        score: 1,
+    }, // Producer reference time
 ];
 /// Translate of the C `detect_stream_type` function with comments preserved.
-pub unsafe fn detect_stream_type(
-    ctx: &mut CcxDemuxer,
-) {
+pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     #[allow(unused_mut)]
     let mut ccx_options = CCX_OPTIONS.lock().unwrap();
 
@@ -138,7 +183,8 @@ pub unsafe fn detect_stream_type(
         }
     }
     // MP4 check. "Still not found" or we want file reports.
-    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound || ccx_options.print_file_reports != false)
+    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound
+        || ccx_options.print_file_reports != false)
         && ctx.startbytes_avail >= 4
     {
         let mut idx = 0usize;
@@ -147,12 +193,7 @@ pub unsafe fn detect_stream_type(
         while idx + 8 <= ctx.startbytes_avail as usize {
             // Check if we have a valid box
             let mut next_box_location = 0usize;
-            if is_valid_mp4_box(
-                &ctx.startbytes,
-                idx,
-                &mut next_box_location,
-                &mut box_score,
-            ) != 0
+            if is_valid_mp4_box(&ctx.startbytes, idx, &mut next_box_location, &mut box_score) != 0
                 && next_box_location > idx
             {
                 // If the box is valid, a new box should be found
@@ -285,9 +326,7 @@ pub unsafe fn detect_stream_type(
 
     // return_to_buffer(ctx, &ctx.startbytes, ctx.startbytes_avail as u32);
 }
-pub fn detect_myth(
-    ctx: &mut CcxDemuxer,
-) -> i32 {
+pub fn detect_myth(ctx: &mut CcxDemuxer) -> i32 {
     let mut vbi_blocks = 0;
     // VBI data? If yes, use MythTV loop
     // STARTBYTESLENGTH is 1MB; if the file is shorter, we will never detect
@@ -330,19 +369,20 @@ pub fn is_valid_mp4_box(
             && buffer[position + 7] == CCX_STREAM_MP4_BOXES[idx].box_type[3]
         {
             // Print detected MP4 box name
-            info!("{}", &format!(
-                "Detected MP4 box with name: {}\n",
-                std::str::from_utf8(&CCX_STREAM_MP4_BOXES[idx].box_type).unwrap_or("???")
-            ));
+            info!(
+                "{}",
+                &format!(
+                    "Detected MP4 box with name: {}\n",
+                    std::str::from_utf8(&CCX_STREAM_MP4_BOXES[idx].box_type).unwrap_or("???")
+                )
+            );
 
             // If the box type is "moov", check if it contains a valid movie header (mvhd)
             if idx == 2
-                && !(
-                buffer[position + 12] == b'm'
+                && !(buffer[position + 12] == b'm'
                     && buffer[position + 13] == b'v'
                     && buffer[position + 14] == b'h'
-                    && buffer[position + 15] == b'd'
-            )
+                    && buffer[position + 15] == b'd')
             {
                 // If "moov" doesn't have "mvhd", skip it.
                 continue;

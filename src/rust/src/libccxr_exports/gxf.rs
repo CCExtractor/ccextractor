@@ -1,8 +1,8 @@
-use std::os::raw::c_int;
 use lib_ccxr::demuxer::common_structs::*;
 use lib_ccxr::demuxer::demuxer::*;
 use lib_ccxr::gxf_demuxer::gxf::*;
-use std::os::raw::{ c_uchar};
+use std::os::raw::c_int;
+use std::os::raw::c_uchar;
 use std::slice;
 
 #[no_mangle]
@@ -21,10 +21,7 @@ pub unsafe extern "C" fn ccxr_parse_packet_header(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_parse_material_sec(
-    demux: *mut CcxDemuxer,
-    len: c_int,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_parse_material_sec(demux: *mut CcxDemuxer, len: c_int) -> c_int {
     // Pass the demux pointer and length (converted to i32) to the Rust function.
     parse_material_sec(demux, len as i32)
 }
@@ -43,10 +40,7 @@ pub unsafe extern "C" fn ccxr_parse_mpeg525_track_desc(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_parse_ad_track_desc(
-    demux: *mut CcxDemuxer,
-    len: c_int,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_parse_ad_track_desc(demux: *mut CcxDemuxer, len: c_int) -> c_int {
     // Check for a valid pointer.
     if demux.is_null() {
         return CCX_EINVAL;
@@ -55,10 +49,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_track_desc(
     parse_ad_track_desc(&mut *demux, len as i32)
 }
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_set_track_frame_rate(
-    vid_track: *mut CcxGxfVideoTrack,
-    val: i8,
-) {
+pub unsafe extern "C" fn ccxr_set_track_frame_rate(vid_track: *mut CcxGxfVideoTrack, val: i8) {
     if vid_track.is_null() {
         return;
     }
@@ -130,10 +121,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_field(
     parse_ad_field(&mut *demux, len as i32, &mut *data)
 }
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_set_data_timebase(
-    vid_format: c_int,
-    data: *mut DemuxerData,
-) {
+pub unsafe extern "C" fn ccxr_set_data_timebase(vid_format: c_int, data: *mut DemuxerData) {
     if data.is_null() {
         return;
     }
@@ -203,10 +191,7 @@ pub unsafe extern "C" fn ccxr_parse_media(
 // Extern wrapper for parse_flt
 //
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_parse_flt(
-    ctx: *mut CcxDemuxer,
-    len: c_int,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_parse_flt(ctx: *mut CcxDemuxer, len: c_int) -> c_int {
     if ctx.is_null() {
         return CCX_EINVAL;
     }
@@ -217,10 +202,7 @@ pub unsafe extern "C" fn ccxr_parse_flt(
 // Extern wrapper for parse_umf
 //
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_parse_umf(
-    ctx: *mut CcxDemuxer,
-    len: c_int,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_parse_umf(ctx: *mut CcxDemuxer, len: c_int) -> c_int {
     if ctx.is_null() {
         return CCX_EINVAL;
     }
@@ -246,10 +228,7 @@ pub unsafe extern "C" fn ccxr_parse_map(
 // Extern wrapper for read_packet
 //
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_read_packet(
-    ctx: *mut CcxDemuxer,
-    data: *mut DemuxerData,
-) -> c_int {
+pub unsafe extern "C" fn ccxr_read_packet(ctx: *mut CcxDemuxer, data: *mut DemuxerData) -> c_int {
     if ctx.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
@@ -260,10 +239,7 @@ pub unsafe extern "C" fn ccxr_read_packet(
 // Extern wrapper for ccx_gxf_probe
 //
 #[no_mangle]
-pub extern "C" fn ccxr_gxf_probe(
-    buf: *const c_uchar,
-    len: c_int,
-) -> c_int {
+pub extern "C" fn ccxr_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int {
     // Here we assume CCX_TRUE and CCX_FALSE are defined (typically 1 and 0).
     if buf.is_null() {
         return CCX_FALSE;

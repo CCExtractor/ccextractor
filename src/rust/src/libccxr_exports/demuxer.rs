@@ -1,4 +1,7 @@
-use lib_ccxr::demuxer::demuxer::{ccx_demuxer_get_file_size, ccx_demuxer_get_stream_mode, ccx_demuxer_print_cfg, dinit_cap, freep, CcxDemuxer};
+use lib_ccxr::demuxer::demuxer::{
+    ccx_demuxer_get_file_size, ccx_demuxer_get_stream_mode, ccx_demuxer_print_cfg, dinit_cap,
+    freep, CcxDemuxer,
+};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_longlong};
 
@@ -13,7 +16,6 @@ pub unsafe extern "C" fn ccxr_demuxer_reset(ctx: *mut CcxDemuxer) {
     // Convert the raw pointer into a mutable reference and call the reset method.
     (*ctx).reset();
 }
-
 
 // Extern function for ccx_demuxer_close
 #[no_mangle]
@@ -32,7 +34,11 @@ pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *const CcxDemuxer) -> c_int {
         return 0;
     }
     // Call the Rust implementation is_open()
-    if (*ctx).is_open() { 1 } else { 0 }
+    if (*ctx).is_open() {
+        1
+    } else {
+        0
+    }
 }
 
 // Extern function for ccx_demuxer_open
