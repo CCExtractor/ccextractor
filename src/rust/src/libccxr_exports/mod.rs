@@ -1,6 +1,7 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
 pub mod time;
+pub mod xds_exports;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;
 use lib_ccxr::util::{bits::*, levenshtein::*};
