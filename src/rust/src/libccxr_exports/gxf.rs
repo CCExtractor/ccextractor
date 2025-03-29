@@ -23,7 +23,7 @@ pub unsafe extern "C" fn ccxr_parse_packet_header(
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_material_sec(demux: *mut CcxDemuxer, len: c_int) -> c_int {
     // Pass the demux pointer and length (converted to i32) to the Rust function.
-    parse_material_sec(demux, len as i32)
+    parse_material_sec(demux, len)
 }
 
 #[no_mangle]
@@ -36,7 +36,7 @@ pub unsafe extern "C" fn ccxr_parse_mpeg525_track_desc(
         return CCX_EINVAL;
     }
     // Convert the raw pointer into a mutable reference and call the Rust function.
-    parse_mpeg525_track_desc(&mut *demux, len as i32)
+    parse_mpeg525_track_desc(&mut *demux, len)
 }
 
 #[no_mangle]
@@ -46,7 +46,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_track_desc(demux: *mut CcxDemuxer, len: c
         return CCX_EINVAL;
     }
     // Convert the raw pointer into a mutable reference and call the Rust function.
-    parse_ad_track_desc(&mut *demux, len as i32)
+    parse_ad_track_desc(&mut *demux, len)
 }
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_set_track_frame_rate(vid_track: *mut CcxGxfVideoTrack, val: i8) {
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn ccxr_parse_track_sec(
         return CCX_EINVAL;
     }
     // Convert the raw pointers into mutable references.
-    parse_track_sec(&mut *demux, len as i32, &mut *data)
+    parse_track_sec(&mut *demux, len, &mut *data)
 }
 
 #[no_mangle]
@@ -96,7 +96,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_pyld(
     if demux.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_ad_pyld(&mut *demux, len as i32, &mut *data)
+    parse_ad_pyld(&mut *demux, len, &mut *data)
 }
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_ad_vbi(
@@ -107,7 +107,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_vbi(
     if demux.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_ad_vbi(&mut *demux, len as i32, &mut *data)
+    parse_ad_vbi(&mut *demux, len, &mut *data)
 }
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_ad_field(
@@ -118,14 +118,14 @@ pub unsafe extern "C" fn ccxr_parse_ad_field(
     if demux.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_ad_field(&mut *demux, len as i32, &mut *data)
+    parse_ad_field(&mut *demux, len, &mut *data)
 }
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_set_data_timebase(vid_format: c_int, data: *mut DemuxerData) {
     if data.is_null() {
         return;
     }
-    set_data_timebase(vid_format as i32, &mut *data)
+    set_data_timebase(vid_format, &mut *data)
 }
 //
 // Extern wrapper for parse_mpeg_packet
@@ -155,7 +155,7 @@ pub unsafe extern "C" fn ccxr_parse_ad_packet(
     if demux.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_ad_packet(&mut *demux, len as i32, &mut *data)
+    parse_ad_packet(&mut *demux, len, &mut *data)
 }
 
 //
@@ -184,7 +184,7 @@ pub unsafe extern "C" fn ccxr_parse_media(
     if demux.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_media(&mut *demux, len as i32, &mut *data)
+    parse_media(&mut *demux, len, &mut *data)
 }
 
 //
@@ -195,7 +195,7 @@ pub unsafe extern "C" fn ccxr_parse_flt(ctx: *mut CcxDemuxer, len: c_int) -> c_i
     if ctx.is_null() {
         return CCX_EINVAL;
     }
-    parse_flt(&mut *ctx, len as i32)
+    parse_flt(&mut *ctx, len)
 }
 
 //
@@ -206,7 +206,7 @@ pub unsafe extern "C" fn ccxr_parse_umf(ctx: *mut CcxDemuxer, len: c_int) -> c_i
     if ctx.is_null() {
         return CCX_EINVAL;
     }
-    parse_umf(&mut *ctx, len as i32)
+    parse_umf(&mut *ctx, len)
 }
 
 //
@@ -221,7 +221,7 @@ pub unsafe extern "C" fn ccxr_parse_map(
     if ctx.is_null() || data.is_null() {
         return CCX_EINVAL;
     }
-    parse_map(&mut *ctx, len as i32, &mut *data)
+    parse_map(&mut *ctx, len, &mut *data)
 }
 
 //
