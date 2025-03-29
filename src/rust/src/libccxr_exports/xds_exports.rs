@@ -1,127 +1,81 @@
-use lib_ccxr::decoder_xds::functions_xds::*;
-use lib_ccxr::decoder_xds::structs_xds::*;
-use lib_ccxr::time::timing::*;
+use lib_ccxr::decoder_xds::functions_xds::{do_end_of_xds, process_xds_bytes, xds_cea608_test};
+use lib_ccxr::decoder_xds::structs_xds::{CcSubtitle, CcxDecodersXdsContext};
+use lib_ccxr::time::TimingContext;
 
 #[no_mangle]
-pub extern "C" fn ccxr_ccx_decoders_xds_init_library(
-    timing: TimingContext,
-    xds_write_to_file: i64,
-) -> CcxDecodersXdsContext {
-    ccx_decoders_xds_init_library(timing, xds_write_to_file) // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_write_xds_string(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-    p: *const u8,
-    len: usize,
-) -> i32 {
-    write_xds_string(sub, ctx, p, len) // Call the pure Rust function
-}
-
 /// # Safety
-///
-/// The `fmt` pointer must be a valid null-terminated C string,
-/// and `args` must contain valid formatting arguments. Ensure that
-/// `fmt` is not null and points to a properly allocated memory region.
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_xdsprint(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-    fmt: *const std::os::raw::c_char,
-    args: *const std::os::raw::c_char,
+/// - `sub` must be a non-null pointer to a valid, mutable `CcSubtitle` instance.
+/// - `ctx` must be a non-null pointer to a valid, mutable `CcxDecodersXdsContext` instance.
+/// - The caller must ensure that the memory referenced by `sub` and `ctx` remains valid for the duration of the function call.
+/// - Passing null or invalid pointers will result in undefined behavior.
+pub unsafe extern "C" fn ccxr_do_end_of_xds(
+    sub: *mut CcSubtitle,
+    ctx: *mut CcxDecodersXdsContext,
+    expected_checksum: u8,
 ) {
-    // Call the pure Rust function
-    xdsprint(
-        sub,
-        ctx,
-        unsafe { std::ffi::CStr::from_ptr(fmt).to_str().unwrap_or("") },
-        format_args!("{}", unsafe {
-            std::ffi::CStr::from_ptr(args).to_str().unwrap_or("")
-        }),
-    );
+    if sub.is_null() || ctx.is_null() {
+        return;
+    }
+
+    let sub = unsafe { &mut *sub };
+    let ctx = unsafe { &mut *ctx };
+
+    do_end_of_xds(sub, ctx, expected_checksum);
 }
 
 #[no_mangle]
-pub extern "C" fn ccxr_clear_xds_buffer(ctx: &mut CcxDecodersXdsContext, num: i64) {
-    clear_xds_buffer(ctx, num); // Call the pure Rust function
+/// # Safety
+/// - `ctx` must be a non-null pointer to a valid, mutable `CcxDecodersXdsContext` instance.
+/// - The caller must ensure that the memory referenced by `ctx` remains valid for the duration of the function call.
+/// - Passing a null or invalid pointer will result in undefined behavior.
+pub unsafe extern "C" fn ccxr_process_xds_bytes(ctx: *mut CcxDecodersXdsContext, hi: u8, lo: u8) {
+    if ctx.is_null() {
+        return;
+    }
+
+    let ctx = unsafe { &mut *ctx };
+
+    process_xds_bytes(ctx, hi as i64, lo as i64);
 }
 
 #[no_mangle]
-pub extern "C" fn ccxr_how_many_used(ctx: &CcxDecodersXdsContext) -> i64 {
-    how_many_used(ctx) // Call the pure Rust function
+/// # Safety
+/// - `timing` must be a non-null pointer to a valid, mutable `TimingContext` instance.
+/// - The caller must ensure that the memory referenced by `timing` remains valid for the duration of the function call.
+/// - The returned pointer must be managed properly by the caller. It points to a heap-allocated `CcxDecodersXdsContext` instance, and the caller is responsible for freeing it using `Box::from_raw` when it is no longer needed.
+/// - Failure to free the returned pointer will result in a memory leak.
+/// - Passing a null or invalid pointer for `timing` will result in undefined behavior.
+pub unsafe extern "C" fn ccxr_ccx_decoders_xds_init_library(
+    timing: *mut TimingContext,
+    xds_write_to_file: bool,
+) -> *mut CcxDecodersXdsContext {
+    if timing.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let timing = unsafe { &mut *timing };
+
+    let ctx = CcxDecodersXdsContext::xds_init_library(timing.clone(), xds_write_to_file);
+
+    Box::into_raw(Box::new(ctx))
 }
 
 #[no_mangle]
-pub extern "C" fn ccxr_process_xds_bytes(ctx: &mut CcxDecodersXdsContext, hi: u8, lo: i64) {
-    process_xds_bytes(ctx, hi, lo); // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_copy_generation_management_system(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-    c1: u8,
-    c2: u8,
+/// # Safety
+/// - `ctx` must be a non-null pointer to a valid, mutable `CcxDecodersXdsContext` instance.
+/// - `sub` must be a non-null pointer to a valid, mutable `CcSubtitle` instance.
+/// - The caller must ensure that the memory referenced by `ctx` and `sub` remains valid for the duration of the function call.
+/// - Passing null or invalid pointers will result in undefined behavior.
+pub unsafe extern "C" fn ccxr_xds_cea608_test(
+    ctx: *mut CcxDecodersXdsContext,
+    sub: *mut CcSubtitle,
 ) {
-    xds_do_copy_generation_management_system(sub, ctx, c1, c2); // Call the pure Rust function
-}
+    if ctx.is_null() || sub.is_null() {
+        return;
+    }
 
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_content_advisory(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-    c1: u8,
-    c2: u8,
-) {
-    xds_do_content_advisory(sub, ctx, c1, c2); // Call the pure Rust function
-}
+    let ctx = unsafe { &mut *ctx };
+    let sub = unsafe { &mut *sub };
 
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_private_data(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-) -> i64 {
-    xds_do_private_data(sub, ctx) // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_misc(ctx: &CcxDecodersXdsContext) -> i64 {
-    xds_do_misc(ctx) // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_current_and_future(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-) -> i64 {
-    xds_do_current_and_future(sub, ctx) // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_do_end_of_xds(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-    expected_checksum: i64,
-) {
-    do_end_of_xds(sub, ctx, expected_checksum); // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_do_channel(
-    sub: &mut CcSubtitle,
-    ctx: &mut CcxDecodersXdsContext,
-) -> i64 {
-    xds_do_channel(sub, ctx) // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_debug_test(ctx: &mut CcxDecodersXdsContext, sub: &mut CcSubtitle) {
-    xds_debug_test(ctx, sub); // Call the pure Rust function
-}
-
-#[no_mangle]
-pub extern "C" fn ccxr_xds_cea608_test(ctx: &mut CcxDecodersXdsContext, sub: &mut CcSubtitle) {
-    xds_cea608_test(ctx, sub); // Call the pure Rust function
+    xds_cea608_test(ctx, sub);
 }

@@ -12,7 +12,7 @@ void do_end_of_xds (struct cc_subtitle *sub, struct ccx_decoders_xds_context *ct
 
 struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file);
 
-void xds_cea608_test();
+void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *sub);
 
 struct xds_buffer
 {
