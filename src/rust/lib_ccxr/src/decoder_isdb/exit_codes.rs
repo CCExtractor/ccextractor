@@ -9,7 +9,7 @@ pub const CCX_ENOSUPP: i64 = -103;
 pub const CCX_ENOMEM: i64 = -104;
 
 pub const NUM_BYTES_PER_PACKET: i64 = 35; // Class + type (repeated for convenience) + data + zero
-pub const NUM_XDS_BUFFERS: i64 = 35; // CEA recommends no more than one level of interleaving. Play it safe
+pub const NUM_XDS_BUFFERS: i64 = 9; // CEA recommends no more than one level of interleaving. Play it safe
 
 pub const MAXBFRAMES: usize = 50;
 pub const SORTBUF: usize = 2 * MAXBFRAMES + 1;

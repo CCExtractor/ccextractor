@@ -142,9 +142,7 @@ pub struct CcxDecoderVbiCtx {
     pub vbi_decoder_inited: c_int,
     pub zvbi_decoder: VbiRawDecoder,
     // vbi3_raw_decoder zvbi_decoder;
-    // #ifdef VBI_DEBUG
-    // pub vbi_debug_dump: *mut FILE,
-    // #endif
+    pub vbi_debug_dump: Option<Box<std::fs::File>>,
 }
 
 #[repr(C)]
