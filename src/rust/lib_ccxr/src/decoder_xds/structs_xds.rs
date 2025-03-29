@@ -40,7 +40,7 @@ pub const CCX_DECODER_608_SCREEN_ROWS: usize = 15;
 pub const CCX_DECODER_608_SCREEN_WIDTH: usize = 32;
 
 pub const NUM_BYTES_PER_PACKET: i64 = 35; // Class + type (repeated for convenience) + data + zero
-pub const NUM_XDS_BUFFERS: i64 = 35; // CEA recommends no more than one level of interleaving. Play it safe
+pub const NUM_XDS_BUFFERS: i64 = 9; // CEA recommends no more than one level of interleaving. Play it safe
 
 // Enums for format, color codes, font bits, and modes
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
