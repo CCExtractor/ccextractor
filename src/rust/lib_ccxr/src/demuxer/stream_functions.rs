@@ -1,9 +1,9 @@
 #![allow(unexpected_cfgs)]
 
 use crate::common::{Options, StreamMode};
-use crate::demuxer::demuxer::{CcxDemuxer, STARTBYTESLENGTH};
+use crate::demuxer::demux::{CcxDemuxer, STARTBYTESLENGTH};
 use crate::fatal;
-use crate::file_functions::file_functions::{buffered_read_opt, return_to_buffer};
+use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::gxf::{ccx_gxf_probe, CcxGxf};
 use crate::util::log::{debug, info, DebugMessageFlag, ExitCause};
 use std::sync::{LazyLock, Mutex};
@@ -82,7 +82,9 @@ pub static CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
         score: 1,
     }, // Producer reference time
 ];
-/// Translate of the C `detect_stream_type` function with comments preserved.
+/// C `detect_stream_type` function
+/// # Safety
+/// This function is unsafe because it calls unsafe function buffered_read_opt.
 pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     #[allow(unused_mut)]
     let mut ccx_options = CCX_OPTIONS.lock().unwrap();
@@ -100,14 +102,10 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // Check for ASF magic bytes
-    if ctx.startbytes_avail >= 4 {
-        if ctx.startbytes[0] == 0x30
-            && ctx.startbytes[1] == 0x26
-            && ctx.startbytes[2] == 0xb2
-            && ctx.startbytes[3] == 0x75
-        {
-            ctx.stream_mode = StreamMode::Asf;
-        }
+    if ctx.startbytes_avail >= 4 && ctx.startbytes[0] == 0x30
+        && ctx.startbytes[1] == 0x26
+        && ctx.startbytes[2] == 0xb2 && ctx.startbytes[3] == 0x75 {
+        ctx.stream_mode = StreamMode::Asf;
     }
 
     // WARNING: Always check containers first (such as Matroska),
@@ -133,23 +131,17 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // GXF probe
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound {
-        if ccx_gxf_probe(&ctx.startbytes) == true {
-            ctx.stream_mode = StreamMode::Gxf;
-            // ctx.private_data = CcxGxf::default() as *mut std::ffi::c_void;
-            ctx.private_data = Box::into_raw(Box::new(CcxGxf::default())) as *mut core::ffi::c_void;
-        }
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ccx_gxf_probe(&ctx.startbytes) {
+        ctx.stream_mode = StreamMode::Gxf;
+        // ctx.private_data = CcxGxf::default() as *mut std::ffi::c_void;
+        ctx.private_data = Box::into_raw(Box::new(CcxGxf::default())) as *mut core::ffi::c_void;
     }
 
     // WTV check
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 4 {
-        if ctx.startbytes[0] == 0xb7
-            && ctx.startbytes[1] == 0xd8
-            && ctx.startbytes[2] == 0x00
-            && ctx.startbytes[3] == 0x20
-        {
-            ctx.stream_mode = StreamMode::Wtv;
-        }
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 4 && ctx.startbytes[0] == 0xb7
+        && ctx.startbytes[1] == 0xd8
+        && ctx.startbytes[2] == 0x00 && ctx.startbytes[3] == 0x20 {
+        ctx.stream_mode = StreamMode::Wtv;
     }
 
     // Hex dump check
@@ -171,20 +163,16 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // Check for CCExtractor magic bytes
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 11 {
-        if ctx.startbytes[0] == 0xCC
-            && ctx.startbytes[1] == 0xCC
-            && ctx.startbytes[2] == 0xED
-            && ctx.startbytes[8] == 0
-            && ctx.startbytes[9] == 0
-            && ctx.startbytes[10] == 0
-        {
-            ctx.stream_mode = StreamMode::Rcwt;
-        }
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 11 && ctx.startbytes[0] == 0xCC
+        && ctx.startbytes[1] == 0xCC
+        && ctx.startbytes[2] == 0xED
+        && ctx.startbytes[8] == 0
+        && ctx.startbytes[9] == 0 && ctx.startbytes[10] == 0 {
+        ctx.stream_mode = StreamMode::Rcwt;
     }
     // MP4 check. "Still not found" or we want file reports.
     if (ctx.stream_mode == StreamMode::ElementaryOrNotFound
-        || ccx_options.print_file_reports != false)
+        || ccx_options.print_file_reports)
         && ctx.startbytes_avail >= 4
     {
         let mut idx = 0usize;
@@ -361,7 +349,7 @@ pub fn is_valid_mp4_box(
     box_score: &mut i32,
 ) -> i32 {
     // For each known MP4 box type, check if there's a match.
-    for idx in 0..16 {
+    for (idx, _) in CCX_STREAM_MP4_BOXES.iter().enumerate() {
         // Compare the 4 bytes in the provided buffer to the boxType in ccx_stream_mp4_boxes.
         if buffer[position + 4] == CCX_STREAM_MP4_BOXES[idx].box_type[0]
             && buffer[position + 5] == CCX_STREAM_MP4_BOXES[idx].box_type[1]
@@ -380,9 +368,9 @@ pub fn is_valid_mp4_box(
             // If the box type is "moov", check if it contains a valid movie header (mvhd)
             if idx == 2
                 && !(buffer[position + 12] == b'm'
-                    && buffer[position + 13] == b'v'
-                    && buffer[position + 14] == b'h'
-                    && buffer[position + 15] == b'd')
+                && buffer[position + 13] == b'v'
+                && buffer[position + 14] == b'h'
+                && buffer[position + 15] == b'd')
             {
                 // If "moov" doesn't have "mvhd", skip it.
                 continue;

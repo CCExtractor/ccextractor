@@ -1,5 +1,5 @@
 use crate::common::{Decoder608Report, DecoderDtvccReport, OutputFormat};
-use crate::demuxer::demuxer::{CcxDemuxer, DecodersCommonSettings, EITProgram, HList, PSI_buffer};
+use crate::demuxer::demux::{CcxDemuxer, DecodersCommonSettings, EITProgram, HList, PSI_buffer};
 
 #[repr(C)]
 #[derive(Debug)]

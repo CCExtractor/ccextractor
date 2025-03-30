@@ -46,7 +46,7 @@ pub struct LibCcDecode {
     pub total_pulldownfields: u32,
     pub total_pulldownframes: u32,
     pub program_number: i32,
-    pub list: crate::demuxer::demuxer::HList,
+    pub list: crate::demuxer::demux::HList,
     pub timing: *mut crate::time::TimingContext,
     pub codec: crate::common::Codec, // Can also be SelectCodec
 
@@ -54,7 +54,7 @@ pub struct LibCcDecode {
     pub has_ccdata_buffered: i32,
     pub is_alloc: i32,
 
-    pub avc_ctx: *mut crate::avc_functions::avc_functions::AvcCtx,
+    pub avc_ctx: *mut crate::avc_functions::avc::AvcCtx,
     pub private_data: *mut std::ffi::c_void,
 
     /* General video information */
@@ -152,7 +152,7 @@ impl Default for LibCcDecode {
             total_pulldownfields: 0,
             total_pulldownframes: 0,
             program_number: 0,
-            list: crate::demuxer::demuxer::HList::default(),
+            list: crate::demuxer::demux::HList::default(),
             timing: std::ptr::null_mut(),
             codec: crate::common::Codec::Dvb,
             has_ccdata_buffered: 0,
