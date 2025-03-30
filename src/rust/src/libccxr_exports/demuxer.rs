@@ -1,4 +1,4 @@
-use lib_ccxr::demuxer::demuxer::{
+use lib_ccxr::demuxer::demux::{
     ccx_demuxer_get_file_size, ccx_demuxer_get_stream_mode, ccx_demuxer_print_cfg, dinit_cap,
     freep, CcxDemuxer,
 };

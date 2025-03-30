@@ -4,8 +4,8 @@
 #![allow(unused_assignments)]
 
 use crate::demuxer::common_structs::*;
-use crate::demuxer::demuxer::{CcxDemuxer, DemuxerData};
-use crate::file_functions::file_functions::*;
+use crate::demuxer::demux::{CcxDemuxer, DemuxerData};
+use crate::file_functions::file::*;
 use crate::info;
 use crate::util::log::{debug, DebugMessageFlag};
 use byteorder::{ByteOrder, NetworkEndian};
@@ -29,17 +29,25 @@ macro_rules! dbg {
 
 /// Reads a 32-bit big-endian value from the given pointer and converts it to host order.
 /// Mimics the C macro: #define RB32(x) (ntohl(*(unsigned int *)(x)))
+/// # Safety
+/// This function is unsafe because it calls unsafe function `from_raw_parts`
 pub unsafe fn rb32(ptr: *const u8) -> u32 {
     let bytes = slice::from_raw_parts(ptr, 4);
     NetworkEndian::read_u32(bytes)
 }
+/// # Safety
+/// This function is unsafe because it calls unsafe function `from_raw_parts`
 pub unsafe fn rb16(ptr: *const u8) -> u16 {
     let bytes = slice::from_raw_parts(ptr, 2);
     NetworkEndian::read_u16(bytes)
 }
+/// # Safety
+/// This function is unsafe because it calls unsafe function `read_unaligned`
 pub unsafe fn rl32(ptr: *const u8) -> u32 {
     ptr::read_unaligned::<u32>(ptr as *const u32)
 }
+/// # Safety
+/// This function is unsafe because it calls unsafe function `read_unaligned`
 pub unsafe fn rl16(ptr: *const u8) -> u16 {
     ptr::read_unaligned::<u16>(ptr as *const u16)
 }
@@ -492,6 +500,8 @@ impl CcxGxf {
 /// @return CCX_EINVAL if header not found or contains invalid data,
 ///         CCX_EOF if EOF reached while reading packet
 ///         CCX_OK if the stream was fine enough to be parsed
+/// # Safety
+/// This function is unsafe because it calls unsafe functions `buffered_read` and `rb32`
 pub unsafe fn parse_packet_header(
     ctx: *mut CcxDemuxer,
     pkt_type: &mut GXFPktType,
@@ -559,6 +569,8 @@ pub unsafe fn parse_packet_header(
 
     CCX_OK
 }
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_byte` and `buffered_read`
 pub unsafe fn parse_material_sec(demux: *mut CcxDemuxer, mut len: i32) -> i32 {
     if demux.is_null() {
         return CCX_EINVAL;
@@ -669,6 +681,8 @@ pub fn set_track_frame_rate(vid_track: &mut CcxGxfVideoTrack, val: i8) {
         _ => { /* Do nothing in case of no frame rate */ }
     }
 }
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_byte` and `buffered_read`
 pub unsafe fn parse_mpeg525_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
     // Retrieve the GXF context from demux->private_data.
     let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
@@ -749,6 +763,8 @@ pub unsafe fn parse_mpeg525_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> 
     }
     ret
 }
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_byte` and `buffered_read`
 pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
     // Retrieve the GXF context from demux->private_data.
     let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
@@ -857,7 +873,8 @@ pub unsafe fn parse_ad_track_desc(demux: &mut CcxDemuxer, mut len: i32) -> i32 {
     }
     ret
 }
-
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_byte` and `buffered_get_be16`
 pub unsafe fn parse_track_sec(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     // Retrieve the GXF context from demux->private_data.
     let ctx = match (demux.private_data as *mut CcxGxf).as_mut() {
@@ -1060,8 +1077,9 @@ pub fn parse_ad_cdp(cdp: &[u8], data: &mut DemuxerData) -> Result<(), &'static s
 /**
  * parse ancillary data payload
  */
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_le16` and `buffered_skip`
 pub unsafe fn parse_ad_pyld(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerData) -> i32 {
-    let result;
     #[allow(unused_variables)]
     let mut ret = CCX_OK;
     let mut rem_len = len;
@@ -1109,7 +1127,7 @@ pub unsafe fn parse_ad_pyld(demux: &mut CcxDemuxer, len: i32, data: &mut Demuxer
                 }
                 // Call parse_ad_cdp on the newly filled buffer.
                 // (Assume parse_ad_cdp returns Ok(()) on success.)
-                let _ = parse_ad_cdp(&ctx.cdp.as_ref().unwrap(), data);
+                let _ = parse_ad_cdp(ctx.cdp.as_ref().unwrap(), data);
                 // TODO: Check checksum.
             }
         }
@@ -1122,7 +1140,7 @@ pub unsafe fn parse_ad_pyld(demux: &mut CcxDemuxer, len: i32, data: &mut Demuxer
         // Otherwise, ignore other services.
     }
 
-    result = buffered_skip(demux, rem_len as u32);
+    let result = buffered_skip(demux, rem_len as u32);
     demux.past += result as i64;
     if result != rem_len as usize {
         ret = CCX_EOF;
@@ -1138,6 +1156,8 @@ pub unsafe fn parse_ad_pyld(demux: &mut CcxDemuxer, len: i32, data: &mut Demuxer
  * is not able to see the caption, there might be need
  * of parsing vbi
  */
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe function `buffered_skip`
 #[allow(unused_variables)]
 pub unsafe fn parse_ad_vbi(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
@@ -1168,11 +1188,13 @@ pub unsafe fn parse_ad_vbi(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerD
 /// parse_ad_field: parses an ancillary data field from the demuxer buffer,
 /// verifying header tags (e.g. "finf", "LIST", "anc ") and then processing each
 /// sub‐section (e.g. "pyld"/"vbi") until the field is exhausted.
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_read` and `buffered_get_le32`
 pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
     let mut result;
     let mut tag = [0u8; 5]; // 4-byte tag plus null terminator
-    let field_identifier;
+
 
     tag[4] = 0;
 
@@ -1192,7 +1214,7 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
 
     // Read field identifier
     len -= 4;
-    field_identifier = buffered_get_le32(demux);
+    let field_identifier = buffered_get_le32(demux);
     info!("LOG: field identifier {}\n", field_identifier);
 
     // Read "LIST" tag
@@ -1219,18 +1241,12 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
 
     // Process sub-sections until less than or equal to 28 bytes remain.
     while len > 28 {
-        let line_nb;
-        let luma_flag;
-        let hanc_vanc_flag;
-        let hdr_len;
-        let pyld_len;
-
         len -= 4;
         result = buffered_read(demux, Some(&mut tag[..4]), 4);
         demux.past += result as i64;
 
         len -= 4;
-        hdr_len = buffered_get_le32(demux);
+        let hdr_len = buffered_get_le32(demux);
 
         // Check for pad tag.
         if &tag[..4] == b"pad " {
@@ -1256,15 +1272,15 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
         }
 
         len -= 4;
-        line_nb = buffered_get_le32(demux);
+        let line_nb = buffered_get_le32(demux);
         info!("Line nb: {}\n", line_nb);
 
         len -= 4;
-        luma_flag = buffered_get_le32(demux);
+        let luma_flag = buffered_get_le32(demux);
         info!("luma color diff flag: {}\n", luma_flag);
 
         len -= 4;
-        hanc_vanc_flag = buffered_get_le32(demux);
+        let hanc_vanc_flag = buffered_get_le32(demux);
         info!("hanc/vanc flag: {}\n", hanc_vanc_flag);
 
         len -= 4;
@@ -1272,7 +1288,7 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
         demux.past += result as i64;
 
         len -= 4;
-        pyld_len = buffered_get_le32(demux);
+        let pyld_len = buffered_get_le32(demux);
         info!("pyld len: {}\n", pyld_len);
 
         if &tag[..4] == b"pyld" {
@@ -1301,9 +1317,9 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
 }
 
 /**
- * @param vid_format following format are supported to set valid timebase
- * 	in demuxer data
- * value   |  Meaning
+ *  @param vid_format following format are supported to set valid timebase
+ *  in demuxer data
+ *  value   |  Meaning
  *=====================================
  *  0      | 525 interlaced lines at 29.97 frames / sec
  *  1      | 625 interlaced lines at 25 frames / sec
@@ -1381,6 +1397,8 @@ pub fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
     }
 }
 
+/// # Safety
+/// This function is unsafe because it calls unsafe functions like `buffered_read` and `from_raw_parts_mut`
 pub unsafe fn parse_mpeg_packet(demux: &mut CcxDemuxer, len: usize, data: &mut DemuxerData) -> i32 {
     // Read 'len' bytes into the data buffer at offset data.len.
     let result = buffered_read(
@@ -1401,6 +1419,8 @@ pub unsafe fn parse_mpeg_packet(demux: &mut CcxDemuxer, len: usize, data: &mut D
  * This packet contain RIFF data
  * @param demuxer Demuxer must contain vaild ad_track structure
  */
+/// # Safety
+/// This function is unsafe because it deferences raw pointers and calls unsafe functions like `buffered_read` and `buffered_get_le32`
 pub unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
     let mut remaining_len = len;
@@ -1561,7 +1581,9 @@ macro_rules! goto_end {
         return $ret;
     }};
 }
-/// Translated version of the C `parse_media` function.
+/// C `parse_media` function.
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and calls unsafe functions like `buffered_get_byte` and `buffered_skip`
 pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
     let mut result;
@@ -1577,29 +1599,26 @@ pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demux
     }
 
     let ctx = &mut *(demux.private_data as *mut CcxGxf);
-    let media_type: GXFTrackType;
-    let track_nb: u8;
-    let media_field_nb: u32;
+
 
     let mut first_field_nb: u16 = 0;
     let mut last_field_nb: u16 = 0;
     let mut mpeg_pic_size: u32 = 0;
     let mut mpeg_frame_desc_flag: u8 = 0;
 
-    let time_field: u32;
-    let valid_time_field: u8;
 
     len -= 1;
 
     let media_type_0 = GXFTrackType::try_from(buffered_get_byte(demux));
-    if media_type_0.is_err() {
-        goto_end!(demux, len, ret);
+    let media_type: GXFTrackType = if let Ok(mt) = media_type_0 {
+        mt
     } else {
-        media_type = media_type_0.unwrap();
-    }
-    track_nb = buffered_get_byte(demux);
+        goto_end!(demux, len, ret);
+    };
+
+    let track_nb: u8 = buffered_get_byte(demux);
     len -= 1;
-    media_field_nb = buffered_get_be32(demux);
+    let media_field_nb: u32 = buffered_get_be32(demux);
     len -= 4;
 
     match media_type {
@@ -1622,10 +1641,10 @@ pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demux
         }
     }
 
-    time_field = buffered_get_be32(demux);
+    let time_field: u32 = buffered_get_be32(demux);
     len -= 4;
 
-    valid_time_field = buffered_get_byte(demux) & 0x01;
+    let valid_time_field: u8 = buffered_get_byte(demux) & 0x01;
     len -= 1;
 
     result = buffered_skip(demux, 1) as i32;
@@ -1686,6 +1705,8 @@ pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demux
 /**
  * Dummy function that ignore field locator table packet
  */
+/// # Safety
+/// This function is unsafe because it calls unsafe function `buffered_skip`
 pub unsafe fn parse_flt(demux: &mut CcxDemuxer, len: i32) -> i32 {
     let mut ret = CCX_OK;
     let mut result = 0;
@@ -1700,7 +1721,8 @@ pub unsafe fn parse_flt(demux: &mut CcxDemuxer, len: i32) -> i32 {
 /**
  * Dummy function that ignore unified material format packet
  */
-
+/// # Safety
+/// This function is unsafe because it calls unsafe function `buffered_skip`
 pub unsafe fn parse_umf(demux: &mut CcxDemuxer, len: i32) -> i32 {
     let mut ret = CCX_OK;
     let mut result = 0;
@@ -1723,7 +1745,8 @@ pub unsafe fn parse_umf(demux: &mut CcxDemuxer, len: i32) -> i32 {
  *
  * TODO do buffer cahce to know that you are not reading after eof
  */
-
+/// # Safety
+/// This function is unsafe because it calls unsafe functions like `buffered_skip` and `parse_material_sec`
 pub unsafe fn parse_map(demux: &mut CcxDemuxer, mut len: i32, data: &mut DemuxerData) -> i32 {
     let mut ret = CCX_OK;
 
@@ -1789,6 +1812,8 @@ pub unsafe fn parse_map(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demuxer
  *     +----------+-------+------+---------------+--------+
  *
  */
+/// # Safety
+/// This function is unsafe because it calls unsafe functions like `parse_packet_header` and `parse_map`
 pub unsafe fn read_packet(demux: &mut CcxDemuxer, data: &mut DemuxerData) -> i32 {
     let mut len = 0;
     let mut ret = CCX_OK;
@@ -1850,7 +1875,7 @@ pub fn ccx_gxf_probe(buf: &[u8]) -> bool {
         return false;
     }
     // If the start of the buffer matches startcode, return true.
-    if &buf[..startcode.len()] == &startcode {
+    if buf[..startcode.len()] == startcode {
         return true;
     }
     false
@@ -1867,7 +1892,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-            .ok();
+                .ok();
         });
     }
 
@@ -2217,7 +2242,7 @@ mod tests {
         buf.extend_from_slice(&fps.to_be_bytes());
 
         // Append extra bytes.
-        buf.extend_from_slice(&vec![0u8; 5]);
+        buf.extend_from_slice(&[0u8; 5]);
 
         // Create a dummy CcxGxf context.
         let gxf = CcxGxf {
@@ -2346,7 +2371,7 @@ mod tests {
         buf.extend_from_slice(&auxi_info);
 
         // Append extra bytes.
-        buf.extend_from_slice(&vec![0u8; 3]);
+        buf.extend_from_slice(&[0u8; 3]);
 
         // Create a dummy CcxGxf context.
         let gxf = CcxGxf {
@@ -2682,7 +2707,7 @@ mod tests {
         payload.extend_from_slice(&[0x01, 0x00]); // d_id
         payload.extend_from_slice(&[0x02, 0x00]); // sd_id
         payload.extend_from_slice(&[0xFF, 0x00]); // dc (masked to 0xFF)
-                                                  // Remaining payload: one 16-bit word.
+        // Remaining payload: one 16-bit word.
         payload.extend_from_slice(&[0xFF, 0x00]); // This will produce 0x00FF stored in cdp[0]
         payload
     }
@@ -2723,7 +2748,7 @@ mod tests {
         payload.extend_from_slice(&[0x01, 0x00]); // d_id
         payload.extend_from_slice(&[0x03, 0x00]); // sd_id = 0x0003 for CEA-608
         payload.extend_from_slice(&[0x00, 0x00]); // dc (arbitrary)
-                                                  // Append some extra payload (e.g., 4 bytes).
+        // Append some extra payload (e.g., 4 bytes).
         payload.extend_from_slice(&[0x11, 0x22, 0x33, 0x44]);
         let total_len = payload.len() as i32;
         let mut demux = create_demuxer_with_buffer(&payload);
@@ -2751,7 +2776,7 @@ mod tests {
         payload.extend_from_slice(&[0x02, 0x00]); // d_id = 0x0002 (does not match)
         payload.extend_from_slice(&[0x02, 0x00]); // sd_id = 0x0002 (irrelevant)
         payload.extend_from_slice(&[0x00, 0x00]); // dc
-                                                  // Append extra payload (4 bytes).
+        // Append extra payload (4 bytes).
         payload.extend_from_slice(&[0x55, 0x66, 0x77, 0x88]);
         let total_len = payload.len() as i32;
         let mut demux = create_demuxer_with_buffer(&payload);
@@ -2797,7 +2822,9 @@ mod tests {
 
     // --- Tests for when VBI support is enabled ---
     #[test]
-    #[cfg(feature = "ccx_gxf_enable_ad_vbi")] // to run use ccx_gxf_enable_ad_vbi=1 RUST_TEST_THREADS=1 cargo test
+    #[cfg(
+        feature = "ccx_gxf_enable_ad_vbi"
+    )] // to run use ccx_gxf_enable_ad_vbi=1 RUST_TEST_THREADS=1 cargo test
     fn test_parse_ad_vbi_enabled() {
         // Create a buffer with known content.
         let payload = vec![0xBB; 20]; // 20 bytes of data.
@@ -2847,7 +2874,7 @@ mod tests {
         buf.extend_from_slice(&[0x24, 0x00, 0x00, 0x00]); // 36 decimal
         buf.extend_from_slice(b"anc ");
         // Append 28 bytes of dummy data (e.g. 0xAA)
-        buf.extend_from_slice(&vec![0xAA; 28]);
+        buf.extend_from_slice(&[0xAA; 28]);
         let total_len = buf.len() as i32;
         // Create a dummy GXF context with an ancillary track
         #[allow(unused_variables)]
@@ -2998,7 +3025,7 @@ mod tests {
     fn test_parse_ad_packet_incorrect_riff() {
         let mut data = Vec::new();
         data.extend_from_slice(b"RIFX"); // Incorrect RIFF
-                                         // ... rest of data setup similar to correct test but with incorrect header
+        // ... rest of data setup similar to correct test but with incorrect header
 
         let mut demux = create_ccx_demuxer_with_header(&data);
         let mut ctx = CcxGxf {
@@ -3075,7 +3102,7 @@ mod tests {
         assert_eq!(track_type1 as i32, track_type2 as i32);
     }
     fn create_test_demuxer(data: &[u8], has_ctx: bool) -> CcxDemuxer {
-        let demux = CcxDemuxer {
+        CcxDemuxer {
             filebuffer: data.as_ptr() as *mut u8,
             bytesinbuffer: data.len() as u32,
             filebuffer_pos: 0,
@@ -3102,8 +3129,7 @@ mod tests {
                 ptr::null_mut()
             },
             ..Default::default()
-        };
-        demux
+        }
     }
 
     #[test]
@@ -3227,17 +3253,17 @@ mod tests {
         // Next 2 bytes: material_sec_len = 10 (big-endian).
         buf.extend_from_slice(&10u16.to_be_bytes());
         // Material section: 10 arbitrary bytes.
-        buf.extend_from_slice(&vec![0xAA; 10]);
+        buf.extend_from_slice(&[0xAA; 10]);
         // Next 2 bytes: track_sec_len = 8.
         buf.extend_from_slice(&8u16.to_be_bytes());
         // Track section: 8 arbitrary bytes.
-        buf.extend_from_slice(&vec![0xBB; 8]);
+        buf.extend_from_slice(&[0xBB; 8]);
         // Now remaining bytes: 14 arbitrary bytes.
-        buf.extend_from_slice(&vec![0xCC; 14]);
+        buf.extend_from_slice(&[0xCC; 14]);
         #[allow(unused_variables)]
         let total_len = buf.len() as i32; // should be 40 + 14 = 54? Let's check:
-                                          // Actually: 2+2+2+10+2+8+14 = 40 bytes.
-                                          // Let's set total length = buf.len() as i32.
+        // Actually: 2+2+2+10+2+8+14 = 40 bytes.
+        // Let's set total length = buf.len() as i32.
         let total_len = buf.len() as i32;
 
         // Create demuxer with this buffer.

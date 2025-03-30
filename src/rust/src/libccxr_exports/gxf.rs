@@ -1,5 +1,5 @@
 use lib_ccxr::demuxer::common_structs::*;
-use lib_ccxr::demuxer::demuxer::*;
+use lib_ccxr::demuxer::demux::*;
 use lib_ccxr::gxf_demuxer::gxf::*;
 use std::os::raw::c_int;
 use std::os::raw::c_uchar;
