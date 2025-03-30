@@ -93,7 +93,9 @@ pub unsafe fn sleepandchecktimeout(start: u64) {
         }
         return;
     }
-    if ccx_options.live_stream.unwrap().seconds() != 0 && ccx_options.live_stream.unwrap().seconds() == -1 {
+    if ccx_options.live_stream.unwrap().seconds() != 0
+        && ccx_options.live_stream.unwrap().seconds() == -1
+    {
         // Sleep without timeout check
         sleep_secs(1);
         return;
@@ -300,8 +302,7 @@ pub unsafe fn buffered_read_opt(
                             if (op + bytes as i64) < 0 {
                                 return 0;
                             }
-                            let np =
-                                file.seek(SeekFrom::Current(bytes as i64)).unwrap() as i64;
+                            let np = file.seek(SeekFrom::Current(bytes as i64)).unwrap() as i64;
                             i = (np - op) as isize;
                         }
                         if i == 0 && ccx_options.live_stream.unwrap().millis() != 0 {
@@ -364,10 +365,13 @@ pub unsafe fn buffered_read_opt(
                 if i == -1 {
                     fatal!(cause = ExitCause::NoInputFiles; "Error reading input stream!\n");
                 }
-                if i == 0 && (ccx_options.live_stream.unwrap().millis() > 0
-                        || ctx.parent.as_mut().unwrap().inputsize <= origin_buffer_size as i64 || !(ccx_options.binary_concat
+                if i == 0
+                    && (ccx_options.live_stream.unwrap().millis() > 0
+                        || ctx.parent.as_mut().unwrap().inputsize <= origin_buffer_size as i64
+                        || !(ccx_options.binary_concat
                             && switch_to_next_file(ctx.parent.as_mut().unwrap(), copied as i64)
-                                != 0)) {
+                                != 0))
+                {
                     eof = true;
                 }
                 ctx.filebuffer_pos = keep as u32;
@@ -673,10 +677,10 @@ mod tests {
     use crate::common::{Codec, StreamMode};
     use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
     // use std::io::{Seek, SeekFrom, Write};
+    use serial_test::serial;
     use std::os::unix::io::IntoRawFd;
     use std::slice;
     use std::sync::Once;
-    use serial_test::serial;
 
     static INIT: Once = Once::new();
 

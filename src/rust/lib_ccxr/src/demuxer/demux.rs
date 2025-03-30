@@ -817,7 +817,8 @@ impl<'a> CcxDemuxer<'a> {
                 if matches!(
                     self.stream_mode,
                     StreamMode::ElementaryOrNotFound | StreamMode::Program
-                ) && detect_myth(self) != 0 {
+                ) && detect_myth(self) != 0
+                {
                     self.stream_mode = StreamMode::Myth;
                 }
             }
@@ -1064,9 +1065,9 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
             // dec_ctx = update_decoder_list_cinfo(ctx, best_info); // TODO
             if (*dec_ctx).in_bufferdatatype == BufferdataType::Pes
                 && (demux_ctx.stream_mode == StreamMode::Transport
-                || demux_ctx.stream_mode == StreamMode::Program
-                || demux_ctx.stream_mode == StreamMode::Asf
-                || demux_ctx.stream_mode == StreamMode::Wtv)
+                    || demux_ctx.stream_mode == StreamMode::Program
+                    || demux_ctx.stream_mode == StreamMode::Asf
+                    || demux_ctx.stream_mode == StreamMode::Wtv)
             {
                 println!("Width: {}", (*dec_ctx).current_hor_size);
                 println!("Height: {}", (*dec_ctx).current_vert_size);
@@ -1218,12 +1219,12 @@ mod tests {
     use crate::util::log::{
         set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget,
     };
+    use serial_test::serial;
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::os::fd::AsRawFd;
     use std::slice;
     use std::sync::Once;
-    use serial_test::serial;
     use tempfile::NamedTempFile;
     static INIT: Once = Once::new();
 
@@ -1234,7 +1235,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-                .ok();
+            .ok();
         });
     }
     #[test]
@@ -1729,7 +1730,8 @@ mod tests {
             .expect("Failed to open file");
         // Move the file cursor to a nonzero position.
         file.seek(SeekFrom::Start(5)).expect("Failed to seek");
-        let pos_before = file.stream_position()
+        let pos_before = file
+            .stream_position()
             .expect("Failed to get current position");
 
         // Create a demuxer with the same file descriptor.
@@ -1741,7 +1743,8 @@ mod tests {
         let _ = get_filesize(&CcxDemuxer::default(), &mut demuxer);
 
         // After calling the function, the file position should be restored.
-        let pos_after = file.stream_position()
+        let pos_after = file
+            .stream_position()
             .expect("Failed to get current position");
         assert_eq!(
             pos_before, pos_after,

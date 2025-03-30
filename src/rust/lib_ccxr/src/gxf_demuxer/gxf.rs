@@ -1195,7 +1195,6 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
     let mut result;
     let mut tag = [0u8; 5]; // 4-byte tag plus null terminator
 
-
     tag[4] = 0;
 
     // Read "finf" tag
@@ -1600,12 +1599,10 @@ pub unsafe fn parse_media(demux: &mut CcxDemuxer, mut len: i32, data: &mut Demux
 
     let ctx = &mut *(demux.private_data as *mut CcxGxf);
 
-
     let mut first_field_nb: u16 = 0;
     let mut last_field_nb: u16 = 0;
     let mut mpeg_pic_size: u32 = 0;
     let mut mpeg_frame_desc_flag: u8 = 0;
-
 
     len -= 1;
 
@@ -1892,7 +1889,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-                .ok();
+            .ok();
         });
     }
 
@@ -2707,7 +2704,7 @@ mod tests {
         payload.extend_from_slice(&[0x01, 0x00]); // d_id
         payload.extend_from_slice(&[0x02, 0x00]); // sd_id
         payload.extend_from_slice(&[0xFF, 0x00]); // dc (masked to 0xFF)
-        // Remaining payload: one 16-bit word.
+                                                  // Remaining payload: one 16-bit word.
         payload.extend_from_slice(&[0xFF, 0x00]); // This will produce 0x00FF stored in cdp[0]
         payload
     }
@@ -2748,7 +2745,7 @@ mod tests {
         payload.extend_from_slice(&[0x01, 0x00]); // d_id
         payload.extend_from_slice(&[0x03, 0x00]); // sd_id = 0x0003 for CEA-608
         payload.extend_from_slice(&[0x00, 0x00]); // dc (arbitrary)
-        // Append some extra payload (e.g., 4 bytes).
+                                                  // Append some extra payload (e.g., 4 bytes).
         payload.extend_from_slice(&[0x11, 0x22, 0x33, 0x44]);
         let total_len = payload.len() as i32;
         let mut demux = create_demuxer_with_buffer(&payload);
@@ -2776,7 +2773,7 @@ mod tests {
         payload.extend_from_slice(&[0x02, 0x00]); // d_id = 0x0002 (does not match)
         payload.extend_from_slice(&[0x02, 0x00]); // sd_id = 0x0002 (irrelevant)
         payload.extend_from_slice(&[0x00, 0x00]); // dc
-        // Append extra payload (4 bytes).
+                                                  // Append extra payload (4 bytes).
         payload.extend_from_slice(&[0x55, 0x66, 0x77, 0x88]);
         let total_len = payload.len() as i32;
         let mut demux = create_demuxer_with_buffer(&payload);
@@ -2822,9 +2819,7 @@ mod tests {
 
     // --- Tests for when VBI support is enabled ---
     #[test]
-    #[cfg(
-        feature = "ccx_gxf_enable_ad_vbi"
-    )] // to run use ccx_gxf_enable_ad_vbi=1 RUST_TEST_THREADS=1 cargo test
+    #[cfg(feature = "ccx_gxf_enable_ad_vbi")] // to run use ccx_gxf_enable_ad_vbi=1 RUST_TEST_THREADS=1 cargo test
     fn test_parse_ad_vbi_enabled() {
         // Create a buffer with known content.
         let payload = vec![0xBB; 20]; // 20 bytes of data.
@@ -3025,7 +3020,7 @@ mod tests {
     fn test_parse_ad_packet_incorrect_riff() {
         let mut data = Vec::new();
         data.extend_from_slice(b"RIFX"); // Incorrect RIFF
-        // ... rest of data setup similar to correct test but with incorrect header
+                                         // ... rest of data setup similar to correct test but with incorrect header
 
         let mut demux = create_ccx_demuxer_with_header(&data);
         let mut ctx = CcxGxf {
@@ -3262,8 +3257,8 @@ mod tests {
         buf.extend_from_slice(&[0xCC; 14]);
         #[allow(unused_variables)]
         let total_len = buf.len() as i32; // should be 40 + 14 = 54? Let's check:
-        // Actually: 2+2+2+10+2+8+14 = 40 bytes.
-        // Let's set total length = buf.len() as i32.
+                                          // Actually: 2+2+2+10+2+8+14 = 40 bytes.
+                                          // Let's set total length = buf.len() as i32.
         let total_len = buf.len() as i32;
 
         // Create demuxer with this buffer.
