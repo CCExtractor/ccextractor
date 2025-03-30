@@ -1,6 +1,7 @@
 #![allow(non_camel_case_types)]
 #![allow(unexpected_cfgs)]
 #![allow(unused_mut)]
+#![allow(clippy::needless_lifetimes)]
 
 use crate::activity::ActivityExt;
 use crate::common::{
@@ -851,7 +852,7 @@ impl<'a> CcxDemuxer<'a> {
 }
 
 /// This function returns the file size for a given demuxer.
-/// Translated from the C function `ccx_demuxer_get_file_size`.
+/// C function `ccx_demuxer_get_file_size`.
 /// LLONG is `int64_t`, so we use `i64` in Rust.
 pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
     // Get the file descriptor from ctx.
@@ -873,7 +874,10 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
         Ok(pos) => pos,
         Err(_) => {
             // Return the fd back and then -1.
+            #[cfg(unix)]
             let _ = file.into_raw_fd();
+            #[cfg(windows)]
+            let _ = file.into_raw_handle();
             return -1;
         }
     };
@@ -882,7 +886,10 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
     let length = match file.seek(SeekFrom::End(0)) {
         Ok(pos) => pos,
         Err(_) => {
+            #[cfg(unix)]
             let _ = file.into_raw_fd();
+            #[cfg(windows)]
+            let _ = file.into_raw_handle();
             return -1;
         }
     };
@@ -896,24 +903,30 @@ pub fn ccx_demuxer_get_file_size(ctx: &mut CcxDemuxer) -> i64 {
     let ret = match file.seek(SeekFrom::Start(current)) {
         Ok(pos) => pos,
         Err(_) => {
+            #[cfg(unix)]
             let _ = file.into_raw_fd();
+            #[cfg(windows)]
+            let _ = file.into_raw_handle();
             return -1;
         }
     };
 
     // Return the fd back to its original owner.
+    #[cfg(unix)]
     let _ = file.into_raw_fd();
+    #[cfg(windows)]
+    let _ = file.into_raw_handle();
     length as i64
 }
 
-/// Translated from the C function `ccx_demuxer_get_stream_mode`.
+/// C function `ccx_demuxer_get_stream_mode`.
 /// Returns the current stream mode.
 pub fn ccx_demuxer_get_stream_mode(ctx: &CcxDemuxer) -> i32 {
     // return ctx->stream_mode;
     ctx.stream_mode as i32
 }
 
-/// Translated from the C function `ccx_demuxer_print_cfg`.
+/// C function `ccx_demuxer_print_cfg`.
 /// Prints the current `auto_stream` mode for the demuxer.
 // Note: `#ifdef WTV_DEBUG` becomes `#[cfg(feature = "wtv_debug")]` in Rust.
 pub fn ccx_demuxer_print_cfg(ctx: &CcxDemuxer) {
@@ -973,7 +986,7 @@ fn y_n(count: i32) -> &'static str {
     }
 }
 
-/// Translated version of the C `print_file_report` function, preserving structure
+/// C `print_file_report` function, preserving structure
 /// and replacing `#ifdef` with `#[cfg(feature = "wtv_debug")]`.
 /// Uses `printf` from libc.
 pub fn print_file_report(ctx: &mut LibCcxCtx) {
@@ -1089,9 +1102,9 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
             // dec_ctx = update_decoder_list_cinfo(ctx, best_info); // TODO
             if (*dec_ctx).in_bufferdatatype == BufferdataType::Pes
                 && (demux_ctx.stream_mode == StreamMode::Transport
-                || demux_ctx.stream_mode == StreamMode::Program
-                || demux_ctx.stream_mode == StreamMode::Asf
-                || demux_ctx.stream_mode == StreamMode::Wtv)
+                    || demux_ctx.stream_mode == StreamMode::Program
+                    || demux_ctx.stream_mode == StreamMode::Asf
+                    || demux_ctx.stream_mode == StreamMode::Wtv)
             {
                 println!("Width: {}", (*dec_ctx).current_hor_size);
                 println!("Height: {}", (*dec_ctx).current_vert_size);
@@ -1120,7 +1133,7 @@ pub fn print_file_report(ctx: &mut LibCcxCtx) {
         ptr::write_bytes(&mut ctx.freport as *mut FileReport, 0, 1);
     }
 }
-
+#[allow(clippy::manual_c_str_literals)]
 pub fn get_desc_placeholder(_index: usize) -> *const i8 {
     b"Unknown\0".as_ptr() as *const i8
 }
@@ -1259,7 +1272,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-                .ok();
+            .ok();
         });
     }
     #[test]

@@ -1,9 +1,9 @@
+#![allow(static_mut_refs)] // Temporary fix for mutable static variable
 use std::io;
 use std::io::Write;
 
 use crate::common::Options;
 use std::sync::atomic::{AtomicUsize, Ordering};
-
 pub static mut NET_ACTIVITY_GUI: AtomicUsize = AtomicUsize::new(0);
 
 pub trait ActivityExt {

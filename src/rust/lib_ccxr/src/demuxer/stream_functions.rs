@@ -351,7 +351,7 @@ pub fn detect_myth(ctx: &mut CcxDemuxer) -> i32 {
     0
 }
 
-/// Translated version of the C `isValidMP4Box` function with comments preserved.
+/// C `isValidMP4Box` function
 pub fn is_valid_mp4_box(
     buffer: &[u8],
     position: usize,
