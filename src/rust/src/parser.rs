@@ -444,7 +444,7 @@ impl OptionsExt for Options {
         } else {
             0
         };
-        if num_input_files as i32 >= *inputfile_capacity as i32 {
+        if num_input_files >= *inputfile_capacity as _ {
             *inputfile_capacity += 10;
         }
 

@@ -4,7 +4,8 @@ use lib_ccxr::demuxer::demux::{
 };
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_longlong};
-
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_reset(ctx: *mut CcxDemuxer) {
     // Check for a null pointer to avoid undefined behavior.
@@ -18,6 +19,8 @@ pub unsafe extern "C" fn ccxr_demuxer_reset(ctx: *mut CcxDemuxer) {
 }
 
 // Extern function for ccx_demuxer_close
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut CcxDemuxer) {
     if ctx.is_null() {
@@ -28,6 +31,8 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut CcxDemuxer) {
 }
 
 // Extern function for ccx_demuxer_isopen
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *const CcxDemuxer) -> c_int {
     if ctx.is_null() {
@@ -42,6 +47,8 @@ pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *const CcxDemuxer) -> c_int {
 }
 
 // Extern function for ccx_demuxer_open
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer and calls unsafe function `open`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut CcxDemuxer, file: *const c_char) -> c_int {
     if ctx.is_null() || file.is_null() {
@@ -60,6 +67,8 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut CcxDemuxer, file: *const c_
 }
 
 // Extern function for ccx_demuxer_get_file_size
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut CcxDemuxer) -> c_longlong {
     if ctx.is_null() {
@@ -70,6 +79,8 @@ pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut CcxDemuxer) -> c_l
 }
 
 // Extern function for ccx_demuxer_get_stream_mode
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_get_stream_mode(ctx: *const CcxDemuxer) -> c_int {
     if ctx.is_null() {
@@ -80,6 +91,8 @@ pub unsafe extern "C" fn ccxr_demuxer_get_stream_mode(ctx: *const CcxDemuxer) ->
 }
 
 // Extern function for ccx_demuxer_print_cfg
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *const CcxDemuxer) {
     if ctx.is_null() {
@@ -89,6 +102,8 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *const CcxDemuxer) {
     ccx_demuxer_print_cfg(&*ctx)
 }
 
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer and calls unsafe function `dinit_cap`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_delete(ctx: *mut *mut CcxDemuxer) {
     // Check if the pointer itself or the pointed-to pointer is null.

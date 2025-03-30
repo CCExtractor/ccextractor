@@ -102,9 +102,12 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // Check for ASF magic bytes
-    if ctx.startbytes_avail >= 4 && ctx.startbytes[0] == 0x30
+    if ctx.startbytes_avail >= 4
+        && ctx.startbytes[0] == 0x30
         && ctx.startbytes[1] == 0x26
-        && ctx.startbytes[2] == 0xb2 && ctx.startbytes[3] == 0x75 {
+        && ctx.startbytes[2] == 0xb2
+        && ctx.startbytes[3] == 0x75
+    {
         ctx.stream_mode = StreamMode::Asf;
     }
 
@@ -138,9 +141,13 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // WTV check
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 4 && ctx.startbytes[0] == 0xb7
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound
+        && ctx.startbytes_avail >= 4
+        && ctx.startbytes[0] == 0xb7
         && ctx.startbytes[1] == 0xd8
-        && ctx.startbytes[2] == 0x00 && ctx.startbytes[3] == 0x20 {
+        && ctx.startbytes[2] == 0x00
+        && ctx.startbytes[3] == 0x20
+    {
         ctx.stream_mode = StreamMode::Wtv;
     }
 
@@ -163,16 +170,19 @@ pub unsafe fn detect_stream_type(ctx: &mut CcxDemuxer) {
     }
 
     // Check for CCExtractor magic bytes
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ctx.startbytes_avail >= 11 && ctx.startbytes[0] == 0xCC
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound
+        && ctx.startbytes_avail >= 11
+        && ctx.startbytes[0] == 0xCC
         && ctx.startbytes[1] == 0xCC
         && ctx.startbytes[2] == 0xED
         && ctx.startbytes[8] == 0
-        && ctx.startbytes[9] == 0 && ctx.startbytes[10] == 0 {
+        && ctx.startbytes[9] == 0
+        && ctx.startbytes[10] == 0
+    {
         ctx.stream_mode = StreamMode::Rcwt;
     }
     // MP4 check. "Still not found" or we want file reports.
-    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound
-        || ccx_options.print_file_reports)
+    if (ctx.stream_mode == StreamMode::ElementaryOrNotFound || ccx_options.print_file_reports)
         && ctx.startbytes_avail >= 4
     {
         let mut idx = 0usize;
@@ -368,9 +378,9 @@ pub fn is_valid_mp4_box(
             // If the box type is "moov", check if it contains a valid movie header (mvhd)
             if idx == 2
                 && !(buffer[position + 12] == b'm'
-                && buffer[position + 13] == b'v'
-                && buffer[position + 14] == b'h'
-                && buffer[position + 15] == b'd')
+                    && buffer[position + 13] == b'v'
+                    && buffer[position + 14] == b'h'
+                    && buffer[position + 15] == b'd')
             {
                 // If "moov" doesn't have "mvhd", skip it.
                 continue;
