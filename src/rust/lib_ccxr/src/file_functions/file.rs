@@ -1,5 +1,6 @@
-#![allow(unexpected_cfgs)]
-#![allow(unused_mut)]
+#![allow(unexpected_cfgs)] // Temporary
+#![allow(unused_mut)] // Temporary
+#![allow(static_mut_refs)] // Temporary fix for mutable static variable
 
 use crate::activity::{update_net_activity_gui, ActivityExt, NET_ACTIVITY_GUI};
 use crate::common::{DataSource, Options};
@@ -45,18 +46,31 @@ pub fn position_sanity_check(ctx: &mut CcxDemuxer) {
 
             let fd = ctx.infd;
             // Convert raw fd to a File without taking ownership
+            #[cfg(unix)]
             let mut file = unsafe { File::from_raw_fd(fd) };
+            #[cfg(windows)]
+            let mut file = unsafe { File::from_raw_handle(fd as *mut _) };
             let realpos_result = file.seek(SeekFrom::Current(0));
             let realpos = match realpos_result {
                 Ok(pos) => pos as i64, // Convert to i64 to match C's LLONG
                 Err(_) => {
                     // Return the fd to avoid closing it
-                    let _ = file.into_raw_fd();
+                    #[cfg(unix)]
+                    {
+                        let _ = file.into_raw_fd();
+                    }
+                    #[cfg(windows)]
+                    {
+                        let _ = file.into_raw_handle();
+                    }
                     return;
                 }
             };
             // Return the fd to avoid closing it
+            #[cfg(unix)]
             let _ = file.into_raw_fd();
+            #[cfg(windows)]
+            let _ = file.into_raw_handle();
 
             let expected_pos = ctx.past - ctx.filebuffer_pos as i64 + ctx.bytesinbuffer as i64;
 
@@ -707,7 +721,10 @@ mod tests {
         // Create temp file
         let mut file = tempfile().unwrap();
         file.write_all(b"test data").unwrap();
+        #[cfg(unix)]
         let fd = file.into_raw_fd(); // Now owns the fd
+        #[cfg(windows)]
+        let fd = file.into_raw_handle(); // Now owns the handle
 
         // SAFETY: Initialize directly on heap without stack intermediate
         let mut ctx = Box::new(CcxDemuxer::default());
@@ -722,11 +739,17 @@ mod tests {
         // Example for one array - repeat for others:
         ctx.startbytes = vec![0u8; STARTBYTESLENGTH];
         // Set file position
+        #[cfg(unix)]
         let mut file = unsafe { File::from_raw_fd(fd) };
+        #[cfg(windows)]
+        let mut file = unsafe { File::from_raw_handle(fd as *mut _) };
         file.seek(SeekFrom::Start(130)).unwrap();
 
         // Prevent double-closing when 'file' drops
+        #[cfg(unix)]
         let _ = file.into_raw_fd();
+        #[cfg(windows)]
+        let _ = file.into_raw_handle();
 
         // Run test
         position_sanity_check(&mut ctx);
@@ -900,7 +923,14 @@ mod tests {
             .expect("Unable to seek to start");
         // Get the file descriptor. Ensure the file stays open.
         let file = tmp.reopen().expect("Unable to reopen temp file");
-        file.into_raw_fd()
+        #[cfg(unix)]
+        {
+            file.into_raw_fd()
+        }
+        #[cfg(windows)]
+        {
+            file.into_raw_handle() as i32
+        }
     }
 
     // Dummy allocation for filebuffer.

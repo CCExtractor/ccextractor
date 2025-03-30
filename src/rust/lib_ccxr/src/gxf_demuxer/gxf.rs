@@ -1315,8 +1315,7 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
     ret
 }
 
-/**
- *  @param vid_format following format are supported to set valid timebase
+/* *  @param vid_format following format are supported to set valid timebase
  *  in demuxer data
  *  value   |  Meaning
  *=====================================
@@ -1346,7 +1345,6 @@ pub unsafe fn parse_ad_field(demux: &mut CcxDemuxer, mut len: i32, data: &mut De
  *        data len may be zero, while setting timebase we don not care about
  *        actual data
  */
-
 pub fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
     dbg!("LOG: Format Video {}", vid_format);
 
@@ -1554,11 +1552,8 @@ pub unsafe fn parse_ad_packet(demux: &mut CcxDemuxer, len: i32, data: &mut Demux
  *    |          4:7                |      Not Used MUST be 0     |
  *    +-----------------------------+-----------------------------+
  */
-/// Translated version of the C `set_mpeg_frame_desc` function.
-
+/// C `set_mpeg_frame_desc` function.
 pub fn set_mpeg_frame_desc(vid_track: &mut CcxGxfVideoTrack, mpeg_frame_desc_flag: u8) {
-    // vid_track.p_code = MpegPictureCoding::from(mpeg_frame_desc_flag & 0x03);
-    // vid_track.p_struct = MpegPictureStruct::from((mpeg_frame_desc_flag >> 2) & 0x03);
     vid_track.p_code = MpegPictureCoding::try_from(mpeg_frame_desc_flag & 0x03).unwrap();
     vid_track.p_struct = MpegPictureStruct::try_from((mpeg_frame_desc_flag >> 2) & 0x03).unwrap();
 }
@@ -2008,7 +2003,14 @@ mod tests {
             .expect("Unable to seek to start");
         // Get the file descriptor. Ensure the file stays open.
         let file = tmp.reopen().expect("Unable to reopen temp file");
-        file.into_raw_fd()
+        #[cfg(unix)]
+        {
+            file.into_raw_fd()
+        }
+        #[cfg(windows)]
+        {
+            file.into_raw_handle() as i32
+        }
     }
     /// Create a dummy CcxDemuxer with a filebuffer containing `header_data`.
     fn create_ccx_demuxer_with_header(header_data: &[u8]) -> CcxDemuxer<'static> {
