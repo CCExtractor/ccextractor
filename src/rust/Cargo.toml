@@ -39,6 +39,7 @@ wtv_debug = []
 enable_ffmpeg = []
 with_libcurl = []
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+sanity_check = []
 
 [profile.release-with-debug]
 inherits = "release"
