@@ -1,73 +1,32 @@
-<img src ="https://github.com/CCExtractor/ccextractor-org-media/blob/master/static/ccx_logo_transparent_800x600.png" width="200px" alt="logo" />
-
 # CCExtractor
 
-<a href="https://travis-ci.org/CCExtractor/ccextractor"><img src="https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/static/macOS-build-badge-logo.png" width="20"></a> [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
-[![Sample-Platform Build Status Windows](https://sampleplatform.ccextractor.org/static/img/status/build-windows.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/windows)
-[![Sample-Platform Build Status Linux](https://sampleplatform.ccextractor.org/static/img/status/build-linux.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/linux)
-[![SourceForge](https://img.shields.io/badge/SourceForge%20downloads-213k%2Ftotal-brightgreen.svg)](https://sourceforge.net/projects/ccextractor/)
-[![GitHub All Releases](https://img.shields.io/github/downloads/CCExtractor/CCExtractor/total.svg)](https://github.com/CCExtractor/ccextractor/releases/latest)
+CCExtractor is an open-source tool to extract closed captions from video files.
 
-CCExtractor is a tool used to produce subtitles for TV recordings from almost anywhere in the world. We intend to keep up with all sources and formats.
+---
 
-Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
+## Requirements
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
+Before getting started, make sure you have the following installed:
 
-### **Features**
+- Python 3.6 or higher
+- Git
+- FFmpeg (optional, in some cases)
 
-- Extract subtitles in real-time
-- Translate subtitles
-- Extract closed captions from DVDs
-- Convert closed captions to subtitles
-
-### Programming Languages & Technologies
-
-The core functionality is written in C. Other languages used include C++ and Python.
+---
 
 ## Installation and Usage
 
-Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
+To get started with CCExtractor, follow these steps:
 
-Extracting subtitles is relatively simple. Just run the following command:
+### 1. Download Files
 
-`ccextractor <input>`
+You can download pre-built binaries or source code from the releases page on GitHub:
 
-This will extract the subtitles.
+[CCExtractor Downloads](https://github.com/CCExtractor/ccextractor/releases)
 
-More usage information can be found on our website:
+### 2. Run the Program
 
-- [Using the command line tool](https://ccextractor.org/public/general/command_line_usage/)
-- [Using the Flutter GUI](https://ccextractor.org/public/general/flutter_gui/)
+Open your command line (Terminal on Linux/macOS or CMD on Windows), and navigate to the folder where you have the CCExtractor files using the `cd` command:
 
-You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
-
-You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
-
-## Compiling CCExtractor
-
-To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
-
-## Support
-
-By far the best way to get support is by opening an issue at our [issue tracker](https://github.com/CCExtractor/ccextractor/issues).
-
-When you create a new issue, please fill in the needed details in the provided template. That makes it easier for us to help you more efficiently.
-
-If you have a question or a problem you can also [contact us by email or chat with the team in Slack](https://ccextractor.org/public/general/support/).
-
-If you want to contribute to CCExtractor but can't submit some code patches or issues or video samples, you can also [donate to us](https://sourceforge.net/donate/index.php?group_id=190832)
-
-## Contributing
-
-You can contribute to the project by reporting issues, forking it, modifying the code and making a pull request to the repository. We have some rules, outlined in the [contributor's guide](.github/CONTRIBUTING.md).
-
-## News & Other Information
-
-News about releases and modifications to the code can be found in the [CHANGES.TXT](docs/CHANGES.TXT) file.
-
-For more information visit the CCExtractor website: [https://www.ccextractor.org](https://www.ccextractor.org)
-
-## License
-
-GNU General Public License version 2.0 (GPL-2.0)
+```bash
+cd path/to/your/folder
