@@ -112,6 +112,8 @@
 - Fix: CEA-708: Better timing, fixes for missing subtitles
 - Fix: timing for direct rollup
 - Fix: timing for VOB files with multiple chapters
+- Enhanced: -out=report now lists detected Teletext subtitle pages under "Pages With Subtitles" (previously left blank even when pages were detected). Improves analysis for manual page selection use cases.
+
 
 0.88 (2019-05-21)
 -----------------
