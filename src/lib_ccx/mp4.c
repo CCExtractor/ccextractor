@@ -14,6 +14,7 @@
 #include "ccx_demuxer.h"
 #include "png.h"
 #include "ccx_decoders_common.h"
+#include "ccx_log.h"
 
 // Declaration for ccx_log function
 extern void ccx_log(const char *fmt, ...);

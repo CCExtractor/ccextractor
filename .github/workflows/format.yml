@@ -20,21 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
       - name: Format code
-        id: format
         run: |
           find src/ -type f -not -path "src/thirdparty/*" -not -path "src/lib_ccx/zvbi/*" -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
-          git diff-index --quiet HEAD -- || echo "changes_detected=true" >> $GITHUB_ENV
-      - name: Commit changes
-        if: env.changes_detected == 'true'
-        run: |
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git checkout -B formatted-branch
           git add .
           git commit -m "Automated code formatting by GitHub Actions"
-          git push
+          git push origin formatted-branch
+
   format_rust:
     runs-on: ubuntu-latest
     strategy:
@@ -62,7 +57,7 @@ jobs:
       - name: dependencies
         run: sudo apt update && sudo apt install libtesseract-dev  libavformat-dev libavdevice-dev libswscale-dev yasm
       - name: rustfmt
-        run: cargo fmt --all 
+        run: cargo fmt --all -- --check
       - name: clippy
         run: |
           cargo clippy -- -D warnings

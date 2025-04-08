@@ -14,6 +14,7 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_decoders_vbi.h"
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
+#include "ccx_log.h"
 
 // Declaration for ccx_log function
 extern void ccx_log(const char *fmt, ...);
