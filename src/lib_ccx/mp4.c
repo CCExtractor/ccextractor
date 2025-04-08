@@ -436,9 +436,13 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				// Use Rust implementation if available
 #ifndef DISABLE_RUST
 				// Initialize Rust Dtvcc if not already done
-				if (dec_ctx->dtvcc_rust == NULL)
-				{
-					ccxr_dtvcc_init(dec_ctx);
+				if (dec_ctx->dtvcc_rust == NULL) {
+					if (ccxr_dtvcc_init(dec_ctx) != 0) {
+						ccx_log("Failed to initialize Rust Dtvcc instance\n");
+						// Fall back to C implementation
+						dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+						return -1;
+					}
 				}
 				
 				if (dec_ctx->dtvcc_rust != NULL)

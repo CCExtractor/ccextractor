@@ -18,7 +18,7 @@ made to reuse, not duplicate, as many functions as possible */
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
-extern void ccxr_dtvcc_init(struct lib_cc_decode *ctx);
+extern int ccxr_dtvcc_init(struct lib_cc_decode *ctx);
 extern void ccxr_dtvcc_free(struct lib_cc_decode *ctx);
 #endif
 
@@ -268,7 +268,9 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->dtvcc_rust = NULL; // Initialize dtvcc_rust to NULL
 
 	// Initialize the Rust Dtvcc instance
-	ccxr_dtvcc_init(ctx);
+	if (ccxr_dtvcc_init(ctx) != 0) {
+		ccx_log("Failed to initialize Rust Dtvcc instance\n");
+	}
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
 	{
