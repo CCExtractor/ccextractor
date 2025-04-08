@@ -13,6 +13,10 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
+// Constants from ccx_decoders_structs.h
+pub const MAXBFRAMES: usize = 50;
+pub const SORTBUF: usize = 2 * MAXBFRAMES + 1;
+
 pub mod args;
 pub mod common;
 pub mod decoder;
@@ -39,14 +43,93 @@ use log::{warn, LevelFilter};
 use std::{
     ffi::CStr,
     io::Write,
-    os::raw::{c_char, c_double, c_int, c_long, c_uint},
+    os::raw::{c_char, c_double, c_int, c_long, c_uint, c_void},
 };
 
 // Add a new field to store the Rust Dtvcc instance
 #[repr(C)]
 pub struct lib_cc_decode {
-    // ... existing fields ...
     pub dtvcc_rust: *mut Dtvcc<'static>,
+    pub dtvcc: *mut dtvcc_ctx,
+    pub write_format: ccx_output_format,
+    pub cc_stats: [c_int; 4],
+    pub timing: *mut ccx_common_timing_ctx,
+    pub current_field: c_int,
+    pub extraction_start: ccx_boundary_time,
+    pub extraction_end: ccx_boundary_time,
+    pub processed_enough: c_int,
+    pub saw_caption_block: c_int,
+    pub context_cc608_field_1: *mut c_void,
+    pub context_cc608_field_2: *mut c_void,
+    pub no_rollup: c_int,
+    pub noscte20: c_int,
+    pub fix_padding: c_int,
+    pub subs_delay: i64,
+    pub extract: c_int,
+    pub fullbin: c_int,
+    pub dec_sub: cc_subtitle,
+    pub in_bufferdatatype: ccx_bufferdata_type,
+    pub hauppauge_mode: c_uint,
+    pub frames_since_last_gop: c_int,
+    pub saw_gop_header: c_int,
+    pub max_gop_length: c_int,
+    pub last_gop_length: c_int,
+    pub total_pulldownfields: c_uint,
+    pub total_pulldownframes: c_uint,
+    pub program_number: c_int,
+    pub list: list_head,
+    pub codec: ccx_code_type,
+    pub has_ccdata_buffered: c_int,
+    pub is_alloc: c_int,
+    pub avc_ctx: *mut avc_ctx,
+    pub private_data: *mut c_void,
+    pub current_hor_size: c_uint,
+    pub current_vert_size: c_uint,
+    pub current_aspect_ratio: c_uint,
+    pub current_frame_rate: c_uint,
+    pub no_bitstream_error: c_int,
+    pub saw_seqgoppic: c_int,
+    pub in_pic_data: c_int,
+    pub current_progressive_sequence: c_uint,
+    pub current_pulldownfields: c_uint,
+    pub temporal_reference: c_int,
+    pub picture_coding_type: ccx_frame_type,
+    pub num_key_frames: c_uint,
+    pub picture_structure: c_uint,
+    pub repeat_first_field: c_uint,
+    pub progressive_frame: c_uint,
+    pub pulldownfields: c_uint,
+    pub top_field_first: c_uint,
+    pub stat_numuserheaders: c_int,
+    pub stat_dvdccheaders: c_int,
+    pub stat_scte20ccheaders: c_int,
+    pub stat_replay5000headers: c_int,
+    pub stat_replay4000headers: c_int,
+    pub stat_dishheaders: c_int,
+    pub stat_hdtv: c_int,
+    pub stat_divicom: c_int,
+    pub false_pict_header: c_int,
+    pub maxtref: c_int,
+    pub cc_data_count: [c_int; SORTBUF],
+    pub cc_fts: [i64; SORTBUF],
+    pub cc_data_pkts: [[u8; 10*31*3+1]; SORTBUF],
+    pub anchor_seq_number: c_int,
+    pub xds_ctx: *mut ccx_decoders_xds_context,
+    pub vbi_decoder: *mut ccx_decoder_vbi_ctx,
+    pub writedata: Option<unsafe extern "C" fn(data: *const u8, length: c_int, private_data: *mut c_void, sub: *mut cc_subtitle) -> c_int>,
+    pub ocr_quantmode: c_int,
+    pub prev: *mut lib_cc_decode,
+}
+
+// Define the ccx_boundary_time struct
+#[repr(C)]
+#[derive(Default)]
+pub struct ccx_boundary_time {
+    pub hh: c_int,
+    pub mm: c_int,
+    pub ss: c_int,
+    pub time_in_ms: i64,
+    pub set: c_int,
 }
 
 #[cfg(test)]
@@ -356,6 +439,85 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     }
 
     ExitCause::Ok.exit_code()
+}
+
+// Implement Default for lib_cc_decode
+impl Default for lib_cc_decode {
+    fn default() -> Self {
+        // Create a default instance with all fields zeroed/nulled
+        Self {
+            dtvcc_rust: std::ptr::null_mut(),
+            dtvcc: std::ptr::null_mut(),
+            write_format: ccx_output_format::CCX_OF_SRT, // Default to SRT
+            cc_stats: [0; 4],
+            timing: std::ptr::null_mut(),
+            current_field: 0,
+            extraction_start: ccx_boundary_time::default(),
+            extraction_end: ccx_boundary_time::default(),
+            processed_enough: 0,
+            saw_caption_block: 0,
+            context_cc608_field_1: std::ptr::null_mut(),
+            context_cc608_field_2: std::ptr::null_mut(),
+            no_rollup: 0,
+            noscte20: 0,
+            fix_padding: 0,
+            subs_delay: 0,
+            extract: 0,
+            fullbin: 0,
+            dec_sub: unsafe { std::mem::zeroed() },
+            in_bufferdatatype: unsafe { std::mem::zeroed() },
+            hauppauge_mode: 0,
+            frames_since_last_gop: 0,
+            saw_gop_header: 0,
+            max_gop_length: 0,
+            last_gop_length: 0,
+            total_pulldownfields: 0,
+            total_pulldownframes: 0,
+            program_number: 0,
+            list: unsafe { std::mem::zeroed() },
+            codec: unsafe { std::mem::zeroed() },
+            has_ccdata_buffered: 0,
+            is_alloc: 0,
+            avc_ctx: std::ptr::null_mut(),
+            private_data: std::ptr::null_mut(),
+            current_hor_size: 0,
+            current_vert_size: 0,
+            current_aspect_ratio: 0,
+            current_frame_rate: 0,
+            no_bitstream_error: 0,
+            saw_seqgoppic: 0,
+            in_pic_data: 0,
+            current_progressive_sequence: 0,
+            current_pulldownfields: 0,
+            temporal_reference: 0,
+            picture_coding_type: unsafe { std::mem::zeroed() },
+            num_key_frames: 0,
+            picture_structure: 0,
+            repeat_first_field: 0,
+            progressive_frame: 0,
+            pulldownfields: 0,
+            top_field_first: 0,
+            stat_numuserheaders: 0,
+            stat_dvdccheaders: 0,
+            stat_scte20ccheaders: 0,
+            stat_replay5000headers: 0,
+            stat_replay4000headers: 0,
+            stat_dishheaders: 0,
+            stat_hdtv: 0,
+            stat_divicom: 0,
+            false_pict_header: 0,
+            maxtref: 0,
+            cc_data_count: [0; SORTBUF],
+            cc_fts: [0; SORTBUF],
+            cc_data_pkts: [[0; 10*31*3+1]; SORTBUF],
+            anchor_seq_number: 0,
+            xds_ctx: std::ptr::null_mut(),
+            vbi_decoder: std::ptr::null_mut(),
+            writedata: None,
+            ocr_quantmode: 0,
+            prev: std::ptr::null_mut(),
+        }
+    }
 }
 
 #[cfg(test)]
