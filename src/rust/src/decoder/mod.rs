@@ -251,12 +251,21 @@ mod test {
             false,
         ))
         .ok();
+        
+        // Create and initialize needed components
+        let mut report = get_zero_allocated_obj::<ccx_decoder_dtvcc_report>();
+        let mut encoder = get_zero_allocated_obj::<encoder_ctx>();
+        let mut timing = get_zero_allocated_obj::<ccx_common_timing_ctx>();
+        
+        // Create and initialize dtvcc_ctx with proper pointers
         let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+        dtvcc_ctx.report = Box::into_raw(report);
+        dtvcc_ctx.encoder = Box::into_raw(encoder) as *mut ::std::os::raw::c_void;
+        dtvcc_ctx.timing = Box::into_raw(timing);
+        
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
         // Case 1:  cc_type = 2
-        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
-        decoder.report = &mut dtvcc_report;
         decoder.is_header_parsed = true;
         decoder.is_active = true;
         decoder.report_enabled = true;
@@ -290,6 +299,13 @@ mod test {
         assert_eq!(decoder.packet, vec![0xC2, 0x23, 0x45, 0x67, 0x01, 0x02]);
         assert_eq!(decoder.packet_length, 6);
         assert!(decoder.is_header_parsed);
+        
+        // Clean up raw pointers (convert back to Box and let it drop)
+        unsafe {
+            let _ = Box::from_raw(dtvcc_ctx.report);
+            let _ = Box::from_raw(dtvcc_ctx.encoder as *mut encoder_ctx);
+            let _ = Box::from_raw(dtvcc_ctx.timing);
+        }
     }
 
     #[test]
@@ -300,12 +316,21 @@ mod test {
             false,
         ))
         .ok();
+        
+        // Create and initialize needed components
+        let mut report = get_zero_allocated_obj::<ccx_decoder_dtvcc_report>();
+        let mut encoder = get_zero_allocated_obj::<encoder_ctx>();
+        let mut timing = get_zero_allocated_obj::<ccx_common_timing_ctx>();
+        
+        // Create and initialize dtvcc_ctx with proper pointers
         let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+        dtvcc_ctx.report = Box::into_raw(report);
+        dtvcc_ctx.encoder = Box::into_raw(encoder) as *mut ::std::os::raw::c_void;
+        dtvcc_ctx.timing = Box::into_raw(timing);
+        
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
         // Case 1: Without providing last_sequence
-        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
-        decoder.report = &mut dtvcc_report;
         decoder.packet = vec![0xC2, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF];
         decoder.packet_length = 8;
         decoder.process_current_packet(4);
@@ -314,8 +339,6 @@ mod test {
         assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
 
         // Case 2: With providing last_sequence
-        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
-        decoder.report = &mut dtvcc_report;
         decoder.packet = vec![0xC7, 0xC2, 0x12, 0x67, 0x29, 0xAB, 0xCD, 0xEF];
         decoder.packet_length = 8;
         decoder.last_sequence = 6;
@@ -325,8 +348,6 @@ mod test {
         assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
 
         // Test case 3: Packet with extended header and multiple service blocks
-        let mut dtvcc_report = ccx_decoder_dtvcc_report::default();
-        decoder.report = &mut dtvcc_report;
         decoder.packet = vec![
             0xC0, 0xE7, 0x08, 0x02, 0x01, 0x02, 0x07, 0x03, 0x03, 0x04, 0x05,
         ];
@@ -336,5 +357,12 @@ mod test {
 
         assert_eq!(decoder.report.services[8], 1);
         assert_eq!(decoder.packet_length, 0); // due to `clear_packet()` fn call
+        
+        // Clean up raw pointers (convert back to Box and let it drop)
+        unsafe {
+            let _ = Box::from_raw(dtvcc_ctx.report);
+            let _ = Box::from_raw(dtvcc_ctx.encoder as *mut encoder_ctx);
+            let _ = Box::from_raw(dtvcc_ctx.timing);
+        }
     }
 }

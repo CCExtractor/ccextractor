@@ -15,6 +15,9 @@
 #include "png.h"
 #include "ccx_decoders_common.h"
 
+// Declaration for ccx_log function
+extern void ccx_log(const char *fmt, ...);
+
 #ifndef DISABLE_RUST
 extern int ccxr_dtvcc_init(struct lib_cc_decode *ctx);
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
