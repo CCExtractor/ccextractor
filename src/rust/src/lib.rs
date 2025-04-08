@@ -177,7 +177,9 @@ pub extern "C" fn ccxr_init_logger() {
 }
 
 /// Initialize a new Dtvcc instance and store it in the lib_cc_decode struct
+#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
 #[no_mangle]
+#[allow(improper_ctypes_definitions)]
 pub extern "C" fn ccxr_dtvcc_init(dec_ctx: *mut lib_cc_decode) -> c_int {
     if dec_ctx.is_null() {
         return -1;
@@ -196,7 +198,9 @@ pub extern "C" fn ccxr_dtvcc_init(dec_ctx: *mut lib_cc_decode) -> c_int {
 }
 
 /// Free the Dtvcc instance stored in the lib_cc_decode struct
+#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
 #[no_mangle]
+#[allow(improper_ctypes_definitions)]
 pub extern "C" fn ccxr_dtvcc_free(dec_ctx: *mut lib_cc_decode) {
     if dec_ctx.is_null() {
         return;
@@ -216,8 +220,10 @@ pub extern "C" fn ccxr_dtvcc_free(dec_ctx: *mut lib_cc_decode) {
 /// # Safety
 /// dec_ctx should not be a null pointer
 /// data should point to cc_data of length cc_count
+#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
 #[no_mangle]
-extern "C" fn ccxr_process_cc_data(
+#[allow(improper_ctypes_definitions)]
+pub extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
     data: *const ::std::os::raw::c_uchar,
     cc_count: c_int,

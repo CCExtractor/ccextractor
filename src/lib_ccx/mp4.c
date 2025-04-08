@@ -439,29 +439,20 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				// Initialize Rust Dtvcc if not already done
 				if (dec_ctx->dtvcc_rust == NULL) {
 					if (ccxr_dtvcc_init(dec_ctx) != 0) {
-						ccx_log("Failed to initialize Rust Dtvcc instance\n");
-						// Fall back to C implementation
+						ccx_log("Failed to initialize Rust Dtvcc instance, falling back to C implementation\n");
 						dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
-						return -1;
+						continue;
 					}
 				}
 				
-				if (dec_ctx->dtvcc_rust != NULL)
-				{
-					// Process data using Rust implementation
-					unsigned char cc_block[3];
-					cc_block[0] = (cc_valid << 2) | cc_type;
-					cc_block[1] = cc_data[1];
-					cc_block[2] = cc_data[2];
-					
-					// For Rust, we send the whole cc_block instead of temp
-					ccxr_process_cc_data(dec_ctx, cc_block, 1);
-				}
-				else
-				{
-					// Fallback to C implementation
-					dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
-				}
+				// Process data using Rust implementation
+				unsigned char cc_block[3];
+				cc_block[0] = (cc_valid << 2) | cc_type;
+				cc_block[1] = cc_data[1];
+				cc_block[2] = cc_data[2];
+				
+				// For Rust, we send the whole cc_block instead of temp
+				ccxr_process_cc_data(dec_ctx, cc_block, 1);
 #else
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
 #endif

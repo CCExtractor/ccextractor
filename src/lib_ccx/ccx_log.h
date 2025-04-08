@@ -12,6 +12,9 @@
  * @param fmt The format string
  * @param ... Variable arguments for the format string
  */
+#ifdef __APPLE__
+__attribute__((visibility("default")))
+#endif
 void ccx_log(const char *fmt, ...);
 
 #ifdef __APPLE__
@@ -23,6 +26,7 @@ void ccx_log(const char *fmt, ...);
  * @param fmt The format string
  * @param ... Variable arguments for the format string
  */
+__attribute__((visibility("default")))
 void _ccx_log(const char *fmt, ...);
 #endif
 

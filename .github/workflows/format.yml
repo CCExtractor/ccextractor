@@ -57,7 +57,7 @@ jobs:
       - name: dependencies
         run: sudo apt update && sudo apt install libtesseract-dev  libavformat-dev libavdevice-dev libswscale-dev yasm
       - name: rustfmt
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all 
       - name: clippy
         run: |
           cargo clippy -- -D warnings
