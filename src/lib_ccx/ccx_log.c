@@ -10,10 +10,31 @@
  * @param fmt The format string
  * @param ... Variable arguments for the format string
  */
+#ifdef __APPLE__
+// On macOS, we need to ensure the function is exported with the correct name
+void _ccx_log(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    mprint(fmt, args);
+    va_end(args);
+}
+
+// Also provide the original name for compatibility
+void ccx_log(const char *fmt, ...)
+{
+    // For compatibility, we'll just call mprint directly
+    va_list args;
+    va_start(args, fmt);
+    mprint(fmt, args);
+    va_end(args);
+}
+#else
 void ccx_log(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
     mprint(fmt, args);
     va_end(args);
-} 
+}
+#endif 

@@ -16,9 +16,6 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_dtvcc.h"
 #include "ccx_log.h"
 
-// Declaration for ccx_log function
-extern void ccx_log(const char *fmt, ...);
-
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);

@@ -14,4 +14,16 @@
  */
 void ccx_log(const char *fmt, ...);
 
+#ifdef __APPLE__
+/**
+ * _ccx_log - Internal function for macOS compatibility
+ * 
+ * This function is provided for compatibility with macOS/arm64 architecture.
+ * 
+ * @param fmt The format string
+ * @param ... Variable arguments for the format string
+ */
+void _ccx_log(const char *fmt, ...);
+#endif
+
 #endif /* CCX_LOG_H */ 
