@@ -18,6 +18,8 @@ made to reuse, not duplicate, as many functions as possible */
 #ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
+extern void ccxr_dtvcc_init(struct lib_cc_decode *ctx);
+extern void ccxr_dtvcc_free(struct lib_cc_decode *ctx);
 #endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
@@ -263,6 +265,10 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
+	ctx->dtvcc_rust = NULL; // Initialize dtvcc_rust to NULL
+
+	// Initialize the Rust Dtvcc instance
+	ccxr_dtvcc_init(ctx);
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
 	{
@@ -540,6 +546,10 @@ struct lib_cc_decode *copy_decoder_context(struct lib_cc_decode *ctx)
 		ctx_copy->dtvcc = malloc(sizeof(struct dtvcc_ctx));
 		memcpy(ctx_copy->dtvcc, ctx->dtvcc, sizeof(struct dtvcc_ctx));
 	}
+	
+	// dtvcc_rust will be initialized later by ccxr_dtvcc_init
+	ctx_copy->dtvcc_rust = NULL;
+	
 	if (ctx->xds_ctx)
 	{
 		ctx_copy->xds_ctx = malloc(sizeof(struct ccx_decoders_xds_context));
@@ -593,6 +603,10 @@ void free_decoder_context(struct lib_cc_decode *ctx)
 	freep(&ctx->timing);
 	freep(&ctx->avc_ctx);
 	freep(&ctx->private_data);
+	
+	// Free the Rust Dtvcc instance
+	ccxr_dtvcc_free(ctx);
+	
 	freep(&ctx->dtvcc);
 	freep(&ctx->xds_ctx);
 	freep(&ctx->vbi_decoder);

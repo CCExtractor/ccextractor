@@ -11,10 +11,24 @@
 #include "ccx_mp4.h"
 #include "activity.h"
 #include "ccx_dtvcc.h"
+#include "ccx_demuxer.h"
+#include "png.h"
+#include "ccx_decoders_common.h"
+
+#ifndef DISABLE_RUST
+extern int ccxr_dtvcc_init(struct lib_cc_decode *ctx);
+extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
+#endif
 
 #define MEDIA_TYPE(type, subtype) (((u64)(type) << 32) + (subtype))
 
 #define GF_ISOM_SUBTYPE_C708 GF_4CC('c', '7', '0', '8')
+
+// Convert a 4-byte type to 4 separate bytes for printing
+#define PRINT_TYPE(t) (t) & 0xFF, ((t) >> 8) & 0xFF, ((t) >> 16) & 0xFF, ((t) >> 24) & 0xFF
+#define ATOMPRINT mprint("Atom: [%c%c%c%c]", PRINT_TYPE(head.type))
+
+#define ATOM_CONTAINS(a, b) (a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3])
 
 static short bswap16(short v)
 {
@@ -418,7 +432,34 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				}
 				// WARN: otherwise cea-708 will not work
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx;
+				
+				// Use Rust implementation if available
+#ifndef DISABLE_RUST
+				// Initialize Rust Dtvcc if not already done
+				if (dec_ctx->dtvcc_rust == NULL)
+				{
+					ccxr_dtvcc_init(dec_ctx);
+				}
+				
+				if (dec_ctx->dtvcc_rust != NULL)
+				{
+					// Process data using Rust implementation
+					unsigned char cc_block[3];
+					cc_block[0] = (cc_valid << 2) | cc_type;
+					cc_block[1] = cc_data[1];
+					cc_block[2] = cc_data[2];
+					
+					// For Rust, we send the whole cc_block instead of temp
+					ccxr_process_cc_data(dec_ctx, cc_block, 1);
+				}
+				else
+				{
+					// Fallback to C implementation
+					dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+				}
+#else
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+#endif
 				cb_708++;
 			}
 			if (ctx->write_format == CCX_OF_MCC)

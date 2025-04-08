@@ -42,6 +42,13 @@ use std::{
     os::raw::{c_char, c_double, c_int, c_long, c_uint},
 };
 
+// Add a new field to store the Rust Dtvcc instance
+#[repr(C)]
+pub struct lib_cc_decode {
+    // ... existing fields ...
+    pub dtvcc_rust: *mut Dtvcc<'static>,
+}
+
 #[cfg(test)]
 static mut cb_708: c_int = 0;
 #[cfg(test)]
@@ -86,6 +93,41 @@ pub extern "C" fn ccxr_init_logger() {
         .init();
 }
 
+/// Initialize a new Dtvcc instance and store it in the lib_cc_decode struct
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_init(dec_ctx: *mut lib_cc_decode) -> c_int {
+    if dec_ctx.is_null() {
+        return -1;
+    }
+    
+    let dec_ctx = unsafe { &mut *dec_ctx };
+    if dec_ctx.dtvcc.is_null() {
+        return -1;
+    }
+    
+    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
+    let dtvcc = Box::new(Dtvcc::new(dtvcc_ctx));
+    dec_ctx.dtvcc_rust = Box::into_raw(dtvcc) as *mut Dtvcc<'static>;
+    
+    0
+}
+
+/// Free the Dtvcc instance stored in the lib_cc_decode struct
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_free(dec_ctx: *mut lib_cc_decode) {
+    if dec_ctx.is_null() {
+        return;
+    }
+    
+    let dec_ctx = unsafe { &mut *dec_ctx };
+    if !dec_ctx.dtvcc_rust.is_null() {
+        unsafe {
+            let _ = Box::from_raw(dec_ctx.dtvcc_rust);
+        }
+        dec_ctx.dtvcc_rust = std::ptr::null_mut();
+    }
+}
+
 /// Process cc_data
 ///
 /// # Safety
@@ -102,13 +144,35 @@ extern "C" fn ccxr_process_cc_data(
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
     let dec_ctx = unsafe { &mut *dec_ctx };
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
+    
+    // Use the stored Dtvcc instance instead of creating a new one
+    if dec_ctx.dtvcc_rust.is_null() {
+        // If dtvcc_rust is null, initialize it
+        if ccxr_dtvcc_init(dec_ctx) != 0 {
+            // If initialization fails, fall back to the old method
+            let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
+            let mut dtvcc = Dtvcc::new(dtvcc_ctx);
+            
+            for cc_block in cc_data.chunks_exact_mut(3) {
+                if !validate_cc_pair(cc_block) {
+                    continue;
+                }
+                let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+                if success {
+                    ret = 0;
+                }
+            }
+            return ret;
+        }
+    }
+    
+    let dtvcc = unsafe { &mut *dec_ctx.dtvcc_rust };
+    
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb(dec_ctx, dtvcc, cc_block);
         if success {
             ret = 0;
         }
