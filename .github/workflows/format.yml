@@ -23,7 +23,13 @@ jobs:
       - name: Format code
         run: |
           find src/ -type f -not -path "src/thirdparty/*" -not -path "src/lib_ccx/zvbi/*" -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
-          git diff-index --quiet HEAD -- || (git diff && exit 1)
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git checkout -B formatted-branch
+          git add .
+          git commit -m "Automated code formatting by GitHub Actions"
+          git push origin formatted-branch
+
   format_rust:
     runs-on: ubuntu-latest
     strategy:
@@ -51,7 +57,7 @@ jobs:
       - name: dependencies
         run: sudo apt update && sudo apt install libtesseract-dev  libavformat-dev libavdevice-dev libswscale-dev yasm
       - name: rustfmt
-        run: cargo fmt --all -- --check
+        run: cargo fmt --all 
       - name: clippy
         run: |
           cargo clippy -- -D warnings

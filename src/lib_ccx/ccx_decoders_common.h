@@ -32,4 +32,10 @@ struct cc_subtitle* copy_subtitle(struct cc_subtitle *sub);
 void free_encoder_context(struct encoder_ctx *ctx);
 void free_decoder_context(struct lib_cc_decode *ctx);
 void free_subtitle(struct cc_subtitle* sub);
+
+extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
+extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
+extern int ccxr_dtvcc_init(struct lib_cc_decode *ctx);
+extern void ccxr_dtvcc_free(struct lib_cc_decode *ctx);
+
 #endif
