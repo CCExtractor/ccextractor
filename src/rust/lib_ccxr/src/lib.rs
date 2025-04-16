@@ -6,3 +6,5 @@ pub mod subtitle;
 pub mod teletext;
 pub mod time;
 pub mod util;
+#[cfg(feature = "enable_sharing")]
+pub mod share;

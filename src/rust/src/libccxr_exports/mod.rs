@@ -3,6 +3,8 @@
 pub mod bitstream;
 pub mod time;
 
+#[cfg(feature = "enable_sharing")]
+pub mod share;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;
 use lib_ccxr::util::{bits::*, levenshtein::*};

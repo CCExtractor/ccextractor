@@ -8,26 +8,46 @@
 #include "ccx_common_option.h"
 #include "ccx_decoders_structs.h"
 #include "lib_ccx.h"
-
 #ifdef ENABLE_SHARING
 
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 
 ccx_share_service_ctx ccx_share_ctx;
+#ifndef DISABLE_RUST
+extern void ccxr_sub_entry_msg_cleanup_c(CcxSubEntryMessage *msg);
+extern void ccxr_sub_entry_msg_print_c(const CcxSubEntryMessage *msg);
+extern void ccxr_sub_entries_cleanup_c(ccx_sub_entries *entries);
+extern void ccxr_sub_entries_print_c(const ccx_sub_entries *entries);
+extern ccx_share_status ccxr_share_start_c(const char *stream_name);
+extern ccx_share_status ccxr_share_stop_c(void);
+extern ccx_share_status _ccxr_share_send_c(const CcxSubEntryMessage *msg);
+extern ccx_share_status ccxr_share_send_c(const struct cc_subtitle *sub);
+extern ccx_share_status ccxr_share_stream_done_c(const char *stream_name);
+extern ccx_share_status _ccxr_share_sub_to_entries_c(const struct cc_subtitle *sub, ccx_sub_entries *entries);
+
+#endif
 
 void ccx_sub_entry_msg_cleanup(CcxSubEntryMessage *msg)
 {
+#ifndef DISABLE_RUST
+	return ccxr_sub_entry_msg_cleanup_c(msg);
+#else
+
 	for (int i = 0; i < msg->n_lines; i++)
 	{
 		free(msg->lines[i]);
 	}
 	free(msg->lines);
 	free(msg->stream_name);
+#endif
 }
 
 void ccx_sub_entry_msg_print(CcxSubEntryMessage *msg)
 {
+#ifndef DISABLE_RUST
+	return ccxr_sub_entry_msg_print_c(msg);
+#else
 	if (!msg)
 	{
 		dbg_print(CCX_DMT_SHARE, "[share] print(!msg)\n");
@@ -55,6 +75,7 @@ void ccx_sub_entry_msg_print(CcxSubEntryMessage *msg)
 		}
 		dbg_print(CCX_DMT_SHARE, "[share] %s\n", msg->lines[i]);
 	}
+#endif
 }
 
 void ccx_sub_entries_init(ccx_sub_entries *entries)
@@ -65,6 +86,9 @@ void ccx_sub_entries_init(ccx_sub_entries *entries)
 
 void ccx_sub_entries_cleanup(ccx_sub_entries *entries)
 {
+#ifndef DISABLE_RUST
+	return ccxr_sub_entries_cleanup_c(entries);
+#else
 	for (int i = 0; i < entries->count; i++)
 	{
 		ccx_sub_entry_msg_cleanup(entries->messages + i);
@@ -72,19 +96,27 @@ void ccx_sub_entries_cleanup(ccx_sub_entries *entries)
 	free(entries->messages);
 	entries->messages = NULL;
 	entries->count = 0;
+#endif
 }
 
 void ccx_sub_entries_print(ccx_sub_entries *entries)
 {
+#ifndef DISABLE_RUST
+	return ccxr_sub_entries_print_c(entries);
+#else
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_sub_entries_print (%u entries)\n", entries->count);
 	for (int i = 0; i < entries->count; i++)
 	{
 		ccx_sub_entry_msg_print(entries->messages + i);
 	}
+#endif
 }
 
 ccx_share_status ccx_share_start(const char *stream_name) // TODO add stream
 {
+#ifndef DISABLE_RUST
+	return ccxr_share_start_c(stream_name);
+#else
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_start: starting service\n");
 	// TODO for multiple files we have to move creation to ccx_share_init
 	ccx_share_ctx.nn_sock = nn_socket(AF_SP, NN_PUB);
@@ -121,18 +153,26 @@ ccx_share_status ccx_share_start(const char *stream_name) // TODO add stream
 
 	sleep(1); // We have to sleep a while, because it takes some time for subscribers to subscribe
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status ccx_share_stop()
 {
+#ifndef DISABLE_RUST
+	return ccxr_share_stop_c();
+#else
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_stop: stopping service\n");
 	nn_shutdown(ccx_share_ctx.nn_sock, ccx_share_ctx.nn_binder);
 	free(ccx_share_ctx.stream_name);
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_share_send_c(sub);
+#else
 	dbg_print(CCX_DMT_SHARE, "[share] ccx_share_send: sending\n");
 	ccx_sub_entries entries;
 	ccx_sub_entries_init(&entries);
@@ -154,10 +194,14 @@ ccx_share_status ccx_share_send(struct cc_subtitle *sub)
 	ccx_sub_entries_cleanup(&entries);
 
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status _ccx_share_send(CcxSubEntryMessage *msg)
 {
+#ifndef DISABLE_RUST
+	return _ccxr_share_send_c(msg);
+#else
 	dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send\n");
 	size_t len = ccx_sub_entry_message__get_packed_size(msg);
 	void *buf = malloc(len);
@@ -175,10 +219,14 @@ ccx_share_status _ccx_share_send(CcxSubEntryMessage *msg)
 	free(buf);
 	dbg_print(CCX_DMT_SHARE, "[share] _ccx_share_send: sent\n");
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status ccx_share_stream_done(char *stream_name)
 {
+#ifndef DISABLE_RUST
+	return ccxr_share_stream_done_c(stream_name);
+#else
 	CcxSubEntryMessage msg = CCX_SUB_ENTRY_MESSAGE__INIT;
 	msg.eos = 1;
 	msg.stream_name = strdup(stream_name);
@@ -197,10 +245,14 @@ ccx_share_status ccx_share_stream_done(char *stream_name)
 	ccx_sub_entry_msg_cleanup(&msg);
 
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entries *entries)
 {
+#ifndef DISABLE_RUST
+	return _ccxr_share_sub_to_entries_c(sub, entries);
+#else
 	dbg_print(CCX_DMT_SHARE, "\n[share] _ccx_share_sub_to_entry\n");
 	if (sub->type == CC_608)
 	{
@@ -295,6 +347,7 @@ ccx_share_status _ccx_share_sub_to_entries(struct cc_subtitle *sub, ccx_sub_entr
 	dbg_print(CCX_DMT_SHARE, "[share] done\n");
 
 	return CCX_SHARE_OK;
+#endif
 }
 
 ccx_share_status ccx_share_launch_translator(char *langs, char *auth)
