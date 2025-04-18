@@ -15,6 +15,7 @@ strum = "0.26.3"
 strum_macros = "0.26.4"
 crc32fast = "1.4.2"
 num_enum = "0.6.1"
+libc = { version = "0.2.138", features = ["extra_traits"] }        # for FILE
 
 [features]
 default = [

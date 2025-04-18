@@ -5,15 +5,44 @@
 #include "utility.h"
 #include "stdlib.h"
 
+#ifndef DISABLE_RUST
+
+extern void ccxr_delete_decoder_vbi(
+    struct ccx_decoder_vbi_ctx **arg);
+
+extern struct ccx_decoder_vbi_ctx *ccxr_init_decoder_vbi(
+    struct ccx_decoder_vbi_cfg *cfg);
+
+extern int ccxr_decode_vbi(
+    struct lib_cc_decode *dec_ctx,
+    uint8_t field,
+    unsigned char *buffer,
+    size_t len,
+    struct cc_subtitle *sub);
+
+#endif
+
 void delete_decoder_vbi(struct ccx_decoder_vbi_ctx **arg)
 {
+#ifndef DISABLE_RUST
+	ccxr_delete_decoder_vbi(arg);
+#else
 	struct ccx_decoder_vbi_ctx *ctx = *arg;
 	vbi_raw_decoder_destroy(&ctx->zvbi_decoder);
 
 	freep(arg);
+#endif
 }
+
 struct ccx_decoder_vbi_ctx *init_decoder_vbi(struct ccx_decoder_vbi_cfg *cfg)
 {
+#ifndef DISABLE_RUST
+	struct ccx_decoder_vbi_ctx *vbi = ccxr_init_decoder_vbi(cfg);
+	if (vbi == NULL)
+	{
+		return NULL;
+	}
+#else
 	struct ccx_decoder_vbi_ctx *vbi;
 
 	vbi = malloc(sizeof(*vbi));
@@ -61,10 +90,14 @@ struct ccx_decoder_vbi_ctx *init_decoder_vbi(struct ccx_decoder_vbi_cfg *cfg)
 		vbi_raw_decoder_add_services(&vbi->zvbi_decoder, VBI_SLICED_CAPTION_525, /* strict */ 0);
 	}
 	return vbi;
+#endif
 }
 
 int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buffer, size_t len, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_decode_vbi(dec_ctx, field, buffer, len, sub);
+#else
 	int i = 0;
 	unsigned int n_lines;
 	vbi_sliced sliced[52];
@@ -96,4 +129,5 @@ int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buff
 		}
 	}
 	return CCX_OK;
+#endif
 }
