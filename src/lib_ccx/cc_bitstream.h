@@ -20,7 +20,7 @@ struct bitstream
 	// This is meant to store high level syntax errors, i.e a function
 	// using the bitstream functions found a syntax error.
 	int error;
-	// Internal (private) variable - used to store the the bitstream
+	// Internal (private) variable - used to store the bitstream
 	// position until it is decided if the bitstream pointer will be
 	// increased by the calling function, or not.
 	unsigned char *_i_pos;
