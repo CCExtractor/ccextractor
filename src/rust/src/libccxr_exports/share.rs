@@ -1,5 +1,5 @@
 use lib_ccxr::share::ccxr_sub_entry_message::*;
-use lib_ccxr::share::share::*;
+use lib_ccxr::share::functions::sharing::*;
 use lib_ccxr::util::log::{debug, DebugMessageFlag};
 use std::ffi::CStr;
 /// C-compatible function to clean up a `CcxSubEntryMessage`.
@@ -28,7 +28,6 @@ pub unsafe extern "C" fn ccxr_sub_entry_msg_print_c(msg: *const CcxSubEntryMessa
     ccxr_sub_entry_msg_print(msg);
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_sub_entries_cleanup_c(entries: *mut CcxSubEntries) {
     if entries.is_null() {
@@ -50,7 +49,9 @@ pub unsafe extern "C" fn ccxr_sub_entries_print_c(entries: *const CcxSubEntries)
 
 /// C-compatible function to start the sharing service.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_share_start_c(stream_name: *const libc::c_char) -> CcxShareStatus {
+pub unsafe extern "C" fn ccxr_share_start_c(
+    stream_name: *const std::os::raw::c_char,
+) -> CcxShareStatus {
     if stream_name.is_null() {
         return ccxr_share_start(Option::from("unknown"));
     }
@@ -85,7 +86,9 @@ pub unsafe extern "C" fn ccxr_share_send_c(sub: *const CcSubtitle) -> CcxShareSt
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_share_stream_done_c(stream_name: *const libc::c_char) -> CcxShareStatus {
+pub unsafe extern "C" fn ccxr_share_stream_done_c(
+    stream_name: *const std::os::raw::c_char,
+) -> CcxShareStatus {
     if stream_name.is_null() {
         return CcxShareStatus::Fail;
     }

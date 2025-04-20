@@ -17,18 +17,16 @@ crc32fast = "1.4.2"
 num_enum = "0.6.1"
 prost = "0.13.5"
 lazy_static = "1.5.0"
-nanomsg-sys = "0.7.2"
-libc = "0.2.172"
-
+nanomsg-sys = { version = "0.7.2", optional = true, default-features = false, features = ["bundled"] }
 [features]
 default = [
-  "enable_sharing",
-  "wtv_debug",
-  "enable_ffmpeg",
-  "debug",
-  "with_libcurl",
+    "enable_sharing",
+    "wtv_debug",
+    "enable_ffmpeg",
+    "debug",
+    "with_libcurl",
 ]
-enable_sharing = []
+enable_sharing = ["nanomsg-sys"]
 wtv_debug = []
 enable_ffmpeg = []
 debug_out = []

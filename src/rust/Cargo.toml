@@ -30,6 +30,7 @@ url = "2.5.4"
 encoding_rs = "0.8.5"
 libc = "0.2.172"
 
+
 [build-dependencies]
 bindgen = "0.64.0"
 pkg-config = "0.3.32"

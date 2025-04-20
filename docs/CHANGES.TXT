@@ -1297,3 +1297,4 @@ version of CCExtractor.
 - Added video information (as extracted from sequence header).
 - Some code clean-up.
 - FF sanity check enabled by default.
+- Added Share Module to lib_ccxr

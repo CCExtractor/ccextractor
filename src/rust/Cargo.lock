@@ -182,7 +182,6 @@ dependencies = [
  "env_logger",
  "leptonica-sys",
  "lib_ccxr",
- "libc",
  "log",
  "num-integer",
  "palette",
@@ -641,7 +640,6 @@ dependencies = [
  "crc32fast",
  "derive_more",
  "lazy_static",
- "libc",
  "nanomsg-sys",
  "num_enum",
  "prost",
@@ -654,9 +652,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.172"
+version = "0.2.170"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
+checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
 
 [[package]]
 name = "libloading"

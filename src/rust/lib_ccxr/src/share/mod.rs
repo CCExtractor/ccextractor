@@ -1,3 +1,3 @@
-pub mod share;
 pub mod ccxr_sub_entry_message;
-mod tests;
+pub mod functions;
+pub mod tests;

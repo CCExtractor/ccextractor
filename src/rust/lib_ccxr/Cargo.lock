@@ -309,7 +309,6 @@ dependencies = [
  "crc32fast",
  "derive_more",
  "lazy_static",
- "libc",
  "nanomsg-sys",
  "num_enum",
  "prost",
