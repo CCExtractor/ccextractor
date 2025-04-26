@@ -1,0 +1,21 @@
+1
+00:00:00,317 --> 00:00:02,183
+<font color="#aaaaaa">d</font>
+
+2
+00:00:02,184 --> 00:00:04,116
+<font color="#aaaaaa">d</font>
+<font color="#aaaaaa">1</font>
+
+3
+00:00:04,117 --> 00:00:06,383
+<font color="#aaaaaa">d</font>
+<font color="#aaaaaa">1</font>
+<font color="#aaaaaa">h</font>
+
+4
+00:00:06,384 --> 00:00:09,999
+<font color="#aaaaaa">1</font>
+<font color="#aaaaaa">h</font>
+<font color="#aaaaaa">m</font>
+

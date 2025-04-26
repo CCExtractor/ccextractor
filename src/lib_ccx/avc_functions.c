@@ -95,14 +95,18 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 	NAL_stop = NAL_length + NAL_start;
 	NAL_stop = remove_03emu(NAL_start + 1, NAL_stop); // Add +1 to NAL_stop for TS, without it for MP4. Still don't know why
 
-	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
-		nal_unit_type, NAL_stop - NAL_start - 1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
-
 	if (NAL_stop == NULL) // remove_03emu failed.
 	{
-		mprint("\rNotice: NAL of type %u had to be skipped because remove_03emu failed.\n", nal_unit_type);
+		mprint("\rWarning: Invalid emulation prevention bytes detected in NAL unit type %u (0x%02X). "
+		       "This NAL unit contains an illegal byte sequence (0x000000, 0x000001, or 0x000002) or "
+		       "improper emulation prevention byte (0x03). "
+		       "This may indicate a corrupted AVC/H.264 stream. NAL unit skipped.\n",
+		       nal_unit_type, nal_unit_type);
 		return;
 	}
+
+	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
+		nal_unit_type, NAL_stop - NAL_start - 1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
 
 	if (nal_unit_type == CCX_NAL_TYPE_ACCESS_UNIT_DELIMITER_9)
 	{
@@ -127,7 +131,7 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI)
 	{
 		// Found SEI (used for subtitles)
-		// set_fts(ctx->timing); // FIXME - check this!!!
+		set_fts(enc_ctx->timing);
 		sei_rbsp(dec_ctx->avc_ctx, NAL_start + 1, NAL_stop);
 	}
 	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET)
@@ -301,7 +305,7 @@ u32 avc_remove_emulation_bytes(const unsigned char *buffer_src, unsigned char *b
 unsigned char *remove_03emu(unsigned char *from, unsigned char *to)
 {
 	int num = to - from;
-	int newsize = EBSPtoRBSP(from, num, 0); // TODO: Do something if newsize == -1 (broken NAL)
+	int newsize = EBSPtoRBSP(from, num, 0);
 	if (newsize == -1)
 		return NULL;
 	return from + newsize;
