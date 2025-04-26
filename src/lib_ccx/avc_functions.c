@@ -97,9 +97,9 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 
 	if (NAL_stop == NULL) // remove_03emu failed.
 	{
-		mprint("\rWarning: Invalid emulation prevention bytes detected in NAL unit type %u (0x%02X). "
+		mprint("\rWarning: Invalid prevention bytes detected in NAL unit type %u (0x%02X). "
 		       "This NAL unit contains an illegal byte sequence (0x000000, 0x000001, or 0x000002) or "
-		       "improper emulation prevention byte (0x03). "
+		       "improper prevention byte (0x03). "
 		       "This may indicate a corrupted AVC/H.264 stream. NAL unit skipped.\n",
 		       nal_unit_type, nal_unit_type);
 		return;
