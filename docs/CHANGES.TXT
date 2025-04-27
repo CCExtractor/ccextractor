@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- IMPROVEMENT: Refactor and optimize Dockerfile
 - Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
