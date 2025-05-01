@@ -157,8 +157,8 @@ dependencies = [
  "bindgen 0.64.0",
  "cfg-if",
  "clap",
+ "encoding_rs",
  "env_logger",
- "iconv",
  "leptonica-sys",
  "lib_ccxr",
  "log",
@@ -294,16 +294,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "dyn_buf"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74c57ab96715773d9cb9789b38eb7cbf04b3c6f5624a9d98f51761603376767c"
-
-[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+
+[[package]]
+name = "encoding_rs"
+version = "0.8.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75030f3c4f45dafd7586dd6780965a8c7e8e285a5ecb86713e63a79c5b2766f3"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "env_logger"
@@ -399,16 +402,6 @@ name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
-
-[[package]]
-name = "iconv"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07e6a7db0df823ef299ef75b6951975c7a1f9019910b3665614bac4161bab1a9"
-dependencies = [
- "dyn_buf",
- "libc",
-]
 
 [[package]]
 name = "icu_collections"
