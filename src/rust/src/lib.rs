@@ -173,7 +173,11 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
             0 | 1 => {}
             // Type 2 and 3 are for CEA-708 data.
             2 | 3 => {
-                let current_time = unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) };
+                let current_time = if ctx.timing.is_null() {
+                    0
+                } else {
+                    unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) }
+                };
                 ctx.current_field = 3;
 
                 // Check whether current time is within start and end bounds
