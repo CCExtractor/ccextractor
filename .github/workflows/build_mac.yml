@@ -47,7 +47,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: brew install pkg-config autoconf automake libtool gpac
+      run: brew install pkg-config autoconf automake libtool gpac nanomsg
     - name: run autogen
       run: ./autogen.sh
       working-directory: ./mac
