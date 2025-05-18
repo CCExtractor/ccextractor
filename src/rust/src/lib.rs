@@ -21,7 +21,6 @@ pub mod hardsubx;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
-
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
 
