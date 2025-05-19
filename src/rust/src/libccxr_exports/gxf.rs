@@ -1,6 +1,6 @@
-use lib_ccxr::demuxer::common_structs::*;
-use lib_ccxr::demuxer::demux::*;
-use lib_ccxr::gxf_demuxer::gxf::*;
+use crate::demuxer::common_structs::*;
+use crate::demuxer::demux::*;
+use crate::gxf_demuxer::gxf::*;
 use std::os::raw::c_int;
 use std::os::raw::c_uchar;
 use std::slice;

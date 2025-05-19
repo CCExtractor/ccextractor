@@ -3,19 +3,14 @@
 #![allow(unused_mut)]
 #![allow(clippy::needless_lifetimes)]
 
-use crate::activity::ActivityExt;
-use crate::common::{
-    BufferdataType, Codec, Decoder608Settings, DecoderDtvccSettings, OutputFormat, SelectCodec,
-    StreamMode, StreamType,
-};
-use crate::common::{DataSource, Options};
-use crate::demuxer::common_structs::LibCcDecode;
-use crate::demuxer::lib_ccx::{FileReport, LibCcxCtx};
+use lib_ccxr::activity::ActivityExt;
+use lib_ccxr::common::{BufferdataType, Codec, Decoder608Report, Decoder608Settings, DecoderDtvccReport, DecoderDtvccSettings, OutputFormat, SelectCodec, StreamMode, StreamType};
+use lib_ccxr::common::{DataSource, Options};
 use crate::demuxer::stream_functions::{detect_myth, detect_stream_type};
 use crate::file_functions::file::FILEBUFFERSIZE;
-use crate::time::Timestamp;
-use crate::util::log::ExitCause;
-use crate::{common, fatal, info};
+use lib_ccxr::time::Timestamp;
+use lib_ccxr::util::log::ExitCause;
+use lib_ccxr::{common, fatal, info};
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::{Seek, SeekFrom};
@@ -28,7 +23,17 @@ use std::path::Path;
 use std::ptr::{null_mut, NonNull};
 use std::sync::{LazyLock, Mutex};
 use std::{mem, ptr};
+use cfg_if::cfg_if;
+use crate::bindings::{lib_cc_decode, lib_ccx_ctx, list_head};
+use crate::hlist::{init_list_head, list_del, list_empty, list_entry};
 
+cfg_if! {
+    if #[cfg(test)] {
+        use crate::demuxer::demux::tests::{print_file_report};
+    } else {
+        use crate::{print_file_report};
+    }
+}
 pub static CCX_OPTIONS: LazyLock<Mutex<Options>> = LazyLock::new(|| Mutex::new(Options::default()));
 
 // Constants
@@ -55,6 +60,17 @@ pub struct CcxDemuxReport {
     pub program_cnt: u32,
     pub dvb_sub_pid: [u32; SUB_STREAMS_CNT],
     pub tlt_sub_pid: [u32; SUB_STREAMS_CNT],
+    pub mp4_cc_track_cnt: u32,
+}
+#[repr(C)]
+#[derive(Debug)]
+pub struct FileReport {
+    pub width: u32,
+    pub height: u32,
+    pub aspect_ratio: u32,
+    pub frame_rate: u32,
+    pub data_from_608: *mut Decoder608Report, // Pointer to Decoder608Report
+    pub data_from_708: *mut DecoderDtvccReport, // Pointer to DecoderDtvccReport
     pub mp4_cc_track_cnt: u32,
 }
 pub struct CcxRational {
@@ -98,51 +114,36 @@ pub struct CapInfo {
     /**
      * List joining all streams in TS
      */
-    pub all_stream: HList, // List head representing a hyperlinked list
+    pub all_stream: list_head, // List head representing a hyperlinked list
 
     /**
      * List joining all sibling Stream in Program
      */
-    pub sib_head: HList,
-    pub sib_stream: HList,
+    pub sib_head: list_head,
+    pub sib_stream: list_head,
 
     /**
      * List joining all sibling Stream in Program
      */
-    pub pg_stream: HList,
+    pub pg_stream: list_head,
 }
 
-// HList (Hyperlinked List)
-#[derive(Debug)]
-pub struct HList {
-    // A lot of the HList struct is not implemented yet
-    pub next: *mut HList,
-    pub prev: *mut HList,
-}
-impl Default for HList {
-    fn default() -> Self {
-        HList {
-            next: null_mut(),
-            prev: null_mut(),
-        }
-    }
-}
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer.
-pub unsafe extern "C" fn is_decoder_processed_enough(ctx: *mut LibCcxCtx) -> i32 {
+pub unsafe extern "C" fn is_decoder_processed_enough(ctx: *mut lib_ccx_ctx) -> i32 {
     // Use core::mem::offset_of!() for safer offset calculation
-    const LIST_OFFSET: usize = memoffset::offset_of!(LibCcDecode, list);
+    const LIST_OFFSET: usize = memoffset::offset_of!(lib_cc_decode, list);
 
     let head = &(*ctx).dec_ctx_head;
     let mut current = head.next;
 
-    while current != &(*ctx).dec_ctx_head as *const HList as *mut HList {
+    while current != &(*ctx).dec_ctx_head as *const list_head as *mut list_head {
         if current.is_null() {
             break;
         }
 
         // Convert list node to containing struct
-        let dec_ctx = (current as *mut u8).sub(LIST_OFFSET) as *mut LibCcDecode;
+        let dec_ctx = (current as *mut u8).sub(LIST_OFFSET) as *mut lib_cc_decode;
 
         // Check if current decoder meets the condition
         if (*dec_ctx).processed_enough == 1 && (*ctx).multiprogram == 0 {
@@ -173,7 +174,7 @@ pub unsafe fn get_sib_stream_by_type(program: *mut CapInfo, codec_type: Codec) -
         member_ptr - base_ptr
     };
 
-    let head = &(*program).sib_head as *const HList as *mut HList;
+    let head = &(*program).sib_head as *const list_head as *mut list_head;
     let mut current = (*head).next;
     while !current.is_null() && current != head {
         let cap_ptr = (current as *mut u8).sub(offset) as *mut CapInfo;
@@ -212,15 +213,15 @@ pub unsafe fn get_best_sib_stream(program: *mut CapInfo) -> *mut CapInfo {
 // Constants
 
 // PSI_buffer Struct
-pub struct PSI_buffer {
+pub struct PSIBuffer {
     pub prev_ccounter: u32,
     pub buffer: *mut u8,
     pub buffer_length: u32,
     pub ccounter: u32,
 }
-impl Default for PSI_buffer {
+impl Default for PSIBuffer {
     fn default() -> Self {
-        PSI_buffer {
+        PSIBuffer {
             prev_ccounter: 0,
             buffer: Box::into_raw(Box::new(0u8)),
             buffer_length: 0,
@@ -229,9 +230,9 @@ impl Default for PSI_buffer {
     }
 }
 
-impl PSI_buffer {
-    pub(crate) fn default() -> PSI_buffer {
-        PSI_buffer {
+impl PSIBuffer {
+    pub(crate) fn default() -> PSIBuffer {
+        PSIBuffer {
             prev_ccounter: 0,
             buffer: Box::into_raw(Box::new(0u8)),
             buffer_length: 0,
@@ -300,7 +301,7 @@ impl DecodersCommonSettings {
 }
 
 // PMT_entry Struct
-pub struct PMT_entry {
+pub struct PMTEntry {
     pub program_number: u32,
     pub elementary_pid: u32,
     pub stream_type: StreamType, // ccx_stream_type maps to StreamType
@@ -389,17 +390,16 @@ pub struct CcxDemuxer<'a> {
     pub m2ts: i32,
     pub stream_mode: StreamMode, // ccx_stream_mode_enum maps to StreamMode
     pub auto_stream: StreamMode, // ccx_stream_mode_enum maps to StreamMode
-    // pub startbytes: [u8; STARTBYTESLENGTH],
     pub startbytes: Vec<u8>,
     pub startbytes_pos: u32,
     pub startbytes_avail: i32,
 
     // User Specified Params
-    pub ts_autoprogram: i32,
-    pub ts_allprogram: i32,
-    pub flag_ts_forced_pn: i32,
-    pub flag_ts_forced_cappid: i32,
-    pub ts_datastreamtype: i32,
+    pub ts_autoprogram: bool,
+    pub ts_allprogram: bool,
+    pub flag_ts_forced_pn: bool,
+    pub flag_ts_forced_cappid: bool,
+    pub ts_datastreamtype: StreamType,
 
     pub pinfo: Vec<ProgramInfo>,
     pub nb_program: usize,
@@ -414,28 +414,29 @@ pub struct CcxDemuxer<'a> {
     pub past: i64, // Position in file, equivalent to ftell()
 
     // Global timestamps
-    pub global_timestamp: i64,
-    pub min_global_timestamp: i64,
-    pub offset_global_timestamp: i64,
-    pub last_global_timestamp: i64,
-    pub global_timestamp_inited: i32,
+    pub global_timestamp: Timestamp,
+    pub min_global_timestamp: Timestamp,
+    pub offset_global_timestamp: Timestamp,
+    pub last_global_timestamp: Timestamp,
+    pub global_timestamp_inited: Timestamp,
 
-    pub pid_buffers: Vec<*mut PSI_buffer>,
+    pub pid_buffers: Vec<*mut PSIBuffer>,
     pub pids_seen: Vec<i32>,
 
     pub stream_id_of_each_pid: Vec<u8>,
     pub min_pts: Vec<u64>,
     pub have_pids: Vec<i32>,
     pub num_of_pids: i32,
-    pub pids_programs: Vec<*mut PMT_entry>,
+    pub pids_programs: Vec<*mut PMTEntry>,
     pub freport: CcxDemuxReport,
 
     // Hauppauge support
-    pub hauppauge_warning_shown: u32,
+    pub hauppauge_warning_shown: bool,
 
     pub multi_stream_per_prog: i32,
 
     pub last_pat_payload: *mut u8,
+    // pub last_pat_payload: Option<NonNull<u8>>,
     pub last_pat_length: u32,
 
     pub filebuffer: *mut u8,
@@ -443,23 +444,15 @@ pub struct CcxDemuxer<'a> {
     pub filebuffer_pos: u32,   // Position of pointer relative to buffer start
     pub bytesinbuffer: u32,    // Number of bytes in buffer
 
-    pub warning_program_not_found_shown: i32,
+    pub warning_program_not_found_shown: bool,
 
     pub strangeheader: i32, // Tracks if the last header was valid
 
+
+    pub parent: Option<&'a mut lib_ccx_ctx>,
+    pub private_data: *mut std::ffi::c_void,// TODO - this struct contains a large variety of contexts
     #[cfg(feature = "enable_ffmpeg")]
     pub ffmpeg_ctx: *mut std::ffi::c_void,
-
-    // pub parent: *mut std::ffi::c_void,
-    pub parent: Option<&'a mut LibCcxCtx<'a>>, // Demuxer Context
-    pub private_data: *mut std::ffi::c_void,
-    pub reset: fn(&mut CcxDemuxer<'a>),
-    pub print_cfg: fn(&CcxDemuxer<'a>),
-    pub close: unsafe fn(&mut CcxDemuxer<'a>),
-    pub open: unsafe fn(&mut CcxDemuxer<'a>, &str) -> i32,
-    pub is_open: fn(&CcxDemuxer<'a>) -> bool,
-    pub get_stream_mode: fn(&CcxDemuxer<'a>) -> i32,
-    pub get_filesize: fn(&CcxDemuxer<'a>, &mut CcxDemuxer) -> i64,
 }
 
 impl<'a> Default for CcxDemuxer<'a> {
@@ -474,11 +467,11 @@ impl<'a> Default for CcxDemuxer<'a> {
                 startbytes_avail: 0,
 
                 // User Specified Params
-                ts_autoprogram: 0,
-                ts_allprogram: 0,
-                flag_ts_forced_pn: 0,
-                flag_ts_forced_cappid: 0,
-                ts_datastreamtype: 0,
+                ts_autoprogram: false,
+                ts_allprogram: false,
+                flag_ts_forced_pn: false,
+                flag_ts_forced_cappid: false,
+                ts_datastreamtype: StreamType::Unknownstream,
 
                 pinfo: vec![ProgramInfo::default(); MAX_PROGRAM],
                 nb_program: 0,
@@ -492,11 +485,11 @@ impl<'a> Default for CcxDemuxer<'a> {
                 // File Handles
                 infd: -1,
                 past: 0,
-                global_timestamp: 0,
-                min_global_timestamp: 0,
-                offset_global_timestamp: 0,
-                last_global_timestamp: 0,
-                global_timestamp_inited: 0,
+                global_timestamp: Timestamp::from_millis(0),
+                min_global_timestamp: Timestamp::from_millis(0),
+                offset_global_timestamp: Timestamp::from_millis(0),
+                last_global_timestamp: Timestamp::from_millis(0),
+                global_timestamp_inited: Timestamp::from_millis(0),
 
                 pid_buffers: vec![null_mut(); MAX_PSI_PID],
                 pids_seen: vec![0; MAX_PID],
@@ -508,7 +501,7 @@ impl<'a> Default for CcxDemuxer<'a> {
                 pids_programs: vec![null_mut(); MAX_PID],
                 freport: CcxDemuxReport::default(), // Assuming CcxDemuxReport has a Default implementation
                 // Hauppauge support
-                hauppauge_warning_shown: 0,
+                hauppauge_warning_shown: false,
 
                 multi_stream_per_prog: 0,
 
@@ -520,7 +513,7 @@ impl<'a> Default for CcxDemuxer<'a> {
                 filebuffer_pos: 0,
                 bytesinbuffer: 0,
 
-                warning_program_not_found_shown: 0,
+                warning_program_not_found_shown: false,
 
                 strangeheader: 0,
 
@@ -530,13 +523,6 @@ impl<'a> Default for CcxDemuxer<'a> {
                 parent: None,
                 private_data: null_mut(),
 
-                reset: CcxDemuxer::reset,
-                print_cfg: ccx_demuxer_print_cfg,
-                close: CcxDemuxer::close,
-                open: CcxDemuxer::open,
-                is_open: CcxDemuxer::is_open,
-                get_stream_mode: ccx_demuxer_get_stream_mode,
-                get_filesize: CcxDemuxer::get_filesize,
             }
         }
     }
@@ -575,10 +561,10 @@ impl Default for CapInfo {
             ignore: 0,
 
             // Initialize lists to empty or default states
-            all_stream: HList::default(), // Assuming HList has a Default impl
-            sib_head: HList::default(),
-            sib_stream: HList::default(),
-            pg_stream: HList::default(),
+            all_stream: list_head::default(), // Assuming HList has a Default impl
+            sib_head: list_head::default(),
+            sib_stream: list_head::default(),
+            pg_stream: list_head::default(),
         }
     }
 }
@@ -594,8 +580,8 @@ impl Default for CcxDemuxReport {
 }
 
 impl<'a> CcxDemuxer<'a> {
-    pub fn get_filesize(&self, p0: &mut CcxDemuxer) -> i64 {
-        ccx_demuxer_get_file_size(p0)
+    pub fn get_filesize(&mut self) -> i64 {
+        ccx_demuxer_get_file_size(self)
     }
 }
 
@@ -666,7 +652,9 @@ impl<'a> CcxDemuxer<'a> {
             }
             // Set each min_pts[i] to u64::MAX for i in 0..=MAX_PSI_PID.
             for i in 0..=MAX_PSI_PID {
-                self.min_pts[i] = u64::MAX;
+                if !self.min_pts.is_empty() {
+                    self.min_pts[i] = u64::MAX;
+                }
             }
             // Fill stream_id_of_each_pid with 0 for (MAX_PSI_PID+1) elements.
             if self.stream_id_of_each_pid.len() < len_have {
@@ -685,8 +673,7 @@ impl<'a> CcxDemuxer<'a> {
 }
 
 impl<'a> CcxDemuxer<'a> {
-    pub fn close(&mut self) {
-        let mut ccx_options = CCX_OPTIONS.lock().unwrap();
+    pub fn close(&mut self, ccx_options : &mut Options) {
         self.past = 0;
         if self.infd != -1 && ccx_options.input_source == DataSource::File {
             // Convert raw fd to Rust File to handle closing
@@ -722,10 +709,10 @@ impl<'a> CcxDemuxer<'a> {
 
         // Initialize timestamp fields
         self.past = 0;
-        self.min_global_timestamp = 0;
-        self.global_timestamp_inited = 0;
-        self.last_global_timestamp = 0;
-        self.offset_global_timestamp = 0;
+        self.min_global_timestamp = Timestamp::from_millis(0);
+        self.global_timestamp_inited = Timestamp::from_millis(0);
+        self.last_global_timestamp = Timestamp::from_millis(0);
+        self.offset_global_timestamp = Timestamp::from_millis(0);
 
         // FFmpeg initialization (commented out until implemented)
         // #[cfg(feature = "enable_ffmpeg")]
@@ -747,7 +734,7 @@ impl<'a> CcxDemuxer<'a> {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
                         {
-                            print_file_report(self.parent.as_mut().unwrap());
+                            print_file_report(*self.parent.as_mut().unwrap());
                         }
                     }
                     return -1;
@@ -760,7 +747,7 @@ impl<'a> CcxDemuxer<'a> {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
                         {
-                            print_file_report(self.parent.as_mut().unwrap());
+                            print_file_report(*self.parent.as_mut().unwrap());
                         }
                     }
                     return -1;
@@ -776,7 +763,7 @@ impl<'a> CcxDemuxer<'a> {
                 if self.infd != -1 {
                     if ccx_options.print_file_reports {
                         {
-                            print_file_report(self.parent.as_mut().unwrap());
+                            print_file_report(*self.parent.as_mut().unwrap());
                         }
                     }
                     return -1;
@@ -986,153 +973,6 @@ fn y_n(count: i32) -> &'static str {
     }
 }
 
-/// C `print_file_report` function, preserving structure
-/// and replacing `#ifdef` with `#[cfg(feature = "wtv_debug")]`.
-/// Uses `printf` from libc.
-pub fn print_file_report(ctx: &mut LibCcxCtx) {
-    unsafe {
-        let mut ccx_options = CCX_OPTIONS.lock().unwrap();
-
-        let mut dec_ctx: *mut LibCcDecode = null_mut();
-        let demux_ctx = &mut *ctx.demux_ctx;
-
-        println!("File: ");
-        match ccx_options.input_source {
-            DataSource::File => {
-                if ctx.current_file < 0 {
-                    println!("file is not opened yet");
-                    return;
-                }
-                if ctx.current_file >= ctx.num_input_files {
-                    return;
-                }
-                // Print the filename.
-                println!("{}", ctx.inputfile[ctx.current_file as usize]);
-            }
-            DataSource::Stdin => {
-                println!("stdin");
-            }
-            DataSource::Tcp | DataSource::Network => {
-                println!("network");
-            }
-        }
-
-        println!("Stream Mode: ");
-        match demux_ctx.stream_mode {
-            StreamMode::Transport => {
-                println!("Transport Stream");
-                println!("Program Count: {}", demux_ctx.freport.program_cnt);
-                println!("Program Numbers: ");
-                for i in 0..demux_ctx.nb_program {
-                    println!("{}", demux_ctx.pinfo[i].program_number);
-                }
-                println!();
-                for i in 0..65536 {
-                    if demux_ctx.pids_programs[i as usize].is_null() {
-                        continue;
-                    }
-                    println!(
-                        "PID: {}, Program: {}, ",
-                        i,
-                        (*demux_ctx.pids_programs[i as usize]).program_number
-                    );
-                    let mut j = 0;
-                    while j < SUB_STREAMS_CNT {
-                        if demux_ctx.freport.dvb_sub_pid[j] == i as u32 {
-                            println!("DVB Subtitles");
-                            break;
-                        }
-                        if demux_ctx.freport.tlt_sub_pid[j] == i as u32 {
-                            println!("Teletext Subtitles");
-                            break;
-                        }
-                        j += 1;
-                    }
-                    if j == SUB_STREAMS_CNT {
-                        let idx =
-                            (*demux_ctx.pids_programs[i as usize]).printable_stream_type as usize;
-                        let desc = CStr::from_ptr(get_desc_placeholder(idx))
-                            .to_str()
-                            .unwrap_or("Unknown");
-                        println!("{}", desc);
-                    }
-                }
-            }
-            StreamMode::Program => println!("Program Stream"),
-            StreamMode::Asf => println!("ASF"),
-            StreamMode::Wtv => println!("WTV"),
-            StreamMode::ElementaryOrNotFound => println!("Not Found"),
-            StreamMode::Mp4 => println!("MP4"),
-            StreamMode::McpoodlesRaw => println!("McPoodle's raw"),
-            StreamMode::Rcwt => println!("BIN"),
-            #[cfg(feature = "wtv_debug")]
-            StreamMode::HexDump => println!("Hex"),
-            _ => {}
-        }
-
-        if list_empty(&demux_ctx.cinfo_tree.all_stream) {
-            // print_cc_report(ctx, ptr::null_mut()); //TODO
-        }
-        let mut program = demux_ctx.cinfo_tree.pg_stream.next;
-        while program != &demux_ctx.cinfo_tree.pg_stream as *const _ as *mut _ && !program.is_null()
-        {
-            let program_ptr = program as *mut CapInfo;
-            println!(
-                "//////// Program #{}: ////////",
-                (*program_ptr).program_number
-            );
-
-            println!("DVB Subtitles: ");
-            let mut info = get_sib_stream_by_type(program_ptr, Codec::Dvb);
-            println!("{}", if !info.is_null() { "Yes" } else { "No" });
-
-            println!("Teletext: ");
-            info = get_sib_stream_by_type(program_ptr, Codec::Teletext);
-            println!("{}", if !info.is_null() { "Yes" } else { "No" });
-
-            println!("ATSC Closed Caption: ");
-            info = get_sib_stream_by_type(program_ptr, Codec::AtscCc);
-            println!("{}", if !info.is_null() { "Yes" } else { "No" });
-
-            let best_info = get_best_sib_stream(program_ptr);
-            if best_info.is_null() {
-                program = (*program).next;
-                continue;
-            }
-            // dec_ctx = update_decoder_list_cinfo(ctx, best_info); // TODO
-            if (*dec_ctx).in_bufferdatatype == BufferdataType::Pes
-                && (demux_ctx.stream_mode == StreamMode::Transport
-                    || demux_ctx.stream_mode == StreamMode::Program
-                    || demux_ctx.stream_mode == StreamMode::Asf
-                    || demux_ctx.stream_mode == StreamMode::Wtv)
-            {
-                println!("Width: {}", (*dec_ctx).current_hor_size);
-                println!("Height: {}", (*dec_ctx).current_vert_size);
-                let ar_idx = (*dec_ctx).current_aspect_ratio as usize;
-                println!("Aspect Ratio: {}", common::ASPECT_RATIO_TYPES[ar_idx]);
-                let fr_idx = (*dec_ctx).current_frame_rate as usize;
-                println!("Frame Rate: {}", common::FRAMERATES_TYPES[fr_idx]);
-            }
-            println!();
-            program = (*program).next;
-        }
-
-        println!(
-            "MPEG-4 Timed Text: {}",
-            y_n(ctx.freport.mp4_cc_track_cnt as i32)
-        );
-        if ctx.freport.mp4_cc_track_cnt != 0 {
-            println!(
-                "MPEG-4 Timed Text tracks count: {}",
-                ctx.freport.mp4_cc_track_cnt
-            );
-        }
-
-        // Instead of freep(&ctx->freport.data_from_608);
-        ctx.freport.data_from_608 = null_mut();
-        ptr::write_bytes(&mut ctx.freport as *mut FileReport, 0, 1);
-    }
-}
 #[allow(clippy::manual_c_str_literals)]
 pub fn get_desc_placeholder(_index: usize) -> *const i8 {
     b"Unknown\0".as_ptr() as *const i8
@@ -1146,45 +986,17 @@ pub fn freep<T>(ptr: &mut *mut T) {
     }
 }
 
-pub fn list_empty(head: &HList) -> bool {
-    head.next == head as *const HList as *mut HList
-}
 
-pub fn list_entry<T>(ptr: *mut HList, offset: usize) -> *mut T {
-    (ptr as *mut u8).wrapping_sub(offset) as *mut T
-}
-/// # Safety
-/// This function is unsafe because it dereferences raw pointers.
-pub unsafe fn list_del(entry: &mut HList) {
-    if entry.prev.is_null() && entry.next.is_null() {
-        return;
-    }
-
-    if !entry.prev.is_null() {
-        (*entry.prev).next = entry.next;
-    }
-    if !entry.next.is_null() {
-        (*entry.next).prev = entry.prev;
-    }
-
-    entry.next = null_mut();
-    entry.prev = null_mut();
-}
-/// # Safety
-/// This function is unsafe because it dereferences raw pointers.
-pub unsafe fn list_add(new_entry: &mut HList, head: &mut HList) {
-    new_entry.next = head.next;
-    new_entry.prev = head as *mut HList;
-
-    if !head.next.is_null() {
-        (*head.next).prev = new_entry as *mut HList;
-    }
-    head.next = new_entry as *mut HList;
-}
-
-pub fn init_list_head(head: &mut HList) {
-    head.next = head as *mut HList;
-    head.prev = head as *mut HList;
+// Tests for ccx_demuxer_delete
+pub fn create_capinfo() -> *mut CapInfo {
+    Box::into_raw(Box::new(CapInfo {
+        all_stream: list_head {
+            next: null_mut(),
+            prev: null_mut(),
+        },
+        capbuf: Box::into_raw(Box::new(0u8)),
+        ..Default::default()
+    }))
 }
 
 /// # Safety
@@ -1194,13 +1006,13 @@ pub unsafe fn dinit_cap(ctx: &mut CcxDemuxer) {
     let offset = {
         let mut dummy = CapInfo {
             pid: 0,
-            all_stream: HList::default(),
-            sib_head: HList::default(),
-            sib_stream: HList::default(),
-            pg_stream: HList::default(),
+            all_stream: list_head::default(),
+            sib_head: list_head::default(),
+            sib_stream: list_head::default(),
+            pg_stream: list_head::default(),
             ..Default::default()
         };
-        &dummy.all_stream as *const HList as usize - &dummy as *const CapInfo as usize
+        &dummy.all_stream as *const list_head as usize - &dummy as *const CapInfo as usize
     };
 
     // Process all_stream list
@@ -1209,8 +1021,9 @@ pub unsafe fn dinit_cap(ctx: &mut CcxDemuxer) {
         let entry = list_entry::<CapInfo>(current, offset);
 
         // Remove from list before processing
-        list_del(current.as_mut().unwrap());
-
+        if let Some(current) = current.as_mut() {
+            list_del(current);
+        }
         // Free resources
         freep(&mut (*entry).capbuf);
         freep(&mut (*entry).codec_private_data);
@@ -1253,7 +1066,7 @@ unsafe fn ccx_demuxer_delete(ctx: &mut *mut CcxDemuxer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::util::log::{
+    use lib_ccxr::util::log::{
         set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget,
     };
     use serial_test::serial;
@@ -1263,6 +1076,13 @@ mod tests {
     use std::slice;
     use std::sync::Once;
     use tempfile::NamedTempFile;
+    use lib_ccxr::util::write_string_into_pointer;
+    use crate::common::CType;
+    use crate::hlist::list_add;
+    #[no_mangle]
+    pub unsafe extern "C" fn print_file_report(ctx: *mut lib_ccx_ctx) {}
+
+
     static INIT: Once = Once::new();
 
     fn initialize_logger() {
@@ -1272,7 +1092,7 @@ mod tests {
                 DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
                 false,
             ))
-            .ok();
+                .ok();
         });
     }
     #[test]
@@ -1297,22 +1117,22 @@ mod tests {
         assert_eq!(demuxer.auto_stream, StreamMode::default());
         assert_eq!(demuxer.startbytes_pos, 0);
         assert_eq!(demuxer.startbytes_avail, 0);
-        assert_eq!(demuxer.ts_autoprogram, 0);
-        assert_eq!(demuxer.ts_allprogram, 0);
-        assert_eq!(demuxer.flag_ts_forced_pn, 0);
-        assert_eq!(demuxer.flag_ts_forced_cappid, 0);
-        assert_eq!(demuxer.ts_datastreamtype, 0);
+        assert_eq!(demuxer.ts_autoprogram, false);
+        assert_eq!(demuxer.ts_allprogram, false);
+        assert_eq!(demuxer.flag_ts_forced_pn, false);
+        assert_eq!(demuxer.flag_ts_forced_cappid, false);
+        assert_eq!(demuxer.ts_datastreamtype, StreamType::Unknownstream);
         assert_eq!(demuxer.pinfo.len(), MAX_PROGRAM);
         assert_eq!(demuxer.nb_program, 0);
         assert_eq!(demuxer.codec, Codec::Dvb);
         assert_eq!(demuxer.nocodec, Codec::Dvb);
         assert_eq!(demuxer.infd, -1);
         assert_eq!(demuxer.past, 0);
-        assert_eq!(demuxer.global_timestamp, 0);
-        assert_eq!(demuxer.min_global_timestamp, 0);
-        assert_eq!(demuxer.offset_global_timestamp, 0);
-        assert_eq!(demuxer.last_global_timestamp, 0);
-        assert_eq!(demuxer.global_timestamp_inited, 0);
+        assert_eq!(demuxer.global_timestamp, Timestamp::from_millis(0));
+        assert_eq!(demuxer.min_global_timestamp, Timestamp::from_millis(0));
+        assert_eq!(demuxer.offset_global_timestamp, Timestamp::from_millis(0));
+        assert_eq!(demuxer.last_global_timestamp, Timestamp::from_millis(0));
+        assert_eq!(demuxer.global_timestamp_inited, Timestamp::from_millis(0));
         assert_eq!(demuxer.pid_buffers.len(), MAX_PSI_PID);
         assert_eq!(demuxer.pids_seen.len(), MAX_PID);
         assert_eq!(demuxer.stream_id_of_each_pid.len(), MAX_PSI_PID + 1);
@@ -1320,7 +1140,7 @@ mod tests {
         assert_eq!(demuxer.have_pids.len(), MAX_PSI_PID + 1);
         assert_eq!(demuxer.num_of_pids, 0);
         assert_eq!(demuxer.pids_programs.len(), MAX_PID);
-        assert_eq!(demuxer.hauppauge_warning_shown, 0);
+        assert_eq!(demuxer.hauppauge_warning_shown, false);
         assert_eq!(demuxer.multi_stream_per_prog, 0);
         assert_eq!(demuxer.last_pat_payload, null_mut());
         assert_eq!(demuxer.last_pat_length, 0);
@@ -1328,7 +1148,7 @@ mod tests {
         assert_eq!(demuxer.filebuffer_start, 0);
         assert_eq!(demuxer.filebuffer_pos, 0);
         assert_eq!(demuxer.bytesinbuffer, 0);
-        assert_eq!(demuxer.warning_program_not_found_shown, 0);
+        assert_eq!(demuxer.warning_program_not_found_shown, false);
         assert_eq!(demuxer.strangeheader, 0);
         #[cfg(feature = "enable_ffmpeg")]
         assert_eq!(demuxer.ffmpeg_ctx, null_mut());
@@ -1336,10 +1156,10 @@ mod tests {
     }
 
     // Tests for is_decoder_processed_enough
-    fn new_lib_cc_decode(processed_enough: i32) -> Box<LibCcDecode> {
-        Box::new(LibCcDecode {
+    fn new_lib_cc_decode(processed_enough: i32) -> Box<lib_cc_decode> {
+        Box::new(lib_cc_decode {
             processed_enough,
-            list: HList {
+            list: list_head {
                 next: null_mut(),
                 prev: null_mut(),
             },
@@ -1349,13 +1169,13 @@ mod tests {
 
     // Helper to build a circular linked list from a vector of LibCcDecode nodes.
     // Returns a Vec of Box<LibCcDecode> (to keep ownership) and sets up the links.
-    fn build_decoder_list(nodes: &mut [Box<LibCcDecode>]) -> *mut HList {
+    fn build_decoder_list(nodes: &mut [Box<lib_cc_decode>]) -> *mut list_head {
         if nodes.is_empty() {
             return null_mut();
         }
         // Let head be the address of dec_ctx_head in LibCcxCtx.
         // For simplicity, we simulate this by using the list field of the first node as head.
-        let head = &mut nodes[0].list as *mut HList;
+        let head = &mut nodes[0].list as *mut list_head;
         // Link all nodes in a circular doubly linked list.
         for i in 0..nodes.len() {
             let next_i = (i + 1) % nodes.len();
@@ -1371,45 +1191,45 @@ mod tests {
     #[test]
     fn test_is_decoder_processed_enough_true() {
         // multiprogram == false, and one of the decoders has processed_enough true.
-        let mut decoders: Vec<Box<LibCcDecode>> = vec![
+        let mut decoders: Vec<Box<lib_cc_decode>> = vec![
             new_lib_cc_decode(0),
             new_lib_cc_decode(1),
             new_lib_cc_decode(0),
         ];
         let head = build_decoder_list(&mut decoders);
-        let mut ctx = LibCcxCtx::default();
+        let mut ctx = lib_ccx_ctx::default();
         ctx.dec_ctx_head.next = head;
         ctx.dec_ctx_head.prev = head;
         ctx.multiprogram = 0;
         // Manually set the list pointers in ctx to our head.
         // Now call the function.
-        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut LibCcxCtx) };
+        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut lib_ccx_ctx) };
         assert_ne!(result, 0);
     }
 
     #[test]
     fn test_is_decoder_processed_enough_false_no_decoder() {
         // multiprogram == false, but no decoder has processed_enough true.
-        let mut decoders: Vec<Box<LibCcDecode>> = vec![new_lib_cc_decode(0), new_lib_cc_decode(0)];
+        let mut decoders: Vec<Box<lib_cc_decode>> = vec![new_lib_cc_decode(0), new_lib_cc_decode(0)];
         let head = build_decoder_list(&mut decoders);
-        let mut ctx = LibCcxCtx::default();
+        let mut ctx = lib_ccx_ctx::default();
         ctx.dec_ctx_head.next = head;
         ctx.dec_ctx_head.prev = head;
         ctx.multiprogram = 0;
-        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut LibCcxCtx) };
+        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut lib_ccx_ctx) };
         assert_eq!(result, 0);
     }
 
     #[test]
     fn test_is_decoder_processed_enough_false_multiprogram() {
         // Even if a decoder is processed enough, if multiprogram is true, should return false.
-        let mut decoders: Vec<Box<LibCcDecode>> = vec![new_lib_cc_decode(1)];
+        let mut decoders: Vec<Box<lib_cc_decode>> = vec![new_lib_cc_decode(1)];
         let head = build_decoder_list(&mut decoders);
-        let mut ctx = LibCcxCtx::default();
+        let mut ctx = lib_ccx_ctx::default();
         ctx.dec_ctx_head.next = head;
         ctx.dec_ctx_head.prev = head;
         ctx.multiprogram = 1;
-        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut LibCcxCtx) };
+        let result = unsafe { is_decoder_processed_enough(&mut ctx as *mut lib_ccx_ctx) };
         assert_eq!(result, 0);
     }
     #[allow(unused)]
@@ -1418,15 +1238,15 @@ mod tests {
         Box::new(CapInfo {
             codec,
             sib_head: {
-                let mut hl = HList::default();
-                let ptr = &mut hl as *mut HList;
+                let mut hl = list_head::default();
+                let ptr = &mut hl as *mut list_head;
                 hl.next = ptr;
                 hl.prev = ptr;
                 hl
             },
             sib_stream: {
-                let mut hl = HList::default();
-                let ptr = &mut hl as *mut HList;
+                let mut hl = list_head::default();
+                let ptr = &mut hl as *mut list_head;
                 hl.next = ptr;
                 hl.prev = ptr;
                 hl
@@ -1439,24 +1259,24 @@ mod tests {
     // The program's sib_head acts as the dummy head.
     fn build_capinfo_list(program: &mut CapInfo, nodes: &mut [Box<CapInfo>]) {
         if nodes.is_empty() {
-            let head_ptr = program as *mut CapInfo as *mut HList;
+            let head_ptr = program as *mut CapInfo as *mut list_head;
             program.sib_head.next = head_ptr;
             program.sib_head.prev = head_ptr;
             return;
         }
-        let head_ptr = program as *mut CapInfo as *mut HList;
-        program.sib_head.next = &mut nodes[0].sib_stream as *mut HList;
-        program.sib_head.prev = &mut nodes[nodes.len() - 1].sib_stream as *mut HList;
+        let head_ptr = program as *mut CapInfo as *mut list_head;
+        program.sib_head.next = &mut nodes[0].sib_stream as *mut list_head;
+        program.sib_head.prev = &mut nodes[nodes.len() - 1].sib_stream as *mut list_head;
         for i in 0..nodes.len() {
             let next_ptr = if i + 1 < nodes.len() {
-                &mut nodes[i + 1].sib_stream as *mut HList
+                &mut nodes[i + 1].sib_stream as *mut list_head
             } else {
                 head_ptr
             };
             let prev_ptr = if i == 0 {
                 head_ptr
             } else {
-                &mut nodes[i - 1].sib_stream as *mut HList
+                &mut nodes[i - 1].sib_stream as *mut list_head
             };
             nodes[i].sib_stream.next = next_ptr;
             nodes[i].sib_stream.prev = prev_ptr;
@@ -1506,8 +1326,8 @@ mod tests {
     //Tests for list_empty
     #[test]
     fn test_list_empty_not_empty() {
-        let mut head = HList::default();
-        let mut node = HList::default();
+        let mut head = list_head::default();
+        let mut node = list_head::default();
         head.next = &mut node;
         head.prev = &mut node;
         let result = list_empty(&mut head);
@@ -1625,7 +1445,7 @@ mod tests {
         ctx.min_pts = vec![0; MAX_PSI_PID + 1];
         ctx.stream_id_of_each_pid = vec![5; MAX_PSI_PID + 1];
         ctx.pids_programs = vec![null_mut(); MAX_PID];
-        (ctx.reset)(&mut ctx);
+        ctx.reset();
         assert_eq!(ctx.startbytes_pos, 0);
         assert_eq!(ctx.startbytes_avail, 0);
         assert_eq!(ctx.num_of_pids, 0);
@@ -1649,7 +1469,7 @@ mod tests {
             assert_eq!(demuxer.open(file_path), 0);
             assert!(demuxer.is_open());
 
-            demuxer.close();
+            demuxer.close(&mut Options::default());
             assert!(!demuxer.is_open());
         }
     }
@@ -1675,9 +1495,9 @@ mod tests {
 
         unsafe {
             assert_eq!(demuxer.open(file_path), 0);
-            demuxer.close();
+            demuxer.close(&mut Options::default());
             assert_eq!(demuxer.open(file_path), 0);
-            demuxer.close();
+            demuxer.close(&mut Options::default());
         }
     }
 
@@ -1695,7 +1515,7 @@ mod tests {
             assert_eq!(demuxer.open(file_path), 0);
             // Verify stream mode was detected
             assert_ne!(demuxer.stream_mode, StreamMode::Autodetect);
-            demuxer.close();
+            demuxer.close(&mut Options::default());
         }
     }
     // #[serial]
@@ -1736,8 +1556,7 @@ mod tests {
         demuxer.infd = fd;
 
         // Call the file-size function.
-        let get_filesize = demuxer.get_filesize;
-        let ret = get_filesize(&CcxDemuxer::default(), &mut demuxer);
+        let ret = demuxer.get_filesize();
         assert_eq!(ret, size as i64, "File size should match the actual size");
     }
 
@@ -1746,8 +1565,7 @@ mod tests {
     fn test_get_file_size_invalid_fd() {
         let mut demuxer = CcxDemuxer::default();
         demuxer.infd = -1;
-        let get_filesize = demuxer.get_filesize;
-        let ret = get_filesize(&CcxDemuxer::default(), &mut demuxer);
+        let ret = demuxer.get_filesize();
         assert_eq!(
             ret, -1,
             "File size should be -1 for an invalid file descriptor"
@@ -1778,8 +1596,7 @@ mod tests {
         demuxer.infd = fd;
 
         // Call the file-size function.
-        let get_filesize = demuxer.get_filesize;
-        let _ = get_filesize(&CcxDemuxer::default(), &mut demuxer);
+        let _ = demuxer.get_filesize();
 
         // After calling the function, the file position should be restored.
         let pos_after = file
@@ -1817,18 +1634,19 @@ mod tests {
 
     // Tests for print_file_report
     /// Helper function to create a LibCcxCtx with a dummy demuxer.
-    fn create_dummy_ctx() -> LibCcxCtx<'static> {
-        let mut ctx = LibCcxCtx::default();
+    unsafe fn create_dummy_ctx() -> lib_ccx_ctx{
+        let mut ctx = lib_ccx_ctx::default();
         // For testing file input, set current_file and inputfile.
         ctx.current_file = 0;
         ctx.num_input_files = 1;
-        ctx.inputfile.push(String::from("dummy_file.txt"));
+        write_string_into_pointer(*ctx.inputfile, "dummy_file.txt");
         // Set a dummy program in the demuxer.
         unsafe {
             (*ctx.demux_ctx).nb_program = 1;
             let mut pinfo = ProgramInfo::default();
             pinfo.program_number = 101;
-            (*ctx.demux_ctx).pinfo = vec![pinfo];
+            let pinfo_c = pinfo.to_ctype();
+            (*ctx.demux_ctx).pinfo = [pinfo_c; 128];
             (*ctx.demux_ctx).freport.program_cnt = 1;
             // For testing, leave pids_programs as all null.
         }
@@ -1841,133 +1659,8 @@ mod tests {
         opts.input_source = ds;
     }
 
-    #[test]
-    fn test_print_file_report_file_not_opened() {
-        // Set global option to File.
-        set_global_options(DataSource::File);
-        let mut ctx = create_dummy_ctx();
-        // Set current_file negative to trigger "file is not opened yet"
-        ctx.current_file = -1;
-        // Capture output by redirecting stdout.
-        print_file_report(&mut ctx);
-        // In this test we simply ensure that the function returns without panic.
-    }
 
-    #[test]
-    fn test_print_file_report_valid_file() {
-        set_global_options(DataSource::File);
-        let mut ctx = create_dummy_ctx();
-        // current_file is 0 and valid; inputfile[0] is "dummy_file.txt"
-        print_file_report(&mut ctx);
-        // After calling, check that the file report was cleared.
-        // Since we zeroed the memory, program_cnt should be 0.
-        // assert_eq!(ctx.freport.program_cnt, 0);
-        // And data_from_608 should be null.
-        assert!(ctx.freport.data_from_608.is_null());
-    }
 
-    #[test]
-    fn test_print_file_report_stdin() {
-        set_global_options(DataSource::Stdin);
-        let mut ctx = create_dummy_ctx();
-        print_file_report(&mut ctx);
-        // Ensure that nothing panics.
-    }
-
-    #[test]
-    fn test_print_file_report_network() {
-        set_global_options(DataSource::Tcp);
-        let mut ctx = create_dummy_ctx();
-        print_file_report(&mut ctx);
-        // Ensure that nothing panics.
-    }
-
-    // Tests for ccx_demuxer_delete
-    fn create_capinfo() -> *mut CapInfo {
-        Box::into_raw(Box::new(CapInfo {
-            all_stream: HList {
-                next: null_mut(),
-                prev: null_mut(),
-            },
-            capbuf: Box::into_raw(Box::new(0u8)),
-            ..Default::default()
-        }))
-    }
-
-    #[test]
-    fn test_list_operations() {
-        let mut head = HList {
-            next: null_mut(),
-            prev: null_mut(),
-        };
-        init_list_head(&mut head);
-        assert!(list_empty(&mut head));
-
-        // Test list insertion/deletion
-        unsafe {
-            let cap = create_capinfo();
-            list_add(&mut (*cap).all_stream, &mut head);
-            assert!(!list_empty(&mut head));
-
-            list_del(&mut (*cap).all_stream);
-            assert!(list_empty(&mut head));
-
-            let _ = Box::from_raw(cap);
-        }
-    }
-    // static inline void __list_add(struct list_head *elem,
-    // struct list_head *prev,
-    // struct list_head *next)
-    // {
-    // next->prev = elem;
-    // elem->next = next;
-    // elem->prev = prev;
-    // prev->next = elem;
-    // }
-
-    unsafe fn list_add(new_entry: &mut HList, head: &mut HList) {
-        // Link new entry between head and head.next
-        new_entry.next = head.next;
-        new_entry.prev = head as *mut HList;
-
-        // Update existing nodes' links
-        if !head.next.is_null() {
-            (*head.next).prev = new_entry as *mut HList;
-        }
-
-        // Finalize head's new link
-        head.next = new_entry as *mut HList;
-    }
-    #[test]
-    fn test_list_add() {
-        let mut head = HList {
-            next: null_mut(),
-            prev: null_mut(),
-        };
-        init_list_head(&mut head);
-
-        unsafe {
-            let mut entry1 = HList {
-                next: null_mut(),
-                prev: null_mut(),
-            };
-            let mut entry2 = HList {
-                next: null_mut(),
-                prev: null_mut(),
-            };
-
-            list_add(&mut entry1, &mut head);
-            assert_eq!(head.next, &mut entry1 as *mut HList);
-            assert_eq!(entry1.prev, &mut head as *mut HList);
-            assert_eq!(entry1.next, &mut head as *mut HList);
-
-            list_add(&mut entry2, &mut head);
-            assert_eq!(head.next, &mut entry2 as *mut HList);
-            assert_eq!(entry2.prev, &mut head as *mut HList);
-            assert_eq!(entry2.next, &mut entry1 as *mut HList);
-            assert_eq!(entry1.prev, &mut entry2 as *mut HList);
-        }
-    }
     fn create_test_capinfo() -> *mut CapInfo {
         Box::into_raw(Box::new(CapInfo {
             pid: 123,
@@ -1981,19 +1674,19 @@ mod tests {
             prev_counter: 0,
             codec_private_data: null_mut(),
             ignore: 0,
-            all_stream: HList {
+            all_stream: list_head {
                 next: null_mut(),
                 prev: null_mut(),
             },
-            sib_head: HList {
+            sib_head: list_head {
                 next: null_mut(),
                 prev: null_mut(),
             },
-            sib_stream: HList {
+            sib_stream: list_head {
                 next: null_mut(),
                 prev: null_mut(),
             },
-            pg_stream: HList {
+            pg_stream: list_head {
                 next: null_mut(),
                 prev: null_mut(),
             },
@@ -2015,19 +1708,19 @@ mod tests {
                 prev_counter: 0,
                 codec_private_data: null_mut(),
                 ignore: 0,
-                all_stream: HList {
+                all_stream: list_head {
                     next: null_mut(),
                     prev: null_mut(),
                 },
-                sib_head: HList {
+                sib_head: list_head {
                     next: null_mut(),
                     prev: null_mut(),
                 },
-                sib_stream: HList {
+                sib_stream: list_head {
                     next: null_mut(),
                     prev: null_mut(),
                 },
-                pg_stream: HList {
+                pg_stream: list_head {
                     next: null_mut(),
                     prev: null_mut(),
                 },
@@ -2057,7 +1750,7 @@ mod tests {
             assert!(list_empty(&(*ctx_ptr).cinfo_tree.all_stream));
             assert_eq!(
                 (*ctx_ptr).cinfo_tree.all_stream.next,
-                &mut (*ctx_ptr).cinfo_tree.all_stream as *mut HList
+                &mut (*ctx_ptr).cinfo_tree.all_stream as *mut list_head
             );
 
             // Cleanup context

@@ -65,7 +65,7 @@ struct list_head {
 /*
  * Insert a new entry between two known consecutive entries.
  *
- * This is only for internal list manipulation where we know
+ * This is only for internal list manipulation where we know-
  * the prev/next entries already!
  */
 static inline void __list_add(struct list_head *elem,

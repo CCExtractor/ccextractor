@@ -16,11 +16,17 @@ pub mod bindings {
 pub mod args;
 pub mod common;
 pub mod decoder;
+pub mod demuxer;
+pub mod file_functions;
+pub mod gxf_demuxer;
+pub mod ctorust;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
+pub mod hlist;
+
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
 
@@ -237,6 +243,14 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
         // File will close automatically (due to Drop) once it goes out of scope
         let _file = File::from_raw_handle(handle);
     }
+}
+
+extern "C" {
+    fn version(location: *const c_char);
+    #[allow(dead_code)]
+    fn set_binary_mode();
+    #[allow(dead_code)]
+    fn print_file_report(ctx: *mut lib_ccx_ctx);
 }
 
 /// # Safety

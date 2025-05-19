@@ -12,6 +12,7 @@ fn main() {
         "writercwtdata",
         "version",
         "set_binary_mode",
+        "print_file_report",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -27,6 +28,8 @@ fn main() {
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
+        "ccx_demuxer",
+        "lib_ccx_ctx",
         "cc_subtitle",
         "ccx_output_format",
         "ccx_boundary_time",
