@@ -6,9 +6,9 @@
 use crate::demuxer::common_structs::*;
 use crate::demuxer::demux::{CcxDemuxer, DemuxerData};
 use crate::file_functions::file::*;
-use crate::info;
-use crate::util::log::{debug, DebugMessageFlag};
 use byteorder::{ByteOrder, NetworkEndian};
+use lib_ccxr::info;
+use lib_ccxr::util::log::{debug, DebugMessageFlag};
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
 use std::ptr;
@@ -19,7 +19,7 @@ const CLOSED_CAP_DID: u8 = 0x61;
 const CLOSED_C708_SDID: u8 = 0x01;
 const CLOSED_C608_SDID: u8 = 0x02;
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
-use crate::common::BufferdataType;
+use lib_ccxr::common::BufferdataType;
 
 macro_rules! dbg {
     ($($args:expr),*) => {
@@ -1875,6 +1875,12 @@ pub fn ccx_gxf_probe(buf: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+    use std::mem;
+    use std::os::fd::IntoRawFd;
+    use std::sync::Once;
+
     static INIT: Once = Once::new();
 
     fn initialize_logger() {
@@ -1887,12 +1893,6 @@ mod tests {
             .ok();
         });
     }
-
-    use super::*;
-    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
-    use std::mem;
-    use std::os::fd::IntoRawFd;
-    use std::sync::Once;
 
     #[test]
     fn test_rl32() {

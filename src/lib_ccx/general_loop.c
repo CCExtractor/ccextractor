@@ -39,7 +39,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		if (!*ppdata)
 			return -1;
 		data = *ppdata;
-		// TODO Set to dummy, find and set actual value
+		// TO_DO Set to dummy, find and set actual value
 		data->program_number = 1;
 		data->stream_pid = 1;
 		data->codec = CCX_CODEC_ATSC_CC;

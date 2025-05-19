@@ -1,11 +1,11 @@
 #![allow(unexpected_cfgs)]
 
-use crate::common::{Options, StreamMode};
+use lib_ccxr::common::{Options, StreamMode};
 use crate::demuxer::demux::{CcxDemuxer, STARTBYTESLENGTH};
-use crate::fatal;
+use lib_ccxr::fatal;
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::gxf::{ccx_gxf_probe, CcxGxf};
-use crate::util::log::{debug, info, DebugMessageFlag, ExitCause};
+use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
 use std::sync::{LazyLock, Mutex};
 pub static CCX_OPTIONS: LazyLock<Mutex<Options>> = LazyLock::new(|| Mutex::new(Options::default()));
 

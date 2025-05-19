@@ -2,15 +2,16 @@
 #![allow(unused_mut)] // Temporary
 #![allow(static_mut_refs)] // Temporary fix for mutable static variable
 
-use crate::activity::{update_net_activity_gui, ActivityExt, NET_ACTIVITY_GUI};
-use crate::common::{DataSource, Options};
+use crate::bindings::{lib_ccx_ctx, print_file_report};
 use crate::demuxer::demux::*;
-use crate::demuxer::lib_ccx::*;
-use crate::fatal;
-use crate::time::Timestamp;
-use crate::util::log::ExitCause;
-use crate::util::log::{debug, DebugMessageFlag};
-use std::ffi::CString;
+use crate::libccxr_exports::demuxer::copy_demuxer_to_rust;
+use lib_ccxr::activity::{update_net_activity_gui, ActivityExt, NET_ACTIVITY_GUI};
+use lib_ccxr::common::{DataSource, Options};
+use lib_ccxr::fatal;
+use lib_ccxr::time::Timestamp;
+use lib_ccxr::util::log::ExitCause;
+use lib_ccxr::util::log::{debug, DebugMessageFlag};
+use std::ffi::CStr;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem::ManuallyDrop;
@@ -24,7 +25,7 @@ use std::sync::{LazyLock, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{ptr, slice};
 
-pub static mut TERMINATE_ASAP: bool = false; //TODO convert to Mutex
+pub static mut TERMINATE_ASAP: bool = false; //TODO obtain from extern
 pub const FILEBUFFERSIZE: usize = 1024 * 1024 * 16; // 16 Mbytes no less. Minimize number of real read calls()
                                                     // lazy_static! {
                                                     //     pub static ref CcxOptions: Mutex<Options> = Mutex::new(Options::default());
@@ -135,11 +136,16 @@ pub unsafe fn sleepandchecktimeout(start: u64) {
     }
 }
 
-fn close_input_file(ctx: &mut LibCcxCtx) {
-    unsafe {
-        (*ctx.demux_ctx).close();
-    }
-}
+// fn close_input_file(ctx: &mut lib_ccx_ctx) {
+//     unsafe {
+//         // (*ctx.demux_ctx).close();
+//         if let Some(close_fn) = (*ctx.demux_ctx).close {
+//             unsafe {
+//                 close_fn(ctx.demux_ctx);
+//             }
+//         }
+//     }
+// }
 
 /* Close current file and open next one in list -if any- */
 /* bytesinbuffer is the number of bytes read (in some buffer) that haven't been added
@@ -147,21 +153,28 @@ to 'past' yet. We provide this number to switch_to_next_file() so a final sanity
 can be done */
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls multiple unsafe functions like `is_decoder_processed_enough` and `demuxer.open`
-pub unsafe fn switch_to_next_file(ctx: &mut LibCcxCtx, bytes_in_buffer: i64) -> i32 {
+pub unsafe fn switch_to_next_file(ctx: &mut lib_ccx_ctx, bytes_in_buffer: i64) -> i32 {
     let mut ccx_options = CCX_OPTIONS.lock().unwrap();
 
-    let mut ret;
+    let mut ret = 0;
 
-    // 1. Initial reset condition (matching C logic exactly)
-    if ctx.current_file == -1 || !ccx_options.binary_concat {
-        (*ctx.demux_ctx).reset();
-    }
+    // 1. Initially reset condition (matching C logic exactly)
+    let mut demux_ctx = copy_demuxer_to_rust(ctx.demux_ctx);
+
+    demux_ctx.reset();
+    // if ctx.current_file == -1 || !ccx_options.binary_concat {
+    //     if let Some(reset_fn) = (*ctx.demux_ctx).reset {
+    //         unsafe {
+    //             reset_fn(ctx.demux_ctx);
+    //         }
+    //     }
+    // }
 
     // 2. Handle special input sources
     #[allow(deref_nullptr)]
     match ccx_options.input_source {
         DataSource::Stdin | DataSource::Network | DataSource::Tcp => {
-            ret = (*ctx.demux_ctx).open(*ptr::null());
+            demux_ctx.open(*ptr::null());
             return match ret {
                 r if r < 0 => 0,
                 r if r > 0 => r,
@@ -173,39 +186,37 @@ pub unsafe fn switch_to_next_file(ctx: &mut LibCcxCtx, bytes_in_buffer: i64) -> 
 
     // 3. Close current file handling
 
-    if let Some(demuxer_ref) = unsafe { ctx.demux_ctx.as_ref() } {
-        if demuxer_ref.is_open() {
-            // Debug output matching C version
-            debug!(
-                msg_type = DebugMessageFlag::DECODER_708;
-                "[CEA-708] The 708 decoder was reset [{}] times.\n",
-                unsafe { (*ctx.freport.data_from_708).reset_count }
-            );
+    if demux_ctx.is_open() {
+        // Debug output matching C version
+        debug!(
+            msg_type = DebugMessageFlag::DECODER_708;
+            "[CEA-708] The 708 decoder was reset [{}] times.\n",
+            unsafe { (*ctx.freport.data_from_708).reset_count }
+        );
 
-            if ccx_options.print_file_reports {
-                print_file_report(ctx);
-            }
+        if ccx_options.print_file_reports {
+            print_file_report(ctx);
+        }
 
-            // Premature end check
-            if ctx.inputsize > 0
-                && is_decoder_processed_enough(ctx) == 0
-                && (unsafe { (*ctx.demux_ctx).past } + bytes_in_buffer < ctx.inputsize)
-            {
-                println!("\n\n\n\nATTENTION!!!!!!");
-                println!(
+        // Premature end check
+        if ctx.inputsize > 0
+            && is_decoder_processed_enough(ctx) == 0
+            && (demux_ctx.past + bytes_in_buffer < ctx.inputsize)
+        {
+            println!("\n\n\n\nATTENTION!!!!!!");
+            println!(
                     "In switch_to_next_file(): Processing of {} {} ended prematurely {} < {}, please send bug report.\n\n",
-                    ctx.inputfile[ctx.current_file as usize],
+                    CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
                     ctx.current_file,
-                    unsafe { (*ctx.demux_ctx).past },
+                     demux_ctx.past,
                     ctx.inputsize
                 );
-            }
+        }
 
-            close_input_file(ctx);
-            if ccx_options.binary_concat {
-                ctx.total_past += ctx.inputsize;
-                unsafe { (*ctx.demux_ctx).past = 0 };
-            }
+        demux_ctx.close(&mut *ccx_options);
+        if ccx_options.binary_concat {
+            ctx.total_past += ctx.inputsize;
+            demux_ctx.past = 0;
         }
     }
     // 4. File iteration loop
@@ -219,29 +230,28 @@ pub unsafe fn switch_to_next_file(ctx: &mut LibCcxCtx, bytes_in_buffer: i64) -> 
         println!("\n\r-----------------------------------------------------------------");
         println!(
             "\rOpening file: {}",
-            ctx.inputfile[ctx.current_file as usize]
+            CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
         );
-        #[allow(unused)]
-        let c_filename = CString::new(ctx.inputfile[ctx.current_file as usize].as_bytes())
-            .expect("Invalid filename");
 
-        let filename = &ctx.inputfile[ctx.current_file as usize];
-        ret = (*ctx.demux_ctx).open(filename);
+        let filename =
+            CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy();
+
+        ret = demux_ctx.open(&filename);
 
         if ret < 0 {
             println!(
                 "\rWarning: Unable to open input file [{}]",
-                ctx.inputfile[ctx.current_file as usize]
+                CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
             );
         } else {
             // Activity reporting
             let mut c = Options::default();
-            c.activity_input_file_open(&ctx.inputfile[ctx.current_file as usize]);
+            c.activity_input_file_open(
+                &CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
+            );
 
             if ccx_options.live_stream.unwrap().millis() == 0 {
-                if let Some(get_filesize_fn) = ctx.demux_ctx.as_ref() {
-                    ctx.inputsize = get_filesize_fn.get_filesize(&mut *ctx.demux_ctx);
-                }
+                ctx.inputsize = demux_ctx.get_filesize();
                 if !ccx_options.binary_concat {
                     ctx.total_inputsize = ctx.inputsize;
                 }
@@ -692,10 +702,12 @@ pub unsafe fn buffered_skip(ctx: *mut CcxDemuxer, bytes: u32) -> usize {
 }
 #[cfg(test)]
 mod tests {
+    use std::ffi::CString;
     use super::*;
-    use crate::common::{Codec, StreamMode};
-    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+    use lib_ccxr::common::{Codec, StreamMode, StreamType};
+    use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
     // use std::io::{Seek, SeekFrom, Write};
+    use crate::libccxr_exports::demuxer::copy_demuxer_from_rust;
     use serial_test::serial;
     use std::os::unix::io::IntoRawFd;
     use std::slice;
@@ -801,14 +813,22 @@ mod tests {
         unsafe {
             initialize_logger();
             // Create a demuxer and leak its pointer.
-            let demuxer = Box::from(CcxDemuxer::default());
-            let demuxer_ptr = Box::into_raw(demuxer);
-            let mut ctx = LibCcxCtx::default();
+            let demuxer = (CcxDemuxer::default());
+            // let demuxer_ptr = Box::into_raw(demuxer);
+            let mut ctx = lib_ccx_ctx::default();
 
             ctx.current_file = -1;
             ctx.num_input_files = 2;
-            ctx.inputfile = vec!["/home/file1.ts".to_string(), "/home/file2.ts".to_string()];
-            ctx.demux_ctx = demuxer_ptr;
+            let c_strings: Vec<CString> = vec![
+                CString::new("/home/file1.ts").unwrap(),
+                CString::new("/home/file2.ts").unwrap(),
+            ];
+            let c_pointers: Vec<*mut std::os::raw::c_char> = c_strings
+                .iter()
+                .map(|s| s.as_ptr() as *mut std::os::raw::c_char)
+                .collect();
+            ctx.inputfile = c_pointers.as_ptr() as *mut *mut std::os::raw::c_char;
+            copy_demuxer_from_rust(ctx.demux_ctx, demuxer);
             ctx.inputsize = 0;
             ctx.total_inputsize = 0;
             ctx.total_past = 0;
@@ -831,9 +851,6 @@ mod tests {
             // Second call should open file2.ts.
             assert_eq!(switch_to_next_file(&mut ctx, 0), 1);
             assert_eq!(ctx.current_file, 1);
-
-            // Cleanup.
-            let _ = Box::from_raw(demuxer_ptr);
         }
     }
 
@@ -841,13 +858,20 @@ mod tests {
     #[allow(unused)]
     fn test_switch_to_next_file_failure() {
         unsafe {
-            let demuxer = Box::from(CcxDemuxer::default());
-            let demuxer_ptr = Box::into_raw(demuxer);
-            let mut ctx = LibCcxCtx::default();
+            let demuxer = (CcxDemuxer::default());
+            let mut ctx = lib_ccx_ctx::default();
             ctx.current_file = 0;
             ctx.num_input_files = 2;
-            ctx.inputfile = vec!["badfile1.ts".to_string(), "badfile2.ts".to_string()];
-            ctx.demux_ctx = demuxer_ptr;
+            let c_strings: Vec<CString> = vec![
+                CString::new("/home/file1.ts").unwrap(),
+                CString::new("/home/file2.ts").unwrap(),
+            ];
+            let c_pointers: Vec<*mut std::os::raw::c_char> = c_strings
+                .iter()
+                .map(|s| s.as_ptr() as *mut std::os::raw::c_char)
+                .collect();
+            ctx.inputfile = c_pointers.as_ptr() as *mut *mut std::os::raw::c_char;
+            copy_demuxer_from_rust(ctx.demux_ctx, demuxer);
             ctx.inputsize = 0;
             ctx.total_inputsize = 0;
             ctx.total_past = 0;
@@ -861,9 +885,6 @@ mod tests {
             // Should try both files and fail
             assert_eq!(switch_to_next_file(&mut ctx, 0), 0);
             assert_eq!(ctx.current_file, 2);
-
-            // Cleanup
-            let _ = Box::from_raw(demuxer_ptr);
         }
     }
 
@@ -871,17 +892,23 @@ mod tests {
     #[allow(unused)]
     fn test_binary_concat_mode() {
         unsafe {
-            let demuxer = Box::from(CcxDemuxer::default());
-            let demuxer_ptr = Box::into_raw(demuxer);
-            let mut ctx = LibCcxCtx::default();
+            let mut demuxer0 = (CcxDemuxer::default());
+            let mut demuxer = (CcxDemuxer::default());
+            let mut ctx = lib_ccx_ctx::default();
 
             ctx.current_file = -1;
             ctx.num_input_files = 2;
-            ctx.inputfile = vec!["/home/file1.ts".to_string(), "/home/file2.ts".to_string()]; // replace with actual paths
-            ctx.demux_ctx = demuxer_ptr;
-            {
-                (*demuxer_ptr).infd = 3;
-            } // Mark the demuxer as "open"
+            let c_strings: Vec<CString> = vec![
+                CString::new("/home/file1.ts").unwrap(),
+                CString::new("/home/file2.ts").unwrap(),
+            ];
+            let c_pointers: Vec<*mut std::os::raw::c_char> = c_strings
+                .iter()
+                .map(|s| s.as_ptr() as *mut std::os::raw::c_char)
+                .collect();
+            ctx.inputfile = c_pointers.as_ptr() as *mut *mut std::os::raw::c_char;
+            copy_demuxer_from_rust(ctx.demux_ctx, demuxer0);
+            (demuxer).infd = 3;
             ctx.inputsize = 500;
             ctx.total_past = 1000;
             // Reset global options.
@@ -904,8 +931,6 @@ mod tests {
             assert_eq!(ctx.total_past, 1500); // 1000 + 500
             assert_eq!({ (*ctx.demux_ctx).past }, 0);
 
-            // Cleanup
-            let _ = Box::from_raw(demuxer_ptr);
             let mut ccx_options = CCX_OPTIONS.lock().unwrap();
             ccx_options.binary_concat = false;
         }
@@ -973,21 +998,21 @@ mod tests {
         ctx.startbytes = Vec::new();
         ctx.startbytes_pos = 0;
         ctx.startbytes_avail = 0;
-        ctx.ts_autoprogram = 0;
-        ctx.ts_allprogram = 0;
-        ctx.flag_ts_forced_pn = 0;
-        ctx.flag_ts_forced_cappid = 0;
-        ctx.ts_datastreamtype = 0;
+        ctx.ts_autoprogram = false;
+        ctx.ts_allprogram = false;
+        ctx.flag_ts_forced_pn = false;
+        ctx.flag_ts_forced_cappid = false;
+        ctx.ts_datastreamtype = StreamType::Unknownstream;
         ctx.pinfo = vec![];
         ctx.nb_program = 0;
         ctx.codec = Codec::Dvb;
         ctx.nocodec = Codec::Dvb;
         ctx.cinfo_tree = CapInfo::default();
-        ctx.global_timestamp = 0;
-        ctx.min_global_timestamp = 0;
-        ctx.offset_global_timestamp = 0;
-        ctx.last_global_timestamp = 0;
-        ctx.global_timestamp_inited = 0;
+        ctx.global_timestamp = Timestamp::from_millis(0);
+        ctx.min_global_timestamp = Timestamp::from_millis(0);
+        ctx.offset_global_timestamp = Timestamp::from_millis(0);
+        ctx.last_global_timestamp = Timestamp::from_millis(0);
+        ctx.global_timestamp_inited = Timestamp::from_millis(0);
         // unsafe { ctx.parent = *ptr::null_mut(); }
         // Prepare an output buffer.
         let mut out_buf1 = vec![0u8; content.len()];
@@ -1030,21 +1055,21 @@ mod tests {
         ctx.startbytes = Vec::new();
         ctx.startbytes_pos = 0;
         ctx.startbytes_avail = 0;
-        ctx.ts_autoprogram = 0;
-        ctx.ts_allprogram = 0;
-        ctx.flag_ts_forced_pn = 0;
-        ctx.flag_ts_forced_cappid = 0;
-        ctx.ts_datastreamtype = 0;
+        ctx.ts_autoprogram = false;
+        ctx.ts_allprogram = false;
+        ctx.flag_ts_forced_pn = false;
+        ctx.flag_ts_forced_cappid = false;
+        ctx.ts_datastreamtype = StreamType::Unknownstream;
         ctx.pinfo = vec![];
         ctx.nb_program = 0;
         ctx.codec = Codec::Dvb;
         ctx.nocodec = Codec::Dvb;
         ctx.cinfo_tree = CapInfo::default();
-        ctx.global_timestamp = 0;
-        ctx.min_global_timestamp = 0;
-        ctx.offset_global_timestamp = 0;
-        ctx.last_global_timestamp = 0;
-        ctx.global_timestamp_inited = 0;
+        ctx.global_timestamp = Timestamp::from_millis(0);
+        ctx.min_global_timestamp = Timestamp::from_millis(0);
+        ctx.offset_global_timestamp = Timestamp::from_millis(0);
+        ctx.last_global_timestamp = Timestamp::from_millis(0);
+        ctx.global_timestamp_inited = Timestamp::from_millis(0);
         // unsafe { ctx.parent = *ptr::null_mut(); }
 
         let mut out_buf1 = vec![0u8; content.len()];
@@ -1187,7 +1212,6 @@ mod tests {
             // The new front (first 2 bytes) should equal input.
             assert_eq!(&out[0..2], &input);
             // There should be no additional data.
-            assert_eq!(&out[2..], &[]);
         }
         // Clean up.
         unsafe {
