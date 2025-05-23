@@ -38,6 +38,7 @@ impl Default for EncodersTranscriptFormat {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub enum FrameType {
     #[default]

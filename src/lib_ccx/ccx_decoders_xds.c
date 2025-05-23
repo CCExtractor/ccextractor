@@ -4,6 +4,26 @@
 #include "ccx_common_common.h"
 #include "utility.h"
 
+#ifndef DISABLE_RUST
+extern void ccxr_process_xds_bytes(
+    struct ccx_decoders_xds_context *ctx,
+    unsigned char hi,
+    unsigned char lo);
+
+extern void ccxr_do_end_of_xds(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    unsigned char expected_checksum);
+
+extern struct ccx_decoders_xds_context *ccxr_ccx_decoders_xds_init_library(
+    struct ccx_common_timing_ctx *timing,
+    int xds_write_to_file);
+
+extern void ccxr_xds_cea608_test(
+    struct ccx_decoders_xds_context *ctx,
+    struct cc_subtitle *sub);
+#endif
+
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
 static const char *XDSclasses[] =
@@ -80,6 +100,9 @@ static const char *XDSProgramTypes[] =
 
 struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common_timing_ctx *timing, int xds_write_to_file)
 {
+#ifndef DISABLE_RUST
+	return ccxr_ccx_decoders_xds_init_library(timing, xds_write_to_file); // Use the Rust implementation
+#else
 	int i;
 	struct ccx_decoders_xds_context *ctx = NULL;
 
@@ -121,6 +144,7 @@ struct ccx_decoders_xds_context *ccx_decoders_xds_init_library(struct ccx_common
 	ctx->xds_write_to_file = xds_write_to_file;
 
 	return ctx;
+#endif
 }
 
 int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, char *p, size_t len)
@@ -138,6 +162,7 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 	{
 		sub->data = data;
 		sub->datatype = CC_DATATYPE_GENERIC;
+
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		data->format = SFORMAT_XDS;
 		data->start_time = ts_start_of_xds;
@@ -145,6 +170,7 @@ int write_xds_string(struct cc_subtitle *sub, struct ccx_decoders_xds_context *c
 		data->xds_str = p;
 		data->xds_len = len;
 		data->cur_xds_packet_class = ctx->cur_xds_packet_class;
+
 		sub->nb_data++;
 		sub->type = CC_608;
 		sub->got_output = 1;
@@ -203,6 +229,9 @@ void xds_debug_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *su
 
 void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_xds_cea608_test(ctx, sub);
+#else
 	/* This test is the sample data that comes in CEA-608. It sets the program name
 	   to be "Star Trek". The checksum is 0x1d and the validation must succeed. */
 	process_xds_bytes(ctx, 0x01, 0x03);
@@ -214,6 +243,7 @@ void xds_cea608_test(struct ccx_decoders_xds_context *ctx, struct cc_subtitle *s
 	process_xds_bytes(ctx, 0x02, 0x03);
 	process_xds_bytes(ctx, 0x6b, 0x00);
 	do_end_of_xds(sub, ctx, 0x1d);
+#endif
 }
 
 int how_many_used(struct ccx_decoders_xds_context *ctx)
@@ -236,6 +266,9 @@ void clear_xds_buffer(struct ccx_decoders_xds_context *ctx, int num)
 
 void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char hi, int lo)
 {
+#ifndef DISABLE_RUST
+	return ccxr_process_xds_bytes(ctx, hi, lo); // Use the Rust implementation
+#else
 	int is_new;
 	if (!ctx)
 		return;
@@ -305,7 +338,9 @@ void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes++] = lo;
 		ctx->xds_buffers[ctx->cur_xds_buffer_idx].bytes[ctx->xds_buffers[ctx->cur_xds_buffer_idx].used_bytes] = 0;
 	}
+#endif
 }
+
 /**
  * ctx XDS context can be NULL, if user don't want to write xds in transcript
  */
@@ -857,6 +892,10 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 
 void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum)
 {
+#ifndef DISABLE_RUST
+	return ccxr_do_end_of_xds(sub, ctx, expected_checksum);
+#else
+
 	int cs = 0;
 	int i;
 
@@ -935,4 +974,5 @@ void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 		dump(CCX_DMT_DECODER_XDS, ctx->cur_xds_payload, ctx->cur_xds_payload_length, 0, 0);
 	}
 	clear_xds_buffer(ctx, ctx->cur_xds_buffer_idx);
+#endif
 }
