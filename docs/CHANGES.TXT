@@ -1,6 +1,6 @@
 1.0 (to be released)
 -----------------
-- IMPROVEMENT: Refactor and optimize Dockerfile
+- New: Add demuxer and file_functions module in lib_ccxr (#1662)
 - Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
@@ -40,7 +40,6 @@
 - New: Add tesseract page segmentation modes control with `--psm` flag
 - Fix: Resolve compile-time error about implicit declarations (#1646)
 - Fix: fatal out of memory error extracting from a VOB PS
-- Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
 
 0.94 (2021-12-14)
 -----------------
