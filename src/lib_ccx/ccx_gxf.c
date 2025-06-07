@@ -19,8 +19,6 @@
 #include "ccx_demuxer.h"
 #include "file_buffer.h"
 
-#define STR_LEN 256u
-
 #define CLOSED_CAP_DID 0x61
 #define CLOSED_C708_SDID 0x01
 #define CLOSED_C608_SDID 0x02
@@ -29,6 +27,7 @@
 #define log(fmt, ...) ccx_common_logging.log_ftn("GXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 
 #undef CCX_GXF_ENABLE_AD_VBI
+
 typedef enum
 {
 	PKT_MAP = 0xbc,
@@ -277,53 +276,6 @@ struct ccx_gxf_ancillary_data_track
 
 	/* Field per frame Might need if parsed vbi*/
 	uint32_t field_per_frame;
-};
-
-struct ccx_gxf
-{
-	int nb_streams;
-
-	/* Name of Media File  */
-	char media_name[STR_LEN];
-
-	/**
-	 *  The first field number shall represent the position on a playout
-	 *  time line of the first recorded field on a track
-	 */
-	int32_t first_field_nb;
-
-	/**
-	 * The last field number shall represent the position on a playout
-	 *  time line of the last recorded field plus one.
-	 */
-	int32_t last_field_nb;
-
-	/**
-	 * The mark in field number shall represent the position on a playout
-	 *  time line of the first field to be played from a track.
-	 */
-	int32_t mark_in;
-
-	/**
-	 * The mark out field number shall represent the position on a playout
-	 * time line of the last field to be played plus one
-	 */
-	int32_t mark_out;
-
-	/**
-	 * Estimated size in kb for bytes multiply by 1024
-	 */
-	int32_t stream_size;
-
-	struct ccx_gxf_ancillary_data_track *ad_track;
-
-	struct ccx_gxf_video_track *vid_track;
-
-	/**
-	 * cdp data buffer
-	 */
-	unsigned char *cdp;
-	size_t cdp_len;
 };
 
 /**
@@ -781,7 +733,6 @@ error:
 
 int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 {
-
 	int ret = CCX_OK;
 	uint16_t cdp_length;
 	uint16_t cdp_framerate;
@@ -1000,6 +951,7 @@ static int parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data 
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
+	// #endif
 }
 
 static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
@@ -1218,6 +1170,7 @@ static void set_data_timebase(int32_t vid_format, struct demuxer_data *data)
 		default:
 			break;
 	}
+	// #endif
 }
 
 static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
@@ -1660,6 +1613,7 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 	if (!memcmp(buf, startcode, sizeof(startcode)))
 		return CCX_TRUE;
 	return CCX_FALSE;
+	// #endif
 }
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
