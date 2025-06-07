@@ -19,7 +19,6 @@
 #include "ccx_demuxer.h"
 #include "file_buffer.h"
 
-
 #define CLOSED_CAP_DID 0x61
 #define CLOSED_C708_SDID 0x01
 #define CLOSED_C608_SDID 0x02
@@ -278,7 +277,6 @@ struct ccx_gxf_ancillary_data_track
 	/* Field per frame Might need if parsed vbi*/
 	uint32_t field_per_frame;
 };
-
 
 /**
  * @brief parses a packet header, extracting type and length
@@ -953,7 +951,7 @@ static int parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data 
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
-// #endif
+	// #endif
 }
 
 static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
@@ -1172,7 +1170,7 @@ static void set_data_timebase(int32_t vid_format, struct demuxer_data *data)
 		default:
 			break;
 	}
-// #endif
+	// #endif
 }
 
 static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
@@ -1615,7 +1613,7 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 	if (!memcmp(buf, startcode, sizeof(startcode)))
 		return CCX_TRUE;
 	return CCX_FALSE;
-// #endif
+	// #endif
 }
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
