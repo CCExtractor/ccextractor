@@ -1785,7 +1785,6 @@ mod tests {
         ctx.filebuffer_pos = 10;
         let skip = 20u32;
         let result = unsafe { buffered_skip(&mut ctx as *mut CcxDemuxer, skip, &mut *ccx_options) };
-        // Since available = 50 - 10 = 40, and 20 <= 40, buffered_skip should just increment filebuffer_pos.
         assert_eq!(result, 20);
         assert_eq!(ctx.filebuffer_pos, 30);
     }
