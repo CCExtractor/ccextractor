@@ -139,10 +139,12 @@ impl CcxDemuxer<'_> {
         if self.infd != -1 && ccx_options.input_source == DataSource::File {
             // Convert raw fd to Rust File to handle closing
             #[cfg(unix)]
-            let file = unsafe { File::from_raw_fd(self.infd) };
-            drop(file); // This closes the file descriptor
-            self.infd = -1;
-            ccx_options.activity_input_file_closed();
+            {
+                let file = unsafe { File::from_raw_fd(self.infd) };
+                drop(file); // This closes the file descriptor
+                self.infd = -1;
+                ccx_options.activity_input_file_closed();
+            }
             #[cfg(windows)]
             {
                 let file = unsafe { File::from_raw_handle(self.infd as _) };
@@ -371,8 +373,11 @@ mod tests {
     use serial_test::serial;
     use std::fs::OpenOptions;
     use std::io::Write;
+    #[cfg(unix)]
     use std::os::fd::AsRawFd;
     use std::os::raw::{c_char, c_int, c_uint};
+    #[cfg(windows)]
+    use std::os::windows::io::AsRawHandle;
     use std::slice;
     use std::sync::Once;
     use tempfile::NamedTempFile;
@@ -641,7 +646,10 @@ mod tests {
         let size = metadata.len();
 
         // Get the raw file descriptor.
+        #[cfg(unix)]
         let fd = tmpfile.as_file().as_raw_fd();
+        #[cfg(windows)]
+        let fd = tmpfile.as_file().as_raw_handle();
         (tmpfile, fd, size)
     }
 

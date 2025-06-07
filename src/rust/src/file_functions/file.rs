@@ -301,7 +301,10 @@ pub unsafe fn buffered_read_opt(
                         // buffered - if here, then it must be files.
                         if !buffer_ptr.is_null() {
                             // Read
+                            #[cfg(unix)]
                             let mut file = File::from_raw_fd(ctx.infd);
+                            #[cfg(windows)]
+                            let mut file = File::from_raw_handle(ctx.infd as _);
                             let slice = slice::from_raw_parts_mut(buffer_ptr, bytes);
                             match file.read(slice) {
                                 Ok(n) => i = n as isize,
@@ -317,7 +320,10 @@ pub unsafe fn buffered_read_opt(
                             buffer_ptr = buffer_ptr.add(i as usize);
                         } else {
                             // Seek
+                            #[cfg(unix)]
                             let mut file = File::from_raw_fd(ctx.infd);
+                            #[cfg(windows)]
+                            let mut file = File::from_raw_handle(ctx.infd as _);
                             let mut op = file.stream_position().unwrap_or(i64::MAX as u64) as i64; // Get current pos
                             if op == i64::MAX {
                                 op = -1;
@@ -387,7 +393,10 @@ pub unsafe fn buffered_read_opt(
                 let i = if ccx_options.input_source == DataSource::File
                     || ccx_options.input_source == DataSource::Stdin
                 {
+                    #[cfg(unix)]
                     let mut file = File::from_raw_fd(ctx.infd);
+                    #[cfg(windows)]
+                    let mut file = File::from_raw_handle(ctx.infd as _);
                     let slice = slice::from_raw_parts_mut(
                         ctx.filebuffer.add(keep as usize),
                         FILEBUFFERSIZE - keep as usize,
@@ -467,7 +476,10 @@ pub unsafe fn buffered_read_opt(
             let mut buffer_ptr = buffer;
             let mut i;
             while bytes > 0 && ctx.infd != -1 {
+                #[cfg(unix)]
                 let mut file = File::from_raw_fd(ctx.infd);
+                #[cfg(windows)]
+                let mut file = File::from_raw_handle(ctx.infd as _);
                 let slice = slice::from_raw_parts_mut(buffer_ptr, bytes);
                 i = file.read(slice).unwrap_or(i64::MAX as usize) as isize;
                 if i == i64::MAX as usize as isize {
@@ -508,7 +520,10 @@ pub unsafe fn buffered_read_opt(
             if terminate_asap != 0 {
                 break;
             }
+            #[cfg(unix)]
             let mut file = File::from_raw_fd(ctx.infd);
+            #[cfg(windows)]
+            let mut file = File::from_raw_handle(ctx.infd as _);
 
             // Try to get current position and seek
             let op_result = file.stream_position(); // Get current pos
@@ -789,16 +804,18 @@ pub unsafe fn buffered_skip(ctx: *mut CcxDemuxer, bytes: u32, ccx_options: &mut 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::libccxr_exports::demuxer::copy_demuxer_from_rust_to_c;
     use lib_ccxr::common::{Codec, StreamMode, StreamType};
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
-    use std::ffi::CString;
-    // use std::io::{Seek, SeekFrom, Write};
-    use crate::libccxr_exports::demuxer::copy_demuxer_from_rust_to_c;
     use serial_test::serial;
+    use std::ffi::CString;
     #[cfg(feature = "sanity_check")]
     use std::io::Write;
     use std::os::raw::{c_char, c_int, c_ulong, c_void};
+    #[cfg(unix)]
     use std::os::unix::io::IntoRawFd;
+    #[cfg(windows)]
+    use std::os::windows::io::IntoRawHandle;
     use std::slice;
     use std::sync::Once;
     #[cfg(feature = "sanity_check")]
