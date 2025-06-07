@@ -2,6 +2,7 @@ use crate::bindings::{lib_cc_decode, lib_ccx_ctx, list_head};
 use std::ptr::null_mut;
 // HList (Hyperlinked List)
 
+#[allow(clippy::ptr_eq)]
 pub fn list_empty(head: &list_head) -> bool {
     head.next == head as *const list_head as *mut list_head
 }

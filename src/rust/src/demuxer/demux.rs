@@ -416,8 +416,8 @@ mod tests {
         assert_eq!(demuxer.ts_datastreamtype, StreamType::Unknownstream);
         assert_eq!(demuxer.pinfo.len(), MAX_PROGRAM);
         assert_eq!(demuxer.nb_program, 0);
-        assert_eq!(demuxer.codec, Codec::Dvb);
-        assert_eq!(demuxer.nocodec, Codec::Dvb);
+        assert_eq!(demuxer.codec, Codec::Any);
+        assert_eq!(demuxer.nocodec, Codec::Any);
         assert_eq!(demuxer.infd, -1);
         assert_eq!(demuxer.past, 0);
         assert_eq!(demuxer.global_timestamp, Timestamp::from_millis(0));
