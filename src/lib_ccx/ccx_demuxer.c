@@ -247,9 +247,9 @@ static int ccx_demuxer_get_stream_mode(struct ccx_demuxer *ctx)
 
 static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 {
-	#ifndef DISABLE_RUST
-		ccxr_demuxer_print_cfg(ctx);
-	#else
+#ifndef DISABLE_RUST
+	ccxr_demuxer_print_cfg(ctx);
+#else
 	switch (ctx->auto_stream)
 	{
 		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -294,7 +294,7 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode. Please file a bug report on Github.\n");
 			break;
 	}
-	#endif
+#endif
 }
 
 void ccx_demuxer_delete(struct ccx_demuxer **ctx)

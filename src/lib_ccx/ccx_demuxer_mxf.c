@@ -14,7 +14,6 @@
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
 #define IS_KLV_KEY_ANY_VERSION(x, y) (!memcmp(x, y, 7) && !memcmp(x + 8, y + 8, sizeof(y) - 8))
 
-
 typedef struct KLVPacket
 {
 	UID key;
@@ -29,13 +28,11 @@ typedef struct MXFCodecUL
 
 typedef int ReadFunc(struct ccx_demuxer *ctx, uint64_t size);
 
-
 typedef struct MXFReadTableEntry
 {
 	const UID key;
 	ReadFunc *read;
 } MXFReadTableEntry;
-
 
 typedef struct MXFLocalTAGS
 {
