@@ -15,17 +15,16 @@ pub mod bindings {
 
 pub mod args;
 pub mod common;
+pub mod ctorust;
 pub mod decoder;
 pub mod demuxer;
 pub mod file_functions;
-pub mod gxf_demuxer;
-pub mod ctorust;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
+pub mod hlist;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
-pub mod hlist;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
@@ -42,6 +41,7 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
+use std::os::raw::{c_uchar, c_ulong, c_void};
 use std::{
     ffi::CStr,
     io::Write,
@@ -87,6 +87,8 @@ extern "C" {
     static mut current_fps: c_double;
     static mut usercolor_rgb: [c_int; 8];
     static mut FILEBUFFERSIZE: c_int;
+    static mut terminate_asap: c_int;
+    static mut net_activity_gui: c_ulong;
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
@@ -251,6 +253,24 @@ extern "C" {
     fn set_binary_mode();
     #[allow(dead_code)]
     fn print_file_report(ctx: *mut lib_ccx_ctx);
+    #[allow(dead_code)]
+    #[cfg(feature = "enable_ffmpeg")]
+    fn init_ffmpeg(path: *const c_char);
+    pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int;
+    pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int;
+    pub fn net_udp_read(
+        socket: c_int,
+        buffer: *mut c_void,
+        length: usize,
+        src_str: *const c_char,
+        addr_str: *const c_char,
+    ) -> c_int;
+    pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int;
+    pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int;
+    pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext;
+    #[allow(clashing_extern_declarations)]
+    pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
+    pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
 }
 
 /// # Safety

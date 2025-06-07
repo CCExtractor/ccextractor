@@ -17,7 +17,7 @@
 //! | `language[NB_LANGUAGE]` | [`Language`]               |
 
 mod constants;
-pub mod options;
+mod options;
 
 pub use constants::*;
 pub use options::*;
