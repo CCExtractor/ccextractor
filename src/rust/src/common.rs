@@ -5,9 +5,11 @@ use crate::ctorust::{
     from_ctype_EncodersTranscriptFormat, from_ctype_OutputTarget, from_ctype_Output_Date_Format,
     from_ctype_Output_Format, from_ctype_ocr_mode,
 };
+use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, PMTEntry, PSIBuffer, ProgramInfo};
 use crate::utils::null_pointer;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
+use lib_ccxr::common::CommonTimingCtx;
 use lib_ccxr::common::Decoder608Report;
 use lib_ccxr::common::Decoder608Settings;
 use lib_ccxr::common::DecoderDtvccReport;
@@ -23,18 +25,15 @@ use lib_ccxr::common::SelectCodec;
 use lib_ccxr::common::StreamMode;
 use lib_ccxr::common::StreamType;
 use lib_ccxr::common::{Codec, DataSource};
-use lib_ccxr::common::{CommonTimingCtx, Decoder608ColorCode};
 use lib_ccxr::hardsubx::ColorHue;
 use lib_ccxr::hardsubx::OcrMode;
 use lib_ccxr::teletext::TeletextConfig;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
-use lib_ccxr::util::log::{DebugMessageMask, OutputTarget};
 use std::os::raw::c_int;
 use std::path::PathBuf;
 use std::str::FromStr;
-use crate::demuxer::demux::{CapInfo, CcxDemuxReport, PMTEntry, PSIBuffer, ProgramInfo};
 
 pub trait FromC<T> {
     fn from_c(value: T) -> Self;
@@ -255,62 +254,54 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
 ///
 /// This function is unsafe because we are dereferencing the pointer passed to it.
 pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
-    let mut options = Options::default();
-
-    options.extract = (*ccx_s_options).extract as u8;
-    options.no_rollup = (*ccx_s_options).no_rollup != 0;
-    options.noscte20 = (*ccx_s_options).noscte20 != 0;
-    options.webvtt_create_css = (*ccx_s_options).webvtt_create_css != 0;
-    options.cc_channel = (*ccx_s_options).cc_channel as u8;
-    options.buffer_input = (*ccx_s_options).buffer_input != 0;
-    options.nofontcolor = (*ccx_s_options).nofontcolor != 0;
-    options.nohtmlescape = (*ccx_s_options).nohtmlescape != 0;
-    options.notypesetting = (*ccx_s_options).notypesetting != 0;
-
-    // Handle extraction_start and extraction_end
-    options.extraction_start = Some(
-        Timestamp::from_hms_millis(
-            (*ccx_s_options).extraction_start.hh as u8,
-            (*ccx_s_options).extraction_start.mm as u8,
-            (*ccx_s_options).extraction_start.ss as u8,
-            (*ccx_s_options).extraction_start.time_in_ms as u16,
-        )
-        .expect("Invalid extraction start time"),
-    );
-    // options.extraction_end = Some(Timestamp::from_c_boundary_time(
-    //     &(*ccx_s_options).extraction_end,
-    // ));
-    options.extraction_end = Some(
-        Timestamp::from_hms_millis(
-            (*ccx_s_options).extraction_end.hh as u8,
-            (*ccx_s_options).extraction_end.mm as u8,
-            (*ccx_s_options).extraction_end.ss as u8,
-            (*ccx_s_options).extraction_end.time_in_ms as u16,
-        )
-        .expect("Invalid extraction end time"),
-    );
-
-    options.print_file_reports = (*ccx_s_options).print_file_reports != 0;
-    // Handle settings_608 and settings_dtvcc - assuming FromCType trait is implemented for these
-    options.settings_608 = from_ctype_Decoder608Settings((*ccx_s_options).settings_608);
-    options.settings_dtvcc = from_ctype_DecoderDtvccSettings((*ccx_s_options).settings_dtvcc);
-
-    options.is_608_enabled = (*ccx_s_options).is_608_enabled != 0;
-    options.is_708_enabled = (*ccx_s_options).is_708_enabled != 0;
-
-    // Assuming a millis_separator conversion function exists or we can use chars directly
-    options.binary_concat = (*ccx_s_options).binary_concat != 0;
-
-    // Handle use_gop_as_pts special case
-    options.use_gop_as_pts = match (*ccx_s_options).use_gop_as_pts {
-        1 => Some(true),
-        -1 => Some(false),
-        _ => None,
+    let mut options = Options {
+        extract: (*ccx_s_options).extract as u8,
+        no_rollup: (*ccx_s_options).no_rollup != 0,
+        noscte20: (*ccx_s_options).noscte20 != 0,
+        webvtt_create_css: (*ccx_s_options).webvtt_create_css != 0,
+        cc_channel: (*ccx_s_options).cc_channel as u8,
+        buffer_input: (*ccx_s_options).buffer_input != 0,
+        nofontcolor: (*ccx_s_options).nofontcolor != 0,
+        nohtmlescape: (*ccx_s_options).nohtmlescape != 0,
+        notypesetting: (*ccx_s_options).notypesetting != 0,
+        // Handle extraction_start and extraction_end
+        extraction_start: Some(
+            Timestamp::from_hms_millis(
+                (*ccx_s_options).extraction_start.hh as u8,
+                (*ccx_s_options).extraction_start.mm as u8,
+                (*ccx_s_options).extraction_start.ss as u8,
+                (*ccx_s_options).extraction_start.time_in_ms as u16,
+            )
+            .expect("Invalid extraction start time"),
+        ),
+        extraction_end: Some(
+            Timestamp::from_hms_millis(
+                (*ccx_s_options).extraction_end.hh as u8,
+                (*ccx_s_options).extraction_end.mm as u8,
+                (*ccx_s_options).extraction_end.ss as u8,
+                (*ccx_s_options).extraction_end.time_in_ms as u16,
+            )
+            .expect("Invalid extraction end time"),
+        ),
+        print_file_reports: (*ccx_s_options).print_file_reports != 0,
+        // Handle settings_608 and settings_dtvcc - assuming FromCType trait is implemented for these
+        settings_608: from_ctype_Decoder608Settings((*ccx_s_options).settings_608),
+        settings_dtvcc: from_ctype_DecoderDtvccSettings((*ccx_s_options).settings_dtvcc),
+        is_608_enabled: (*ccx_s_options).is_608_enabled != 0,
+        is_708_enabled: (*ccx_s_options).is_708_enabled != 0,
+        // Assuming a millis_separator conversion function exists or we can use chars directly
+        binary_concat: (*ccx_s_options).binary_concat != 0,
+        // Handle use_gop_as_pts special case
+        use_gop_as_pts: match (*ccx_s_options).use_gop_as_pts {
+            1 => Some(true),
+            -1 => Some(false),
+            _ => None,
+        },
+        fix_padding: (*ccx_s_options).fix_padding != 0,
+        gui_mode_reports: (*ccx_s_options).gui_mode_reports != 0,
+        no_progress_bar: (*ccx_s_options).no_progress_bar != 0,
+        ..Default::default()
     };
-
-    options.fix_padding = (*ccx_s_options).fix_padding != 0;
-    options.gui_mode_reports = (*ccx_s_options).gui_mode_reports != 0;
-    options.no_progress_bar = (*ccx_s_options).no_progress_bar != 0;
 
     // Handle sentence_cap_file (C string to PathBuf)
     if !(*ccx_s_options).sentence_cap_file.is_null() {
@@ -371,7 +362,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     // Handle dvblang (C string to Option<Language>)
     if !(*ccx_s_options).dvblang.is_null() {
         options.dvblang = Some(
-            Language::from_str(&*c_char_to_string((*ccx_s_options).dvblang))
+            Language::from_str(&c_char_to_string((*ccx_s_options).dvblang))
                 .expect("Invalid language"),
         );
     }
@@ -388,7 +379,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     // Handle mkvlang (C string to Option<Language>)
     if !(*ccx_s_options).mkvlang.is_null() {
         options.mkvlang = Some(
-            Language::from_str(&*c_char_to_string((*ccx_s_options).mkvlang))
+            Language::from_str(&c_char_to_string((*ccx_s_options).mkvlang))
                 .expect("Invalid language"),
         )
     }
@@ -938,11 +929,11 @@ impl CType<ccx_code_type> for Codec {
     /// Convert to C variant of `ccx_code_type`.
     unsafe fn to_ctype(&self) -> ccx_code_type {
         match self {
-            Codec::Any       => ccx_code_type_CCX_CODEC_ANY,
-            Codec::Teletext  => ccx_code_type_CCX_CODEC_TELETEXT,
-            Codec::Dvb       => ccx_code_type_CCX_CODEC_DVB,
-            Codec::IsdbCc    => ccx_code_type_CCX_CODEC_ISDB_CC,
-            Codec::AtscCc    => ccx_code_type_CCX_CODEC_ATSC_CC,
+            Codec::Any => ccx_code_type_CCX_CODEC_ANY,
+            Codec::Teletext => ccx_code_type_CCX_CODEC_TELETEXT,
+            Codec::Dvb => ccx_code_type_CCX_CODEC_DVB,
+            Codec::IsdbCc => ccx_code_type_CCX_CODEC_ISDB_CC,
+            Codec::AtscCc => ccx_code_type_CCX_CODEC_ATSC_CC,
         }
     }
 }
@@ -952,8 +943,8 @@ impl CType<cap_info> for CapInfo {
         cap_info {
             pid: self.pid,
             program_number: self.program_number,
-            stream: self.stream.to_ctype() as ccx_stream_type,       // CType<ccx_stream_type> for StreamType
-            codec: self.codec.to_ctype(),         // CType<ccx_code_type> for Codec
+            stream: self.stream.to_ctype() as ccx_stream_type, // CType<ccx_stream_type> for StreamType
+            codec: self.codec.to_ctype(),                      // CType<ccx_code_type> for Codec
             capbufsize: self.capbufsize,
             capbuf: self.capbuf,
             capbuflen: self.capbuflen,
@@ -1001,14 +992,19 @@ impl CType<program_info> for ProgramInfo {
 
         // Copy got_important_streams_min_pts (up to 3 entries only)
         let mut min_pts_c: [u64; 3] = [0; 3];
-        for (i, &val) in self.got_important_streams_min_pts.iter().take(3).enumerate() {
+        for (i, &val) in self
+            .got_important_streams_min_pts
+            .iter()
+            .take(3)
+            .enumerate()
+        {
             min_pts_c[i] = val;
         }
 
         program_info {
             pid: self.pid,
             program_number: self.program_number,
-            initialized_ocr: self.initialized_ocr,
+            initialized_ocr: c_int::from(self.initialized_ocr),
             _bitfield_align_1: [],
             _bitfield_1: bf1,
             version: self.version,
@@ -1019,7 +1015,7 @@ impl CType<program_info> for ProgramInfo {
             name: name_c,
             pcr_pid: self.pcr_pid,
             got_important_streams_min_pts: min_pts_c,
-            has_all_min_pts: self.has_all_min_pts,
+            has_all_min_pts: c_int::from(self.has_all_min_pts),
         }
     }
 }
@@ -1040,7 +1036,7 @@ impl CType<PMT_entry> for PMTEntry {
         PMT_entry {
             program_number: self.program_number,
             elementary_PID: self.elementary_pid,
-            stream_type: self.stream_type.to_ctype() as ccx_stream_type,       // CType<ccx_stream_type> for StreamType
+            stream_type: self.stream_type.to_ctype() as ccx_stream_type, // CType<ccx_stream_type> for StreamType
             printable_stream_type: self.printable_stream_type,
         }
     }
