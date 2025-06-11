@@ -31,7 +31,7 @@ use lib_ccxr::teletext::TeletextConfig;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
-use std::os::raw::c_int;
+use std::os::raw::{c_int, c_long};
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -253,6 +253,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
 /// # Safety
 ///
 /// This function is unsafe because we are dereferencing the pointer passed to it.
+#[allow(clippy::unnecessary_cast)]
 pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     let mut options = Options {
         extract: (*ccx_s_options).extract as u8,
@@ -449,7 +450,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     }
 
     options.noautotimeref = (*ccx_s_options).noautotimeref != 0;
-    options.input_source = DataSource::from((*ccx_s_options).input_source);
+    options.input_source = DataSource::from((*ccx_s_options).input_source as u32);
 
     if !(*ccx_s_options).output_filename.is_null() {
         options.output_filename = Some(c_char_to_string((*ccx_s_options).output_filename));
@@ -945,9 +946,9 @@ impl CType<cap_info> for CapInfo {
             program_number: self.program_number,
             stream: self.stream.to_ctype() as ccx_stream_type, // CType<ccx_stream_type> for StreamType
             codec: self.codec.to_ctype(),                      // CType<ccx_code_type> for Codec
-            capbufsize: self.capbufsize,
+            capbufsize: self.capbufsize as c_long,
             capbuf: self.capbuf,
-            capbuflen: self.capbuflen,
+            capbuflen: self.capbuflen as c_long,
             saw_pesstart: self.saw_pesstart,
             prev_counter: self.prev_counter,
             codec_private_data: self.codec_private_data,
@@ -1004,7 +1005,7 @@ impl CType<program_info> for ProgramInfo {
         program_info {
             pid: self.pid,
             program_number: self.program_number,
-            initialized_ocr: c_int::from(self.initialized_ocr),
+            initialized_ocr: self.initialized_ocr as c_int,
             _bitfield_align_1: [],
             _bitfield_1: bf1,
             version: self.version,
@@ -1015,7 +1016,7 @@ impl CType<program_info> for ProgramInfo {
             name: name_c,
             pcr_pid: self.pcr_pid,
             got_important_streams_min_pts: min_pts_c,
-            has_all_min_pts: c_int::from(self.has_all_min_pts),
+            has_all_min_pts: self.has_all_min_pts as c_int,
         }
     }
 }

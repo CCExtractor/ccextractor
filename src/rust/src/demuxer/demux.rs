@@ -378,6 +378,8 @@ mod tests {
     use std::os::raw::{c_char, c_int, c_uint};
     #[cfg(windows)]
     use std::os::windows::io::AsRawHandle;
+    #[cfg(windows)]
+    use std::os::windows::io::RawHandle;
     use std::slice;
     use std::sync::Once;
     use tempfile::NamedTempFile;
@@ -636,6 +638,7 @@ mod tests {
     }
 
     /// Helper: Create a temporary file with the given content and return its file descriptor.
+    #[cfg(unix)]
     fn create_temp_file_with_content(content: &[u8]) -> (NamedTempFile, i32, u64) {
         let mut tmpfile = NamedTempFile::new().expect("Failed to create temp file");
         tmpfile.write_all(content).expect("Failed to write content");
@@ -652,6 +655,19 @@ mod tests {
         let fd = tmpfile.as_file().as_raw_handle();
         (tmpfile, fd, size)
     }
+    #[cfg(windows)]
+    fn create_temp_file_with_content(content: &[u8]) -> (NamedTempFile, RawHandle, u64) {
+        let mut tmpfile = NamedTempFile::new().expect("Failed to create temp file");
+        tmpfile.write_all(content).expect("Failed to write content");
+        let metadata = tmpfile
+            .as_file()
+            .metadata()
+            .expect("Failed to get metadata");
+        let size = metadata.len();
+
+        let handle: RawHandle = tmpfile.as_file().as_raw_handle();
+        (tmpfile, handle, size)
+    }
 
     /// Test that ccx_demuxer_get_file_size returns the correct file size for a valid file.
     #[test]
@@ -662,7 +678,7 @@ mod tests {
 
         // Create a default demuxer and modify the infd field.
         let mut demuxer = CcxDemuxer::default();
-        demuxer.infd = fd;
+        demuxer.infd = fd as _;
 
         // Call the file-size function.
         let ret = demuxer.get_filesize();
@@ -699,7 +715,7 @@ mod tests {
 
         // Create a demuxer with the same file descriptor.
         let mut demuxer = CcxDemuxer::default();
-        demuxer.infd = fd;
+        demuxer.infd = fd as _;
 
         // Call the file-size function.
         let _ = demuxer.get_filesize();
