@@ -1,3 +1,4 @@
+#![allow(clippy::unnecessary_cast)] // we have to do this as windows has different types for some C types
 use crate::bindings::{
     cap_info, ccx_boundary_time, ccx_code_type, ccx_common_timing_ctx, ccx_decoder_608_color_code,
     ccx_decoder_608_color_code_COL_MAX, ccx_decoder_608_report, ccx_decoder_608_settings,
@@ -574,11 +575,11 @@ pub fn from_ctype_cap_info(info: cap_info) -> CapInfo {
     CapInfo {
         pid: info.pid,
         program_number: info.program_number,
-        stream: from_ctype_StreamType(info.stream),
+        stream: from_ctype_StreamType(info.stream as u32),
         codec: from_ctype_Codec(info.codec),
-        capbufsize: info.capbufsize,
+        capbufsize: info.capbufsize as i64,
         capbuf: info.capbuf,
-        capbuflen: info.capbuflen,
+        capbuflen: info.capbuflen as i64,
         saw_pesstart: info.saw_pesstart,
         prev_counter: info.prev_counter,
         codec_private_data: info.codec_private_data,
@@ -641,7 +642,7 @@ pub unsafe fn from_ctype_PMT_entry(buffer_ptr: *mut PMT_entry) -> Option<*mut PM
     let psi_buffer = PMTEntry {
         program_number: buffer.program_number,
         elementary_pid: buffer.elementary_PID,
-        stream_type: from_ctype_StreamType(buffer.stream_type),
+        stream_type: from_ctype_StreamType(buffer.stream_type as u32),
         printable_stream_type: buffer.printable_stream_type,
     };
     Some(Box::into_raw(Box::new(psi_buffer)))

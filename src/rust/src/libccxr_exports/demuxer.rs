@@ -42,8 +42,16 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
 
     // Copy simple fields
     c.m2ts = rust_demuxer.m2ts;
-    c.stream_mode = rust_demuxer.stream_mode.to_ctype();
-    c.auto_stream = rust_demuxer.auto_stream.to_ctype();
+    #[cfg(windows)]
+    {
+        c.stream_mode = rust_demuxer.stream_mode.to_ctype() as c_int;
+        c.auto_stream = rust_demuxer.auto_stream.to_ctype() as c_int;
+    }
+    #[cfg(unix)]
+    {
+        c.stream_mode = rust_demuxer.stream_mode.to_ctype() as c_uint;
+        c.auto_stream = rust_demuxer.auto_stream.to_ctype() as c_uint;
+    }
     // Copy startbytes array
     copy_rust_vec_to_c(&rust_demuxer.startbytes, c.startbytes.as_mut_ptr());
     c.startbytes_pos = rust_demuxer.startbytes_pos;
@@ -535,9 +543,16 @@ mod tests {
 
         // Basic fields
         assert_eq!(c_demuxer.m2ts, 99);
-        assert_eq!(c_demuxer.stream_mode, StreamMode::Asf as u32);
-        assert_eq!(c_demuxer.auto_stream, StreamMode::Asf as u32);
-
+        #[cfg(windows)]
+        {
+            assert_eq!(c_demuxer.stream_mode, StreamMode::Asf as c_int);
+            assert_eq!(c_demuxer.auto_stream, StreamMode::Asf as c_int);
+        }
+        #[cfg(unix)]
+        {
+            assert_eq!(c_demuxer.stream_mode, StreamMode::Asf as c_uint);
+            assert_eq!(c_demuxer.auto_stream, StreamMode::Asf as c_uint);
+        }
         // startbytes array - test first few bytes
         assert_eq!(c_demuxer.startbytes[0], 0xAA);
         assert_eq!(c_demuxer.startbytes[1], 0xBB);
@@ -561,9 +576,16 @@ mod tests {
         assert_eq!(c_demuxer.nb_program, 5);
 
         // Codec fields
-        assert_eq!(c_demuxer.codec, Codec::AtscCc as u32);
-        assert_eq!(c_demuxer.nocodec, Codec::Any as u32);
-
+        #[cfg(unix)]
+        {
+            assert_eq!(c_demuxer.codec, Codec::AtscCc as c_uint);
+            assert_eq!(c_demuxer.nocodec, Codec::Any as c_uint);
+        }
+        #[cfg(windows)]
+        {
+            assert_eq!(c_demuxer.codec, Codec::AtscCc as c_int);
+            assert_eq!(c_demuxer.nocodec, Codec::Any as c_int);
+        }
         // Add specific field checks here if CapInfo has testable fields
 
         // File handle fields
@@ -728,9 +750,16 @@ mod tests {
         // Set up comprehensive test data in the C structure
         // Basic fields
         c_demuxer_ptr.m2ts = 42;
-        c_demuxer_ptr.stream_mode = StreamMode::Asf as u32;
-        c_demuxer_ptr.auto_stream = StreamMode::Mp4 as u32;
-
+        #[cfg(unix)]
+        {
+            c_demuxer_ptr.stream_mode = StreamMode::Asf as c_uint;
+            c_demuxer_ptr.auto_stream = StreamMode::Mp4 as c_uint;
+        }
+        #[cfg(windows)]
+        {
+            c_demuxer_ptr.stream_mode = StreamMode::Asf as c_int;
+            c_demuxer_ptr.auto_stream = StreamMode::Mp4 as c_int;
+        }
         // startbytes array - set some test data
         c_demuxer_ptr.startbytes[0] = 0xDE;
         c_demuxer_ptr.startbytes[1] = 0xAD;
@@ -753,9 +782,16 @@ mod tests {
         c_demuxer_ptr.nb_program = 3;
 
         // Codec fields
-        c_demuxer_ptr.codec = Codec::AtscCc as u32;
-        c_demuxer_ptr.nocodec = Codec::Any as u32;
-
+        #[cfg(unix)]
+        {
+            c_demuxer_ptr.codec = Codec::AtscCc as c_uint;
+            c_demuxer_ptr.nocodec = Codec::Any as c_uint;
+        }
+        #[cfg(windows)]
+        {
+            c_demuxer_ptr.codec = Codec::AtscCc as c_int;
+            c_demuxer_ptr.nocodec = Codec::Any as c_int;
+        }
         // File handle fields
         c_demuxer_ptr.infd = 789;
         c_demuxer_ptr.past = 9876543210;
