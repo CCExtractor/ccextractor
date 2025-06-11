@@ -1717,7 +1717,7 @@ mod tests {
         ctx.bytesinbuffer = 0;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
+        // In this case, buffered_read_opt (our version) will supply 0xAA for each byte.
         let value = unsafe { buffered_get_le16(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
         // Expect the two bytes to be 0xAAAA.
         assert_eq!(value, 0);
