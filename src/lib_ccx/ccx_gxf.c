@@ -951,7 +951,6 @@ static int parse_ad_vbi(struct ccx_demuxer *demux, int len, struct demuxer_data 
 	if (result != len)
 		ret = CCX_EOF;
 	return ret;
-	// #endif
 }
 
 static int parse_ad_field(struct ccx_demuxer *demux, int len, struct demuxer_data *data)

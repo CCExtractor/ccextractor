@@ -34,6 +34,7 @@ use lib_ccxr::util::encoding::Encoding;
 use std::os::raw::{c_int, c_long};
 use std::path::PathBuf;
 use std::str::FromStr;
+use lib_ccxr::info;
 
 pub trait FromC<T> {
     fn from_c(value: T) -> Self;
@@ -271,7 +272,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
                 (*ccx_s_options).extraction_start.hh as u8,
                 (*ccx_s_options).extraction_start.mm as u8,
                 (*ccx_s_options).extraction_start.ss as u8,
-                (*ccx_s_options).extraction_start.time_in_ms as u16,
+                0,
             )
             .expect("Invalid extraction start time"),
         ),
@@ -280,7 +281,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
                 (*ccx_s_options).extraction_end.hh as u8,
                 (*ccx_s_options).extraction_end.mm as u8,
                 (*ccx_s_options).extraction_end.ss as u8,
-                (*ccx_s_options).extraction_end.time_in_ms as u16,
+                0,
             )
             .expect("Invalid extraction end time"),
         ),
