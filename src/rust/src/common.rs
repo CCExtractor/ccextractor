@@ -34,7 +34,6 @@ use lib_ccxr::util::encoding::Encoding;
 use std::os::raw::{c_int, c_long};
 use std::path::PathBuf;
 use std::str::FromStr;
-use lib_ccxr::info;
 
 pub trait FromC<T> {
     fn from_c(value: T) -> Self;
