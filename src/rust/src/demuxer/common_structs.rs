@@ -115,18 +115,6 @@ impl Default for PSIBuffer {
     }
 }
 
-impl PSIBuffer {
-    #[allow(unused)] // used in tests
-    pub(crate) fn default() -> PSIBuffer {
-        PSIBuffer {
-            prev_ccounter: 0,
-            buffer: Box::into_raw(Box::new(0u8)),
-            buffer_length: 0,
-            ccounter: 0,
-        }
-    }
-}
-
 pub struct PMTEntry {
     pub program_number: u32,
     pub elementary_pid: u32,
