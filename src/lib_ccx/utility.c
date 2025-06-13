@@ -662,6 +662,38 @@ size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 	return 0;
 }
 
+size_t ascii_to_html(unsigned char ascii_char, unsigned char *out)
+{
+	unsigned char *write = NULL;
+	if (ascii_char == '&')
+		write = "&amp;";
+	else if (ascii_char == '<')
+		write = "&lt;";
+	else if (ascii_char == '>')
+		write = "&gt;";
+	if (write != NULL)
+	{
+		strcpy(out, write);
+		return strlen(write);
+	}
+	else
+	{
+		out[0] = ascii_char;
+		return 1;
+	}
+	return 0;
+}
+
+size_t ascii_to_unicode(unsigned char *ascii_char_buf, int ascii_char_len, unsigned char *out)
+{
+	for (int i = ascii_char_len - 1; i >= 0; i--)
+	{
+		out[i * 2] = ascii_char_buf[i];
+		out[i * 2 + 1] = 0;
+	}
+	return ascii_char_len * 2;
+}
+
 LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb)
 {
 	/* val = (value * current timebase) / destination timebase */
