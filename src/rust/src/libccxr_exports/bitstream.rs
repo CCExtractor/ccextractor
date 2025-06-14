@@ -496,7 +496,10 @@ mod tests {
             _i_bpos: 8,
         };
 
-        assert_eq!(unsafe { super::ccxr_read_exp_golomb_unsigned(&mut c_bs) }, 0);
+        assert_eq!(
+            unsafe { super::ccxr_read_exp_golomb_unsigned(&mut c_bs) },
+            0
+        );
         drop(data);
     }
 
