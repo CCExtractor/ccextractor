@@ -413,7 +413,6 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
     if ctx.is_null() || file.is_null() {
         return -1;
     }
-    // Convert the C string to a Rust string slice.
     let c_str = CStr::from_ptr(file);
     let file_str = match c_str.to_str() {
         Ok(s) => s,
@@ -424,7 +423,7 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
 
     let ReturnValue = demux_ctx.open(file_str, &mut CcxOptions);
     copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
-    ReturnValue as c_int
+    ReturnValue
 }
 
 // Extern function for ccx_demuxer_get_file_size

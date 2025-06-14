@@ -24,7 +24,6 @@ use std::path::PathBuf;
 
 pub fn from_ctype_Decoder608ColorCode(color: ccx_decoder_608_color_code) -> Decoder608ColorCode {
     match color {
-        0 => Decoder608ColorCode::White,
         1 => Decoder608ColorCode::Green,
         2 => Decoder608ColorCode::Blue,
         3 => Decoder608ColorCode::Cyan,
@@ -34,7 +33,7 @@ pub fn from_ctype_Decoder608ColorCode(color: ccx_decoder_608_color_code) -> Deco
         7 => Decoder608ColorCode::Userdefined,
         8 => Decoder608ColorCode::Black,
         9 => Decoder608ColorCode::Transparent,
-        _ => panic!("Invalid color code"),
+        _ => Decoder608ColorCode::White,
     }
 }
 
@@ -149,32 +148,29 @@ pub fn from_ctype_DecoderDtvccReport(report: ccx_decoder_dtvcc_report) -> Decode
 
 pub fn from_ctype_OutputTarget(target: c_int) -> OutputTarget {
     match target {
-        0 => OutputTarget::Quiet,
         1 => OutputTarget::Stdout,
         2 => OutputTarget::Stderr,
-        _ => panic!("Invalid output target"),
+        _ => OutputTarget::Quiet,
     }
 }
 
 pub fn from_ctype_ocr_mode(mode: c_int) -> lib_ccxr::hardsubx::OcrMode {
     match mode {
-        0 => lib_ccxr::hardsubx::OcrMode::Frame,
         1 => lib_ccxr::hardsubx::OcrMode::Word,
         2 => lib_ccxr::hardsubx::OcrMode::Letter,
-        _ => panic!("Invalid OCR mode"),
+        _ => lib_ccxr::hardsubx::OcrMode::Frame,
     }
 }
 
 pub fn from_ctype_ColorHue(hue: c_int) -> lib_ccxr::hardsubx::ColorHue {
     match hue {
-        0 => lib_ccxr::hardsubx::ColorHue::White,
         1 => lib_ccxr::hardsubx::ColorHue::Yellow,
         2 => lib_ccxr::hardsubx::ColorHue::Green,
         3 => lib_ccxr::hardsubx::ColorHue::Cyan,
         4 => lib_ccxr::hardsubx::ColorHue::Blue,
         5 => lib_ccxr::hardsubx::ColorHue::Magenta,
         6 => lib_ccxr::hardsubx::ColorHue::Red,
-        _ => panic!("Invalid color hue"),
+        _ => lib_ccxr::hardsubx::ColorHue::White,
     }
 }
 
@@ -255,7 +251,6 @@ fn c_array_to_vec(c_array: &[c_uint; 128usize]) -> Vec<u32> {
 }
 pub fn from_ctype_StreamMode(mode: ccx_stream_mode_enum) -> StreamMode {
     match mode {
-        0 => StreamMode::ElementaryOrNotFound,
         1 => StreamMode::Transport,
         2 => StreamMode::Program,
         3 => StreamMode::Asf,
@@ -272,25 +267,23 @@ pub fn from_ctype_StreamMode(mode: ccx_stream_mode_enum) -> StreamMode {
         12 => StreamMode::Mkv,
         13 => StreamMode::Mxf,
         16 => StreamMode::Autodetect,
-        _ => panic!("Invalid stream mode"),
+        _ => StreamMode::ElementaryOrNotFound,
     }
 }
 
 pub fn from_ctype_SelectCodec(codec: ccx_code_type) -> SelectCodec {
     match codec {
-        0 => SelectCodec::Some(Codec::Any),
         1 => SelectCodec::Some(Codec::Teletext),
         2 => SelectCodec::Some(Codec::Dvb),
         3 => SelectCodec::Some(Codec::IsdbCc),
         4 => SelectCodec::Some(Codec::AtscCc),
         5 => SelectCodec::None,
-        _ => panic!("Invalid codec type"),
+        _ => SelectCodec::Some(Codec::Any),
     }
 }
 
 pub fn from_ctype_StreamType(stream_type: c_uint) -> StreamType {
     match stream_type {
-        0x00 => StreamType::Unknownstream,
         0x01 => StreamType::VideoMpeg1,
         0x02 => StreamType::VideoMpeg2,
         0x03 => StreamType::AudioMpeg1,
@@ -311,7 +304,7 @@ pub fn from_ctype_StreamType(stream_type: c_uint) -> StreamType {
         0x81 => StreamType::AudioAc3,
         0x82 => StreamType::AudioHdmvDts,
         0x8a => StreamType::AudioDts,
-        _ => panic!("Invalid stream type"),
+        _ => StreamType::Unknownstream,
     }
 }
 /// # Safety
@@ -489,14 +482,13 @@ pub unsafe fn from_ctype_EncoderConfig(cfg: encoder_cfg) -> EncoderConfig {
         extract_only_708,
     }
 }
-
 pub fn from_ctype_Encoding(encoding: ccx_encoding_type) -> Encoding {
     match encoding {
-        0 => Encoding::Line21,
-        1 => Encoding::Latin1,
-        3 => Encoding::Ucs2,
-        2 => Encoding::Utf8,
-        _ => panic!("Invalid encoding type"),
+        0 => Encoding::Ucs2,   // CCX_ENC_UNICODE
+        1 => Encoding::Latin1, // CCX_ENC_LATIN_1
+        2 => Encoding::Utf8,   // CCX_ENC_UTF_8
+        3 => Encoding::Line21, // CCX_ENC_ASCII
+        _ => Encoding::Utf8,   // Default to UTF-8 if unknown
     }
 }
 /// # Safety
@@ -638,12 +630,39 @@ pub unsafe fn from_ctype_PMT_entry(buffer_ptr: *mut PMT_entry) -> Option<*mut PM
     if buffer_ptr.is_null() {
         return None;
     }
+
     let buffer = unsafe { &*buffer_ptr };
-    let psi_buffer = PMTEntry {
-        program_number: buffer.program_number,
-        elementary_pid: buffer.elementary_PID,
-        stream_type: from_ctype_StreamType(buffer.stream_type as u32),
-        printable_stream_type: buffer.printable_stream_type,
+
+    let program_number = if buffer.program_number != 0 {
+        buffer.program_number
+    } else {
+        0
     };
-    Some(Box::into_raw(Box::new(psi_buffer)))
+
+    let elementary_pid = if buffer.elementary_PID != 0 {
+        buffer.elementary_PID
+    } else {
+        0
+    };
+
+    let stream_type = if buffer.stream_type != 0 {
+        from_ctype_StreamType(buffer.stream_type as u32)
+    } else {
+        StreamType::Unknownstream
+    };
+
+    let printable_stream_type = if buffer.printable_stream_type != 0 {
+        buffer.printable_stream_type
+    } else {
+        0
+    };
+
+    let mut pmt_entry = PMTEntry {
+        program_number,
+        elementary_pid,
+        stream_type,
+        printable_stream_type,
+    };
+
+    Some(&mut pmt_entry as *mut PMTEntry)
 }

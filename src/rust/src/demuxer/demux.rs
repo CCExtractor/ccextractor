@@ -288,7 +288,6 @@ impl CcxDemuxer<'_> {
         } else {
             self.stream_mode = self.auto_stream;
         }
-
         // MythTV detection logic
         match ccx_options.auto_myth {
             Some(false) => {
@@ -306,7 +305,6 @@ impl CcxDemuxer<'_> {
             }
             _ => {}
         }
-
         0
     }
     pub fn get_stream_mode(&mut self) -> i32 {
