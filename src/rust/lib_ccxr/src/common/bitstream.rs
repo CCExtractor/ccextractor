@@ -1,4 +1,5 @@
-use std::cmp::min;
+use crate::fatal;
+use crate::util::log::ExitCause;
 use thiserror::Error;
 
 /// Trait for converting Rust types to their C counterparts
@@ -28,143 +29,112 @@ pub enum BitstreamError {
     IllegalBitPosition(u8),
     #[error("Argument is greater than maximum bit number (64): {0}")]
     TooManyBits(u32),
+    #[error("Data is insufficient for operation")]
+    InsufficientData,
 }
 
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CCBitstream {
-    pub pos: *mut u8,
-    pub bpos: i32,
-    pub end: *mut u8,
-    pub bitsleft: i64,
-    pub error: i32,
-    pub _i_pos: *mut u8,
-    pub _i_bpos: i32,
+pub struct BitStreamRust<'a> {
+    pub data: &'a [u8],
+    pub pos: usize,
+    pub bpos: u8,
+    pub bits_left: i64,
+    pub error: bool,
+    pub _i_pos: usize,
+    pub _i_bpos: u8,
 }
 
-pub struct Bitstream<'a> {
-    pos: &'a [u8],
-    bpos: u8,
-    bits_left: i64,
-    error: i32,
-    _i_pos: usize,
-    _i_bpos: u8,
-}
-
-impl<'a> CType<CCBitstream> for Bitstream<'a> {
-    unsafe fn to_ctype(&self) -> CCBitstream {
-        CCBitstream {
-            pos: self.pos.as_ptr() as *mut u8,
-            bpos: self.bpos as i32,
-            end: self.pos.as_ptr().add(self.pos.len()) as *mut u8,
-            bitsleft: self.bits_left,
-            error: self.error,
-            _i_pos: self.pos.as_ptr().add(self._i_pos) as *mut u8,
-            _i_bpos: self._i_bpos as i32,
-        }
-    }
-}
-
-impl<'a> FromC<CCBitstream> for Bitstream<'a> {
-    fn from_c(value: CCBitstream) -> Self {
-        unsafe {
-            let len = value.end.offset_from(value.pos) as usize;
-            let slice = std::slice::from_raw_parts(value.pos, len);
-            let i_pos = if value._i_pos.is_null() {
-                0
-            } else {
-                value._i_pos.offset_from(value.pos) as usize
-            };
-
-            Bitstream {
-                pos: slice,
-                bpos: value.bpos as u8,
-                bits_left: value.bitsleft,
-                error: value.error,
-                _i_pos: i_pos,
-                _i_bpos: value._i_bpos as u8,
-            }
-        }
-    }
-}
-
-impl<'a> Bitstream<'a> {
+impl<'a> BitStreamRust<'a> {
+    /// Create a new bitstream. Empty data is allowed (bits_left = 0).
     pub fn new(data: &'a [u8]) -> Result<Self, BitstreamError> {
         if data.is_empty() {
             return Err(BitstreamError::NegativeLength);
         }
 
         Ok(Self {
-            pos: data,
+            data,
+            pos: 0,
             bpos: 8,
             bits_left: (data.len() as i64) * 8,
-            error: 0,
+            error: false,
             _i_pos: 0,
             _i_bpos: 0,
         })
     }
 
+    /// Peek at next `bnum` bits without advancing. MSB first.
     pub fn next_bits(&mut self, bnum: u32) -> Result<u64, BitstreamError> {
         if bnum > 64 {
-            return Err(BitstreamError::TooManyBits(bnum));
+            fatal!(cause = ExitCause::Bug; "In next_bits: Argument is greater than the maximum bit number i.e. 64: {}!", bnum);
         }
 
+        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
+        // In Rust: data.len() is equivalent to end, pos is current position
+        if self.pos > self.data.len() {
+            fatal!(cause = ExitCause::Bug; "In next_bits: Bitstream can not have negative length!");
+        }
+
+        // Keep a negative bitstream.bitsleft, but correct it.
         if self.bits_left <= 0 {
             self.bits_left -= bnum as i64;
             return Ok(0);
         }
 
-        // Calculate remaining bits
+        // Calculate the remaining number of bits in bitstream after reading.
+        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bnum;
         self.bits_left =
-            (self.pos.len() as i64 - self._i_pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
+            (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
         if self.bits_left < 0 {
             return Ok(0);
         }
 
+        // Special case for reading zero bits. Return zero
         if bnum == 0 {
             return Ok(0);
         }
 
-        let mut vbit = self.bpos;
-        let mut vpos = self._i_pos;
+        let mut vbit = self.bpos as i32;
+        let mut vpos = self.pos;
         let mut res = 0u64;
-        let mut bits_to_read = bnum;
+        let mut remaining_bits = bnum;
 
         if !(1..=8).contains(&vbit) {
-            return Err(BitstreamError::IllegalBitPosition(vbit));
+            fatal!(cause = ExitCause::Bug; "In next_bits: Illegal bit position value {}!", vbit);
         }
 
-        while bits_to_read > 0 {
-            if vpos >= self.pos.len() {
-                return Err(BitstreamError::NegativeLength);
+        loop {
+            if vpos >= self.data.len() {
+                // We should not get here ...
+                fatal!(cause = ExitCause::Bug; "In next_bits: Trying to read after end of data ...");
             }
 
-            let current_byte = self.pos[vpos];
-            res |= if (current_byte & (1 << (vbit - 1))) != 0 {
+            // C: res |= (*vpos & (0x01 << (vbit - 1)) ? 1 : 0);
+            res |= if self.data[vpos] & (0x01 << (vbit - 1)) != 0 {
                 1
             } else {
                 0
             };
-
             vbit -= 1;
-            bits_to_read -= 1;
+            remaining_bits -= 1;
 
             if vbit == 0 {
                 vpos += 1;
                 vbit = 8;
             }
 
-            if bits_to_read > 0 {
+            if remaining_bits != 0 {
                 res <<= 1;
+            } else {
+                break;
             }
         }
 
-        self._i_bpos = vbit;
+        // Remember the bitstream position
+        self._i_bpos = vbit as u8;
         self._i_pos = vpos;
 
         Ok(res)
     }
-
+    /// Read and commit `bnum` bits. On underflow or zero, returns 0.
     pub fn read_bits(&mut self, bnum: u32) -> Result<u64, BitstreamError> {
         let res = self.next_bits(bnum)?;
 
@@ -173,426 +143,258 @@ impl<'a> Bitstream<'a> {
         }
 
         self.bpos = self._i_bpos;
+        self.pos = self._i_pos;
 
         Ok(res)
     }
-
+    /// Skip `bnum` bits, advancing the position.
     pub fn skip_bits(&mut self, bnum: u32) -> Result<bool, BitstreamError> {
+        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
+        // In Rust: data.len() is equivalent to end, pos is current position
+        if self.pos > self.data.len() {
+            fatal!(cause = ExitCause::Bug; "In skip_bits: bitstream length cannot be negative!");
+        }
+
+        // Keep a negative bitstream.bitsleft, but correct it.
         if self.bits_left < 0 {
             self.bits_left -= bnum as i64;
             return Ok(false);
         }
 
+        // Calculate the remaining number of bits in bitstream after reading.
+        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bnum;
         self.bits_left =
-            (self.pos.len() as i64 - self._i_pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
+            (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
         if self.bits_left < 0 {
             return Ok(false);
         }
 
+        // Special case for reading zero bits. Return true
         if bnum == 0 {
             return Ok(true);
         }
 
-        let mut new_bpos = (self.bpos as i32) - (bnum % 8) as i32;
-        let mut new_pos = self._i_pos + (bnum / 8) as usize;
+        // Handle the bit position arithmetic more carefully
+        // C: bstr->bpos -= bnum % 8;
+        // C: bstr->pos += bnum / 8;
+        let mut new_bpos = self.bpos as i32 - (bnum % 8) as i32;
+        let mut new_pos = self.pos + (bnum / 8) as usize;
 
+        // C: if (bstr->bpos < 1) { bstr->bpos += 8; bstr->pos += 1; }
         if new_bpos < 1 {
             new_bpos += 8;
             new_pos += 1;
         }
 
         self.bpos = new_bpos as u8;
-        self._i_pos = new_pos;
+        self.pos = new_pos;
 
         Ok(true)
     }
 
+    /// Check alignment: true if on next-byte boundary.
     pub fn is_byte_aligned(&self) -> Result<bool, BitstreamError> {
-        if self.bpos == 0 || self.bpos > 8 {
-            return Err(BitstreamError::IllegalBitPosition(self.bpos));
+        if self.pos > self.data.len() {
+            fatal!(cause = ExitCause::Bug; "In is_byte_aligned: bitstream length can not be negative!");
         }
-        Ok(self.bpos == 8)
+        let vbit = self.bpos as i32;
+        if vbit == 0 || vbit > 8 {
+            fatal!(cause = ExitCause::Bug; "In is_byte_aligned: Illegal bit position value {}!", vbit);
+        }
+        if vbit == 8 {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 
+    /// Align to next byte boundary (commit state).
     pub fn make_byte_aligned(&mut self) -> Result<(), BitstreamError> {
-        let vbit = self.bpos;
-
-        if vbit == 0 || vbit > 8 {
-            return Err(BitstreamError::IllegalBitPosition(vbit));
+        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
+        // In Rust: data.len() is equivalent to end, pos is current position
+        if self.pos > self.data.len() {
+            fatal!(cause = ExitCause::Bug; "In make_byte_aligned: bitstream length can not be negative!");
         }
 
+        let vbit = self.bpos as i32;
+
+        if vbit == 0 || vbit > 8 {
+            fatal!(cause = ExitCause::Bug; "In make_byte_aligned: Illegal bit position value {}!", vbit);
+        }
+
+        // Keep a negative bstr->bitsleft, but correct it.
         if self.bits_left < 0 {
+            // Pay attention to the bit alignment
+            // C: bstr->bitsleft = (bstr->bitsleft - 7) / 8 * 8;
             self.bits_left = (self.bits_left - 7) / 8 * 8;
             return Ok(());
         }
 
         if self.bpos != 8 {
             self.bpos = 8;
-            self._i_pos += 1;
+            self.pos += 1;
         }
 
-        self.bits_left = (self.pos.len() as i64 - self._i_pos as i64 - 1) * 8 + self.bpos as i64;
+        // Reset, in case a next_???() function was used before
+        // C: bstr->bitsleft = 0LL + 8 * (bstr->end - bstr->pos - 1) + bstr->bpos;
+        self.bits_left = 8 * (self.data.len() as i64 - self.pos as i64 - 1) + self.bpos as i64;
+
         Ok(())
     }
 
-    pub fn next_bytes(&mut self, bynum: usize) -> Result<Option<&[u8]>, BitstreamError> {
-        if self.bits_left < 0 {
-            self.bits_left -= (bynum * 8) as i64;
-            return Ok(None);
+    /// Peek at next `bynum` bytes without advancing.
+    /// Errors if not aligned or insufficient data.
+    pub fn next_bytes(&mut self, bynum: usize) -> Result<&'a [u8], BitstreamError> {
+        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
+        // In Rust: data.len() is equivalent to end, pos is current position
+        if self.pos > self.data.len() {
+            fatal!(cause = ExitCause::Bug; "In next_bytes: bitstream length can not be negative!");
         }
 
-        self.bits_left = (self.pos.len() as i64 - self._i_pos as i64 - 1) * 8 + self.bpos as i64
+        // Keep a negative bstr->bitsleft, but correct it.
+        if self.bits_left < 0 {
+            self.bits_left -= (bynum * 8) as i64;
+            return Err(BitstreamError::InsufficientData);
+        }
+
+        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bynum * 8;
+        self.bits_left = (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64
             - (bynum * 8) as i64;
 
+        // C: if (!is_byte_aligned(bstr) || bstr->bitsleft < 0 || bynum < 1)
         if !self.is_byte_aligned()? || self.bits_left < 0 || bynum < 1 {
-            return Ok(None);
+            return Err(BitstreamError::InsufficientData);
         }
 
+        // Remember the bitstream position
+        // C: bstr->_i_bpos = 8;
+        // C: bstr->_i_pos = bstr->pos + bynum;
         self._i_bpos = 8;
-        self._i_pos += bynum;
+        self._i_pos = self.pos + bynum;
 
-        Ok(Some(
-            &self.pos[self._i_pos..min(self._i_pos + bynum, self.pos.len())],
-        ))
+        // Return slice of the requested bytes
+        // C: return bstr->pos;
+        if self.pos + bynum <= self.data.len() {
+            Ok(&self.data[self.pos..self.pos + bynum])
+        } else {
+            Err(BitstreamError::InsufficientData)
+        }
+    }
+    /// Read and commit `bynum` bytes.
+    pub fn read_bytes(&mut self, bynum: usize) -> Result<&'a [u8], BitstreamError> {
+        let res = self.next_bytes(bynum)?;
+
+        // Advance the bitstream when a read was possible
+        // C: if (res) { bstr->bpos = bstr->_i_bpos; bstr->pos = bstr->_i_pos; }
+        self.bpos = self._i_bpos;
+        self.pos = self._i_pos;
+
+        Ok(res)
+    }
+    /// Return an integer number with "bytes" precision from the current bitstream position.
+    /// Allowed "bytes" values are 1,2,4,8.
+    /// This function advances the bitstream pointer when "advance" is true.
+    /// Numbers come MSB (most significant first).
+    pub fn bitstream_get_num(
+        &mut self,
+        bytes: usize,
+        advance: bool,
+    ) -> Result<u64, BitstreamError> {
+        let bpos = if advance {
+            self.read_bytes(bytes)?
+        } else {
+            self.next_bytes(bytes)?
+        };
+
+        match bytes {
+            1 | 2 | 4 | 8 => {}
+            _ => {
+                fatal!(cause = ExitCause::Bug; "In bitstream_get_num: Illegal precision value [{}]!", bytes);
+            }
+        }
+
+        let mut rval = 0u64;
+        for i in 0..bytes {
+            // Read backwards - C: unsigned char *ucpos = ((unsigned char *)bpos) + bytes - i - 1;
+            let uc = bpos[bytes - i - 1];
+            rval = (rval << 8) + uc as u64;
+        }
+
+        Ok(rval)
     }
 
-    pub fn read_bytes(&mut self, bynum: usize) -> Result<Option<&[u8]>, BitstreamError> {
-        if self.bits_left < 0 {
-            self.bits_left -= (bynum * 8) as i64;
-            return Ok(None);
-        }
-
-        if !self.is_byte_aligned()? || bynum < 1 {
-            return Ok(None);
-        }
-
-        self.bits_left = (self.pos.len() as i64 - self._i_pos as i64 - 1) * 8 + self.bpos as i64
-            - (bynum * 8) as i64;
-        if self.bits_left < 0 {
-            return Ok(None);
-        }
-
-        let new_pos = self._i_pos + bynum;
-        let slice = &self.pos[self._i_pos..min(new_pos, self.pos.len())];
-
-        self.bpos = 8;
-        self._i_pos = new_pos;
-
-        Ok(Some(slice))
-    }
-
+    /// Read unsigned Exp-Golomb code from bitstream
     pub fn read_exp_golomb_unsigned(&mut self) -> Result<u64, BitstreamError> {
         let mut zeros = 0;
 
+        // Count leading zeros
         while self.read_bits(1)? == 0 && self.bits_left >= 0 {
             zeros += 1;
         }
 
-        let res = (1u64 << zeros) - 1 + self.read_bits(zeros as u32)?;
+        // Read the remaining bits
+        let remaining_bits = self.read_bits(zeros)?;
+        let res = ((1u64 << zeros) - 1) + remaining_bits;
+
         Ok(res)
     }
 
+    /// Read signed Exp-Golomb code from bitstream
     pub fn read_exp_golomb(&mut self) -> Result<i64, BitstreamError> {
         let res = self.read_exp_golomb_unsigned()? as i64;
-        Ok((res / 2 + if res % 2 != 0 { 1 } else { 0 }) * if res % 2 != 0 { 1 } else { -1 })
+
+        // The following function might truncate when res+1 overflows
+        // res = (res+1)/2 * (res % 2 ? 1 : -1);
+        // Use this:
+        // C: res = (res / 2 + (res % 2 ? 1 : 0)) * (res % 2 ? 1 : -1);
+        let result =
+            (res / 2 + if res % 2 != 0 { 1 } else { 0 }) * if res % 2 != 0 { 1 } else { -1 };
+
+        Ok(result)
+    }
+    /// Read signed integer with bnum bits length.
+    pub fn read_int(&mut self, bnum: u32) -> Result<i64, BitstreamError> {
+        let res = self.read_bits(bnum)?;
+
+        // Special case for reading zero bits. Return zero
+        if bnum == 0 {
+            return Ok(0);
+        }
+
+        // C: return (0xFFFFFFFFFFFFFFFFULL << bnum) | res;
+        // Sign extend by filling upper bits with 1s
+        let result = (0xFFFFFFFFFFFFFFFFu64 << bnum) | res;
+
+        Ok(result as i64)
     }
 
+    /// Return the value with the bit order reversed.
     pub fn reverse8(data: u8) -> u8 {
         let mut res = 0u8;
+
         for k in 0..8 {
             res <<= 1;
-            res |= (data & (1 << k)) >> k;
+            res |= if data & (0x01 << k) != 0 { 1 } else { 0 };
         }
+
         res
     }
 }
-
-/// Initialize a new bitstream from raw pointers
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences raw pointers
-/// - Creates a slice from raw parts
-/// - Assumes the memory between start and end is valid and properly aligned
-/// - Assumes the memory remains valid for the lifetime of the returned Bitstream
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_init_bitstream(
-    start: *const u8,
-    end: *const u8,
-) -> *mut Bitstream<'static> {
-    if start.is_null() || end.is_null() {
-        return std::ptr::null_mut();
-    }
-
-    let len = end.offset_from(start) as usize;
-    let slice = std::slice::from_raw_parts(start, len);
-    match Bitstream::new(slice) {
-        Ok(bs) => Box::into_raw(Box::new(bs)),
-        Err(_) => std::ptr::null_mut(),
-    }
-}
-
-/// Free a bitstream created by ccxr_init_bitstream
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer
-/// - Assumes the pointer was created by ccxr_init_bitstream
-/// - Assumes no other references to the Bitstream exist
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_free_bitstream(bs: *mut Bitstream<'static>) {
-    if !bs.is_null() {
-        drop(Box::from_raw(bs));
-    }
-}
-
-/// Read bits from a bitstream without advancing the position
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_next_bits(bs: *mut CCBitstream, bnum: u32) -> u64 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    let val = match rust_bs.next_bits(bnum) {
-        Ok(val) => val,
-        Err(_) => return 0,
-    };
-    let updated_bs = unsafe { rust_bs.to_ctype() };
-    bs.pos = updated_bs.pos;
-    bs.bpos = updated_bs.bpos;
-    bs._i_pos = updated_bs._i_pos;
-    bs._i_bpos = updated_bs._i_bpos;
-    bs.bitsleft = updated_bs.bitsleft;
-    val
-}
-
-/// Read bits from a bitstream and advance the position
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_read_bits(bs: *mut CCBitstream, bnum: u32) -> u64 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    let val = match rust_bs.read_bits(bnum) {
-        Ok(val) => val,
-        Err(_) => return 0,
-    };
-    let updated_bs = unsafe { rust_bs.to_ctype() };
-    bs.pos = updated_bs.pos;
-    bs.bpos = updated_bs.bpos;
-    bs._i_pos = updated_bs._i_pos;
-    bs._i_bpos = updated_bs._i_bpos;
-    bs.bitsleft = updated_bs.bitsleft;
-    val
-}
-
-/// Skip a number of bits in the bitstream
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_skip_bits(bs: *mut CCBitstream, bnum: u32) -> i32 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    let val = match rust_bs.skip_bits(bnum) {
-        Ok(val) => val,
-        Err(_) => return 0,
-    };
-    let updated_bs = unsafe { rust_bs.to_ctype() };
-    bs.pos = updated_bs.pos;
-    bs.bpos = updated_bs.bpos;
-    bs._i_pos = updated_bs._i_pos;
-    bs._i_bpos = updated_bs._i_bpos;
-    bs.bitsleft = updated_bs.bitsleft;
-    if val {
-        1
-    } else {
-        0
-    }
-}
-
-/// Check if the bitstream is byte aligned
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_is_byte_aligned(bs: *const CCBitstream) -> i32 {
-    let bs = &*bs;
-    let rust_bs = Bitstream::from_c(*bs);
-    match rust_bs.is_byte_aligned() {
-        Ok(val) => {
-            if val {
-                1
-            } else {
-                0
-            }
-        }
-        Err(_) => 0,
-    }
-}
-
-/// Align the bitstream to the next byte boundary
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_make_byte_aligned(bs: *mut CCBitstream) {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    if rust_bs.make_byte_aligned().is_ok() {
-        let updated_bs = unsafe { rust_bs.to_ctype() };
-        bs.pos = updated_bs.pos;
-        bs.bpos = updated_bs.bpos;
-        bs._i_pos = updated_bs._i_pos;
-        bs._i_bpos = updated_bs._i_bpos;
-        bs.bitsleft = updated_bs.bitsleft;
-    }
-}
-
-/// Get a pointer to the next bytes in the bitstream without advancing
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Returns a raw pointer that must not outlive the bitstream
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_next_bytes(bs: *mut CCBitstream, bynum: usize) -> *const u8 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    let bytes = match rust_bs.next_bytes(bynum) {
-        Ok(Some(bytes)) => bytes,
-        _ => return std::ptr::null(),
-    };
-    let bytes_ptr = bytes.as_ptr();
-    let updated_bs = unsafe { rust_bs.to_ctype() };
-    bs.pos = updated_bs.pos;
-    bs.bpos = updated_bs.bpos;
-    bs._i_pos = updated_bs._i_pos;
-    bs._i_bpos = updated_bs._i_bpos;
-    bs.bitsleft = updated_bs.bitsleft;
-    bytes_ptr
-}
-
-/// Read bytes from the bitstream and advance the position
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Returns a raw pointer that must not outlive the bitstream
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_read_bytes(bs: *mut CCBitstream, bynum: usize) -> *const u8 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    let bytes = match rust_bs.read_bytes(bynum) {
-        Ok(Some(bytes)) => bytes,
-        _ => return std::ptr::null(),
-    };
-    let bytes_ptr = bytes.as_ptr();
-    let updated_bs = unsafe { rust_bs.to_ctype() };
-    bs.pos = updated_bs.pos;
-    bs.bpos = updated_bs.bpos;
-    bs._i_pos = updated_bs._i_pos;
-    bs._i_bpos = updated_bs._i_bpos;
-    bs.bitsleft = updated_bs.bitsleft;
-    bytes_ptr
-}
-
-/// Read an unsigned Exp-Golomb code from the bitstream
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut CCBitstream) -> u64 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    match rust_bs.read_exp_golomb_unsigned() {
-        Ok(val) => {
-            let updated_bs = unsafe { rust_bs.to_ctype() };
-            bs.pos = updated_bs.pos;
-            bs.bpos = updated_bs.bpos;
-            bs._i_pos = updated_bs._i_pos;
-            bs._i_bpos = updated_bs._i_bpos;
-            bs.bitsleft = updated_bs.bitsleft;
-            val
-        }
-        Err(_) => 0,
-    }
-}
-
-/// Read a signed Exp-Golomb code from the bitstream
-///
-/// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer to CCBitstream
-/// - Assumes the pointer and contained data are valid and properly aligned
-/// - Modifies the bitstream state
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut CCBitstream) -> i64 {
-    let bs = &mut *bs;
-    let mut rust_bs = Bitstream::from_c(*bs);
-    match rust_bs.read_exp_golomb() {
-        Ok(val) => {
-            let updated_bs = unsafe { rust_bs.to_ctype() };
-            bs.pos = updated_bs.pos;
-            bs.bpos = updated_bs.bpos;
-            bs._i_pos = updated_bs._i_pos;
-            bs._i_bpos = updated_bs._i_bpos;
-            bs.bitsleft = updated_bs.bitsleft;
-            val
-        }
-        Err(_) => 0,
-    }
-}
-
-/// Reverse the bits in a byte
-///
-/// # Safety
-/// This function is unsafe because it is part of the FFI interface.
-/// However, it does not perform any unsafe operations internally.
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_reverse8(data: u8) -> u8 {
-    Bitstream::reverse8(data)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::mem;
 
     #[test]
     fn test_bitstream_creation() {
         let data = vec![0xFF, 0x00];
-        let bs = Bitstream::new(&data);
+        let bs = BitStreamRust::new(&data);
         assert!(bs.is_ok());
     }
 
     #[test]
     fn test_read_bits() {
         let data = vec![0b10101010];
-        let mut bs = Bitstream::new(&data).unwrap();
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
         assert_eq!(bs.read_bits(1).unwrap(), 1);
         assert_eq!(bs.read_bits(1).unwrap(), 0);
@@ -602,7 +404,7 @@ mod tests {
     #[test]
     fn test_byte_alignment() {
         let data = vec![0xFF];
-        let mut bs = Bitstream::new(&data).unwrap();
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
         assert!(bs.is_byte_aligned().unwrap());
         bs.read_bits(1).unwrap();
@@ -611,116 +413,94 @@ mod tests {
         assert!(bs.is_byte_aligned().unwrap());
     }
 
-    // FFI binding tests
     #[test]
-    fn test_ffi_next_bits() {
-        let data = vec![0b10101010];
-        let mut c_bs = CCBitstream {
-            pos: data.as_ptr() as *mut u8,
-            bpos: 8,
-            end: unsafe { data.as_ptr().add(data.len()) } as *mut u8,
-            bitsleft: (data.len() as i64) * 8,
-            error: 0,
-            _i_pos: data.as_ptr() as *mut u8,
-            _i_bpos: 8,
-        };
-
-        assert_eq!(unsafe { ccxr_next_bits(&mut c_bs, 1) }, 1);
+    fn test_multi_bit_reads() {
+        // Test data: 0xFF, 0x00 = 11111111 00000000
+        let data = [0xFF, 0x00];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        assert_eq!(bs.next_bits(4).unwrap(), 0xF); // 1111
+        assert_eq!(bs.next_bits(4).unwrap(), 0xF); // 1111
     }
 
     #[test]
-    fn test_ffi_read_bits() {
-        let data = vec![0b10101010];
-        let mut c_bs = CCBitstream {
-            pos: data.as_ptr() as *mut u8,
-            bpos: 8,
-            end: unsafe { data.as_ptr().add(data.len()) } as *mut u8,
-            bitsleft: (data.len() as i64) * 8,
-            error: 0,
-            _i_pos: data.as_ptr() as *mut u8,
-            _i_bpos: 8,
-        };
+    fn test_cross_byte_boundary() {
+        // Test data: 0xF0, 0x0F = 11110000 00001111
+        let data = [0xF0, 0x0F];
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
-        assert_eq!(unsafe { ccxr_read_bits(&mut c_bs, 3) }, 0b101);
+        // Read 6 bits crossing byte boundary: 111100 (should be 0x3C = 60)
+        assert_eq!(bs.next_bits(6).unwrap(), 0x3C);
+
+        // Read remaining 10 bits: 0000001111 (should be 0x0F = 15)
     }
 
     #[test]
-    fn test_ffi_byte_alignment() {
-        let data = vec![0xFF];
-        let mut c_bs = CCBitstream {
-            pos: data.as_ptr() as *mut u8,
-            bpos: 8,
-            end: unsafe { data.as_ptr().add(data.len()) } as *mut u8,
-            bitsleft: (data.len() as i64) * 8,
-            error: 0,
-            _i_pos: data.as_ptr() as *mut u8,
-            _i_bpos: 8,
-        };
+    fn test_large_reads() {
+        // Test reading up to 64 bits
+        let data = [0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88];
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
-        assert_eq!(unsafe { ccxr_is_byte_aligned(&c_bs) }, 1);
-        unsafe { ccxr_read_bits(&mut c_bs, 1) };
-        assert_eq!(unsafe { ccxr_is_byte_aligned(&c_bs) }, 0);
+        // Read all 64 bits at once
+        let result = bs.next_bits(64).unwrap();
+        let expected = 0xFFEEDDCCBBAA9988u64;
+        assert_eq!(result, expected);
     }
 
     #[test]
-    fn test_ffi_read_bytes() {
-        static DATA: [u8; 3] = [0xAA, 0xBB, 0xCC];
-        let mut c_bs = CCBitstream {
-            pos: DATA.as_ptr() as *mut u8,
-            bpos: 8,
-            end: unsafe { DATA.as_ptr().add(DATA.len()) } as *mut u8,
-            bitsleft: (DATA.len() as i64) * 8,
-            error: 0,
-            _i_pos: DATA.as_ptr() as *mut u8,
-            _i_bpos: 8,
-        };
+    fn test_zero_bits_read() {
+        let data = [0xAA];
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
-        unsafe {
-            let ptr = ccxr_read_bytes(&mut c_bs, 2);
-            assert!(!ptr.is_null());
-            let b1 = *ptr;
-            let b2 = *ptr.add(1);
-            assert_eq!([b1, b2], [0xAA, 0xBB]);
-        }
+        // Reading 0 bits should return 0 and not advance position
+        assert_eq!(bs.next_bits(0).unwrap(), 0);
+        assert_eq!(bs._i_pos, 0);
+
+        // Next read should still work normally
+        assert_eq!(bs.next_bits(1).unwrap(), 1);
     }
 
     #[test]
-    fn test_ffi_exp_golomb() {
-        let data = vec![0b10000000];
-        let data_ptr = data.as_ptr();
-        let mut c_bs = CCBitstream {
-            pos: data_ptr as *mut u8,
-            bpos: 8,
-            end: unsafe { data_ptr.add(data.len()) } as *mut u8,
-            bitsleft: (data.len() as i64) * 8,
-            error: 0,
-            _i_pos: data_ptr as *mut u8,
-            _i_bpos: 8,
-        };
+    fn test_insufficient_data() {
+        let data = [0xAA]; // Only 8 bits available
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
-        assert_eq!(unsafe { ccxr_read_exp_golomb_unsigned(&mut c_bs) }, 0);
-        mem::drop(data);
+        // Try to read more bits than available
+        let result = bs.next_bits(16).unwrap();
+        assert_eq!(result, 0); // Should return 0 when not enough bits
+        assert!(bs.bits_left < 0); // bits_left should be negative
+
+        // Subsequent reads should also return 0
+        assert_eq!(bs.next_bits(8).unwrap(), 0);
     }
 
     #[test]
-    fn test_ffi_reverse8() {
-        assert_eq!(unsafe { ccxr_reverse8(0b10101010) }, 0b01010101);
+    fn test_negative_bits_left_behavior() {
+        let data = [0xFF];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+
+        // Exhaust all bits
+        bs.next_bits(8).unwrap();
+
+        // Now bits_left should be 0
+        assert_eq!(bs.bits_left, 0);
+
+        // Try to read more - should return 0 and make bits_left negative
+        assert_eq!(bs.next_bits(4).unwrap(), 0);
+        assert_eq!(bs.bits_left, -4);
+
+        // Another read should make it more negative
+        assert_eq!(bs.next_bits(2).unwrap(), 0);
+        assert_eq!(bs.bits_left, -6);
     }
 
     #[test]
-    fn test_ffi_state_updates() {
-        let data = vec![0xAA, 0xBB];
-        let mut c_bs = CCBitstream {
-            pos: data.as_ptr() as *mut u8,
-            bpos: 8,
-            end: unsafe { data.as_ptr().add(data.len()) } as *mut u8,
-            bitsleft: (data.len() as i64) * 8,
-            error: 0,
-            _i_pos: data.as_ptr() as *mut u8,
-            _i_bpos: 8,
-        };
+    fn test_bits_left_calculation() {
+        let data = [0xFF, 0xFF, 0xFF]; // 24 bits total
+        let mut bs = BitStreamRust::new(&data).unwrap();
 
-        unsafe { ccxr_read_bits(&mut c_bs, 4) };
-        assert_eq!(c_bs.bpos, 4);
+        assert_eq!(bs.bits_left, 24);
+
+        bs.next_bits(5).unwrap();
+        assert_eq!(bs.bits_left, 19);
     }
 }

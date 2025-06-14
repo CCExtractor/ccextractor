@@ -28,7 +28,7 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 use args::Args;
 use bindings::*;
 use clap::{error::ErrorKind, Parser};
-use common::{CType, CType2, FromRust};
+use common::{copy_from_rust, CType, CType2};
 use decoder::Dtvcc;
 use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
 use parser::OptionsExt;
@@ -173,7 +173,11 @@ pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> boo
             0 | 1 => {}
             // Type 2 and 3 are for CEA-708 data.
             2 | 3 => {
-                let current_time = unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) };
+                let current_time = if ctx.timing.is_null() {
+                    0
+                } else {
+                    unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) }
+                };
                 ctx.current_field = 3;
 
                 // Check whether current time is within start and end bounds
@@ -282,7 +286,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     tlt_config = _tlt_config.to_ctype(&opt);
 
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
-    ccx_options.copy_from_rust(opt);
+    copy_from_rust(&raw mut ccx_options, opt);
 
     if !_capitalization_list.is_empty() {
         capitalization_list = _capitalization_list.to_ctype();

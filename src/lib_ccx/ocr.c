@@ -9,7 +9,6 @@
 #include "ccx_encoders_helpers.h"
 #include "ccx_encoders_spupng.h"
 #include "ocr.h"
-#undef OCR_DEBUG
 
 struct ocrCtx
 {
@@ -620,6 +619,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 					// realloc if memory allocated may be not enough
 					int length_needed = (new_text_out_iter - new_text_out) +
 							    (line_end - line_start) +
+							    (last_font_tag_end ? (last_font_tag_end - last_font_tag) : 0) +
 							    length_closing_font + 32;
 
 					if (length_needed > length)
@@ -685,7 +685,6 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		TessResultIteratorDelete(ri);
 	}
 	// End Color Detection
-	freep(&text_out);
 	boxDestroy(&crop_points);
 
 	pixDestroy(&pix);
@@ -697,23 +696,15 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	return text_out;
 }
 
-void erode(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color)
+void erode(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color, int background_index)
 {
-	int background_index;
-	for (background_index = 0; background_index < nb_color; background_index++)
-	{
-		if (alpha[background_index])
-		{
-			break;
-		}
-	}
 	// we will use a 2*2 kernel for the erosion
 	for (int row = 0; row < h - 1; row++)
 	{
 		for (int col = 0; col < w - 1; col++)
 		{
-			if (alpha[bitmap[row * w + col]] || alpha[bitmap[(row + 1) * w + col]] ||
-			    alpha[bitmap[row * w + (col + 1)]] || alpha[bitmap[(row + 1) * w + (col + 1)]])
+			if (bitmap[row * w + col] == background_index || bitmap[(row + 1) * w + col] == background_index ||
+			    bitmap[row * w + (col + 1)] == background_index || bitmap[(row + 1) * w + (col + 1)] == background_index)
 			{
 				bitmap[row * w + col] = background_index;
 			}
@@ -721,23 +712,15 @@ void erode(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, i
 	}
 }
 
-void dilate(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color)
+void dilate(png_color *palette, png_byte *alpha, uint8_t *bitmap, int w, int h, int nb_color, int foreground_index)
 {
-	int foreground_index;
-	for (foreground_index = 0; foreground_index < nb_color; foreground_index++)
-	{
-		if (!alpha[foreground_index])
-		{
-			break;
-		}
-	}
 	// we will use a 2*2 kernel for the erosion
 	for (int row = 0; row < h - 1; row++)
 	{
 		for (int col = 0; col < w - 1; col++)
 		{
-			if (!(alpha[bitmap[row * w + col]] && alpha[bitmap[(row + 1) * w + col]] &&
-			      alpha[bitmap[row * w + (col + 1)]] && alpha[bitmap[(row + 1) * w + (col + 1)]]))
+			if ((bitmap[row * w + col] == foreground_index && bitmap[(row + 1) * w + col] == foreground_index &&
+			     bitmap[row * w + (col + 1)] == foreground_index && bitmap[(row + 1) * w + (col + 1)] == foreground_index))
 			{
 				bitmap[row * w + col] = foreground_index;
 			}
@@ -768,6 +751,7 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 	 */
 	uint32_t *mcit = NULL;
 	struct transIntensity ti = {alpha, palette};
+	int text_color, text_bg_color;
 
 	int ret = 0;
 
@@ -834,6 +818,14 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 				max_ind = j;
 			}
 		}
+
+		// Assume second most frequent color to be text background (first is alpha channel)
+		if (i == 1)
+			text_bg_color = iot[max_ind];
+		// Assume third most frequent color to be text color
+		if (i == 2)
+			text_color = iot[max_ind];
+
 		for (j = i; j > 0 && max_ind < mcit[j - 1]; j--)
 		{
 			mcit[j] = mcit[j - 1];
@@ -877,8 +869,8 @@ static int quantize_map(png_byte *alpha, png_color *palette,
 			palette[iot[i]].green = palette[index].green;
 		}
 	}
-	erode(palette, alpha, bitmap, w, h, nb_color);
-	dilate(palette, alpha, bitmap, w, h, nb_color);
+	erode(palette, alpha, bitmap, w, h, nb_color, text_bg_color);
+	dilate(palette, alpha, bitmap, w, h, nb_color, text_color);
 #ifdef OCR_DEBUG
 	ccx_common_logging.log_ftn("Colors present in quantized Image\n");
 	for (int i = 0; i < nb_color; i++)
@@ -1061,7 +1053,13 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 			len += strlen(rect->ocr_text);
 	}
 	if (len <= 0)
+	{
+		for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+		{
+			freep(&rect->ocr_text);
+		}
 		return NULL;
+	}
 	else
 	{
 		str = malloc(len + 1 + 10); // Extra space for possible trailing '/n's at the end of tesseract UTF8 text
@@ -1075,7 +1073,7 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 		if (!rect->ocr_text)
 			continue;
 		add_ocrtext2str(str, rect->ocr_text, context->encoded_crlf, context->encoded_crlf_length);
-		free(rect->ocr_text);
+		freep(&rect->ocr_text);
 	}
 	return str;
 }

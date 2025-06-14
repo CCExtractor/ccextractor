@@ -27,6 +27,7 @@ fn main() {
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
+        "bitstream",
         "cc_subtitle",
         "ccx_output_format",
         "ccx_boundary_time",

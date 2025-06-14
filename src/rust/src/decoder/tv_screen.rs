@@ -17,6 +17,7 @@ use crate::{
     bindings::*,
     utils::{is_false, is_true},
 };
+use encoding_rs::Encoding;
 
 use log::{debug, warn};
 
@@ -232,8 +233,17 @@ impl dtvcc_tv_screen {
                 };
                 debug!("Charset: {}", charset);
 
-                let op = iconv::decode(&buf, charset).map_err(|err| err.to_string())?;
-                writer.write_to_file(op.as_bytes())?;
+                // Look up the encoding by label (name)
+                if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
+                    let (cow, _encoding_used, had_errors) = encoding.decode(&buf);
+                    if had_errors {
+                        println!("Warning: Had errors during encoding from {charset} to UTF-8");
+                    }
+                    if _encoding_used != encoding {
+                        println!("Warning: Encoding specified ({}) does not match encoding detected ({})",charset,_encoding_used.name());
+                    }
+                    writer.write_to_file(cow.as_bytes())?;
+                }
             }
         } else {
             writer.write_to_file(&buf)?;

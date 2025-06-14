@@ -104,6 +104,12 @@ Notes on adding credits:
   to display the message for at least the specified time.
 
 Notes on the CEA-708 decoder:
+	By default, ccextractor now extracts both CEA-608 and CEA-708 subtitles
+	if they are present in the input. This results in two output files: one
+	for CEA-608 and one for CEA-708.
+	To extract only CEA-608 subtitles, use -1, -2, or -12.
+	To extract only CEA-708 subtitles, use -svc.
+	To extract both CEA-608 and CEA-708 subtitles, use both -1/-2/-12 and -svc.
   While it is starting to be useful, it's
   a work in progress. A number of things don't work yet in the decoder
   itself, and many of the auxiliary tools (case conversion to name one)
@@ -156,7 +162,7 @@ pub struct Args {
     pub pesheader: bool,
     /// Write the DVB subtitle debug traces to console.
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
-    pub debugdvdsub: bool,
+    pub debugdvbsub: bool,
     /// Ignore PTS jumps (default).
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub ignoreptsjumps: bool,
