@@ -12,6 +12,17 @@ fn main() {
         "writercwtdata",
         "version",
         "set_binary_mode",
+        "print_file_report",
+        "start_upd_srv", // shall be removed after NET
+        "start_tcp_srv", // shall be removed after NET
+        "net_tcp_read",  // shall be removed after NET
+        "net_udp_read",  // shall be removed after NET
+        "ccx_probe_mxf", // shall be removed after mxf
+        "ccx_mxf_init",  // shall be removed after mxf
+        "ccx_gxf_probe", // shall be removed after gxf
+        "ccx_gxf_init",  // shall be removed after gxf
+        #[cfg(feature = "enable_ffmpeg")]
+        "init_ffmpeg",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -27,6 +38,8 @@ fn main() {
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
+        "ccx_demuxer",
+        "lib_ccx_ctx",
         "cc_subtitle",
         "ccx_output_format",
         "ccx_boundary_time",
@@ -38,6 +51,8 @@ fn main() {
         "ccx_encoding_type",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
+        "ccx_gxf",
+        "MXFContext",
         "uint8_t",
         "word_list",
     ]);
