@@ -1,7 +1,6 @@
 #ifndef _BITSTREAM_
 #define _BITSTREAM_
 
-
 // The structure holds the current position in the bitstream.
 // pos points to the current byte position and bpos counts the
 // bits left unread at the current byte pos. No bit read means
