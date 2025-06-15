@@ -21,6 +21,10 @@ fn main() {
         "ccx_mxf_init",  // shall be removed after mxf
         "ccx_gxf_probe", // shall be removed after gxf
         "ccx_gxf_init",  // shall be removed after gxf
+        #[cfg(windows)]
+        "_open_osfhandle",
+        #[cfg(windows)]
+        "_get_osfhandle",
         #[cfg(feature = "enable_ffmpeg")]
         "init_ffmpeg",
     ]);

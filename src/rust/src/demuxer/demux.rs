@@ -11,12 +11,14 @@ use std::io::{Seek, SeekFrom};
 
 use crate::demuxer::common_structs::*;
 use crate::file_functions::file::init_file_buffer;
+#[cfg(windows)]
+use crate::{bindings::_open_osfhandle, file_functions::file::open_windows};
 use cfg_if::cfg_if;
 #[cfg(unix)]
 use std::os::fd::{FromRawFd, IntoRawFd};
 use std::os::raw::{c_char, c_uint};
 #[cfg(windows)]
-use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+use std::os::windows::io::IntoRawHandle;
 use std::path::Path;
 use std::ptr::{null, null_mut};
 
@@ -44,7 +46,7 @@ impl CcxDemuxer<'_> {
         #[cfg(unix)]
         let mut file = unsafe { File::from_raw_fd(in_fd) };
         #[cfg(windows)]
-        let mut file = unsafe { File::from_raw_handle(in_fd as _) };
+        let mut file = open_windows(in_fd);
 
         // Get current position: equivalent to LSEEK(in, 0, SEEK_CUR);
         let current = match file.stream_position() {
@@ -147,7 +149,7 @@ impl CcxDemuxer<'_> {
             }
             #[cfg(windows)]
             {
-                let file = unsafe { File::from_raw_handle(self.infd as _) };
+                let file = open_windows(self.infd);
                 drop(file); // This closes the file descriptor
                 self.infd = -1;
                 ccx_options.activity_input_file_closed();
@@ -253,7 +255,12 @@ impl CcxDemuxer<'_> {
                         }
                         #[cfg(windows)]
                         {
-                            self.infd = file.into_raw_handle() as _;
+                            let handle = file.into_raw_handle();
+                            let fd = unsafe { _open_osfhandle(handle as isize, 0) };
+                            if fd == -1 {
+                                return -1;
+                            }
+                            self.infd = fd;
                         }
                     }
                     Err(_) => return -1,
