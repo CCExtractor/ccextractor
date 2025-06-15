@@ -1,3 +1,5 @@
+#[cfg(windows)]
+use crate::bindings::_get_osfhandle;
 use crate::bindings::{lib_ccx_ctx, print_file_report};
 use crate::demuxer::common_structs::*;
 use crate::libccxr_exports::demuxer::copy_demuxer_from_c_to_rust;
@@ -15,8 +17,6 @@ use std::io::{Read, Seek, SeekFrom};
 use std::os::fd::FromRawFd;
 #[cfg(windows)]
 use std::os::windows::io::FromRawHandle;
-#[cfg(windows)]
-use std::os::windows::io::IntoRawHandle;
 use std::ptr::{copy, copy_nonoverlapping};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{mem, ptr, slice};
@@ -52,18 +52,29 @@ pub fn init_file_buffer(ctx: &mut CcxDemuxer) -> i32 {
     0
 }
 
+#[cfg(windows)]
+pub fn open_windows(infd: i32) -> File {
+    // Convert raw fd to a File without taking ownership
+    let handle = unsafe { _get_osfhandle(infd) };
+    if handle == -1 {
+        fatal!(cause = ExitCause::Bug; "Invalid file descriptor for Windows handle.");
+    }
+    unsafe { File::from_raw_handle(handle as *mut _) }
+}
+
 /// This function checks that the current file position matches the expected value.
 #[allow(unused_variables)]
 pub fn position_sanity_check(ctx: &mut CcxDemuxer) {
     #[cfg(feature = "sanity_check")]
     {
+        use std::os::windows::io::IntoRawHandle;
         if ctx.infd != -1 {
             let fd = ctx.infd;
             // Convert raw fd to a File without taking ownership
             #[cfg(unix)]
             let mut file = unsafe { File::from_raw_fd(fd) };
             #[cfg(windows)]
-            let mut file = unsafe { File::from_raw_handle(fd as *mut _) };
+            let mut file = open_windows(fd);
             let realpos_result = file.seek(SeekFrom::Current(0));
             let realpos = match realpos_result {
                 Ok(pos) => pos as i64, // Convert to i64 to match C's LLONG
@@ -304,7 +315,7 @@ pub unsafe fn buffered_read_opt(
                             #[cfg(unix)]
                             let mut file = File::from_raw_fd(ctx.infd);
                             #[cfg(windows)]
-                            let mut file = File::from_raw_handle(ctx.infd as _);
+                            let mut file = open_windows(ctx.infd);
                             let slice = slice::from_raw_parts_mut(buffer_ptr, bytes);
                             match file.read(slice) {
                                 Ok(n) => i = n as isize,
@@ -323,7 +334,7 @@ pub unsafe fn buffered_read_opt(
                             #[cfg(unix)]
                             let mut file = File::from_raw_fd(ctx.infd);
                             #[cfg(windows)]
-                            let mut file = File::from_raw_handle(ctx.infd as _);
+                            let mut file = open_windows(ctx.infd);
                             let mut op = file.stream_position().unwrap_or(i64::MAX as u64) as i64; // Get current pos
                             if op == i64::MAX {
                                 op = -1;
@@ -396,7 +407,7 @@ pub unsafe fn buffered_read_opt(
                     #[cfg(unix)]
                     let mut file = File::from_raw_fd(ctx.infd);
                     #[cfg(windows)]
-                    let mut file = File::from_raw_handle(ctx.infd as _);
+                    let mut file = open_windows(ctx.infd);
                     let slice = slice::from_raw_parts_mut(
                         ctx.filebuffer.add(keep as usize),
                         FILEBUFFERSIZE - keep as usize,
@@ -479,7 +490,7 @@ pub unsafe fn buffered_read_opt(
                 #[cfg(unix)]
                 let mut file = File::from_raw_fd(ctx.infd);
                 #[cfg(windows)]
-                let mut file = File::from_raw_handle(ctx.infd as _);
+                let mut file = open_windows(ctx.infd);
                 let slice = slice::from_raw_parts_mut(buffer_ptr, bytes);
                 i = file.read(slice).unwrap_or(i64::MAX as usize) as isize;
                 if i == i64::MAX as usize as isize {
@@ -523,7 +534,7 @@ pub unsafe fn buffered_read_opt(
             #[cfg(unix)]
             let mut file = File::from_raw_fd(ctx.infd);
             #[cfg(windows)]
-            let mut file = File::from_raw_handle(ctx.infd as _);
+            let mut file = open_windows(ctx.infd);
 
             // Try to get current position and seek
             let op_result = file.stream_position(); // Get current pos
@@ -875,7 +886,7 @@ mod tests {
         #[cfg(unix)]
         let mut file = unsafe { File::from_raw_fd(fd) };
         #[cfg(windows)]
-        let mut file = unsafe { File::from_raw_handle(fd as *mut _) };
+        let mut file = unsafe { open_windows(fd) };
         file.seek(SeekFrom::Start(130)).unwrap();
 
         // Prevent double-closing when 'file' drops
