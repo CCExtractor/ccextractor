@@ -1169,7 +1169,6 @@ static void set_data_timebase(int32_t vid_format, struct demuxer_data *data)
 		default:
 			break;
 	}
-	// #endif
 }
 
 static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_data *data)
@@ -1612,7 +1611,6 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 	if (!memcmp(buf, startcode, sizeof(startcode)))
 		return CCX_TRUE;
 	return CCX_FALSE;
-	// #endif
 }
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
