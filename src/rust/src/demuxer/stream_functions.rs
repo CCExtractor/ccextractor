@@ -1,6 +1,8 @@
 use crate::bindings::ccx_demuxer;
 use crate::demuxer::common_structs::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
+use crate::gxf_demuxer::common_structs::CcxGxf;
+use crate::gxf_demuxer::gxf::ccx_gxf_probe;
 use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c};
 use cfg_if::cfg_if;
 use lib_ccxr::common::{Options, StreamMode};
@@ -9,10 +11,10 @@ use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
 
 cfg_if! {
     if #[cfg(test)] {
-        use crate::demuxer::stream_functions::tests::{ccx_gxf_init, ccx_gxf_probe, ccx_mxf_init, ccx_probe_mxf};
+        use crate::demuxer::stream_functions::tests::{ccx_mxf_init, ccx_probe_mxf};
     }
     else {
-        use crate::{ccx_gxf_init, ccx_gxf_probe, ccx_mxf_init, ccx_probe_mxf};
+        use crate::{ccx_mxf_init, ccx_probe_mxf};
     }
 }
 
@@ -136,16 +138,10 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
     }
 
     // GXF probe
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound
-        && ccx_gxf_probe(ctx.startbytes.as_ptr(), ctx.startbytes_avail) != 0
-    {
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ccx_gxf_probe(&ctx.startbytes) {
         ctx.stream_mode = StreamMode::Gxf;
-
-        let demuxer: *mut ccx_demuxer = alloc_new_demuxer();
-        copy_demuxer_from_rust_to_c(demuxer, ctx);
-        let private = ccx_gxf_init(demuxer);
-        ctx.private_data = private as *mut core::ffi::c_void;
-        drop(Box::from_raw(demuxer));
+        let private = Box::new(CcxGxf::default());
+        ctx.private_data = Box::into_raw(private) as *mut core::ffi::c_void;
     }
 
     // WTV check
@@ -424,10 +420,10 @@ pub fn is_valid_mp4_box(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bindings::{ccx_demuxer, ccx_gxf, MXFContext};
+    use crate::bindings::{ccx_demuxer, MXFContext};
     use crate::file_functions::file::FILEBUFFERSIZE;
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
-    use std::os::raw::{c_int, c_uchar};
+    use std::os::raw::c_int;
     use std::ptr;
     use std::sync::Once;
 
@@ -436,13 +432,6 @@ mod tests {
     }
     pub unsafe fn ccx_mxf_init(_demux: *mut ccx_demuxer) -> *mut MXFContext {
         Box::into_raw(Box::new(MXFContext::default()))
-    }
-
-    pub fn ccx_gxf_probe(_buf: *const c_uchar, _len: c_int) -> c_int {
-        0
-    }
-    pub fn ccx_gxf_init(_arg: *mut ccx_demuxer) -> *mut ccx_gxf {
-        Box::into_raw(Box::new(ccx_gxf::default()))
     }
 
     static INIT: Once = Once::new();

@@ -45,6 +45,7 @@ enable_ffmpeg = []
 with_libcurl = []
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
 sanity_check = []
+ccx_gxf_enable_ad_vbi = []
 
 [profile.release-with-debug]
 inherits = "release"

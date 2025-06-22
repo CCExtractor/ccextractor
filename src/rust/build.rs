@@ -19,8 +19,6 @@ fn main() {
         "net_udp_read",  // shall be removed after NET
         "ccx_probe_mxf", // shall be removed after mxf
         "ccx_mxf_init",  // shall be removed after mxf
-        "ccx_gxf_probe", // shall be removed after gxf
-        "ccx_gxf_init",  // shall be removed after gxf
         #[cfg(windows)]
         "_open_osfhandle",
         #[cfg(windows)]
@@ -57,6 +55,10 @@ fn main() {
         "ccx_decoder_608_report",
         "ccx_gxf",
         "MXFContext",
+        "GXFPktType",
+        "GXFMatTag",
+        "GXFTrackTag",
+        "GXFTrackType",
         "demuxer_data",
         "uint8_t",
         "word_list",

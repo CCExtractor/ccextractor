@@ -26,6 +26,10 @@
 #define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "GXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define log(fmt, ...) ccx_common_logging.log_ftn("GXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 
+#ifndef DISABLE_RUST
+extern int ccxr_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
+#endif
+
 #undef CCX_GXF_ENABLE_AD_VBI
 
 /**
@@ -1365,6 +1369,9 @@ int ccx_gxf_probe(unsigned char *buf, int len)
 
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
+#ifndef DISABLE_RUST
+	return ccxr_gxf_get_more_data(ctx, ppdata);
+#else
 	int ret;
 	struct demuxer_data *data;
 
@@ -1388,6 +1395,7 @@ int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 	ret = read_packet(ctx->demux_ctx, data);
 	return ret;
+#endif
 }
 
 struct ccx_gxf *ccx_gxf_init(struct ccx_demuxer *arg)

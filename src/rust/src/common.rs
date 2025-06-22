@@ -3,6 +3,10 @@ use crate::ctorust::{from_ctype_DebugMessageMask, FromCType};
 use crate::demuxer::common_structs::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
+use crate::gxf_demuxer::common_structs::{
+    GXF_Anc_Data_Pres_Format, GXF_Mat_Tag, GXF_Pkt_Type, GXF_Track_Tag, GXF_Track_Type,
+    MpegPictureCoding, MpegPictureStruct,
+};
 use crate::utils::null_pointer;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
@@ -1073,6 +1077,113 @@ impl CType<ccx_rational> for CcxRational {
         ccx_rational {
             num: self.num,
             den: self.den,
+        }
+    }
+}
+// CType implementations for enums
+impl CType<GXFPktType> for GXF_Pkt_Type {
+    unsafe fn to_ctype(&self) -> GXFPktType {
+        match self {
+            GXF_Pkt_Type::PKT_MAP => GXFPktType_PKT_MAP,
+            GXF_Pkt_Type::PKT_MEDIA => GXFPktType_PKT_MEDIA,
+            GXF_Pkt_Type::PKT_EOS => GXFPktType_PKT_EOS,
+            GXF_Pkt_Type::PKT_FLT => GXFPktType_PKT_FLT,
+            GXF_Pkt_Type::PKT_UMF => GXFPktType_PKT_UMF,
+        }
+    }
+}
+
+impl CType<GXFMatTag> for GXF_Mat_Tag {
+    unsafe fn to_ctype(&self) -> GXFMatTag {
+        match self {
+            GXF_Mat_Tag::MAT_NAME => GXFMatTag_MAT_NAME,
+            GXF_Mat_Tag::MAT_FIRST_FIELD => GXFMatTag_MAT_FIRST_FIELD,
+            GXF_Mat_Tag::MAT_LAST_FIELD => GXFMatTag_MAT_LAST_FIELD,
+            GXF_Mat_Tag::MAT_MARK_IN => GXFMatTag_MAT_MARK_IN,
+            GXF_Mat_Tag::MAT_MARK_OUT => GXFMatTag_MAT_MARK_OUT,
+            GXF_Mat_Tag::MAT_SIZE => GXFMatTag_MAT_SIZE,
+        }
+    }
+}
+
+impl CType<GXFTrackTag> for GXF_Track_Tag {
+    unsafe fn to_ctype(&self) -> GXFTrackTag {
+        match self {
+            GXF_Track_Tag::TRACK_NAME => GXFTrackTag_TRACK_NAME,
+            GXF_Track_Tag::TRACK_AUX => GXFTrackTag_TRACK_AUX,
+            GXF_Track_Tag::TRACK_VER => GXFTrackTag_TRACK_VER,
+            GXF_Track_Tag::TRACK_MPG_AUX => GXFTrackTag_TRACK_MPG_AUX,
+            GXF_Track_Tag::TRACK_FPS => GXFTrackTag_TRACK_FPS,
+            GXF_Track_Tag::TRACK_LINES => GXFTrackTag_TRACK_LINES,
+            GXF_Track_Tag::TRACK_FPF => GXFTrackTag_TRACK_FPF,
+        }
+    }
+}
+
+impl CType<GXFTrackType> for GXF_Track_Type {
+    unsafe fn to_ctype(&self) -> GXFTrackType {
+        match self {
+            GXF_Track_Type::TRACK_TYPE_MOTION_JPEG_525 => GXFTrackType_TRACK_TYPE_MOTION_JPEG_525,
+            GXF_Track_Type::TRACK_TYPE_MOTION_JPEG_625 => GXFTrackType_TRACK_TYPE_MOTION_JPEG_625,
+            GXF_Track_Type::TRACK_TYPE_TIME_CODE_525 => GXFTrackType_TRACK_TYPE_TIME_CODE_525,
+            GXF_Track_Type::TRACK_TYPE_TIME_CODE_625 => GXFTrackType_TRACK_TYPE_TIME_CODE_625,
+            GXF_Track_Type::TRACK_TYPE_AUDIO_PCM_24 => GXFTrackType_TRACK_TYPE_AUDIO_PCM_24,
+            GXF_Track_Type::TRACK_TYPE_AUDIO_PCM_16 => GXFTrackType_TRACK_TYPE_AUDIO_PCM_16,
+            GXF_Track_Type::TRACK_TYPE_MPEG2_525 => GXFTrackType_TRACK_TYPE_MPEG2_525,
+            GXF_Track_Type::TRACK_TYPE_MPEG2_625 => GXFTrackType_TRACK_TYPE_MPEG2_625,
+            GXF_Track_Type::TRACK_TYPE_DV_BASED_25MB_525 => {
+                GXFTrackType_TRACK_TYPE_DV_BASED_25MB_525
+            }
+            GXF_Track_Type::TRACK_TYPE_DV_BASED_25MB_625 => {
+                GXFTrackType_TRACK_TYPE_DV_BASED_25MB_625
+            }
+            GXF_Track_Type::TRACK_TYPE_DV_BASED_50MB_525 => {
+                GXFTrackType_TRACK_TYPE_DV_BASED_50MB_525
+            }
+            GXF_Track_Type::TRACK_TYPE_DV_BASED_50_MB_625 => {
+                GXFTrackType_TRACK_TYPE_DV_BASED_50_MB_625
+            }
+            GXF_Track_Type::TRACK_TYPE_AC_3_16b_audio => GXFTrackType_TRACK_TYPE_AC_3_16b_audio,
+            GXF_Track_Type::TRACK_TYPE_COMPRESSED_24B_AUDIO => {
+                GXFTrackType_TRACK_TYPE_COMPRESSED_24B_AUDIO
+            }
+            GXF_Track_Type::TRACK_TYPE_RESERVED => GXFTrackType_TRACK_TYPE_RESERVED,
+            GXF_Track_Type::TRACK_TYPE_MPEG2_HD => GXFTrackType_TRACK_TYPE_MPEG2_HD,
+            GXF_Track_Type::TRACK_TYPE_ANCILLARY_DATA => GXFTrackType_TRACK_TYPE_ANCILLARY_DATA,
+            GXF_Track_Type::TRACK_TYPE_MPEG1_525 => GXFTrackType_TRACK_TYPE_MPEG1_525,
+            GXF_Track_Type::TRACK_TYPE_MPEG1_625 => GXFTrackType_TRACK_TYPE_MPEG1_625,
+            GXF_Track_Type::TRACK_TYPE_TIME_CODE_HD => GXFTrackType_TRACK_TYPE_TIME_CODE_HD,
+        }
+    }
+}
+
+impl CType<ccx_ad_pres_format> for GXF_Anc_Data_Pres_Format {
+    unsafe fn to_ctype(&self) -> ccx_ad_pres_format {
+        match self {
+            GXF_Anc_Data_Pres_Format::PRES_FORMAT_SD => ccx_ad_pres_format_PRES_FORMAT_SD,
+            GXF_Anc_Data_Pres_Format::PRES_FORMAT_HD => ccx_ad_pres_format_PRES_FORMAT_HD,
+        }
+    }
+}
+
+impl CType<mpeg_picture_coding> for MpegPictureCoding {
+    unsafe fn to_ctype(&self) -> mpeg_picture_coding {
+        match self {
+            MpegPictureCoding::CCX_MPC_NONE => mpeg_picture_coding_CCX_MPC_NONE,
+            MpegPictureCoding::CCX_MPC_I_FRAME => mpeg_picture_coding_CCX_MPC_I_FRAME,
+            MpegPictureCoding::CCX_MPC_P_FRAME => mpeg_picture_coding_CCX_MPC_P_FRAME,
+            MpegPictureCoding::CCX_MPC_B_FRAME => mpeg_picture_coding_CCX_MPC_B_FRAME,
+        }
+    }
+}
+
+impl CType<mpeg_picture_struct> for MpegPictureStruct {
+    unsafe fn to_ctype(&self) -> mpeg_picture_struct {
+        match self {
+            MpegPictureStruct::CCX_MPS_NONE => mpeg_picture_struct_CCX_MPS_NONE,
+            MpegPictureStruct::CCX_MPS_TOP_FIELD => mpeg_picture_struct_CCX_MPS_TOP_FIELD,
+            MpegPictureStruct::CCX_MPS_BOTTOM_FIELD => mpeg_picture_struct_CCX_MPS_BOTTOM_FIELD,
+            MpegPictureStruct::CCX_MPS_FRAME => mpeg_picture_struct_CCX_MPS_FRAME,
         }
     }
 }
