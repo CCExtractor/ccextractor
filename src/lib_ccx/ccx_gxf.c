@@ -28,7 +28,6 @@
 
 #undef CCX_GXF_ENABLE_AD_VBI
 
-
 /**
  * @brief parses a packet header, extracting type and length
  * @param ctx Demuxer Ctx used for reading from file
