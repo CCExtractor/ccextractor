@@ -1,15 +1,11 @@
 use crate::bindings::*;
-use crate::ctorust::{
-    from_ctype_ColorHue, from_ctype_DebugMessageMask, from_ctype_Decoder608Settings,
-    from_ctype_DecoderDtvccSettings, from_ctype_DemuxerConfig, from_ctype_EncoderConfig,
-    from_ctype_EncodersTranscriptFormat, from_ctype_OutputTarget, from_ctype_Output_Date_Format,
-    from_ctype_Output_Format, from_ctype_ocr_mode,
+use crate::ctorust::{from_ctype_DebugMessageMask, FromCType};
+use crate::demuxer::common_structs::{
+    CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
-use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, PMTEntry, PSIBuffer, ProgramInfo};
 use crate::utils::null_pointer;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
-use lib_ccxr::common::CommonTimingCtx;
 use lib_ccxr::common::Decoder608Report;
 use lib_ccxr::common::Decoder608Settings;
 use lib_ccxr::common::DecoderDtvccReport;
@@ -24,6 +20,7 @@ use lib_ccxr::common::OutputFormat;
 use lib_ccxr::common::SelectCodec;
 use lib_ccxr::common::StreamMode;
 use lib_ccxr::common::StreamType;
+use lib_ccxr::common::{BufferdataType, CommonTimingCtx};
 use lib_ccxr::common::{Codec, DataSource};
 use lib_ccxr::hardsubx::ColorHue;
 use lib_ccxr::hardsubx::OcrMode;
@@ -31,6 +28,7 @@ use lib_ccxr::teletext::TeletextConfig;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
+use lib_ccxr::util::log::OutputTarget;
 use std::os::raw::{c_int, c_long};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -286,8 +284,10 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
         ),
         print_file_reports: (*ccx_s_options).print_file_reports != 0,
         // Handle settings_608 and settings_dtvcc - assuming FromCType trait is implemented for these
-        settings_608: from_ctype_Decoder608Settings((*ccx_s_options).settings_608),
-        settings_dtvcc: from_ctype_DecoderDtvccSettings((*ccx_s_options).settings_dtvcc),
+        settings_608: Decoder608Settings::from_ctype((*ccx_s_options).settings_608)
+            .unwrap_or(Decoder608Settings::default()),
+        settings_dtvcc: DecoderDtvccSettings::from_ctype((*ccx_s_options).settings_dtvcc)
+            .unwrap_or(DecoderDtvccSettings::default()),
         is_608_enabled: (*ccx_s_options).is_608_enabled != 0,
         is_708_enabled: (*ccx_s_options).is_708_enabled != 0,
         // Assuming a millis_separator conversion function exists or we can use chars directly
@@ -325,7 +325,8 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
             PathBuf::from(c_char_to_string((*ccx_s_options).filter_profanity_file));
     }
 
-    options.messages_target = from_ctype_OutputTarget((*ccx_s_options).messages_target);
+    options.messages_target =
+        OutputTarget::from_ctype((*ccx_s_options).messages_target).unwrap_or(OutputTarget::Stdout);
     options.timestamp_map = (*ccx_s_options).timestamp_map != 0;
     options.dolevdist = (*ccx_s_options).dolevdist != 0;
     options.levdistmincnt = (*ccx_s_options).levdistmincnt as u8;
@@ -386,21 +387,26 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     }
 
     options.analyze_video_stream = (*ccx_s_options).analyze_video_stream != 0;
-    options.hardsubx_ocr_mode = from_ctype_ocr_mode((*ccx_s_options).hardsubx_ocr_mode);
+    options.hardsubx_ocr_mode =
+        OcrMode::from_ctype((*ccx_s_options).hardsubx_ocr_mode).unwrap_or(OcrMode::Frame);
     options.hardsubx_min_sub_duration =
         Timestamp::from_millis((*ccx_s_options).hardsubx_min_sub_duration as i64);
     options.hardsubx_detect_italics = (*ccx_s_options).hardsubx_detect_italics != 0;
     options.hardsubx_conf_thresh = (*ccx_s_options).hardsubx_conf_thresh as f64;
-    options.hardsubx_hue = from_ctype_ColorHue((*ccx_s_options).hardsubx_hue as f64 as c_int);
+    options.hardsubx_hue = ColorHue::from_ctype((*ccx_s_options).hardsubx_hue as f64 as c_int)
+        .unwrap_or(ColorHue::White);
     options.hardsubx_lum_thresh = (*ccx_s_options).hardsubx_lum_thresh as f64;
 
     // Handle transcript_settings
     options.transcript_settings =
-        from_ctype_EncodersTranscriptFormat((*ccx_s_options).transcript_settings);
+        EncodersTranscriptFormat::from_ctype((*ccx_s_options).transcript_settings)
+            .unwrap_or(EncodersTranscriptFormat::default());
 
-    options.date_format = from_ctype_Output_Date_Format((*ccx_s_options).date_format);
+    options.date_format =
+        TimestampFormat::from_ctype((*ccx_s_options).date_format).unwrap_or(TimestampFormat::None);
     options.send_to_srv = (*ccx_s_options).send_to_srv != 0;
-    options.write_format = from_ctype_Output_Format((*ccx_s_options).write_format);
+    options.write_format =
+        OutputFormat::from_ctype((*ccx_s_options).write_format).unwrap_or(OutputFormat::Raw);
     options.write_format_rewritten = (*ccx_s_options).write_format_rewritten != 0;
     options.use_ass_instead_of_ssa = (*ccx_s_options).use_ass_instead_of_ssa != 0;
     options.use_webvtt_styling = (*ccx_s_options).use_webvtt_styling != 0;
@@ -473,8 +479,10 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     }
 
     // Handle demux_cfg and enc_cfg
-    options.demux_cfg = from_ctype_DemuxerConfig((*ccx_s_options).demux_cfg);
-    options.enc_cfg = from_ctype_EncoderConfig((*ccx_s_options).enc_cfg);
+    options.demux_cfg =
+        DemuxerConfig::from_ctype((*ccx_s_options).demux_cfg).unwrap_or(DemuxerConfig::default());
+    options.enc_cfg =
+        EncoderConfig::from_ctype((*ccx_s_options).enc_cfg).unwrap_or(EncoderConfig::default());
 
     options.subs_delay = Timestamp::from_millis((*ccx_s_options).subs_delay);
     options.cc_to_stdout = (*ccx_s_options).cc_to_stdout != 0;
@@ -1039,6 +1047,32 @@ impl CType<PMT_entry> for PMTEntry {
             elementary_PID: self.elementary_pid,
             stream_type: self.stream_type.to_ctype() as ccx_stream_type, // CType<ccx_stream_type> for StreamType
             printable_stream_type: self.printable_stream_type,
+        }
+    }
+}
+impl CType<ccx_bufferdata_type> for BufferdataType {
+    unsafe fn to_ctype(&self) -> ccx_bufferdata_type {
+        match self {
+            BufferdataType::Unknown => ccx_bufferdata_type_CCX_UNKNOWN,
+            BufferdataType::Pes => ccx_bufferdata_type_CCX_PES,
+            BufferdataType::Raw => ccx_bufferdata_type_CCX_RAW,
+            BufferdataType::H264 => ccx_bufferdata_type_CCX_H264,
+            BufferdataType::Hauppage => ccx_bufferdata_type_CCX_HAUPPAGE,
+            BufferdataType::Teletext => ccx_bufferdata_type_CCX_TELETEXT,
+            BufferdataType::PrivateMpeg2Cc => ccx_bufferdata_type_CCX_PRIVATE_MPEG2_CC,
+            BufferdataType::DvbSubtitle => ccx_bufferdata_type_CCX_DVB_SUBTITLE,
+            BufferdataType::IsdbSubtitle => ccx_bufferdata_type_CCX_ISDB_SUBTITLE,
+            BufferdataType::RawType => ccx_bufferdata_type_CCX_RAW_TYPE,
+            BufferdataType::DvdSubtitle => ccx_bufferdata_type_CCX_DVD_SUBTITLE,
+        }
+    }
+}
+
+impl CType<ccx_rational> for CcxRational {
+    unsafe fn to_ctype(&self) -> ccx_rational {
+        ccx_rational {
+            num: self.num,
+            den: self.den,
         }
     }
 }
