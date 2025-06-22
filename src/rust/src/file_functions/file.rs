@@ -670,8 +670,11 @@ pub unsafe fn buffered_read(
         ctx.filebuffer_pos += bytes as u32;
         bytes
     } else {
-        let result =
-            unsafe { buffered_read_opt(ctx, buffer.unwrap().as_mut_ptr(), bytes, ccx_options) };
+        let ptr = buffer
+            .map(|b| b.as_mut_ptr())
+            .unwrap_or(std::ptr::null_mut());
+
+        let result = buffered_read_opt(ctx, ptr, bytes, ccx_options);
 
         if ccx_options.gui_mode_reports && ccx_options.input_source == DataSource::Network {
             net_activity_gui += 1;
@@ -687,16 +690,10 @@ pub unsafe fn buffered_read(
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_opt`
 pub unsafe fn buffered_read_byte(
-    ctx: *mut CcxDemuxer,
+    ctx: &mut CcxDemuxer,
     buffer: Option<&mut u8>,
     ccx_options: &mut Options,
 ) -> usize {
-    if ctx.is_null() {
-        return 0;
-    }
-
-    let ctx = &mut *ctx; // Dereference the raw pointer safely
-
     if ctx.bytesinbuffer > ctx.filebuffer_pos {
         if let Some(buf) = buffer {
             *buf = *ctx.filebuffer.add(ctx.filebuffer_pos as usize);
@@ -704,41 +701,28 @@ pub unsafe fn buffered_read_byte(
             return 1;
         }
     } else {
-        let mut buf = [0u8; 1048576];
-        if let Some(b) = buffer {
-            buf[0] = *b;
-        }
-        return buffered_read_opt(ctx, buf.as_mut_ptr(), 1, ccx_options);
+        let ptr = buffer.map(|b| b as *mut u8).unwrap_or(std::ptr::null_mut());
+        return buffered_read_opt(ctx, ptr, 1, ccx_options);
     }
     0
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_byte`
-pub unsafe fn buffered_get_be16(ctx: *mut CcxDemuxer, ccx_options: &mut Options) -> u16 {
-    if ctx.is_null() {
-        return 0;
-    }
-    let ctx = &mut *ctx; // Dereference the raw pointer safely
-
+pub unsafe fn buffered_get_be16(ctx: &mut CcxDemuxer, ccx_options: &mut Options) -> u16 {
     let mut a: u8 = 0;
     let mut b: u8 = 0;
 
-    buffered_read_byte(ctx as *mut CcxDemuxer, Some(&mut a), ccx_options);
+    buffered_read_byte(ctx, Some(&mut a), ccx_options);
     ctx.past += 1;
 
-    buffered_read_byte(ctx as *mut CcxDemuxer, Some(&mut b), ccx_options);
+    buffered_read_byte(ctx, Some(&mut b), ccx_options);
     ctx.past += 1;
 
     ((a as u16) << 8) | (b as u16)
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_byte`
-pub unsafe fn buffered_get_byte(ctx: *mut CcxDemuxer, ccx_options: &mut Options) -> u8 {
-    if ctx.is_null() {
-        return 0;
-    }
-
-    let ctx = &mut *ctx;
+pub unsafe fn buffered_get_byte(ctx: &mut CcxDemuxer, ccx_options: &mut Options) -> u8 {
     let mut b: u8 = 0;
 
     if buffered_read_byte(ctx, Some(&mut b), ccx_options) == 1 {
@@ -750,11 +734,7 @@ pub unsafe fn buffered_get_byte(ctx: *mut CcxDemuxer, ccx_options: &mut Options)
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_get_be16`
-pub unsafe fn buffered_get_be32(ctx: *mut CcxDemuxer, ccx_options: &mut Options) -> u32 {
-    if ctx.is_null() {
-        return 0;
-    }
-
+pub unsafe fn buffered_get_be32(ctx: &mut CcxDemuxer, ccx_options: &mut Options) -> u32 {
     let high = (buffered_get_be16(ctx, ccx_options) as u32) << 16;
     let low = buffered_get_be16(ctx, ccx_options) as u32;
 
@@ -762,12 +742,7 @@ pub unsafe fn buffered_get_be32(ctx: *mut CcxDemuxer, ccx_options: &mut Options)
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_byte`
-pub unsafe fn buffered_get_le16(ctx: *mut CcxDemuxer, ccx_options: &mut Options) -> u16 {
-    if ctx.is_null() {
-        return 0;
-    }
-
-    let ctx = &mut *ctx;
+pub unsafe fn buffered_get_le16(ctx: &mut CcxDemuxer, ccx_options: &mut Options) -> u16 {
     let mut a: u8 = 0;
     let mut b: u8 = 0;
 
@@ -781,11 +756,7 @@ pub unsafe fn buffered_get_le16(ctx: *mut CcxDemuxer, ccx_options: &mut Options)
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_get_le16`
-pub unsafe fn buffered_get_le32(ctx: *mut CcxDemuxer, ccx_options: &mut Options) -> u32 {
-    if ctx.is_null() {
-        return 0;
-    }
-
+pub unsafe fn buffered_get_le32(ctx: &mut CcxDemuxer, ccx_options: &mut Options) -> u32 {
     let low = buffered_get_le16(ctx, ccx_options) as u32;
     let high = (buffered_get_le16(ctx, ccx_options) as u32) << 16;
 
@@ -793,23 +764,14 @@ pub unsafe fn buffered_get_le32(ctx: *mut CcxDemuxer, ccx_options: &mut Options)
 }
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_opt`
-pub unsafe fn buffered_skip(ctx: *mut CcxDemuxer, bytes: u32, ccx_options: &mut Options) -> usize {
-    if ctx.is_null() {
-        return 0;
-    }
+pub unsafe fn buffered_skip(ctx: &mut CcxDemuxer, bytes: u32, ccx_options: &mut Options) -> usize {
+    let available = ctx.bytesinbuffer.saturating_sub(ctx.filebuffer_pos);
 
-    let ctx_ref = &mut *ctx;
-
-    if bytes <= ctx_ref.bytesinbuffer - ctx_ref.filebuffer_pos {
-        ctx_ref.filebuffer_pos += bytes;
+    if bytes <= available {
+        ctx.filebuffer_pos += bytes;
         bytes as usize
     } else {
-        buffered_read_opt(
-            ctx.as_mut().unwrap(),
-            ptr::null_mut(),
-            bytes as usize,
-            ccx_options,
-        )
+        buffered_read_opt(ctx, ptr::null_mut(), bytes as usize, ccx_options)
     }
 }
 #[cfg(test)]
@@ -1491,13 +1453,7 @@ mod tests {
         ctx.bytesinbuffer = data.len() as u32;
         ctx.filebuffer_pos = 1; // Assume one byte has already been read.
         let mut out_byte: u8 = 0;
-        let read = unsafe {
-            buffered_read_byte(
-                &mut ctx as *mut CcxDemuxer,
-                Some(&mut out_byte),
-                &mut *ccx_options,
-            )
-        };
+        let read = unsafe { buffered_read_byte(&mut ctx, Some(&mut out_byte), &mut *ccx_options) };
         // Expect to read 1 byte, which should be data[1] = 0xBB.
         assert_eq!(read, 1);
         assert_eq!(out_byte, 0xBB);
@@ -1518,8 +1474,7 @@ mod tests {
         ctx.bytesinbuffer = data.len() as u32;
         ctx.filebuffer_pos = 0;
         // Call with None; expect it returns 0 since nothing is copied.
-        let read =
-            unsafe { buffered_read_byte(&mut ctx as *mut CcxDemuxer, None, &mut *ccx_options) };
+        let read = unsafe { buffered_read_byte(&mut ctx, None, &mut *ccx_options) };
         assert_eq!(read, 0);
         // filebuffer_pos remains unchanged.
         assert_eq!(ctx.filebuffer_pos, 0);
@@ -1544,15 +1499,9 @@ mod tests {
         ctx.filebuffer_pos = 10;
         let mut out_byte: u8 = 0;
         // Our dummy buffered_read_opt returns 1 and writes 0xAA.
-        let read = unsafe {
-            buffered_read_byte(
-                &mut ctx as *mut CcxDemuxer,
-                Some(&mut out_byte),
-                &mut *ccx_options,
-            )
-        };
+        let read = unsafe { buffered_read_byte(&mut ctx, Some(&mut out_byte), &mut *ccx_options) };
         assert_eq!(read, 1);
-        assert_eq!(out_byte, 0);
+        assert_eq!(out_byte, 97);
     }
 
     // Tests for buffered_get_be16
@@ -1571,7 +1520,7 @@ mod tests {
         ctx.bytesinbuffer = 2;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        let value = unsafe { buffered_get_be16(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_be16(&mut ctx, &mut *ccx_options) };
         // Expect 0x1234.
         assert_eq!(value, 0x1234);
         // past should have been incremented twice.
@@ -1588,7 +1537,7 @@ mod tests {
         let ccx_options = &mut Options::default();
         #[allow(unused_variables)]
         let ctx = create_ccx_demuxer_with_buffer();
-        let content = b"Network buffered read test!";
+        let content = b"Network buffered read test ABCD!";
         let fd = create_temp_file_with_content(content);
         let mut ctx = create_ccx_demuxer_with_buffer();
         ctx.infd = fd;
@@ -1596,10 +1545,9 @@ mod tests {
         ctx.bytesinbuffer = 0;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_be16(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_be16(&mut ctx, &mut *ccx_options) };
         // Expect the two bytes to be 0xAA each, so 0xAAAA.
-        assert_eq!(value, 0);
+        assert_eq!(value, 0x4E65);
         // past should have been incremented by 2.
         assert_eq!(ctx.past, 2);
     }
@@ -1617,7 +1565,7 @@ mod tests {
         ctx.bytesinbuffer = 1;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        let value = unsafe { buffered_get_byte(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_byte(&mut ctx, &mut *ccx_options) };
         // Expect 0x12.
         assert_eq!(value, 0x12);
         // past should have been incremented.
@@ -1640,9 +1588,9 @@ mod tests {
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
         // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_byte(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_byte(&mut ctx, &mut *ccx_options) };
         // Expect the byte to be 0xAA.
-        assert_eq!(value, 0);
+        assert_eq!(value, 0x4E);
         // past should have been incremented.
         assert_eq!(ctx.past, 1);
     }
@@ -1660,7 +1608,7 @@ mod tests {
         ctx.bytesinbuffer = 4;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        let value = unsafe { buffered_get_be32(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_be32(&mut ctx, &mut *ccx_options) };
         // Expect 0x12345678.
         assert_eq!(value, 0x12345678);
         // past should have been incremented by 4.
@@ -1684,9 +1632,9 @@ mod tests {
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
         // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_be32(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_be32(&mut ctx, &mut *ccx_options) };
         // Expect the four bytes to be 0xAAAAAAAA.
-        assert_eq!(value, 0);
+        assert_eq!(value, 0x4E657477);
         // past should have been incremented by 4.
         assert_eq!(ctx.past, 4);
     }
@@ -1705,7 +1653,7 @@ mod tests {
         ctx.bytesinbuffer = 2;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        let value = unsafe { buffered_get_le16(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_le16(&mut ctx, &mut *ccx_options) };
         // Expect 0x3412.
         assert_eq!(value, 0x3412);
         // past should have been incremented by 2.
@@ -1729,9 +1677,9 @@ mod tests {
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
         // In this case, buffered_read_opt (our version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_le16(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_le16(&mut ctx, &mut *ccx_options) };
         // Expect the two bytes to be 0xAAAA.
-        assert_eq!(value, 0);
+        assert_eq!(value, 0x654E);
         // past should have been incremented by 2.
         assert_eq!(ctx.past, 2);
     }
@@ -1750,19 +1698,13 @@ mod tests {
         ctx.bytesinbuffer = 4;
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
-        let value = unsafe { buffered_get_le32(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_le32(&mut ctx, &mut *ccx_options) };
         // Expect 0x78563412.
         assert_eq!(value, 0x78563412);
         // past should have been incremented by 4.
         assert_eq!(ctx.past, 4);
         // filebuffer_pos should have advanced by 4.
         assert_eq!(ctx.filebuffer_pos, 4);
-    }
-    #[test]
-    fn test_buffered_get_le16_null_ctx() {
-        let ccx_options = &mut Options::default();
-        let value = unsafe { buffered_get_le16(ptr::null_mut(), &mut *ccx_options) };
-        assert_eq!(value, 0);
     }
 
     #[test]
@@ -1781,9 +1723,9 @@ mod tests {
         ctx.filebuffer_pos = 0;
         ctx.past = 0;
         // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_le32(&mut ctx as *mut CcxDemuxer, &mut *ccx_options) };
+        let value = unsafe { buffered_get_le32(&mut ctx, &mut *ccx_options) };
         // Expect the four bytes to be 0xAAAAAAAA.
-        assert_eq!(value, 0);
+        assert_eq!(value, 0x7774654E);
         // past should have been incremented by 4.
         assert_eq!(ctx.past, 4);
     }
@@ -1795,7 +1737,7 @@ mod tests {
         ctx.bytesinbuffer = 50;
         ctx.filebuffer_pos = 10;
         let skip = 20u32;
-        let result = unsafe { buffered_skip(&mut ctx as *mut CcxDemuxer, skip, &mut *ccx_options) };
+        let result = unsafe { buffered_skip(&mut ctx, skip, &mut *ccx_options) };
         assert_eq!(result, 20);
         assert_eq!(ctx.filebuffer_pos, 30);
     }
@@ -1817,15 +1759,7 @@ mod tests {
 
         // In this case, buffered_skip will call buffered_read_opt with an empty buffer.
         // Our dummy buffered_read_opt returns the requested number of bytes when the buffer is empty.
-        let result = unsafe { buffered_skip(&mut ctx as *mut CcxDemuxer, skip, &mut *ccx_options) };
+        let result = unsafe { buffered_skip(&mut ctx, skip, &mut *ccx_options) };
         assert_eq!(result, 15);
-    }
-
-    // Test 6: When ctx is null.
-    #[test]
-    fn test_buffered_skip_null_ctx() {
-        let ccx_options = &mut Options::default();
-        let result = unsafe { buffered_skip(ptr::null_mut(), 10, &mut *ccx_options) };
-        assert_eq!(result, 0);
     }
 }

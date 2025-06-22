@@ -1,12 +1,9 @@
 use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_to_rust, CType};
-use crate::ctorust::{
-    from_ctype_Codec, from_ctype_PMT_entry, from_ctype_PSI_buffer, from_ctype_StreamMode,
-    from_ctype_StreamType, from_ctype_cap_info, from_ctype_demux_report, from_ctype_program_info,
-};
-use crate::demuxer::common_structs::CcxDemuxer;
-use lib_ccxr::common::Options;
+use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
+use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
+use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
@@ -204,8 +201,10 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
 
     // Copy fixed-size fields
     let m2ts = c.m2ts;
-    let stream_mode = from_ctype_StreamMode(c.stream_mode);
-    let auto_stream = from_ctype_StreamMode(c.auto_stream);
+    let stream_mode =
+        StreamMode::from_ctype(c.stream_mode).unwrap_or(StreamMode::ElementaryOrNotFound);
+    let auto_stream =
+        StreamMode::from_ctype(c.auto_stream).unwrap_or(StreamMode::ElementaryOrNotFound);
 
     // Copy startbytes buffer up to available length
     let startbytes = copy_c_array_to_rust_vec(&c.startbytes);
@@ -217,19 +216,20 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
     let ts_allprogram = c.ts_allprogram != 0;
     let flag_ts_forced_pn = c.flag_ts_forced_pn != 0;
     let flag_ts_forced_cappid = c.flag_ts_forced_cappid != 0;
-    let ts_datastreamtype = from_ctype_StreamType(c.ts_datastreamtype as c_uint);
+    let ts_datastreamtype =
+        StreamType::from_ctype(c.ts_datastreamtype as c_uint).unwrap_or(StreamType::Unknownstream);
 
     // Program info list
     let nb_program = c.nb_program as usize;
     let pinfo = c.pinfo[..nb_program]
         .iter()
-        .map(|pi| from_ctype_program_info(*pi))
+        .map(|pi| ProgramInfo::from_ctype(*pi).unwrap_or(ProgramInfo::default()))
         .collect::<Vec<_>>();
 
     // Codec settings
-    let codec = from_ctype_Codec(c.codec);
-    let nocodec = from_ctype_Codec(c.nocodec);
-    let cinfo_tree = from_ctype_cap_info(c.cinfo_tree);
+    let codec = Codec::from_ctype(c.codec).unwrap_or(Codec::Any);
+    let nocodec = Codec::from_ctype(c.nocodec).unwrap_or(Codec::Any);
+    let cinfo_tree = CapInfo::from_ctype(c.cinfo_tree).unwrap_or(CapInfo::default());
 
     // File handles and positions
     let infd = c.infd;
@@ -272,7 +272,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
     let have_pids = Vec::from(&c.have_PIDs[..]);
     let num_of_pids = c.num_of_PIDs;
     // Reports and warnings
-    let freport = from_ctype_demux_report(c.freport);
+    let freport = CcxDemuxReport::from_ctype(c.freport).unwrap_or(CcxDemuxReport::default());
     let hauppauge_warning_shown = c.hauppauge_warning_shown != 0;
     let multi_stream_per_prog = c.multi_stream_per_prog;
 
@@ -410,7 +410,7 @@ pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *mut ccx_demuxer) -> c_int {
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `open`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c_char) -> c_int {
-    if ctx.is_null() || file.is_null() {
+    if ctx.is_null() {
         return -1;
     }
     let c_str = CStr::from_ptr(file);

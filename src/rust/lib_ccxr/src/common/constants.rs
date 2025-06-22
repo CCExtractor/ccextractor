@@ -279,7 +279,7 @@ pub enum StreamMode {
     Mxf = 13,
     Autodetect = 16,
 }
-
+#[derive(Debug, Eq, Clone, Copy)]
 pub enum BufferdataType {
     Unknown,
     Pes,

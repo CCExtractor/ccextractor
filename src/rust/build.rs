@@ -57,6 +57,7 @@ fn main() {
         "ccx_decoder_608_report",
         "ccx_gxf",
         "MXFContext",
+        "demuxer_data",
         "uint8_t",
         "word_list",
     ]);

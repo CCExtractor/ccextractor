@@ -354,3 +354,9 @@ impl Default for CcxDemuxReport {
         }
     }
 }
+
+#[derive(Default, Debug, Clone, Copy)]
+pub struct CcxRational {
+    pub num: i32,
+    pub den: i32,
+}
