@@ -45,7 +45,7 @@ pub fn get_time_str(time: LLONG) -> String {
     let mm = time / 1000 / 60 - 60 * hh;
     let ss = time / 1000 - 60 * (mm + 60 * hh);
     let ms = time - 1000 * (ss + 60 * (mm + 60 * hh));
-    format!("{:02}:{:02}:{:02},{:03}", hh, mm, ss, ms)
+    format!("{hh:02}:{mm:02}:{ss:02},{ms:03}")
 }
 
 impl ccx_boundary_time {
