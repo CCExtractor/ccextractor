@@ -121,8 +121,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
         let new_len = line.trim().len();
         if new_len > CCX_DECODER_608_SCREEN_WIDTH {
             println!(
-                "Word in line {} too long, max = {} characters.",
-                num, CCX_DECODER_608_SCREEN_WIDTH
+                "Word in line {num} too long, max = {CCX_DECODER_608_SCREEN_WIDTH} characters."
             );
             continue;
         }
@@ -1325,7 +1324,7 @@ impl OptionsExt for Options {
                 }
 
                 if !self.transcript_settings.is_final {
-                    let chars = format!("{}", customtxt).chars().collect::<Vec<char>>();
+                    let chars = format!("{customtxt}").chars().collect::<Vec<char>>();
                     self.transcript_settings.show_start_time = chars[0] == '1';
                     self.transcript_settings.show_end_time = chars[1] == '1';
                     self.transcript_settings.show_mode = chars[2] == '1';

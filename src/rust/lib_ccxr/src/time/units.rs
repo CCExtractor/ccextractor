@@ -231,7 +231,7 @@ impl Timestamp {
         let s = millis / 1000 - 3600 * h - 60 * m;
         let u = millis - 3600000 * h - 60000 * m - 1000 * s;
         if h > 24 {
-            println!("{}", h)
+            println!("{h}")
         }
         Ok((h.try_into()?, m as u8, s as u8, u as u16))
     }
@@ -248,7 +248,7 @@ impl Timestamp {
     /// ```
     pub fn write_srt_time(&self, output: &mut String) -> Result<(), TimestampError> {
         let (h, m, s, u) = self.as_hms_millis()?;
-        write!(output, "{:02}:{:02}:{:02},{:03}", h, m, s, u)?;
+        write!(output, "{h:02}:{m:02}:{s:02},{u:03}")?;
         Ok(())
     }
 
@@ -264,7 +264,7 @@ impl Timestamp {
     /// ```
     pub fn write_vtt_time(&self, output: &mut String) -> Result<(), TimestampError> {
         let (h, m, s, u) = self.as_hms_millis()?;
-        write!(output, "{:02}:{:02}:{:02}.{:03}", h, m, s, u)?;
+        write!(output, "{h:02}:{m:02}:{s:02}.{u:03}")?;
         Ok(())
     }
 
@@ -288,7 +288,7 @@ impl Timestamp {
         let sign = if self.millis < 0 { "-" } else { "" };
         let timestamp = if self.millis < 0 { -*self } else { *self };
         let (h, m, s, u) = timestamp.as_hms_millis()?;
-        write!(output, "{}{:02}:{:02}:{:02}{}{:03}", sign, h, m, s, sep, u)?;
+        write!(output, "{sign}{h:02}:{m:02}:{s:02}{sep}{u:03}")?;
         Ok(())
     }
 
@@ -325,12 +325,12 @@ impl Timestamp {
             TimestampFormat::None => Ok(()),
             TimestampFormat::HHMMSS => {
                 let (h, m, s, _) = self.as_hms_millis()?;
-                write!(output, "{:02}:{:02}:{:02}", h, m, s)?;
+                write!(output, "{h:02}:{m:02}:{s:02}")?;
                 Ok(())
             }
             TimestampFormat::Seconds { millis_separator } => {
                 let (sec, millis) = self.as_sec_millis()?;
-                write!(output, "{}{}{:03}", sec, millis_separator, millis)?;
+                write!(output, "{sec}{millis_separator}{millis:03}")?;
                 Ok(())
             }
             TimestampFormat::Date { millis_separator } => {
@@ -404,7 +404,7 @@ impl Timestamp {
         let (h, m, s, _) = self.as_hms_millis()?;
         let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * 29.97 / 1000.0;
 
-        write!(result, "{:02}:{:02}:{:02};{:02}", h, m, s, frame)?;
+        write!(result, "{h:02}:{m:02}:{s:02};{frame:02}")?;
 
         Ok(result)
     }
