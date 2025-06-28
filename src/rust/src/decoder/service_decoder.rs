@@ -1136,7 +1136,10 @@ impl dtvcc_service_decoder {
         window.is_empty = 0;
 
         // Add symbol to window
-        window.rows[window.pen_row as usize] = Box::into_raw(Box::new(sym));
+        unsafe {
+            let ptr: *mut dtvcc_symbol = window.rows[window.pen_row as usize].add(window.pen_column as usize);
+            *ptr = sym;
+        }
 
         // "Painting" char by pen - attribs
         window.pen_attribs[window.pen_row as usize][window.pen_column as usize] =
