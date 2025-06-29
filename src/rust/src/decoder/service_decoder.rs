@@ -1136,9 +1136,14 @@ impl dtvcc_service_decoder {
         window.is_empty = 0;
 
         // Add symbol to window
-        unsafe {
-            let ptr: *mut dtvcc_symbol = window.rows[window.pen_row as usize].add(window.pen_column as usize);
-            *ptr = sym;
+        if window.memory_reserved == 1 {
+            unsafe {
+                let ptr: *mut dtvcc_symbol =
+                    window.rows[window.pen_row as usize].add(window.pen_column as usize);
+                *ptr = sym;
+            }
+        } else {
+            return;
         }
 
         // "Painting" char by pen - attribs
@@ -1227,6 +1232,30 @@ extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_serv
 mod test {
     use super::*;
     use crate::utils::get_zero_allocated_obj;
+
+    fn setup_test_decoder_with_memory() -> dtvcc_service_decoder {
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+
+        decoder.current_window = 0;
+        decoder.windows[0].is_defined = 1;
+        decoder.windows[0].row_count = 4;
+        decoder.windows[0].col_count = 4;
+        decoder.windows[0].attribs.print_direction =
+            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        decoder.windows[0].rows[0] = unsafe { alloc(layout) } as *mut dtvcc_symbol;
+        decoder.windows[0].memory_reserved = 1;
+
+        *decoder
+    }
+
+    fn cleanup_test_decoder(decoder: &mut dtvcc_service_decoder) {
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        unsafe {
+            dealloc(decoder.windows[0].rows[0] as *mut u8, layout);
+        }
+    }
 
     // -------------------------- C0 Commands-------------------------
     #[test]
@@ -1381,13 +1410,7 @@ mod test {
 
     #[test]
     fn test_process_p16() {
-        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
-        decoder.current_window = 0;
-        decoder.windows[0].is_defined = 1;
-        decoder.windows[0].row_count = 4;
-        decoder.windows[0].col_count = 4;
-        decoder.windows[0].attribs.print_direction =
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        let mut decoder = setup_test_decoder_with_memory();
         let block = [b'a', b'b'] as [c_uchar; 2];
 
         decoder.process_p16(&block);
@@ -1396,10 +1419,12 @@ mod test {
         assert_eq!(decoder.windows[0].pen_column, 1);
         unsafe {
             assert_eq!(
-                *decoder.windows[0].rows[0],
+                *decoder.windows[0].rows[0].add(0),
                 dtvcc_symbol::new_16(block[0], block[1])
             );
         }
+
+        cleanup_test_decoder(&mut decoder);
     }
 
     // -------------------------- C1 Commands-------------------------
@@ -1643,14 +1668,7 @@ mod test {
     // -------------------------- G0, G1 and extended Commands-------------------------
     #[test]
     fn test_handle_G0() {
-        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
-
-        decoder.current_window = 0;
-        decoder.windows[0].is_defined = 1;
-        decoder.windows[0].row_count = 4;
-        decoder.windows[0].col_count = 4;
-        decoder.windows[0].attribs.print_direction =
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        let mut decoder = setup_test_decoder_with_memory();
 
         // Case: block[0] == 0x7F
         let block = [0x7F, 0x61];
@@ -1660,7 +1678,7 @@ mod test {
         assert_eq!(decoder.windows[0].pen_column, 1);
         unsafe {
             assert_eq!(
-                decoder.windows[0].rows[0].read().sym,
+                decoder.windows[0].rows[0].add(0).read().sym,
                 CCX_DTVCC_MUSICAL_NOTE_CHAR
             );
         }
@@ -1671,20 +1689,15 @@ mod test {
 
         assert_eq!(return_value, 1);
         unsafe {
-            assert_eq!(decoder.windows[0].rows[0].read().sym, 96);
+            assert_eq!(decoder.windows[0].rows[0].add(1).read().sym, 96);
         }
+
+        cleanup_test_decoder(&mut decoder);
     }
 
     #[test]
     fn test_handle_G1() {
-        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
-
-        decoder.current_window = 0;
-        decoder.windows[0].is_defined = 1;
-        decoder.windows[0].row_count = 4;
-        decoder.windows[0].col_count = 4;
-        decoder.windows[0].attribs.print_direction =
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        let mut decoder = setup_test_decoder_with_memory();
 
         let block = [0x7F, 0x61];
         let return_value = decoder.handle_G1(&block);
@@ -1693,20 +1706,15 @@ mod test {
         assert_eq!(decoder.windows[0].pen_row, 0);
         assert_eq!(decoder.windows[0].pen_column, 1);
         unsafe {
-            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x7F);
+            assert_eq!(decoder.windows[0].rows[0].add(0).read().sym, 0x7F);
         }
+
+        cleanup_test_decoder(&mut decoder);
     }
 
     #[test]
     fn test_handle_extended_char() {
-        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
-
-        decoder.current_window = 0;
-        decoder.windows[0].is_defined = 1;
-        decoder.windows[0].row_count = 4;
-        decoder.windows[0].col_count = 4;
-        decoder.windows[0].attribs.print_direction =
-            dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        let mut decoder = setup_test_decoder_with_memory();
 
         // 0..=0x1F
         let return_value = decoder.handle_extended_char(&[0x1A, 0x61]);
@@ -1718,7 +1726,7 @@ mod test {
         assert_eq!(decoder.windows[0].pen_row, 0);
         assert_eq!(decoder.windows[0].pen_column, 1);
         unsafe {
-            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x5);
+            assert_eq!(decoder.windows[0].rows[0].add(0).read().sym, 0x5);
         }
 
         // 0x80..=0x9F
@@ -1731,8 +1739,10 @@ mod test {
         assert_eq!(decoder.windows[0].pen_row, 0);
         assert_eq!(decoder.windows[0].pen_column, 2);
         unsafe {
-            assert_eq!(decoder.windows[0].rows[0].read().sym, 0x20);
+            assert_eq!(decoder.windows[0].rows[0].add(1).read().sym, 0x20);
         }
+
+        cleanup_test_decoder(&mut decoder);
     }
 
     #[test]
@@ -1757,13 +1767,20 @@ mod test {
         decoder.windows[0].attribs.print_direction =
             dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
 
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        decoder.windows[0].rows[0] = unsafe { alloc(layout) } as *mut dtvcc_symbol;
+        decoder.windows[0].memory_reserved = 1;
+
         decoder.process_character(sym);
 
         // Check changes
         assert_eq!(decoder.windows[0].pen_row, 0);
         assert_eq!(decoder.windows[0].pen_column, 1);
         unsafe {
-            assert_eq!(decoder.windows[0].rows[0].read(), dtvcc_symbol::new(0x41));
+            assert_eq!(
+                decoder.windows[0].rows[0].add(0).read(),
+                dtvcc_symbol::new(0x41)
+            );
         }
     }
 }
