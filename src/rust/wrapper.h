@@ -11,3 +11,4 @@
 #include "../lib_ccx/hardsubx.h"
 #include "../lib_ccx/utility.h"
 #include "../lib_ccx/ccx_encoders_helpers.h"
+#include "../lib_ccx/cc_bitstream.h"
