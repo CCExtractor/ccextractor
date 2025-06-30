@@ -2,25 +2,6 @@ use crate::fatal;
 use crate::util::log::ExitCause;
 use thiserror::Error;
 
-/// Trait for converting Rust types to their C counterparts
-pub trait CType<T> {
-    /// Convert the Rust type to its C counterpart
-    ///
-    /// # Safety
-    /// This function is unsafe because it creates raw pointers and assumes the underlying data
-    /// remains valid for the lifetime of the C type. The caller must ensure that:
-    /// - The source data outlives the C type
-    /// - The pointers created are valid and properly aligned
-    /// - The data is not mutably aliased
-    unsafe fn to_ctype(&self) -> T;
-}
-
-/// Trait for converting C types to their Rust counterparts
-pub trait FromC<T> {
-    /// Convert the C type to its Rust counterpart
-    fn from_c(value: T) -> Self;
-}
-
 #[derive(Debug, Error)]
 pub enum BitstreamError {
     #[error("Bitstream has negative length")]
