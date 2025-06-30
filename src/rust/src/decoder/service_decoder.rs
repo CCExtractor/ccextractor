@@ -525,9 +525,7 @@ impl dtvcc_service_decoder {
         block: &[c_uchar],
         timing: &mut ccx_common_timing_ctx,
     ) {
-        debug!(
-            "dtvcc_handle_DFx_DefineWindow: W[{window_id}], attributes:"
-        );
+        debug!("dtvcc_handle_DFx_DefineWindow: W[{window_id}], attributes:");
         let window = &mut self.windows[window_id as usize];
         let block = &block[..=5];
         let is_command_repeated = window
@@ -700,9 +698,7 @@ impl dtvcc_service_decoder {
         debug!(
             "Pen size: [{pen_size}]     Offset: [{offset}]  Text tag: [{text_tag}]   Font tag: [{font_tag}]"
         );
-        debug!(
-            "Edge type: [{edge_type}]  Underline: [{underline}]    Italic: [{italic}]"
-        );
+        debug!("Edge type: [{edge_type}]  Underline: [{underline}]    Italic: [{italic}]");
 
         let window = &mut self.windows[self.current_window as usize];
         if window.pen_row == -1 {
@@ -735,12 +731,8 @@ impl dtvcc_service_decoder {
         let bg_opacity = (block[1] >> 6) & 0x03;
         let edge_color = (block[2]) & 0x3f;
         debug!("dtvcc_handle_SPC_SetPenColor: attributes: ");
-        debug!(
-            "Foreground color: [{fg_color}]     Foreground opacity: [{fg_opacity}]"
-        );
-        debug!(
-            "Background color: [{bg_color}]     Background opacity: [{bg_opacity}]"
-        );
+        debug!("Foreground color: [{fg_color}]     Foreground opacity: [{fg_opacity}]");
+        debug!("Background color: [{bg_color}]     Background opacity: [{bg_opacity}]");
         debug!("Edge color: [{edge_color}]");
 
         let window = &mut self.windows[self.current_window as usize];
@@ -830,17 +822,13 @@ impl dtvcc_service_decoder {
         if is_true(self.windows[window_id as usize].is_defined) {
             self.current_window = window_id as i32;
         } else {
-            debug!(
-                "dtvcc_handle_CWx_SetCurrentWindow: window [{window_id}] is not defined"
-            );
+            debug!("dtvcc_handle_CWx_SetCurrentWindow: window [{window_id}] is not defined");
         }
     }
 
     /// DLY Delay
     pub fn handle_delay(&mut self, tenths_of_sec: u8) {
-        debug!(
-            "dtvcc_handle_DLY_Delay: dely for {tenths_of_sec} tenths of second"
-        );
+        debug!("dtvcc_handle_DLY_Delay: dely for {tenths_of_sec} tenths of second");
     }
 
     /// DLC Delay Cancel

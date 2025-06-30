@@ -106,9 +106,7 @@ pub fn color_to_hex(color: u8) -> (u8, u8, u8) {
     let red = color >> 4;
     let green = (color >> 2) & 0x3;
     let blue = color & 0x3;
-    debug!(
-        "Color: {color} [{color:06x}] {red} {green} {blue}"
-    );
+    debug!("Color: {color} [{color:06x}] {red} {green} {blue}");
     (red, green, blue)
 }
 
