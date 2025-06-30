@@ -1,6 +1,6 @@
 use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
-use crate::common::{copy_to_rust, CType};
+use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
 use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
 use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
@@ -96,7 +96,7 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
                 }
                 Err(_) => {
                     // Pointer was invalid, set to null
-                    eprintln!("Warning: Invalid PID buffer pointer at index {}", i);
+                    eprintln!("Warning: Invalid PID buffer pointer at index {i}");
                     c.PID_buffers[i] = std::ptr::null_mut();
                 }
             }
@@ -124,7 +124,7 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
                 }
                 Err(_) => {
                     // Pointer was invalid, set to null
-                    eprintln!("Warning: Invalid PMT entry pointer at index {}", i);
+                    eprintln!("Warning: Invalid PMT entry pointer at index {i}");
                     c.PIDs_programs[i] = std::ptr::null_mut();
                 }
             }
@@ -386,6 +386,7 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
     demux_ctx.close(&mut CcxOptions);
+    copy_from_rust(&raw mut ccx_options, CcxOptions);
     copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
 }
 
@@ -418,10 +419,13 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
         Ok(s) => s,
         Err(_) => return -1,
     };
+
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
 
     let ReturnValue = demux_ctx.open(file_str, &mut CcxOptions);
+
+    copy_from_rust(&raw mut ccx_options, CcxOptions);
     copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
     ReturnValue
 }
@@ -875,10 +879,10 @@ mod tests {
         assert_eq!(rust_demuxer.startbytes_avail, 456);
 
         // Boolean conversions (C int to Rust bool)
-        assert_eq!(rust_demuxer.ts_autoprogram, true);
-        assert_eq!(rust_demuxer.ts_allprogram, false);
-        assert_eq!(rust_demuxer.flag_ts_forced_pn, true);
-        assert_eq!(rust_demuxer.flag_ts_forced_cappid, false);
+        assert!(rust_demuxer.ts_autoprogram);
+        assert!(!rust_demuxer.ts_allprogram);
+        assert!(rust_demuxer.flag_ts_forced_pn);
+        assert!(!rust_demuxer.flag_ts_forced_cappid);
 
         // Enum conversion
         assert_eq!(rust_demuxer.ts_datastreamtype, StreamType::AudioAac);
@@ -946,8 +950,8 @@ mod tests {
         assert!(rust_demuxer.pids_programs.is_empty());
 
         // Boolean conversions
-        assert_eq!(rust_demuxer.hauppauge_warning_shown, false);
-        assert_eq!(rust_demuxer.warning_program_not_found_shown, true);
+        assert!(!rust_demuxer.hauppauge_warning_shown);
+        assert!(rust_demuxer.warning_program_not_found_shown);
 
         // Numeric fields
         assert_eq!(rust_demuxer.multi_stream_per_prog, 88);

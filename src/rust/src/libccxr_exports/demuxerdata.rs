@@ -4,6 +4,7 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_structs::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
+use std::os::raw::c_uchar;
 use std::os::raw::{c_int, c_uint};
 
 /// Convert from C demuxer_data to Rust DemuxerData
@@ -12,27 +13,20 @@ use std::os::raw::{c_int, c_uint};
 /// - The buffer pointer in c_data must be valid for the length specified by len
 /// - The returned DemuxerData borrows the buffer data, so the C struct must outlive it
 #[allow(clippy::unnecessary_cast)]
-pub unsafe fn copy_demuxer_data_to_rust<'a>(c_data: *const demuxer_data) -> DemuxerData<'a> {
-    // Create slice from C buffer pointer and length
-    let buffer_slice = if (*c_data).buffer.is_null() || (*c_data).len == 0 {
-        &[]
-    } else {
-        std::slice::from_raw_parts((*c_data).buffer, (*c_data).len)
-    };
-
+pub unsafe fn copy_demuxer_data_to_rust(c_data: *const demuxer_data) -> DemuxerData {
     DemuxerData {
         program_number: (*c_data).program_number as i32,
         stream_pid: (*c_data).stream_pid as i32,
         codec: Codec::from_ctype((*c_data).codec),
         bufferdatatype: BufferdataType::from_ctype((*c_data).bufferdatatype)
             .unwrap_or(BufferdataType::Unknown),
-        buffer_data: buffer_slice,
-        buffer_pos: 0, // Reset position to start of buffer
+        buffer: (*c_data).buffer,
+        len: (*c_data).len, // Reset position to start of buffer
         rollover_bits: (*c_data).rollover_bits as u32,
         pts: (*c_data).pts as i64,
         tb: CcxRational::from_ctype((*c_data).tb).unwrap_or(CcxRational::default()), // Assuming From trait is implemented
-        next_stream: (*c_data).next_stream as *mut DemuxerData<'a>,
-        next_program: (*c_data).next_program as *mut DemuxerData<'a>,
+        next_stream: (*c_data).next_stream,
+        next_program: (*c_data).next_program,
     }
 }
 
@@ -51,13 +45,8 @@ pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: 
     (*c_data).bufferdatatype = rust_data.bufferdatatype.to_ctype(); // Assuming Into trait is implemented
 
     // Copy buffer data from Rust slice to C buffer
-    if !(*c_data).buffer.is_null() && !rust_data.buffer_data.is_empty() {
-        let copy_len = std::cmp::min(rust_data.buffer_data.len(), (*c_data).len);
-        std::ptr::copy_nonoverlapping(rust_data.buffer_data.as_ptr(), (*c_data).buffer, copy_len);
-        (*c_data).len = copy_len;
-    } else {
-        (*c_data).len = 0;
-    }
+    (*c_data).buffer = rust_data.buffer as *mut c_uchar;
+    (*c_data).len = rust_data.len;
 
     (*c_data).rollover_bits = rust_data.rollover_bits as c_uint;
     (*c_data).pts = rust_data.pts as i64;
@@ -66,42 +55,9 @@ pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: 
     (*c_data).next_program = rust_data.next_program as *mut demuxer_data;
 }
 
-// Helper function to create a DemuxerData with a specific buffer
-impl<'a> DemuxerData<'a> {
-    /// Create a new DemuxerData with a specific buffer
-    pub fn with_buffer(buffer: &'a [u8]) -> Self {
-        Self {
-            buffer_data: buffer,
-            ..Default::default()
-        }
-    }
-
-    /// Get the current byte at buffer_pos, if within bounds
-    pub fn current_byte(&self) -> Option<u8> {
-        self.buffer_data.get(self.buffer_pos).copied()
-    }
-
-    /// Advance the buffer position by n bytes
-    pub fn advance(&mut self, n: usize) {
-        self.buffer_pos = std::cmp::min(self.buffer_pos + n, self.buffer_data.len());
-    }
-
-    /// Get remaining bytes from current position
-    pub fn remaining(&self) -> &[u8] {
-        &self.buffer_data[self.buffer_pos..]
-    }
-
-    /// Check if we've reached the end of the buffer
-    pub fn is_at_end(&self) -> bool {
-        self.buffer_pos >= self.buffer_data.len()
-    }
-}
-#[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bindings::{ccx_bufferdata_type_CCX_H264, demuxer_data};
-    use crate::demuxer::demuxer_data::CCX_NOPTS;
-    use lib_ccxr::common::Codec;
+    use crate::bindings::ccx_bufferdata_type_CCX_H264;
     use std::ptr;
     // Helper function to create a test C demuxer_data struct
 
@@ -113,57 +69,16 @@ mod tests {
         assert_eq!(default_data.stream_pid, -1);
         assert_eq!(default_data.codec, None);
         assert_eq!(default_data.bufferdatatype, BufferdataType::Pes);
-        assert!(default_data.buffer_data.is_empty());
-        assert_eq!(default_data.buffer_pos, 0);
+        assert!(default_data.buffer.is_null());
+        assert_eq!(default_data.len, 0);
         assert_eq!(default_data.rollover_bits, 0);
-        assert_eq!(default_data.pts, CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::demuxer_data::CCX_NOPTS);
         assert_eq!(default_data.tb.num, 1);
         assert_eq!(default_data.tb.den, 90000);
         assert!(default_data.next_stream.is_null());
         assert!(default_data.next_program.is_null());
     }
-
-    #[test]
-    fn test_with_buffer_constructor() {
-        let test_buffer = &[0x10, 0x20, 0x30, 0x40];
-        let data = DemuxerData::with_buffer(test_buffer);
-
-        assert_eq!(data.buffer_data, test_buffer);
-        assert_eq!(data.buffer_pos, 0);
-        // Other fields should be default
-        assert_eq!(data.program_number, -1);
-        assert_eq!(data.codec, None);
-    }
-
-    #[test]
-    fn test_helper_methods() {
-        let test_buffer = &[0x10, 0x20, 0x30, 0x40];
-        let mut data = DemuxerData::with_buffer(test_buffer);
-
-        // Test current_byte
-        assert_eq!(data.current_byte(), Some(0x10));
-
-        // Test advance
-        data.advance(2);
-        assert_eq!(data.buffer_pos, 2);
-        assert_eq!(data.current_byte(), Some(0x30));
-
-        // Test remaining
-        let remaining = data.remaining();
-        assert_eq!(remaining, &[0x30, 0x40]);
-
-        // Test is_at_end
-        assert!(!data.is_at_end());
-        data.advance(10); // Advance beyond buffer
-        assert!(data.is_at_end());
-        assert_eq!(data.buffer_pos, test_buffer.len()); // Should be clamped
-
-        // Test current_byte at end
-        assert_eq!(data.current_byte(), None);
-
-        // Test remaining at end
-        assert!(data.remaining().is_empty());
-    }
+    #[allow(dead_code)]
     fn create_test_c_demuxer_data() -> (*mut demuxer_data, Vec<u8>) {
         unsafe {
             let c_data = Box::into_raw(Box::new(demuxer_data {
@@ -200,17 +115,18 @@ mod tests {
             // Test all basic fields
             assert_eq!(rust_data.program_number, c_data.program_number);
             assert_eq!(rust_data.stream_pid, c_data.stream_pid);
-            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits as u32);
-            assert_eq!(rust_data.pts, c_data.pts as i64);
+            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits);
+            assert_eq!(rust_data.pts, c_data.pts);
 
             // Test buffer data
-            assert_eq!(rust_data.buffer_data.len(), c_data.len);
-            assert_eq!(rust_data.buffer_pos, 0); // Should start at 0
+            assert_eq!(rust_data.len, c_data.len);
 
             // Test buffer content
-            let expected_buffer = [0x01, 0x02, 0x03, 0x04, 0x05, 0xAA, 0xBB, 0xCC];
-            assert_eq!(rust_data.buffer_data, &expected_buffer);
-
+            let expected_buffer = &mut [0x01, 0x02, 0x03, 0x04, 0x05, 0xAA, 0xBB, 0xCC];
+            assert_eq!(
+                std::slice::from_raw_parts(rust_data.buffer, rust_data.len),
+                expected_buffer
+            );
             // Cleanup
             let _ = Box::from_raw(c_data_ptr);
         }
@@ -288,22 +204,22 @@ mod tests {
 
         let rust_data = unsafe { copy_demuxer_data_to_rust(&c_data) };
 
-        assert!(rust_data.buffer_data.is_empty());
-        assert_eq!(rust_data.buffer_pos, 0);
+        assert!(rust_data.buffer.is_null());
+        assert_eq!(rust_data.len, 0);
         assert_eq!(rust_data.program_number, 100);
         assert_eq!(rust_data.stream_pid, 200);
     }
 
     #[test]
     fn test_copy_demuxer_from_rust_basic_fields() {
-        let test_buffer = &[0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE];
+        let test_buffer = &mut [0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE];
         let rust_data = DemuxerData {
             program_number: 999,
             stream_pid: 888,
             codec: Some(Codec::Any),
             bufferdatatype: BufferdataType::Raw,
-            buffer_data: test_buffer,
-            buffer_pos: 2, // This shouldn't affect the copy
+            buffer: test_buffer.as_mut_ptr(),
+            len: 6,
             rollover_bits: 777,
             pts: 555666777,
             tb: CcxRational { num: 3, den: 60 },
@@ -337,7 +253,7 @@ mod tests {
             assert_eq!(c_data.stream_pid, rust_data.stream_pid);
             assert_eq!(c_data.rollover_bits, rust_data.rollover_bits);
             assert_eq!(c_data.pts, rust_data.pts);
-            assert_eq!(c_data.len, test_buffer.len());
+            assert_eq!(c_data.len, 6);
 
             // Verify buffer content was copied
             let copied_buffer = std::slice::from_raw_parts(c_data.buffer, c_data.len);
@@ -417,9 +333,10 @@ mod tests {
 
     #[test]
     fn test_copy_demuxer_from_rust_buffer_size_limits() {
-        let large_buffer = vec![0x42; 1000]; // Large buffer
+        let mut large_buffer = vec![0x42; 1000]; // Large buffer
         let rust_data = DemuxerData {
-            buffer_data: &large_buffer,
+            buffer: large_buffer.as_mut_ptr(),
+            len: 100,
             ..Default::default()
         };
 
@@ -446,7 +363,7 @@ mod tests {
     #[test]
     fn test_copy_demuxer_from_rust_empty_buffer() {
         let rust_data = DemuxerData {
-            buffer_data: &[],
+            buffer: [].as_mut_ptr(),
             ..Default::default()
         };
 
@@ -472,9 +389,9 @@ mod tests {
 
     #[test]
     fn test_copy_demuxer_from_rust_null_c_buffer() {
-        let test_buffer = &[0x01, 0x02, 0x03];
+        let test_buffer = &mut [0x01, 0x02, 0x03];
         let rust_data = DemuxerData {
-            buffer_data: test_buffer,
+            buffer: test_buffer.as_mut_ptr(),
             ..Default::default()
         };
 
@@ -523,9 +440,12 @@ mod tests {
     #[test]
     fn test_ccx_nopts_constant() {
         // Verify the CCX_NOPTS constant matches the C definition
-        assert_eq!(CCX_NOPTS, 0x8000000000000000u64 as i64);
+        assert_eq!(
+            crate::demuxer::demuxer_data::CCX_NOPTS,
+            0x8000000000000000u64 as i64
+        );
 
         let default_data = DemuxerData::default();
-        assert_eq!(default_data.pts, CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::demuxer_data::CCX_NOPTS);
     }
 }

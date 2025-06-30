@@ -1830,7 +1830,7 @@ pub mod tests {
         assert!(options.cc_to_stdout);
 
         assert_eq!(options.messages_target, OutputTarget::Quiet);
-        assert_eq!(options.nofontcolor, true);
+        assert!(options.nofontcolor);
     }
 
     #[test]

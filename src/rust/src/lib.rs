@@ -248,9 +248,6 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 }
 
 extern "C" {
-    fn version(location: *const c_char);
-    #[allow(dead_code)]
-    fn set_binary_mode();
     #[allow(dead_code)]
     fn print_file_report(ctx: *mut lib_ccx_ctx);
     #[allow(dead_code)]

@@ -199,9 +199,10 @@ pub unsafe fn switch_to_next_file(
             && is_decoder_processed_enough(ctx) == 0
             && (demux_ctx.past + bytes_in_buffer < ctx.inputsize)
         {
-            println!("\n\n\n\nATTENTION!!!!!!");
-            println!(
-                "In switch_to_next_file(): Processing of {} {} ended prematurely {} < {}, please send bug report.\n\n",
+            debug!(msg_type = DebugMessageFlag::DECODER_708; "\n\n\n\nATTENTION!!!!!!");
+            debug!(
+                msg_type = DebugMessageFlag::DECODER_708;
+                "In Rust:switch_to_next_file(): Processing of {} {} ended prematurely {} < {}, please send bug report.\n\n",
                 CStr::from_ptr((*ctx.inputfile).add(ctx.current_file as usize)).to_string_lossy(),
                 ctx.current_file,
                 demux_ctx.past,
@@ -271,7 +272,6 @@ pub unsafe fn buffered_read_opt(
     let mut bytes = bytes;
 
     position_sanity_check(ctx);
-
     if let Some(live_stream) = &ccx_options.live_stream {
         if live_stream.millis() > 0 {
             seconds = SystemTime::now()
@@ -280,7 +280,6 @@ pub unsafe fn buffered_read_opt(
                 .unwrap_or(0);
         }
     }
-
     if ccx_options.buffer_input || ctx.filebuffer_pos < ctx.bytesinbuffer {
         // Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
         let mut eof = ctx.infd == -1;
@@ -371,7 +370,6 @@ pub unsafe fn buffered_read_opt(
                             copied += i as usize;
                             bytes -= i as usize;
                         }
-
                         if !((i != 0
                             || (ccx_options.live_stream.is_some()
                                 && ccx_options.live_stream.unwrap().millis() != 0)
@@ -497,7 +495,6 @@ pub unsafe fn buffered_read_opt(
                     i = -1;
                 }
                 mem::forget(file);
-
                 if !((i != 0
                     || (ccx_options.live_stream.is_some()
                         && ccx_options.live_stream.unwrap().millis() != 0)
@@ -551,6 +548,7 @@ pub unsafe fn buffered_read_opt(
             let moved = match (op_result, np_result) {
                 (Ok(op), Ok(np)) => {
                     // Both seeks succeeded - normal case
+                    mem::forget(file);
                     (np - op) as usize
                 }
                 (Err(_), Err(_)) => {
@@ -570,6 +568,7 @@ pub unsafe fn buffered_read_opt(
                             }
                         }
                     }
+                    mem::forget(file);
                     bytes
                 }
                 (Ok(op), Err(_)) => {
@@ -586,11 +585,9 @@ pub unsafe fn buffered_read_opt(
                     i as usize
                 }
             };
-
             let delta = moved;
             copied += delta;
             bytes -= copied;
-
             if copied == 0 {
                 if ccx_options.live_stream.is_some()
                     && ccx_options.live_stream.unwrap().millis() != 0
@@ -687,6 +684,7 @@ pub unsafe fn buffered_read(
         result
     }
 }
+
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_opt`
 pub unsafe fn buffered_read_byte(
@@ -789,6 +787,7 @@ mod tests {
     use std::os::unix::io::IntoRawFd;
     #[cfg(windows)]
     use std::os::windows::io::IntoRawHandle;
+    use std::ptr::null_mut;
     use std::slice;
     use std::sync::Once;
     #[cfg(feature = "sanity_check")]
@@ -875,7 +874,7 @@ mod tests {
             let ccx_options = Options::default();
 
             {
-                println!("{:?}", ccx_options);
+                println!("{ccx_options:?}");
             }
         }
     }
@@ -895,6 +894,7 @@ mod tests {
 
             // Now, re-lock to verify the changes.
             assert_eq!(ccx_options.live_stream.unwrap().millis(), 0);
+            assert!((null_mut::<*mut u8>()).is_null());
         }
     }
     // #[test] // Uncomment to run
