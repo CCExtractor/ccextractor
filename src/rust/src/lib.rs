@@ -24,9 +24,9 @@ pub mod gxf_demuxer;
 pub mod hardsubx;
 pub mod hlist;
 pub mod libccxr_exports;
+mod mxf_demuxer;
 pub mod parser;
 pub mod utils;
-mod mxf_demuxer;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
@@ -280,7 +280,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
             match e.kind() {
                 ErrorKind::DisplayHelp => {
                     // Print the help string
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::WithHelp.exit_code();
                 }
                 ErrorKind::DisplayVersion => {
@@ -289,11 +289,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
                 }
                 ErrorKind::UnknownArgument => {
                     println!("Unknown Argument");
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::MalformedParameter.exit_code();
                 }
                 _ => {
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::Failure.exit_code();
                 }
             }

@@ -4,8 +4,13 @@ use crate::file_functions::file::{
     buffered_get_be16, buffered_get_be32, buffered_get_byte, buffered_read, buffered_read_byte,
     buffered_skip,
 };
-use crate::gxf_demuxer::common_structs:: DemuxerError;
-use crate::mxf_demuxer::common_structs::{KLVPacketRust, MXFCaptionTypeRust, MXFContextRust, MXFReadTableEntryRust, MXFTrackRust, UidRust, FRAMERATE_RATIONALS_RUST, MXF_CAPTION_ESSENCE_CONTAINER_RUST, MXF_ESSENCE_ELEMENT_KEY_RUST, MXF_HEADER_PARTITION_PACK_KEY_RUST, MXF_KLV_KEY_RUST, MXF_READ_TABLE_RUST};
+use crate::gxf_demuxer::common_structs::DemuxerError;
+use crate::mxf_demuxer::common_structs::{
+    KLVPacketRust, MXFCaptionTypeRust, MXFContextRust, MXFReadTableEntryRust, MXFTrackRust,
+    UidRust, FRAMERATE_RATIONALS_RUST, MXF_CAPTION_ESSENCE_CONTAINER_RUST,
+    MXF_ESSENCE_ELEMENT_KEY_RUST, MXF_HEADER_PARTITION_PACK_KEY_RUST, MXF_KLV_KEY_RUST,
+    MXF_READ_TABLE_RUST,
+};
 use lib_ccxr::common::{BufferdataType, Options};
 use lib_ccxr::info;
 use lib_ccxr::util::log::{debug, DebugMessageFlag};
@@ -165,8 +170,14 @@ pub unsafe fn mxf_read_cdp_data(
     }
 
     // 7) Read the actual closed caption data
-    let buffer_slice = std::slice::from_raw_parts_mut(data.buffer.add(data.len), (cc_count * 3) as usize);
-    ret = buffered_read(demux, Some(buffer_slice), (cc_count * 3) as usize, ccx_options) as i32;
+    let buffer_slice =
+        std::slice::from_raw_parts_mut(data.buffer.add(data.len), (cc_count * 3) as usize);
+    ret = buffered_read(
+        demux,
+        Some(buffer_slice),
+        (cc_count * 3) as usize,
+        ccx_options,
+    ) as i32;
     data.len += (cc_count * 3) as usize;
     demux.past += (cc_count * 3) as i64;
     len += ret;
@@ -298,7 +309,7 @@ pub unsafe fn mxf_read_header_partition_pack(
         for A in MXF_CAPTION_ESSENCE_CONTAINER_RUST.iter() {
             let uid = &A.uid;
             let ctype = A.caption_type;
-            if &ull[..7] == &uid[..7] && &ull[8..] == &uid[8..] {
+            if ull[..7] == uid[..7] && ull[8..] == uid[8..] {
                 // we’ve found our matching UL
                 ctx.r#caption_type = ctype;
             }
@@ -496,7 +507,7 @@ pub unsafe fn mxf_read_essence_element(
             return Err(DemuxerError::InvalidArgument);
         }
     };
-    if ctx.caption_type == MXFCaptionTypeRust::ANC {
+    if ctx.caption_type == MXFCaptionTypeRust::Anc {
         // for ANC, set raw type and delegate to VANC reader
         data.bufferdatatype = BufferdataType::RawType;
         let ret = match mxf_read_vanc_data(demux, size, data, opts) {
@@ -519,7 +530,6 @@ unsafe fn klv_read_packet(
     ctx: &mut CcxDemuxer,
     ccx_options: &mut Options,
 ) -> i32 {
-
     // 1) Sync: read 4 bytes, return any non-zero code immediately.
     let sync_ret = mxf_read_sync(ctx, &MXF_KLV_KEY_RUST, 4, ccx_options);
     if sync_ret != 0 {
@@ -657,7 +667,7 @@ mod tests {
         // Place MXF header at the beginning
         ctx.startbytes[0..14].copy_from_slice(&MXF_HEADER_PARTITION_PACK_KEY_RUST);
 
-        assert_eq!(ccx_probe_mxf(&ctx), true);
+        assert!(ccx_probe_mxf(&ctx));
     }
 
     #[test]
@@ -671,7 +681,7 @@ mod tests {
         // Place MXF header at offset 5
         ctx.startbytes[5..19].copy_from_slice(&MXF_HEADER_PARTITION_PACK_KEY_RUST);
 
-        assert_eq!(ccx_probe_mxf(&ctx), true);
+        assert!(ccx_probe_mxf(&ctx));
     }
 
     #[test]
@@ -684,7 +694,7 @@ mod tests {
             ctx.startbytes[i] = (i % 256) as u8;
         }
 
-        assert_eq!(ccx_probe_mxf(&ctx), false);
+        assert!(!ccx_probe_mxf(&ctx));
     }
 
     #[test]
@@ -696,7 +706,7 @@ mod tests {
         ctx.startbytes[0..10].copy_from_slice(&MXF_HEADER_PARTITION_PACK_KEY_RUST[0..10]);
 
         // Should return false because we can't match the full 14-byte header
-        assert_eq!(ccx_probe_mxf(&ctx), false);
+        assert!(!ccx_probe_mxf(&ctx));
     }
 
     #[test]
@@ -727,7 +737,7 @@ mod tests {
     }
     fn make_ctx(tracks: &[(i32, [u8; 4])]) -> MXFContextRust {
         let mut ctx = MXFContextRust {
-            caption_type: MXFCaptionTypeRust::VBI,
+            caption_type: MXFCaptionTypeRust::Vbi,
             cap_track_id: 0,
             cap_essence_key: [0xFF; 16], // sentinel
             tracks: [MXFTrackRust {
@@ -788,7 +798,7 @@ mod tests {
 
     #[test]
     fn too_small_partition() {
-        let mut dem = make_demux(vec![0; 100], MXFCaptionTypeRust::ANC);
+        let mut dem = make_demux(vec![0; 100], MXFCaptionTypeRust::Anc);
         let r = unsafe { mxf_read_header_partition_pack(&mut dem, 87, &mut Options::default()) };
         assert_eq!(r, Err(DemuxerError::InvalidArgument));
     }
@@ -834,11 +844,11 @@ mod tests {
         b.extend(&[0u8; 78]);
         b.extend(&0u32.to_be_bytes());
         b.extend(&16u32.to_be_bytes());
-        let mut dem = make_demux(b, MXFCaptionTypeRust::ANC);
+        let mut dem = make_demux(b, MXFCaptionTypeRust::Anc);
         let r = unsafe { mxf_read_header_partition_pack(&mut dem, 88, &mut Options::default()) };
         assert_eq!(r, Ok(88));
         let ctx = unsafe { &*(dem.private_data as *const MXFContextRust) };
-        assert_eq!(ctx.caption_type, MXFCaptionTypeRust::ANC);
+        assert_eq!(ctx.caption_type, MXFCaptionTypeRust::Anc);
     }
 
     #[test]
@@ -851,12 +861,11 @@ mod tests {
         let mut ul = MXF_CAPTION_ESSENCE_CONTAINER_RUST[0].uid;
         ul[7] ^= 0xFF;
         b.extend(&ul);
-        let mut dem = make_demux(b, MXFCaptionTypeRust::ANC);
-        let r =
-            unsafe { mxf_read_header_partition_pack(&mut dem, 104, &mut &mut Options::default()) };
+        let mut dem = make_demux(b, MXFCaptionTypeRust::Anc);
+        let r = unsafe { mxf_read_header_partition_pack(&mut dem, 104, &mut Options::default()) };
         assert_eq!(r, Ok(104));
         let ctx = unsafe { &*(dem.private_data as *const MXFContextRust) };
-        assert_eq!(ctx.caption_type, MXFCaptionTypeRust::VBI);
+        assert_eq!(ctx.caption_type, MXFCaptionTypeRust::Vbi);
     }
     fn allocate_filebuffer() -> *mut u8 {
         // For simplicity, we allocate FILEBUFFERSIZE bytes.
@@ -871,7 +880,7 @@ mod tests {
     fn make_demux_vanc(buf: &[u8]) -> (CcxDemuxer<'static>, DemuxerData) {
         let mut demux = CcxDemuxer::default();
         // allocate and copy
-        let fb =  allocate_filebuffer();
+        let fb = allocate_filebuffer();
         unsafe {
             let slice = slice::from_raw_parts_mut(fb, buf.len());
             slice.copy_from_slice(buf);
@@ -906,8 +915,7 @@ mod tests {
         let (mut demux, mut data) = make_demux_vanc(&buf);
         let mut opts = Options::default();
 
-            unsafe { mxf_read_vanc_data(&mut demux, buf.len() as u64, &mut data, &mut opts) }
-                .unwrap();
+        unsafe { mxf_read_vanc_data(&mut demux, buf.len() as u64, &mut data, &mut opts) }.unwrap();
         assert_eq!(demux.filebuffer_pos as usize, buf.len());
     }
 
@@ -972,7 +980,7 @@ mod tests {
     #[test]
     fn header_eof_returns_err() {
         // size says 19, but only 10 bytes in buffer
-        let (mut demux, mut data) = make_demux_vanc(&vec![0u8; 10]);
+        let (mut demux, mut data) = make_demux_vanc(&[0u8; 10]);
         let mut opts = Options::default();
         let err = unsafe { mxf_read_vanc_data(&mut demux, 19, &mut data, &mut opts) }.unwrap_err();
         assert_eq!(err, DemuxerError::EOF);
@@ -999,7 +1007,7 @@ mod tests {
     #[test]
     fn non_anc_skips() {
         let buf = vec![0u8; 10];
-        let (mut demux, mut data, _ctx) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::ANC, 5);
+        let (mut demux, mut data, _ctx) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::Anc, 5);
         let mut opts = Options::default();
 
         let consumed =
@@ -1017,7 +1025,7 @@ mod tests {
         // prepare a tiny VANC block size=19 (header only, VANC will skip)
         let mut buf = vec![0u8; 19];
         buf[1] = 0; // zero packets
-        let (mut demux, mut data, ctx) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::ANC, 7);
+        let (mut demux, mut data, ctx) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::Anc, 7);
         let mut opts = Options::default();
 
         let consumed =
@@ -1037,7 +1045,7 @@ mod tests {
     fn anc_multiple_increments() {
         let mut buf = vec![0u8; 19];
         buf[1] = 0;
-        let (mut demux, mut data, _) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::ANC, 0);
+        let (mut demux, mut data, _) = make_demux_with_ctx(&buf, MXFCaptionTypeRust::Anc, 0);
         let mut opts = Options::default();
 
         let c1 = unsafe { mxf_read_essence_element(&mut demux, 19, &mut data, &mut opts) }.unwrap();
@@ -1088,7 +1096,7 @@ mod tests {
         let size = buf.len() as u64;
 
         let init = MXFContextRust {
-            caption_type: MXFCaptionTypeRust::ANC,
+            caption_type: MXFCaptionTypeRust::Anc,
             cap_track_id: 0,
             cap_essence_key: [0; 16],
             ..Default::default()
@@ -1131,7 +1139,7 @@ mod tests {
 
         let size = buf.len() as u64;
         let init = MXFContextRust {
-            caption_type: MXFCaptionTypeRust::ANC,
+            caption_type: MXFCaptionTypeRust::Anc,
             cap_track_id: 0,
             cap_essence_key: [0; 16],
             ..Default::default()
@@ -1193,7 +1201,7 @@ mod tests {
 
         let size = buf.len() as u64;
         let init = MXFContextRust {
-            caption_type: MXFCaptionTypeRust::ANC,
+            caption_type: MXFCaptionTypeRust::Anc,
             cap_track_id: 0,
             cap_essence_key: [0; 16],
             ..Default::default()
@@ -1231,7 +1239,7 @@ mod tests {
     fn test_mxf_read_vanc_vbi_desc_with_ltrack_id_tag() {
         unsafe {
             let mut ctx = MXFContextRust {
-                caption_type: MXFCaptionTypeRust::ANC,
+                caption_type: MXFCaptionTypeRust::Anc,
                 cap_track_id: 0,
                 cap_essence_key: [0u8; 16],
                 tracks: [MXFTrackRust::default(); 32],
@@ -1269,7 +1277,7 @@ mod tests {
     fn test_mxf_read_vanc_vbi_desc_multiple_tags() {
         unsafe {
             let mut ctx = MXFContextRust {
-                caption_type: MXFCaptionTypeRust::ANC,
+                caption_type: MXFCaptionTypeRust::Anc,
                 cap_track_id: 0,
                 cap_essence_key: [0u8; 16],
                 tracks: [MXFTrackRust::default(); 32],
@@ -1368,17 +1376,15 @@ mod tests {
         unsafe {
             // Create a valid CDP packet - note that the size byte should match the parameter passed to the function
             let test_data = vec![
-                0x96, 0x69,  // CDP identifier (0x9669)
-                24,          // packet size (matches what we'll pass to function)
-                0x10,        // framerate (top 4 bits = 1)
+                0x96, 0x69, // CDP identifier (0x9669)
+                24,   // packet size (matches what we'll pass to function)
+                0x10, // framerate (top 4 bits = 1)
                 0x00, 0x00, 0x00, // skip bytes (flag and hdr_seq_cntr)
-                0x72,        // cdata identifier
-                0x05,        // cc_count (5 & 0x1F = 5)
+                0x72, // cdata identifier
+                0x05, // cc_count (5 & 0x1F = 5)
                 // 15 bytes of CC data (5 * 3)
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-                0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
-                0x0D, 0x0E, 0x0F,
-                // CDP footer (4 bytes)
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+                0x0F, // CDP footer (4 bytes)
                 0x74, 0x00, 0x00, 0x26,
             ];
 
@@ -1413,13 +1419,12 @@ mod tests {
         unsafe {
             // Create packet with invalid CDP identifier
             let test_data = vec![
-                0x12, 0x34,  // Invalid CDP identifier (should be 0x9669)
-                20,          // packet size
-                0x10,        // framerate
+                0x12, 0x34, // Invalid CDP identifier (should be 0x9669)
+                20,   // packet size
+                0x10, // framerate
                 // Rest of packet...
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
             ];
 
             let mut demux = create_test_demuxer(&test_data);
@@ -1445,13 +1450,12 @@ mod tests {
         unsafe {
             // Create packet where declared size doesn't match parameter
             let test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
-                15,          // packet says size 15, but we'll pass 20
-                0x10,        // framerate
+                0x96, 0x69, // Valid CDP identifier
+                15,   // packet says size 15, but we'll pass 20
+                0x10, // framerate
                 // Rest of packet...
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00,
             ];
 
             let mut demux = create_test_demuxer(&test_data);
@@ -1477,15 +1481,14 @@ mod tests {
         unsafe {
             // Create packet with invalid cdata identifier
             let test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
-                20,          // packet size
-                0x10,        // framerate
+                0x96, 0x69, // Valid CDP identifier
+                20,   // packet size
+                0x10, // framerate
                 0x00, 0x00, 0x00, // skip bytes
-                0x99,        // Invalid cdata identifier (should be 0x72)
-                0x05,        // cc_count
+                0x99, // Invalid cdata identifier (should be 0x72)
+                0x05, // cc_count
                 // Rest of data...
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             ];
 
             let mut demux = create_test_demuxer(&test_data);
@@ -1511,12 +1514,12 @@ mod tests {
         unsafe {
             // Create packet where CC count * 3 > available space
             let test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
-                9,           // Small packet size (matches what we pass to function)
-                0x10,        // framerate
+                0x96, 0x69, // Valid CDP identifier
+                9,    // Small packet size (matches what we pass to function)
+                0x10, // framerate
                 0x00, 0x00, 0x00, // skip bytes
-                0x72,        // Valid cdata identifier
-                0x0A,        // cc_count = 10, needs 30 bytes but only ~4 left after headers
+                0x72, // Valid cdata identifier
+                0x0A, // cc_count = 10, needs 30 bytes but only ~4 left after headers
                 // Only a few bytes of data (function will try to read 30 but only get what's available)
                 0x01, 0x02,
             ];
@@ -1544,16 +1547,15 @@ mod tests {
         unsafe {
             // Create packet with zero CC count
             let test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
-                20,          // packet size
-                0x10,        // framerate
+                0x96, 0x69, // Valid CDP identifier
+                20,   // packet size
+                0x10, // framerate
                 0x00, 0x00, 0x00, // skip bytes
-                0x72,        // Valid cdata identifier
-                0x00,        // cc_count = 0
+                0x72, // Valid cdata identifier
+                0x00, // cc_count = 0
                 // CDP footer
-                0x74, 0x00, 0x00, 0x26,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x74, 0x00, 0x00, 0x26, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00,
             ];
 
             let mut demux = create_test_demuxer(&test_data);
@@ -1580,19 +1582,40 @@ mod tests {
     #[test]
     fn test_different_framerate_values() {
         unsafe {
-            for (framerate_byte, expected_index) in [(0x00, 0), (0x10, 1), (0x20, 2), (0x30, 3), (0x40, 4), (0x50, 5)] {
+            for (framerate_byte, expected_index) in [
+                (0x00, 0),
+                (0x10, 1),
+                (0x20, 2),
+                (0x30, 3),
+                (0x40, 4),
+                (0x50, 5),
+            ] {
                 let test_data = vec![
-                    0x96, 0x69,      // Valid CDP identifier
-                    20,              // packet size
-                    framerate_byte,  // Different framerate values
-                    0x00, 0x00, 0x00, // skip bytes
-                    0x72,            // Valid cdata identifier
-                    0x02,            // cc_count = 2
+                    0x96,
+                    0x69,           // Valid CDP identifier
+                    20,             // packet size
+                    framerate_byte, // Different framerate values
+                    0x00,
+                    0x00,
+                    0x00, // skip bytes
+                    0x72, // Valid cdata identifier
+                    0x02, // cc_count = 2
                     // 6 bytes of CC data (2 * 3)
-                    0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+                    0x01,
+                    0x02,
+                    0x03,
+                    0x04,
+                    0x05,
+                    0x06,
                     // CDP footer
-                    0x74, 0x00, 0x00, 0x26,
-                    0x00, 0x00, 0x00, 0x00,
+                    0x74,
+                    0x00,
+                    0x00,
+                    0x26,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
                 ];
 
                 let mut demux = create_test_demuxer(&test_data);
@@ -1624,16 +1647,14 @@ mod tests {
         unsafe {
             // Test that cc_count is properly masked with 0x1F
             let test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
-                20,          // packet size
-                0x10,        // framerate
+                0x96, 0x69, // Valid CDP identifier
+                20,   // packet size
+                0x10, // framerate
                 0x00, 0x00, 0x00, // skip bytes
-                0x72,        // Valid cdata identifier
-                0xE3,        // cc_count with high bits set (0xE3 & 0x1F = 3)
+                0x72, // Valid cdata identifier
+                0xE3, // cc_count with high bits set (0xE3 & 0x1F = 3)
                 // 9 bytes of CC data (3 * 3)
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-                0x07, 0x08, 0x09,
-                // CDP footer
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, // CDP footer
                 0x74, 0x26,
             ];
 
@@ -1669,12 +1690,15 @@ mod tests {
             let packet_size = 100;
 
             let mut test_data = vec![
-                0x96, 0x69,  // Valid CDP identifier
+                0x96,
+                0x69,        // Valid CDP identifier
                 packet_size, // Large packet size (matches what we pass to function)
                 0x20,        // framerate
-                0x00, 0x00, 0x00, // skip bytes
-                0x72,        // Valid cdata identifier
-                cc_count,    // Maximum cc_count
+                0x00,
+                0x00,
+                0x00,     // skip bytes
+                0x72,     // Valid cdata identifier
+                cc_count, // Maximum cc_count
             ];
 
             // Add CC data
@@ -1692,7 +1716,6 @@ mod tests {
             let mut data = create_test_demuxer_data(1024);
 
             mxf_read_cdp_data(&mut demux, packet_size as i32, &mut data, &mut options);
-
 
             // Should have read all CC data
             assert_eq!(data.len, cc_data_size as usize);

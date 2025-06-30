@@ -3,10 +3,10 @@ use crate::demuxer::common_structs::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENG
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::common_structs::CcxGxf;
 use crate::gxf_demuxer::gxf::ccx_gxf_probe;
+use crate::mxf_demuxer::mxf::ccx_probe_mxf;
 use lib_ccxr::common::{Options, StreamMode};
 use lib_ccxr::fatal;
 use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
-use crate::mxf_demuxer::mxf::ccx_probe_mxf;
 
 pub const CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
     CcxStreamMp4Box {
@@ -207,12 +207,10 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
     }
 
     // Search for MXF header
-    if ctx.stream_mode == StreamMode::ElementaryOrNotFound {
-        if ccx_probe_mxf(&ctx) {
-            ctx.stream_mode = StreamMode::Mxf;
-            let private = Box::new(MXFContext::default());
-            ctx.private_data = Box::into_raw(private) as *mut core::ffi::c_void;
-        }
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound && ccx_probe_mxf(ctx) {
+        ctx.stream_mode = StreamMode::Mxf;
+        let private = Box::new(MXFContext::default());
+        ctx.private_data = Box::into_raw(private) as *mut core::ffi::c_void;
     }
 
     // Still not found

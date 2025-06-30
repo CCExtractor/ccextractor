@@ -1,8 +1,10 @@
 use crate::demuxer::common_structs::{CcxDemuxer, CcxRational};
-use std::convert::TryFrom;
-use lib_ccxr::common::Options;
 use crate::gxf_demuxer::common_structs::DemuxerError;
-use crate::mxf_demuxer::mxf::{mxf_read_header_partition_pack, mxf_read_timeline_track_metadata, mxf_read_vanc_vbi_desc};
+use crate::mxf_demuxer::mxf::{
+    mxf_read_header_partition_pack, mxf_read_timeline_track_metadata, mxf_read_vanc_vbi_desc,
+};
+use lib_ccxr::common::Options;
+use std::convert::TryFrom;
 
 // Type alias for UID - 16 bytes
 pub type UidRust = [u8; 16];
@@ -11,8 +13,8 @@ pub type UidRust = [u8; 16];
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 pub enum MXFCaptionTypeRust {
-    VBI,
-    ANC,
+    Vbi,
+    Anc,
 }
 
 // Enum for MXF Local Tags
@@ -77,7 +79,7 @@ pub struct MXFReadTableEntryRust {
 // MXF Track structure
 #[derive(Debug, Clone)]
 #[repr(C)]
-#[derive(Copy)]
+#[derive(Copy, Default)]
 pub struct MXFTrackRust {
     pub track_id: i32,
     pub track_number: [u8; 4],
@@ -113,13 +115,13 @@ pub const MXF_CAPTION_ESSENCE_CONTAINER_RUST: [MXFCodecULRust; 2] = [
         uid: [
             0x6, 0xE, 0x2B, 0x34, 0x04, 0x01, 0x01, 0x09, 0xD, 0x1, 0x3, 0x1, 0x2, 0xD, 0x0, 0x0,
         ],
-        caption_type: MXFCaptionTypeRust::VBI,
+        caption_type: MXFCaptionTypeRust::Vbi,
     },
     MXFCodecULRust {
         uid: [
             0x6, 0xE, 0x2B, 0x34, 0x04, 0x01, 0x01, 0x09, 0xD, 0x1, 0x3, 0x1, 0x2, 0xE, 0x0, 0x0,
         ],
-        caption_type: MXFCaptionTypeRust::ANC,
+        caption_type: MXFCaptionTypeRust::Anc,
     },
 ];
 
@@ -147,19 +149,11 @@ pub const FRAMERATE_RATIONALS_RUST: [CcxRational; 10] = [
 ];
 
 // Implementations for default values and convenience methods
-impl Default for MXFTrackRust {
-    fn default() -> Self {
-        Self {
-            track_id: 0,
-            track_number: [0; 4],
-        }
-    }
-}
 
 impl Default for MXFContextRust {
     fn default() -> Self {
         Self {
-            caption_type: MXFCaptionTypeRust::VBI,
+            caption_type: MXFCaptionTypeRust::Vbi,
             cap_track_id: 0,
             cap_essence_key: [0; 16],
             tracks: [MXFTrackRust::default(); 32],
@@ -169,7 +163,6 @@ impl Default for MXFContextRust {
         }
     }
 }
-
 
 // MXF Read Table constant
 pub const MXF_READ_TABLE_RUST: [MXFReadTableEntryRust; 4] = [
@@ -205,6 +198,3 @@ pub const MXF_READ_TABLE_RUST: [MXFReadTableEntryRust; 4] = [
         read: None,
     },
 ];
-
-
-

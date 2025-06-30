@@ -1,7 +1,7 @@
-use std::ptr::null_mut;
+use crate::bindings::demuxer_data;
 use crate::demuxer::common_structs::CcxRational;
 use lib_ccxr::common::{BufferdataType, Codec};
-use crate::bindings::demuxer_data;
+use std::ptr::null_mut;
 
 #[derive(Debug, Clone)]
 pub struct DemuxerData {
@@ -27,8 +27,8 @@ impl Default for DemuxerData {
             stream_pid: -1,
             codec: None,                         // CCX_CODEC_NONE
             bufferdatatype: BufferdataType::Pes, // CCX_PES
-            buffer: null_mut(),                    // empty slice
-            len: 0,                       // start at 0
+            buffer: null_mut(),                  // empty slice
+            len: 0,                              // start at 0
             rollover_bits: 0,                    // no rollover yet
             pts: CCX_NOPTS,                      // no PTS
             tb: CcxRational {

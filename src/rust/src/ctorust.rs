@@ -8,15 +8,14 @@ use crate::bindings::{
     ccx_bufferdata_type_CCX_PRIVATE_MPEG2_CC, ccx_bufferdata_type_CCX_RAW,
     ccx_bufferdata_type_CCX_RAW_TYPE, ccx_bufferdata_type_CCX_TELETEXT,
     ccx_bufferdata_type_CCX_UNKNOWN, ccx_code_type, ccx_common_timing_ctx,
-    ccx_decoder_608_color_code, ccx_decoder_608_report,
-    ccx_decoder_608_settings, ccx_decoder_dtvcc_report, ccx_decoder_dtvcc_settings,
-    ccx_demux_report, ccx_encoders_transcript_format, ccx_encoding_type,
-    ccx_frame_type_CCX_FRAME_TYPE_B_FRAME, ccx_frame_type_CCX_FRAME_TYPE_D_FRAME,
-    ccx_frame_type_CCX_FRAME_TYPE_I_FRAME, ccx_frame_type_CCX_FRAME_TYPE_P_FRAME,
-    ccx_output_date_format, ccx_output_format, ccx_rational, ccx_stream_mode_enum, demuxer_cfg,
-    encoder_cfg, list_head, mpeg_picture_coding, mpeg_picture_coding_CCX_MPC_B_FRAME,
-    mpeg_picture_coding_CCX_MPC_I_FRAME, mpeg_picture_coding_CCX_MPC_NONE,
-    mpeg_picture_coding_CCX_MPC_P_FRAME, mpeg_picture_struct,
+    ccx_decoder_608_color_code, ccx_decoder_608_report, ccx_decoder_608_settings,
+    ccx_decoder_dtvcc_report, ccx_decoder_dtvcc_settings, ccx_demux_report,
+    ccx_encoders_transcript_format, ccx_encoding_type, ccx_frame_type_CCX_FRAME_TYPE_B_FRAME,
+    ccx_frame_type_CCX_FRAME_TYPE_D_FRAME, ccx_frame_type_CCX_FRAME_TYPE_I_FRAME,
+    ccx_frame_type_CCX_FRAME_TYPE_P_FRAME, ccx_output_date_format, ccx_output_format, ccx_rational,
+    ccx_stream_mode_enum, demuxer_cfg, encoder_cfg, list_head, mpeg_picture_coding,
+    mpeg_picture_coding_CCX_MPC_B_FRAME, mpeg_picture_coding_CCX_MPC_I_FRAME,
+    mpeg_picture_coding_CCX_MPC_NONE, mpeg_picture_coding_CCX_MPC_P_FRAME, mpeg_picture_struct,
     mpeg_picture_struct_CCX_MPS_BOTTOM_FIELD, mpeg_picture_struct_CCX_MPS_FRAME,
     mpeg_picture_struct_CCX_MPS_NONE, mpeg_picture_struct_CCX_MPS_TOP_FIELD, program_info,
     GXFMatTag, GXFMatTag_MAT_FIRST_FIELD, GXFMatTag_MAT_LAST_FIELD, GXFMatTag_MAT_MARK_IN,
@@ -539,9 +538,7 @@ impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
                     // If individual string pointer is null, use empty string as fallback
                     String::new()
                 } else {
-                    CStr::from_ptr(str_ptr)
-                        .to_string_lossy()
-                        .into_owned()
+                    CStr::from_ptr(str_ptr).to_string_lossy().into_owned()
                 };
 
                 charsets.push(charset_str);

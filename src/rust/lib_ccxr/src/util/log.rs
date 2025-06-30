@@ -279,8 +279,8 @@ impl<'a> CCExtractorLogger {
 
     fn print(&self, args: &Arguments<'a>) {
         match &self.target {
-            OutputTarget::Stdout => print!("{}", args),
-            OutputTarget::Stderr => eprint!("{}", args),
+            OutputTarget::Stdout => print!("{args}"),
+            OutputTarget::Stderr => eprint!("{args}"),
             OutputTarget::Quiet => {}
         }
     }
@@ -305,7 +305,7 @@ impl<'a> CCExtractorLogger {
             eprint!("\rError: ")
         }
 
-        eprintln!("{}", args);
+        eprintln!("{args}");
     }
 
     /// Log an informational message. Use [`info!`] instead.
@@ -335,22 +335,19 @@ impl<'a> CCExtractorLogger {
         if self.gui_mode {
             match message_type {
                 GuiXdsMessage::ProgramName(program_name) => {
-                    eprintln!("###XDSPROGRAMNAME#{}", program_name)
+                    eprintln!("###XDSPROGRAMNAME#{program_name}")
                 }
                 GuiXdsMessage::ProgramIdNr {
                     minute,
                     hour,
                     date,
                     month,
-                } => eprintln!(
-                    "###XDSPROGRAMIDENTIFICATIONNUMBER#{}#{}#{}#{}",
-                    minute, hour, date, month
-                ),
+                } => eprintln!("###XDSPROGRAMIDENTIFICATIONNUMBER#{minute}#{hour}#{date}#{month}"),
                 GuiXdsMessage::ProgramDescription { line_num, desc } => {
-                    eprintln!("###XDSPROGRAMDESC#{}#{}", line_num, desc)
+                    eprintln!("###XDSPROGRAMDESC#{line_num}#{desc}")
                 }
                 GuiXdsMessage::CallLetters(current_letters) => {
-                    eprintln!("###XDSNETWORKCALLLETTERS#{}", current_letters)
+                    eprintln!("###XDSNETWORKCALLLETTERS#{current_letters}")
                 }
             }
         }
@@ -380,7 +377,7 @@ impl<'a> CCExtractorLogger {
         for (id, chunk) in chunked_data.enumerate() {
             self.print(&format_args!("{:05} | ", id * 16 + start_idx));
             for x in chunk {
-                self.print(&format_args!("{:02X} ", x));
+                self.print(&format_args!("{x:02X} "));
             }
 
             for _ in 0..(16 - chunk.len()) {

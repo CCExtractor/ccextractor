@@ -281,7 +281,6 @@ pub unsafe fn buffered_read_opt(
         }
     }
     if ccx_options.buffer_input || ctx.filebuffer_pos < ctx.bytesinbuffer {
-        
         // Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
         let mut eof = ctx.infd == -1;
         let mut buffer_ptr = buffer;
@@ -686,7 +685,6 @@ pub unsafe fn buffered_read(
     }
 }
 
-
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_opt`
 pub unsafe fn buffered_read_byte(
@@ -765,7 +763,6 @@ pub unsafe fn buffered_get_le32(ctx: &mut CcxDemuxer, ccx_options: &mut Options)
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer and calls unsafe function `buffered_read_opt`
 pub unsafe fn buffered_skip(ctx: &mut CcxDemuxer, bytes: u32, ccx_options: &mut Options) -> usize {
-
     let available = ctx.bytesinbuffer.saturating_sub(ctx.filebuffer_pos);
 
     if bytes <= available {
@@ -877,7 +874,7 @@ mod tests {
             let ccx_options = Options::default();
 
             {
-                println!("{:?}", ccx_options);
+                println!("{ccx_options:?}");
             }
         }
     }
@@ -897,7 +894,7 @@ mod tests {
 
             // Now, re-lock to verify the changes.
             assert_eq!(ccx_options.live_stream.unwrap().millis(), 0);
-            assert_eq!((null_mut::< *mut u8>()).is_null(), true);
+            assert!((null_mut::<*mut u8>()).is_null());
         }
     }
     // #[test] // Uncomment to run

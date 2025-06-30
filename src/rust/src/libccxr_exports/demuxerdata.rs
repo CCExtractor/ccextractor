@@ -1,10 +1,10 @@
-use std::os::raw::c_uchar;
 use crate::bindings::demuxer_data;
 use crate::common::CType;
 use crate::ctorust::FromCType;
 use crate::demuxer::common_structs::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
+use std::os::raw::c_uchar;
 use std::os::raw::{c_int, c_uint};
 
 /// Convert from C demuxer_data to Rust DemuxerData
@@ -13,9 +13,7 @@ use std::os::raw::{c_int, c_uint};
 /// - The buffer pointer in c_data must be valid for the length specified by len
 /// - The returned DemuxerData borrows the buffer data, so the C struct must outlive it
 #[allow(clippy::unnecessary_cast)]
-pub unsafe fn copy_demuxer_data_to_rust<'a>(c_data: *const demuxer_data) -> DemuxerData {
-
-
+pub unsafe fn copy_demuxer_data_to_rust(c_data: *const demuxer_data) -> DemuxerData {
     DemuxerData {
         program_number: (*c_data).program_number as i32,
         stream_pid: (*c_data).stream_pid as i32,
@@ -27,8 +25,8 @@ pub unsafe fn copy_demuxer_data_to_rust<'a>(c_data: *const demuxer_data) -> Demu
         rollover_bits: (*c_data).rollover_bits as u32,
         pts: (*c_data).pts as i64,
         tb: CcxRational::from_ctype((*c_data).tb).unwrap_or(CcxRational::default()), // Assuming From trait is implemented
-        next_stream: (*c_data).next_stream ,
-        next_program: (*c_data).next_program
+        next_stream: (*c_data).next_stream,
+        next_program: (*c_data).next_program,
     }
 }
 
@@ -57,11 +55,10 @@ pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: 
     (*c_data).next_program = rust_data.next_program as *mut demuxer_data;
 }
 
-
 mod tests {
     use super::*;
-    use std::ptr;
     use crate::bindings::ccx_bufferdata_type_CCX_H264;
+    use std::ptr;
     // Helper function to create a test C demuxer_data struct
 
     #[test]
@@ -81,8 +78,7 @@ mod tests {
         assert!(default_data.next_stream.is_null());
         assert!(default_data.next_program.is_null());
     }
-
-
+    #[allow(dead_code)]
     fn create_test_c_demuxer_data() -> (*mut demuxer_data, Vec<u8>) {
         unsafe {
             let c_data = Box::into_raw(Box::new(demuxer_data {
@@ -119,8 +115,8 @@ mod tests {
             // Test all basic fields
             assert_eq!(rust_data.program_number, c_data.program_number);
             assert_eq!(rust_data.stream_pid, c_data.stream_pid);
-            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits as u32);
-            assert_eq!(rust_data.pts, c_data.pts as i64);
+            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits);
+            assert_eq!(rust_data.pts, c_data.pts);
 
             // Test buffer data
             assert_eq!(rust_data.len, c_data.len);
@@ -367,7 +363,7 @@ mod tests {
     #[test]
     fn test_copy_demuxer_from_rust_empty_buffer() {
         let rust_data = DemuxerData {
-            buffer: *&[].as_mut_ptr(),
+            buffer: [].as_mut_ptr(),
             ..Default::default()
         };
 
@@ -444,7 +440,10 @@ mod tests {
     #[test]
     fn test_ccx_nopts_constant() {
         // Verify the CCX_NOPTS constant matches the C definition
-        assert_eq!(crate::demuxer::demuxer_data::CCX_NOPTS, 0x8000000000000000u64 as i64);
+        assert_eq!(
+            crate::demuxer::demuxer_data::CCX_NOPTS,
+            0x8000000000000000u64 as i64
+        );
 
         let default_data = DemuxerData::default();
         assert_eq!(default_data.pts, crate::demuxer::demuxer_data::CCX_NOPTS);

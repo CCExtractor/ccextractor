@@ -3,8 +3,8 @@
 pub mod demuxer;
 pub mod demuxerdata;
 pub mod gxf;
-pub mod time;
 pub mod mxf;
+pub mod time;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;
 use lib_ccxr::util::{bits::*, levenshtein::*};

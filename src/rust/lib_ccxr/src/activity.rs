@@ -15,7 +15,7 @@ impl ActivityExt for Options {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             let version = env!("CARGO_PKG_VERSION");
-            writeln!(stderr, "###VERSION#CCExtractor#{}", version).unwrap();
+            writeln!(stderr, "###VERSION#CCExtractor#{version}").unwrap();
             stderr.flush().unwrap();
         }
     }
@@ -30,7 +30,7 @@ impl ActivityExt for Options {
     fn activity_input_file_open(&mut self, filename: &str) {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
-            writeln!(stderr, "###INPUTFILEOPEN#{}", filename).unwrap();
+            writeln!(stderr, "###INPUTFILEOPEN#{filename}").unwrap();
             stderr.flush().unwrap();
         }
     }

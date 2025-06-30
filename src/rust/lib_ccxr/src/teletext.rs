@@ -519,14 +519,11 @@ impl G0Charset {
                     self.g0_charset[0x00][pos] = ch;
                 }
                 if self.verbose_debug {
-                    eprintln!("- Using G0 Latin National Subset ID {} ({})", subset, s);
+                    eprintln!("- Using G0 Latin National Subset ID {subset} ({s})");
                 }
                 self.primary_charset_current = subset;
             } else {
-                eprintln!(
-                    "- G0 Latin National Subset ID {} is not implemented",
-                    subset
-                );
+                eprintln!("- G0 Latin National Subset ID {subset} is not implemented");
             }
         }
     }
@@ -960,9 +957,9 @@ impl<'a> TeletextContext<'a> {
         #[cfg(feature = "debug")]
         {
             for (index, row) in self.page_buffer.text.iter().enumerate().skip(1) {
-                print!("DEUBG[{:02}]: ", index);
+                print!("DEUBG[{index:02}]: ");
                 for c in row {
-                    print!("{:3x} ", c)
+                    print!("{c:3x} ")
                 }
                 println!();
             }
@@ -1068,10 +1065,7 @@ impl<'a> TeletextContext<'a> {
                     let timecode_show_mmss = &timecode_show[3..8];
                     let timecode_hide_mmss = &timecode_hide[3..8];
                     // Note, only MM:SS here as we need to save space in the preview window
-                    eprint!(
-                        "###TIME###{}-{}\n###SUBTITLES###",
-                        timecode_show_mmss, timecode_hide_mmss
-                    );
+                    eprint!("###TIME###{timecode_show_mmss}-{timecode_hide_mmss}\n###SUBTITLES###");
                     time_reported = true;
                 } else {
                     eprint!("###SUBTITLE###");
@@ -1152,7 +1146,7 @@ impl<'a> TeletextContext<'a> {
                         self.page_buffer_cur.get_or_insert("".into()).push(u);
                         if logger().expect("could not access logger").is_gui_mode() {
                             // For now we just handle the easy stuff
-                            eprint!("{}", u);
+                            eprint!("{u}");
                         }
                     }
                 }
@@ -1271,7 +1265,7 @@ impl<'a> TeletextContext<'a> {
                 let mut thisp = ((m as u32) << 8)
                     | ((decode_hamming_8_4(packet.data[1]).unwrap() as u32) << 4)
                     | (decode_hamming_8_4(packet.data[0]).unwrap() as u32);
-                let t1 = format!("{:x}", thisp); // Example: 1928 -> 788
+                let t1 = format!("{thisp:x}"); // Example: 1928 -> 788
                 thisp = t1.parse().unwrap();
                 if !self.seen_sub_page[thisp as usize] {
                     self.seen_sub_page[thisp as usize] = true;

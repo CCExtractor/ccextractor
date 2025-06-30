@@ -1,6 +1,6 @@
 use crate::bindings::{
-     ccx_demuxer, demuxer_data,
-    MXFCaptionType_MXF_CT_ANC, MXFCaptionType_MXF_CT_VBI, MXFContext, MXFTrack,
+    ccx_demuxer, demuxer_data, MXFCaptionType_MXF_CT_ANC, MXFCaptionType_MXF_CT_VBI, MXFContext,
+    MXFTrack,
 };
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
@@ -8,9 +8,7 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_structs::CcxRational;
 use crate::libccxr_exports::demuxer::{copy_demuxer_from_c_to_rust, copy_demuxer_from_rust_to_c};
 use crate::libccxr_exports::demuxerdata::{copy_demuxer_data_from_rust, copy_demuxer_data_to_rust};
-use crate::mxf_demuxer::common_structs::{
-    MXFCaptionTypeRust, MXFContextRust, MXFTrackRust,
-};
+use crate::mxf_demuxer::common_structs::{MXFCaptionTypeRust, MXFContextRust, MXFTrackRust};
 use crate::mxf_demuxer::mxf::read_packet_mxf;
 use std::os::raw::c_int;
 
@@ -22,17 +20,21 @@ pub unsafe fn copy_mxf_context_to_rust(c_ctx: *const MXFContext) -> MXFContextRu
     let c = &*c_ctx;
     // Convert caption type
     let caption_type = match c.type_ {
-        MXFCaptionType_MXF_CT_ANC => MXFCaptionTypeRust::ANC,
-        _ => MXFCaptionTypeRust::VBI,
+        MXFCaptionType_MXF_CT_ANC => MXFCaptionTypeRust::Anc,
+        _ => MXFCaptionTypeRust::Vbi,
     };
     // Convert tracks
     let mut rust_tracks: [MXFTrackRust; 32] = [MXFTrackRust {
         track_id: 0,
         track_number: [0; 4],
     }; 32];
-    for i in 0..(c.nb_tracks as usize).min(32) {
+    for (i, rust_track) in rust_tracks
+        .iter_mut()
+        .enumerate()
+        .take((c.nb_tracks as usize).min(32))
+    {
         let t: MXFTrack = c.tracks[i];
-        rust_tracks[i] = MXFTrackRust {
+        *rust_track = MXFTrackRust {
             track_id: t.track_id,
             track_number: t.track_number,
         };
@@ -56,7 +58,7 @@ pub unsafe fn copy_mxf_context_to_rust(c_ctx: *const MXFContext) -> MXFContextRu
 pub unsafe fn copy_mxf_context_from_rust(c_ctx: *mut MXFContext, rust_ctx: &MXFContextRust) {
     let c = &mut *c_ctx;
     c.type_ = match rust_ctx.caption_type {
-        MXFCaptionTypeRust::ANC => MXFCaptionType_MXF_CT_ANC,
+        MXFCaptionTypeRust::Anc => MXFCaptionType_MXF_CT_ANC,
         _ => MXFCaptionType_MXF_CT_VBI,
     };
     c.cap_track_id = rust_ctx.cap_track_id;
@@ -116,7 +118,7 @@ pub unsafe extern "C" fn ccxr_mxf_getmoredata(
             return -102;
         }
     };
-    copy_mxf_context_from_rust(c_mxf, &new_rust_mxf);
+    copy_mxf_context_from_rust(c_mxf, new_rust_mxf);
     demuxer_rust.private_data = c_mxf as *mut core::ffi::c_void;
     copy_demuxer_from_rust_to_c(ctx, &demuxer_rust);
     // Copy back demuxer_data
@@ -156,7 +158,7 @@ mod tests {
     fn test_copy_to_rust() {
         let c_ctx = make_test_c_context();
         let rust_ctx = unsafe { copy_mxf_context_to_rust(&c_ctx) };
-        assert_eq!(rust_ctx.caption_type, MXFCaptionTypeRust::VBI);
+        assert_eq!(rust_ctx.caption_type, MXFCaptionTypeRust::Vbi);
         assert_eq!(rust_ctx.cap_track_id, 7);
         assert_eq!(rust_ctx.cap_essence_key, [1u8; 16]);
         assert_eq!(rust_ctx.nb_tracks, 2);
@@ -173,7 +175,7 @@ mod tests {
         let mut c_ctx = make_test_c_context();
         let mut rust_ctx = unsafe { copy_mxf_context_to_rust(&c_ctx) };
         // Modify Rust ctx
-        rust_ctx.caption_type = MXFCaptionTypeRust::ANC;
+        rust_ctx.caption_type = MXFCaptionTypeRust::Anc;
         rust_ctx.cap_track_id = 9;
         rust_ctx.tracks[0].track_id = 99;
         rust_ctx.nb_tracks = 1;

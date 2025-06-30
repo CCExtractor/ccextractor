@@ -360,4 +360,3 @@ pub struct CcxRational {
     pub num: i32,
     pub den: i32,
 }
-

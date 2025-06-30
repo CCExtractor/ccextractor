@@ -1315,7 +1315,7 @@ mod tests_c_to_rust {
             let ptr = alloc(layout) as *mut ccx_gxf;
             assert!(!ptr.is_null());
 
-            let cdp_data = vec![0x96u8, 0x69, 0x55, 0x3F];
+            let cdp_data = [0x96u8, 0x69, 0x55, 0x3F];
             let cdp_ptr = cdp_data.as_ptr();
 
             ptr::write_bytes(ptr, 0, 1);

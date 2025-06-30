@@ -70,7 +70,7 @@ impl<'a> Writer<'a> {
     pub fn write_done(&mut self) {
         if self.write_format == ccx_output_format::CCX_OF_SAMI {
             if let Err(err) = self.write_sami_footer() {
-                warn!("{}", err);
+                warn!("{err}");
             }
         } else {
             debug!("dtvcc_write_done: no handling required");
@@ -106,10 +106,7 @@ pub fn color_to_hex(color: u8) -> (u8, u8, u8) {
     let red = color >> 4;
     let green = (color >> 2) & 0x3;
     let blue = color & 0x3;
-    debug!(
-        "Color: {} [{:06x}] {} {} {}",
-        color, color, red, green, blue
-    );
+    debug!("Color: {color} [{color:06x}] {red} {green} {blue}");
     (red, green, blue)
 }
 
