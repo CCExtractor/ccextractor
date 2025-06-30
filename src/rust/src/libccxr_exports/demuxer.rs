@@ -1,6 +1,6 @@
 use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
-use crate::common::{copy_to_rust, CType};
+use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
 use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
 use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
@@ -386,6 +386,7 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
     demux_ctx.close(&mut CcxOptions);
+    copy_from_rust(&raw mut ccx_options, CcxOptions);
     copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
 }
 
@@ -418,10 +419,13 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
         Ok(s) => s,
         Err(_) => return -1,
     };
+    
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
 
     let ReturnValue = demux_ctx.open(file_str, &mut CcxOptions);
+    
+    copy_from_rust(&raw mut ccx_options, CcxOptions);
     copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
     ReturnValue
 }

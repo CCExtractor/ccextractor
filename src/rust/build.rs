@@ -17,8 +17,6 @@ fn main() {
         "start_tcp_srv", // shall be removed after NET
         "net_tcp_read",  // shall be removed after NET
         "net_udp_read",  // shall be removed after NET
-        "ccx_probe_mxf", // shall be removed after mxf
-        "ccx_mxf_init",  // shall be removed after mxf
         #[cfg(windows)]
         "_open_osfhandle",
         #[cfg(windows)]

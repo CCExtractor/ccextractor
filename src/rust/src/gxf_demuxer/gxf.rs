@@ -3,7 +3,6 @@ use crate::demuxer::demuxer_data::DemuxerData;
 use crate::file_functions::file::*;
 use crate::gxf_demuxer::common_structs::*;
 use crate::utils::rb32;
-use byteorder::{BigEndian, ByteOrder};
 use lib_ccxr::common::{BufferdataType, Options};
 use lib_ccxr::info;
 use lib_ccxr::util::log::{debug, DebugMessageFlag};
@@ -424,44 +423,31 @@ pub fn set_data_timebase(vid_format: i32, data: &mut DemuxerData) {
  */
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers and calls unsafe function `buffered_skip`
+#[allow(unused_variables)]
 pub unsafe fn parse_ad_vbi(
     demux: &mut CcxDemuxer,
-    len: usize,
-    #[allow(unused)] // only used when vbi feature is enabled
-    data: &mut DemuxerData<'_>,
+    len: i32,
+    data: &mut DemuxerData,
     ccx_options: &mut Options,
 ) -> Result<(), DemuxerError> {
-    // C: int ret = OK; int result = 0;
     let mut ret = Ok(());
     let result: usize;
 
     #[cfg(feature = "ccx_gxf_enable_ad_vbi")]
     {
-        // grow the “used” length, but check we still fit in the backing slice
-        if data
-            .buffer_pos
-            .checked_add(len)
-            .filter(|&end| end <= data.buffer_data.len())
-            .is_none()
-        {
-            return Err(DemuxerError::EOF);
-        }
-        // read into the next len bytes
-        let dst = &mut *(slice::from_raw_parts_mut(
-            data.buffer_data.as_ptr() as *mut u8,
-            data.buffer_data.len(),
-        ));
-        let buf = &mut dst[data.buffer_pos..data.buffer_pos + len];
-        result = buffered_read(demux, Some(buf), len, ccx_options);
-        data.buffer_pos += result;
+        data.len += len as usize;
+        // Read 'len' bytes into data.buffer (starting at index 0).
+        let buffer_slice = std::slice::from_raw_parts_mut(data.buffer, len as usize);
+        result = buffered_read(demux, Some(buffer_slice), len as usize, ccx_options);
     }
     #[cfg(not(feature = "ccx_gxf_enable_ad_vbi"))]
     {
+        // Skip 'len' bytes if VBI support is not enabled.
         result = buffered_skip(demux, len as u32, ccx_options);
     }
-
+    // Update demux.past with the bytes processed.
     demux.past += result as i64;
-    if result != len {
+    if result != len as usize {
         ret = Err(DemuxerError::EOF);
     }
     ret
@@ -481,116 +467,109 @@ pub unsafe fn parse_ad_vbi(
  * with header and footer inclusive of checksum
  * @return Err(DemuxerError::InvalidArgument) if cdp data fields are not valid
  */
-pub fn parse_ad_cdp(cdp: &[u8], data: &mut DemuxerData<'_>) -> Result<(), DemuxerError> {
-    let mut idx = 0;
-    let total_len = cdp.len();
-
-    // if (len < 11) return EINVAL
-    if total_len < 11 {
+pub fn parse_ad_cdp(cdp: &[u8], data: &mut DemuxerData) -> Result<(), DemuxerError> {
+    // Do not accept packet whose length does not fit header and footer
+    if cdp.len() < 11 {
         info!("Short packet can't accommodate header and footer");
         return Err(DemuxerError::InvalidArgument);
     }
 
-    // if cdp[0]!=0x96 || cdp[1]!=0x69
+    // Verify cdp header identifier
     if cdp[0] != 0x96 || cdp[1] != 0x69 {
         info!("Could not find CDP identifier of 0x96 0x69");
         return Err(DemuxerError::InvalidArgument);
     }
-    idx += 2;
 
-    // cdp_length = *cdp++;
-    let cdp_length = cdp[idx] as usize;
-    idx += 1;
-    if cdp_length != total_len {
-        info!("Cdp length is not valid");
+    // Save original packet length and advance pointer by 2 bytes
+    let orig_len = cdp.len();
+    let mut offset = 2;
+
+    // Read CDP length (1 byte) and verify that it equals the original packet length
+    let cdp_length = cdp[offset] as usize;
+    offset += 1;
+
+    if cdp_length != orig_len {
+        info!("CDP length is not valid");
         return Err(DemuxerError::InvalidArgument);
     }
 
-    // Need at least 4 more bytes for header fields
-    if idx + 4 > total_len {
-        return Err(DemuxerError::InvalidArgument);
-    }
-    let cdp_framerate = (cdp[idx] & 0xF0) >> 4;
-    idx += 1;
-    let cc_data_present = (cdp[idx] & 0x40) >> 6;
-    let caption_service_active = (cdp[idx] & 0x02) >> 1;
-    idx += 1;
-    let cdp_header_sequence_counter = BigEndian::read_u16(&cdp[idx..idx + 2]);
-    idx += 2;
+    // Parse header fields
+    let cdp_framerate = (cdp[offset] & 0xF0) >> 4;
+    offset += 1;
+    let cc_data_present = (cdp[offset] & 0x40) >> 6;
+    let caption_service_active = (cdp[offset] & 0x02) >> 1;
+    offset += 1;
 
-    dbg!(" CDP length: {} words", cdp_length);
-    dbg!(" CDP frame rate: 0x{:x}", cdp_framerate);
-    dbg!(" CC data present: {}", cc_data_present);
-    dbg!(" caption service active: {}", caption_service_active);
+    // Read 16-bit big-endian sequence counter
+    let cdp_header_sequence_counter = u16::from_be_bytes([cdp[offset], cdp[offset + 1]]);
+    offset += 2;
+
+    dbg!("CDP length: {} words", cdp_length);
+    dbg!("CDP frame rate: 0x{:x}", cdp_framerate);
+    dbg!("CC data present: {}", cc_data_present);
+    dbg!("Caption service active: {}", caption_service_active);
     dbg!(
-        " header sequence counter: {} (0x{:x})",
+        "Header sequence counter: {} (0x{:x})",
         cdp_header_sequence_counter,
         cdp_header_sequence_counter
     );
 
-    // single‐section dispatch
-    if idx >= total_len {
-        return Ok(());
-    }
-    match cdp[idx] {
+    // Process CDP sections (only one section allowed per packet)
+    match cdp[offset] {
         0x71 => {
             info!("Ignore Time code section");
-            return Err(DemuxerError::Unsupported); // maps C’s -1
+            return Err(DemuxerError::Retry); // C returns -1, which should map to Retry
         }
-        0x72 => unsafe {
-            idx += 1;
-            if idx >= total_len {
-                return Err(DemuxerError::InvalidArgument);
-            }
-            let cc_count = (cdp[idx] & 0x1F) as usize;
-            idx += 1;
+        0x72 => {
+            offset += 1; // Advance past section id
+            let cc_count = (cdp[offset] & 0x1F) as usize;
+            offset += 1;
+
             dbg!("cc_count: {}", cc_count);
 
-            let copy_size = cc_count
-                .checked_mul(3)
-                .ok_or(DemuxerError::InvalidArgument)?;
-            if idx + copy_size > total_len {
+            let copy_size = cc_count * 3;
+
+            // Check bounds for source
+            if offset + copy_size > cdp.len() {
                 return Err(DemuxerError::InvalidArgument);
             }
 
-            // guard writing into data.buffer_data
-            let dst_off = data.buffer_pos;
-            let end = dst_off.checked_add(copy_size).ok_or(DemuxerError::EOF)?;
-            if end > data.buffer_data.len() {
-                return Err(DemuxerError::EOF);
+            // Copy ccdata into data.buffer starting at offset data.len
+            unsafe {
+                let dst_ptr = data.buffer.add(data.len);
+                let src_ptr = cdp.as_ptr().add(offset);
+                std::ptr::copy_nonoverlapping(src_ptr, dst_ptr, copy_size);
             }
 
-            let raw_buf = data.buffer_data.as_ptr() as *mut u8;
-            let full = slice::from_raw_parts_mut(raw_buf, data.buffer_data.len());
-            full[dst_off..end].copy_from_slice(&cdp[idx..idx + copy_size]);
-            data.buffer_pos = end;
-
-            idx += copy_size;
-        },
+            data.len += copy_size;
+            offset += copy_size;
+        }
         0x73 => {
             info!("Ignore service information section");
-            return Err(DemuxerError::Unsupported);
+            return Err(DemuxerError::Retry); // C returns -1
         }
-        id @ 0x75..=0xEF => {
+        0x75..=0xEF => {
             info!(
-                "Please share sample—newer SMPTE‑334 spec detected; section id 0x{:x}",
-                id
+                "Newer version of SMPTE-334 specification detected. New section id 0x{:x}",
+                cdp[offset]
             );
-            return Err(DemuxerError::Unsupported);
+            return Err(DemuxerError::Retry); // C returns -1
         }
         _ => {}
     }
 
-    // footer check
-    if idx < total_len && cdp[idx] == 0x74 {
-        idx += 1;
-        if idx + 2 > total_len {
-            info!("Incomplete cdp packet");
+    // Check CDP footer
+    if offset < cdp.len() && cdp[offset] == 0x74 {
+        offset += 1;
+
+        // Ensure we have enough bytes for the footer sequence counter
+        if offset + 1 >= cdp.len() {
             return Err(DemuxerError::InvalidArgument);
         }
-        let footer_seq = BigEndian::read_u16(&cdp[idx..idx + 2]);
-        if footer_seq != cdp_header_sequence_counter {
-            info!("Incomplete cdp packet");
+
+        let footer_sequence_counter = u16::from_be_bytes([cdp[offset], cdp[offset + 1]]);
+        if cdp_header_sequence_counter != footer_sequence_counter {
+            info!("Incomplete CDP packet");
             return Err(DemuxerError::InvalidArgument);
         }
     }
@@ -626,38 +605,26 @@ pub fn set_mpeg_frame_desc(vid_track: &mut CcxGxfVideoTrack, mpeg_frame_desc_fla
 
 /// # Safety
 /// This function is unsafe because it calls unsafe functions like `buffered_read` and `from_raw_parts_mut`
-pub fn parse_mpeg_packet(
+pub unsafe fn parse_mpeg_packet(
     demux: &mut CcxDemuxer,
     len: usize,
-    data: &mut DemuxerData<'_>,
+    data: &mut DemuxerData,
     ccx_options: &mut Options,
 ) -> Result<(), DemuxerError> {
-    let end = data
-        .buffer_pos
-        .checked_add(len)
-        .ok_or(DemuxerError::InvalidArgument)?;
-    if end > data.buffer_data.len() {
-        return Err(DemuxerError::EOF);
-    }
-
-    // Cast the immutable slice to mutable (unsafe!)
-    let dst = unsafe {
-        slice::from_raw_parts_mut(
-            data.buffer_data.as_ptr().add(data.buffer_pos) as *mut u8,
-            len,
-        )
-    };
-
-    let result = unsafe { buffered_read(demux, Option::from(dst), len, ccx_options) };
-
-    data.buffer_pos += result;
-    demux.past = demux.past.saturating_add(result as i64);
+    // Read 'len' bytes into the data buffer at offset data.len.
+    let result = buffered_read(
+        demux,
+        Some(slice::from_raw_parts_mut(data.buffer.add(data.len), len)),
+        len,
+        ccx_options,
+    );
+    data.len += len;
+    demux.past += result as i64;
 
     if result != len {
-        Err(DemuxerError::EOF)
-    } else {
-        Ok(())
+        return Err(DemuxerError::EOF);
     }
+    Ok(())
 }
 
 /// # Safety
@@ -1049,7 +1016,7 @@ pub unsafe fn parse_ad_field(
             }
         } else if &tag[..4] == b"vbi " {
             len -= pyld_len as i32;
-            ret = parse_ad_vbi(demux, pyld_len as usize, data, ccx_options);
+            ret = parse_ad_vbi(demux, pyld_len as i32, data, ccx_options);
             if ret == Err(DemuxerError::EOF) {
                 break;
             }
@@ -1216,7 +1183,7 @@ macro_rules! goto_end {
 pub unsafe fn parse_media(
     demux: &mut CcxDemuxer,
     mut len: i32,
-    data: &mut DemuxerData<'_>,
+    data: &mut DemuxerData,
     ccx_options: &mut Options,
 ) -> Result<(), DemuxerError> {
     let mut ret = Ok(());
@@ -1384,7 +1351,7 @@ pub unsafe fn parse_map(
     // APPLIED the TODO
     demux: &mut CcxDemuxer,
     mut len: i32,
-    data: &mut DemuxerData<'_>,
+    data: &mut DemuxerData,
     ccx_options: &mut Options,
 ) -> Result<(), DemuxerError> {
     // 1) Header check
@@ -1452,7 +1419,7 @@ pub unsafe fn parse_map(
 /// This function is unsafe because it calls unsafe functions like `parse_packet_header` and `parse_map`
 pub unsafe fn read_packet(
     demux: &mut CcxDemuxer,
-    data: &mut DemuxerData<'_>,
+    data: &mut DemuxerData,
     ccx_options: &mut Options,
 ) -> Result<(), DemuxerError> {
     let mut len = 0;
@@ -1490,7 +1457,7 @@ pub unsafe fn read_packet(
 mod tests {
     use super::*;
     use crate::demuxer::demuxer_data::DemuxerData;
-    use lib_ccxr::common::Codec;
+    use lib_ccxr::common::{Codec, BUFSIZE};
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
     use std::os::fd::IntoRawFd;
     use std::sync::Once;
@@ -2158,18 +2125,18 @@ mod tests {
         assert_eq!(data.bufferdatatype, BufferdataType::Pes);
         assert_eq!(demux.past as usize, buf.len());
     }
-    impl<'a> DemuxerData<'a> {
-        pub fn new(size: usize) -> Self {
-            let mut vec = vec![0u8; size];
+    impl DemuxerData {
+        pub fn new() -> Self {
+            let mut vec = vec![0u8; BUFSIZE];
             let ptr = vec.as_mut_ptr();
             mem::forget(vec);
             DemuxerData {
                 program_number: 0,
                 stream_pid: 0,
-                codec: Option::from(Codec::Dvb), // or whatever default you need
+                codec: Option::from(Codec::Dvb),
                 bufferdatatype: BufferdataType::Raw,
-                buffer_data: unsafe { slice::from_raw_parts_mut(ptr, size) },
-                buffer_pos: 0,
+                buffer: ptr,
+                len: 0, // Start with 0 data length
                 rollover_bits: 0,
                 pts: 0,
                 tb: CcxRational::default(),
@@ -2212,43 +2179,21 @@ mod tests {
     fn test_parse_ad_cdp_valid() {
         initialize_logger();
         let packet = build_valid_cdp_packet();
-
-        // Create a buffer with actual length (not just capacity)
-        // This simulates the real scenario where you have a pre-allocated C buffer
-        let mut buffer = vec![0u8; 100]; // 100 bytes of actual data
-        let mut data = DemuxerData {
-            program_number: 0,
-            stream_pid: 0,
-            codec: Option::from(Codec::Dvb), // or whatever default you need
-            bufferdatatype: BufferdataType::Raw,
-            buffer_data: &mut buffer[..], // Slice with actual length of 100
-            buffer_pos: 0,
-            rollover_bits: 0,
-            pts: 0,
-            tb: CcxRational::default(),
-            next_stream: ptr::null_mut(),
-            next_program: ptr::null_mut(),
-        };
-
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_ok());
-
         // cc_count = 2 so we expect 2 * 3 = 6 bytes to be copied.
-        // Check that buffer_pos was updated to 6
-        assert_eq!(data.buffer_pos, 6);
-
-        // Check the actual data was copied correctly
-        assert_eq!(
-            &data.buffer_data[0..6],
-            &[0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]
-        );
+        assert_eq!(data.len, 6);
+        let copied = unsafe { slice::from_raw_parts(data.buffer, data.len) };
+        assert_eq!(copied, &[0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
     }
+
     #[test]
     fn test_parse_ad_cdp_short_packet() {
         initialize_logger();
         // Packet shorter than 11 bytes.
         let packet = vec![0x96, 0x69, 0x08, 0x50, 0x42, 0x00, 0x01, 0x72, 0x01, 0xAA];
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), DemuxerError::InvalidArgument);
@@ -2259,7 +2204,7 @@ mod tests {
         initialize_logger();
         let mut packet = build_valid_cdp_packet();
         packet[0] = 0x00;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), DemuxerError::InvalidArgument);
@@ -2270,7 +2215,7 @@ mod tests {
         initialize_logger();
         let mut packet = build_valid_cdp_packet();
         packet[2] = 20; // Set length to 20, but actual length is 18.
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), DemuxerError::InvalidArgument);
@@ -2282,10 +2227,10 @@ mod tests {
         let mut packet = build_valid_cdp_packet();
         // Change section id at offset 7 to 0x71.
         packet[7] = 0x71;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), DemuxerError::Unsupported);
+        assert_eq!(result.unwrap_err(), DemuxerError::Retry);
     }
 
     #[test]
@@ -2293,10 +2238,10 @@ mod tests {
         initialize_logger();
         let mut packet = build_valid_cdp_packet();
         packet[7] = 0x73;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), DemuxerError::Unsupported);
+        assert_eq!(result.unwrap_err(), DemuxerError::Retry);
     }
 
     #[test]
@@ -2304,10 +2249,10 @@ mod tests {
         initialize_logger();
         let mut packet = build_valid_cdp_packet();
         packet[7] = 0x80; // falls in 0x75..=0xEF
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), DemuxerError::Unsupported);
+        assert_eq!(result.unwrap_err(), DemuxerError::Retry);
     }
 
     #[test]
@@ -2317,7 +2262,7 @@ mod tests {
         // Change footer sequence counter (bytes 16-17) to 0x00,0x02.
         packet[16] = 0x00;
         packet[17] = 0x02;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
         let result = parse_ad_cdp(&packet, &mut data);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), DemuxerError::InvalidArgument);
@@ -2357,7 +2302,7 @@ mod tests {
             ..Default::default()
         };
         demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
 
         let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Ok(()));
@@ -2391,7 +2336,7 @@ mod tests {
             ..Default::default()
         };
         demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
 
         let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data, &mut *ccx_options) };
         // In this branch, the function only logs "Need Sample" and does not fill cdp.
@@ -2421,7 +2366,7 @@ mod tests {
             ..Default::default()
         };
         demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
 
         let ret = unsafe { parse_ad_pyld(&mut demux, total_len, &mut data, &mut *ccx_options) };
         // For other service, no branch is taken; we simply skip remaining bytes.
@@ -2440,15 +2385,15 @@ mod tests {
         let total_len = payload.len() as i32;
         let mut demux = create_demuxer_with_buffer(&payload);
         // Create a dummy DemuxerData (not used in disabled branch).
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
 
         let ret =
-            unsafe { parse_ad_vbi(&mut demux, total_len as usize, &mut data, &mut *ccx_options) };
+            unsafe { parse_ad_vbi(&mut demux, total_len as i32, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Ok(()));
         // Since VBI is disabled, buffered_skip should be called and return total_len.
         assert_eq!(demux.past as usize, payload.len());
         // data.len should remain unchanged.
-        assert_eq!(data.buffer_data.len(), 100);
+        assert_eq!(data.len, 0);
     }
 
     // Helper: Create a demuxer for ad field, with a given GXF context that already has an ancillary track.
@@ -2498,7 +2443,7 @@ mod tests {
         };
         let mut gxf = CcxGxf::default();
         let mut demux = create_demuxer_for_ad_field(&buf, &mut gxf);
-        let mut data = DemuxerData::new(100);
+        let mut data = DemuxerData::new();
 
         let ret = unsafe { parse_ad_field(&mut demux, total_len, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Ok(()));
@@ -2533,12 +2478,10 @@ mod tests {
     }
 
     // Helper: Create a DemuxerData with a writable buffer.
-    fn create_demuxer_data(size: usize) -> DemuxerData<'static> {
-        let mut buffer = vec![0u8; size].into_boxed_slice();
+    fn create_demuxer_data() -> DemuxerData {
+        let mut buffer = vec![0u8; BUFSIZE].into_boxed_slice();
         let ptr = buffer.as_mut_ptr();
-        let len = buffer.len();
         // Leak the buffer to get a 'static lifetime
-        let buffer_data: &'static mut [u8] = unsafe { slice::from_raw_parts_mut(ptr, len) };
         mem::forget(buffer);
 
         DemuxerData {
@@ -2546,8 +2489,8 @@ mod tests {
             stream_pid: 0,
             codec: Option::from(Codec::Dvb),
             bufferdatatype: BufferdataType::Raw,
-            buffer_data,
-            buffer_pos: 0,
+            buffer: ptr,
+            len: 0,
             rollover_bits: 0,
             pts: 0,
             tb: CcxRational::default(),
@@ -2557,6 +2500,7 @@ mod tests {
     }
 
     // Test: Full packet is successfully read.
+    // Test: Full packet is successfully read.
     #[test]
     fn test_parse_mpeg_packet_valid() {
         let ccx_options = &mut Options::default();
@@ -2565,15 +2509,16 @@ mod tests {
         let payload = b"Hello, Rust MPEG Packet!";
         let total_len = payload.len();
         let mut demux = create_demuxer_with_data(payload);
-        let mut data = create_demuxer_data(total_len);
+        let mut data = create_demuxer_data();
 
         // Call parse_mpeg_packet.
-        let ret = parse_mpeg_packet(&mut demux, total_len, &mut data, &mut *ccx_options);
+        let ret = unsafe { parse_mpeg_packet(&mut demux, total_len, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Ok(()));
         // Check that data.len was increased by total_len.
-        assert_eq!(data.buffer_data.len(), total_len);
+        assert_eq!(data.len, total_len);
         // Verify that the content in data.buffer matches payload.
-        assert_eq!(data.buffer_data, payload);
+        let out = unsafe { slice::from_raw_parts(data.buffer, total_len) };
+        assert_eq!(out, payload);
         // Check that demux.past equals total_len.
         assert_eq!(demux.past as usize, total_len);
     }
@@ -2589,13 +2534,13 @@ mod tests {
         // Create a demuxer with only half of the payload available.
         let available = total_len / 2;
         let mut demux = create_demuxer_with_data(&payload[..available]);
-        let mut data = create_demuxer_data(total_len);
+        let mut data = create_demuxer_data();
 
         // Call parse_mpeg_packet.
-        let ret = parse_mpeg_packet(&mut demux, total_len, &mut data, &mut *ccx_options);
+        let ret = unsafe { parse_mpeg_packet(&mut demux, total_len, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Err(DemuxerError::EOF));
         // data.len should still be increased by total_len
-        assert_eq!(data.buffer_data.len(), total_len);
+        assert_eq!(data.len, total_len);
         // demux.past should equal available.
         assert_eq!(demux.past as usize, 0);
     }
@@ -2931,7 +2876,7 @@ mod tests {
         // Set private_data.
         demux.private_data = &mut gxf as *mut CcxGxf as *mut std::ffi::c_void;
         // Create a dummy DemuxerData.
-        let mut data = create_demuxer_data(1024);
+        let mut data = create_demuxer_data();
 
         let ret = unsafe { parse_map(&mut demux, total_len, &mut data, &mut *ccx_options) };
         assert_eq!(ret, Ok(()));

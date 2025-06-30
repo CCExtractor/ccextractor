@@ -1,22 +1,12 @@
-use crate::bindings::ccx_demuxer;
+use crate::bindings::MXFContext;
 use crate::demuxer::common_structs::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::common_structs::CcxGxf;
 use crate::gxf_demuxer::gxf::ccx_gxf_probe;
-use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c};
-use cfg_if::cfg_if;
 use lib_ccxr::common::{Options, StreamMode};
 use lib_ccxr::fatal;
 use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
-
-cfg_if! {
-    if #[cfg(test)] {
-        use crate::demuxer::stream_functions::tests::{ccx_mxf_init, ccx_probe_mxf};
-    }
-    else {
-        use crate::{ccx_mxf_init, ccx_probe_mxf};
-    }
-}
+use crate::mxf_demuxer::mxf::ccx_probe_mxf;
 
 pub const CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
     CcxStreamMp4Box {
@@ -218,14 +208,11 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
 
     // Search for MXF header
     if ctx.stream_mode == StreamMode::ElementaryOrNotFound {
-        let demuxer: *mut ccx_demuxer = alloc_new_demuxer();
-        copy_demuxer_from_rust_to_c(demuxer, ctx);
-        if ccx_probe_mxf(demuxer) == 1 {
+        if ccx_probe_mxf(&ctx) {
             ctx.stream_mode = StreamMode::Mxf;
-            let private = ccx_mxf_init(demuxer);
-            ctx.private_data = private as *mut core::ffi::c_void;
+            let private = Box::new(MXFContext::default());
+            ctx.private_data = Box::into_raw(private) as *mut core::ffi::c_void;
         }
-        drop(Box::from_raw(demuxer));
     }
 
     // Still not found
@@ -420,19 +407,10 @@ pub fn is_valid_mp4_box(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bindings::{ccx_demuxer, MXFContext};
     use crate::file_functions::file::FILEBUFFERSIZE;
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
-    use std::os::raw::c_int;
     use std::ptr;
     use std::sync::Once;
-
-    pub fn ccx_probe_mxf(_ctx: *mut ccx_demuxer) -> c_int {
-        0
-    }
-    pub unsafe fn ccx_mxf_init(_demux: *mut ccx_demuxer) -> *mut MXFContext {
-        Box::into_raw(Box::new(MXFContext::default()))
-    }
 
     static INIT: Once = Once::new();
     fn initialize_logger() {

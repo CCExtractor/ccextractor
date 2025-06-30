@@ -26,6 +26,7 @@ pub mod hlist;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
+mod mxf_demuxer;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
