@@ -13,7 +13,6 @@
 int ccxr_mxf_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data);
 #endif
 
-
 #define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "MXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define log(fmt, ...) ccx_common_logging.log_ftn("MXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
@@ -577,13 +576,13 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	{
 		data = *ppdata;
 	}
-	#ifndef DISABLE_RUST
-		return ccxr_mxf_getmoredata(ctx->demux_ctx, data);
-	#else
+#ifndef DISABLE_RUST
+	return ccxr_mxf_getmoredata(ctx->demux_ctx, data);
+#else
 
 	ret = read_packet(ctx->demux_ctx, data);
 	return ret;
-	#endif
+#endif
 }
 
 int ccx_probe_mxf(struct ccx_demuxer *ctx)

@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- New: Added MythTV module
 - New: Added MXF module
 - New: Added GXF module
 - New: Add demuxer and file_functions module (#1662)
