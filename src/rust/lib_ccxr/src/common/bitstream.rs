@@ -48,8 +48,6 @@ impl<'a> BitStreamRust<'a> {
             fatal!(cause = ExitCause::Bug; "In next_bits: Argument is greater than the maximum bit number i.e. 64: {}!", bnum);
         }
 
-        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
-        // In Rust: data.len() is equivalent to end, pos is current position
         if self.pos > self.data.len() {
             fatal!(cause = ExitCause::Bug; "In next_bits: Bitstream can not have negative length!");
         }
@@ -61,7 +59,6 @@ impl<'a> BitStreamRust<'a> {
         }
 
         // Calculate the remaining number of bits in bitstream after reading.
-        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bnum;
         self.bits_left =
             (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
         if self.bits_left < 0 {
@@ -88,7 +85,6 @@ impl<'a> BitStreamRust<'a> {
                 fatal!(cause = ExitCause::Bug; "In next_bits: Trying to read after end of data ...");
             }
 
-            // C: res |= (*vpos & (0x01 << (vbit - 1)) ? 1 : 0);
             res |= if self.data[vpos] & (0x01 << (vbit - 1)) != 0 {
                 1
             } else {
@@ -130,8 +126,6 @@ impl<'a> BitStreamRust<'a> {
     }
     /// Skip `bnum` bits, advancing the position.
     pub fn skip_bits(&mut self, bnum: u32) -> Result<bool, BitstreamError> {
-        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
-        // In Rust: data.len() is equivalent to end, pos is current position
         if self.pos > self.data.len() {
             fatal!(cause = ExitCause::Bug; "In skip_bits: bitstream length cannot be negative!");
         }
@@ -143,7 +137,6 @@ impl<'a> BitStreamRust<'a> {
         }
 
         // Calculate the remaining number of bits in bitstream after reading.
-        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bnum;
         self.bits_left =
             (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64 - bnum as i64;
         if self.bits_left < 0 {
@@ -156,12 +149,9 @@ impl<'a> BitStreamRust<'a> {
         }
 
         // Handle the bit position arithmetic more carefully
-        // C: bstr->bpos -= bnum % 8;
-        // C: bstr->pos += bnum / 8;
         let mut new_bpos = self.bpos as i32 - (bnum % 8) as i32;
         let mut new_pos = self.pos + (bnum / 8) as usize;
 
-        // C: if (bstr->bpos < 1) { bstr->bpos += 8; bstr->pos += 1; }
         if new_bpos < 1 {
             new_bpos += 8;
             new_pos += 1;
@@ -187,8 +177,6 @@ impl<'a> BitStreamRust<'a> {
 
     /// Align to next byte boundary (commit state).
     pub fn make_byte_aligned(&mut self) -> Result<(), BitstreamError> {
-        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
-        // In Rust: data.len() is equivalent to end, pos is current position
         if self.pos > self.data.len() {
             fatal!(cause = ExitCause::Bug; "In make_byte_aligned: bitstream length can not be negative!");
         }
@@ -201,8 +189,6 @@ impl<'a> BitStreamRust<'a> {
 
         // Keep a negative bstr->bitsleft, but correct it.
         if self.bits_left < 0 {
-            // Pay attention to the bit alignment
-            // C: bstr->bitsleft = (bstr->bitsleft - 7) / 8 * 8;
             self.bits_left = (self.bits_left - 7) / 8 * 8;
             return Ok(());
         }
@@ -213,7 +199,6 @@ impl<'a> BitStreamRust<'a> {
         }
 
         // Reset, in case a next_???() function was used before
-        // C: bstr->bitsleft = 0LL + 8 * (bstr->end - bstr->pos - 1) + bstr->bpos;
         self.bits_left = 8 * (self.data.len() as i64 - self.pos as i64 - 1) + self.bpos as i64;
 
         Ok(())
@@ -222,8 +207,6 @@ impl<'a> BitStreamRust<'a> {
     /// Peek at next `bynum` bytes without advancing.
     /// Errors if not aligned or insufficient data.
     pub fn next_bytes(&mut self, bynum: usize) -> Result<&'a [u8], BitstreamError> {
-        // Sanity check - equivalent to (bstr->end - bstr->pos < 0)
-        // In Rust: data.len() is equivalent to end, pos is current position
         if self.pos > self.data.len() {
             fatal!(cause = ExitCause::Bug; "In next_bytes: bitstream length can not be negative!");
         }
@@ -234,23 +217,18 @@ impl<'a> BitStreamRust<'a> {
             return Err(BitstreamError::InsufficientData);
         }
 
-        // C: bstr->bitsleft = 0LL + (bstr->end - bstr->pos - 1) * 8 + bstr->bpos - bynum * 8;
         self.bits_left = (self.data.len() as i64 - self.pos as i64 - 1) * 8 + self.bpos as i64
             - (bynum * 8) as i64;
 
-        // C: if (!is_byte_aligned(bstr) || bstr->bitsleft < 0 || bynum < 1)
         if !self.is_byte_aligned()? || self.bits_left < 0 || bynum < 1 {
             return Err(BitstreamError::InsufficientData);
         }
 
         // Remember the bitstream position
-        // C: bstr->_i_bpos = 8;
-        // C: bstr->_i_pos = bstr->pos + bynum;
         self._i_bpos = 8;
         self._i_pos = self.pos + bynum;
 
         // Return slice of the requested bytes
-        // C: return bstr->pos;
         if self.pos + bynum <= self.data.len() {
             Ok(&self.data[self.pos..self.pos + bynum])
         } else {
@@ -262,7 +240,6 @@ impl<'a> BitStreamRust<'a> {
         let res = self.next_bytes(bynum)?;
 
         // Advance the bitstream when a read was possible
-        // C: if (res) { bstr->bpos = bstr->_i_bpos; bstr->pos = bstr->_i_pos; }
         self.bpos = self._i_bpos;
         self.pos = self._i_pos;
 
