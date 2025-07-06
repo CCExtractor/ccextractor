@@ -382,7 +382,8 @@ mod test {
 
     #[test]
     fn test_do_cb() {
-        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut dtvcc_ctx = crate::decoder::test::initialize_dtvcc_ctx();
+
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
 
         let mut decoder_ctx = lib_cc_decode::default();
