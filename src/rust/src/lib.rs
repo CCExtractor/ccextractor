@@ -321,7 +321,7 @@ mod test {
     use super::*;
 
     #[test]
-    pub fn test_verify_parity() {
+    fn test_verify_parity() {
         // Odd parity
         assert!(verify_parity(0b1010001));
 
