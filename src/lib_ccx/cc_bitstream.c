@@ -166,7 +166,7 @@ int skip_bits(struct bitstream *bstr, unsigned bnum)
 	if (bstr->bitsleft < 0)
 		return 0;
 
-	// Special case for reading zero bits. Return zero
+	// Special case for reading zero bits. Return one == success
 	if (bnum == 0)
 		return 1;
 
