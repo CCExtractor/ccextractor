@@ -236,13 +236,27 @@ impl PartialEq for dtvcc_symbol {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
 
     use crate::utils::get_zero_allocated_obj;
 
     use super::*;
 
+    pub fn initialize_dtvcc_ctx() -> Box<dtvcc_ctx> {
+        let mut ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+
+        // Initialize the required pointers to avoid null pointer dereference
+        let report = Box::new(ccx_decoder_dtvcc_report::default());
+        ctx.report = Box::into_raw(report);
+
+        let encoder = Box::new(encoder_ctx::default());
+        ctx.encoder = Box::into_raw(encoder) as *mut _ as *mut std::os::raw::c_void;
+
+        let timing = Box::new(ccx_common_timing_ctx::default());
+        ctx.timing = Box::into_raw(timing);
+        ctx
+    }
     #[test]
     fn test_process_cc_data() {
         set_logger(CCExtractorLogger::new(
@@ -252,17 +266,7 @@ mod test {
         ))
         .ok();
 
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
-
-        // Initialize the required pointers to avoid null pointer dereference
-        let report = Box::new(ccx_decoder_dtvcc_report::default());
-        dtvcc_ctx.report = Box::into_raw(report);
-
-        let encoder = Box::new(encoder_ctx::default());
-        dtvcc_ctx.encoder = Box::into_raw(encoder) as *mut _ as *mut std::os::raw::c_void;
-
-        let timing = Box::new(ccx_common_timing_ctx::default());
-        dtvcc_ctx.timing = Box::into_raw(timing);
+        let mut dtvcc_ctx = initialize_dtvcc_ctx();
 
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
@@ -313,17 +317,7 @@ mod test {
         ))
         .ok();
 
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
-
-        // Initialize the required pointers to avoid null pointer dereference
-        let report = Box::new(ccx_decoder_dtvcc_report::default());
-        dtvcc_ctx.report = Box::into_raw(report);
-
-        let encoder = Box::new(encoder_ctx::default());
-        dtvcc_ctx.encoder = Box::into_raw(encoder) as *mut std::os::raw::c_void;
-
-        let timing = Box::new(ccx_common_timing_ctx::default());
-        dtvcc_ctx.timing = Box::into_raw(timing);
+        let mut dtvcc_ctx = initialize_dtvcc_ctx();
 
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
