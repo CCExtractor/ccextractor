@@ -356,13 +356,13 @@ mod test {
 
         // Initialize the required pointers to avoid null pointer dereference
         let report = Box::new(ccx_decoder_dtvcc_report::default());
-        dtvcc_ctx.report = Box::leak(report);
+        dtvcc_ctx.report = Box::into_raw(report);
 
         let encoder = Box::new(encoder_ctx::default());
-        dtvcc_ctx.encoder = Box::leak(encoder) as *mut _ as *mut std::os::raw::c_void;
+        dtvcc_ctx.encoder = Box::into_raw(encoder) as *mut _ as *mut std::os::raw::c_void;
 
         let timing = Box::new(ccx_common_timing_ctx::default());
-        dtvcc_ctx.timing = Box::leak(timing);
+        dtvcc_ctx.timing = Box::into_raw(timing);
 
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
 
