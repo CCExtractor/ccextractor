@@ -13,3 +13,4 @@
 #include "../lib_ccx/ccx_encoders_helpers.h"
 #include "../lib_ccx/ccx_gxf.h"
 #include "../lib_ccx/ccx_demuxer_mxf.h"
+#include "../lib_ccx/cc_bitstream.h"
