@@ -25,6 +25,7 @@ pub mod hardsubx;
 pub mod hlist;
 pub mod libccxr_exports;
 mod mxf_demuxer;
+pub mod mythtv;
 pub mod parser;
 pub mod utils;
 

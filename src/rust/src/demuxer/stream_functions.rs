@@ -327,7 +327,9 @@ pub fn detect_myth(ctx: &mut CcxDemuxer) -> i32 {
         uc.copy_from_slice(&ctx.startbytes[..3]);
 
         for &byte in &ctx.startbytes[3..ctx.startbytes_avail as usize] {
-            if (uc == [b't', b'v', b'0']) || (uc == [b'T', b'V', b'0']) {
+            if ((uc[0] == b't') && (uc[1] == b'v') && (uc[2] == b'0'))
+                || ((uc[0] == b'T') && (uc[1] == b'V') && (uc[2] == b'0'))
+            {
                 vbi_blocks += 1;
             }
 

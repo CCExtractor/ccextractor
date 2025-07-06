@@ -16,6 +16,16 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "file_buffer.h"
+#include "ccx_gxf.h"
+
+#ifndef DISABLE_RUST
+extern int ccxr_mpegps_read_packet(
+    struct ccx_demuxer *ctx,
+    unsigned int header_state,
+    unsigned char psm_es_type[256],
+    struct AVPacket *av
+);
+#endif
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
@@ -267,21 +277,6 @@ enum CodecID
 					  stream (only used by libavformat) */
 };
 
-typedef struct AVPacket
-{
-	LLONG pts; ///< presentation time stamp in time_base units
-	LLONG dts; ///< decompression time stamp in time_base units
-	unsigned char *data;
-	int size;
-	int stream_index;
-	int flags;
-	int duration; ///< presentation duration in time_base units (0 if not available)
-	void (*destruct)(struct AVPacket *);
-	void *priv;
-	LLONG pos; ///< byte position in stream, -1 if unknown
-	int codec_id;
-	int type;
-} AVPacket;
 
 static AVPacket av;
 
@@ -622,8 +617,10 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 static int mpegps_read_packet(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_mpegps_read_packet(ctx, header_state, psm_es_type, &av);
+#else
 	LLONG pts, dts;
-
 	int len, startcode, type, codec_id = 0, es_type;
 redo:
 	len = mpegps_read_pes_header(ctx, &startcode, &pts, &dts);
@@ -795,6 +792,7 @@ goto skip; */
 #endif
 
 	return 0;
+#endif
 }
 
 int myth_loop(struct lib_ccx_ctx *ctx)
@@ -808,7 +806,6 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	unsigned long desp_length = 65536;
 	unsigned char *desp = (unsigned char *)malloc(desp_length);
-
 	av.data = NULL;
 	ccx_options.buffer_input = 1;
 	dec_ctx = update_decoder_list(ctx);

@@ -57,6 +57,7 @@ fn main() {
         "GXFMatTag",
         "GXFTrackTag",
         "GXFTrackType",
+        "AVPacket",
         "demuxer_data",
         "uint8_t",
         "word_list",

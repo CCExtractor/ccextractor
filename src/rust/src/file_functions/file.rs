@@ -667,9 +667,7 @@ pub unsafe fn buffered_read(
         ctx.filebuffer_pos += bytes as u32;
         bytes
     } else {
-        let ptr = buffer
-            .map(|b| b.as_mut_ptr())
-            .unwrap_or(std::ptr::null_mut());
+        let ptr = buffer.map(|b| b.as_mut_ptr()).unwrap_or(ptr::null_mut());
 
         let result = buffered_read_opt(ctx, ptr, bytes, ccx_options);
 
@@ -772,6 +770,31 @@ pub unsafe fn buffered_skip(ctx: &mut CcxDemuxer, bytes: u32, ccx_options: &mut 
         buffered_read_opt(ctx, ptr::null_mut(), bytes as usize, ccx_options)
     }
 }
+/// # Safety
+/// This function is unsafe because it calls unsafe function `buffered_read_opt`
+pub unsafe fn buffered_seek(ctx: &mut CcxDemuxer, offset: i32, ccx_options: &mut Options) {
+    position_sanity_check(ctx);
+
+    if offset < 0 {
+        let signed_pos = ctx.filebuffer_pos as i32 + offset;
+        if signed_pos >= 0 {
+            ctx.filebuffer_pos = signed_pos as u32;
+        } else {
+            let new_start = ctx.startbytes_pos as i32 + signed_pos;
+            if new_start < 0 {
+                fatal!(cause = ExitCause::Bug;
+                    "PANIC: Attempt to seek before buffer start, this is a bug!");
+            }
+            ctx.startbytes_pos = new_start as u32;
+            ctx.filebuffer_pos = 0;
+        }
+    } else {
+        // Positive seek: skip forward in the buffer
+        buffered_read_opt(ctx, std::ptr::null_mut(), offset as usize, ccx_options);
+        position_sanity_check(ctx);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -302,6 +302,22 @@ struct ccx_gxf
     size_t cdp_len;
 };
 
+typedef struct AVPacket // Moved here from myth.c for C to Rust conversion
+{
+	LLONG pts; ///< presentation time stamp in time_base units
+	LLONG dts; ///< decompression time stamp in time_base units
+	unsigned char *data;
+	int size;
+	int stream_index;
+	int flags;
+	int duration; ///< presentation duration in time_base units (0 if not available)
+	void (*destruct)(struct AVPacket *);
+	void *priv;
+	LLONG pos; ///< byte position in stream, -1 if unknown
+	int codec_id;
+	int type;
+} AVPacket;
+
 int ccx_gxf_probe(unsigned char *buf, int len);
 int ccx_gxf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 struct ccx_gxf *ccx_gxf_init(struct ccx_demuxer *arg);
