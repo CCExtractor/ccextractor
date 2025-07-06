@@ -182,11 +182,7 @@ impl<'a> BitStreamRust<'a> {
         if vbit == 0 || vbit > 8 {
             fatal!(cause = ExitCause::Bug; "In is_byte_aligned: Illegal bit position value {}!", vbit);
         }
-        if vbit == 8 {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        Ok(vbit == 8)
     }
 
     /// Align to next byte boundary (commit state).
