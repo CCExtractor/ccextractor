@@ -7,13 +7,8 @@ use std::os::raw::{c_int, c_uchar};
 ///
 /// # Safety
 /// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bitstream_ptr`) without null checking
-/// - Assumes `bitstream_ptr` points to a valid, properly initialized and aligned `bitstream` struct
-/// - Assumes the `bitstream` struct has sufficient memory allocated for all fields
-/// - Assumes `rust_bitstream` is properly initialized with valid data
-/// - Performs pointer arithmetic on `rust_bitstream.data` assuming it points to valid memory
-/// - The caller must ensure the `bitstream` struct remains valid for the duration of the operation
-/// - The data referenced by `rust_bitstream.data` must remain valid during the operation
+/// - Dereferences a raw pointer (`bitstream_ptr`)
+/// - Performs pointer arithmetic and assumes valid memory layout
 unsafe fn copy_bitstream_from_rust_to_c(
     bitstream_ptr: *mut bitstream,
     rust_bitstream: &BitStreamRust,
@@ -56,15 +51,8 @@ unsafe fn copy_bitstream_from_rust_to_c(
 /// Converts a C `bitstream` struct to a Rust `BitStreamRust` with static lifetime.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`value`) without null checking
-/// - Assumes `value` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the `pos` and `end` pointers are either both null or both point to valid memory
-/// - Creates a slice with `'static` lifetime from potentially non-static memory
-/// - Assumes the memory region from `pos` to `end` contains valid, readable data
-/// - Assumes `_i_pos` is either null or points to memory within the valid range
-/// - The caller must ensure the memory referenced by the pointers remains valid for the `'static` lifetime
-/// - Performs pointer arithmetic and offset calculations assuming valid pointer relationships
+/// This function is unsafe because it Dereferences a raw pointer (`value`) without null checking and
+/// Performs pointer arithmetic and offset calculations assuming valid pointer relationships
 unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'static> {
     // We need to work with the original buffer, not just from current position
     let mut slice: &[u8] = &[];
@@ -104,11 +92,8 @@ unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'stat
 ///
 /// # Safety
 /// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bitstream_ptr`) without null checking
-/// - Assumes `bitstream_ptr` points to a valid, properly initialized `bitstream` struct
-/// - Assumes `rust_bitstream` is properly initialized with valid data
-/// - Performs pointer arithmetic assuming valid memory layout
-/// - The caller must ensure the `bitstream` struct remains valid during the operation
+/// This function is unsafe because it Dereferences a raw pointer (`value`) without null checking and
+/// Performs pointer arithmetic and offset calculations assuming valid pointer relationships
 unsafe fn copy_internal_state_from_rust_to_c(
     bitstream_ptr: *mut bitstream,
     rust_bitstream: &BitStreamRust,
@@ -135,13 +120,7 @@ unsafe fn copy_internal_state_from_rust_to_c(
 /// Free a bitstream created by Rust allocation functions.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer without null checking (though it does check for null)
-/// - Assumes the pointer was allocated by Rust and is owned by a `Box`
-/// - Assumes no other references to the `BitStreamRust` exist when this is called
-/// - The pointer must not be used after this function returns
-/// - This function must only be called once per allocated bitstream
-/// - Double-free will occur if called multiple times with the same pointer
+/// This function is unsafe because it Drops the `Box` created from a raw pointer (`bs`) without null checking.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_free_bitstream(bs: *mut BitStreamRust<'static>) {
     if !bs.is_null() {
@@ -152,14 +131,7 @@ pub unsafe extern "C" fn ccxr_free_bitstream(bs: *mut BitStreamRust<'static>) {
 /// Read bits from a bitstream without advancing the position (peek operation).
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers (`pos`, `end`, `_i_pos`) point to valid, readable memory
-/// - Assumes the memory region contains valid data and has sufficient bits available
-/// - Modifies the internal state of the bitstream struct
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
-/// - The underlying data must not be modified during the operation
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_internal_state_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_next_bits(bs: *mut bitstream, bnum: u32) -> u64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -175,14 +147,7 @@ pub unsafe extern "C" fn ccxr_next_bits(bs: *mut bitstream, bnum: u32) -> u64 {
 /// Read bits from a bitstream and advance the position.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Assumes the memory region contains sufficient readable bits for the requested operation
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
-/// - The underlying data must not be modified during the operation
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_bits(bs: *mut bitstream, bnum: u32) -> u64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -197,13 +162,7 @@ pub unsafe extern "C" fn ccxr_read_bits(bs: *mut bitstream, bnum: u32) -> u64 {
 /// Skip a number of bits in the bitstream.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid memory
-/// - Assumes the bitstream contains at least the requested number of bits to skip
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_skip_bits(bs: *mut bitstream, bnum: u32) -> i32 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -222,11 +181,7 @@ pub unsafe extern "C" fn ccxr_skip_bits(bs: *mut bitstream, bnum: u32) -> i32 {
 /// Check if the bitstream is byte aligned.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid memory
-/// - The caller must ensure the bitstream remains valid during the operation
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_is_byte_aligned(bs: *mut bitstream) -> i32 {
     let rust_bs = copy_bitstream_c_to_rust(bs);
@@ -245,13 +200,7 @@ pub unsafe extern "C" fn ccxr_is_byte_aligned(bs: *mut bitstream) -> i32 {
 /// Align the bitstream to the next byte boundary.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Modifies the bitstream state including position pointers
-/// - Assumes the bitstream has sufficient bits available to reach the next byte boundary
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_make_byte_aligned(bs: *mut bitstream) {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -265,16 +214,7 @@ pub unsafe extern "C" fn ccxr_make_byte_aligned(bs: *mut bitstream) {
 /// Get a pointer to the next bytes in the bitstream without advancing the position.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Returns a raw pointer that must not outlive the bitstream or be used after bitstream modification
-/// - Assumes the bitstream is byte-aligned before calling this function
-/// - Assumes the bitstream contains at least `bynum` readable bytes
-/// - Modifies the internal state of the bitstream
-/// - The returned pointer points to read-only memory that must not be modified
-/// - The caller must ensure the bitstream and its data remain valid while using the returned pointer
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_internal_state_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_next_bytes(bs: *mut bitstream, bynum: usize) -> *const u8 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -291,16 +231,7 @@ pub unsafe extern "C" fn ccxr_next_bytes(bs: *mut bitstream, bynum: usize) -> *c
 /// Read bytes from the bitstream and advance the position.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Returns a raw pointer that must not outlive the bitstream or be used after bitstream modification
-/// - Assumes the bitstream is byte-aligned before calling this function
-/// - Assumes the bitstream contains at least `bynum` readable bytes
-/// - Modifies the bitstream state including position pointers
-/// - The returned pointer points to read-only memory that must not be modified
-/// - The caller must ensure the bitstream and its data remain valid while using the returned pointer
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_bytes(bs: *mut bitstream, bynum: usize) -> *const u8 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -315,14 +246,7 @@ pub unsafe extern "C" fn ccxr_read_bytes(bs: *mut bitstream, bynum: usize) -> *c
 /// Read a multi-byte number from the bitstream with optional position advancement.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Assumes the bitstream contains at least `bytes` readable bytes
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
-/// - The `bytes` parameter should be reasonable (typically 1-8) to avoid potential overflow
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_bitstream_get_num(
     bs: *mut bitstream,
@@ -338,14 +262,7 @@ pub unsafe extern "C" fn ccxr_bitstream_get_num(
 /// Read an unsigned Exp-Golomb code from the bitstream.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Assumes the bitstream contains a valid Exp-Golomb encoded value
-/// - Assumes the bitstream has sufficient bits to read the complete encoded value
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -357,14 +274,7 @@ pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u6
 /// Read a signed Exp-Golomb code from the bitstream.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Assumes the bitstream contains a valid signed Exp-Golomb encoded value
-/// - Assumes the bitstream has sufficient bits to read the complete encoded value
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut bitstream) -> i64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -375,14 +285,7 @@ pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut bitstream) -> i64 {
 /// Read a signed integer value from the specified number of bits.
 ///
 /// # Safety
-/// This function is unsafe because it:
-/// - Dereferences a raw pointer (`bs`) without null checking
-/// - Assumes `bs` points to a valid, properly initialized `bitstream` struct
-/// - Assumes the bitstream's data pointers point to valid, readable memory
-/// - Assumes the bitstream contains at least `bnum` readable bits
-/// - Modifies the bitstream state including position pointers
-/// - The caller must ensure the bitstream remains valid and is not accessed concurrently
-/// - The `bnum` parameter should be reasonable (typically 1-64) for integer representation
+/// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_int(bs: *mut bitstream, bnum: u32) -> i64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
@@ -395,8 +298,6 @@ pub unsafe extern "C" fn ccxr_read_int(bs: *mut bitstream, bnum: u32) -> i64 {
 ///
 /// # Safety
 /// This function is marked unsafe only because it's part of the FFI interface.
-/// It does not perform any unsafe operations internally and is safe to call with any `u8` value.
-/// The safety requirements exist only due to the C calling convention.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_reverse8(data: u8) -> u8 {
     BitStreamRust::reverse8(data)
