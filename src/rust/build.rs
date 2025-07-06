@@ -80,6 +80,7 @@ fn main() {
         "ccx_decoder_608_report",
         "ccx_gxf",
         "MXFContext",
+        "AVPacket",
         "demuxer_data",
         "eia608_screen",
         "uint8_t",
