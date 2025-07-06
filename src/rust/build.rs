@@ -80,7 +80,7 @@ fn main() {
         "ccx_decoder_608_report",
         "ccx_gxf",
         "MXFContext",
-        "AVPacket",
+        "AVPacketMythTV",
         "demuxer_data",
         "eia608_screen",
         "uint8_t",
@@ -88,7 +88,7 @@ fn main() {
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_types.extend_from_slice(&["AVRational", "AVFrame"]);
+    allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate

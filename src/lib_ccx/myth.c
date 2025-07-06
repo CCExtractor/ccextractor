@@ -23,7 +23,7 @@ extern int ccxr_mpegps_read_packet(
     struct ccx_demuxer *ctx,
     unsigned int header_state,
     unsigned char psm_es_type[256],
-    struct AVPacket *av);
+    struct AVPacketMythTV *av);
 #endif
 
 static unsigned int header_state;
@@ -276,7 +276,7 @@ enum CodecID
 					  stream (only used by libavformat) */
 };
 
-static AVPacket av;
+static AVPacketMythTV av;
 
 static LLONG get_pts(struct ccx_demuxer *ctx, int c)
 {
