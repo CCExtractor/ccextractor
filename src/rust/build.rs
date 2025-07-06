@@ -57,14 +57,14 @@ fn main() {
         "GXFMatTag",
         "GXFTrackTag",
         "GXFTrackType",
-        "AVPacket",
+        "AVPacketMythTV",
         "demuxer_data",
         "uint8_t",
         "word_list",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
-    allowlist_types.extend_from_slice(&["AVRational", "AVFrame"]);
+    allowlist_types.extend_from_slice(&["AVRational", "AVPacket", "AVFrame"]);
 
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
