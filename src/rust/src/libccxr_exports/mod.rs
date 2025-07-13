@@ -1,9 +1,9 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
+pub mod bitstream;
 pub mod demuxer;
 pub mod demuxerdata;
 pub mod gxf;
-pub mod bitstream;
 pub mod time;
 
 use crate::ccx_options;

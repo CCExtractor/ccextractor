@@ -307,7 +307,7 @@ mod tests {
     // FFI binding tests
     #[test]
     fn test_ffi_next_bits() {
-        let data = vec![0b10101010];
+        let data = [0b10101010];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     fn test_ffi_read_bits() {
-        let data = vec![0b10101010];
+        let data = [0b10101010];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -339,7 +339,7 @@ mod tests {
 
     #[test]
     fn test_ffi_byte_alignment() {
-        let data = vec![0xFF];
+        let data = [0xFF];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -411,7 +411,7 @@ mod tests {
 
     #[test]
     fn test_ffi_state_updates() {
-        let data = vec![0xAA, 0xBB];
+        let data = [0xAA, 0xBB];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -465,7 +465,7 @@ mod bitstream_copying_tests {
             assert_eq!(c_stream._i_bpos, 5);
 
             // Verify pointer arithmetic
-            assert!(verify_pointer_bounds(&c_stream));
+            assert!(verify_pointer_bounds(c_stream));
             assert_eq!(c_stream.end.offset_from(c_stream.pos), 100);
             assert_eq!(c_stream._i_pos.offset_from(c_stream.pos), 10);
 
@@ -496,7 +496,7 @@ mod bitstream_copying_tests {
             // Verify basic field conversions
             assert_eq!(rust_stream.bpos, 7);
             assert_eq!(rust_stream.bits_left, 400);
-            assert_eq!(rust_stream.error, true);
+            assert!(rust_stream.error);
             assert_eq!(rust_stream._i_pos, 15);
             assert_eq!(rust_stream._i_bpos, 2);
 
@@ -635,7 +635,7 @@ mod bitstream_copying_tests {
 
             assert_eq!(reconstructed.bpos, 7);
             assert_eq!(reconstructed.bits_left, i64::MAX);
-            assert_eq!(reconstructed.error, true);
+            assert!(reconstructed.error);
             assert_eq!(reconstructed._i_pos, 255);
             assert_eq!(reconstructed._i_bpos, 7);
         }
@@ -660,7 +660,7 @@ mod bitstream_copying_tests {
             let reconstructed = copy_bitstream_c_to_rust(c_s);
 
             assert_eq!(reconstructed.bits_left, -100);
-            assert_eq!(reconstructed.error, false);
+            assert!(!reconstructed.error);
         }
     }
 
@@ -778,7 +778,7 @@ mod bitstream_copying_tests {
                 copy_bitstream_from_rust_to_c(c_s, &rust_stream);
                 let new_rust_stream = copy_bitstream_c_to_rust(c_s);
 
-                assert_eq!(new_rust_stream.error, true);
+                assert!(new_rust_stream.error);
                 assert_eq!(new_rust_stream.data.len(), 64);
                 assert_eq!(new_rust_stream._i_pos, 32);
 
@@ -836,7 +836,7 @@ mod bitstream_copying_tests {
             let c_stream = &mut *c_s;
 
             // Verify all pointers are within bounds
-            assert!(verify_pointer_bounds(&c_stream));
+            assert!(verify_pointer_bounds(c_stream));
 
             // Verify we can safely access the boundaries
             let first_byte = *c_stream.pos;

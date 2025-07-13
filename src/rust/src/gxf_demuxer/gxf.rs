@@ -2215,7 +2215,7 @@ mod tests {
 
         // Create a buffer with actual length (not just capacity)
         // This simulates the real scenario where you have a pre-allocated C buffer
-        let mut buffer = vec![0u8; 100]; // 100 bytes of actual data
+        let mut buffer = [0u8; 100]; // 100 bytes of actual data
         let mut data = DemuxerData {
             program_number: 0,
             stream_pid: 0,

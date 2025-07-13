@@ -532,7 +532,7 @@ impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
             let mut charsets = Vec::new();
             for &code in charsets_slice {
                 if *code < ccx_decoder_608_color_code_COL_MAX as i8 {
-                    charsets.push(format!("Charset_{:?}", code));
+                    charsets.push(format!("Charset_{code:?}"));
                 } else {
                     charsets.push("Invalid".to_string());
                 }

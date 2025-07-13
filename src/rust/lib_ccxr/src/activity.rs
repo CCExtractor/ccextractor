@@ -30,7 +30,7 @@ impl ActivityExt for Options {
     fn activity_input_file_open(&mut self, filename: &str) {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
-            writeln!(stderr, "###INPUTFILEOPEN#{}", filename).unwrap();
+            writeln!(stderr, "###INPUTFILEOPEN#{filename}").unwrap();
             stderr.flush().unwrap();
         }
     }

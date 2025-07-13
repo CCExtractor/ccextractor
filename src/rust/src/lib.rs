@@ -73,9 +73,6 @@ cfg_if! {
         static mut ccx_common_timing_settings: ccx_common_timing_settings_t = unsafe { std::mem::zeroed() };
         static mut capitalization_list: word_list = unsafe { std::mem::zeroed() };
         static mut profane: word_list = unsafe { std::mem::zeroed() };
-
-        unsafe extern "C" fn version(_location: *const c_char) {}
-        unsafe extern "C" fn set_binary_mode() {}
     }
 }
 
@@ -104,8 +101,6 @@ extern "C" {
     static mut profane: word_list;
     static mut pts_big_change: c_uint;
 
-    fn version(location: *const c_char);
-    fn set_binary_mode();
 }
 
 /// Initialize env logger with custom format, using stdout as target

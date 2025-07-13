@@ -200,8 +200,8 @@ mod tests {
             // Test all basic fields
             assert_eq!(rust_data.program_number, c_data.program_number);
             assert_eq!(rust_data.stream_pid, c_data.stream_pid);
-            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits as u32);
-            assert_eq!(rust_data.pts, c_data.pts as i64);
+            assert_eq!(rust_data.rollover_bits, c_data.rollover_bits);
+            assert_eq!(rust_data.pts, c_data.pts);
 
             // Test buffer data
             assert_eq!(rust_data.buffer_data.len(), c_data.len);

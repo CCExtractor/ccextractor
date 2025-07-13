@@ -421,10 +421,10 @@ mod tests {
         assert_eq!(demuxer.auto_stream, StreamMode::default());
         assert_eq!(demuxer.startbytes_pos, 0);
         assert_eq!(demuxer.startbytes_avail, 0);
-        assert_eq!(demuxer.ts_autoprogram, false);
-        assert_eq!(demuxer.ts_allprogram, false);
-        assert_eq!(demuxer.flag_ts_forced_pn, false);
-        assert_eq!(demuxer.flag_ts_forced_cappid, false);
+        assert!(!demuxer.ts_autoprogram);
+        assert!(!demuxer.ts_allprogram);
+        assert!(!demuxer.flag_ts_forced_pn);
+        assert!(!demuxer.flag_ts_forced_cappid);
         assert_eq!(demuxer.ts_datastreamtype, StreamType::Unknownstream);
         assert_eq!(demuxer.pinfo.len(), MAX_PROGRAM);
         assert_eq!(demuxer.nb_program, 0);
@@ -444,7 +444,7 @@ mod tests {
         assert_eq!(demuxer.have_pids.len(), MAX_PSI_PID + 1);
         assert_eq!(demuxer.num_of_pids, 0);
         assert_eq!(demuxer.pids_programs.len(), MAX_PID);
-        assert_eq!(demuxer.hauppauge_warning_shown, false);
+        assert!(!demuxer.hauppauge_warning_shown);
         assert_eq!(demuxer.multi_stream_per_prog, 0);
         assert_eq!(demuxer.last_pat_payload, null_mut());
         assert_eq!(demuxer.last_pat_length, 0);
@@ -452,7 +452,7 @@ mod tests {
         assert_eq!(demuxer.filebuffer_start, 0);
         assert_eq!(demuxer.filebuffer_pos, 0);
         assert_eq!(demuxer.bytesinbuffer, 0);
-        assert_eq!(demuxer.warning_program_not_found_shown, false);
+        assert!(!demuxer.warning_program_not_found_shown);
         assert_eq!(demuxer.strangeheader, 0);
         #[cfg(feature = "enable_ffmpeg")]
         assert_eq!(demuxer.ffmpeg_ctx, null_mut());

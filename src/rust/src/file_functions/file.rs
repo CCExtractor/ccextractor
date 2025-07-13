@@ -875,7 +875,7 @@ mod tests {
             let ccx_options = Options::default();
 
             {
-                println!("{:?}", ccx_options);
+                println!("{ccx_options:?}");
             }
         }
     }
