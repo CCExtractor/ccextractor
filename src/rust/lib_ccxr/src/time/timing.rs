@@ -95,6 +95,7 @@ pub struct GlobalTimingInfo {
     pub fts_at_gop_start: Timestamp,
     pub gop_rollover: bool,
     pub timing_settings: TimingSettings,
+    pub mpeg_clock_freq: i64,
 }
 
 impl TimingContext {
@@ -132,12 +133,14 @@ impl TimingContext {
     ///
     /// It also checks for PTS resets.
     pub fn set_current_pts(&mut self, pts: MpegClockTick) {
+        let timing_info = GLOBAL_TIMING_INFO.read().unwrap();
+
         let prev_pts = self.current_pts;
         self.current_pts = pts;
         if self.pts_set == PtsSet::No {
             self.pts_set = PtsSet::Received
         }
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "PTS: {} ({:8})", self.current_pts.as_timestamp().to_hms_millis_time(':').unwrap(), self.current_pts.as_i64());
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "PTS: {} ({:8})", self.current_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(), self.current_pts.as_i64());
         debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "  FTS: {} \n", self.fts_now.to_hms_millis_time(':').unwrap());
 
         // Check if PTS reset
@@ -162,7 +165,9 @@ impl TimingContext {
                 // Disables sync check. Used for several input formats.
                 0
             } else {
-                (self.current_pts - self.sync_pts).as_timestamp().seconds()
+                (self.current_pts - self.sync_pts)
+                    .as_timestamp(timing_info.mpeg_clock_freq)
+                    .seconds()
             };
 
             // Previously in C equivalent code, its -0.2
@@ -221,7 +226,7 @@ impl TimingContext {
                 self.sync_pts = self.current_pts
                     - self
                         .current_tref
-                        .as_mpeg_clock_tick(timing_info.current_fps);
+                        .as_mpeg_clock_tick(timing_info.current_fps, timing_info.mpeg_clock_freq);
 
                 if self.current_tref.as_u64() == 0
                     || (timing_info.total_frames_count - timing_info.frames_since_ref_time).as_u64()
@@ -245,7 +250,7 @@ impl TimingContext {
                 debug!(
                     msg_type = DebugMessageFlag::TIME;
                     "\nFirst sync time    PTS: {} {:+}ms (time before this PTS)\n",
-                    self.min_pts.as_timestamp().to_hms_millis_time(':').unwrap(),
+                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(),
                     self.fts_offset.millis()
                 );
                 debug!(
@@ -262,7 +267,7 @@ impl TimingContext {
                 // sync_pts (set at the beginning of the last GOP) plus the
                 // time of the frames since then.
                 self.fts_offset = self.fts_offset
-                    + (self.sync_pts - self.min_pts).as_timestamp()
+                    + (self.sync_pts - self.min_pts).as_timestamp(timing_info.mpeg_clock_freq)
                     + timing_info
                         .frames_since_ref_time
                         .as_timestamp(timing_info.current_fps);
@@ -277,14 +282,14 @@ impl TimingContext {
                 self.sync_pts = self.current_pts
                     - self
                         .current_tref
-                        .as_mpeg_clock_tick(timing_info.current_fps);
+                        .as_mpeg_clock_tick(timing_info.current_fps, timing_info.mpeg_clock_freq);
                 // Set min_pts = sync_pts as this is used for fts_now
                 self.min_pts = self.sync_pts;
 
                 debug!(
                     msg_type = DebugMessageFlag::TIME;
                     "\nNew min PTS time: {} {:+}ms (time before this PTS)\n",
-                    self.min_pts.as_timestamp().to_hms_millis_time(':').unwrap(),
+                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(),
                     self.fts_offset.millis()
                 );
             }
@@ -305,7 +310,9 @@ impl TimingContext {
         // CFS: Remove or think decent condition
         if self.pts_set != PtsSet::No {
             // If pts_set is TRUE we have min_pts
-            self.fts_now = (self.current_pts - self.min_pts).as_timestamp() + self.fts_offset;
+            self.fts_now = (self.current_pts - self.min_pts)
+                .as_timestamp(timing_info.mpeg_clock_freq)
+                + self.fts_offset;
             if !self.sync_pts2fts_set {
                 self.sync_pts2fts_pts = self.current_pts;
                 self.sync_pts2fts_fts = self.fts_now;
@@ -373,7 +380,7 @@ impl TimingContext {
         info!(
             "Sync time stamps:  PTS: {}                ",
             self.sync_pts
-                .as_timestamp()
+                .as_timestamp(timing_info.mpeg_clock_freq)
                 .to_hms_millis_time(':')
                 .unwrap()
         );
@@ -385,7 +392,8 @@ impl TimingContext {
         // Length first GOP to last GOP
         let goplenms = gop_time - first_gop_time;
         // Length at last sync point
-        let ptslenms = (self.sync_pts - tempmin_pts).as_timestamp() + self.fts_offset;
+        let ptslenms = (self.sync_pts - tempmin_pts).as_timestamp(timing_info.mpeg_clock_freq)
+            + self.fts_offset;
 
         info!(
             "Last               FTS: {}",
@@ -548,6 +556,7 @@ impl GlobalTimingInfo {
                 no_sync: false,
                 is_elementary_stream: false,
             },
+            mpeg_clock_freq: 0,
         }
     }
 }

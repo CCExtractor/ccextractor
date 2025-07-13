@@ -24,13 +24,7 @@ use time::OffsetDateTime;
 use crate::args::CCXCodec;
 use crate::args::{self, InFormat};
 
-cfg_if! {
-    if #[cfg(test)] {
-        use crate::parser::tests::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
-    } else {
-        use crate::{set_binary_mode, MPEG_CLOCK_FREQ, usercolor_rgb, FILEBUFFERSIZE};
-    }
-}
+use crate::{set_binary_mode, usercolor_rgb, FILEBUFFERSIZE, MPEG_CLOCK_FREQ};
 
 cfg_if! {
     if #[cfg(windows)] {
@@ -121,8 +115,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
         let new_len = line.trim().len();
         if new_len > CCX_DECODER_608_SCREEN_WIDTH {
             println!(
-                "Word in line {} too long, max = {} characters.",
-                num, CCX_DECODER_608_SCREEN_WIDTH
+                "Word in line {num} too long, max = {CCX_DECODER_608_SCREEN_WIDTH} characters."
             );
             continue;
         }
@@ -1325,7 +1318,7 @@ impl OptionsExt for Options {
                 }
 
                 if !self.transcript_settings.is_final {
-                    let chars = format!("{}", customtxt).chars().collect::<Vec<char>>();
+                    let chars = format!("{customtxt}").chars().collect::<Vec<char>>();
                     self.transcript_settings.show_start_time = chars[0] == '1';
                     self.transcript_settings.show_end_time = chars[1] == '1';
                     self.transcript_settings.show_mode = chars[2] == '1';
@@ -1685,9 +1678,6 @@ pub mod tests {
 
     #[no_mangle]
     pub unsafe extern "C" fn set_binary_mode() {}
-    pub static mut MPEG_CLOCK_FREQ: u64 = 0;
-    pub static mut FILEBUFFERSIZE: i32 = 0;
-    pub static mut usercolor_rgb: [i32; 8] = [0; 8];
 
     fn parse_args(args: &[&str]) -> (Options, TeletextConfig) {
         let mut common_args = vec!["./ccextractor", "input_file"];

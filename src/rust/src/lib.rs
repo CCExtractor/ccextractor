@@ -32,6 +32,7 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 
 use args::Args;
 use bindings::*;
+use cfg_if::cfg_if;
 use clap::{error::ErrorKind, Parser};
 use common::{copy_from_rust, CType, CType2};
 use decoder::Dtvcc;
@@ -48,22 +49,43 @@ use std::{
     os::raw::{c_char, c_double, c_int, c_long, c_uint},
 };
 
-#[cfg(test)]
-static mut cb_708: c_int = 0;
-#[cfg(test)]
-static mut cb_field1: c_int = 0;
-#[cfg(test)]
-static mut cb_field2: c_int = 0;
+// Mock data for rust unit tests
+cfg_if! {
+    if #[cfg(test)] {
+        static mut cb_708: c_int = 0;
+        static mut cb_field1: c_int = 0;
+        static mut cb_field2: c_int = 0;
+        static mut current_fps: c_double = 30.0;
+        static mut usercolor_rgb: [c_int; 8] = [0; 8];
+        static mut FILEBUFFERSIZE: c_int = 0;
+        static mut MPEG_CLOCK_FREQ: c_int = 90000;
 
+        static mut frames_since_ref_time: c_int = 0;
+        static mut total_frames_count: c_uint = 0;
+        static mut fts_at_gop_start: c_long = 0;
+        static mut gop_rollover: c_int = 0;
+        static mut pts_big_change: c_uint = 0;
+
+        static mut tlt_config: ccx_s_teletext_config = unsafe { std::mem::zeroed() };
+        static mut ccx_options: ccx_s_options = unsafe { std::mem::zeroed() };
+        static mut gop_time: gop_time_code = unsafe { std::mem::zeroed() };
+        static mut first_gop_time: gop_time_code = unsafe { std::mem::zeroed() };
+        static mut ccx_common_timing_settings: ccx_common_timing_settings_t = unsafe { std::mem::zeroed() };
+        static mut capitalization_list: word_list = unsafe { std::mem::zeroed() };
+        static mut profane: word_list = unsafe { std::mem::zeroed() };
+
+        unsafe extern "C" fn version(_location: *const c_char) {}
+        unsafe extern "C" fn set_binary_mode() {}
+    }
+}
+
+// External C symbols (only when not testing)
 #[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
-}
-
-#[allow(dead_code)]
-extern "C" {
+    static mut current_fps: c_double;
     static mut usercolor_rgb: [c_int; 8];
     static mut FILEBUFFERSIZE: c_int;
     static mut terminate_asap: c_int;
@@ -71,8 +93,6 @@ extern "C" {
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
-    static mut pts_big_change: c_uint;
-    static mut current_fps: c_double;
     static mut frames_since_ref_time: c_int;
     static mut total_frames_count: c_uint;
     static mut gop_time: gop_time_code;
@@ -82,6 +102,10 @@ extern "C" {
     static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
     static mut capitalization_list: word_list;
     static mut profane: word_list;
+    static mut pts_big_change: c_uint;
+
+    fn version(location: *const c_char);
+    fn set_binary_mode();
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -279,7 +303,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
             match e.kind() {
                 ErrorKind::DisplayHelp => {
                     // Print the help string
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::WithHelp.exit_code();
                 }
                 ErrorKind::DisplayVersion => {
@@ -288,11 +312,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
                 }
                 ErrorKind::UnknownArgument => {
                     println!("Unknown Argument");
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::MalformedParameter.exit_code();
                 }
                 _ => {
-                    println!("{}", e);
+                    println!("{e}");
                     return ExitCause::Failure.exit_code();
                 }
             }
@@ -362,7 +386,8 @@ mod test {
 
     #[test]
     fn test_do_cb() {
-        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut dtvcc_ctx = crate::decoder::test::initialize_dtvcc_ctx();
+
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
 
         let mut decoder_ctx = lib_cc_decode::default();

@@ -494,7 +494,7 @@ impl dtvcc_tv_screen {
                         buf.push(' ');
                     }
                     let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
-                    buf = format!("{}{:x}", buf, adjusted_val);
+                    buf = format!("{buf}{adjusted_val:x}");
                     bytes_written += 1;
                 }
                 // add 0x80 padding and form byte pair if the last byte pair is not form
@@ -625,7 +625,7 @@ impl dtvcc_tv_screen {
                 red *= 255 / 3;
                 green *= 255 / 3;
                 blue *= 255 / 3;
-                let font_tag = format!("<font color=\"#{:02x}{:02x}{:02x}\">", red, green, blue);
+                let font_tag = format!("<font color=\"#{red:02x}{green:02x}{blue:02x}\">");
                 buf.extend_from_slice(font_tag.as_bytes());
             }
         }
