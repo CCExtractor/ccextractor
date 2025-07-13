@@ -19,6 +19,10 @@ int fsync(int fd)
 }
 #endif
 
+#ifndef DISABLE_RUST
+int ccxr_get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
+		  enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
+#endif
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
     {
@@ -293,6 +297,9 @@ int change_ascii_encoding(unsigned char *dest, unsigned char *src, int len, enum
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
 		  enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len)
 {
+#ifndef DISABLE_RUST
+	return ccxr_get_str_basic(out_buffer, in_buffer, trim_subs, in_enc, out_enc, max_len);
+#else
 	int last_non_blank = -1;
 	int first_non_blank = -1;
 	int len = 0;
@@ -305,7 +312,6 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 		*out_buffer = 0;
 		return 0;
 	}
-
 	// change encoding only when required
 	switch (in_enc)
 	{
@@ -331,6 +337,7 @@ int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_
 		return (unsigned)len; // Return length
 
 	return 0; // Return length
+#endif
 }
 
 int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
