@@ -21,7 +21,7 @@ int fsync(int fd)
 
 #ifndef DISABLE_RUST
 int ccxr_get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
-		  enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
+		       enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
 #endif
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
