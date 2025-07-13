@@ -437,7 +437,7 @@ impl OptionsExt for Options {
         } else {
             0
         };
-        if num_input_files >= *inputfile_capacity as _ {
+        if num_input_files >= *inputfile_capacity as usize {
             *inputfile_capacity += 10;
         }
 
@@ -1830,7 +1830,7 @@ pub mod tests {
         assert!(options.cc_to_stdout);
 
         assert_eq!(options.messages_target, OutputTarget::Quiet);
-        assert_eq!(options.nofontcolor, true);
+        assert!(options.nofontcolor);
     }
 
     #[test]

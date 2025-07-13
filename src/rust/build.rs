@@ -12,6 +12,17 @@ fn main() {
         "writercwtdata",
         "version",
         "set_binary_mode",
+        "print_file_report",
+        "start_upd_srv", // shall be removed after NET
+        "start_tcp_srv", // shall be removed after NET
+        "net_tcp_read",  // shall be removed after NET
+        "net_udp_read",  // shall be removed after NET
+        #[cfg(windows)]
+        "_open_osfhandle",
+        #[cfg(windows)]
+        "_get_osfhandle",
+        #[cfg(feature = "enable_ffmpeg")]
+        "init_ffmpeg",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -27,6 +38,8 @@ fn main() {
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
+        "ccx_demuxer",
+        "lib_ccx_ctx",
         "bitstream",
         "cc_subtitle",
         "ccx_output_format",
@@ -39,6 +52,14 @@ fn main() {
         "ccx_encoding_type",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
+        "ccx_gxf",
+        "MXFContext",
+        "GXFPktType",
+        "GXFMatTag",
+        "GXFTrackTag",
+        "GXFTrackType",
+        "AVPacketMythTV",
+        "demuxer_data",
         "uint8_t",
         "word_list",
     ]);
