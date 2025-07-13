@@ -40,6 +40,7 @@ fn main() {
         "lib_cc_decode",
         "ccx_demuxer",
         "lib_ccx_ctx",
+        "bitstream",
         "cc_subtitle",
         "ccx_output_format",
         "ccx_boundary_time",

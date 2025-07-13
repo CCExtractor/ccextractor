@@ -342,7 +342,7 @@ impl<'a> CCExtractorLogger {
                     hour,
                     date,
                     month,
-                } => eprintln!("###XDSPROGRAMIDENTIFICATIONNUMBER#{minute}#{hour}#{date}#{month}"),
+                } => eprintln!("###XDSPROGRAMIDENTIFICATIONNUMBER#{minute}#{hour}#{date}#{month}",),
                 GuiXdsMessage::ProgramDescription { line_num, desc } => {
                     eprintln!("###XDSPROGRAMDESC#{line_num}#{desc}")
                 }

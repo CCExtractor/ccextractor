@@ -957,7 +957,7 @@ impl<'a> TeletextContext<'a> {
         #[cfg(feature = "debug")]
         {
             for (index, row) in self.page_buffer.text.iter().enumerate().skip(1) {
-                print!("DEUBG[{index:02}]: ");
+                print!("DEBUG[{index:02}]: ");
                 for c in row {
                     print!("{c:3x} ")
                 }
@@ -1065,7 +1065,7 @@ impl<'a> TeletextContext<'a> {
                     let timecode_show_mmss = &timecode_show[3..8];
                     let timecode_hide_mmss = &timecode_hide[3..8];
                     // Note, only MM:SS here as we need to save space in the preview window
-                    eprint!("###TIME###{timecode_show_mmss}-{timecode_hide_mmss}\n###SUBTITLES###");
+                    eprint!("###TIME###{timecode_show_mmss}-{timecode_hide_mmss}\n###SUBTITLES###",);
                     time_reported = true;
                 } else {
                     eprint!("###SUBTITLE###");

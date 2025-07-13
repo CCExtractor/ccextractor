@@ -4,6 +4,8 @@
 - New: Added GXF module
 - New: Add demuxer and file_functions module (#1662)
 - Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0 (#1694)
+- Fix: Segmentation faults on XDS files
+- Fix: Clippy Errors Based on Rust 1.88
 - IMPROVEMENT: Refactor and optimize Dockerfile
 - Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
