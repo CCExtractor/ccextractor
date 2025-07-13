@@ -240,6 +240,9 @@ pub fn update_cap_essence_key(ctx: &mut MXFContextRust, track_id: u32) {
     }
     // no match → do nothing
 }
+/// # Safety
+/// Caller must ensure that `demux.private_data` points to a valid `MXFContextRust`.
+/// This function is unsafe because it manipulates raw pointers and calls unsafe File Op functions
 pub unsafe fn mxf_read_header_partition_pack(
     demux: &mut CcxDemuxer<'_>,
     size: u64,
@@ -380,7 +383,8 @@ pub unsafe fn mxf_read_timeline_track_metadata(
     Ok(len as i32)
 }
 
-/// # Safety: caller must ensure `demux.filebuffer` is valid
+/// # Safety
+/// Caller must ensure `demux.filebuffer` is valid
 /// and that `demux.private_data` points to a valid MXF context.
 pub unsafe fn mxf_read_vanc_data(
     demux: &mut CcxDemuxer,
@@ -449,6 +453,8 @@ pub unsafe fn mxf_read_vanc_data(
 
     Ok(len as i32)
 }
+/// # Safety
+/// This function is unsafe because it manipulates raw pointers and calls unsafe File Op functions
 pub unsafe fn mxf_read_vanc_vbi_desc(
     demux: &mut CcxDemuxer,
     size: u64,
@@ -571,7 +577,8 @@ pub fn get_mxf_reader(key: &UidRust) -> Option<&'static MXFReadTableEntryRust> {
     }
     None
 }
-
+/// # Safety
+/// This function is unsafe because it manipulates raw pointers and calls unsafe File Op functions
 pub unsafe fn read_packet_mxf(
     demux: &mut CcxDemuxer<'_>,
     data: &mut DemuxerData,
