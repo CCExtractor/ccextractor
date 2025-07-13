@@ -11,8 +11,11 @@ use lib_ccxr::{debug, info};
 use std::alloc::{alloc, dealloc, Layout};
 use std::fs::File;
 use std::io::Write;
+#[cfg(unix)]
 use std::os::fd::FromRawFd;
 use std::os::raw::{c_int, c_uchar, c_uint, c_void};
+#[cfg(windows)]
+use std::os::windows::io::FromRawHandle;
 use std::ptr;
 const CCD_HEADER: &[u8] = b"SCC_disassembly V1.2";
 const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
@@ -224,7 +227,10 @@ pub fn write_raw(fd: c_int, buf: *const c_void, count: usize) -> isize {
     if buf.is_null() || count == 0 {
         return 0;
     }
+    #[cfg(unix)]
     let mut file = unsafe { File::from_raw_fd(fd) };
+    #[cfg(windows)]
+    let mut file = unsafe { File::from_raw_handle(fd as _) };
     let data = unsafe { std::slice::from_raw_parts(buf as *const u8, count) };
     let result = match file.write(data) {
         Ok(bytes_written) => bytes_written as isize,
