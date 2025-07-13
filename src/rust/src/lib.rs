@@ -15,17 +15,10 @@ pub mod bindings {
 
 pub mod args;
 pub mod common;
-pub mod ctorust;
 pub mod decoder;
-pub mod demuxer;
-pub mod file_functions;
-pub mod gxf_demuxer;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
-pub mod hlist;
 pub mod libccxr_exports;
-mod mxf_demuxer;
-pub mod mythtv;
 pub mod parser;
 pub mod utils;
 
@@ -34,6 +27,7 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 
 use args::Args;
 use bindings::*;
+use cfg_if::cfg_if;
 use clap::{error::ErrorKind, Parser};
 use common::{copy_from_rust, CType, CType2};
 use decoder::Dtvcc;
@@ -43,38 +37,54 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
-use std::os::raw::{c_uchar, c_ulong, c_void};
 use std::{
     ffi::CStr,
     io::Write,
     os::raw::{c_char, c_double, c_int, c_long, c_uint},
 };
 
-#[cfg(test)]
-static mut cb_708: c_int = 0;
-#[cfg(test)]
-static mut cb_field1: c_int = 0;
-#[cfg(test)]
-static mut cb_field2: c_int = 0;
+// Mock data for rust unit tests
+cfg_if! {
+    if #[cfg(test)] {
+        static mut cb_708: c_int = 0;
+        static mut cb_field1: c_int = 0;
+        static mut cb_field2: c_int = 0;
+        static mut current_fps: c_double = 30.0;
+        static mut usercolor_rgb: [c_int; 8] = [0; 8];
+        static mut FILEBUFFERSIZE: c_int = 0;
+        static mut MPEG_CLOCK_FREQ: c_int = 90000;
 
+        static mut frames_since_ref_time: c_int = 0;
+        static mut total_frames_count: c_uint = 0;
+        static mut fts_at_gop_start: c_long = 0;
+        static mut gop_rollover: c_int = 0;
+        static mut pts_big_change: c_uint = 0;
+
+        static mut tlt_config: ccx_s_teletext_config = unsafe { std::mem::zeroed() };
+        static mut ccx_options: ccx_s_options = unsafe { std::mem::zeroed() };
+        static mut gop_time: gop_time_code = unsafe { std::mem::zeroed() };
+        static mut first_gop_time: gop_time_code = unsafe { std::mem::zeroed() };
+        static mut ccx_common_timing_settings: ccx_common_timing_settings_t = unsafe { std::mem::zeroed() };
+        static mut capitalization_list: word_list = unsafe { std::mem::zeroed() };
+        static mut profane: word_list = unsafe { std::mem::zeroed() };
+
+        unsafe extern "C" fn version(_location: *const c_char) {}
+        unsafe extern "C" fn set_binary_mode() {}
+    }
+}
+
+// External C symbols (only when not testing)
 #[cfg(not(test))]
 extern "C" {
     static mut cb_708: c_int;
     static mut cb_field1: c_int;
     static mut cb_field2: c_int;
-}
-
-#[allow(dead_code)]
-extern "C" {
+    static mut current_fps: c_double;
     static mut usercolor_rgb: [c_int; 8];
     static mut FILEBUFFERSIZE: c_int;
-    static mut terminate_asap: c_int;
-    static mut net_activity_gui: c_ulong;
     static mut MPEG_CLOCK_FREQ: c_int;
     static mut tlt_config: ccx_s_teletext_config;
     static mut ccx_options: ccx_s_options;
-    static mut pts_big_change: c_uint;
-    static mut current_fps: c_double;
     static mut frames_since_ref_time: c_int;
     static mut total_frames_count: c_uint;
     static mut gop_time: gop_time_code;
@@ -84,6 +94,10 @@ extern "C" {
     static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
     static mut capitalization_list: word_list;
     static mut profane: word_list;
+    static mut pts_big_change: c_uint;
+
+    fn version(location: *const c_char);
+    fn set_binary_mode();
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -226,32 +240,6 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     }
 }
 
-extern "C" {
-    fn version(location: *const c_char);
-    #[allow(dead_code)]
-    fn set_binary_mode();
-    #[allow(dead_code)]
-    fn print_file_report(ctx: *mut lib_ccx_ctx);
-    #[allow(dead_code)]
-    #[cfg(feature = "enable_ffmpeg")]
-    fn init_ffmpeg(path: *const c_char);
-    pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int;
-    pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int;
-    pub fn net_udp_read(
-        socket: c_int,
-        buffer: *mut c_void,
-        length: usize,
-        src_str: *const c_char,
-        addr_str: *const c_char,
-    ) -> c_int;
-    pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int;
-    pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int;
-    pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext;
-    #[allow(clashing_extern_declarations)]
-    pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
-    pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
-}
-
 /// # Safety
 /// Safe if argv is a valid pointer
 ///
@@ -364,7 +352,8 @@ mod test {
 
     #[test]
     fn test_do_cb() {
-        let mut dtvcc_ctx = utils::get_zero_allocated_obj::<dtvcc_ctx>();
+        let mut dtvcc_ctx = crate::decoder::test::initialize_dtvcc_ctx();
+
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
 
         let mut decoder_ctx = lib_cc_decode::default();

@@ -22,6 +22,7 @@ on:
       - "**.c"
       - "**.h"
       - "windows/**"
+      - "src/rust/**"
 
 jobs:
   build_release:

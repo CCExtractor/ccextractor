@@ -44,35 +44,24 @@ pub struct Dtvcc<'a> {
 impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
     pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
-        let report = if !ctx.report.is_null() {
-            unsafe { Box::new(*(ctx.report)) }
-        } else {
-            Box::new(ccx_decoder_dtvcc_report::default())
-        };
-        let encoder = if !ctx.encoder.is_null() {
-            unsafe { Box::new(*(ctx.encoder as *mut encoder_ctx)) }
-        } else {
-            Box::new(encoder_ctx::default())
-        };
-        let timing = if !ctx.timing.is_null() {
-            unsafe { Box::new(*(ctx.timing)) }
-        } else {
-            Box::new(ccx_common_timing_ctx::default())
-        };
+        let report = unsafe { &mut *ctx.report };
+        let encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
+        let timing = unsafe { &mut *ctx.timing };
+
         Self {
             is_active: is_true(ctx.is_active),
             active_services_count: ctx.active_services_count as u8,
             services_active: ctx.services_active.to_vec(),
             report_enabled: is_true(ctx.report_enabled),
-            report: Box::leak(report),
+            report,
             decoders: ctx.decoders.iter_mut().collect(),
             packet: ctx.current_packet.to_vec(),
             packet_length: ctx.current_packet_length as u8,
             is_header_parsed: is_true(ctx.is_current_packet_header_parsed),
             last_sequence: ctx.last_sequence,
-            encoder: Box::leak(encoder),
+            encoder,
             no_rollup: is_true(ctx.no_rollup),
-            timing: Box::leak(timing),
+            timing,
         }
     }
     /// Process cc data and add it to the dtvcc packet
@@ -247,13 +236,27 @@ impl PartialEq for dtvcc_symbol {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
 
     use crate::utils::get_zero_allocated_obj;
 
     use super::*;
 
+    pub fn initialize_dtvcc_ctx() -> Box<dtvcc_ctx> {
+        let mut ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+
+        // Initialize the required pointers to avoid null pointer dereference
+        let report = Box::new(ccx_decoder_dtvcc_report::default());
+        ctx.report = Box::into_raw(report);
+
+        let encoder = Box::new(encoder_ctx::default());
+        ctx.encoder = Box::into_raw(encoder) as *mut _ as *mut std::os::raw::c_void;
+
+        let timing = Box::new(ccx_common_timing_ctx::default());
+        ctx.timing = Box::into_raw(timing);
+        ctx
+    }
     #[test]
     fn test_process_cc_data() {
         set_logger(CCExtractorLogger::new(
@@ -262,7 +265,9 @@ mod test {
             false,
         ))
         .ok();
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+
+        let mut dtvcc_ctx = initialize_dtvcc_ctx();
+
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
         // Case 1:  cc_type = 2
@@ -311,7 +316,9 @@ mod test {
             false,
         ))
         .ok();
-        let mut dtvcc_ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+
+        let mut dtvcc_ctx = initialize_dtvcc_ctx();
+
         let mut decoder = Dtvcc::new(&mut dtvcc_ctx);
 
         // Case 1: Without providing last_sequence
