@@ -133,6 +133,7 @@ Dependencies can be installed via Homebrew as:
 ```bash
 brew install pkg-config
 brew install autoconf automake libtool
+brew install cmake gpac
 # optional if you want OCR:
 brew install tesseract
 brew install leptonica

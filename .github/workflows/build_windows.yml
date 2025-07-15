@@ -14,6 +14,7 @@ on:
       - "**.c"
       - "**.h"
       - "windows/**"
+      - "src/rust/**"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -21,6 +22,7 @@ on:
       - "**.c"
       - "**.h"
       - "windows/**"
+      - "src/rust/**"
 
 jobs:
   build_release:

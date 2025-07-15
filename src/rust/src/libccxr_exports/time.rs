@@ -6,7 +6,7 @@ use std::ffi::{c_char, c_int, c_long, CStr};
 use crate::{
     bindings::*, cb_708, cb_field1, cb_field2, ccx_common_timing_settings as timing_settings,
     current_fps, first_gop_time, frames_since_ref_time, fts_at_gop_start, gop_rollover, gop_time,
-    pts_big_change, total_frames_count,
+    pts_big_change, total_frames_count, MPEG_CLOCK_FREQ,
 };
 
 use lib_ccxr::common::FrameType;
@@ -279,6 +279,7 @@ unsafe fn apply_timing_info() {
     timing_info.timing_settings.disable_sync_check = timing_settings.disable_sync_check != 0;
     timing_info.timing_settings.no_sync = timing_settings.no_sync != 0;
     timing_info.timing_settings.is_elementary_stream = timing_settings.is_elementary_stream != 0;
+    timing_info.mpeg_clock_freq = MPEG_CLOCK_FREQ.into();
 }
 
 /// Write from [`GLOBAL_TIMING_INFO`] to the equivalent static variables in C.

@@ -1,5 +1,8 @@
 1.0 (to be released)
 -----------------
+- Fix: Segmentation faults on XDS files
+- Fix: Clippy Errors Based on Rust 1.88
+- IMPROVEMENT: Refactor and optimize Dockerfile
 - Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
@@ -40,6 +43,7 @@
 - Fix: Resolve compile-time error about implicit declarations (#1646)
 - Fix: fatal out of memory error extracting from a VOB PS
 - Fix: Fix TODO and FIXME in `avc_functions.c`
+
 0.94 (2021-12-14)
 -----------------
 - BOM is no longer enabled by default on windows platforms
