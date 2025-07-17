@@ -20,6 +20,7 @@ void activity_progress(int percentage, int cur_min, int cur_sec)
 			mprint("\n");
 		}
 	}
+	printf("test");
 	fflush(stdout);
 	if (ccx_options.gui_mode_reports)
 	{
