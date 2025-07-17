@@ -9,6 +9,7 @@ unsigned long net_activity_gui = 0;
 /* Print current progress. For percentage, -1 -> streaming mode */
 void activity_progress(int percentage, int cur_min, int cur_sec)
 {
+	()
 	if (!ccx_options.no_progress_bar)
 	{
 		if (percentage == -1)
