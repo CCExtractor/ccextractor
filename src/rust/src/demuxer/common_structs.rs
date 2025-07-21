@@ -153,8 +153,6 @@ pub struct CcxDemuxer<'a> {
     pub codec: Codec,
     pub nocodec: Codec,
 
-    pub cinfo_tree: CapInfo,
-
     // File Handles
     pub infd: i32, // Descriptor number for input
     pub past: i64, // Position in file, equivalent to ftell()
@@ -241,9 +239,6 @@ impl Default for CcxDemuxer<'_> {
             codec: Codec::Any,            // C: cfg->codec == CCX_CODEC_ANY (zero)
             flag_ts_forced_cappid: false, // no forced CA‐PID if cfg->nb_ts_cappid == 0
             nocodec: Codec::Any,          // C: cfg->nocodec == CCX_CODEC_ANY
-
-            // (e) Capability‐info tree
-            cinfo_tree: CapInfo::default(), // C: INIT_LIST_HEAD; with no capids, the tree is empty
 
             // (f) Start‐bytes buffer
             startbytes: vec![0; STARTBYTESLENGTH],

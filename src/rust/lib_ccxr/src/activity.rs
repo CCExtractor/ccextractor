@@ -9,6 +9,7 @@ pub trait ActivityExt {
     fn activity_input_file_closed(&mut self);
     fn activity_input_file_open(&mut self, filename: &str);
     fn activity_report_data_read(&mut self, net_activity_gui: &mut c_ulong);
+    fn activity_program_number(&mut self, program_number: u16);
 }
 impl ActivityExt for Options {
     fn activity_report_version(&mut self) {
@@ -39,6 +40,13 @@ impl ActivityExt for Options {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             writeln!(stderr, "###DATAREAD#{}", (*net_activity_gui) / 1000).unwrap();
+            stderr.flush().unwrap();
+        }
+    }
+    fn activity_program_number(&mut self, program_number: u16) {
+        if self.gui_mode_reports {
+            let mut stderr = std::io::stderr();
+            writeln!(stderr, "###TSPROGRAMNUMBER#{}", program_number as u32).unwrap();
             stderr.flush().unwrap();
         }
     }

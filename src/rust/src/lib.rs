@@ -27,6 +27,7 @@ pub mod libccxr_exports;
 pub mod mxf_demuxer;
 pub mod mythtv;
 pub mod parser;
+pub mod transportstream;
 pub mod utils;
 
 #[cfg(windows)]

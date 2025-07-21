@@ -1,8 +1,9 @@
-use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
+use crate::bindings::{cap_info, ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
-use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
+use crate::demuxer::common_structs::{CcxDemuxReport, CcxDemuxer, ProgramInfo};
+use crate::transportstream::tables::parse_pat;
 use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
@@ -71,9 +72,6 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
     // Codec settings
     c.codec = rust_demuxer.codec.to_ctype();
     c.nocodec = rust_demuxer.nocodec.to_ctype();
-
-    // Cap info tree
-    c.cinfo_tree = rust_demuxer.cinfo_tree.to_ctype();
 
     // Global timestamps
     c.global_timestamp = rust_demuxer.global_timestamp.millis();
@@ -229,7 +227,6 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
     // Codec settings
     let codec = Codec::from_ctype(c.codec).unwrap_or(Codec::Any);
     let nocodec = Codec::from_ctype(c.nocodec).unwrap_or(Codec::Any);
-    let cinfo_tree = CapInfo::from_ctype(c.cinfo_tree).unwrap_or(CapInfo::default());
 
     // File handles and positions
     let infd = c.infd;
@@ -316,7 +313,6 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
         nb_program,
         codec,
         nocodec,
-        cinfo_tree,
         infd,
         past,
         global_timestamp,
@@ -453,7 +449,21 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *mut ccx_demuxer) {
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     demux_ctx.print_cfg()
 }
-
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer and calls C structs
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_parse_PAT(ctx: *mut ccx_demuxer, cap: *mut cap_info) -> c_int {
+    if ctx.is_null() {
+        // Working, but currently unplugged as it was making the program slow
+        return -1; // Invalid input
+    }
+    let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
+    let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
+    let result = parse_pat(&mut demux_ctx, &mut CcxOptions, &mut *cap);
+    copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
+    copy_from_rust(&raw mut ccx_options, CcxOptions);
+    result as c_int
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -498,7 +508,6 @@ mod tests {
             pinfo: Vec::new(), // We'll test this separately if needed
             codec: Codec::AtscCc,
             nocodec: Codec::Any,
-            cinfo_tree: Default::default(),
             infd: 123,
             past: 987654321,
             global_timestamp: Timestamp::from_millis(1111),
@@ -973,7 +982,7 @@ mod tests {
     #[test]
     fn test_ccx_demuxer_other() {
         use super::*;
-        use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, ProgramInfo};
+        use crate::demuxer::common_structs::{CcxDemuxReport, ProgramInfo};
         use lib_ccxr::common::{Codec, StreamMode, StreamType};
         use std::ptr;
 
@@ -988,10 +997,6 @@ mod tests {
             ProgramInfo::default(),
         ];
         rust_demuxer.nb_program = rust_demuxer.pinfo.len();
-
-        // b) cinfo_tree (use Default; assuming CapInfo: Default + PartialEq)
-        let cap_defaults = CapInfo::default();
-        rust_demuxer.cinfo_tree = cap_defaults.clone();
 
         // c) freport (use Default; assuming CcxDemuxReport: Default + PartialEq)
         let report_defaults = CcxDemuxReport::default();
@@ -1059,9 +1064,6 @@ mod tests {
             // the entries themselves should be identical to the originals:
             assert_eq!(recovered.pinfo[0].pcr_pid, rust_demuxer.pinfo[0].pcr_pid);
 
-            // — cinfo_tree roundtrip —
-            assert_eq!(recovered.cinfo_tree.codec, rust_demuxer.cinfo_tree.codec);
-
             // — freport roundtrip —
             assert_eq!(
                 recovered.freport.mp4_cc_track_cnt,
@@ -1087,9 +1089,6 @@ mod tests {
             assert_eq!(rust_from_zeroed.nb_program, 2);
             assert_eq!(rust_from_zeroed.pinfo.len(), 2);
             assert_eq!(rust_from_zeroed.pinfo[0].pcr_pid, 0);
-
-            // cinfo_tree was zeroed in C; that should become default CapInfo in Rust
-            assert_eq!(rust_from_zeroed.cinfo_tree.codec, Codec::Any);
 
             // freport was zeroed in C; that should become default CcxDemuxReport in Rust
             assert_eq!(

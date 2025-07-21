@@ -1103,7 +1103,6 @@ mod tests {
         ctx.nb_program = 0;
         ctx.codec = Codec::Dvb;
         ctx.nocodec = Codec::Dvb;
-        ctx.cinfo_tree = CapInfo::default();
         ctx.global_timestamp = Timestamp::from_millis(0);
         ctx.min_global_timestamp = Timestamp::from_millis(0);
         ctx.offset_global_timestamp = Timestamp::from_millis(0);
@@ -1165,7 +1164,6 @@ mod tests {
         ctx.nb_program = 0;
         ctx.codec = Codec::Dvb;
         ctx.nocodec = Codec::Dvb;
-        ctx.cinfo_tree = CapInfo::default();
         ctx.global_timestamp = Timestamp::from_millis(0);
         ctx.min_global_timestamp = Timestamp::from_millis(0);
         ctx.offset_global_timestamp = Timestamp::from_millis(0);

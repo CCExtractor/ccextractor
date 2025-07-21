@@ -1,4 +1,4 @@
-use crate::bindings::{lib_cc_decode, lib_ccx_ctx, list_head};
+use crate::bindings::{cap_info, lib_cc_decode, lib_ccx_ctx, list_head};
 use std::ptr::null_mut;
 // HList (Hyperlinked List)
 
@@ -124,9 +124,58 @@ pub unsafe fn is_decoder_processed_enough(ctx: &mut lib_ccx_ctx) -> i32 {
 
     0
 }
+/// # Safety
+/// This function is unsafe because it calls list_del.
+pub unsafe fn dinit_cap(cinfo_tree: &mut cap_info) {
+    // Calculate offset of all_stream within CapInfo
+    let offset = {
+        let dummy = cap_info {
+            pid: 0,
+            all_stream: list_head::default(),
+            sib_head: list_head::default(),
+            sib_stream: list_head::default(),
+            pg_stream: list_head::default(),
+            ..Default::default()
+        };
+        &dummy.all_stream as *const list_head as usize - &dummy as *const cap_info as usize
+    };
+
+    // Process all_stream list
+    while !list_empty(&cinfo_tree.all_stream) {
+        let current = cinfo_tree.all_stream.next;
+        let entry = list_entry::<cap_info>(current, offset);
+
+        // Remove from list before processing
+        if let Some(current) = current.as_mut() {
+            list_del(current);
+        }
+        // Free resources
+        freep(&mut (*entry).capbuf);
+        freep(&mut (*entry).codec_private_data);
+        let _ = Box::from_raw(entry);
+    }
+
+    // Reinitialize all relevant list heads
+    init_list_head(&mut cinfo_tree.all_stream);
+    init_list_head(&mut cinfo_tree.sib_stream);
+    init_list_head(&mut cinfo_tree.pg_stream);
+}
+
+fn freep<T>(ptr: &mut *mut T) {
+    unsafe {
+        if !ptr.is_null() {
+            let _ = Box::from_raw(*ptr);
+            *ptr = null_mut();
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bindings::{
+        ccx_code_type_CCX_CODEC_NONE, ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM,
+    };
     use crate::demuxer::common_structs::CapInfo;
     use std::ptr;
 
@@ -500,6 +549,98 @@ mod tests {
 
             let result = is_decoder_processed_enough(&mut ctx);
             assert_eq!(result, 1, "Should return true (1) on first processed entry");
+        }
+    }
+    fn create_test_capinfo() -> *mut cap_info {
+        Box::into_raw(Box::new(cap_info {
+            pid: 123,
+            program_number: 1,
+            stream: ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM,
+            codec: ccx_code_type_CCX_CODEC_NONE,
+            capbuf: Box::into_raw(Box::new(0u8)),
+            capbufsize: 1024,
+            capbuflen: 0,
+            saw_pesstart: 0,
+            prev_counter: 0,
+            codec_private_data: null_mut(),
+            ignore: 0,
+            all_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            sib_head: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            sib_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            pg_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+        }))
+    }
+    #[test]
+    fn test_dinit_cap_safety() {
+        let mut cinfo_tree = Box::new(cap_info {
+            pid: 0,
+            program_number: 0,
+            stream: ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM,
+            codec: ccx_code_type_CCX_CODEC_NONE,
+            capbufsize: 0,
+            capbuf: null_mut(),
+            capbuflen: 0,
+            saw_pesstart: 0,
+            prev_counter: 0,
+            codec_private_data: null_mut(),
+            ignore: 0,
+            all_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            sib_head: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            sib_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+            pg_stream: list_head {
+                next: null_mut(),
+                prev: null_mut(),
+            },
+        });
+
+        // Properly initialize list heads
+        crate::hlist::init_list_head(&mut cinfo_tree.all_stream);
+        crate::hlist::init_list_head(&mut cinfo_tree.sib_stream);
+        crate::hlist::init_list_head(&mut cinfo_tree.pg_stream);
+
+        unsafe {
+            // Add test entries
+            let cap1 = create_test_capinfo();
+            crate::hlist::list_add(&mut (*cap1).all_stream, &mut cinfo_tree.all_stream);
+
+            let cap2 = create_test_capinfo();
+            crate::hlist::list_add(&mut (*cap2).all_stream, &mut cinfo_tree.all_stream);
+
+            // Convert to raw pointer for demuxer
+            let ctx_ptr = Box::into_raw(cinfo_tree);
+
+            dinit_cap(&mut *ctx_ptr);
+
+            // Verify cleanup
+            assert!(list_empty(&(*ctx_ptr).all_stream));
+            assert_eq!(
+                (*ctx_ptr).all_stream.next,
+                &mut (*ctx_ptr).all_stream as *mut list_head
+            );
+
+            // Cleanup context
+            let _ = Box::from_raw(ctx_ptr);
         }
     }
 }
