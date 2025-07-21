@@ -9,18 +9,15 @@
 #include "utility.h"
 #include "lib_ccx.h"
 
+#ifndef DISABLE_RUST
+int ccxr_mxf_getmoredata(struct ccx_demuxer *ctx, struct demuxer_data *data);
+#endif
+
 #define debug(fmt, ...) ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "MXF:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #define log(fmt, ...) ccx_common_logging.log_ftn("MXF:%d: " fmt, __LINE__, ##__VA_ARGS__)
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
 #define IS_KLV_KEY_ANY_VERSION(x, y) (!memcmp(x, y, 7) && !memcmp(x + 8, y + 8, sizeof(y) - 8))
 
-enum MXFCaptionType
-{
-	MXF_CT_VBI,
-	MXF_CT_ANC,
-};
-
-typedef uint8_t UID[16];
 typedef struct KLVPacket
 {
 	UID key;
@@ -35,28 +32,11 @@ typedef struct MXFCodecUL
 
 typedef int ReadFunc(struct ccx_demuxer *ctx, uint64_t size);
 
-typedef struct
-{
-	int track_id;
-	uint8_t track_number[4];
-} MXFTrack;
-
 typedef struct MXFReadTableEntry
 {
 	const UID key;
 	ReadFunc *read;
 } MXFReadTableEntry;
-
-typedef struct MXFContext
-{
-	enum MXFCaptionType type;
-	int cap_track_id;
-	UID cap_essence_key;
-	MXFTrack tracks[32];
-	int nb_tracks;
-	int cap_count;
-	struct ccx_rational edit_rate;
-} MXFContext;
 
 typedef struct MXFLocalTAGS
 {
@@ -540,13 +520,12 @@ static int read_packet(struct ccx_demuxer *demux, struct demuxer_data *data)
 	struct MXFContext *ctx = demux->private_data;
 	while ((ret = klv_read_packet(&klv, demux)) == 0)
 	{
-		debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %" PRIu64 "\n",
+		debug("Key: %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %" PRIu64 "\n",
 		      klv.key[0], klv.key[1], klv.key[2], klv.key[3],
-		      klv.key[4], klv.key[5], klv.key[5], klv.key[7],
+		      klv.key[4], klv.key[5], klv.key[6], klv.key[7],
 		      klv.key[8], klv.key[9], klv.key[10], klv.key[11],
 		      klv.key[12], klv.key[13], klv.key[14], klv.key[15],
 		      klv.length);
-
 		if (IS_KLV_KEY(klv.key, ctx->cap_essence_key))
 		{
 			mxf_read_essence_element(demux, klv.length, data);
@@ -597,10 +576,13 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	{
 		data = *ppdata;
 	}
+#ifndef DISABLE_RUST
+	return ccxr_mxf_getmoredata(ctx->demux_ctx, data);
+#else
 
 	ret = read_packet(ctx->demux_ctx, data);
-
 	return ret;
+#endif
 }
 
 int ccx_probe_mxf(struct ccx_demuxer *ctx)

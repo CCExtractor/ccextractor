@@ -3,9 +3,20 @@
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ffmpeg_intgr.h"
+#ifndef DISABLE_RUST
+void ccxr_demuxer_reset(struct ccx_demuxer *ctx);
+void ccxr_demuxer_close(struct ccx_demuxer *ctx);
+int ccxr_demuxer_isopen(const struct ccx_demuxer *ctx);
+int ccxr_demuxer_open(struct ccx_demuxer *ctx, const char *file);
+LLONG ccxr_demuxer_get_file_size(struct ccx_demuxer *ctx);
+void ccxr_demuxer_print_cfg(const struct ccx_demuxer *ctx);
+#endif
 
 static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_demuxer_reset(ctx);
+#else
 	ctx->startbytes_pos = 0;
 	ctx->startbytes_avail = 0;
 	ctx->num_of_PIDs = 0;
@@ -17,10 +28,14 @@ static void ccx_demuxer_reset(struct ccx_demuxer *ctx)
 	}
 	memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
 	memset(ctx->PIDs_programs, 0, 65536 * sizeof(struct PMT_entry *));
+#endif
 }
 
 static void ccx_demuxer_close(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_demuxer_close(ctx);
+#else
 	ctx->past = 0;
 	if (ctx->infd != -1 && ccx_options.input_source == CCX_DS_FILE)
 	{
@@ -28,14 +43,23 @@ static void ccx_demuxer_close(struct ccx_demuxer *ctx)
 		ctx->infd = -1;
 		activity_input_file_closed();
 	}
+#endif
 }
 
 static int ccx_demuxer_isopen(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_demuxer_isopen(ctx);
+#else
 	return ctx->infd != -1;
+#endif
 }
+
 static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 {
+#ifndef DISABLE_RUST
+	return ccxr_demuxer_open(ctx, file);
+#else
 	ctx->past = 0;
 	ctx->min_global_timestamp = 0;
 	ctx->global_timestamp_inited = 0;
@@ -193,9 +217,14 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 	}
 
 	return 0;
+#endif
 }
+
 LLONG ccx_demuxer_get_file_size(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_demuxer_get_file_size(ctx);
+#else
 	LLONG ret = 0;
 	int in = ctx->infd;
 	LLONG current = LSEEK(in, 0, SEEK_CUR);
@@ -208,6 +237,7 @@ LLONG ccx_demuxer_get_file_size(struct ccx_demuxer *ctx)
 		return -1;
 
 	return length;
+#endif
 }
 
 static int ccx_demuxer_get_stream_mode(struct ccx_demuxer *ctx)
@@ -217,6 +247,9 @@ static int ccx_demuxer_get_stream_mode(struct ccx_demuxer *ctx)
 
 static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_demuxer_print_cfg(ctx);
+#else
 	switch (ctx->auto_stream)
 	{
 		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
@@ -261,6 +294,7 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 			fatal(CCX_COMMON_EXIT_BUG_BUG, "BUG: Unknown stream mode. Please file a bug report on Github.\n");
 			break;
 	}
+#endif
 }
 
 void ccx_demuxer_delete(struct ccx_demuxer **ctx)
