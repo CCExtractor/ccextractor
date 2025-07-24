@@ -3,6 +3,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_common.h"
+#include "utility.h"
 
 #include <assert.h>
 
@@ -350,14 +351,22 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		{
 			case CCX_ENC_UTF_8:
 				bytes = get_char_in_utf_8(buffer, line[i]);
+				if (bytes == 1)
+					bytes = ascii_to_html(*buffer, buffer);
 				break;
 			case CCX_ENC_LATIN_1:
 				get_char_in_latin_1(buffer, line[i]);
-				bytes = 1;
+				bytes = ascii_to_html(*buffer, buffer);
 				break;
 			case CCX_ENC_UNICODE:
 				get_char_in_unicode(buffer, line[i]);
-				bytes = 2;
+				if (buffer[1] == 0)
+				{
+					bytes = ascii_to_html(*buffer, buffer);
+					bytes = ascii_to_unicode(buffer, bytes, buffer);
+				}
+				else
+					bytes = 2;
 				break;
 			case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
 				break;
