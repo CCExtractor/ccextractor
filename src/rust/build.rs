@@ -17,6 +17,11 @@ fn main() {
         "start_tcp_srv", // shall be removed after NET
         "net_tcp_read",  // shall be removed after NET
         "net_udp_read",  // shall be removed after NET
+        "net_send_epg",  // shall be removed after NET
+        "fopen",
+        "fclose",
+        "fprintf",
+        "fwrite",
         #[cfg(windows)]
         "_open_osfhandle",
         #[cfg(windows)]

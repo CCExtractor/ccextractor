@@ -9,6 +9,7 @@ use crate::transportstream::epg_tables::epg_dvb_decode_string;
 use lib_ccxr::activity::ActivityExt;
 use lib_ccxr::common::{MpegDescriptor, Options, StreamType};
 use lib_ccxr::util::log::{debug, info, DebugMessageFlag};
+pub const TS_PMT_MAP_SIZE: usize = 8192;
 
 pub fn get_printable_stream_type(stream_type: StreamType) -> StreamType {
     match stream_type {
