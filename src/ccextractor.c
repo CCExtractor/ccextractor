@@ -183,11 +183,11 @@ int api_start(struct ccx_s_options api_options)
 		----------------------------------------------------------------- */
 		switch (stream_mode)
 		{
+			// Note: This case is meant to fall through
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
 				if (!api_options.use_gop_as_pts)	// If !0 then the user selected something
 					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
 				ccx_common_timing_settings.is_elementary_stream = 1;
-				break;
 			case CCX_SM_TRANSPORT:
 			case CCX_SM_PROGRAM:
 			case CCX_SM_ASF:
