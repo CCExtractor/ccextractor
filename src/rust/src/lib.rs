@@ -270,6 +270,10 @@ extern "C" {
     #[allow(clashing_extern_declarations)]
     pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
     pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
+    pub fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> ::std::os::raw::c_int;
+    pub fn fwrite(__ptr: *const c_void, __size: c_ulong, __n: c_ulong, __s: *mut FILE) -> c_ulong;
+    pub fn fclose(__stream: *mut FILE) -> c_int;
+    pub fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
 }
 
 /// # Safety

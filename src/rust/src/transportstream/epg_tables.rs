@@ -1,8 +1,9 @@
-use crate::bindings::{fclose, fopen, fprintf, fwrite, lib_ccx_ctx, net_send_epg, FILE};
+use crate::bindings::{lib_ccx_ctx, net_send_epg, FILE};
 use crate::common::CType;
 use crate::ctorust::FromCType;
 use crate::transportstream::epg_event::{EPGEventRust, EPGRatingRust};
 use crate::transportstream::tables::TS_PMT_MAP_SIZE;
+use crate::{fclose, fopen, fprintf, fwrite};
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use encoding_rs::*;
 use lib_ccxr::common::Options;
@@ -11,7 +12,7 @@ use lib_ccxr::info;
 use lib_ccxr::util::log::DebugMessageFlag;
 use std::alloc::{alloc, dealloc, realloc, Layout};
 use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_ulong, c_void};
+use std::os::raw::{c_char, c_void};
 use std::ptr;
 
 /// Specific errors for EPG DVB string decoding.
@@ -162,7 +163,7 @@ fn write_raw_bytes(f: &mut FILE, bytes: &[u8]) {
         fwrite(
             bytes.as_ptr() as *const c_void,
             1,
-            bytes.len() as c_ulong,
+            bytes.len() as _,
             f as *mut FILE,
         );
     }
