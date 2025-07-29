@@ -1668,13 +1668,20 @@ pub unsafe fn parse_epg_packet(ctx: &mut lib_ccx_ctx, tspacket: &[u8; 188], opti
             let layout = Layout::from_size_align_unchecked(epg_buffer.buffer_length as usize, 1);
             dealloc(epg_buffer.buffer, layout);
         }
-        // else {
-        //     // must be first EIT packet
-        // }
 
         // Allocate using Rust's allocator
         let layout = Layout::from_size_align_unchecked(payload_length as usize, 1);
         epg_buffer.buffer = alloc(layout);
+
+        // CHECK FOR ALLOCATION FAILURE
+        if epg_buffer.buffer.is_null() {
+            debug!(
+                msg_type = DebugMessageFlag::GENERIC_NOTICE;
+                "\rError: Failed to allocate memory for EPG buffer.\n\0"
+            );
+            return;
+        }
+
         ptr::copy_nonoverlapping(payload_start, epg_buffer.buffer, payload_length as usize);
         epg_buffer.buffer_length = payload_length;
         epg_buffer.ccounter += 1;
@@ -1686,7 +1693,18 @@ pub unsafe fn parse_epg_packet(ctx: &mut lib_ccx_ctx, tspacket: &[u8; 188], opti
         // Reallocate using Rust's allocator
         let old_layout = Layout::from_size_align_unchecked(epg_buffer.buffer_length as usize, 1);
         let new_size = epg_buffer.buffer_length + payload_length;
-        epg_buffer.buffer = realloc(epg_buffer.buffer, old_layout, new_size as usize);
+        let new_buffer = realloc(epg_buffer.buffer, old_layout, new_size as usize);
+
+        // CHECK FOR REALLOCATION FAILURE
+        if new_buffer.is_null() {
+            debug!(
+                msg_type = DebugMessageFlag::GENERIC_NOTICE;
+                "\rError: Failed to reallocate memory for EPG buffer.\n\0"
+            );
+            return;
+        }
+
+        epg_buffer.buffer = new_buffer;
 
         ptr::copy_nonoverlapping(
             payload_start,
