@@ -308,6 +308,7 @@ endif
 
 if WITH_RUST
 ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
+ccextractor_LDADD += -framework CoreFoundation
 else
 ccextractor_CFLAGS += -DDISABLE_RUST
 ccextractor_CPPFLAGS += -DDISABLE_RUST
