@@ -458,8 +458,6 @@ pub fn epg_print_event(event: &EPGEventRust, channel: u32, f: &mut FILE) {
             "    <desc lang=\"{}\">",
             &event.extended_iso_639_language_code,
         );
-        //mprint("Extented Text = %s\n",event->extended_text);
-        info!("Extented Text = {}\n", extended_text);
         epg_fprintxml(f, extended_text);
         write_fprintf(f, "</desc>\n");
     }
