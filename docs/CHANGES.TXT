@@ -1,6 +1,7 @@
 1.0 (to be released)
 -----------------
 - New: Add Encoder Module to Rust
+- Fix: Elementary stream regressions
 - Fix: Segmentation faults on XDS files
 - Fix: Clippy Errors Based on Rust 1.88
 - IMPROVEMENT: Refactor and optimize Dockerfile
