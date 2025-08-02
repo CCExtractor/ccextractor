@@ -29,4 +29,16 @@ struct ccx_s_write
 
 };
 
+struct spupng_t
+{
+	FILE *fpxml;
+	FILE *fppng;
+	char *dirname;
+	char *pngfile;
+	char *relative_path_png;
+	int fileIndex;
+	int xOffset;
+	int yOffset;
+};
+
 #endif
