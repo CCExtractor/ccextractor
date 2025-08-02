@@ -197,22 +197,21 @@ pub fn change_ascii_encoding(
     for &c in src {
         match out_enc {
             Encoding::Utf8 => {
-                let (utf8_packed, byte_count) = line21_to_utf8(c);
-
-                // Extract bytes based on count (big-endian storage)
-                match byte_count {
-                    1 => dest.push(utf8_packed as u8),
-                    2 => {
-                        dest.push((utf8_packed >> 8) as u8);
-                        dest.push(utf8_packed as u8);
-                    }
-                    3 => {
-                        dest.push((utf8_packed >> 16) as u8);
-                        dest.push((utf8_packed >> 8) as u8);
-                        dest.push(utf8_packed as u8);
-                    }
-                    _ => return Err(-1), // Invalid byte count
-                }
+                let utf8_packed = line21_to_utf8(c);
+                let bytes = if utf8_packed <= 0xff {
+                    vec![utf8_packed as u8]
+                } else if utf8_packed <= 0xffff {
+                    vec![(utf8_packed >> 8) as u8, utf8_packed as u8]
+                } else if utf8_packed <= 0xffffff {
+                    vec![
+                        (utf8_packed >> 16) as u8,
+                        (utf8_packed >> 8) as u8,
+                        utf8_packed as u8,
+                    ]
+                } else {
+                    return Err(-1); // Invalid byte count
+                };
+                dest.extend(bytes);
             }
             Encoding::Latin1 => {
                 let latin1_char = line21_to_latin1(c);

@@ -43,38 +43,35 @@ pub fn get_line_encoded(
     for i in line.iter().take(33) {
         let bytes_written = match ctx.encoding {
             ccx_encoding_type_CCX_ENC_UTF_8 => {
-                let (utf8_packed, byte_count) = line21_to_utf8(*i);
+                let utf8_packed = line21_to_utf8(*i);
+                let (byte_count, bytes) = if utf8_packed <= 0xff {
+                    (1, [(utf8_packed & 0xFF) as c_uchar, 0, 0])
+                } else if utf8_packed <= 0xffff {
+                    (
+                        2,
+                        [
+                            ((utf8_packed >> 8) & 0xFF) as c_uchar,
+                            (utf8_packed & 0xFF) as c_uchar,
+                            0,
+                        ],
+                    )
+                } else {
+                    (
+                        3,
+                        [
+                            ((utf8_packed >> 16) & 0xFF) as c_uchar,
+                            ((utf8_packed >> 8) & 0xFF) as c_uchar,
+                            (utf8_packed & 0xFF) as c_uchar,
+                        ],
+                    )
+                };
 
-                // Extract bytes based on count (big-endian storage)
-                match byte_count {
-                    1 => {
-                        if buffer_pos < buffer.len() {
-                            buffer[buffer_pos] = utf8_packed as c_uchar;
-                            1
-                        } else {
-                            0
-                        }
-                    }
-                    2 => {
-                        if buffer_pos + 1 < buffer.len() {
-                            buffer[buffer_pos] = (utf8_packed >> 8) as c_uchar;
-                            buffer[buffer_pos + 1] = utf8_packed as c_uchar;
-                            2
-                        } else {
-                            0
-                        }
-                    }
-                    3 => {
-                        if buffer_pos + 2 < buffer.len() {
-                            buffer[buffer_pos] = (utf8_packed >> 16) as c_uchar;
-                            buffer[buffer_pos + 1] = (utf8_packed >> 8) as c_uchar;
-                            buffer[buffer_pos + 2] = utf8_packed as c_uchar;
-                            3
-                        } else {
-                            0
-                        }
-                    }
-                    _ => 0, // Invalid byte count
+                if buffer_pos + byte_count - 1 < buffer.len() {
+                    buffer[buffer_pos..(byte_count + buffer_pos)]
+                        .copy_from_slice(&bytes[..byte_count]);
+                    byte_count
+                } else {
+                    0
                 }
             }
             ccx_encoding_type_CCX_ENC_LATIN_1 => {

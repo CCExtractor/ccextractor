@@ -766,141 +766,137 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
     }
 }
 
-pub fn line21_to_utf8(c: Line21Char) -> (u32, usize) {
+pub fn line21_to_utf8(c: Line21Char) -> u32 {
     if c < 0x80 {
         // Regular line-21 character set, mostly ASCII except these exceptions
         match c {
-            0x2a => (0xc3a1, 2),   // lowercase a, acute accent
-            0x5c => (0xc3a9, 2),   // lowercase e, acute accent
-            0x5e => (0xc3ad, 2),   // lowercase i, acute accent
-            0x5f => (0xc3b3, 2),   // lowercase o, acute accent
-            0x60 => (0xc3ba, 2),   // lowercase u, acute accent
-            0x7b => (0xc3a7, 2),   // lowercase c with cedilla
-            0x7c => (0xc3b7, 2),   // division symbol
-            0x7d => (0xc391, 2),   // uppercase N tilde
-            0x7e => (0xc3b1, 2),   // lowercase n tilde
-            0x7f => (0xe296a0, 3), // Solid block
-            _ => (c as u32, 1),    // Default: regular ASCII
+            0x2a => 0xc3a1,   // lowercase a, acute accent
+            0x5c => 0xc3a9,   // lowercase e, acute accent
+            0x5e => 0xc3ad,   // lowercase i, acute accent
+            0x5f => 0xc3b3,   // lowercase o, acute accent
+            0x60 => 0xc3ba,   // lowercase u, acute accent
+            0x7b => 0xc3a7,   // lowercase c with cedilla
+            0x7c => 0xc3b7,   // division symbol
+            0x7d => 0xc391,   // uppercase N tilde
+            0x7e => 0xc3b1,   // lowercase n tilde
+            0x7f => 0xe296a0, // Solid block
+            _ => c as u32,    // Default: regular ASCII
         }
     } else {
         match c {
             // THIS BLOCK INCLUDES THE 16 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
             // THAT COME FROM HI BYTE=0x11 AND LOW BETWEEN 0x30 AND 0x3F
-            0x80 => (0xc2ae, 2),   // Registered symbol (R)
-            0x81 => (0xc2b0, 2),   // degree sign
-            0x82 => (0xc2bd, 2),   // 1/2 symbol
-            0x83 => (0xc2bf, 2),   // Inverted (open) question mark
-            0x84 => (0xe284a2, 3), // Trademark symbol (TM)
-            0x85 => (0xc2a2, 2),   // Cents symbol
-            0x86 => (0xc2a3, 2),   // Pounds sterling
-            0x87 => (0xe299aa, 3), // Music note
-            0x88 => (0xc3a0, 2),   // lowercase a, grave accent
-            0x89 => (0x20, 1),     // transparent space, we make it regular
-            0x8a => (0xc3a8, 2),   // lowercase e, grave accent
-            0x8b => (0xc3a2, 2),   // lowercase a, circumflex accent
-            0x8c => (0xc3aa, 2),   // lowercase e, circumflex accent
-            0x8d => (0xc3ae, 2),   // lowercase i, circumflex accent
-            0x8e => (0xc3b4, 2),   // lowercase o, circumflex accent
-            0x8f => (0xc3bb, 2),   // lowercase u, circumflex accent
-
+            0x80 => 0xc2ae,   // Registered symbol (R)
+            0x81 => 0xc2b0,   // degree sign
+            0x82 => 0xc2bd,   // 1/2 symbol
+            0x83 => 0xc2bf,   // Inverted (open) question mark
+            0x84 => 0xe284a2, // Trademark symbol (TM)
+            0x85 => 0xc2a2,   // Cents symbol
+            0x86 => 0xc2a3,   // Pounds sterling
+            0x87 => 0xe299aa, // Music note
+            0x88 => 0xc3a0,   // lowercase a, grave accent
+            0x89 => 0x20,     // transparent space, we make it regular
+            0x8a => 0xc3a8,   // lowercase e, grave accent
+            0x8b => 0xc3a2,   // lowercase a, circumflex accent
+            0x8c => 0xc3aa,   // lowercase e, circumflex accent
+            0x8d => 0xc3ae,   // lowercase i, circumflex accent
+            0x8e => 0xc3b4,   // lowercase o, circumflex accent
+            0x8f => 0xc3bb,   // lowercase u, circumflex accent
             // THIS BLOCK INCLUDES THE 32 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
             // THAT COME FROM HI BYTE=0x12 AND LOW BETWEEN 0x20 AND 0x3F
-            0x90 => (0xc381, 2),   // capital letter A with acute
-            0x91 => (0xc389, 2),   // capital letter E with acute
-            0x92 => (0xc393, 2),   // capital letter O with acute
-            0x93 => (0xc39a, 2),   // capital letter U with acute
-            0x94 => (0xc39c, 2),   // capital letter U with diaeresis
-            0x95 => (0xc3bc, 2),   // lowercase letter U with diaeresis
-            0x96 => (0x27, 1),     // apostrophe
-            0x97 => (0xc2a1, 2),   // inverted exclamation mark
-            0x98 => (0x2a, 1),     // asterisk
-            0x99 => (0x27, 1),     // Plain single quote
-            0x9a => (0xe28094, 3), // em dash
-            0x9b => (0xc2a9, 2),   // copyright sign
-            0x9c => (0xe284a0, 3), // Service mark
-            0x9d => (0xe280a2, 3), // Round bullet
-            0x9e => (0xe2809c, 3), // Opening double quotes
-            0x9f => (0xe2809d, 3), // Closing double quotes
-            0xa0 => (0xc380, 2),   // uppercase A, grave accent
-            0xa1 => (0xc382, 2),   // uppercase A, circumflex
-            0xa2 => (0xc387, 2),   // uppercase C with cedilla
-            0xa3 => (0xc388, 2),   // uppercase E, grave accent
-            0xa4 => (0xc38a, 2),   // uppercase E, circumflex
-            0xa5 => (0xc38b, 2),   // capital letter E with diaeresis
-            0xa6 => (0xc3ab, 2),   // lowercase letter e with diaeresis
-            0xa7 => (0xc38e, 2),   // uppercase I, circumflex
-            0xa8 => (0xc38f, 2),   // uppercase I, with diaeresis
-            0xa9 => (0xc3af, 2),   // lowercase i, with diaeresis
-            0xaa => (0xc394, 2),   // uppercase O, circumflex
-            0xab => (0xc399, 2),   // uppercase U, grave accent
-            0xac => (0xc3b9, 2),   // lowercase u, grave accent
-            0xad => (0xc39b, 2),   // uppercase U, circumflex
-            0xae => (0xc2ab, 2),   // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-            0xaf => (0xc2bb, 2),   // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+            0x90 => 0xc381,   // capital letter A with acute
+            0x91 => 0xc389,   // capital letter E with acute
+            0x92 => 0xc393,   // capital letter O with acute
+            0x93 => 0xc39a,   // capital letter U with acute
+            0x94 => 0xc39c,   // capital letter U with diaeresis
+            0x95 => 0xc3bc,   // lowercase letter U with diaeresis
+            0x96 => 0x27,     // apostrophe
+            0x97 => 0xc2a1,   // inverted exclamation mark
+            0x98 => 0x2a,     // asterisk
+            0x99 => 0x27,     // Plain single quote
+            0x9a => 0xe28094, // em dash
+            0x9b => 0xc2a9,   // copyright sign
+            0x9c => 0xe284a0, // Service mark
+            0x9d => 0xe280a2, // Round bullet
+            0x9e => 0xe2809c, // Opening double quotes
+            0x9f => 0xe2809d, // Closing double quotes
+            0xa0 => 0xc380,   // uppercase A, grave accent
+            0xa1 => 0xc382,   // uppercase A, circumflex
+            0xa2 => 0xc387,   // uppercase C with cedilla
+            0xa3 => 0xc388,   // uppercase E, grave accent
+            0xa4 => 0xc38a,   // uppercase E, circumflex
+            0xa5 => 0xc38b,   // capital letter E with diaeresis
+            0xa6 => 0xc3ab,   // lowercase letter e with diaeresis
+            0xa7 => 0xc38e,   // uppercase I, circumflex
+            0xa8 => 0xc38f,   // uppercase I, with diaeresis
+            0xa9 => 0xc3af,   // lowercase i, with diaeresis
+            0xaa => 0xc394,   // uppercase O, circumflex
+            0xab => 0xc399,   // uppercase U, grave accent
+            0xac => 0xc3b9,   // lowercase u, grave accent
+            0xad => 0xc39b,   // uppercase U, circumflex
+            0xae => 0xc2ab,   // LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+            0xaf => 0xc2bb,   // RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
 
             // THIS BLOCK INCLUDES THE 32 EXTENDED (TWO-BYTE) LINE 21 CHARACTERS
             // THAT COME FROM HI BYTE=0x13 AND LOW BETWEEN 0x20 AND 0x3F
-            0xb0 => (0xc383, 2),   // Uppercase A, tilde
-            0xb1 => (0xc3a3, 2),   // Lowercase a, tilde
-            0xb2 => (0xc38d, 2),   // Uppercase I, acute accent
-            0xb3 => (0xc38c, 2),   // Uppercase I, grave accent
-            0xb4 => (0xc3ac, 2),   // Lowercase i, grave accent
-            0xb5 => (0xc392, 2),   // Uppercase O, grave accent
-            0xb6 => (0xc3b2, 2),   // Lowercase o, grave accent
-            0xb7 => (0xc395, 2),   // Uppercase O, tilde
-            0xb8 => (0xc3b5, 2),   // Lowercase o, tilde
-            0xb9 => (0x7b, 1),     // Open curly brace
-            0xba => (0x7d, 1),     // Closing curly brace
-            0xbb => (0x5c, 1),     // Backslash
-            0xbc => (0x5e, 1),     // Caret
-            0xbd => (0x5f, 1),     // Underscore
-            0xbe => (0xc2a6, 2),   // Pipe (broken bar)
-            0xbf => (0x7e, 1),     // Tilde
-            0xc0 => (0xc384, 2),   // Uppercase A, umlaut
-            0xc1 => (0xc3a4, 2),   // Lowercase A, umlaut
-            0xc2 => (0xc396, 2),   // Uppercase O, umlaut
-            0xc3 => (0xc3b6, 2),   // Lowercase o, umlaut
-            0xc4 => (0xc39f, 2),   // Esszett (sharp S)
-            0xc5 => (0xc2a5, 2),   // Yen symbol
-            0xc6 => (0xc2a4, 2),   // Currency symbol
-            0xc7 => (0x7c, 1),     // Vertical bar
-            0xc8 => (0xc385, 2),   // Uppercase A, ring
-            0xc9 => (0xc3a5, 2),   // Lowercase A, ring
-            0xca => (0xc398, 2),   // Uppercase O, slash
-            0xcb => (0xc3b8, 2),   // Lowercase o, slash
-            0xcc => (0xe28c9c, 3), // Top left corner
-            0xcd => (0xe28c9d, 3), // Top right corner
-            0xce => (0xe28c9e, 3), // Bottom left corner
-            0xcf => (0xe28c9f, 3), // Bottom right corner
-            _ => (b'?' as u32, 1), // I'll do it eventually, I promise
-                                    // This are weird chars anyway
+            0xb0 => 0xc383,   // Uppercase A, tilde
+            0xb1 => 0xc3a3,   // Lowercase a, tilde
+            0xb2 => 0xc38d,   // Uppercase I, acute accent
+            0xb3 => 0xc38c,   // Uppercase I, grave accent
+            0xb4 => 0xc3ac,   // Lowercase i, grave accent
+            0xb5 => 0xc392,   // Uppercase O, grave accent
+            0xb6 => 0xc3b2,   // Lowercase o, grave accent
+            0xb7 => 0xc395,   // Uppercase O, tilde
+            0xb8 => 0xc3b5,   // Lowercase o, tilde
+            0xb9 => 0x7b,     // Open curly brace
+            0xba => 0x7d,     // Closing curly brace
+            0xbb => 0x5c,     // Backslash
+            0xbc => 0x5e,     // Caret
+            0xbd => 0x5f,     // Underscore
+            0xbe => 0xc2a6,   // Pipe (broken bar)
+            0xbf => 0x7e,     // Tilde
+            0xc0 => 0xc384,   // Uppercase A, umlaut
+            0xc1 => 0xc3a4,   // Lowercase A, umlaut
+            0xc2 => 0xc396,   // Uppercase O, umlaut
+            0xc3 => 0xc3b6,   // Lowercase o, umlaut
+            0xc4 => 0xc39f,   // Esszett (sharp S)
+            0xc5 => 0xc2a5,   // Yen symbol
+            0xc6 => 0xc2a4,   // Currency symbol
+            0xc7 => 0x7c,     // Vertical bar
+            0xc8 => 0xc385,   // Uppercase A, ring
+            0xc9 => 0xc3a5,   // Lowercase A, ring
+            0xca => 0xc398,   // Uppercase O, slash
+            0xcb => 0xc3b8,   // Lowercase o, slash
+            0xcc => 0xe28c9c, // Top left corner
+            0xcd => 0xe28c9d, // Top right corner
+            0xce => 0xe28c9e, // Bottom left corner
+            0xcf => 0xe28c9f, // Bottom right corner
+            _ => b'?' as u32, // I'll do it eventually, I promise
+                               // This are weird chars anyway
         }
     }
 }
 pub fn line21_to_char(c: Line21Char) -> char {
-    let (utf8_packed, byte_count) = line21_to_utf8(c);
+    let utf8_packed = line21_to_utf8(c);
 
-    // Extract bytes and create a UTF-8 string
-    let mut bytes = Vec::new();
-    match byte_count {
-        1 => bytes.push(utf8_packed as u8),
-        2 => {
-            bytes.push((utf8_packed >> 8) as u8);
-            bytes.push(utf8_packed as u8);
-        }
-        3 => {
-            bytes.push((utf8_packed >> 16) as u8);
-            bytes.push((utf8_packed >> 8) as u8);
-            bytes.push(utf8_packed as u8);
-        }
-        _ => return '?', // Invalid byte count
-    }
+    let bytes = if utf8_packed <= 0xff {
+        vec![utf8_packed as u8]
+    } else if utf8_packed <= 0xffff {
+        vec![(utf8_packed >> 8) as u8, utf8_packed as u8]
+    } else if utf8_packed <= 0xffffff {
+        vec![
+            (utf8_packed >> 16) as u8,
+            (utf8_packed >> 8) as u8,
+            utf8_packed as u8,
+        ]
+    } else {
+        return '?';
+    };
 
-    // Convert UTF-8 bytes to char
-    match std::str::from_utf8(&bytes) {
-        Ok(s) => s.chars().next().unwrap_or('?'),
-        Err(_) => '?',
-    }
+    std::str::from_utf8(&bytes)
+        .ok()
+        .and_then(|s| s.chars().next())
+        .unwrap_or('?')
 }
 pub fn line21_to_ucs2(c: Line21Char) -> Ucs2Char {
     match c {
