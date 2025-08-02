@@ -766,7 +766,7 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
     }
 }
 
-pub fn line21_to_utf8(c: Line21Char) -> u32 {
+pub fn line21_to_utf8(c: Line21Char) -> Utf8Char {
     if c < 0x80 {
         // Regular line-21 character set, mostly ASCII except these exceptions
         match c {
