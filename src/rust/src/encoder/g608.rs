@@ -4,7 +4,7 @@ use crate::bindings::{
     font_bits_FONT_ITALICS, font_bits_FONT_REGULAR, font_bits_FONT_UNDERLINED,
     font_bits_FONT_UNDERLINED_ITALICS,
 };
-use crate::encoder::headers_and_footers::{encode_line, write_raw};
+use crate::encoder::metadata::{encode_line, write_raw};
 use crate::libccxr_exports::time::ccxr_millis_to_time;
 use lib_ccxr::util::encoding::{line21_to_latin1, line21_to_ucs2, line21_to_utf8};
 use std::io;

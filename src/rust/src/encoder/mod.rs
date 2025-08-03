@@ -1,11 +1,10 @@
 use crate::bindings::ccx_encoding_type;
-use crate::encoder::common::get_str_basic;
+use lib_ccxr::encoder::common::get_str_basic;
 use lib_ccxr::util::encoding::Encoding;
 use std::os::raw::{c_int, c_uchar};
 
-pub mod common;
 pub mod g608;
-pub mod headers_and_footers;
+pub mod metadata;
 pub mod simplexml;
 /// # Safety
 /// This function is unsafe because it deferences to raw pointers and performs operations on pointer slices.
@@ -69,7 +68,7 @@ impl FromCType<ccx_encoding_type> for Encoding {
             0 => Encoding::Ucs2,   // CCX_ENC_UNICODE
             1 => Encoding::Latin1, // CCX_ENC_LATIN_1
             2 => Encoding::Utf8,   // CCX_ENC_UTF_8
-            3 => Encoding::Line21, // CCX_ENC_ASCII
+            3 => Encoding::Ascii,  // CCX_ENC_ASCII
             _ => Encoding::Utf8,   // Default to UTF-8 if unknown
         })
     }

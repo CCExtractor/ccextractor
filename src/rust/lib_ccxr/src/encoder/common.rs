@@ -1,5 +1,5 @@
-use lib_ccxr::info;
-use lib_ccxr::util::encoding::*;
+use crate::info;
+use crate::util::encoding::*;
 use std::cmp;
 use std::convert::TryFrom;
 
@@ -159,7 +159,7 @@ fn change_utf8_encoding(dest: &mut [u8], src: &[u8], len: i32, out_enc: Encoding
             Encoding::Ucs2 => {
                 return EncoderError::Unsupported as i32;
             }
-            Encoding::Line21 => {
+            Encoding::Ascii => {
                 if c_len == 1 {
                     dest[dest_idx] = src[src_idx];
                     dest_idx += 1;
@@ -222,7 +222,7 @@ pub fn change_ascii_encoding(
                 // UCS-2 is 2 bytes, little-endian
                 dest.extend_from_slice(&ucs2_char.to_le_bytes());
             }
-            Encoding::Line21 => {
+            Encoding::Ascii => {
                 dest.extend_from_slice(src);
                 return Ok(src.len());
             }
@@ -320,7 +320,7 @@ pub fn get_str_basic(
                 out_buffer.extend_from_slice(&temp_buffer[..len as usize]);
             }
         }
-        Encoding::Line21 => {
+        Encoding::Ascii => {
             let input_slice =
                 &in_buffer[first_non_blank as usize..(first_non_blank + content_length) as usize];
             len = change_ascii_encoding(out_buffer, input_slice, out_enc)
@@ -387,7 +387,7 @@ mod tests {
         let src = b"Hello, \xC3\xA9world!"; // "Hello, éworld!"
         let mut dest = [0u8; 20];
 
-        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::Line21);
+        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::Ascii);
 
         assert_eq!(result, 14); // "Hello, ?world!" (14 chars)
         assert_eq!(&dest[..14], b"Hello, ?world!");
@@ -406,7 +406,7 @@ mod tests {
     fn test_ascii_to_ascii() {
         let src = b"Hello World!";
         let mut dest = Vec::with_capacity(20);
-        let result = change_ascii_encoding(&mut dest, src, Encoding::Line21);
+        let result = change_ascii_encoding(&mut dest, src, Encoding::Ascii);
 
         assert_eq!(result.unwrap(), src.len());
         assert_eq!(&dest[..src.len()], src);
@@ -456,8 +456,8 @@ mod tests {
             &mut out_buffer,
             in_buffer,
             true,
-            Encoding::Line21,
-            Encoding::Line21,
+            Encoding::Ascii,
+            Encoding::Ascii,
             10,
         );
 
@@ -473,8 +473,8 @@ mod tests {
             &mut out_buffer,
             in_buffer,
             false,
-            Encoding::Line21,
-            Encoding::Line21,
+            Encoding::Ascii,
+            Encoding::Ascii,
             10,
         );
 
