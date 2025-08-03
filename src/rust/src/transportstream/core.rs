@@ -606,7 +606,7 @@ pub unsafe fn copy_capbuf_demux_data(
     }
 
     let databuf: *mut u8 = cinfo.capbuf.add(pesheaderlen as usize);
-    let databuflen: i64 = cinfo.capbuflen - pesheaderlen as i64;
+    let databuflen: i64 = (cinfo.capbuflen as i64) - (pesheaderlen as i64);
 
     if !ccx_options.hauppauge_mode {
         // in Haup mode the buffer is filled somewhere else
@@ -674,8 +674,8 @@ pub unsafe fn copy_payload_to_capbuf(
         }
     }
 
-    let newcapbuflen: i64 = cinfo.capbuflen + payload.length as i64;
-    if newcapbuflen > cinfo.capbufsize {
+    let newcapbuflen: i64 = (cinfo.capbuflen as i64) + (payload.length as i64);
+    if newcapbuflen > cinfo.capbufsize as i64 {
         let old_size = cinfo.capbufsize as usize;
         let new_size = newcapbuflen as usize;
 
@@ -689,7 +689,7 @@ pub unsafe fn copy_payload_to_capbuf(
         let new_ptr = new_vec.as_mut_ptr();
         std::mem::forget(new_vec);
         cinfo.capbuf = new_ptr;
-        cinfo.capbufsize = newcapbuflen;
+        cinfo.capbufsize = newcapbuflen as _;
     }
 
     // Copy payload data to capbuf using pure Rust
@@ -698,7 +698,7 @@ pub unsafe fn copy_payload_to_capbuf(
         payload.start,
         payload.length,
     );
-    cinfo.capbuflen = newcapbuflen;
+    cinfo.capbuflen = newcapbuflen as _;
 
     0
 }

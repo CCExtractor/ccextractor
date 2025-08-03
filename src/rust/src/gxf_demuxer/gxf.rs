@@ -1459,7 +1459,10 @@ mod tests {
     use crate::demuxer::demuxer_data::DemuxerData;
     use lib_ccxr::common::{Codec, BUFSIZE};
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+    #[cfg(unix)]
     use std::os::fd::IntoRawFd;
+    #[cfg(windows)]
+    use std::os::windows::io::IntoRawHandle;
     use std::sync::Once;
     use std::{mem, ptr};
 

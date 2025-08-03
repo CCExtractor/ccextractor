@@ -249,7 +249,7 @@ pub unsafe fn update_capinfo(
                 || tmp.codec == ccx_code_type_CCX_CODEC_NONE
             {
                 if stream != StreamType::Unknownstream {
-                    tmp.stream = stream.to_ctype() as u32;
+                    tmp.stream = stream.to_ctype() as _;
                 }
 
                 if codec.is_some() {
@@ -311,7 +311,7 @@ pub unsafe fn update_capinfo(
 
     // Initialize new entry
     tmp.pid = pid;
-    tmp.stream = stream.to_ctype() as u32;
+    tmp.stream = stream.to_ctype() as _;
     if codec.is_none() {
         tmp.codec = ccx_code_type_CCX_CODEC_NONE;
     } else {
@@ -362,7 +362,7 @@ pub unsafe fn need_cap_info_for_pid(cap: &mut cap_info, pid: i32) -> bool {
 
     let head_ptr = &cap.all_stream as *const list_head as *mut list_head;
     for iter in list_for_each_entry!(head_ptr, cap_info, all_stream) {
-        if (*iter).pid == pid && (*iter).stream == StreamType::Unknownstream.to_ctype() as u32 {
+        if (*iter).pid == pid && (*iter).stream == StreamType::Unknownstream.to_ctype() {
             return true;
         }
     }
