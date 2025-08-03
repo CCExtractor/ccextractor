@@ -606,6 +606,9 @@ pub unsafe fn copy_capbuf_demux_data(
     }
 
     let databuf: *mut u8 = cinfo.capbuf.add(pesheaderlen as usize);
+    #[cfg(unix)]
+    let databuflen: i64 = cinfo.capbuflen - (pesheaderlen as i64);
+    #[cfg(windows)]
     let databuflen: i64 = (cinfo.capbuflen as i64) - (pesheaderlen as i64);
 
     if !ccx_options.hauppauge_mode {
@@ -673,9 +676,15 @@ pub unsafe fn copy_payload_to_capbuf(
             return -1;
         }
     }
-
+    #[cfg(unix)]
+    let newcapbuflen: i64 = cinfo.capbuflen + (payload.length as i64);
+    #[cfg(windows)]
     let newcapbuflen: i64 = (cinfo.capbuflen as i64) + (payload.length as i64);
-    if newcapbuflen > cinfo.capbufsize as i64 {
+    #[cfg(unix)]
+    let larger: bool = newcapbuflen > cinfo.capbufsize;
+    #[cfg(windows)]
+    let larger: bool = newcapbuflen > cinfo.capbufsize as i64;
+    if larger {
         let old_size = cinfo.capbufsize as usize;
         let new_size = newcapbuflen as usize;
 
