@@ -362,7 +362,9 @@ pub unsafe fn need_cap_info_for_pid(cap: &mut cap_info, pid: i32) -> bool {
 
     let head_ptr = &cap.all_stream as *const list_head as *mut list_head;
     for iter in list_for_each_entry!(head_ptr, cap_info, all_stream) {
-        if (*iter).pid == pid && (*iter).stream == StreamType::Unknownstream.to_ctype() {
+        if (*iter).pid == pid
+            && (*iter).stream as i64 == StreamType::Unknownstream.to_ctype() as i64
+        {
             return true;
         }
     }
