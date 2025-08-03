@@ -638,8 +638,8 @@ int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx 
 		if (data->row_used[i])
 		{
 			write_cc_line_as_simplexml(data, context, i);
+			wrote_something = 1;
 		}
-		wrote_something = 1;
 	}
 	return wrote_something;
 }
