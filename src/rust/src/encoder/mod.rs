@@ -1,10 +1,10 @@
 use crate::bindings::ccx_encoding_type;
-use lib_ccxr::encoder::common::get_str_basic;
+use lib_ccxr::encoder::txt_helpers::get_str_basic;
 use lib_ccxr::util::encoding::Encoding;
 use std::os::raw::{c_int, c_uchar};
 
+pub mod common;
 pub mod g608;
-pub mod metadata;
 pub mod simplexml;
 /// # Safety
 /// This function is unsafe because it deferences to raw pointers and performs operations on pointer slices.

@@ -1,6 +1,6 @@
 use crate::bindings::{cc_subtitle, ccx_encoding_type_CCX_ENC_ASCII, eia608_screen, encoder_ctx};
 use crate::encoder::ccxr_get_str_basic;
-use crate::encoder::metadata::write_raw;
+use crate::encoder::common::write_raw;
 use lib_ccxr::common::CCX_DECODER_608_SCREEN_WIDTH;
 use lib_ccxr::info;
 use std::os::raw::{c_int, c_void};
