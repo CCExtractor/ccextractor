@@ -80,6 +80,8 @@ extern "C"
 	*
 	*/
 	void dvbsub_set_write(void *dvb_ctx, struct ccx_s_write *out);
+	void delete_isdb_decoder(void **isdb_ctx);
+	void *init_isdb_decoder(void);
 
 #ifdef __cplusplus
 }

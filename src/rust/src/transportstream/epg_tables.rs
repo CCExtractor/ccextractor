@@ -1,7 +1,7 @@
 use crate::bindings::{lib_ccx_ctx, net_send_epg, FILE};
 use crate::common::CType;
 use crate::ctorust::FromCType;
-use crate::transportstream::epg_event::{EPGEventRust, EPGRatingRust};
+use crate::transportstream::common_structs::{EPGEventRust, EPGRatingRust};
 use crate::transportstream::tables::TS_PMT_MAP_SIZE;
 use crate::{fclose, fopen, fprintf, fwrite};
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};

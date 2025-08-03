@@ -970,9 +970,20 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	return ret;
 }
 
+#ifndef DISABLE_RUST
+int ccxr_ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data, struct cap_info *cap,
+						  unsigned char **haup_capbuf,
+						  long *haup_capbufsize, long *haup_capbuflen, uint64_t *last_pts, unsigned char *tspacket);
+#endif
 // TS specific data grabber
-int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
-{
+int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data) {
+#ifndef DISABLE_RUST
+	if (ctx->demux_ctx) {
+		return ccxr_ts_get_more_data(ctx, data, &ctx->demux_ctx->cinfo_tree, &haup_capbuf, &haup_capbufsize,
+									 &haup_capbuflen, &last_pts, tspacket);
+	}
+	return CCX_EAGAIN;
+#else
 	int ret = CCX_OK;
 
 	do
@@ -981,4 +992,5 @@ int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data)
 	} while (ret == CCX_EAGAIN);
 
 	return ret;
+#endif
 }

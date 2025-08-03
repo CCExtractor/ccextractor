@@ -12,9 +12,9 @@ use crate::bindings::{
     ccx_decoder_dtvcc_report, ccx_decoder_dtvcc_settings, ccx_demux_report,
     ccx_encoders_transcript_format, ccx_encoding_type, ccx_frame_type_CCX_FRAME_TYPE_B_FRAME,
     ccx_frame_type_CCX_FRAME_TYPE_D_FRAME, ccx_frame_type_CCX_FRAME_TYPE_I_FRAME,
-    ccx_frame_type_CCX_FRAME_TYPE_P_FRAME, ccx_output_date_format, ccx_output_format, ccx_rational,
-    ccx_stream_mode_enum, demuxer_cfg, encoder_cfg, list_head, mpeg_picture_coding,
-    mpeg_picture_coding_CCX_MPC_B_FRAME, mpeg_picture_coding_CCX_MPC_I_FRAME,
+    ccx_frame_type_CCX_FRAME_TYPE_P_FRAME, ccx_mpeg_descriptor, ccx_output_date_format,
+    ccx_output_format, ccx_rational, ccx_stream_mode_enum, demuxer_cfg, encoder_cfg, list_head,
+    mpeg_picture_coding, mpeg_picture_coding_CCX_MPC_B_FRAME, mpeg_picture_coding_CCX_MPC_I_FRAME,
     mpeg_picture_coding_CCX_MPC_NONE, mpeg_picture_coding_CCX_MPC_P_FRAME, mpeg_picture_struct,
     mpeg_picture_struct_CCX_MPS_BOTTOM_FIELD, mpeg_picture_struct_CCX_MPS_FRAME,
     mpeg_picture_struct_CCX_MPS_NONE, mpeg_picture_struct_CCX_MPS_TOP_FIELD, program_info,
@@ -45,7 +45,8 @@ use crate::gxf_demuxer::common_structs::{
 use lib_ccxr::common::{
     BufferdataType, Codec, CommonTimingCtx, Decoder608ColorCode, Decoder608Report,
     Decoder608Settings, DecoderDtvccReport, DecoderDtvccSettings, DtvccServiceCharset,
-    EncoderConfig, FrameType, SelectCodec, StreamMode, StreamType, DTVCC_MAX_SERVICES,
+    EncoderConfig, FrameType, MpegDescriptor, SelectCodec, StreamMode, StreamType,
+    DTVCC_MAX_SERVICES,
 };
 use lib_ccxr::time::Timestamp;
 use lib_ccxr::util::encoding::Encoding;
@@ -935,5 +936,21 @@ impl FromCType<mpeg_picture_struct> for MpegPictureStruct {
             mpeg_picture_struct_CCX_MPS_FRAME => Some(MpegPictureStruct::CCX_MPS_FRAME),
             _ => None,
         }
+    }
+}
+impl FromCType<ccx_mpeg_descriptor> for MpegDescriptor {
+    unsafe fn from_ctype(c_value: ccx_mpeg_descriptor) -> Option<Self> {
+        Some(match c_value {
+            0x05 => MpegDescriptor::Registration,
+            0x06 => MpegDescriptor::DataStreamAlignment,
+            0x0a => MpegDescriptor::Iso639Language,
+            0x45 => MpegDescriptor::VbiDataDescriptor,
+            0x46 => MpegDescriptor::VbiTeletextDescriptor,
+            0x56 => MpegDescriptor::TeletextDescriptor,
+            0x59 => MpegDescriptor::DvbSubtitle,
+            0x86 => MpegDescriptor::CaptionService,
+            0xfd => MpegDescriptor::DataComp, // Consider to change DESC to DSC
+            _ => return None,                 // Return None for unsupported values
+        })
     }
 }

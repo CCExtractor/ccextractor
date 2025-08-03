@@ -1,11 +1,15 @@
-use crate::bindings::{EPG_event, EPG_rating};
+use crate::bindings::{ts_payload, EPG_event, EPG_rating};
 use crate::common::CType;
 use crate::ctorust::FromCType;
 use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_longlong};
+use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint};
 use std::ptr;
 
-// Rustified version of the EPG_event struct
+pub const RAI_MASK: u8 = 0x40; // byte mask to check if RAI bit is set (random access indicator)
+pub const TS_PMT_MAP_SIZE: usize = 8192;
+pub const TS_SECTION_BUF_SIZE: usize = 4098;
+pub const HAUPPAGE_CCPID: u32 = 1003; // PID for CC's in some Hauppauge recordings
+                                      // Rustified version of the EPG_event struct
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct EPGEventRust {
     pub id: u32,
@@ -24,6 +28,90 @@ pub struct EPGEventRust {
     pub service_id: u16,
     pub count: i64,
     pub live_output: bool,
+}
+
+pub struct TSPayloadRust {
+    pub start: *mut u8,                   // Payload start
+    pub length: usize,                    // Payload length
+    pub pesstart: usize,                  // PES or PSI start
+    pub pid: u32,                         // Stream PID
+    pub counter: i32,                     // continuity counter
+    pub transport_error: i32,             // 0 = packet OK, non-zero damaged
+    pub has_random_access_indicator: i32, // 1 = start of new GOP (Set when the stream may be decoded without errors from this point)
+    pub have_pcr: i32,
+    pub pcr: i64,
+    pub section_buf: [u8; 4098],
+    pub section_index: usize,
+    pub section_size: usize,
+}
+
+impl TSPayloadRust {
+    pub(crate) fn default() -> TSPayloadRust {
+        TSPayloadRust {
+            start: ptr::null_mut(),
+            length: 0,
+            pesstart: 0,
+            pid: 0,
+            counter: 0,
+            transport_error: 0,
+            has_random_access_indicator: 0,
+            have_pcr: 0,
+            pcr: 0,
+            section_buf: [0; TS_SECTION_BUF_SIZE],
+            section_index: 0,
+            section_size: 0,
+        }
+    }
+}
+
+impl FromCType<ts_payload> for TSPayloadRust {
+    unsafe fn from_ctype(payload: ts_payload) -> Option<Self> {
+        // Convert section_buf from c_uchar array to u8 array
+        let mut section_buf = [0u8; TS_SECTION_BUF_SIZE];
+        for (i, &byte) in payload.section_buf.iter().enumerate() {
+            section_buf[i] = byte;
+        }
+
+        Some(TSPayloadRust {
+            start: payload.start,
+            length: payload.length as usize,
+            pesstart: payload.pesstart as usize,
+            pid: payload.pid,
+            counter: payload.counter,
+            transport_error: payload.transport_error,
+            has_random_access_indicator: payload.has_random_access_indicator,
+            have_pcr: payload.have_pcr,
+            pcr: payload.pcr,
+            section_buf,
+            section_index: payload.section_index as usize,
+            section_size: payload.section_size as usize,
+        })
+    }
+}
+
+impl CType<ts_payload> for TSPayloadRust {
+    unsafe fn to_ctype(&self) -> ts_payload {
+        // Convert section_buf from u8 array to c_uchar array
+        let mut section_buf = [0 as c_uchar; TS_SECTION_BUF_SIZE];
+        for (i, &byte) in self.section_buf.iter().enumerate() {
+            section_buf[i] = byte;
+        }
+
+        ts_payload {
+            start: self.start,
+            length: self.length as c_uint,
+            pesstart: self.pesstart as c_uint,
+            pid: self.pid,
+            counter: self.counter,
+            transport_error: self.transport_error,
+            has_random_access_indicator: self.has_random_access_indicator,
+            have_pcr: self.have_pcr,
+            pcr: self.pcr,
+            section_buf,
+            section_index: self.section_index as c_int,
+            section_size: self.section_size as c_int,
+        }
+    }
 }
 
 impl EPGEventRust {
@@ -212,7 +300,7 @@ impl CType<EPG_event> for EPGEventRust {
 // Cleanup function to properly free allocated memory
 impl EPGEventRust {
     /// # Safety
-    /// This function must be called with a valid `EPG_event` pointer that was created by the `to_ctype` method.
+    /// This function is unsafe because it calls `from_raw_parts_mut`.
     pub unsafe fn cleanup_c_event(event: EPG_event) {
         // Free string pointers
         if !event.event_name.is_null() {

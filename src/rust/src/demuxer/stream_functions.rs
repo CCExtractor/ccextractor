@@ -1,12 +1,15 @@
-use crate::bindings::MXFContext;
+use crate::bindings::{demuxer_data, MXFContext};
+use crate::common::CType;
 use crate::demuxer::common_structs::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
-use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
+use crate::demuxer::demuxer_data::CCX_NOPTS;
+use crate::file_functions::file::{buffered_read, buffered_read_opt, return_to_buffer};
 use crate::gxf_demuxer::common_structs::CcxGxf;
 use crate::gxf_demuxer::gxf::ccx_gxf_probe;
 use crate::mxf_demuxer::mxf::ccx_probe_mxf;
-use lib_ccxr::common::{Options, StreamMode};
+use lib_ccxr::common::{BufferdataType, Options, StreamMode};
 use lib_ccxr::fatal;
 use lib_ccxr::util::log::{debug, info, DebugMessageFlag, ExitCause};
+use std::os::raw::c_uchar;
 
 pub const CCX_STREAM_MP4_BOXES: [CcxStreamMp4Box; 16] = [
     CcxStreamMp4Box {
@@ -404,6 +407,206 @@ pub fn is_valid_mp4_box(
     // No match
     0
 }
+/// # Safety
+/// This function is unsafe because it reads from a mutable slice, which may be a file with raw file pointers
+pub unsafe fn read_video_pes_header(
+    ctx: &mut CcxDemuxer,
+    data_ptr: *mut demuxer_data,
+    nextheader: &mut [c_uchar],
+    headerlength: *mut i32,
+    sbuflen: i32,
+    ccx_options: &mut Options,
+) -> i32 {
+    // Read the next video PES
+    // ((nextheader[3]&0xf0)==0xe0)
+    if data_ptr.is_null() {
+        fatal!(cause = ExitCause::Bug; "read_video_pes_header: data_ptr is null");
+    }
+    let data = &mut *data_ptr;
+    let peslen = ((nextheader[4] as u32) << 8) | (nextheader[5] as u32);
+    let mut payloadlength = 0u32; // Length of packet data bytes
+    static mut CURRENT_PTS_33: i64 = 0; // Last PTS from the header, without rollover bits
+
+    if sbuflen == 0 {
+        // Extension present, get it
+        let result = buffered_read(ctx, Some(&mut nextheader[6..9]), 3, ccx_options);
+        ctx.past += result as i64;
+        if result != 3 {
+            // Consider this the end of the show.
+            return -1;
+        }
+    } else {
+        if data.bufferdatatype == BufferdataType::DvbSubtitle.to_ctype()
+            && peslen == 1
+            && nextheader[6] == 0xFF
+        {
+            *headerlength = sbuflen;
+            return 0;
+        }
+        if sbuflen < 9 {
+            // We need at least 9 bytes to continue
+            return -1;
+        }
+    }
+    *headerlength = 6 + 3;
+
+    let mut hskip = 0u32;
+
+    // Assume header[8] is right, but double check
+    if sbuflen == 0 {
+        let eigth = nextheader[8] as usize;
+        if eigth > 0 {
+            let result = buffered_read(
+                ctx,
+                Some(&mut nextheader[9..(9 + eigth)]),
+                eigth,
+                ccx_options,
+            );
+            ctx.past += result as i64;
+            if result != nextheader[8] as usize {
+                return -1;
+            }
+        }
+    } else {
+        // See if the buffer is big enough
+        if sbuflen < *headerlength + nextheader[8] as i32 {
+            return -1;
+        }
+    }
+    *headerlength += nextheader[8] as i32;
+    let mut falsepes = false;
+    /* let pesext = false; */
+
+    // Avoid false positives, check --- not really needed
+    if (nextheader[7] & 0xC0) == 0x80 {
+        // PTS only
+        hskip += 5;
+        if (nextheader[9] & 0xF1) != 0x21
+            || (nextheader[11] & 0x01) != 0x01
+            || (nextheader[13] & 0x01) != 0x01
+        {
+            falsepes = true;
+            info!("False PTS");
+        }
+    } else if (nextheader[7] & 0xC0) == 0xC0 {
+        // PTS and DTS
+        hskip += 10;
+        if (nextheader[9] & 0xF1) != 0x31
+            || (nextheader[11] & 0x01) != 0x01
+            || (nextheader[13] & 0x01) != 0x01
+            || (nextheader[14] & 0xF1) != 0x11
+            || (nextheader[16] & 0x01) != 0x01
+            || (nextheader[18] & 0x01) != 0x01
+        {
+            falsepes = true;
+            info!("False PTS/DTS");
+        }
+    } else if (nextheader[7] & 0xC0) == 0x40 {
+        // Forbidden
+        falsepes = true;
+        info!("False PTS/DTS flag");
+    }
+    if !falsepes && (nextheader[7] & 0x20) != 0 {
+        // ESCR
+        if (nextheader[9 + hskip as usize] & 0xC4) != 0x04
+            || (nextheader[11 + hskip as usize] & 0x04) == 0
+            || (nextheader[13 + hskip as usize] & 0x04) == 0
+            || (nextheader[14 + hskip as usize] & 0x01) == 0
+        {
+            falsepes = true;
+            info!("False ESCR");
+        }
+        hskip += 6;
+    }
+    if !falsepes && (nextheader[7] & 0x10) != 0 {
+        // ES
+        if (nextheader[9 + hskip as usize] & 0x80) == 0
+            || (nextheader[11 + hskip as usize] & 0x01) == 0
+        {
+            info!("False ES");
+            falsepes = true;
+        }
+        hskip += 3;
+    }
+    if !falsepes && (nextheader[7] & 0x04) != 0 {
+        // add copy info
+        if (nextheader[9 + hskip as usize] & 0x80) == 0 {
+            info!("False add copy info");
+            falsepes = true;
+        }
+        hskip += 1;
+    }
+    if !falsepes && (nextheader[7] & 0x02) != 0 {
+        // PES CRC
+        hskip += 2;
+    }
+    if !falsepes && (nextheader[7] & 0x01) != 0 {
+        // PES extension
+        if (nextheader[9 + hskip as usize] & 0x0E) != 0x0E {
+            info!("False PES ext");
+            falsepes = true;
+        }
+        hskip += 1;
+        /* pesext = true; */
+    }
+
+    if !falsepes {
+        hskip = nextheader[8] as u32;
+    }
+
+    if !falsepes && (nextheader[7] & 0x80) != 0 {
+        // Read PTS from byte 9,10,11,12,13
+
+        let bits_9 = ((nextheader[9] as i64) & 0x0E) << 29; // PTS 32..30 - Must be i64 to prevent overflow
+        let bits_10 = (nextheader[10] as u32) << 22; // PTS 29..22
+        let bits_11 = ((nextheader[11] as u32) & 0xFE) << 14; // PTS 21..15
+        let bits_12 = (nextheader[12] as u32) << 7; // PTS 14-7
+        let bits_13 = (nextheader[13] as u32) >> 1; // PTS 6-0
+
+        if data.pts != CCX_NOPTS {
+            // Otherwise can't check for rollovers yet
+            if bits_9 == 0 && ((CURRENT_PTS_33 >> 30) & 7) == 7 {
+                // PTS about to rollover
+                data.rollover_bits += 1;
+            }
+            if (bits_9 >> 30) == 7 && ((CURRENT_PTS_33 >> 30) & 7) == 0 {
+                // PTS rollback? Rare and if happens it would mean out of order frames
+                data.rollover_bits -= 1;
+            }
+        }
+
+        CURRENT_PTS_33 =
+            bits_9 | (bits_10 as i64) | (bits_11 as i64) | (bits_12 as i64) | (bits_13 as i64);
+        data.pts = ((data.rollover_bits as i64) << 33) | CURRENT_PTS_33;
+
+        /* The user data holding the captions seems to come between GOP and
+         * the first frame. The sync PTS (sync_pts) (set at picture 0)
+         * corresponds to the first frame of the current GOP. */
+    }
+
+    // This might happen in PES packets in TS stream. It seems that when the
+    // packet length is unknown it is set to 0.
+    if peslen + 6 >= hskip + 9 {
+        payloadlength = peslen - (hskip + 3); // for [6], [7] and [8]
+    }
+
+    // Use a save default if this is not a real PES header
+    if falsepes {
+        info!("False PES header");
+    }
+
+    // Assuming verbose debug logging would be done with debug!() macro
+    debug!(
+        msg_type = DebugMessageFlag::VERBOSE;
+        "PES header length: {} ({} verified)  Data length: {}",
+        *headerlength,
+        hskip + 9,
+        payloadlength
+    );
+
+    payloadlength as i32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -221,6 +221,7 @@ pub enum StreamType {
     AudioDts = 0x8a,
 }
 
+#[derive(Debug, PartialEq, Eq, FromRepr, Clone, Copy)]
 pub enum MpegDescriptor {
     /*
     The later constants are defined by ETSI EN 300 468 standard

@@ -84,7 +84,7 @@ fn update_pinfo(ctx: &mut CcxDemuxer, pid: i32, program_number: i32) -> Result<(
 
     Ok(())
 }
-fn ts_buffer_psi_packet(ctx: &mut CcxDemuxer, tspacket: &[u8]) {
+pub fn ts_buffer_psi_packet(ctx: &mut CcxDemuxer, tspacket: &[u8]) {
     if tspacket.len() < 188 {
         return;
     }
@@ -616,7 +616,7 @@ fn decode_sdt_services_loop(ctx: &mut CcxDemuxer, buf: &[u8], length: u32) {
     }
 }
 
-fn parse_sdt(ctx: &mut CcxDemuxer) {
+pub fn parse_sdt(ctx: &mut CcxDemuxer) {
     // Safety check: ensure PID_buffers[0x11] exists and is valid
     if ctx.pid_buffers.len() <= 0x11 || ctx.pid_buffers[0x11].is_null() {
         return;

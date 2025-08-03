@@ -1,7 +1,22 @@
-use crate::bindings::{cap_info, lib_cc_decode, lib_ccx_ctx, list_head};
+use crate::bindings::{
+    cap_info, ccx_code_type_CCX_CODEC_NONE, ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM,
+    demuxer_data, dvbsub_init_decoder, lib_cc_decode, lib_ccx_ctx, list_head, telxcc_init,
+};
+use crate::common::CType;
+use crate::demuxer::common_structs::CcxDemuxer;
+use crate::transportstream::core::copy_capbuf_demux_data;
+use lib_ccxr::common::{Codec, Options, StreamType};
+use std::ffi::c_int;
+use std::os::raw::c_void;
 use std::ptr::null_mut;
 // HList (Hyperlinked List)
-
+/* Note
+We are using demuxer_data and cap_info from lib_ccx from bindings,
+because data.next_stream and cinfo.all_stream(and others) are linked lists,
+and are impossible to copy to rust with good performance in mind.
+So, when the core C library is made into rust, please make sure to update these structs
+to DemuxerData and CapInfo, respectively.
+*/
 #[allow(clippy::ptr_eq)]
 pub fn list_empty(head: &list_head) -> bool {
     head.next == head as *const list_head as *mut list_head
@@ -124,6 +139,7 @@ pub unsafe fn is_decoder_processed_enough(ctx: &mut lib_ccx_ctx) -> i32 {
 
     0
 }
+
 /// # Safety
 /// This function is unsafe because it calls list_del.
 pub unsafe fn dinit_cap(cinfo_tree: &mut cap_info) {
@@ -150,7 +166,7 @@ pub unsafe fn dinit_cap(cinfo_tree: &mut cap_info) {
             list_del(current);
         }
         // Free resources
-        freep(&mut (*entry).capbuf);
+        let _ = &mut (*entry).capbuf;
         freep(&mut (*entry).codec_private_data);
         let _ = Box::from_raw(entry);
     }
@@ -161,12 +177,239 @@ pub unsafe fn dinit_cap(cinfo_tree: &mut cap_info) {
     init_list_head(&mut cinfo_tree.pg_stream);
 }
 
-fn freep<T>(ptr: &mut *mut T) {
+pub fn freep<T>(ptr: &mut *mut T) {
     unsafe {
         if !ptr.is_null() {
             let _ = Box::from_raw(*ptr);
             *ptr = null_mut();
         }
+    }
+}
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers.
+unsafe fn __list_add(elem: &mut list_head, prev: *mut list_head, next: *mut list_head) {
+    (*next).prev = elem as *mut list_head;
+    elem.next = next;
+    elem.prev = prev;
+    (*prev).next = elem as *mut list_head;
+}
+
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers.
+pub unsafe fn list_add_tail(elem: &mut list_head, head: &mut list_head) {
+    __list_add(elem, head.prev, head);
+}
+
+/// Initialize private data based on codec type
+/// # Safety
+/// This function is unsafe because it returns raw pointers that need proper management
+unsafe fn init_private_data(codec: Codec) -> *mut std::ffi::c_void {
+    match codec {
+        Codec::Teletext => telxcc_init(),
+        Codec::Dvb => dvbsub_init_decoder(null_mut(), 0),
+        _ => null_mut(),
+    }
+}
+
+/// Update capture info for a given PID
+/// # Safety
+/// This function is unsafe because it manipulates raw pointers and linked lists
+#[allow(clippy::too_many_arguments)]
+pub unsafe fn update_capinfo(
+    ptr: &mut cap_info,
+    pid: i32,
+    stream: StreamType,
+    codec: Option<Codec>,
+    pn: i32,
+    private_data: *mut c_void,
+    flag_ts_forced_cappid: bool,
+    ts_datastreamtype: StreamType,
+) -> i32 {
+    // Check if context is null
+
+    // Check stream type compatibility
+    if ts_datastreamtype != StreamType::Unknownstream && ts_datastreamtype != stream {
+        return -1;
+    }
+
+    // Search for existing entry with same PID
+    for tmp_ptr in list_for_each_entry!(&mut ptr.all_stream, cap_info, all_stream) {
+        // info!("Checking PID: {}\n", (*tmp_ptr).pid);
+        // info!(
+        //     "Current Stream: {:?}, Codec: {:?}\n",
+        //     (*tmp_ptr).stream,
+        //     (*tmp_ptr).codec
+        // );
+
+        let tmp = &mut *tmp_ptr;
+
+        if tmp.pid == pid {
+            // Update existing entry if it has unknown stream or no codec
+            if tmp.stream == ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM
+                || tmp.codec == ccx_code_type_CCX_CODEC_NONE
+            {
+                if stream != StreamType::Unknownstream {
+                    tmp.stream = stream.to_ctype() as u32;
+                }
+
+                if codec.is_some() {
+                    tmp.codec = codec.unwrap().to_ctype();
+                    tmp.codec_private_data = init_private_data(codec.unwrap());
+                }
+
+                tmp.saw_pesstart = 0;
+                tmp.capbuflen = 0;
+                tmp.capbufsize = 0;
+                tmp.ignore = 0;
+
+                if !private_data.is_null() {
+                    tmp.codec_private_data = private_data;
+                }
+            }
+            return 0;
+        }
+    }
+
+    // Check if forced cap PID is enabled
+    if flag_ts_forced_cappid {
+        return -102;
+    }
+
+    // Allocate new cap_info structure using Box
+    let tmp_box = Box::new(cap_info {
+        pid: 0,
+        stream: ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM,
+        codec: ccx_code_type_CCX_CODEC_NONE,
+        program_number: 0,
+        saw_pesstart: 0,
+        capbuflen: 0,
+        capbufsize: 0,
+        capbuf: null_mut(),
+        ignore: 0,
+        codec_private_data: null_mut(),
+        all_stream: list_head {
+            next: null_mut(),
+            prev: null_mut(),
+        },
+        pg_stream: list_head {
+            next: null_mut(),
+            prev: null_mut(),
+        },
+        sib_stream: list_head {
+            next: null_mut(),
+            prev: null_mut(),
+        },
+        sib_head: list_head {
+            next: null_mut(),
+            prev: null_mut(),
+        },
+        prev_counter: 0,
+    });
+    let tmp_ptr = Box::into_raw(tmp_box);
+
+    let tmp = &mut *tmp_ptr;
+
+    // Initialize new entry
+    tmp.pid = pid;
+    tmp.stream = stream.to_ctype() as u32;
+    if codec.is_none() {
+        tmp.codec = ccx_code_type_CCX_CODEC_NONE;
+    } else {
+        tmp.codec = codec.unwrap().to_ctype();
+    }
+    tmp.program_number = pn;
+    tmp.saw_pesstart = 0;
+    tmp.capbuflen = 0;
+    tmp.capbufsize = 0;
+    tmp.capbuf = null_mut();
+    tmp.ignore = 0;
+
+    // Set private data
+    if private_data.is_null() && codec.is_some() {
+        tmp.codec_private_data = init_private_data(codec.unwrap());
+    } else {
+        tmp.codec_private_data = private_data;
+    }
+
+    // Add to all_stream list
+    list_add_tail(&mut tmp.all_stream, &mut ptr.all_stream);
+
+    // Find program with matching program number
+    for program_iter_ptr in list_for_each_entry!(&mut ptr.pg_stream, cap_info, pg_stream) {
+        let program_iter = &mut *program_iter_ptr;
+
+        if program_iter.program_number == pn {
+            list_add_tail(&mut tmp.sib_stream, &mut program_iter.sib_head);
+            return 0;
+        }
+    }
+
+    // No matching program found, create new program entry
+    init_list_head(&mut tmp.sib_head);
+    list_add_tail(&mut tmp.sib_stream, &mut tmp.sib_head);
+    list_add_tail(&mut tmp.pg_stream, &mut ptr.pg_stream);
+
+    0
+}
+
+/// Check if capture info is needed for a given PID
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers in the linked list
+pub unsafe fn need_cap_info_for_pid(cap: &mut cap_info, pid: i32) -> bool {
+    if list_empty(&cap.all_stream) {
+        return false;
+    }
+
+    let head_ptr = &cap.all_stream as *const list_head as *mut list_head;
+    for iter in list_for_each_entry!(head_ptr, cap_info, all_stream) {
+        if (*iter).pid == pid && (*iter).stream == StreamType::Unknownstream.to_ctype() as u32 {
+            return true;
+        }
+    }
+    false
+}
+/// Get capture info for a given PID
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers in the linked list
+pub unsafe fn get_cinfo(cinfo_tree: &mut cap_info, pid: i32) -> *mut cap_info {
+    let head_ptr = &cinfo_tree.all_stream as *const list_head as *mut list_head;
+
+    for iter in list_for_each_entry!(head_ptr, cap_info, all_stream) {
+        if (*iter).pid == pid
+            && (*iter).codec != ccx_code_type_CCX_CODEC_NONE
+            && (*iter).stream != ccx_stream_type_CCX_STREAM_TYPE_UNKNOWNSTREAM
+        {
+            return iter;
+        }
+    }
+
+    null_mut()
+}
+/// Process all cap_info entries and copy their buffers to demuxer data
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers in the linked list
+pub unsafe fn cinfo_cremation(
+    ctx: &mut CcxDemuxer,
+    data: *mut *mut demuxer_data,
+    cinfo_tree: &mut cap_info,
+    ccx_options: &mut Options,
+    haup_capbuf: *mut u8,
+    haup_capbuflen: &mut c_int,
+    last_pts: &mut u64,
+) {
+    let head_ptr = &cinfo_tree.all_stream as *const list_head as *mut list_head;
+
+    for iter in list_for_each_entry!(head_ptr, cap_info, all_stream) {
+        copy_capbuf_demux_data(
+            ctx,
+            data,
+            &mut *iter,
+            ccx_options,
+            haup_capbuf,
+            &mut *haup_capbuflen, // Dereference the pointer to get a mutable reference
+            &mut *last_pts,
+        );
+        freep(&mut (*iter).capbuf);
     }
 }
 

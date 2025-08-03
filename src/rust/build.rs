@@ -22,6 +22,16 @@ fn main() {
         "fclose",
         "fprintf",
         "fwrite",
+        "realloc",
+        "telxcc_init",
+        "dvbsub_init_decoder",
+        "ccx_mpeg_descriptor",
+        "parse_dvb_description",
+        "dvbsub_init_decoder",
+        "init_isdb_decoder",
+        "telxcc_close",
+        "dvbsub_close_decoder",
+        "delete_isdb_decoder",
         #[cfg(windows)]
         "_open_osfhandle",
         #[cfg(windows)]
@@ -65,6 +75,9 @@ fn main() {
         "GXFTrackType",
         "AVPacketMythTV",
         "demuxer_data",
+        "ts_payload",
+        "ccx_mpeg_descriptor",
+        "dvb_config",
         "uint8_t",
         "word_list",
     ]);
