@@ -350,10 +350,10 @@ impl CType<u32> for Encoding {
     /// Convert to C variant of `u32`.
     unsafe fn to_ctype(&self) -> u32 {
         match self {
-            Encoding::Ascii => ccx_encoding_type_CCX_ENC_ASCII as _,
+            Encoding::ASCII => ccx_encoding_type_CCX_ENC_ASCII as _,
             Encoding::Latin1 => ccx_encoding_type_CCX_ENC_LATIN_1 as _,
-            Encoding::Utf8 => ccx_encoding_type_CCX_ENC_UTF_8 as _,
-            Encoding::Ucs2 => ccx_encoding_type_CCX_ENC_UNICODE as _,
+            Encoding::UTF8 => ccx_encoding_type_CCX_ENC_UTF_8 as _,
+            Encoding::UCS2 => ccx_encoding_type_CCX_ENC_UNICODE as _,
         }
     }
 }

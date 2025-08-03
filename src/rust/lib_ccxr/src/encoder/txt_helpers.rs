@@ -61,7 +61,7 @@ fn change_utf8_encoding(dest: &mut [u8], src: &[u8], len: i32, out_enc: Encoding
         }
 
         match out_enc {
-            Encoding::Utf8 => {
+            Encoding::UTF8 => {
                 let to_copy = max;
                 if to_copy <= dest.len() {
                     dest[..to_copy].copy_from_slice(&src[..to_copy]);
@@ -156,10 +156,10 @@ fn change_utf8_encoding(dest: &mut [u8], src: &[u8], len: i32, out_enc: Encoding
                     dest_idx += 1;
                 }
             }
-            Encoding::Ucs2 => {
+            Encoding::UCS2 => {
                 return EncoderError::Unsupported as i32;
             }
-            Encoding::Ascii => {
+            Encoding::ASCII => {
                 if c_len == 1 {
                     dest[dest_idx] = src[src_idx];
                     dest_idx += 1;
@@ -196,7 +196,7 @@ pub fn change_ascii_encoding(
 
     for &c in src {
         match out_enc {
-            Encoding::Utf8 => {
+            Encoding::UTF8 => {
                 let utf8_packed = line21_to_utf8(c);
                 let bytes = if utf8_packed <= 0xff {
                     vec![utf8_packed as u8]
@@ -217,12 +217,12 @@ pub fn change_ascii_encoding(
                 let latin1_char = line21_to_latin1(c);
                 dest.push(latin1_char);
             }
-            Encoding::Ucs2 => {
+            Encoding::UCS2 => {
                 let ucs2_char = line21_to_ucs2(c);
                 // UCS-2 is 2 bytes, little-endian
                 dest.extend_from_slice(&ucs2_char.to_le_bytes());
             }
-            Encoding::Ascii => {
+            Encoding::ASCII => {
                 dest.extend_from_slice(src);
                 return Ok(src.len());
             }
@@ -284,7 +284,7 @@ pub fn get_str_basic(
 
     // change encoding only when required
     match in_enc {
-        Encoding::Utf8 => {
+        Encoding::UTF8 => {
             let mut temp_buffer = vec![0u8; (content_length * 4) as usize]; // Allow extra space for multi-byte encodings
             len = change_utf8_encoding(
                 &mut temp_buffer,
@@ -308,7 +308,7 @@ pub fn get_str_basic(
                 out_buffer.extend_from_slice(&temp_buffer[..len as usize]);
             }
         }
-        Encoding::Ucs2 => {
+        Encoding::UCS2 => {
             let mut temp_buffer = vec![0u8; (content_length * 4) as usize];
             len = change_unicode_encoding(
                 &mut temp_buffer,
@@ -320,7 +320,7 @@ pub fn get_str_basic(
                 out_buffer.extend_from_slice(&temp_buffer[..len as usize]);
             }
         }
-        Encoding::Ascii => {
+        Encoding::ASCII => {
             let input_slice =
                 &in_buffer[first_non_blank as usize..(first_non_blank + content_length) as usize];
             len = change_ascii_encoding(out_buffer, input_slice, out_enc)
@@ -376,7 +376,7 @@ mod tests {
         let src = b"Hello, \xC3\xA9world!"; // "Hello, éworld!"
         let mut dest = [0u8; 20];
 
-        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::Utf8);
+        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::UTF8);
 
         assert_eq!(result, src.len() as i32);
         assert_eq!(&dest[..src.len()], src);
@@ -387,7 +387,7 @@ mod tests {
         let src = b"Hello, \xC3\xA9world!"; // "Hello, éworld!"
         let mut dest = [0u8; 20];
 
-        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::Ascii);
+        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::ASCII);
 
         assert_eq!(result, 14); // "Hello, ?world!" (14 chars)
         assert_eq!(&dest[..14], b"Hello, ?world!");
@@ -398,7 +398,7 @@ mod tests {
         let src = b"Hello";
         let mut dest = [0u8; 10];
 
-        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::Ucs2);
+        let result = change_utf8_encoding(&mut dest, src, src.len() as i32, Encoding::UCS2);
 
         assert_eq!(result, EncoderError::Unsupported as i32);
     }
@@ -406,7 +406,7 @@ mod tests {
     fn test_ascii_to_ascii() {
         let src = b"Hello World!";
         let mut dest = Vec::with_capacity(20);
-        let result = change_ascii_encoding(&mut dest, src, Encoding::Ascii);
+        let result = change_ascii_encoding(&mut dest, src, Encoding::ASCII);
 
         assert_eq!(result.unwrap(), src.len());
         assert_eq!(&dest[..src.len()], src);
@@ -417,7 +417,7 @@ mod tests {
         let src = b"Hello";
         let mut dest = Vec::with_capacity(20);
 
-        let result = change_ascii_encoding(&mut dest, src, Encoding::Utf8);
+        let result = change_ascii_encoding(&mut dest, src, Encoding::UTF8);
 
         assert_eq!(result.unwrap(), 5); // Each ASCII char becomes 1 UTF-8 byte
         assert_eq!(&dest[..5], b"Hello");
@@ -441,7 +441,7 @@ mod tests {
         let src = b"Hi";
         let mut dest = Vec::with_capacity(20);
 
-        let result = change_ascii_encoding(&mut dest, src, Encoding::Ucs2);
+        let result = change_ascii_encoding(&mut dest, src, Encoding::UCS2);
 
         assert_eq!(result.unwrap(), 4); // Each ASCII char becomes 2 Unicode bytes
         assert_eq!(dest[4], 0); // Null terminator
@@ -456,8 +456,8 @@ mod tests {
             &mut out_buffer,
             in_buffer,
             true,
-            Encoding::Ascii,
-            Encoding::Ascii,
+            Encoding::ASCII,
+            Encoding::ASCII,
             10,
         );
 
@@ -473,8 +473,8 @@ mod tests {
             &mut out_buffer,
             in_buffer,
             false,
-            Encoding::Ascii,
-            Encoding::Ascii,
+            Encoding::ASCII,
+            Encoding::ASCII,
             10,
         );
 
