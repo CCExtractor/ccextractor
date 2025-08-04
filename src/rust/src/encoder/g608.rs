@@ -1,12 +1,11 @@
 use crate::bindings::{
-    ccx_encoding_type_CCX_ENC_ASCII, ccx_encoding_type_CCX_ENC_LATIN_1,
-    ccx_encoding_type_CCX_ENC_UNICODE, ccx_encoding_type_CCX_ENC_UTF_8, eia608_screen, encoder_ctx,
-    font_bits_FONT_ITALICS, font_bits_FONT_REGULAR, font_bits_FONT_UNDERLINED,
-    font_bits_FONT_UNDERLINED_ITALICS,
+    eia608_screen, encoder_ctx, font_bits_FONT_ITALICS, font_bits_FONT_REGULAR,
+    font_bits_FONT_UNDERLINED, font_bits_FONT_UNDERLINED_ITALICS,
 };
 use crate::encoder::common::{encode_line, write_raw};
+use crate::encoder::FromCType;
 use crate::libccxr_exports::time::ccxr_millis_to_time;
-use lib_ccxr::util::encoding::{line21_to_latin1, line21_to_ucs2, line21_to_utf8};
+use lib_ccxr::util::encoding::{line21_to_latin1, line21_to_ucs2, line21_to_utf8, Encoding};
 use std::io;
 use std::os::raw::{c_int, c_uchar, c_uint, c_void};
 
@@ -20,11 +19,10 @@ pub fn write_wrapped(fd: c_int, buf: &[u8]) -> Result<(), io::Error> {
         if written == -1 {
             return Err(io::Error::last_os_error());
         }
-        let bytes_written = written as usize;
         unsafe {
-            current_buf = current_buf.add(bytes_written);
+            current_buf = current_buf.add(written as usize);
         }
-        remaining -= bytes_written;
+        remaining -= written as usize;
     }
 
     Ok(())
@@ -41,40 +39,22 @@ pub fn get_line_encoded(
     let line = &data.characters[line_num];
 
     for i in line.iter().take(33) {
-        let bytes_written = match ctx.encoding {
-            ccx_encoding_type_CCX_ENC_UTF_8 => {
-                let utf8_packed = line21_to_utf8(*i);
-                let (byte_count, bytes) = if utf8_packed <= 0xff {
-                    (1, [(utf8_packed & 0xFF) as c_uchar, 0, 0])
-                } else if utf8_packed <= 0xffff {
-                    (
-                        2,
-                        [
-                            ((utf8_packed >> 8) & 0xFF) as c_uchar,
-                            (utf8_packed & 0xFF) as c_uchar,
-                            0,
-                        ],
-                    )
-                } else {
-                    (
-                        3,
-                        [
-                            ((utf8_packed >> 16) & 0xFF) as c_uchar,
-                            ((utf8_packed >> 8) & 0xFF) as c_uchar,
-                            (utf8_packed & 0xFF) as c_uchar,
-                        ],
-                    )
-                };
-
-                if buffer_pos + byte_count - 1 < buffer.len() {
-                    buffer[buffer_pos..(byte_count + buffer_pos)]
-                        .copy_from_slice(&bytes[..byte_count]);
-                    byte_count
-                } else {
-                    0
+        let enc = unsafe { Encoding::from_ctype(ctx.encoding).unwrap_or(Encoding::default()) };
+        let bytes_written = match enc {
+            Encoding::UTF8 => {
+                let utf8_char = line21_to_utf8(*i);
+                let first_non_zero = (utf8_char.leading_zeros() / 8) as usize;
+                let bytes = utf8_char.to_be_bytes(); // UTF-8, big-endian
+                                                     // Since we use u32, it would have leading zeroes
+                let byte_count = bytes.len() - first_non_zero;
+                if buffer_pos + byte_count > buffer.len() {
+                    return 0;
                 }
+                buffer[buffer_pos..(byte_count + buffer_pos)]
+                    .copy_from_slice(&bytes[first_non_zero..(first_non_zero + byte_count)]);
+                byte_count
             }
-            ccx_encoding_type_CCX_ENC_LATIN_1 => {
+            Encoding::Latin1 => {
                 if buffer_pos < buffer.len() {
                     let latin1_char = line21_to_latin1(*i);
                     buffer[buffer_pos] = latin1_char as c_uchar;
@@ -83,7 +63,7 @@ pub fn get_line_encoded(
                     0
                 }
             }
-            ccx_encoding_type_CCX_ENC_UNICODE => {
+            Encoding::UCS2 => {
                 if buffer_pos + 1 < buffer.len() {
                     let ucs2_char = line21_to_ucs2(*i);
                     // UCS-2 is 2 bytes, little-endian
@@ -95,16 +75,13 @@ pub fn get_line_encoded(
                     0
                 }
             }
-            ccx_encoding_type_CCX_ENC_ASCII => {
+            Encoding::Line21 => {
                 if buffer_pos < buffer.len() {
                     buffer[buffer_pos] = *i;
                     1
                 } else {
                     0
                 }
-            }
-            _ => {
-                0 // This should never be reached
             }
         };
 
@@ -190,18 +167,19 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
     unsafe {
         ccxr_millis_to_time(data.start_time, &mut h1, &mut m1, &mut s1, &mut ms1);
         ccxr_millis_to_time(data.end_time - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
+        // -1 To prevent overlapping with the next line.
     }
 
     // Increment counter
     context.srt_counter += 1;
-
-    // Create timeline string for counter
-    let counter_line = format!("{}{}", context.srt_counter, unsafe {
+    let encoded_clrf = unsafe {
         std::str::from_utf8_unchecked(std::slice::from_raw_parts(
             context.encoded_crlf.as_ptr(),
             context.encoded_crlf_length as usize,
         ))
-    });
+    };
+    // Create timeline string for counter
+    let counter_line = format!("{}{}", context.srt_counter, encoded_clrf);
 
     // Encode and write counter line
     let buffer_slice =
@@ -214,21 +192,7 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
 
     // Create timeline string for timestamps
     let timestamp_line = format!(
-        "{:02}:{:02}:{:02},{:03} --> {:02}:{:02}:{:02},{:03}{}",
-        h1,
-        m1,
-        s1,
-        ms1,
-        h2,
-        m2,
-        s2,
-        ms2,
-        unsafe {
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(
-                context.encoded_crlf.as_ptr(),
-                context.encoded_crlf_length as usize,
-            ))
-        }
+        "{h1:02}:{m1:02}:{s1:02},{ms1:03} --> {h2:02}:{m2:02}:{s2:02},{ms2:03}{encoded_clrf}"
     );
 
     // Encode and write timestamp line
@@ -244,37 +208,18 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
             std::slice::from_raw_parts_mut(context.subline, 1024) // temporary, should be inputted after encoder_ctx => EncoderCtx
         };
 
-        // Get line encoded
-        let length = get_line_encoded(context, subline_slice, i, data);
-        if write_wrapped(
-            unsafe { (*context.out).fh },
-            &subline_slice[..length as usize],
-        )
-        .is_err()
-        {
-            return 0;
-        }
-
-        // Get color encoded
-        let length = get_color_encoded(context, subline_slice, i, data);
-        if write_wrapped(
-            unsafe { (*context.out).fh },
-            &subline_slice[..length as usize],
-        )
-        .is_err()
-        {
-            return 0;
-        }
-
-        // Get font encoded
-        let length = get_font_encoded(context, subline_slice, i, data);
-        if write_wrapped(
-            unsafe { (*context.out).fh },
-            &subline_slice[..length as usize],
-        )
-        .is_err()
-        {
-            return 0;
+        type EncodeFn = fn(&encoder_ctx, &mut [c_uchar], usize, &eia608_screen) -> c_uint;
+        let steps: &[EncodeFn] = &[get_line_encoded, get_color_encoded, get_font_encoded];
+        for &encode_fn in steps {
+            let length = encode_fn(context, subline_slice, i, data);
+            if write_wrapped(
+                unsafe { (*context.out).fh },
+                &subline_slice[..length as usize],
+            )
+            .is_err()
+            {
+                return 0;
+            }
         }
 
         // Write CRLF

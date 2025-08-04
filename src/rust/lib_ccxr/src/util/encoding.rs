@@ -2,7 +2,7 @@
 //!
 //! Any Text within the entire application can be in one of the following 4 formats which is
 //! represented by [`Encoding`].
-//! - [`Line 21`](Encoding::ASCII) - Used in 608 captions.
+//! - [`Line 21`](Encoding::Line21) - Used in 608 captions.
 //! - [`Latin-1`](Encoding::Latin1) - ISO/IEC 8859-1.
 //! - [`UCS-2`](Encoding::UCS2) - UCS-2 code points.
 //! - [`UTF-8`](Encoding::UTF8)
@@ -41,7 +41,7 @@
 /// Represents the different kinds of encoding that [`EncodedString`] can take.
 #[derive(Default, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Encoding {
-    ASCII,  // Same as `CCX_ENC_ASCII` in C
+    Line21, // Same as `CCX_ENC_ASCII` in C
     Latin1, // Same as `CCX_ENC_LATIN_1` in C
     #[default]
     UTF8, // Same as `CCX_ENC_UTF_8` in C
@@ -115,7 +115,7 @@ impl Line21String {
     /// Converts this [`Line21String`] to a format provided by `encoding`, returning a new [`EncodedString`].
     pub fn encode_to(&self, encoding: Encoding) -> EncodedString {
         match encoding {
-            Encoding::ASCII => self.clone().into(),
+            Encoding::Line21 => self.clone().into(),
             Encoding::Latin1 => EncodedString::Latin1(self.into()),
             Encoding::UCS2 => EncodedString::Ucs2(self.into()),
             Encoding::UTF8 => EncodedString::Utf8(self.into()),
@@ -172,7 +172,7 @@ impl Latin1String {
     /// Converts this [`Latin1String`] to a format provided by `encoding`, returning a new [`EncodedString`].
     pub fn encode_to(&self, encoding: Encoding) -> EncodedString {
         match encoding {
-            Encoding::ASCII => EncodedString::Line21(self.into()),
+            Encoding::Line21 => EncodedString::Line21(self.into()),
             Encoding::Latin1 => self.clone().into(),
             Encoding::UCS2 => EncodedString::Ucs2(self.into()),
             Encoding::UTF8 => EncodedString::Utf8(self.into()),
@@ -229,7 +229,7 @@ impl Ucs2String {
     /// Converts this [`Ucs2String`] to a format provided by `encoding`, returning a new [`EncodedString`].
     pub fn encode_to(&self, encoding: Encoding) -> EncodedString {
         match encoding {
-            Encoding::ASCII => EncodedString::Line21(self.into()),
+            Encoding::Line21 => EncodedString::Line21(self.into()),
             Encoding::Latin1 => EncodedString::Latin1(self.into()),
             Encoding::UCS2 => self.clone().into(),
             Encoding::UTF8 => EncodedString::Utf8(self.into()),
@@ -372,7 +372,7 @@ impl EncodedString {
     /// ```
     pub fn from_str(string: &str, encoding: Encoding) -> EncodedString {
         match encoding {
-            Encoding::ASCII => EncodedString::Line21(string.into()),
+            Encoding::Line21 => EncodedString::Line21(string.into()),
             Encoding::Latin1 => EncodedString::Latin1(string.into()),
             Encoding::UCS2 => EncodedString::Ucs2(string.into()),
             Encoding::UTF8 => EncodedString::Utf8(string.to_string()),
@@ -385,11 +385,11 @@ impl EncodedString {
     /// ```rust
     /// # use lib_ccxr::util::encoding::*;
     /// let s: EncodedString = Line21String::from_vec(vec![b'a', b'b']).into();
-    /// assert_eq!(s.encoding(), Encoding::ASCII);
+    /// assert_eq!(s.encoding(), Encoding::Line21);
     /// ```
     pub fn encoding(&self) -> Encoding {
         match self {
-            EncodedString::Line21(_) => Encoding::ASCII,
+            EncodedString::Line21(_) => Encoding::Line21,
             EncodedString::Latin1(_) => Encoding::Latin1,
             EncodedString::Ucs2(_) => Encoding::UCS2,
             EncodedString::Utf8(_) => Encoding::UTF8,
@@ -492,7 +492,7 @@ impl EncodedString {
     /// ```
     pub fn encode_to(&self, encoding: Encoding) -> EncodedString {
         match encoding {
-            Encoding::ASCII => EncodedString::Line21(self.to_line21()),
+            Encoding::Line21 => EncodedString::Line21(self.to_line21()),
             Encoding::Latin1 => EncodedString::Latin1(self.to_latin1()),
             Encoding::UCS2 => EncodedString::Ucs2(self.to_ucs2()),
             Encoding::UTF8 => EncodedString::Utf8(self.to_utf8()),

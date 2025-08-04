@@ -1,4 +1,5 @@
-use crate::bindings::ccx_encoding_type;
+use crate::bindings::{ccx_encoding_type, ccx_output_format};
+use lib_ccxr::common::OutputFormat;
 use lib_ccxr::encoder::txt_helpers::get_str_basic;
 use lib_ccxr::util::encoding::Encoding;
 use std::os::raw::{c_int, c_uchar};
@@ -68,8 +69,31 @@ impl FromCType<ccx_encoding_type> for Encoding {
             0 => Encoding::UCS2,   // CCX_ENC_UNICODE
             1 => Encoding::Latin1, // CCX_ENC_LATIN_1
             2 => Encoding::UTF8,   // CCX_ENC_UTF_8
-            3 => Encoding::ASCII,  // CCX_ENC_ASCII
+            3 => Encoding::Line21, // CCX_ENC_ASCII
             _ => Encoding::UTF8,   // Default to UTF-8 if unknown
+        })
+    }
+}
+impl FromCType<ccx_output_format> for OutputFormat {
+    unsafe fn from_ctype(format: ccx_output_format) -> Option<Self> {
+        Some(match format {
+            ccx_output_format::CCX_OF_RAW => OutputFormat::Raw,
+            ccx_output_format::CCX_OF_SRT => OutputFormat::Srt,
+            ccx_output_format::CCX_OF_SAMI => OutputFormat::Sami,
+            ccx_output_format::CCX_OF_TRANSCRIPT => OutputFormat::Transcript,
+            ccx_output_format::CCX_OF_RCWT => OutputFormat::Rcwt,
+            ccx_output_format::CCX_OF_NULL => OutputFormat::Null,
+            ccx_output_format::CCX_OF_SMPTETT => OutputFormat::SmpteTt,
+            ccx_output_format::CCX_OF_SPUPNG => OutputFormat::SpuPng,
+            ccx_output_format::CCX_OF_DVDRAW => OutputFormat::DvdRaw,
+            ccx_output_format::CCX_OF_WEBVTT => OutputFormat::WebVtt,
+            ccx_output_format::CCX_OF_SIMPLE_XML => OutputFormat::SimpleXml,
+            ccx_output_format::CCX_OF_G608 => OutputFormat::G608,
+            ccx_output_format::CCX_OF_CURL => OutputFormat::Curl,
+            ccx_output_format::CCX_OF_SSA => OutputFormat::Ssa,
+            ccx_output_format::CCX_OF_MCC => OutputFormat::Mcc,
+            ccx_output_format::CCX_OF_SCC => OutputFormat::Scc,
+            ccx_output_format::CCX_OF_CCD => OutputFormat::Ccd,
         })
     }
 }

@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 use crate::bindings::{
-    ccx_encoding_type_CCX_ENC_LATIN_1, ccx_encoding_type_CCX_ENC_UNICODE,
-    ccx_encoding_type_CCX_ENC_UTF_8, ccx_output_format, ccx_s_write, encoder_ctx, net_send_header,
+    ccx_encoding_type_CCX_ENC_UNICODE, ccx_s_write, encoder_ctx, net_send_header,
     write_spumux_footer, write_spumux_header,
 };
 use crate::ccx_options;
-use lib_ccxr::common::{BROADCAST_HEADER, LITTLE_ENDIAN_BOM, UTF8_BOM};
+use crate::encoder::FromCType;
+use lib_ccxr::common::{OutputFormat, BROADCAST_HEADER, LITTLE_ENDIAN_BOM, UTF8_BOM};
+use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
 use std::alloc::{alloc, dealloc, Layout};
@@ -17,6 +18,7 @@ use std::os::raw::{c_int, c_uchar, c_uint, c_void};
 #[cfg(windows)]
 use std::os::windows::io::FromRawHandle;
 use std::ptr;
+
 const CCD_HEADER: &[u8] = b"SCC_disassembly V1.2";
 const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
 
@@ -60,9 +62,9 @@ pub fn encode_line(ctx: &mut encoder_ctx, buffer: &mut [c_uchar], text: &[u8]) -
     let text_len = text.iter().position(|&b| b == 0).unwrap_or(text.len());
     while text_pos < text_len {
         let current_byte = text[text_pos];
-
-        match ctx.encoding {
-            ccx_encoding_type_CCX_ENC_UTF_8 | ccx_encoding_type_CCX_ENC_LATIN_1 => {
+        let enc = unsafe { Encoding::from_ctype(ctx.encoding).unwrap_or(Encoding::default()) };
+        match enc {
+            Encoding::UTF8 | Encoding::Latin1 => {
                 if buffer_pos + 1 >= buffer.len() {
                     break;
                 }
@@ -72,7 +74,7 @@ pub fn encode_line(ctx: &mut encoder_ctx, buffer: &mut [c_uchar], text: &[u8]) -
                 buffer_pos += 1;
             }
 
-            ccx_encoding_type_CCX_ENC_UNICODE => {
+            Encoding::UCS2 => {
                 if buffer_pos + 2 >= buffer.len() {
                     break;
                 }
@@ -97,43 +99,17 @@ pub fn encode_line(ctx: &mut encoder_ctx, buffer: &mut [c_uchar], text: &[u8]) -
 pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut ret: c_int = 0;
     let mut str_buffer = [0u8; 1024];
+    let write_format =
+        unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
 
-    match ctx.write_format {
-        ccx_output_format::CCX_OF_SAMI => {
-            let footer = b"</BODY></SAMI>\n\0";
-
-            // Bounds check for str_buffer
-            if footer.len() > str_buffer.len() {
-                return -1;
-            }
-
-            str_buffer[..footer.len()].copy_from_slice(footer);
-
-            if ctx.encoding != ccx_encoding_type_CCX_ENC_UNICODE {
-                debug!(msg_type = DebugMessageFlag::DECODER_608; "\r{}\n",
-                    std::str::from_utf8(&str_buffer[..footer.len()-1]).unwrap_or(""));
-            }
-
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = &str_buffer[..footer.len()];
-            let used = encode_line(ctx, buffer_slice, text_slice);
-
-            // Bounds check for buffer access
-            if used > ctx.capacity {
-                return -1;
-            }
-
-            ret = write_raw(out.fh, ctx.buffer as *const c_void, used as usize) as c_int;
-
-            if ret != used as c_int {
-                info!("WARNING: loss of data\n");
-            }
-        }
-
-        ccx_output_format::CCX_OF_SMPTETT => {
-            let footer = b"    </div>\n  </body>\n</tt>\n\0";
+    match write_format {
+        OutputFormat::Sami | OutputFormat::SmpteTt | OutputFormat::SimpleXml => {
+            let footer: &[u8] = match write_format {
+                OutputFormat::Sami => b"</BODY></SAMI>\n\0",
+                OutputFormat::SmpteTt => b"    </div>\n  </body>\n</tt>\n\0",
+                OutputFormat::SimpleXml => b"</captions>\n\0",
+                _ => unreachable!(),
+            };
 
             // Bounds check for str_buffer
             if footer.len() > str_buffer.len() {
@@ -165,44 +141,11 @@ pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_SPUPNG => unsafe {
+        OutputFormat::SpuPng => unsafe {
             write_spumux_footer(out);
         },
 
-        ccx_output_format::CCX_OF_SIMPLE_XML => {
-            let footer = b"</captions>\n\0";
-
-            // Bounds check for str_buffer
-            if footer.len() > str_buffer.len() {
-                return -1;
-            }
-
-            str_buffer[..footer.len()].copy_from_slice(footer);
-
-            if ctx.encoding != ccx_encoding_type_CCX_ENC_UNICODE {
-                debug!(msg_type = DebugMessageFlag::DECODER_608; "\r{}\n",
-                    std::str::from_utf8(&str_buffer[..footer.len()-1]).unwrap_or(""));
-            }
-
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = &str_buffer[..footer.len()];
-            let used = encode_line(ctx, buffer_slice, text_slice);
-
-            // Bounds check for buffer access
-            if used > ctx.capacity {
-                return -1;
-            }
-
-            ret = write_raw(out.fh, ctx.buffer as *const c_void, used as usize) as c_int;
-
-            if ret != used as c_int {
-                info!("WARNING: loss of data\n");
-            }
-        }
-
-        ccx_output_format::CCX_OF_SCC | ccx_output_format::CCX_OF_CCD => {
+        OutputFormat::Scc | OutputFormat::Ccd => {
             // Bounds check for encoded_crlf access
             if ctx.encoded_crlf_length as usize > ctx.encoded_crlf.len() {
                 return -1;
@@ -222,7 +165,6 @@ pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
 
     ret
 }
-
 pub fn write_raw(fd: c_int, buf: *const c_void, count: usize) -> isize {
     if buf.is_null() || count == 0 {
         return 0;
@@ -279,8 +221,9 @@ pub fn write_bom(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut ret: c_int = 0;
 
     if ctx.no_bom == 0 {
-        match ctx.encoding {
-            ccx_encoding_type_CCX_ENC_UTF_8 => {
+        let enc = unsafe { Encoding::from_ctype(ctx.encoding).unwrap_or(Encoding::default()) };
+        match enc {
+            Encoding::UTF8 => {
                 ret =
                     write_raw(out.fh, UTF8_BOM.as_ptr() as *const c_void, UTF8_BOM.len()) as c_int;
                 if ret < UTF8_BOM.len() as c_int {
@@ -288,7 +231,7 @@ pub fn write_bom(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
                     return -1;
                 }
             }
-            ccx_encoding_type_CCX_ENC_UNICODE => {
+            Encoding::UCS2 => {
                 ret = write_raw(
                     out.fh,
                     LITTLE_ENDIAN_BOM.as_ptr() as *const c_void,
@@ -309,9 +252,11 @@ pub fn write_bom(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
 pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut used: c_uint;
     let mut header_size: usize = 0;
+    let write_format =
+        unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
 
-    match ctx.write_format {
-        ccx_output_format::CCX_OF_CCD => {
+    match write_format {
+        OutputFormat::Ccd => {
             if write_raw(
                 out.fh,
                 CCD_HEADER.as_ptr() as *const c_void,
@@ -328,7 +273,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_SCC => {
+        OutputFormat::Scc => {
             if write_raw(
                 out.fh,
                 SCC_HEADER.as_ptr() as *const c_void,
@@ -340,25 +285,44 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_SRT | ccx_output_format::CCX_OF_G608 => {
+        OutputFormat::Srt
+        | OutputFormat::G608
+        | OutputFormat::SpuPng
+        | OutputFormat::Transcript => {
             if write_bom(ctx, out) < 0 {
                 return -1;
+            }
+            if write_format == OutputFormat::SpuPng {
+                unsafe {
+                    write_spumux_header(ctx, out);
+                }
             }
         }
 
-        ccx_output_format::CCX_OF_SSA => {
+        OutputFormat::Ssa
+        | OutputFormat::Sami
+        | OutputFormat::SmpteTt
+        | OutputFormat::SimpleXml => {
             if write_bom(ctx, out) < 0 {
                 return -1;
             }
 
-            if !request_buffer_capacity(ctx, (SSA_HEADER.len() * 3) as c_uint) {
+            let header_data = match write_format {
+                OutputFormat::Ssa => SSA_HEADER,
+                OutputFormat::Sami => SAMI_HEADER,
+                OutputFormat::SmpteTt => SMPTETT_HEADER,
+                OutputFormat::SimpleXml => SIMPLE_XML_HEADER,
+                _ => unreachable!(),
+            };
+
+            if !request_buffer_capacity(ctx, (header_data.len() * 3) as c_uint) {
                 return -1;
             }
 
             // Create safe slice from buffer pointer and capacity
             let buffer_slice =
                 unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = SSA_HEADER;
+            let text_slice = header_data;
             used = encode_line(ctx, buffer_slice, text_slice.as_ref());
 
             if used > ctx.capacity {
@@ -371,7 +335,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_WEBVTT => {
+        OutputFormat::WebVtt => {
             if write_bom(ctx, out) < 0 {
                 return -1;
             }
@@ -388,6 +352,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             for header_line in WEBVTT_HEADER {
                 let line_to_write = unsafe {
                     if ccx_options.enc_cfg.line_terminator_lf == 1 && *header_line == "\r\n" {
+                        // If -lf parameter passed, write LF instead of CRLF
                         "\n"
                     } else {
                         header_line
@@ -411,57 +376,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_SAMI => {
-            if write_bom(ctx, out) < 0 {
-                return -1;
-            }
-
-            if !request_buffer_capacity(ctx, (SAMI_HEADER.len() * 3) as c_uint) {
-                return -1;
-            }
-
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = SAMI_HEADER;
-            used = encode_line(ctx, buffer_slice, text_slice.as_ref());
-
-            if used > ctx.capacity {
-                return -1;
-            }
-
-            if write_raw(out.fh, ctx.buffer as *const c_void, used as usize) < used as isize {
-                info!("WARNING: Unable to write complete Buffer\n");
-                return -1;
-            }
-        }
-
-        ccx_output_format::CCX_OF_SMPTETT => {
-            if write_bom(ctx, out) < 0 {
-                return -1;
-            }
-
-            if !request_buffer_capacity(ctx, (SMPTETT_HEADER.len() * 3) as c_uint) {
-                return -1;
-            }
-
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = SMPTETT_HEADER;
-            used = encode_line(ctx, buffer_slice, text_slice.as_ref());
-
-            if used > ctx.capacity {
-                return -1;
-            }
-
-            if write_raw(out.fh, ctx.buffer as *const c_void, used as usize) < used as isize {
-                info!("WARNING: Unable to write complete Buffer\n");
-                return -1;
-            }
-        }
-
-        ccx_output_format::CCX_OF_RCWT => {
+        OutputFormat::Rcwt => {
             let mut rcwt_header = RCWT_HEADER.to_vec();
             rcwt_header[7] = ctx.in_fileformat as u8; // sets file format version
 
@@ -480,7 +395,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_RAW => {
+        OutputFormat::Raw => {
             if write_raw(
                 out.fh,
                 BROADCAST_HEADER.as_ptr() as *const c_void,
@@ -492,47 +407,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        ccx_output_format::CCX_OF_SPUPNG => {
-            if write_bom(ctx, out) < 0 {
-                return -1;
-            }
-            unsafe {
-                write_spumux_header(ctx, out);
-            }
-        }
-
-        ccx_output_format::CCX_OF_TRANSCRIPT => {
-            if write_bom(ctx, out) < 0 {
-                return -1;
-            }
-        }
-
-        ccx_output_format::CCX_OF_SIMPLE_XML => {
-            if write_bom(ctx, out) < 0 {
-                return -1;
-            }
-
-            if !request_buffer_capacity(ctx, (SIMPLE_XML_HEADER.len() * 3) as c_uint) {
-                return -1;
-            }
-
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
-            let text_slice = SIMPLE_XML_HEADER;
-            used = encode_line(ctx, buffer_slice, text_slice.as_ref());
-
-            if used > ctx.capacity {
-                return -1;
-            }
-
-            if write_raw(out.fh, ctx.buffer as *const c_void, used as usize) < used as isize {
-                info!("WARNING: Unable to write complete Buffer\n");
-                return -1;
-            }
-        }
-
-        ccx_output_format::CCX_OF_MCC => {
+        OutputFormat::Mcc => {
             ctx.header_printed_flag = 0;
         }
 
