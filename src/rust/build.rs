@@ -12,6 +12,32 @@ fn main() {
         "writercwtdata",
         "version",
         "set_binary_mode",
+        "print_file_report",
+        "start_upd_srv", // shall be removed after NET
+        "start_tcp_srv", // shall be removed after NET
+        "net_tcp_read",  // shall be removed after NET
+        "net_udp_read",  // shall be removed after NET
+        "net_send_epg",  // shall be removed after NET
+        "fopen",
+        "fclose",
+        "fprintf",
+        "fwrite",
+        "realloc",
+        "telxcc_init",
+        "dvbsub_init_decoder",
+        "ccx_mpeg_descriptor",
+        "parse_dvb_description",
+        "dvbsub_init_decoder",
+        "init_isdb_decoder",
+        "telxcc_close",
+        "dvbsub_close_decoder",
+        "delete_isdb_decoder",
+        #[cfg(windows)]
+        "_open_osfhandle",
+        #[cfg(windows)]
+        "_get_osfhandle",
+        #[cfg(feature = "enable_ffmpeg")]
+        "init_ffmpeg",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -27,6 +53,8 @@ fn main() {
         ".*(?i)_?dtvcc_.*",
         "encoder_ctx",
         "lib_cc_decode",
+        "ccx_demuxer",
+        "lib_ccx_ctx",
         "bitstream",
         "cc_subtitle",
         "ccx_output_format",
@@ -39,6 +67,17 @@ fn main() {
         "ccx_encoding_type",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
+        "ccx_gxf",
+        "MXFContext",
+        "GXFPktType",
+        "GXFMatTag",
+        "GXFTrackTag",
+        "GXFTrackType",
+        "AVPacketMythTV",
+        "demuxer_data",
+        "ts_payload",
+        "ccx_mpeg_descriptor",
+        "dvb_config",
         "uint8_t",
         "word_list",
     ]);

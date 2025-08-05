@@ -163,7 +163,7 @@ impl dtvcc_window {
             unsafe {
                 let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
                 if let Err(e) = layout {
-                    error!("clear_row: Incorrect Layout, {}", e);
+                    error!("clear_row: Incorrect Layout, {e}");
                 } else {
                     let layout = layout.unwrap();
                     // deallocate previous memory
