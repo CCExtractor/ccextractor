@@ -4,7 +4,6 @@ use crate::ctorust::FromCType;
 use crate::transportstream::common_structs::{EPGEventRust, EPGRatingRust};
 use crate::transportstream::tables::TS_PMT_MAP_SIZE;
 use crate::{fclose, fopen, fprintf, fwrite};
-use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use encoding_rs::*;
 use lib_ccxr::common::Options;
 use lib_ccxr::debug;
@@ -170,26 +169,69 @@ fn write_raw_bytes(f: &mut FILE, bytes: &[u8]) {
 }
 
 // Fills given string with given (event.*_time_string) ATSC time converted to XMLTV style time string
+
 pub fn epg_atsc_calc_time(output: &mut String, time: u32) {
-    // Start from January 6, 1980
-    let base_date = NaiveDate::from_ymd_opt(1980, 1, 6).unwrap();
-    let base_time = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
-    let base_datetime = NaiveDateTime::new(base_date, base_time);
+    // Start from January 6, 1980, 00:00:00
+    let mut year = 1980;
+    let mut month = 1; // January (1-based)
+    let mut day = 6;
+    let mut hour = 0;
+    let mut minute = 0;
+    let mut second = time; // Start with all seconds in the seconds field
 
-    // Add the time in seconds
-    let result_datetime = base_datetime + chrono::Duration::seconds(time as i64);
+    // Normalize seconds to minutes
+    if second >= 60 {
+        minute += second / 60;
+        second %= 60;
+    }
 
-    *output = format!(
-        "{:04}{:02}{:02}{:02}{:02}{:02} +0000",
-        result_datetime.year(),
-        result_datetime.month(),
-        result_datetime.day(),
-        result_datetime.hour(),
-        result_datetime.minute(),
-        result_datetime.second()
-    );
+    // Normalize minutes to hours
+    if minute >= 60 {
+        hour += minute / 60;
+        minute %= 60;
+    }
+
+    // Normalize hours to days
+    if hour >= 24 {
+        day += hour / 24;
+        hour %= 24;
+    }
+
+    // Normalize days to months/years
+    loop {
+        let days_in_month = get_days_in_month(year, month);
+        if day <= days_in_month {
+            break;
+        }
+        day -= days_in_month;
+        month += 1;
+        if month > 12 {
+            month = 1;
+            year += 1;
+        }
+    }
+
+    *output = format!("{year:04}{month:02}{day:02}{hour:02}{minute:02}{second:02} +0000");
 }
 
+fn get_days_in_month(year: u32, month: u32) -> u32 {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            if is_leap_year(year) {
+                29
+            } else {
+                28
+            }
+        }
+        _ => panic!("Invalid month: {}", month),
+    }
+}
+
+fn is_leap_year(year: u32) -> bool {
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+}
 // Fills event.start_time_string in XMLTV format with passed DVB time
 pub fn epg_dvb_calc_start_time(event: &mut EPGEventRust, time: u64) {
     let mjd = time >> 24;
