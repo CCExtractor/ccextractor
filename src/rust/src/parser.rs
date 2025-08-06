@@ -1150,11 +1150,11 @@ impl OptionsExt for Options {
         }
 
         if args.unicode {
-            self.enc_cfg.encoding = Encoding::Ucs2;
+            self.enc_cfg.encoding = Encoding::UCS2;
         }
 
         if args.utf8 {
-            self.enc_cfg.encoding = Encoding::Utf8;
+            self.enc_cfg.encoding = Encoding::UTF8;
         }
 
         if args.latin1 {
@@ -1582,8 +1582,8 @@ impl OptionsExt for Options {
             );
         }
 
-        if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::Utf8 {
-            self.enc_cfg.encoding = Encoding::Utf8;
+        if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
+            self.enc_cfg.encoding = Encoding::UTF8;
             println!("Note: Output format is WebVTT, forcing UTF-8");
         }
 
@@ -2037,7 +2037,7 @@ pub mod tests {
         let (options, _) = parse_args(&["--unicode", "--no-typesetting"]);
         assert!(options.notypesetting);
 
-        assert_eq!(options.enc_cfg.encoding, Encoding::Ucs2);
+        assert_eq!(options.enc_cfg.encoding, Encoding::UCS2);
     }
 
     #[test]
@@ -2045,7 +2045,7 @@ pub mod tests {
         let (options, _) = parse_args(&["--utf8", "--trim"]);
         assert!(options.enc_cfg.trim_subs);
 
-        assert_eq!(options.enc_cfg.encoding, Encoding::Utf8);
+        assert_eq!(options.enc_cfg.encoding, Encoding::UTF8);
     }
 
     #[test]

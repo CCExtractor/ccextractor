@@ -27,6 +27,9 @@ fn main() {
         "_get_osfhandle",
         #[cfg(feature = "enable_ffmpeg")]
         "init_ffmpeg",
+        "net_send_header", // shall be removed after NET
+        "write_spumux_footer",
+        "write_spumux_header",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -59,6 +62,7 @@ fn main() {
         "ccx_gxf",
         "MXFContext",
         "demuxer_data",
+        "eia608_screen",
         "uint8_t",
         "word_list",
     ]);
