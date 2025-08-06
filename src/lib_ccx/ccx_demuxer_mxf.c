@@ -14,13 +14,6 @@
 #define IS_KLV_KEY(x, y) (!memcmp(x, y, sizeof(y)))
 #define IS_KLV_KEY_ANY_VERSION(x, y) (!memcmp(x, y, 7) && !memcmp(x + 8, y + 8, sizeof(y) - 8))
 
-enum MXFCaptionType
-{
-	MXF_CT_VBI,
-	MXF_CT_ANC,
-};
-
-typedef uint8_t UID[16];
 typedef struct KLVPacket
 {
 	UID key;
@@ -35,28 +28,11 @@ typedef struct MXFCodecUL
 
 typedef int ReadFunc(struct ccx_demuxer *ctx, uint64_t size);
 
-typedef struct
-{
-	int track_id;
-	uint8_t track_number[4];
-} MXFTrack;
-
 typedef struct MXFReadTableEntry
 {
 	const UID key;
 	ReadFunc *read;
 } MXFReadTableEntry;
-
-typedef struct MXFContext
-{
-	enum MXFCaptionType type;
-	int cap_track_id;
-	UID cap_essence_key;
-	MXFTrack tracks[32];
-	int nb_tracks;
-	int cap_count;
-	struct ccx_rational edit_rate;
-} MXFContext;
 
 typedef struct MXFLocalTAGS
 {
