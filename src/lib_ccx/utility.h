@@ -45,6 +45,8 @@ const char *get_file_extension(const enum ccx_output_format write_format);
 char *create_outfilename(const char *basename, const char *suffix, const char *extension);
 int verify_crc32(uint8_t *buf, int len);
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
+size_t ascii_to_html(unsigned char ascii_char, unsigned char *out);
+size_t ascii_to_unicode(unsigned char *ascii_char_buf, int ascii_char_len, unsigned char *out);
 LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb);
 char *str_reallocncat(char *dst, char *src);
 
