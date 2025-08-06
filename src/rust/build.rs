@@ -12,6 +12,9 @@ fn main() {
         "writercwtdata",
         "version",
         "set_binary_mode",
+        "net_send_header", // shall be removed after NET
+        "write_spumux_footer",
+        "write_spumux_header",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
@@ -39,6 +42,7 @@ fn main() {
         "ccx_encoding_type",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
+        "eia608_screen",
         "uint8_t",
         "word_list",
     ]);
