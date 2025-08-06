@@ -14,9 +14,10 @@ pub const MAX_PROGRAM: usize = 128;
 pub const MAX_PROGRAM_NAME_LEN: usize = 128;
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
 pub const CCX_NOPTS: i64 = 0x8000_0000_0000_0000u64 as i64;
+pub const SAVED_SECTIONS_PROGRAMINFO: usize = 1021;
 
 #[repr(u32)]
-pub enum Stream_Type {
+pub enum DemuxerStreamType {
     PrivateStream1 = 0,
     Audio,
     Video,
@@ -52,7 +53,7 @@ pub struct ProgramInfo {
     pub initialized_ocr: bool, // Avoid initializing the OCR more than once
     pub analysed_pmt_once: u8, // 1-bit field
     pub version: u8,
-    pub saved_section: [u8; 1021],
+    pub saved_section: [u8; SAVED_SECTIONS_PROGRAMINFO],
     pub crc: i32,
     pub valid_crc: u8, // 1-bit field
     pub name: [u8; MAX_PROGRAM_NAME_LEN],
@@ -60,7 +61,7 @@ pub struct ProgramInfo {
      * -1 pid represent that pcr_pid is not available
      */
     pub pcr_pid: i16,
-    pub got_important_streams_min_pts: [u64; Stream_Type::Count as usize],
+    pub got_important_streams_min_pts: [u64; DemuxerStreamType::Count as usize],
     pub has_all_min_pts: bool,
 }
 
@@ -203,100 +204,62 @@ pub struct CcxDemuxer<'a> {
 
 impl Default for CcxDemuxer<'_> {
     fn default() -> Self {
-        // 1) Initialize pinfo exactly as C’s init loop does
-        let mut pinfo_vec = Vec::with_capacity(MAX_PROGRAM);
-        for _ in 0..MAX_PROGRAM {
-            let mut pi = ProgramInfo {
-                has_all_min_pts: false,
-                ..Default::default()
-            };
-            for j in 0..(Stream_Type::Count as usize) {
-                pi.got_important_streams_min_pts[j] = u64::MAX;
-            }
-            pi.initialized_ocr = false;
-            pi.version = 0xFF; // “not initialized” marker
-                               // pid and program_number remain zero for now
-            pinfo_vec.push(pi);
-        }
-
-        // 2) Build and return the full struct, matching C’s init_demuxer(cfg=zero, parent=NULL)
         CcxDemuxer {
-            // (a) File handle fields
-            infd: -1, // C: ctx->infd = -1
-            past: 0,  // C does not set past here (init_ts might), so zero is fine
+            infd: -1,
+            past: 0,
 
-            // (b) TS‐specific fields from “cfg = zero” case
-            m2ts: 0, // C: ctx->m2ts = cfg->m2ts (cfg->m2ts == 0)
+            m2ts: 0,
             auto_stream: StreamMode::ElementaryOrNotFound,
             stream_mode: StreamMode::ElementaryOrNotFound,
-            ts_autoprogram: false,    // C: cfg->ts_autoprogram == 0
-            ts_allprogram: false,     // C: cfg->ts_allprogram == 0
-            flag_ts_forced_pn: false, // C sets this only if cfg->ts_forced_program != -1
+            ts_autoprogram: false,
+            ts_allprogram: false,
+            flag_ts_forced_pn: false,
             ts_datastreamtype: StreamType::Unknownstream,
 
-            // (c) Program info
-            pinfo: pinfo_vec,
-            nb_program: 0, // C: starts at 0 (no forced program)
+            pinfo: Vec::with_capacity(MAX_PROGRAM),
+            nb_program: 0,
 
-            // (d) Codec fields
-            codec: Codec::Any,            // C: cfg->codec == CCX_CODEC_ANY (zero)
-            flag_ts_forced_cappid: false, // no forced CA‐PID if cfg->nb_ts_cappid == 0
-            nocodec: Codec::Any,          // C: cfg->nocodec == CCX_CODEC_ANY
+            codec: Codec::Any,
+            flag_ts_forced_cappid: false,
+            nocodec: Codec::Any,
 
-            // (e) Capability‐info tree
-            cinfo_tree: CapInfo::default(), // C: INIT_LIST_HEAD; with no capids, the tree is empty
+            cinfo_tree: CapInfo::default(),
 
-            // (f) Start‐bytes buffer
             startbytes: vec![0; STARTBYTESLENGTH],
             startbytes_pos: 0,
             startbytes_avail: 0,
 
-            // (g) Global timestamps
             global_timestamp: Timestamp::from_millis(0),
             min_global_timestamp: Timestamp::from_millis(0),
             offset_global_timestamp: Timestamp::from_millis(0),
             last_global_timestamp: Timestamp::from_millis(0),
             global_timestamp_inited: Timestamp::from_millis(0),
 
-            // (h) PID buffers
             pid_buffers: vec![null_mut(); MAX_PSI_PID],
 
-            // (i) Arrays that init_ts would set:
             pids_seen: vec![0; MAX_PID],
             stream_id_of_each_pid: vec![0; MAX_PSI_PID + 1],
-            min_pts: {
-                let mut v = vec![0u64; MAX_PSI_PID + 1];
-                for item in v.iter_mut().take(MAX_PSI_PID + 1) {
-                    *item = u64::MAX;
-                }
-                v
-            },
+            min_pts: vec![u64::MAX; MAX_PSI_PID + 1],
             have_pids: vec![-1; MAX_PSI_PID + 1],
             num_of_pids: 0,
             pids_programs: vec![null_mut(); MAX_PID],
 
-            // (j) Report fields
             freport: CcxDemuxReport::default(),
 
-            // (k) Hauppauge and multi‐stream flags
             hauppauge_warning_shown: false,
             multi_stream_per_prog: 0,
 
-            // (l) PAT tracking
             last_pat_payload: null_mut(),
             last_pat_length: 0,
 
-            // (m) Filebuffer (init_ts would set to NULL/0)
             filebuffer: null_mut(),
             filebuffer_start: 0,
             filebuffer_pos: 0,
             bytesinbuffer: 0,
 
-            // (n) Warnings and headers
             warning_program_not_found_shown: false,
             strangeheader: 0,
 
-            // (o) Parent & private data
             parent: None,
             private_data: null_mut(),
 
@@ -313,12 +276,12 @@ impl Default for ProgramInfo {
             initialized_ocr: false,
             analysed_pmt_once: 0,
             version: 0,
-            saved_section: [0; 1021],
+            saved_section: [0; SAVED_SECTIONS_PROGRAMINFO],
             crc: 0,
             valid_crc: 0,
             name: [0; MAX_PROGRAM_NAME_LEN],
             pcr_pid: -1,
-            got_important_streams_min_pts: [0; Stream_Type::Count as usize],
+            got_important_streams_min_pts: [0; DemuxerStreamType::Count as usize],
             has_all_min_pts: false,
         }
     }
