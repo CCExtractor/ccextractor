@@ -1,5 +1,5 @@
 use crate::bindings::ccx_demuxer;
-use crate::demuxer::common_structs::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
+use crate::demuxer::common_types::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c};
 use cfg_if::cfg_if;

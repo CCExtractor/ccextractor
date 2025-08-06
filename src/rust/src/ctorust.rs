@@ -1,6 +1,6 @@
 #![allow(clippy::unnecessary_cast)] // we have to do this as windows has different types for some C types
 use crate::bindings::*;
-use crate::demuxer::common_structs::{
+use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
 use lib_ccxr::common::{

@@ -384,9 +384,7 @@ mod test {
     #[test]
     fn test_do_cb() {
         let mut dtvcc_ctx = crate::decoder::test::initialize_dtvcc_ctx();
-
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
-
         let mut decoder_ctx = lib_cc_decode::default();
         let cc_block = [0x97, 0x1F, 0x3C];
 

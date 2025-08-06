@@ -1,6 +1,6 @@
 use crate::bindings::*;
 use crate::ctorust::{from_ctype_DebugMessageMask, FromCType};
-use crate::demuxer::common_structs::{
+use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
 use crate::utils::null_pointer;

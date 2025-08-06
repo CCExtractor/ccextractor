@@ -9,7 +9,7 @@ use std::ffi::CString;
 use std::fs::File;
 use std::io::{Seek, SeekFrom};
 
-use crate::demuxer::common_structs::*;
+use crate::demuxer::common_types::*;
 use crate::file_functions::file::init_file_buffer;
 #[cfg(windows)]
 use crate::{bindings::_open_osfhandle, file_functions::file::open_windows};

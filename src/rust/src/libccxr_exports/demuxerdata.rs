@@ -1,7 +1,7 @@
 use crate::bindings::demuxer_data;
 use crate::common::CType;
 use crate::ctorust::FromCType;
-use crate::demuxer::common_structs::CcxRational;
+use crate::demuxer::common_types::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
 use std::os::raw::c_uchar;
@@ -72,7 +72,7 @@ mod tests {
         assert!(default_data.buffer.is_null());
         assert_eq!(default_data.len, 0);
         assert_eq!(default_data.rollover_bits, 0);
-        assert_eq!(default_data.pts, crate::demuxer::common_structs::CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::common_types::CCX_NOPTS);
         assert_eq!(default_data.tb.num, 1);
         assert_eq!(default_data.tb.den, 90000);
         assert!(default_data.next_stream.is_null());
@@ -441,11 +441,11 @@ mod tests {
     fn test_ccx_nopts_constant() {
         // Verify the CCX_NOPTS constant matches the C definition
         assert_eq!(
-            crate::demuxer::common_structs::CCX_NOPTS,
+            crate::demuxer::common_types::CCX_NOPTS,
             0x8000000000000000u64 as i64
         );
 
         let default_data = DemuxerData::default();
-        assert_eq!(default_data.pts, crate::demuxer::common_structs::CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::common_types::CCX_NOPTS);
     }
 }

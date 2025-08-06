@@ -1,5 +1,5 @@
 use crate::bindings::demuxer_data;
-use crate::demuxer::common_structs::{CcxRational, CCX_NOPTS};
+use crate::demuxer::common_types::{CcxRational, CCX_NOPTS};
 use crate::MPEG_CLOCK_FREQ;
 use lib_ccxr::common::{BufferdataType, Codec};
 use std::ptr::null_mut;

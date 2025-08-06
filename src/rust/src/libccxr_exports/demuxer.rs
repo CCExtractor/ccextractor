@@ -2,7 +2,7 @@ use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
-use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
+use crate::demuxer::common_types::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
 use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
@@ -10,7 +10,7 @@ use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint, c_void};
 
 pub fn copy_c_array_to_rust_vec(
-    c_bytes: &[u8; crate::demuxer::common_structs::ARRAY_SIZE],
+    c_bytes: &[u8; crate::demuxer::common_types::ARRAY_SIZE],
 ) -> Vec<u8> {
     c_bytes.to_vec()
 }
@@ -18,7 +18,7 @@ pub fn copy_c_array_to_rust_vec(
 /// This function is unsafe because it performs a copy operation from a raw pointer
 #[no_mangle]
 pub unsafe extern "C" fn copy_rust_vec_to_c(rust_vec: &Vec<u8>, c_ptr: *mut u8) {
-    let mut size = crate::demuxer::common_structs::ARRAY_SIZE;
+    let mut size = crate::demuxer::common_types::ARRAY_SIZE;
     if rust_vec.is_empty() || rust_vec.len() < size {
         // This shouldn't happen, just for the tests
         size = rust_vec.len();
@@ -457,7 +457,7 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *mut ccx_demuxer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::demuxer::common_structs::{PMTEntry, PSIBuffer};
+    use crate::demuxer::common_types::{PMTEntry, PSIBuffer};
     use lib_ccxr::common::{Codec, StreamMode, StreamType};
     use std::ptr;
     // Working helper function to create ccx_demuxer on heap
@@ -973,7 +973,7 @@ mod tests {
     #[test]
     fn test_ccx_demuxer_other() {
         use super::*;
-        use crate::demuxer::common_structs::{CapInfo, CcxDemuxReport, ProgramInfo};
+        use crate::demuxer::common_types::{CapInfo, CcxDemuxReport, ProgramInfo};
         use lib_ccxr::common::{Codec, StreamMode, StreamType};
         use std::ptr;
 

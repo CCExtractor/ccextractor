@@ -1,7 +1,7 @@
 #[cfg(windows)]
 use crate::bindings::_get_osfhandle;
 use crate::bindings::{lib_ccx_ctx, print_file_report};
-use crate::demuxer::common_structs::*;
+use crate::demuxer::common_types::*;
 use crate::libccxr_exports::demuxer::copy_demuxer_from_c_to_rust;
 use cfg_if::cfg_if;
 use lib_ccxr::activity::ActivityExt;

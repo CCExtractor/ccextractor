@@ -35,7 +35,7 @@
 //! | `ccx_demuxer_print_cfg` (function)                        | [`CcxDemuxer::print_cfg()`]       |
 //! | `isValidMP4Box` (function)                                | [`is_valid_mp4_box`]              |
 
-pub mod common_structs;
+pub mod common_types;
 pub mod demux;
 pub mod demuxer_data;
 pub mod stream_functions;

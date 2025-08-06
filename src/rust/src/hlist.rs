@@ -127,7 +127,7 @@ pub unsafe fn is_decoder_processed_enough(ctx: &mut lib_ccx_ctx) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::demuxer::common_structs::CapInfo;
+    use crate::demuxer::common_types::CapInfo;
     use std::ptr;
 
     pub fn create_capinfo() -> *mut CapInfo {
