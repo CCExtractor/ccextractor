@@ -201,7 +201,7 @@ int api_start(struct ccx_s_options api_options)
 					api_options.use_gop_as_pts = 0;
 				if (api_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
-				mprint("\r\n Analyzing data in general mode\n");
+				mprint("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);
 				if (!ret)
 					ret = tmp;
