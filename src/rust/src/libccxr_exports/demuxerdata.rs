@@ -440,9 +440,12 @@ mod tests {
     #[test]
     fn test_ccx_nopts_constant() {
         // Verify the CCX_NOPTS constant matches the C definition
-        assert_eq!(CCX_NOPTS, 0x8000000000000000u64 as i64);
+        assert_eq!(
+            crate::demuxer::common_structs::CCX_NOPTS,
+            0x8000000000000000u64 as i64
+        );
 
         let default_data = DemuxerData::default();
-        assert_eq!(default_data.pts, CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::common_structs::CCX_NOPTS);
     }
 }
