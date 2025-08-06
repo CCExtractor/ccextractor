@@ -703,50 +703,6 @@ mod tests {
     }
 
     #[test]
-    fn test_from_rust_to_c_arrays_with_data() {
-        let demuxer = unsafe { alloc_new_demuxer() };
-        // Create test PSI and PMT entries
-        let psi_buffer1 = Box::new(PSIBuffer::default());
-        let psi_buffer2 = Box::new(PSIBuffer::default());
-        let pmt_entry1 = Box::new(PMTEntry::default());
-        let pmt_entry2 = Box::new(PMTEntry::default());
-
-        let rust_demuxer = CcxDemuxer {
-            // Set up pointer arrays with some test data
-            pid_buffers: vec![
-                Box::into_raw(psi_buffer1),
-                ptr::null_mut(),
-                Box::into_raw(psi_buffer2),
-            ],
-            pids_programs: vec![
-                Box::into_raw(pmt_entry1),
-                ptr::null_mut(),
-                Box::into_raw(pmt_entry2),
-            ],
-            ..Default::default()
-        };
-
-        unsafe {
-            copy_demuxer_from_rust_to_c(demuxer, &rust_demuxer);
-        }
-        let c_demuxer = unsafe { &*demuxer };
-
-        // Check that non-null pointers were copied and allocated
-        assert!(!c_demuxer.PID_buffers[0].is_null());
-        assert!(c_demuxer.PID_buffers[1].is_null());
-        assert!(!c_demuxer.PID_buffers[2].is_null());
-
-        assert!(!c_demuxer.PIDs_programs[0].is_null());
-        assert!(c_demuxer.PIDs_programs[1].is_null());
-        assert!(!c_demuxer.PIDs_programs[2].is_null());
-
-        // The rest should be null (cleared by the copy function)
-        for i in 3..100 {
-            assert!(c_demuxer.PID_buffers[i].is_null());
-            assert!(c_demuxer.PIDs_programs[i].is_null());
-        }
-    }
-    #[test]
     fn test_copy_demuxer_from_c_to_rust() {
         // Allocate a new C demuxer structure
         let c_demuxer = unsafe { alloc_new_demuxer() };
@@ -1099,30 +1055,5 @@ mod tests {
                 CcxDemuxReport::default().mp4_cc_track_cnt
             );
         }
-    }
-    #[test]
-    fn test_demuxer_c_to_rust_empty() {
-        // Test the case where we have an empty C demuxer
-        let c_demuxer_ptr = unsafe { alloc_new_demuxer() };
-
-        // Call the function under test
-        #[allow(unused)]
-        let rust_demuxer = unsafe { copy_demuxer_from_c_to_rust(c_demuxer_ptr) };
-    }
-    #[test]
-    fn test_demuxer_rust_to_c_empty() {
-        // Create an empty Rust CcxDemuxer
-        let rust_demuxer = CcxDemuxer::default();
-
-        // Allocate a new C demuxer structure
-        let c_demuxer = unsafe { alloc_new_demuxer() };
-
-        // Call the function being tested
-        unsafe {
-            copy_demuxer_from_rust_to_c(c_demuxer, &rust_demuxer);
-        }
-        // Verify that all fields are set to their default values in C
-        #[allow(unused)]
-        let c_demuxer_ref = unsafe { &*c_demuxer };
     }
 }

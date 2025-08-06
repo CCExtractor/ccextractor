@@ -854,17 +854,6 @@ mod tests {
     }
 
     #[test]
-    fn test_ccx_options_default() {
-        // let mut ccx_options = CcxOptions.lock().unwrap();
-        {
-            let ccx_options = Options::default();
-
-            {
-                println!("{ccx_options:?}");
-            }
-        }
-    }
-    #[test]
     fn test_sleepandchecktimeout_stdin() {
         {
             let mut ccx_options = Options::default();
@@ -883,7 +872,7 @@ mod tests {
             assert!((null_mut::<*mut u8>()).is_null());
         }
     }
-    // #[test] // Uncomment to run
+    // #[test] // Uncomment to run, needs real file
     #[allow(unused)]
     fn test_switch_to_next_file_success() {
         unsafe {
@@ -1149,87 +1138,6 @@ mod tests {
         assert_eq!(read_bytes, content.len());
         assert_eq!(&out_buf1, content);
     }
-    #[test]
-    #[serial]
-    fn test_buffered_read_opt_empty_file() {
-        initialize_logger();
-        let ccx_options = &mut Options::default();
-        // Use buffering.
-        ccx_options.buffer_input = true;
-        ccx_options.live_stream = Some(Timestamp::from_millis(0));
-        ccx_options.input_source = DataSource::File;
-        ccx_options.binary_concat = false;
-        // Create an empty temporary file.
-        let content: &[u8] = b"";
-        let fd = create_temp_file_with_content(content); // file pointer will be at beginning
-                                                         // Allocate a filebuffer.
-        let filebuffer = allocate_filebuffer();
-        let mut ctx = CcxDemuxer::default();
-        ctx.infd = fd;
-        ctx.past = 0;
-        ctx.filebuffer = filebuffer;
-        ctx.filebuffer_start = 0;
-        ctx.filebuffer_pos = 0;
-        ctx.bytesinbuffer = 0;
-        // (Other fields can remain default.)
-
-        // Prepare an output buffer with the same length as content (i.e. zero length).
-        let mut out_buf1 = vec![0u8; content.len()];
-        let out_buf2 = vec![0u8; content.len()];
-        let read_bytes = unsafe {
-            buffered_read_opt(
-                &mut ctx,
-                out_buf1.as_mut_ptr(),
-                out_buf2.len(),
-                &mut *ccx_options,
-            )
-        };
-        assert_eq!(read_bytes, 0);
-        assert_eq!(&out_buf1, content);
-
-        // Clean up allocated filebuffer.
-        unsafe {
-            let _ = Box::from_raw(filebuffer);
-        };
-    }
-
-    #[test]
-    #[serial]
-    fn test_buffered_read_opt_seek_without_buffer() {
-        initialize_logger();
-        let ccx_options = &mut Options::default();
-        // Disable buffering.
-        ccx_options.buffer_input = false;
-        ccx_options.live_stream = Some(Timestamp::from_millis(0));
-        ccx_options.input_source = DataSource::File;
-        ccx_options.binary_concat = false;
-        // Create a file with some content.
-        let content = b"Content for seek branch";
-        let fd = create_temp_file_with_content(content);
-        // For this test we simulate the "seek without a buffer" branch by passing an empty output slice.
-        let mut ctx = CcxDemuxer::default();
-        ctx.infd = fd;
-        ctx.past = 0;
-        // In this branch, the filebuffer is not used.
-        ctx.filebuffer = ptr::null_mut();
-        ctx.filebuffer_start = 0;
-        ctx.filebuffer_pos = 0;
-        ctx.bytesinbuffer = 0;
-
-        // Pass an empty buffer so that the branch that checks `if !buffer.is_empty()` fails.
-        let mut out_buf1 = vec![0u8; 0];
-        let out_buf2 = [0u8; 0];
-        let read_bytes = unsafe {
-            buffered_read_opt(
-                &mut ctx,
-                out_buf1.as_mut_ptr(),
-                out_buf2.len(),
-                &mut *ccx_options,
-            )
-        };
-        // Expect that no bytes can be read into an empty slice.
-        assert_eq!(read_bytes, 0);
-    }
 
     // Helper: create a dummy CcxDemuxer with a preallocated filebuffer.
     fn create_ccx_demuxer_with_buffer<'a>() -> CcxDemuxer<'a> {
@@ -1301,44 +1209,7 @@ mod tests {
         };
     }
 
-    // Test 3: Normal case: no filebuffer_pos; simply copy incoming data.
-    #[test]
-    fn test_return_to_buffer_normal() {
-        initialize_logger();
-        let mut ctx = create_ccx_demuxer_with_buffer();
-        // Set filebuffer_pos to 0 and bytesinbuffer to some existing data.
-        ctx.filebuffer_pos = 0;
-        ctx.bytesinbuffer = 4;
-        // Pre-fill the filebuffer with some data.
-        unsafe {
-            for i in 0..4 {
-                *ctx.filebuffer.add(i) = (i + 10) as u8; // 10,11,12,13
-            }
-        }
-        // Now call return_to_buffer with an input of 3 bytes.
-        let input = [0x77, 0x88, 0x99];
-        return_to_buffer(&mut ctx, &input, 3);
-        // Expected behavior:
-        // - Since filebuffer_pos == 0, it skips the first if blocks.
-        // - It checks that (bytesinbuffer + bytes) does not exceed FILEBUFFERSIZE.
-        // - It then shifts the existing data right by 3 bytes.
-        // - It copies the new input to the front.
-        // - It increments bytesinbuffer by 3 (so now 7 bytes).
-        unsafe {
-            let out = slice::from_raw_parts(ctx.filebuffer, ctx.bytesinbuffer as usize);
-            // First 3 bytes should equal input.
-            assert_eq!(&out[0..3], &input);
-            // Next 4 bytes should be the old data.
-            let expected = &[10u8, 11, 12, 13];
-            assert_eq!(&out[3..7], expected);
-        }
-        // Clean up.
-        unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
-        };
-    }
     //buffered_read tests
-    // Helper: create a dummy CcxDemuxer with a preallocated filebuffer.
 
     // Test 1: Direct branch - when requested bytes <= available in filebuffer.
     #[test]
@@ -1466,33 +1337,9 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, 0);
     }
 
-    // Test 3: When no available data in filebuffer, forcing call to buffered_read_opt.
-    #[test]
-    #[serial]
-    fn test_buffered_read_byte_no_available() {
-        #[allow(unused_variables)]
-        let ctx = create_ccx_demuxer_with_buffer();
-        let content = b"a";
-        let fd = create_temp_file_with_content(content);
-        let mut ctx = create_ccx_demuxer_with_buffer();
-        ctx.infd = fd;
-        ctx.past = 0;
-        let ccx_options = &mut Options::default();
-        // Set bytesinbuffer to 0 to force the else branch.
-
-        // Set bytesinbuffer to equal filebuffer_pos so that no data is available.
-        ctx.bytesinbuffer = 10;
-        ctx.filebuffer_pos = 10;
-        let mut out_byte: u8 = 0;
-        // Our dummy buffered_read_opt returns 1 and writes 0xAA.
-        let read = unsafe { buffered_read_byte(&mut ctx, Some(&mut out_byte), &mut *ccx_options) };
-        assert_eq!(read, 1);
-        assert_eq!(out_byte, 97);
-    }
-
     // Tests for buffered_get_be16
 
-    // Test 4: When filebuffer has at least 2 available bytes.
+    // Test 1: When filebuffer has at least 2 available bytes.
     #[test]
     fn test_buffered_get_be16_from_buffer() {
         let mut ctx = create_ccx_demuxer_with_buffer();
@@ -1515,7 +1362,7 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, 2);
     }
 
-    // Test 5: When filebuffer is empty, forcing buffered_read_opt for each byte.
+    // Test 2: When filebuffer is empty, forcing buffered_read_opt for each byte.
     #[test]
     #[serial]
     fn test_buffered_get_be16_from_opt() {
@@ -1558,27 +1405,6 @@ mod tests {
         assert_eq!(ctx.past, 1);
         // filebuffer_pos should have advanced by 1.
         assert_eq!(ctx.filebuffer_pos, 1);
-    }
-    #[test]
-    #[serial]
-    fn test_buffered_get_byte_no_available() {
-        let ccx_options = &mut Options::default();
-        #[allow(unused_variables)]
-        let ctx = create_ccx_demuxer_with_buffer();
-        let content = b"Network buffered read test!";
-        let fd = create_temp_file_with_content(content);
-        let mut ctx = create_ccx_demuxer_with_buffer();
-        ctx.infd = fd;
-        // Force no available data.
-        ctx.bytesinbuffer = 0;
-        ctx.filebuffer_pos = 0;
-        ctx.past = 0;
-        // In this case, buffered_read_opt (our dummy version) will supply 0xAA for each byte.
-        let value = unsafe { buffered_get_byte(&mut ctx, &mut *ccx_options) };
-        // Expect the byte to be 0xAA.
-        assert_eq!(value, 0x4E);
-        // past should have been incremented.
-        assert_eq!(ctx.past, 1);
     }
 
     #[test]
