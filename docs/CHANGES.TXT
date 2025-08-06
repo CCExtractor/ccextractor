@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- Refactor: Remove API structures from ccextractor
 - New: Add Encoder Module to Rust
 - Fix: Elementary stream regressions
 - Fix: Segmentation faults on XDS files
