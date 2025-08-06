@@ -245,11 +245,6 @@ impl FromCType<ccx_output_format> for lib_ccxr::common::OutputFormat {
     }
 }
 
-// Helper function for array conversion
-fn c_array_to_vec(c_array: &[c_uint; 128usize]) -> Vec<u32> {
-    c_array.to_vec()
-}
-
 // Implementation for DemuxerConfig
 impl FromCType<demuxer_cfg> for lib_ccxr::common::DemuxerConfig {
     unsafe fn from_ctype(cfg: demuxer_cfg) -> Option<Self> {
@@ -260,7 +255,7 @@ impl FromCType<demuxer_cfg> for lib_ccxr::common::DemuxerConfig {
             nocodec: SelectCodec::from_ctype(cfg.nocodec)?,
             ts_autoprogram: cfg.ts_autoprogram != 0,
             ts_allprogram: cfg.ts_allprogram != 0,
-            ts_cappids: c_array_to_vec(&cfg.ts_cappids),
+            ts_cappids: cfg.ts_cappids.to_vec(),
             ts_forced_cappid: cfg.ts_forced_cappid != 0,
             ts_forced_program: if cfg.ts_forced_program != -1 {
                 Some(cfg.ts_forced_program)
@@ -706,66 +701,55 @@ impl FromCType<ccx_rational> for CcxRational {
 }
 /// # Safety
 /// This function is unsafe because it takes a raw pointer to a C struct.
-pub unsafe fn from_ctype_PSI_buffer(buffer_ptr: *mut PSI_buffer) -> Option<*mut PSIBuffer> {
-    if buffer_ptr.is_null() {
-        return None;
+impl FromCType<PSI_buffer> for PSIBuffer {
+    unsafe fn from_ctype(buffer: PSI_buffer) -> Option<Self> {
+        // Create a new PSIBuffer
+        let psi_buffer = PSIBuffer {
+            prev_ccounter: buffer.prev_ccounter,
+            buffer: buffer.buffer,
+            buffer_length: buffer.buffer_length,
+            ccounter: buffer.ccounter,
+        };
+
+        // Box it and convert to raw pointer
+        Some(psi_buffer)
     }
-
-    // Safety: We've checked that the pointer is not null
-    let buffer = unsafe { &*buffer_ptr };
-
-    // Create a new PSIBuffer
-    let psi_buffer = PSIBuffer {
-        prev_ccounter: buffer.prev_ccounter,
-        buffer: buffer.buffer,
-        buffer_length: buffer.buffer_length,
-        ccounter: buffer.ccounter,
-    };
-
-    // Box it and convert to raw pointer
-    Some(Box::into_raw(Box::new(psi_buffer)))
 }
 /// # Safety
 /// This function is unsafe because it takes a raw pointer to a C struct.
-pub unsafe fn from_ctype_PMT_entry(buffer_ptr: *mut PMT_entry) -> Option<*mut PMTEntry> {
-    if buffer_ptr.is_null() {
-        return None;
+impl FromCType<PMT_entry> for PMTEntry {
+    unsafe fn from_ctype(buffer: PMT_entry) -> Option<Self> {
+        let program_number = if buffer.program_number != 0 {
+            buffer.program_number
+        } else {
+            0
+        };
+
+        let elementary_pid = if buffer.elementary_PID != 0 {
+            buffer.elementary_PID
+        } else {
+            0
+        };
+
+        let stream_type = if buffer.stream_type != 0 {
+            StreamType::from_ctype(buffer.stream_type as u32).unwrap_or(StreamType::Unknownstream)
+        } else {
+            StreamType::Unknownstream
+        };
+
+        let printable_stream_type = if buffer.printable_stream_type != 0 {
+            buffer.printable_stream_type
+        } else {
+            0
+        };
+
+        Some(PMTEntry {
+            program_number,
+            elementary_pid,
+            stream_type,
+            printable_stream_type,
+        })
     }
-
-    let buffer = unsafe { &*buffer_ptr };
-
-    let program_number = if buffer.program_number != 0 {
-        buffer.program_number
-    } else {
-        0
-    };
-
-    let elementary_pid = if buffer.elementary_PID != 0 {
-        buffer.elementary_PID
-    } else {
-        0
-    };
-
-    let stream_type = if buffer.stream_type != 0 {
-        StreamType::from_ctype(buffer.stream_type as u32).unwrap_or(StreamType::Unknownstream)
-    } else {
-        StreamType::Unknownstream
-    };
-
-    let printable_stream_type = if buffer.printable_stream_type != 0 {
-        buffer.printable_stream_type
-    } else {
-        0
-    };
-
-    let mut pmt_entry = PMTEntry {
-        program_number,
-        elementary_pid,
-        stream_type,
-        printable_stream_type,
-    };
-
-    Some(&mut pmt_entry as *mut PMTEntry)
 }
 pub fn from_ctype_DebugMessageMask(mask_on_normal: u32, mask_on_debug: u32) -> DebugMessageMask {
     DebugMessageMask::new(
