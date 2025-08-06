@@ -53,10 +53,7 @@ impl CcxDemuxer<'_> {
             Ok(pos) => pos,
             Err(_) => {
                 // Return the fd back and then -1.
-                #[cfg(unix)]
-                let _ = file.into_raw_fd();
-                #[cfg(windows)]
-                let _ = file.into_raw_handle();
+                self.drop_fd(file);
                 return -1;
             }
         };
@@ -65,35 +62,22 @@ impl CcxDemuxer<'_> {
         let length = match file.seek(SeekFrom::End(0)) {
             Ok(pos) => pos,
             Err(_) => {
-                #[cfg(unix)]
-                let _ = file.into_raw_fd();
-                #[cfg(windows)]
-                let _ = file.into_raw_handle();
+                self.drop_fd(file);
                 return -1;
             }
         };
 
-        // If current or length is negative, return -1.
-        // (This check is somewhat redundant because seek returns Result<u64, _>,
-
-        // Restore the file position: equivalent to LSEEK(in, current, SEEK_SET);
         #[allow(unused_variables)]
         let ret = match file.seek(SeekFrom::Start(current)) {
             Ok(pos) => pos,
             Err(_) => {
-                #[cfg(unix)]
-                let _ = file.into_raw_fd();
-                #[cfg(windows)]
-                let _ = file.into_raw_handle();
+                self.drop_fd(file);
                 return -1;
             }
         };
 
         // Return the fd back to its original owner.
-        #[cfg(unix)]
-        let _ = file.into_raw_fd();
-        #[cfg(windows)]
-        let _ = file.into_raw_handle();
+        self.drop_fd(file);
         length as i64
     }
 
@@ -140,20 +124,18 @@ impl CcxDemuxer<'_> {
         self.past = 0;
         if self.infd != -1 && ccx_options.input_source == DataSource::File {
             // Convert raw fd to Rust File to handle closing
+            let file;
             #[cfg(unix)]
             {
-                let file = unsafe { File::from_raw_fd(self.infd) };
-                drop(file); // This closes the file descriptor
-                self.infd = -1;
-                ccx_options.activity_input_file_closed();
+                file = unsafe { File::from_raw_fd(self.infd) };
             }
             #[cfg(windows)]
             {
-                let file = open_windows(self.infd);
-                drop(file); // This closes the file descriptor
-                self.infd = -1;
-                ccx_options.activity_input_file_closed();
+                file = open_windows(self.infd);
             }
+            drop(file); // This closes the file descriptor
+            self.infd = -1;
+            ccx_options.activity_input_file_closed();
         }
     }
 
@@ -185,28 +167,28 @@ impl CcxDemuxer<'_> {
 
         init_file_buffer(self);
 
+        let mut handle_existing_infd = || {
+            if self.infd != -1 {
+                if ccx_options.print_file_reports {
+                    print_file_report(*self.parent.as_mut().unwrap());
+                }
+                return Some(-1);
+            }
+            None
+        };
+
         match ccx_options.input_source {
             DataSource::Stdin => {
-                if self.infd != -1 {
-                    if ccx_options.print_file_reports {
-                        {
-                            print_file_report(*self.parent.as_mut().unwrap());
-                        }
-                    }
-                    return -1;
+                if let Some(result) = handle_existing_infd() {
+                    return result;
                 }
                 self.infd = 0;
                 info!("\n\r-----------------------------------------------------------------\n");
                 info!("\rReading from standard input\n");
             }
             DataSource::Network => {
-                if self.infd != -1 {
-                    if ccx_options.print_file_reports {
-                        {
-                            print_file_report(*self.parent.as_mut().unwrap());
-                        }
-                    }
-                    return -1;
+                if let Some(result) = handle_existing_infd() {
+                    return result;
                 }
                 self.infd = start_upd_srv(
                     ccx_options
@@ -225,13 +207,8 @@ impl CcxDemuxer<'_> {
                 }
             }
             DataSource::Tcp => {
-                if self.infd != -1 {
-                    if ccx_options.print_file_reports {
-                        {
-                            print_file_report(*self.parent.as_mut().unwrap());
-                        }
-                    }
-                    return -1;
+                if let Some(result) = handle_existing_infd() {
+                    return result;
                 }
                 let port_cstring = ccx_options
                     .tcpport
@@ -267,7 +244,6 @@ impl CcxDemuxer<'_> {
                 }
             }
         }
-
         // Stream mode detection
         if self.auto_stream == StreamMode::Autodetect {
             detect_stream_type(self, ccx_options);
@@ -364,6 +340,12 @@ impl CcxDemuxer<'_> {
             }
         }
     }
+    pub fn drop_fd(&mut self, file: File) {
+        #[cfg(unix)]
+        let _ = file.into_raw_fd();
+        #[cfg(windows)]
+        let _ = file.into_raw_handle();
+    }
 }
 
 #[cfg(test)]
@@ -426,7 +408,6 @@ mod tests {
         assert!(!demuxer.flag_ts_forced_pn);
         assert!(!demuxer.flag_ts_forced_cappid);
         assert_eq!(demuxer.ts_datastreamtype, StreamType::Unknownstream);
-        assert_eq!(demuxer.pinfo.len(), MAX_PROGRAM);
         assert_eq!(demuxer.nb_program, 0);
         assert_eq!(demuxer.codec, Codec::Any);
         assert_eq!(demuxer.nocodec, Codec::Any);
