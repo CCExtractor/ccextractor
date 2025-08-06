@@ -72,7 +72,7 @@ mod tests {
         assert!(default_data.buffer.is_null());
         assert_eq!(default_data.len, 0);
         assert_eq!(default_data.rollover_bits, 0);
-        assert_eq!(default_data.pts, crate::demuxer::demuxer_data::CCX_NOPTS);
+        assert_eq!(default_data.pts, crate::demuxer::common_structs::CCX_NOPTS);
         assert_eq!(default_data.tb.num, 1);
         assert_eq!(default_data.tb.den, 90000);
         assert!(default_data.next_stream.is_null());
@@ -440,12 +440,9 @@ mod tests {
     #[test]
     fn test_ccx_nopts_constant() {
         // Verify the CCX_NOPTS constant matches the C definition
-        assert_eq!(
-            crate::demuxer::demuxer_data::CCX_NOPTS,
-            0x8000000000000000u64 as i64
-        );
+        assert_eq!(CCX_NOPTS, 0x8000000000000000u64 as i64);
 
         let default_data = DemuxerData::default();
-        assert_eq!(default_data.pts, crate::demuxer::demuxer_data::CCX_NOPTS);
+        assert_eq!(default_data.pts, CCX_NOPTS);
     }
 }
