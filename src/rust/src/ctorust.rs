@@ -467,11 +467,11 @@ impl FromCType<encoder_cfg> for EncoderConfig {
 impl FromCType<ccx_encoding_type> for Encoding {
     unsafe fn from_ctype(encoding: ccx_encoding_type) -> Option<Self> {
         Some(match encoding {
-            0 => Encoding::Ucs2,   // CCX_ENC_UNICODE
+            0 => Encoding::UCS2,   // CCX_ENC_UNICODE
             1 => Encoding::Latin1, // CCX_ENC_LATIN_1
-            2 => Encoding::Utf8,   // CCX_ENC_UTF_8
+            2 => Encoding::UTF8,   // CCX_ENC_UTF_8
             3 => Encoding::Line21, // CCX_ENC_ASCII
-            _ => Encoding::Utf8,   // Default to UTF-8 if unknown
+            _ => Encoding::UTF8,   // Default to UTF-8 if unknown
         })
     }
 }
