@@ -67,7 +67,6 @@ pub fn open_windows(infd: i32) -> File {
 pub fn position_sanity_check(ctx: &mut CcxDemuxer) {
     #[cfg(feature = "sanity_check")]
     {
-        use std::os::windows::io::IntoRawHandle;
         if ctx.infd != -1 {
             let fd = ctx.infd;
             // Convert raw fd to a File without taking ownership
@@ -80,22 +79,12 @@ pub fn position_sanity_check(ctx: &mut CcxDemuxer) {
                 Ok(pos) => pos as i64, // Convert to i64 to match C's LLONG
                 Err(_) => {
                     // Return the fd to avoid closing it
-                    #[cfg(unix)]
-                    {
-                        let _ = file.into_raw_fd();
-                    }
-                    #[cfg(windows)]
-                    {
-                        let _ = file.into_raw_handle();
-                    }
+                    ctx.drop_fd(file);
                     return;
                 }
             };
             // Return the fd to avoid closing it
-            #[cfg(unix)]
-            let _ = file.into_raw_fd();
-            #[cfg(windows)]
-            let _ = file.into_raw_handle();
+            ctx.drop_fd(file);
 
             let expected_pos = ctx.past - ctx.filebuffer_pos as i64 + ctx.bytesinbuffer as i64;
 
@@ -780,6 +769,7 @@ mod tests {
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
     use serial_test::serial;
     use std::ffi::CString;
+    use std::io::Write;
     #[cfg(feature = "sanity_check")]
     use std::io::Write;
     use std::os::raw::{c_char, c_int, c_ulong, c_void};
@@ -850,11 +840,7 @@ mod tests {
         let mut file = unsafe { open_windows(fd) };
         file.seek(SeekFrom::Start(130)).unwrap();
 
-        // Prevent double-closing when 'file' drops
-        #[cfg(unix)]
-        let _ = file.into_raw_fd();
-        #[cfg(windows)]
-        let _ = file.into_raw_handle();
+        ctx.drop_fd(file);
 
         // Run test
         position_sanity_check(&mut ctx);
