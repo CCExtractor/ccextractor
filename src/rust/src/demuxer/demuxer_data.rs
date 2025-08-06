@@ -1,5 +1,6 @@
 use crate::bindings::demuxer_data;
-use crate::demuxer::common_structs::CcxRational;
+use crate::demuxer::common_structs::{CcxRational, CCX_NOPTS};
+use crate::MPEG_CLOCK_FREQ;
 use lib_ccxr::common::{BufferdataType, Codec};
 use std::ptr::null_mut;
 
@@ -18,8 +19,6 @@ pub struct DemuxerData {
     pub next_program: *mut demuxer_data,
 }
 
-pub const CCX_NOPTS: i64 = 0x8000_0000_0000_0000u64 as i64;
-
 impl Default for DemuxerData {
     fn default() -> Self {
         DemuxerData {
@@ -33,7 +32,7 @@ impl Default for DemuxerData {
             pts: CCX_NOPTS,                      // no PTS
             tb: CcxRational {
                 num: 1,
-                den: 90_000,
+                den: unsafe { MPEG_CLOCK_FREQ },
             }, // default timebase
             next_stream: std::ptr::null_mut(),
             next_program: std::ptr::null_mut(),

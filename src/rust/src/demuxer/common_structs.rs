@@ -13,6 +13,7 @@ pub const MAX_PSI_PID: usize = 8191;
 pub const MAX_PROGRAM: usize = 128;
 pub const MAX_PROGRAM_NAME_LEN: usize = 128;
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
+pub const CCX_NOPTS: i64 = 0x8000_0000_0000_0000u64 as i64;
 
 #[repr(u32)]
 pub enum Stream_Type {
