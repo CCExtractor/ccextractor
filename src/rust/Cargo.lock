@@ -144,12 +144,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
-name = "byteorder"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
-
-[[package]]
 name = "camino"
 version = "1.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -160,22 +154,18 @@ name = "ccx_rust"
 version = "0.1.0"
 dependencies = [
  "bindgen 0.64.0",
- "byteorder",
  "cfg-if",
  "clap",
  "encoding_rs",
  "env_logger",
- "iconv",
  "leptonica-sys",
  "lib_ccxr",
  "log",
- "memoffset",
  "num-integer",
  "palette",
  "pkg-config",
  "rsmpeg",
  "serial_test",
- "strum 0.25.0",
  "strum_macros 0.25.3",
  "tempfile",
  "tesseract-sys",
@@ -302,12 +292,6 @@ dependencies = [
  "quote",
  "syn 2.0.100",
 ]
-
-[[package]]
-name = "dyn_buf"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74c57ab96715773d9cb9789b38eb7cbf04b3c6f5624a9d98f51761603376767c"
 
 [[package]]
 name = "either"
@@ -515,16 +499,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
-name = "iconv"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07e6a7db0df823ef299ef75b6951975c7a1f9019910b3665614bac4161bab1a9"
-dependencies = [
- "dyn_buf",
- "libc",
-]
-
-[[package]]
 name = "icu_collections"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -725,7 +699,7 @@ dependencies = [
  "crc32fast",
  "derive_more",
  "num_enum",
- "strum 0.26.3",
+ "strum",
  "strum_macros 0.26.4",
  "thiserror",
  "time",
@@ -787,15 +761,6 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
-
-[[package]]
-name = "memoffset"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
-dependencies = [
- "autocfg",
-]
 
 [[package]]
 name = "minimal-lexical"
@@ -1275,12 +1240,6 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
-
-[[package]]
-name = "strum"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
 
 [[package]]
 name = "strum"

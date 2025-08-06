@@ -21,10 +21,10 @@ pub unsafe fn copy_demuxer_data_to_rust(c_data: *const demuxer_data) -> DemuxerD
         bufferdatatype: BufferdataType::from_ctype((*c_data).bufferdatatype)
             .unwrap_or(BufferdataType::Unknown),
         buffer: (*c_data).buffer,
-        len: (*c_data).len, // Reset position to start of buffer
+        len: (*c_data).len,
         rollover_bits: (*c_data).rollover_bits as u32,
         pts: (*c_data).pts as i64,
-        tb: CcxRational::from_ctype((*c_data).tb).unwrap_or(CcxRational::default()), // Assuming From trait is implemented
+        tb: CcxRational::from_ctype((*c_data).tb).unwrap_or(CcxRational::default()),
         next_stream: (*c_data).next_stream,
         next_program: (*c_data).next_program,
     }
@@ -41,16 +41,15 @@ pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: 
     (*c_data).stream_pid = rust_data.stream_pid as c_int;
     if rust_data.codec.is_some() {
         (*c_data).codec = rust_data.codec.unwrap().to_ctype();
-    } // Assuming Into trait is implemented
-    (*c_data).bufferdatatype = rust_data.bufferdatatype.to_ctype(); // Assuming Into trait is implemented
+    }
+    (*c_data).bufferdatatype = rust_data.bufferdatatype.to_ctype();
 
-    // Copy buffer data from Rust slice to C buffer
     (*c_data).buffer = rust_data.buffer as *mut c_uchar;
     (*c_data).len = rust_data.len;
 
     (*c_data).rollover_bits = rust_data.rollover_bits as c_uint;
     (*c_data).pts = rust_data.pts as i64;
-    (*c_data).tb = rust_data.tb.to_ctype(); // Assuming Into trait is implemented
+    (*c_data).tb = rust_data.tb.to_ctype();
     (*c_data).next_stream = rust_data.next_stream as *mut demuxer_data;
     (*c_data).next_program = rust_data.next_program as *mut demuxer_data;
 }
@@ -84,7 +83,7 @@ mod tests {
             let c_data = Box::into_raw(Box::new(demuxer_data {
                 program_number: 42,
                 stream_pid: 256,
-                codec: Codec::Any.to_ctype(), // Assuming H264 codec exists
+                codec: Codec::Any.to_ctype(),
                 bufferdatatype: ccx_bufferdata_type_CCX_H264,
                 buffer: ptr::null_mut(),
                 len: 0,

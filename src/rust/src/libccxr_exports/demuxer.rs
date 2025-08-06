@@ -1,8 +1,10 @@
 use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
-use crate::ctorust::{from_ctype_PMT_entry, from_ctype_PSI_buffer, FromCType};
-use crate::demuxer::common_types::{CapInfo, CcxDemuxReport, CcxDemuxer, ProgramInfo};
+use crate::ctorust::FromCType;
+use crate::demuxer::common_types::{
+    CapInfo, CcxDemuxReport, CcxDemuxer, PMTEntry, PSIBuffer, ProgramInfo,
+};
 use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
@@ -250,7 +252,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
             if buffer_ptr.is_null() {
                 None
             } else {
-                from_ctype_PSI_buffer(buffer_ptr)
+                Some(Box::into_raw(Box::new(PSIBuffer::from_ctype(*buffer_ptr)?)))
             }
         })
         .collect::<Vec<_>>();
@@ -261,7 +263,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
             if buffer_ptr.is_null() {
                 None
             } else {
-                from_ctype_PMT_entry(buffer_ptr)
+                Some(Box::into_raw(Box::new(PMTEntry::from_ctype(*buffer_ptr)?)))
             }
         })
         .collect::<Vec<_>>();
@@ -704,9 +706,9 @@ mod tests {
     fn test_from_rust_to_c_arrays_with_data() {
         let demuxer = unsafe { alloc_new_demuxer() };
         // Create test PSI and PMT entries
-        let psi_buffer1 = Box::new(PSIBuffer::default()); // Assuming PSIBuffer has Default
+        let psi_buffer1 = Box::new(PSIBuffer::default());
         let psi_buffer2 = Box::new(PSIBuffer::default());
-        let pmt_entry1 = Box::new(PMTEntry::default()); // Assuming PMTEntry has Default
+        let pmt_entry1 = Box::new(PMTEntry::default());
         let pmt_entry2 = Box::new(PMTEntry::default());
 
         let rust_demuxer = CcxDemuxer {
