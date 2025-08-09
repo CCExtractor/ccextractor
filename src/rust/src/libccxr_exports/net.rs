@@ -1,10 +1,9 @@
 use crate::bindings::*;
 
+use lib_ccxr::net::c_functions::*;
 use std::convert::TryInto;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
-
-use lib_ccxr::net::c_functions::*;
 
 /// Rust equivalent for `connect_to_srv` function in C. Uses C-native types as input and output.
 ///

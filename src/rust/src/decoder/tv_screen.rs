@@ -35,7 +35,7 @@ impl dtvcc_tv_screen {
     pub fn update_time_show(&mut self, time: LLONG) {
         let prev_time_str = get_time_str(self.time_ms_show);
         let curr_time_str = get_time_str(time);
-        debug!("Screen show time: {} -> {}", prev_time_str, curr_time_str);
+        debug!("Screen show time: {prev_time_str} -> {curr_time_str}");
         if self.time_ms_show == -1 || self.time_ms_show > time {
             self.time_ms_show = time;
         }
@@ -45,7 +45,7 @@ impl dtvcc_tv_screen {
     pub fn update_time_hide(&mut self, time: LLONG) {
         let prev_time_str = get_time_str(self.time_ms_hide);
         let curr_time_str = get_time_str(time);
-        debug!("Screen hide time: {} -> {}", prev_time_str, curr_time_str);
+        debug!("Screen hide time: {prev_time_str} -> {curr_time_str}");
         if self.time_ms_hide == -1 || self.time_ms_hide < time {
             self.time_ms_hide = time;
         }
@@ -71,7 +71,7 @@ impl dtvcc_tv_screen {
                     .to_str()
                     .map_err(|err| err.to_string())
             }?;
-            debug!("dtvcc_writer_output: creating {}", filename);
+            debug!("dtvcc_writer_output: creating {filename}");
             let file = File::create(filename).map_err(|err| err.to_string())?;
             writer.writer_ctx.fd = file.into_raw_fd();
 
@@ -138,7 +138,7 @@ impl dtvcc_tv_screen {
             }
         };
         if let Err(err) = result {
-            warn!("{}", err);
+            warn!("{err}");
         }
     }
 
@@ -155,7 +155,7 @@ impl dtvcc_tv_screen {
         let mut pen_color = dtvcc_pen_color::default();
         let mut pen_attribs = dtvcc_pen_attribs::default();
         let (first, last) = self.get_write_interval(row_index);
-        debug!("First: {}, Last: {}", first, last);
+        debug!("First: {first}, Last: {last}");
 
         for i in 0..last + 1 {
             if use_colors {
@@ -231,7 +231,7 @@ impl dtvcc_tv_screen {
                         .to_str()
                         .map_err(|err| err.to_string())?
                 };
-                debug!("Charset: {}", charset);
+                debug!("Charset: {charset}");
 
                 // Look up the encoding by label (name)
                 if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
@@ -486,7 +486,7 @@ impl dtvcc_tv_screen {
                 add_needed_scc_labels(&mut buf, total_subtitle_count, current_subtitle_count);
 
                 let (first, last) = self.get_write_interval(row_index);
-                debug!("First: {}, Last: {}", first, last);
+                debug!("First: {first}, Last: {last}");
 
                 let mut bytes_written = 0;
                 for i in 0..last + 1 {
@@ -520,7 +520,7 @@ impl dtvcc_tv_screen {
     pub fn write_debug(&self) {
         let time_show = get_time_str(self.time_ms_show);
         let time_hide = get_time_str(self.time_ms_hide);
-        debug!("{} --> {}", time_show, time_hide);
+        debug!("{time_show} --> {time_hide}");
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
@@ -529,7 +529,7 @@ impl dtvcc_tv_screen {
                 for sym in self.chars[row_index][first..=last].iter() {
                     buf.push_str(&format!("{:04X},", sym.sym));
                 }
-                debug!("{}", buf);
+                debug!("{buf}");
             }
         }
     }
@@ -620,7 +620,7 @@ impl dtvcc_tv_screen {
                 // should close older non-white color
                 buf.extend_from_slice(b"</font>");
             } else if new_pen_color.fg_color != 0x3F && open {
-                debug!("Colors: {}", col_index);
+                debug!("Colors: {col_index}");
                 let (mut red, mut green, mut blue) = color_to_hex(new_pen_color.fg_color as u8);
                 red *= 255 / 3;
                 green *= 255 / 3;
