@@ -250,7 +250,7 @@ pub trait BlockStream {
             return Ok(false);
         }
 
-        if data.len() > 0 && self.send(data)? != data.len() {
+        if !data.is_empty() && self.send(data)? != data.len() {
             return Ok(false);
         }
 
@@ -351,7 +351,7 @@ impl Display for Command {
             Command::Ping => "PING",
         };
 
-        let _ = write!(f, "{}", message);
+        let _ = write!(f, "{message}");
 
         Ok(())
     }
