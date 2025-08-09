@@ -160,25 +160,128 @@ impl RecvSource {
                 address,
                 port,
             } => {
-                let address = address
-                    .map(|x| {
-                        for s in (x, 0).to_socket_addrs().unwrap() {
-                            if let SocketAddr::V4(sv4) = s {
-                                return *sv4.ip();
-                            }
-                        }
-                        fatal!(cause = ExitCause::Failure; "Could not resolve udp address")
-                    })
-                    .unwrap_or(Ipv4Addr::UNSPECIFIED);
+                // Handle address resolution - match C behavior more closely
+                let address = address.map(|x| {
+                    // First try to parse as direct IP address
+                    if let Ok(ip) = x.parse::<Ipv4Addr>() {
+                        return ip;
+                    }
 
-                let source = source.map(|x| {
-                    for s in (x, 0).to_socket_addrs().unwrap() {
-                        if let SocketAddr::V4(sv4) = s {
-                            return *sv4.ip();
+                    // Handle localhost specifically 
+                    if x == "localhost" {
+                        return Ipv4Addr::LOCALHOST;
+                    }
+
+                    // Try DNS resolution with more lenient approach
+                    match (x, 0).to_socket_addrs() {
+                        Ok(addrs) => {
+                            for s in addrs {
+                                match s {
+                                    SocketAddr::V4(sv4) => return *sv4.ip(),
+                                    SocketAddr::V6(sv6) => {
+                                        // Convert IPv6 localhost to IPv4
+                                        if sv6.ip().is_loopback() {
+                                            return Ipv4Addr::LOCALHOST;
+                                        }
+                                        // Try IPv4-mapped IPv6
+                                        if let Some(ipv4) = sv6.ip().to_ipv4_mapped() {
+                                            return ipv4;
+                                        }
+                                    }
+                                }
+                            }
+                            // If we get here, no suitable address was found
+                            fatal!(cause = ExitCause::Failure; "Could not resolve udp address to IPv4")
+                        },
+                        Err(_) => {
+                            fatal!(cause = ExitCause::Failure; "Could not resolve udp address")
                         }
                     }
-                    fatal!(cause = ExitCause::Failure; "Could not resolve udp source")
+                }).unwrap_or(Ipv4Addr::UNSPECIFIED);
+
+                // Handle source resolution - don't try to resolve hostnames with ports
+                let source = source.map(|x| {
+                    // Check if this looks like hostname:port format (which is invalid for source)
+                    if x.contains(':') {
+                        info!(
+                            "Warning: Source '{}' contains port - this should be hostname only\n",
+                            x
+                        );
+                        // Try to extract just the hostname part
+                        if let Some(hostname) = x.split(':').next() {
+                            info!("Extracting hostname '{}' from '{}'\n", hostname, x);
+                            return resolve_hostname_to_ipv4(hostname);
+                        }
+                    }
+
+                    resolve_hostname_to_ipv4(x)
                 });
+
+                // Helper function to resolve hostname to IPv4
+                fn resolve_hostname_to_ipv4(hostname: &str) -> Ipv4Addr {
+                    // First try to parse as direct IP address
+                    if let Ok(ip) = hostname.parse::<Ipv4Addr>() {
+                        info!("Source address: {}\n", ip);
+                        return ip;
+                    }
+
+                    // Handle localhost specifically
+                    if hostname == "localhost" {
+                        info!("Source address: {}\n", Ipv4Addr::LOCALHOST);
+                        return Ipv4Addr::LOCALHOST;
+                    }
+
+                    // Try DNS resolution
+                    match (hostname, 0).to_socket_addrs() {
+                        Ok(addrs) => {
+                            for s in addrs {
+                                info!("Resolved address: {}\n", s);
+                                match s {
+                                    SocketAddr::V4(sv4) => {
+                                        info!("Source address: {}\n", sv4.ip());
+                                        return *sv4.ip();
+                                    }
+                                    SocketAddr::V6(sv6) => {
+                                        // Convert IPv6 localhost to IPv4
+                                        if sv6.ip().is_loopback() {
+                                            info!(
+                                                "Source address: {} (converted from IPv6)\n",
+                                                Ipv4Addr::LOCALHOST
+                                            );
+                                            return Ipv4Addr::LOCALHOST;
+                                        }
+                                        // Try IPv4-mapped IPv6
+                                        if let Some(ipv4) = sv6.ip().to_ipv4_mapped() {
+                                            info!(
+                                                "Source address: {} (converted from IPv6)\n",
+                                                ipv4
+                                            );
+                                            return ipv4;
+                                        }
+                                    }
+                                }
+                            }
+                            // If we get here, no suitable address was found
+                            info!(
+                                "Warning: Only IPv6 addresses found for {}, but IPv4 required\n",
+                                hostname
+                            );
+                            fatal!(cause = ExitCause::Failure; "Could not resolve udp source to IPv4")
+                        }
+                        Err(e) => {
+                            info!("DNS resolution failed for {}: {}\n", hostname, e);
+                            fatal!(cause = ExitCause::Failure; "Could not resolve udp source")
+                        }
+                    }
+                }
+
+                info!(
+                    "Source: {}\n",
+                    source
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| "None".to_string())
+                );
+                info!("Source port: {}\n", port);
 
                 let socket = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap_or_else(
                     |_| fatal!(cause = ExitCause::Failure; "Socket creation error"),
@@ -186,7 +289,7 @@ impl RecvSource {
 
                 if address.is_multicast() {
                     socket.set_reuse_address(true).unwrap_or_else(|_| {
-                        info!("Cannot not set reuse address\n");
+                        info!("Cannot set reuse address\n");
                     });
                 }
 
