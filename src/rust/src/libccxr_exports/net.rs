@@ -65,7 +65,7 @@ pub unsafe extern "C" fn ccxr_connect_to_srv(
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_net_send_header(data: *const c_uchar, len: usize) {
     let buffer = std::slice::from_raw_parts(data, len);
-    net_send_header(buffer);
+    net_send_header_rust(buffer);
 }
 
 /// Rust equivalent for `net_send_cc` function in C. Uses C-native types as input and output.

@@ -24,7 +24,8 @@ pub fn connect_to_srv(
 }
 
 /// Rust equivalent for `net_send_header` function in C. Uses Rust-native types as input and output.
-pub fn net_send_header(data: &[u8]) {
+pub fn net_send_header_rust(data: &[u8]) {
+    // Rename back to `net_send_header` when C function is removed from encoder
     let mut send_target = TARGET.write().unwrap();
     send_target.as_mut().unwrap().send_header(data);
 }
