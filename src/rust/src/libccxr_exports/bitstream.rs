@@ -74,6 +74,8 @@ unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'stat
                 let i_offset = (*value)._i_pos.offset_from((*value).pos);
                 i_pos_in_slice = i_offset.max(0) as usize;
             }
+        } else if (*value).pos == (*value).end {
+            slice = std::slice::from_raw_parts((*value).pos, 1);
         }
     }
 
