@@ -437,7 +437,7 @@ impl OptionsExt for Options {
         } else {
             0
         };
-        if num_input_files >= *inputfile_capacity as _ {
+        if num_input_files >= *inputfile_capacity as usize {
             *inputfile_capacity += 10;
         }
 
