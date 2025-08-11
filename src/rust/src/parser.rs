@@ -548,13 +548,6 @@ impl OptionsExt for Options {
             }
         }
 
-        if self.inputfile.is_none() {
-            fatal!(
-                cause = ExitCause::NoInputFiles;
-               "No input file specified\n"
-            );
-        }
-
         #[cfg(feature = "hardsubx_ocr")]
         {
             use lib_ccxr::hardsubx::*;
@@ -1365,36 +1358,34 @@ impl OptionsExt for Options {
 
             self.xmltv = 2;
             self.xmltvliveinterval = Timestamp::from_millis(2000);
-            let mut _addr: String = addr.to_string();
+            let _addr: String = addr.to_string();
 
+            // Handle IPv6 addresses in [addr]:port format
             if let Some(saddr) = addr.strip_prefix('[') {
-                _addr = saddr.to_string();
-
-                let result = _addr.find(']');
-                if result.is_none() {
+                if let Some(end_bracket) = saddr.find(']') {
+                    let addr_part = &saddr[..end_bracket];
+                    let port_part = &saddr[end_bracket + 1..];
+                    self.srv_addr = Some(addr_part.to_string());
+                    if let Some(port) = port_part.strip_prefix(':') {
+                        self.srv_port = Some(port.parse().unwrap());
+                    }
+                } else {
                     fatal!(
                         cause = ExitCause::IncompatibleParameters;
-                       "Wrong address format, for IPv6 use [address]:port\n"
+                        "Wrong address format, for IPv6 use [address]:port\n"
                     );
                 }
-                let mut br = result.unwrap();
-                _addr = _addr.replace(']', "");
-
+            } else if let Some(colon) = _addr.rfind(':') {
+                // Handle IPv4 or hostname:port
+                let (host, port) = _addr.split_at(colon);
+                self.srv_addr = Some(host.to_string());
+                self.srv_port = Some(port[1..].parse().unwrap());
+            } else {
+                // No port specified, treat as address only
                 self.srv_addr = Some(_addr.clone());
-
-                br += 1;
-                if !_addr[br..].is_empty() {
-                    self.srv_port = Some(_addr[br..].parse().unwrap());
-                }
+                self.srv_port = None;
             }
-
-            self.srv_addr = Some(_addr.clone());
-
-            let colon = _addr.find(':').unwrap();
-            _addr = _addr.replace(':', "");
-            self.srv_port = Some(_addr[(colon + 1)..].parse().unwrap());
         }
-
         if let Some(ref tcp) = args.tcp {
             self.tcpport = Some(*tcp);
             self.input_source = DataSource::Tcp;
@@ -1830,7 +1821,7 @@ pub mod tests {
         assert!(options.cc_to_stdout);
 
         assert_eq!(options.messages_target, OutputTarget::Quiet);
-        assert_eq!(options.nofontcolor, true);
+        assert!(options.nofontcolor);
     }
 
     #[test]
