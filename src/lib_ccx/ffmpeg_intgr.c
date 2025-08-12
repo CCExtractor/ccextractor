@@ -105,7 +105,7 @@ void *init_ffmpeg(const char *path)
 		goto fail;
 	}
 	stream_index = ret;
-	ctx->dec_ctx = ctx->ifmt->streams[stream_index]->codec;
+	ctx->dec_ctx = ctx->ifmt->streams[stream_index]->codecpar;
 	ctx->stream_index = stream_index;
 	ret = avcodec_open2(ctx->dec_ctx, dec, NULL);
 	if (ret < 0)
@@ -149,7 +149,7 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 		return AVERROR(EAGAIN);
 	}
 
-	avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+	avcodec_send_packet(ctx->dec_ctx, &packet);
 	ret = avcodec_receive_frame(ctx->dec_ctx, ctx->frame);
 	if (ret < 0)
 	{
