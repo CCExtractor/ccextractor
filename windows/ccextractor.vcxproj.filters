@@ -380,9 +380,6 @@
     <ClCompile Include=" ..\src\lib_ccx\ccx_gxf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include=" ..\src\lib_ccx\ccx_share.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\ccx_sub_entry_message.pb-c.c">
       <Filter>Source Files</Filter>
     </ClCompile>

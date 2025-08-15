@@ -103,7 +103,6 @@
     <ClCompile Include=" ..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_encoders_xds.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_gxf.c" />
-    <ClCompile Include=" ..\src\lib_ccx\ccx_share.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_sub_entry_message.pb-c.c" />
     <ClCompile Include=" ..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include=" ..\src\lib_ccx\configuration.c" />

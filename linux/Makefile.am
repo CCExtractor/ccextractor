@@ -123,7 +123,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_gxf.c \
 				../src/lib_ccx/ccx_gxf.h \
 				../src/lib_ccx/ccx_mp4.h \
-				../src/lib_ccx/ccx_share.c \
 				../src/lib_ccx/ccx_sub_entry_message.pb-c.c \
 				../src/lib_ccx/ccx_sub_entry_message.pb-c.h \
 				../src/lib_ccx/compile_info.h \
