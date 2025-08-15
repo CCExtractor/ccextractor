@@ -27,7 +27,6 @@
 #define LOG_DEBUG(...)
 #endif
 
-
 //---------------------------
 // BEGIN of #BUG639
 // HACK: this is workaround for https://github.com/CCExtractor/ccextractor/issues/639

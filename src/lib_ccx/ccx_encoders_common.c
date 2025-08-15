@@ -1091,7 +1091,6 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 	context = change_filename(context);
 
-
 	if (context->sbs_enabled)
 	{
 		// Write to a buffer that is later s+plit to generate split
