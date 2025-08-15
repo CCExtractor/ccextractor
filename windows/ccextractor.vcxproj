@@ -15,7 +15,6 @@
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
     <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\lib_ccx\avc_functions.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_char_encoding.h" />
@@ -103,7 +102,6 @@
     <ClCompile Include=" ..\src\lib_ccx\ccx_encoders_webvtt.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_encoders_xds.c" />
     <ClCompile Include=" ..\src\lib_ccx\ccx_gxf.c" />
-    <ClCompile Include=" ..\src\lib_ccx\ccx_sub_entry_message.pb-c.c" />
     <ClCompile Include=" ..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include=" ..\src\lib_ccx\configuration.c" />
     <ClCompile Include=" ..\src\lib_ccx\dvb_subtitle_decoder.c" />
@@ -180,9 +178,6 @@
     <ClCompile Include=" ..\src\thirdparty\freetype\cid\type1cid.c" />
     <ClCompile Include=" ..\src\thirdparty\freetype\type42\type42.c" />
     <ClCompile Include=" ..\src\thirdparty\freetype\winfonts\winfnt.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=" ..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>

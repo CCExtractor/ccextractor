@@ -165,9 +165,6 @@
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h">
-      <Filter>Header Files\lib_ccx</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
@@ -378,9 +375,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\ccx_gxf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include=" ..\src\lib_ccx\ccx_sub_entry_message.pb-c.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\cc_bitstream.c">
@@ -611,8 +605,5 @@
     <ClCompile Include=" ..\src\thirdparty\freetype\winfonts\winfnt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=" ..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
 </Project>
