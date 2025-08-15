@@ -46,6 +46,7 @@
 - Fix: Resolve compile-time error about implicit declarations (#1646)
 - Fix: fatal out of memory error extracting from a VOB PS
 - Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
+- Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
 
 0.94 (2021-12-14)
 -----------------
