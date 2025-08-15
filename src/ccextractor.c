@@ -38,7 +38,7 @@ void print_end_msg(void)
 	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
 }
 
-int api_start(struct ccx_s_options api_options)
+int start_ccx()
 {
 	struct lib_ccx_ctx *ctx = NULL;	      // Context for libs
 	struct lib_cc_decode *dec_ctx = NULL; // Context for decoder
@@ -49,7 +49,7 @@ int api_start(struct ccx_s_options api_options)
 	setMsgSeverity(LEPT_MSG_SEVERITY);
 #endif
 	// Initialize CCExtractor libraries
-	ctx = init_libraries(&api_options);
+	ctx = init_libraries(&ccx_options);
 
 	if (!ctx)
 	{
@@ -66,10 +66,10 @@ int api_start(struct ccx_s_options api_options)
 	}
 
 #ifdef ENABLE_HARDSUBX
-	if (api_options.hardsubx)
+	if (ccx_options.hardsubx)
 	{
 		// Perform burned in subtitle extraction
-		hardsubx(&api_options, ctx);
+		hardsubx(&ccx_options, ctx);
 		return 0;
 	}
 #endif
@@ -97,11 +97,11 @@ int api_start(struct ccx_s_options api_options)
 		tlt_config.page = ((tlt_config.page / 100) << 8) | (((tlt_config.page / 10) % 10) << 4) | (tlt_config.page % 10);
 	}
 
-	if (api_options.transcript_settings.xds)
+	if (ccx_options.transcript_settings.xds)
 	{
-		if (api_options.write_format != CCX_OF_TRANSCRIPT)
+		if (ccx_options.write_format != CCX_OF_TRANSCRIPT)
 		{
-			api_options.transcript_settings.xds = 0;
+			ccx_options.transcript_settings.xds = 0;
 			mprint("Warning: -xds ignored, XDS can only be exported to transcripts at this time.\n");
 		}
 	}
@@ -109,7 +109,7 @@ int api_start(struct ccx_s_options api_options)
 	time_t start, final;
 	time(&start);
 
-	if (api_options.binary_concat)
+	if (ccx_options.binary_concat)
 	{
 		ctx->total_inputsize = get_total_file_size(ctx);
 		if (ctx->total_inputsize < 0)
@@ -168,8 +168,8 @@ int api_start(struct ccx_s_options api_options)
 		{
 			// Note: This case is meant to fall through
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
-				if (!api_options.use_gop_as_pts)	// If !0 then the user selected something
-					api_options.use_gop_as_pts = 1; // Force GOP timing for ES
+				if (!ccx_options.use_gop_as_pts)	// If !0 then the user selected something
+					ccx_options.use_gop_as_pts = 1; // Force GOP timing for ES
 				ccx_common_timing_settings.is_elementary_stream = 1;
 			case CCX_SM_TRANSPORT:
 			case CCX_SM_PROGRAM:
@@ -180,9 +180,9 @@ int api_start(struct ccx_s_options api_options)
 #ifdef ENABLE_FFMPEG
 			case CCX_SM_FFMPEG:
 #endif
-				if (!api_options.use_gop_as_pts) // If !0 then the user selected something
-					api_options.use_gop_as_pts = 0;
-				if (api_options.ignore_pts_jumps)
+				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
+					ccx_options.use_gop_as_pts = 0;
+				if (ccx_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);
@@ -215,7 +215,7 @@ int api_start(struct ccx_s_options api_options)
 				{
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 				}
-				if (api_options.extract_chapters)
+				if (ccx_options.extract_chapters)
 				{
 					tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				}
@@ -223,7 +223,7 @@ int api_start(struct ccx_s_options api_options)
 				{
 					tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
 				}
-				if (api_options.print_file_reports)
+				if (ccx_options.print_file_reports)
 					print_file_report(ctx);
 				if (!ret)
 					ret = tmp;
@@ -405,12 +405,6 @@ int api_start(struct ccx_s_options api_options)
 	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
 }
 
-struct ccx_s_options *api_init_options()
-{
-	init_options(&ccx_options);
-	return &ccx_options;
-}
-
 int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, ""); // Supports non-English CCs
@@ -418,10 +412,11 @@ int main(int argc, char *argv[])
 			       // thousands' groupoing instead of what the locale might say
 	setlocale(LC_NUMERIC, "POSIX");
 
-	struct ccx_s_options *api_options = api_init_options();
-	parse_configuration(api_options);
+	init_options(&ccx_options);
+
 	// If "ccextractor.cnf" is present, takes options from it.
 	// See docs/ccextractor.cnf.sample for more info.
+	parse_configuration(&ccx_options);
 
 #ifndef DISABLE_RUST
 	ccxr_init_basic_logger();
@@ -430,7 +425,7 @@ int main(int argc, char *argv[])
 #ifndef DISABLE_RUST
 	int compile_ret = ccxr_parse_parameters(argc, argv);
 #else
-	int compile_ret = parse_parameters(api_options, argc, argv);
+	int compile_ret = parse_parameters(&ccx_options, argc, argv);
 #endif
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
@@ -447,6 +442,6 @@ int main(int argc, char *argv[])
 		exit(compile_ret);
 	}
 
-	int start_ret = api_start(*api_options);
+	int start_ret = start_ccx();
 	return start_ret;
 }
