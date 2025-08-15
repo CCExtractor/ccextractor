@@ -2,8 +2,6 @@ pub mod activity;
 pub mod common;
 pub mod encoder;
 pub mod hardsubx;
-#[cfg(feature = "enable_sharing")]
-pub mod share;
 pub mod subtitle;
 pub mod teletext;
 pub mod time;

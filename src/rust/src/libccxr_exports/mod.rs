@@ -1,12 +1,6 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
-
 pub mod bitstream;
-pub mod time;
-
-
-#[cfg(feature = "enable_sharing")]
-pub mod share;
 pub mod time;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;

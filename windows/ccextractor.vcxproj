@@ -15,7 +15,6 @@
     <ClInclude Include="..\src\ccextractor.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_structs.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h" />
-    <ClInclude Include="..\src\lib_ccx\ccx_share.h" />
     <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h" />
     <ClInclude Include="..\src\lib_ccx\compile_info.h" />
     <ClInclude Include="..\src\lib_ccx\avc_functions.h" />

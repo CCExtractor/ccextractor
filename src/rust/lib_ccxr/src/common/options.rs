@@ -520,19 +520,6 @@ pub struct Options {
 
     #[cfg(feature = "with_libcurl")]
     pub curlposturl: Option<Url>,
-
-    //CC sharing
-    #[cfg(feature = "enable_sharing")]
-    pub sharing_enabled: bool,
-    #[cfg(feature = "enable_sharing")]
-    pub sharing_url: Option<Url>,
-    #[cfg(feature = "enable_sharing")]
-    //Translating
-    pub translate_enabled: bool,
-    #[cfg(feature = "enable_sharing")]
-    pub translate_langs: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    pub translate_key: Option<String>,
 }
 
 impl Default for Options {
@@ -634,11 +621,6 @@ impl Default for Options {
                 DebugMessageFlag::VERBOSE,
             ),
             curlposturl: Default::default(),
-            sharing_enabled: Default::default(),
-            sharing_url: Default::default(),
-            translate_enabled: Default::default(),
-            translate_langs: Default::default(),
-            translate_key: Default::default(),
         }
     }
 }

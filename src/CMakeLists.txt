@@ -5,7 +5,6 @@ include (CTest)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
-option (WITH_SHARING "Build with sharing and translation support" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 option (WITHOUT_RUST "Build without Rust library" OFF)
 
@@ -205,21 +204,6 @@ if (PKG_CONFIG_FOUND AND WITH_OCR)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (PKG_CONFIG_FOUND AND WITH_OCR)
-
-########################################################
-# Build with CC sharing and translation support
-########################################################
-
-if (PKG_CONFIG_FOUND AND WITH_SHARING)
-
-  pkg_check_modules (NANOMSG REQUIRED libnanomsg)
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${NANOMSG_STATIC_LIBRARIES})
-
-  include_directories ("${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/")
-  aux_source_directory ("${PROJECT_SOURCE_DIR}/thirdparty/protobuf-c/" SOURCEFILE)
-
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
-endif (PKG_CONFIG_FOUND AND WITH_SHARING)
 
 ########################################################
 # Build for hardsubx using avformat, avutil, avcodec and

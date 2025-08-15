@@ -27,9 +27,6 @@
 #define LOG_DEBUG(...)
 #endif
 
-#ifdef ENABLE_SHARING
-#include "ccx_share.h"
-#endif // ENABLE_SHARING
 
 //---------------------------
 // BEGIN of #BUG639

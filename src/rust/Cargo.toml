@@ -36,7 +36,6 @@ bindgen = "0.64.0"
 pkg-config = "0.3.32"
 
 [features]
-enable_sharing = []
 wtv_debug = []
 enable_ffmpeg = []
 with_libcurl = []

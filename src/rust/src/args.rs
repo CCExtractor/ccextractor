@@ -1,4 +1,3 @@
-use cfg_if::cfg_if;
 use clap::{Parser, ValueEnum};
 use strum_macros::Display;
 
@@ -25,13 +24,6 @@ const TELETEXT_OPTIONS: &str = "Teletext related options";
 const TRANSCRIPT_OPTIONS: &str = "Transcript customizing options";
 const COMMUNICATION_PROTOCOL: &str = "Communication with other programs and console output";
 const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
-
-cfg_if! {
-    if #[cfg(feature = "enable_sharing")] {
-        const SHARING_EXTRACTED_CAPTIONS: &str = "Sharing extracted captions via TCP";
-        const CCTRANSLATE_INTEGRATION: &str = "CCTranslate application integration";
-    }
-}
 
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
@@ -818,10 +810,6 @@ pub struct Args {
     /// to find data in all packets by scanning.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub investigate_packets: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Print extracted CC sharing service messages
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
-    pub sharing_debug: bool,
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
     /// page is always 888, may vary in other countries.
@@ -874,23 +862,6 @@ pub struct Args {
     /// Don't write any message.
     #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
     pub quiet: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Enables real-time sharing of extracted captions
-    #[arg(long, verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
-    pub enable_sharing: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Set url for sharing service in nanomsg format. Default: tcp://*:3269
-    #[arg(long, value_name="url", verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
-    pub sharing_url: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    /// Enables real-time sharing of extracted captions
-    #[arg(long, value_name="languages", verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
-    pub translate: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    /// Set Translation Service authorization data to make translation possible
-    /// In case of Google Translate API - API Key
-    #[arg(long, verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
-    pub translate_auth: Option<String>,
     /// Enable the burned-in subtitle extraction subsystem.
     ///
     /// NOTE: This is needed to use the below burned-in
