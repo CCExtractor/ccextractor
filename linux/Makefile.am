@@ -202,8 +202,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/utf8proc/utf8proc.h \
 				../src/thirdparty/lib_hash/sha2.c \
 				../src/thirdparty/lib_hash/sha2.h \
-				../src/thirdparty/protobuf-c/protobuf-c.c \
-				../src/thirdparty/protobuf-c/protobuf-c.h \
 				../src/lib_ccx/zvbi/bcd.h \
 				../src/lib_ccx/zvbi/bit_slicer.c \
 				../src/lib_ccx/zvbi/bit_slicer.h \
@@ -268,7 +266,7 @@ endif
 
 ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I/usr/include/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I/usr/include/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 
 
 ccextractor_LDADD=-lm -lpthread -ldl -lgpac
