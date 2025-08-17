@@ -5,62 +5,7 @@ use crate::common::CType;
 pub const ZEROBYTES_SHORTSTARTCODE: i32 = 2;
 pub const AVC_CC_DATA_INITIAL_SIZE: usize = 1024;
 pub const MAXBFRAMES: i32 = 50;
-// NAL unit types from H.264 standard
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum NalUnitType {
-    Unspecified = 0,
-    CodedSliceNonIdr = 1,
-    CodedSliceDataPartitionA = 2,
-    CodedSliceDataPartitionB = 3,
-    CodedSliceDataPartitionC = 4,
-    CodedSliceIdr = 5,
-    Sei = 6,
-    SequenceParameterSet = 7,
-    PictureParameterSet = 8,
-    AccessUnitDelimiter = 9,
-    EndOfSequence = 10,
-    EndOfStream = 11,
-    FillerData = 12,
-    SequenceParameterSetExtension = 13,
-    PrefixNalUnit = 14,
-    SubsetSequenceParameterSet = 15,
-    DepthParameterSet = 16,
-    // 17-18 reserved
-    CodedSliceAuxiliary = 19,
-    CodedSliceExtension = 20,
-    // 21-23 reserved
-    // 24-31 unspecified
-}
 
-impl From<u8> for NalUnitType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => NalUnitType::Unspecified,
-            1 => NalUnitType::CodedSliceNonIdr,
-            2 => NalUnitType::CodedSliceDataPartitionA,
-            3 => NalUnitType::CodedSliceDataPartitionB,
-            4 => NalUnitType::CodedSliceDataPartitionC,
-            5 => NalUnitType::CodedSliceIdr,
-            6 => NalUnitType::Sei,
-            7 => NalUnitType::SequenceParameterSet,
-            8 => NalUnitType::PictureParameterSet,
-            9 => NalUnitType::AccessUnitDelimiter,
-            10 => NalUnitType::EndOfSequence,
-            11 => NalUnitType::EndOfStream,
-            12 => NalUnitType::FillerData,
-            13 => NalUnitType::SequenceParameterSetExtension,
-            14 => NalUnitType::PrefixNalUnit,
-            15 => NalUnitType::SubsetSequenceParameterSet,
-            16 => NalUnitType::DepthParameterSet,
-            19 => NalUnitType::CodedSliceAuxiliary,
-            20 => NalUnitType::CodedSliceExtension,
-            _ => NalUnitType::Unspecified,
-        }
-    }
-}
-
-// Rustified version of the avc_ctx struct
 #[derive(Debug, Clone)]
 pub struct AvcContextRust {
     pub cc_count: u8,
@@ -307,6 +252,60 @@ impl From<u32> for SeiPayloadType {
             20 => SeiPayloadType::DeblockingFilterDisplayPreference,
             21 => SeiPayloadType::StereoVideoInfo,
             _ => SeiPayloadType::UserDataUnregistered, // Default fallback
+        }
+    }
+}
+// NAL unit types from H.264 standard
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum NalUnitType {
+    Unspecified = 0,
+    CodedSliceNonIdr = 1,
+    CodedSliceDataPartitionA = 2,
+    CodedSliceDataPartitionB = 3,
+    CodedSliceDataPartitionC = 4,
+    CodedSliceIdr = 5,
+    Sei = 6,
+    SequenceParameterSet = 7,
+    PictureParameterSet = 8,
+    AccessUnitDelimiter = 9,
+    EndOfSequence = 10,
+    EndOfStream = 11,
+    FillerData = 12,
+    SequenceParameterSetExtension = 13,
+    PrefixNalUnit = 14,
+    SubsetSequenceParameterSet = 15,
+    DepthParameterSet = 16,
+    // 17-18 reserved
+    CodedSliceAuxiliary = 19,
+    CodedSliceExtension = 20,
+    // 21-23 reserved
+    // 24-31 unspecified
+}
+
+impl From<u8> for NalUnitType {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => NalUnitType::Unspecified,
+            1 => NalUnitType::CodedSliceNonIdr,
+            2 => NalUnitType::CodedSliceDataPartitionA,
+            3 => NalUnitType::CodedSliceDataPartitionB,
+            4 => NalUnitType::CodedSliceDataPartitionC,
+            5 => NalUnitType::CodedSliceIdr,
+            6 => NalUnitType::Sei,
+            7 => NalUnitType::SequenceParameterSet,
+            8 => NalUnitType::PictureParameterSet,
+            9 => NalUnitType::AccessUnitDelimiter,
+            10 => NalUnitType::EndOfSequence,
+            11 => NalUnitType::EndOfStream,
+            12 => NalUnitType::FillerData,
+            13 => NalUnitType::SequenceParameterSetExtension,
+            14 => NalUnitType::PrefixNalUnit,
+            15 => NalUnitType::SubsetSequenceParameterSet,
+            16 => NalUnitType::DepthParameterSet,
+            19 => NalUnitType::CodedSliceAuxiliary,
+            20 => NalUnitType::CodedSliceExtension,
+            _ => NalUnitType::Unspecified,
         }
     }
 }

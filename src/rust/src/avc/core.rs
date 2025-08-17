@@ -3,34 +3,16 @@ use crate::avc::nal::*;
 use crate::avc::sei::*;
 use crate::avc::FromCType;
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, realloc};
+use crate::libccxr_exports::time::ccxr_set_fts;
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
 use std::os::raw::c_void;
 use std::slice;
 
-/// Portable round function replacement for roundportable in C
+/// Portable round function
 pub fn round_portable(x: f64) -> f64 {
     (x + 0.5).floor()
-}
-
-/// Initialize AVC context in Rust
-pub fn init_avc_rust() -> AvcContextRust {
-    AvcContextRust::default()
-}
-
-/// Deinitialize AVC context and print statistics if needed
-/// # Safety
-/// This function is unsafe because it operates on raw pointers
-pub unsafe fn dinit_avc_rust(ctx: &mut AvcContextRust) {
-    if ctx.ccblocks_in_avc_lost > 0 {
-        info!(
-            "Total caption blocks received: {}\n",
-            ctx.ccblocks_in_avc_total
-        );
-        info!("Total caption blocks lost: {}\n", ctx.ccblocks_in_avc_lost);
-    }
-    // Vec will be automatically dropped
 }
 
 /// Process NAL unit data
@@ -64,7 +46,6 @@ pub unsafe fn do_nal(
     // Get the working slice (skip first byte for remove_03emu)
     let mut working_buffer = nal_start[1..original_length].to_vec();
 
-    // Call remove_03emu equivalent - assuming you have a Rust version
     let processed_length = match remove_03emu(&mut working_buffer) {
         Some(len) => len,
         None => {
@@ -79,13 +60,13 @@ pub unsafe fn do_nal(
     // Truncate buffer to actual processed length
     working_buffer.truncate(processed_length);
 
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!(
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM;
         "BEGIN NAL unit type: {:?} length {} ref_idc: {} - Buffered captions before: {}",
         nal_unit_type,
         working_buffer.len(),
         (*dec_ctx.avc_ctx).nal_ref_idc,
         if (*dec_ctx.avc_ctx).cc_buffer_saved != 0 { 0 } else { 1 }
-    ));
+    );
 
     match nal_unit_type {
         AvcNalType::AccessUnitDelimiter9 => {
@@ -98,11 +79,9 @@ pub unsafe fn do_nal(
             // We need this to parse NAL type 1 (CodedSliceNonIdrPicture1)
             (*dec_ctx.avc_ctx).num_nal_unit_type_7 += 1;
 
-            // Convert to Rust context, process, then update C context
             let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
             seq_parameter_set_rbsp(&mut ctx_rust, &working_buffer)?;
 
-            // Update essential fields in C context
             (*dec_ctx.avc_ctx).seq_parameter_set_id = ctx_rust.seq_parameter_set_id;
             (*dec_ctx.avc_ctx).log2_max_frame_num = ctx_rust.log2_max_frame_num;
             (*dec_ctx.avc_ctx).pic_order_cnt_type = ctx_rust.pic_order_cnt_type;
@@ -126,17 +105,14 @@ pub unsafe fn do_nal(
 
         AvcNalType::Sei if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
             // Found SEI (used for subtitles)
-            // set_fts(ctx->timing); // FIXME - check this!!!
+            ccxr_set_fts(enc_ctx.timing);
 
-            // Convert to Rust context, process, then update C context
             let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
             let old_cc_count = ctx_rust.cc_count;
 
             sei_rbsp(&mut ctx_rust, &working_buffer);
 
-            // If new subtitle data was found, update the C context directly
             if ctx_rust.cc_count > old_cc_count {
-                // Make sure C context has enough space
                 let required_size = (ctx_rust.cc_count as usize * 3) + 1;
                 if required_size > (*dec_ctx.avc_ctx).cc_databufsize as usize {
                     let new_size = required_size * 2; // Some headroom
@@ -149,9 +125,8 @@ pub unsafe fn do_nal(
                     (*dec_ctx.avc_ctx).cc_databufsize = new_size as i64;
                 }
 
-                // Copy the data directly to C context
                 if !(*dec_ctx.avc_ctx).cc_data.is_null() {
-                    let c_data = std::slice::from_raw_parts_mut(
+                    let c_data = slice::from_raw_parts_mut(
                         (*dec_ctx.avc_ctx).cc_data,
                         (*dec_ctx.avc_ctx).cc_databufsize as usize,
                     );
@@ -177,14 +152,13 @@ pub unsafe fn do_nal(
         }
     }
 
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!(
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM;
         "END   NAL unit type: {:?} length {} ref_idc: {} - Buffered captions after: {}",
-        &nal_unit_type,
+        nal_unit_type,
         working_buffer.len(),
         (*dec_ctx.avc_ctx).nal_ref_idc,
         if (*dec_ctx.avc_ctx).cc_buffer_saved != 0 { 0 } else { 1 }
-    ));
-
+    );
     Ok(())
 }
 
@@ -491,8 +465,7 @@ pub unsafe fn process_avc(
 
         (*dec_ctx.avc_ctx).nal_ref_idc = (avcbuf[nal_start_pos] >> 5) as u32;
 
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("process_avc: zeropad {}", zeropad));
-
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "process_avc: zeropad {}", zeropad);
         let nal_length = (nal_stop_pos - nal_start_pos) as i64;
         let mut nal_slice = avcbuf[nal_start_pos..nal_stop_pos].to_vec();
 

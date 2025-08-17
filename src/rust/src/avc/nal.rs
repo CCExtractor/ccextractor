@@ -19,38 +19,38 @@ pub fn seq_parameter_set_rbsp(
 ) -> Result<(), BitstreamError> {
     // Calculate buffer length from pointer difference
     let mut q1 = BitStreamRust::new(seqbuf)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "SEQUENCE PARAMETER SET (bitlen: {})\n", q1.bits_left);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "SEQUENCE PARAMETER SET (bitlen: {})", q1.bits_left);
 
     let tmp = q1.read_bits(8)?;
     let profile_idc = tmp;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "profile_idc=                                   {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "profile_idc=                                   {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set0_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set0_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set1_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set1_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set2_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set2_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set3_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set3_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set4_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set4_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set5_flag=                          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "constraint_set5_flag=                          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(2)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "reserved=                                      {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "reserved=                                      {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(8)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "level_idc=                                     {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "level_idc=                                     {:4} ({:#X})", tmp, tmp);
 
     ctx.seq_parameter_set_id = q1.read_exp_golomb_unsigned()? as i64;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_parameter_set_id=                          {:4} ({:#X})\n", ctx.seq_parameter_set_id, ctx.seq_parameter_set_id);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_parameter_set_id=                          {:4} ({:#X})", ctx.seq_parameter_set_id, ctx.seq_parameter_set_id);
 
     if profile_idc == 100
         || profile_idc == 110
@@ -63,30 +63,30 @@ pub fn seq_parameter_set_rbsp(
         || profile_idc == 128
     {
         let chroma_format_idc = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_format_idc=                             {:4} ({:#X})\n", chroma_format_idc, chroma_format_idc);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_format_idc=                             {:4} ({:#X})", chroma_format_idc, chroma_format_idc);
 
         if chroma_format_idc == 3 {
             let tmp = q1.read_bits(1)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "separate_colour_plane_flag=                    {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "separate_colour_plane_flag=                    {:4} ({:#X})", tmp, tmp);
         }
 
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bit_depth_luma_minus8=                         {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bit_depth_luma_minus8=                         {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bit_depth_chroma_minus8=                       {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bit_depth_chroma_minus8=                       {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "qpprime_y_zero_transform_bypass_flag=          {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "qpprime_y_zero_transform_bypass_flag=          {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_scaling_matrix_present_flag=               {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_scaling_matrix_present_flag=               {:4} ({:#X})", tmp, tmp);
 
         if tmp == 1 {
             // WVI: untested, just copied from specs.
             for i in 0..if chroma_format_idc != 3 { 8 } else { 12 } {
                 let tmp = q1.read_bits(1)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_scaling_list_present_flag[{}]=                 {:4} ({:#X})\n", i, tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "seq_scaling_list_present_flag[{}]=                 {:4} ({:#X})", i, tmp, tmp);
 
                 if tmp != 0 {
                     // We use a "dummy"/slimmed-down replacement here. Actual/full code can be found in the spec (ISO/IEC 14496-10:2012(E)) chapter 7.3.2.1.1.1 - Scaling list syntax
@@ -131,163 +131,163 @@ pub fn seq_parameter_set_rbsp(
     }
 
     ctx.log2_max_frame_num = q1.read_exp_golomb_unsigned()? as i32;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_frame_num4_minus4=                    {:4} ({:#X})\n", ctx.log2_max_frame_num, ctx.log2_max_frame_num);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_frame_num4_minus4=                    {:4} ({:#X})", ctx.log2_max_frame_num, ctx.log2_max_frame_num);
     ctx.log2_max_frame_num += 4; // 4 is added due to the formula.
 
     ctx.pic_order_cnt_type = q1.read_exp_golomb_unsigned()? as i32;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_order_cnt_type=                            {:4} ({:#X})\n", ctx.pic_order_cnt_type, ctx.pic_order_cnt_type);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_order_cnt_type=                            {:4} ({:#X})", ctx.pic_order_cnt_type, ctx.pic_order_cnt_type);
 
     if ctx.pic_order_cnt_type == 0 {
         ctx.log2_max_pic_order_cnt_lsb = q1.read_exp_golomb_unsigned()? as i32;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_pic_order_cnt_lsb_minus4=             {:4} ({:#X})\n", ctx.log2_max_pic_order_cnt_lsb, ctx.log2_max_pic_order_cnt_lsb);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_pic_order_cnt_lsb_minus4=             {:4} ({:#X})", ctx.log2_max_pic_order_cnt_lsb, ctx.log2_max_pic_order_cnt_lsb);
         ctx.log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
     } else if ctx.pic_order_cnt_type == 1 {
         // CFS: Untested, just copied from specs.
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "delta_pic_order_always_zero_flag=              {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "delta_pic_order_always_zero_flag=              {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_non_ref_pic=                        {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_non_ref_pic=                        {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_top_to_bottom_field                 {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_top_to_bottom_field                 {:4} ({:#X})", tmp, tmp);
 
         let num_ref_frame_in_pic_order_cnt_cycle = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "num_ref_frame_in_pic_order_cnt_cycle           {:4} ({:#X})\n", num_ref_frame_in_pic_order_cnt_cycle, num_ref_frame_in_pic_order_cnt_cycle);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "num_ref_frame_in_pic_order_cnt_cycle           {:4} ({:#X})", num_ref_frame_in_pic_order_cnt_cycle, num_ref_frame_in_pic_order_cnt_cycle);
 
         for i in 0..num_ref_frame_in_pic_order_cnt_cycle {
             let tmp = q1.read_exp_golomb()?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_ref_frame [{} / {}] =               {:4} ({:#X})\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "offset_for_ref_frame [{} / {}] =               {:4} ({:#X})", i, num_ref_frame_in_pic_order_cnt_cycle, tmp, tmp);
         }
     } else {
         // Nothing needs to be parsed when pic_order_cnt_type == 2
     }
 
     let tmp = q1.read_exp_golomb_unsigned()?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "max_num_ref_frames=                            {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "max_num_ref_frames=                            {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "gaps_in_frame_num_value_allowed_flag=          {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "gaps_in_frame_num_value_allowed_flag=          {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_exp_golomb_unsigned()?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_width_in_mbs_minus1=                       {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_width_in_mbs_minus1=                       {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_exp_golomb_unsigned()?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_height_in_map_units_minus1=                {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_height_in_map_units_minus1=                {:4} ({:#X})", tmp, tmp);
 
     ctx.frame_mbs_only_flag = q1.read_bits(1)? != 0;
 
     if !ctx.frame_mbs_only_flag {
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "mb_adaptive_fr_fi_flag=                        {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "mb_adaptive_fr_fi_flag=                        {:4} ({:#X})", tmp, tmp);
     }
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "direct_8x8_inference_f=                        {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "direct_8x8_inference_f=                        {:4} ({:#X})", tmp, tmp);
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_cropping_flag=                           {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_cropping_flag=                           {:4} ({:#X})", tmp, tmp);
 
     if tmp != 0 {
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_left_offset=                        {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_left_offset=                        {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_right_offset=                       {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_right_offset=                       {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_top_offset=                         {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_top_offset=                         {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_exp_golomb_unsigned()?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_bottom_offset=                      {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_crop_bottom_offset=                      {:4} ({:#X})", tmp, tmp);
     }
 
     let tmp = q1.read_bits(1)?;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "vui_parameters_present=                        {:4} ({:#X})\n", tmp, tmp);
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "vui_parameters_present=                        {:4} ({:#X})", tmp, tmp);
 
     if tmp != 0 {
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "\nVUI parameters\n");
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "VUI parameters");
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "aspect_ratio_info_pres=                        {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "aspect_ratio_info_pres=                        {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
             let tmp = q1.read_bits(8)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "aspect_ratio_idc=                              {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "aspect_ratio_idc=                              {:4} ({:#X})", tmp, tmp);
 
             if tmp == 255 {
                 let tmp = q1.read_bits(16)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "sar_width=                                     {:4} ({:#X})\n", tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "sar_width=                                     {:4} ({:#X})", tmp, tmp);
 
                 let tmp = q1.read_bits(16)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "sar_height=                                    {:4} ({:#X})\n", tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "sar_height=                                    {:4} ({:#X})", tmp, tmp);
             }
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "overscan_info_pres_flag=                       {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "overscan_info_pres_flag=                       {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
             let tmp = q1.read_bits(1)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "overscan_appropriate_flag=                     {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "overscan_appropriate_flag=                     {:4} ({:#X})", tmp, tmp);
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_signal_type_present_flag=                {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_signal_type_present_flag=                {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
             let tmp = q1.read_bits(3)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_format=                                  {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_format=                                  {:4} ({:#X})", tmp, tmp);
 
             let tmp = q1.read_bits(1)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_full_range_flag=                         {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "video_full_range_flag=                         {:4} ({:#X})", tmp, tmp);
 
             let tmp = q1.read_bits(1)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "colour_description_present_flag=               {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "colour_description_present_flag=               {:4} ({:#X})", tmp, tmp);
 
             if tmp != 0 {
                 let tmp = q1.read_bits(8)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "colour_primaries=                              {:4} ({:#X})\n", tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "colour_primaries=                              {:4} ({:#X})", tmp, tmp);
 
                 let tmp = q1.read_bits(8)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "transfer_characteristics=                      {:4} ({:#X})\n", tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "transfer_characteristics=                      {:4} ({:#X})", tmp, tmp);
 
                 let tmp = q1.read_bits(8)?;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "matrix_coefficients=                           {:4} ({:#X})\n", tmp, tmp);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "matrix_coefficients=                           {:4} ({:#X})", tmp, tmp);
             }
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_loc_info_present_flag=                  {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_loc_info_present_flag=                  {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
             let tmp = q1.read_exp_golomb_unsigned()?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_sample_loc_type_top_field=                  {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_sample_loc_type_top_field=                  {:4} ({:#X})", tmp, tmp);
 
             let tmp = q1.read_exp_golomb_unsigned()?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_sample_loc_type_bottom_field=               {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "chroma_sample_loc_type_bottom_field=               {:4} ({:#X})", tmp, tmp);
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "timing_info_present_flag=                      {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "timing_info_present_flag=                      {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
             let tmp = q1.read_bits(32)?;
             let num_units_in_tick = tmp;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "num_units_in_tick=                             {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "num_units_in_tick=                             {:4} ({:#X})", tmp, tmp);
 
             let tmp = q1.read_bits(32)?;
             let time_scale = tmp;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "time_scale=                                    {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "time_scale=                                    {:4} ({:#X})", tmp, tmp);
 
             let tmp = q1.read_bits(1)?;
             let fixed_frame_rate_flag = tmp != 0;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "fixed_frame_rate_flag=                         {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "fixed_frame_rate_flag=                         {:4} ({:#X})", tmp, tmp);
 
             // Change: use num_units_in_tick and time_scale to calculate FPS. (ISO/IEC 14496-10:2012(E), page 397 & further)
             if fixed_frame_rate_flag {
                 let clock_tick = num_units_in_tick as f64 / time_scale as f64;
-                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "clock_tick= {}\n", clock_tick);
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "clock_tick= {}", clock_tick);
 
                 unsafe {
                     current_fps = time_scale as f64 / (2.0 * num_units_in_tick as f64);
@@ -296,16 +296,16 @@ pub fn seq_parameter_set_rbsp(
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "nal_hrd_parameters_present_flag=               {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "nal_hrd_parameters_present_flag=               {:4} ({:#X})", tmp, tmp);
 
         if tmp != 0 {
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "nal_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "nal_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL");
             ctx.num_nal_hrd += 1;
             return Ok(());
         }
 
         let tmp1 = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "vcl_hrd_parameters_present_flag=               {:#X}\n", tmp1);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "vcl_hrd_parameters_present_flag=               {:#X}", tmp1);
 
         if tmp != 0 {
             // TODO.
@@ -317,15 +317,15 @@ pub fn seq_parameter_set_rbsp(
 
         if tmp != 0 || tmp1 != 0 {
             let tmp = q1.read_bits(1)?;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "low_delay_hrd_flag=                                {:4} ({:#X})\n", tmp, tmp);
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "low_delay_hrd_flag=                                {:4} ({:#X})", tmp, tmp);
             return Ok(());
         }
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_struct_present_flag=                       {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_struct_present_flag=                       {:4} ({:#X})", tmp, tmp);
 
         let tmp = q1.read_bits(1)?;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bitstream_restriction_flag=                    {:4} ({:#X})\n", tmp, tmp);
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bitstream_restriction_flag=                    {:4} ({:#X})", tmp, tmp);
 
         // ..
         // The hope was to find the GOP length in max_dec_frame_buffering, but
@@ -366,16 +366,16 @@ pub unsafe fn slice_header(
         0
     };
 
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "\nSLICE HEADER\n");
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "SLICE HEADER");
 
     tmp = q1.read_exp_golomb_unsigned()? as i64;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("first_mb_in_slice=     {:4} ({:#X})", tmp, tmp));
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "first_mb_in_slice=     {:4} ({:#X})", tmp, tmp);
 
     let slice_type: i64 = q1.read_exp_golomb_unsigned()? as i64;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("slice_type=            {:4X}", slice_type));
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "slice_type=            {:4X}", slice_type);
 
     tmp = q1.read_exp_golomb_unsigned()? as i64;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("pic_parameter_set_id=  {:4} ({:#X})", tmp, tmp));
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_parameter_set_id=  {:4} ({:#X})", tmp, tmp);
 
     (*dec_ctx.avc_ctx).lastframe_num = (*dec_ctx.avc_ctx).frame_num;
     let max_frame_num: i32 = (1 << (*dec_ctx.avc_ctx).log2_max_frame_num) - 1;
@@ -383,16 +383,16 @@ pub unsafe fn slice_header(
     // Needs log2_max_frame_num_minus4 + 4 bits
     (*dec_ctx.avc_ctx).frame_num =
         q1.read_bits((*dec_ctx.avc_ctx).log2_max_frame_num as u32)? as i64;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("frame_num=             {:4X}", (*dec_ctx.avc_ctx).frame_num));
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "frame_num=             {:4X}", (*dec_ctx.avc_ctx).frame_num);
 
     if (*dec_ctx.avc_ctx).frame_mbs_only_flag == 0 {
         field_pic_flag = q1.read_bits(1)? as i64;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("field_pic_flag=        {:4X}", field_pic_flag));
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "field_pic_flag=        {:4X}", field_pic_flag);
 
         if field_pic_flag != 0 {
             // bottom_field_flag
             bottom_field_flag = q1.read_bits(1)? as i64;
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("bottom_field_flag=     {:4X}", bottom_field_flag));
+            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "bottom_field_flag=     {:4X}", bottom_field_flag);
 
             // When bottom_field_flag is set the video is interlaced,
             // override current_fps.
@@ -400,18 +400,18 @@ pub unsafe fn slice_header(
         }
     }
 
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("ird_pic_flag=            {:4}", ird_pic_flag));
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "ird_pic_flag=            {:4}", ird_pic_flag);
 
     if *nal_unit_type == AvcNalType::CodedSliceIdrPicture {
         tmp = q1.read_exp_golomb_unsigned()? as i64;
-        debug!( msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("idr_pic_id=            {:4} ({:#X})", tmp, tmp));
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "idr_pic_id=            {:4} ({:#X})", tmp, tmp);
         // TODO
     }
 
     if (*dec_ctx.avc_ctx).pic_order_cnt_type == 0 {
         pic_order_cnt_lsb =
             q1.read_bits((*dec_ctx.avc_ctx).log2_max_pic_order_cnt_lsb as u32)? as i64;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("pic_order_cnt_lsb=     {:4X}", pic_order_cnt_lsb));
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_order_cnt_lsb=     {:4X}", pic_order_cnt_lsb);
     }
 
     if (*dec_ctx.avc_ctx).pic_order_cnt_type == 1 {
@@ -455,8 +455,8 @@ pub unsafe fn slice_header(
     }
     if (*dec_ctx.avc_ctx).lastframe_num > -1 && !(0..=1).contains(&dif) {
         (*dec_ctx.avc_ctx).num_jump_in_frames += 1;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("\nJump in frame numbers ({}/{})\n",
-                                                             (*dec_ctx.avc_ctx).frame_num, (*dec_ctx.avc_ctx).lastframe_num));
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Jump in frame numbers ({}/{})",
+               (*dec_ctx.avc_ctx).frame_num, (*dec_ctx.avc_ctx).lastframe_num);
         // This will prohibit setting current_tref on potential jumps.
         (*dec_ctx.avc_ctx).maxidx = -1;
         (*dec_ctx.avc_ctx).lastmaxidx = -1;
@@ -469,14 +469,14 @@ pub unsafe fn slice_header(
         // 2014 SugarHouse Casino Mummers Parade Fancy Brigades_new.ts was garbled
         // Probably doing a proper PTS sort would be a better solution.
         isref = 0;
-        debug!(msg_type = DebugMessageFlag::TIME; "Ignoring this reference pic.\n");
+        debug!(msg_type = DebugMessageFlag::TIME; "Ignoring this reference pic.");
     }
 
     // if slices are buffered - flush
     if isref == 1 {
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "{}", &format!("\nReference pic! [{}]\n", SLICE_TYPES[slice_type as usize]));
-        debug!(msg_type = DebugMessageFlag::TIME; "{}", &format!("\nReference pic! [{}] maxrefcnt: {:3}\n",
-                                                     SLICE_TYPES[slice_type as usize], maxrefcnt));
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Reference pic! [{}]", SLICE_TYPES[slice_type as usize]);
+        debug!(msg_type = DebugMessageFlag::TIME; "Reference pic! [{}] maxrefcnt: {:3}",
+               SLICE_TYPES[slice_type as usize], maxrefcnt);
 
         // Flush buffered cc blocks before doing the housekeeping
         if dec_ctx.has_ccdata_buffered != 0 {
@@ -538,7 +538,7 @@ pub unsafe fn slice_header(
     if !ccx_options.usepicorder != 0 && current_index.abs() >= MAXBFRAMES {
         // Probably a jump in the timeline. Warn and handle gracefully.
         info!(
-            "\nFound large gap({}) in PTS! Trying to recover ...\n",
+            "Found large gap({}) in PTS! Trying to recover ...",
             current_index
         );
         current_index = 0;
@@ -591,34 +591,32 @@ pub unsafe fn slice_header(
 
     ccxr_set_fts(dec_ctx.timing); // Keep frames_since_ref_time==0, use current_tref
 
-    debug!(msg_type = DebugMessageFlag::TIME; "{}", &format!("  picordercnt:{:3} tref:{:3} idx:{:3} refidx:{:3} lmaxidx:{:3} maxtref:{:3}\n",
-                                                 pic_order_cnt_lsb, (*dec_ctx.timing).current_tref,
-                                                 current_index, (*dec_ctx.avc_ctx).currref, (*dec_ctx.avc_ctx).lastmaxidx, (*dec_ctx.avc_ctx).maxtref));
+    debug!(msg_type = DebugMessageFlag::TIME; "  picordercnt:{:3} tref:{:3} idx:{:3} refidx:{:3} lmaxidx:{:3} maxtref:{:3}",
+           pic_order_cnt_lsb, (*dec_ctx.timing).current_tref,
+           current_index, (*dec_ctx.avc_ctx).currref, (*dec_ctx.avc_ctx).lastmaxidx, (*dec_ctx.avc_ctx).maxtref);
+
     let mut buf = [c_char::from(0i8); 64];
     debug!(
         msg_type = DebugMessageFlag::TIME;
-        "{}",
-        &format!(
-            "  sync_pts:{} ({:8})",
-            std::ffi::CStr::from_ptr(ccxr_print_mstime_static(
-                ((*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64)) as c_long,
-                buf.as_mut_ptr()
-            ))
-            .to_str()
-            .unwrap_or(""),
-            (*dec_ctx.timing).sync_pts as u32
-        )
+        "  sync_pts:{} ({:8})",
+        std::ffi::CStr::from_ptr(ccxr_print_mstime_static(
+            ((*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64)) as c_long,
+            buf.as_mut_ptr()
+        ))
+        .to_str()
+        .unwrap_or(""),
+        (*dec_ctx.timing).sync_pts as u32
     );
 
-    debug!(msg_type = DebugMessageFlag::TIME; "{}", &format!(" - {} since GOP: {:2}",
-                                                 SLICE_TYPES[slice_type as usize],
-                                                 dec_ctx.frames_since_last_gop as u32));
+    debug!(msg_type = DebugMessageFlag::TIME; " - {} since GOP: {:2}",
+           SLICE_TYPES[slice_type as usize],
+           dec_ctx.frames_since_last_gop as u32);
 
-    debug!(msg_type = DebugMessageFlag::TIME; "{}", &format!("  b:{}  frame# {}\n", bottom_field_flag, (*dec_ctx.avc_ctx).frame_num));
+    debug!(msg_type = DebugMessageFlag::TIME; "  b:{}  frame# {}", bottom_field_flag, (*dec_ctx.avc_ctx).frame_num);
 
     // sync_pts is (was) set when current_tref was zero
     if (*dec_ctx.avc_ctx).lastmaxidx > -1 && (*dec_ctx.timing).current_tref == 0 {
-        debug!(msg_type = DebugMessageFlag::TIME; "\nNew temporal reference:\n");
+        debug!(msg_type = DebugMessageFlag::TIME; "New temporal reference:");
         ccxr_print_debug_timing(dec_ctx.timing);
     }
 
