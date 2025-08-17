@@ -14,6 +14,7 @@ pub mod bindings {
 }
 
 pub mod args;
+pub mod avc;
 pub mod common;
 pub mod decoder;
 pub mod encoder;
