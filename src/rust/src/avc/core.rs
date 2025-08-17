@@ -88,8 +88,8 @@ pub unsafe fn do_nal(
             (*dec_ctx.avc_ctx).log2_max_pic_order_cnt_lsb = ctx_rust.log2_max_pic_order_cnt_lsb;
             (*dec_ctx.avc_ctx).frame_mbs_only_flag =
                 if ctx_rust.frame_mbs_only_flag { 1 } else { 0 };
-            (*dec_ctx.avc_ctx).num_nal_hrd = ctx_rust.num_nal_hrd;
-            (*dec_ctx.avc_ctx).num_vcl_hrd = ctx_rust.num_vcl_hrd;
+            (*dec_ctx.avc_ctx).num_nal_hrd = ctx_rust.num_nal_hrd as _;
+            (*dec_ctx.avc_ctx).num_vcl_hrd = ctx_rust.num_vcl_hrd as _;
 
             (*dec_ctx.avc_ctx).got_seq_para = 1;
         }
@@ -122,7 +122,7 @@ pub unsafe fn do_nal(
                         return Err("Failed to realloc cc_data".into());
                     }
                     (*dec_ctx.avc_ctx).cc_data = new_ptr;
-                    (*dec_ctx.avc_ctx).cc_databufsize = new_size as i64;
+                    (*dec_ctx.avc_ctx).cc_databufsize = new_size as _;
                 }
 
                 if !(*dec_ctx.avc_ctx).cc_data.is_null() {

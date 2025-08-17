@@ -118,11 +118,11 @@ impl FromCType<avc_ctx> for AvcContextRust {
             log2_max_pic_order_cnt_lsb: ctx.log2_max_pic_order_cnt_lsb,
             frame_mbs_only_flag: ctx.frame_mbs_only_flag != 0,
 
-            num_nal_unit_type_7: ctx.num_nal_unit_type_7,
-            num_vcl_hrd: ctx.num_vcl_hrd,
-            num_nal_hrd: ctx.num_nal_hrd,
-            num_jump_in_frames: ctx.num_jump_in_frames,
-            num_unexpected_sei_length: ctx.num_unexpected_sei_length,
+            num_nal_unit_type_7: ctx.num_nal_unit_type_7 as _,
+            num_vcl_hrd: ctx.num_vcl_hrd as _,
+            num_nal_hrd: ctx.num_nal_hrd as _,
+            num_jump_in_frames: ctx.num_jump_in_frames as _,
+            num_unexpected_sei_length: ctx.num_unexpected_sei_length as _,
 
             ccblocks_in_avc_total: ctx.ccblocks_in_avc_total,
             ccblocks_in_avc_lost: ctx.ccblocks_in_avc_lost,
@@ -159,7 +159,7 @@ impl CType<avc_ctx> for AvcContextRust {
         avc_ctx {
             cc_count: self.cc_count,
             cc_data: cc_data_ptr,
-            cc_databufsize: self.cc_databufsize as i64,
+            cc_databufsize: self.cc_databufsize as _,
             cc_buffer_saved: if self.cc_buffer_saved { 1 } else { 0 },
 
             got_seq_para: if self.got_seq_para { 1 } else { 0 },
@@ -170,11 +170,11 @@ impl CType<avc_ctx> for AvcContextRust {
             log2_max_pic_order_cnt_lsb: self.log2_max_pic_order_cnt_lsb,
             frame_mbs_only_flag: if self.frame_mbs_only_flag { 1 } else { 0 },
 
-            num_nal_unit_type_7: self.num_nal_unit_type_7,
-            num_vcl_hrd: self.num_vcl_hrd,
-            num_nal_hrd: self.num_nal_hrd,
-            num_jump_in_frames: self.num_jump_in_frames,
-            num_unexpected_sei_length: self.num_unexpected_sei_length,
+            num_nal_unit_type_7: self.num_nal_unit_type_7 as _,
+            num_vcl_hrd: self.num_vcl_hrd as _,
+            num_nal_hrd: self.num_nal_hrd as _,
+            num_jump_in_frames: self.num_jump_in_frames as _,
+            num_unexpected_sei_length: self.num_unexpected_sei_length as _,
 
             ccblocks_in_avc_total: self.ccblocks_in_avc_total,
             ccblocks_in_avc_lost: self.ccblocks_in_avc_lost,

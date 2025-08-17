@@ -1,11 +1,10 @@
 use crate::avc::common_types::*;
 use crate::avc::core::round_portable;
-use crate::bindings::{
-    anchor_hdcc, cc_subtitle, encoder_ctx, lib_cc_decode, process_hdcc, store_hdcc,
-};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::libccxr_exports::time::{
     ccxr_print_debug_timing, ccxr_print_mstime_static, ccxr_set_fts,
 };
+use crate::{anchor_hdcc, process_hdcc, store_hdcc};
 use crate::{ccx_options, current_fps, total_frames_count, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::{AvcNalType, BitStreamRust, BitstreamError, FRAMERATES_VALUES, SLICE_TYPES};
 use lib_ccxr::util::log::DebugMessageFlag;
