@@ -2,7 +2,7 @@
 #define _CC_ENCODER_COMMON_H
 
 #ifdef WIN32
-	#if defined(__MINGW64__) || defined(__MINGW32)
+	#if defined(__MINGW64__) || defined(__MINGW32__)
 		#include <iconv.h>
 	#else
 		#include "..\\thirdparty\\win_iconv\\iconv.h"
