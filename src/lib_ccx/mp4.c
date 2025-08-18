@@ -416,8 +416,6 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 					dbg_print(CCX_DMT_PARSE, "MP4-708: atom skipped (cc_type < 2)\n");
 					continue;
 				}
-				// WARN: otherwise cea-708 will not work
-				dec_ctx->dtvcc->encoder = (void *)enc_ctx;
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
 				cb_708++;
 			}
@@ -551,6 +549,9 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 
 	if (enc_ctx)
 		enc_ctx->timing = dec_ctx->timing;
+
+	// WARN: otherwise cea-708 will not work
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
 	mprint("Opening \'%s\': ", file);
