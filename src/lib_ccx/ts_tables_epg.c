@@ -4,9 +4,13 @@
 #include "utility.h"
 #include <stdbool.h>
 #ifdef WIN32
-#include "..\\thirdparty\\win_iconv\\iconv.h"
+	#if defined(__MINGW64__) || defined(__MINGW32)
+		#include <iconv.h>
+	#else
+		#include "..\\thirdparty\\win_iconv\\iconv.h"
+	#endif
 #else
-#include "iconv.h"
+	#include "iconv.h"
 #endif
 
 // Prints a string to a file pointer, escaping XML special chars
