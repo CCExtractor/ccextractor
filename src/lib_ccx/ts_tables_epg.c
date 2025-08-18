@@ -4,7 +4,7 @@
 #include "utility.h"
 #include <stdbool.h>
 #ifdef WIN32
-	#if defined(__MINGW64__) || defined(__MINGW32)
+	#if defined(__MINGW64__) || defined(__MINGW32__)
 		#include <iconv.h>
 	#else
 		#include "..\\thirdparty\\win_iconv\\iconv.h"
