@@ -26,7 +26,7 @@
 		#undef UINT64_MAX
 		#define UINT64_MAX   _UI64_MAX
 		typedef int socklen_t;
-		#if !defined(__MINGW64__) && !defined(__MINGW32)
+		#if !defined(__MINGW64__) && !defined(__MINGW32__)
 		    typedef int ssize_t;
 		#endif
 		typedef uint32_t in_addr_t;
@@ -120,3 +120,4 @@
 	typedef uint8_t UBYTE;
 
 #endif // CCX_PLATFORM_H
+
