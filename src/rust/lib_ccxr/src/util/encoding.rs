@@ -41,11 +41,11 @@
 /// Represents the different kinds of encoding that [`EncodedString`] can take.
 #[derive(Default, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Encoding {
-    Line21, // Same as `CCX_ENC_ASCII` in C
+    UCS2,   // Same as `CCX_ENC_UNICODE` in C
     Latin1, // Same as `CCX_ENC_LATIN_1` in C
     #[default]
     UTF8, // Same as `CCX_ENC_UTF_8` in C
-    UCS2,   // Same as `CCX_ENC_UNICODE` in C
+    Line21, // Same as `CCX_ENC_ASCII` in C
 }
 
 /// Represents a character in Line 21 encoding.
