@@ -20,6 +20,8 @@
 #include "networking.h"
 #include "avc_functions.h"
 #include "teletext.h"
+#include "hevc_functions.h"
+
 
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>

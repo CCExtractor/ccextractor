@@ -120,6 +120,19 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 			// We had at least one box (or multiple) at the end to "claim" this is MP4. A single valid box at the end is doubtful...
 			ctx->stream_mode = CCX_SM_MP4;
 		}
+        // HEVC‐in‐MP4 detection
+        for (size_t j = 0; j + 4 < ctx->startbytes_avail; j++)
+        {
+            if ((ctx->startbytes[j]=='h' && ctx->startbytes[j+1]=='v' &&
+                ctx->startbytes[j+2]=='c' && ctx->startbytes[j+3]=='1') ||
+                (ctx->startbytes[j]=='h' && ctx->startbytes[j+1]=='e' &&
+                ctx->startbytes[j+2]=='v' && ctx->startbytes[j+3]=='1'))
+            {
+                mprint("Detected HEVC (H.265) codec in MP4 container\n");
+                break;
+            }
+        }
+
 	}
 
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND) // Search for MXF header

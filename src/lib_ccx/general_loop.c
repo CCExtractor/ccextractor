@@ -17,6 +17,7 @@
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
 #include "ccx_demuxer_mxf.h"
+#include "hevc_functions.h"  // Add this include
 
 int end_of_file = 0; // End of file?
 
@@ -719,6 +720,12 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	{
 		dec_ctx->in_bufferdatatype = CCX_H264;
 		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	// *** ADDED HEVC SUPPORT HERE: ***
+	else if (data_node->bufferdatatype == CCX_HEVC) // HEVC data from TS file
+	{
+		dec_ctx->in_bufferdatatype = CCX_HEVC;           // Set decoder context to HEVC mode  
+		got = process_hevc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
 	{

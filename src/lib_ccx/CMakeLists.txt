@@ -13,6 +13,7 @@ endif(WIN32)
 find_package(PkgConfig)
 pkg_check_modules (GPAC REQUIRED gpac)
 
+list(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/lib_ccx")
 set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
 set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
 
@@ -60,6 +61,7 @@ if (WITH_SHARING)
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
 endif (WITH_SHARING)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HEVC")
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
