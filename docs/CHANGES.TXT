@@ -1,5 +1,7 @@
 1.0 (to be released)
 -----------------
+- Fix: Regression failures on DVD files
+- Fix: Segmentation faults on MP4 files with CEA-708 captions
 - Refactor: Remove API structures from ccextractor
 - New: Add Encoder Module to Rust
 - Fix: Elementary stream regressions
