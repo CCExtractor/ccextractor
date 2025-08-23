@@ -125,6 +125,7 @@ enum ccx_stream_type
 	CCX_STREAM_TYPE_AUDIO_AAC              = 0x0f,
 	CCX_STREAM_TYPE_VIDEO_MPEG4            = 0x10,
 	CCX_STREAM_TYPE_VIDEO_H264             = 0x1b,
+	CCX_STREAM_TYPE_VIDEO_HEVC             = 0x24,
 	CCX_STREAM_TYPE_PRIVATE_USER_MPEG2     = 0x80,
 	CCX_STREAM_TYPE_AUDIO_AC3              = 0x81,
 	CCX_STREAM_TYPE_AUDIO_HDMV_DTS         = 0x82,
@@ -233,14 +234,15 @@ enum ccx_bufferdata_type
 	CCX_PES = 1,
 	CCX_RAW = 2,
 	CCX_H264 = 3,
-	CCX_HAUPPAGE = 4,
-	CCX_TELETEXT = 5,
-	CCX_PRIVATE_MPEG2_CC = 6,
-	CCX_DVB_SUBTITLE = 7,
-	CCX_ISDB_SUBTITLE = 8,
+	CCX_HEVC = 4,
+	CCX_HAUPPAGE = 5,
+	CCX_TELETEXT = 6,
+	CCX_PRIVATE_MPEG2_CC = 7,
+	CCX_DVB_SUBTITLE = 8,
+	CCX_ISDB_SUBTITLE = 9,
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
-	CCX_RAW_TYPE = 9,
-	CCX_DVD_SUBTITLE = 10
+	CCX_RAW_TYPE = 10,
+	CCX_DVD_SUBTITLE = 11
 };
 
 enum ccx_frame_type

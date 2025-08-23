@@ -15,6 +15,7 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 	{
 		case CCX_STREAM_TYPE_VIDEO_MPEG2:
 		case CCX_STREAM_TYPE_VIDEO_H264:
+		case CCX_STREAM_TYPE_VIDEO_HEVC:
 		case CCX_STREAM_TYPE_PRIVATE_MPEG2:
 		case CCX_STREAM_TYPE_PRIVATE_TABLE_MPEG2:
 		case CCX_STREAM_TYPE_MHEG_PACKETS:
@@ -408,7 +409,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			}
 		}
 
-		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
+		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2 || stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
 		{
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 			// mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",

@@ -102,7 +102,9 @@ int get_video_stream(struct ccx_demuxer *ctx)
 	struct cap_info *iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if (iter->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
+		if (iter->stream == CCX_STREAM_TYPE_VIDEO_MPEG2 || 
+		    iter->stream == CCX_STREAM_TYPE_VIDEO_H264 ||
+		    iter->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
 			return iter->pid;
 	}
 	return -1;
