@@ -186,7 +186,7 @@ unsafe fn gop_header(
         if ccx_options.use_gop_as_pts == 1 {
             ccxr_set_current_pts(
                 dec_ctx.timing,
-                (gtc.timestamp.millis() as i32 * (MPEG_CLOCK_FREQ as i32 / 1000)) as _,
+                (gtc.timestamp.millis() as i32 * (MPEG_CLOCK_FREQ / 1000)) as _,
             );
             (*dec_ctx.timing).current_tref = 0;
             frames_since_ref_time = 0;
