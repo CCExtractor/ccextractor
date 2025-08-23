@@ -329,4 +329,6 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx* ctx,
 											int ret,
 											int *caps);
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
+int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buffer, size_t len,  struct cc_subtitle *sub);
+
 #endif

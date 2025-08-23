@@ -13,6 +13,11 @@ fn main() {
         "version",
         "set_binary_mode",
         "net_send_header", // shall be removed after NET
+        "process_hdcc",
+        "anchor_hdcc",
+        "store_hdcc",
+        "do_cb",
+        "decode_vbi",
         "write_spumux_footer",
         "write_spumux_header",
     ]);

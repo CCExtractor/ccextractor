@@ -537,12 +537,12 @@ impl FrameCount {
 /// [`Timestamp`] instead of the other format.
 #[derive(Copy, Clone, Debug)]
 pub struct GopTimeCode {
-    drop_frame: bool,
-    time_code_hours: u8,
-    time_code_minutes: u8,
-    time_code_seconds: u8,
-    time_code_pictures: u8,
-    timestamp: Timestamp,
+    pub drop_frame: bool,
+    pub time_code_hours: u8,
+    pub time_code_minutes: u8,
+    pub time_code_seconds: u8,
+    pub time_code_pictures: u8,
+    pub timestamp: Timestamp,
 }
 
 impl GopTimeCode {
