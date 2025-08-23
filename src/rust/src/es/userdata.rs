@@ -1,8 +1,9 @@
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */
-use crate::bindings::{cc_subtitle, decode_vbi, do_cb, encoder_ctx, lib_cc_decode, store_hdcc};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::current_fps;
 use crate::es::core::dump;
+use crate::{decode_vbi, do_cb, store_hdcc};
 use lib_ccxr::common::{BitStreamRust, BitstreamError};
 use lib_ccxr::util::log::{DebugMessageFlag, ExitCause};
 use lib_ccxr::{debug, fatal, info};

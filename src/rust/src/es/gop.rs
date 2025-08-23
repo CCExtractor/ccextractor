@@ -1,8 +1,9 @@
-use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, process_hdcc};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::libccxr_exports::time::{
     ccxr_get_fts_max, ccxr_print_debug_timing, ccxr_set_current_pts, ccxr_set_fts,
     write_gop_time_code,
 };
+use crate::process_hdcc;
 use crate::{
     ccx_options, current_fps, first_gop_time, frames_since_ref_time, fts_at_gop_start, gop_time,
     total_frames_count, MPEG_CLOCK_FREQ,
@@ -185,7 +186,7 @@ unsafe fn gop_header(
         if ccx_options.use_gop_as_pts == 1 {
             ccxr_set_current_pts(
                 dec_ctx.timing,
-                gtc.timestamp.millis() * (MPEG_CLOCK_FREQ as i64 / 1000),
+                (gtc.timestamp.millis() as i32 * (MPEG_CLOCK_FREQ as i32 / 1000)) as _,
             );
             (*dec_ctx.timing).current_tref = 0;
             frames_since_ref_time = 0;
@@ -197,7 +198,8 @@ unsafe fn gop_header(
             // next GOP.
             // This effect will also lead to captions being one GOP early
             // for DVD captions.
-            fts_at_gop_start = ccxr_get_fts_max(dec_ctx.timing) + (1000.0 / current_fps) as i64;
+            fts_at_gop_start =
+                (ccxr_get_fts_max(dec_ctx.timing) as i32 + (1000.0 / current_fps) as i32) as _;
         }
 
         if ccx_options.debug_mask & 4 != 0 {

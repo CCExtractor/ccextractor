@@ -1,5 +1,6 @@
-use crate::bindings::{anchor_hdcc, cc_subtitle, encoder_ctx, lib_cc_decode, process_hdcc};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::libccxr_exports::time::{ccxr_get_fts, ccxr_print_debug_timing, ccxr_set_fts};
+use crate::{anchor_hdcc, process_hdcc};
 use crate::{ccx_options, frames_since_ref_time, fts_at_gop_start, total_frames_count};
 use lib_ccxr::common::{BitStreamRust, BitstreamError, FrameType};
 use lib_ccxr::debug;
@@ -28,7 +29,7 @@ fn pic_header(
     }
 
     ctx.temporal_reference = esstream.read_bits(10)? as i32;
-    ctx.picture_coding_type = esstream.read_bits(3)? as u32;
+    ctx.picture_coding_type = esstream.read_bits(3)? as _;
 
     if ctx.picture_coding_type == FrameType::IFrame as _ {
         unsafe {
