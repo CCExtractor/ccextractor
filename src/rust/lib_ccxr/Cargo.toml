@@ -15,9 +15,7 @@ strum = "0.26.3"
 strum_macros = "0.26.4"
 crc32fast = "1.4.2"
 num_enum = "0.6.1"
-prost = "0.13.5"
-lazy_static = "1.5.0"
-nanomsg-sys = { version = "0.7.2", optional = true, default-features = false, features = ["bundled"] }
+
 [features]
 default = [
     "wtv_debug",
