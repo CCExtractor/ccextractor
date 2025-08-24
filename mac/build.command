@@ -5,6 +5,7 @@ RUST_LIB="rust/release/libccx_rust.a"
 RUST_PROFILE="--release"
 RUST_FEATURES=""
 
+# Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     OCR)
@@ -31,20 +32,22 @@ done
 
 BLD_FLAGS="-std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
 
+# Add debug flags if needed
 if [[ "$DEBUG" == "true" ]]; then
     BLD_FLAGS="$BLD_FLAGS -g -fsanitize=address"
 fi
 
+# Add OCR support if requested
 if [[ "$ENABLE_OCR" == "true" ]]; then
     BLD_FLAGS="$BLD_FLAGS -DENABLE_OCR"
 fi
 
+# Add hardsubx support if requested
 if [[ "$HARDSUBX" == "true" ]]; then
     BLD_FLAGS="$BLD_FLAGS -DENABLE_HARDSUBX"
 fi
 
-BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/
--c -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include `pkg-config --cflags --silence-errors gpac`"
+BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include `pkg-config --cflags --silence-errors gpac`"
 
 if [[ "$ENABLE_OCR" == "true" ]]; then
     BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
@@ -97,7 +100,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
    ../src/thirdparty/freetype/type42/type42.c \
    ../src/thirdparty/freetype/winfonts/winfnt.c"
 
-BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX $SRC_LIB_HASH $SRC_LIBPNG $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE"
+BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_LIB_HASH $SRC_LIBPNG $SRC_UTF8 $SRC_ZLIB $SRC_FREETYPE"
 
 BLD_LINKER="-lm -liconv -lpthread -ldl `pkg-config --libs --silence-errors gpac`"
 
@@ -113,12 +116,14 @@ echo "Running pre-build script..."
 ./pre-build.sh
 echo "Trying to compile..."
 
+# Check for cargo
 echo "Checking for cargo..."
 if ! [ -x "$(command -v cargo)" ]; then
     echo 'Error: cargo is not installed.' >&2
     exit 1
 fi
 
+# Check rust version
 rustc_version="$(rustc --version)"
 semver=( ${rustc_version//./ } )
 version="${semver[1]}.${semver[2]}.${semver[3]}"
@@ -133,14 +138,17 @@ fi
 echo "Building rust files..."
 (cd ../src/rust && CARGO_TARGET_DIR=../../mac/rust cargo build $RUST_PROFILE $RUST_FEATURES) || { echo "Failed building Rust components." ; exit 1; }
 
+# Copy the Rust library
 cp $RUST_LIB ./libccx_rust.a
 
+# Add Rust library to linker flags
 BLD_LINKER="$BLD_LINKER ./libccx_rust.a"
 
 echo "Building ccextractor"
-out=$( (LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
+out=$((LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER) 2>&1)
 res=$?
 
+# Handle common error cases
 if [[ $out == *"gcc: command not found"* ]]; then
     echo "Error: please install gcc or Xcode command line tools"
     exit 1
@@ -161,7 +169,7 @@ if [[ $out == *"allheaders.h: No such file or directory"* ]]; then
     exit 4
 fi
 
-if [[ $res -ne 0 ]]; then
+if [[ $res -ne 0 ]]; then  # Unknown error
     echo "Compiled with errors"
     >&2 echo "$out"
     exit 5
