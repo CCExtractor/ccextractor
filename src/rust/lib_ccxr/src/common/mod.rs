@@ -16,8 +16,10 @@
 //! | `cdp_section_type`      | [`CdpSectionType`]         |
 //! | `language[NB_LANGUAGE]` | [`Language`]               |
 
+mod bitstream;
 mod constants;
 mod options;
 
+pub use bitstream::*;
 pub use constants::*;
 pub use options::*;
