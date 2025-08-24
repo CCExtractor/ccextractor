@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- Removed Share Module to lib_ccxr
 - Refactor: Remove API structures from ccextractor
 - New: Add Encoder Module to Rust
 - Fix: Elementary stream regressions
@@ -1298,4 +1299,3 @@ version of CCExtractor.
 - Added video information (as extracted from sequence header).
 - Some code clean-up.
 - FF sanity check enabled by default.
-- Added Share Module to lib_ccxr

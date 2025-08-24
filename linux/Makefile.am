@@ -328,7 +328,7 @@ ccextractor_LDADD += $(LEPT_LIB)
 endif
 
 if WITH_RUST
-ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a -lnanomsg
+ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
 else
 ccextractor_CFLAGS += -DDISABLE_RUST
 ccextractor_CPPFLAGS += -DDISABLE_RUST
