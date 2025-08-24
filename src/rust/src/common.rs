@@ -222,21 +222,6 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
                 string_to_c_char(&options.curlposturl.as_ref().unwrap_or_default().as_str());
         }
     }
-    #[cfg(feature = "enable_sharing")]
-    {
-        (*ccx_s_options).sharing_enabled = options.sharing_enabled as _;
-        if options.sharing_url.is_some() {
-            (*ccx_s_options).sharing_url =
-                string_to_c_char(&options.sharing_url.as_ref().unwrap().as_str());
-        }
-        (*ccx_s_options).translate_enabled = options.translate_enabled as _;
-        if options.translate_langs.is_some() {
-            (*ccx_s_options).translate_langs = string_to_c_char(&options.translate_langs.unwrap());
-        }
-        if options.translate_key.is_some() {
-            (*ccx_s_options).translate_key = string_to_c_char(&options.translate_key.unwrap());
-        }
-    }
 }
 
 impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {

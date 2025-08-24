@@ -4,8 +4,7 @@ SRC_ZLIB="$(find ../src/thirdparty/zlib/ -name '*.c')"
 SRC_ZVBI="$(find ../src/thirdparty/zvbi/ -name '*.c')"
 SRC_CCX="$(find ../src/lib_ccx/ -name '*.c')"
 SRC_HASH="$(find ../src/thirdparty/lib_hash/ -name '*.c')"
-SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c/ -name '*.c')"
 SRC_UTF8PROC="../src/utf8proc/utf8proc.c"
-BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_PROTOBUF $SRC_UTF8PROC"
+BLD_SOURCES="../src/ccextractor.c ../src/ccextractorapi_wrap.c $SRC_CCX $SRC_ZLIB $SRC_ZVBI $SRC_LIBPNG $SRC_HASH $SRC_UTF8PROC"
 
 python setup.py $BLD_SOURCES

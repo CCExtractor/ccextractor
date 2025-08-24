@@ -18,13 +18,11 @@ num_enum = "0.6.1"
 
 [features]
 default = [
-  "enable_sharing",
   "wtv_debug",
   "enable_ffmpeg",
   "debug",
   "with_libcurl",
 ]
-enable_sharing = []
 wtv_debug = []
 enable_ffmpeg = []
 debug_out = []
