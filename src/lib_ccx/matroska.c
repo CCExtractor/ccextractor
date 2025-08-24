@@ -731,7 +731,6 @@ enum matroska_track_subtitle_codec_id get_track_subtitle_codec_id(char *codec_id
 void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 {
 	FILE *file = mkv_ctx->file;
-	mprint("\nTrack entry:\n");
 
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
@@ -1423,9 +1422,41 @@ FILE *create_file(struct lib_ccx_ctx *ctx)
 	return file;
 }
 
+void print_track_list(struct matroska_ctx *mkv_ctx)
+{
+	mprint("\n");
+	mprint("Available tracks in input file:\n");
+	mprint("------------------------------\n");
+
+	for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+	{
+		struct matroska_sub_track *track = mkv_ctx->sub_tracks[i];
+
+		mprint("Track %d: Type: Subtitle, Language: %s, Codec: %s\n",
+		       (int)track->track_number,
+		       track->lang ? track->lang : "unknown",
+		       track->codec_id_string ? track->codec_id_string : "unknown");
+	}
+
+	// Print video track if found
+	if (mkv_ctx->avc_track_number > -1)
+	{
+		mprint("Track %d: Type: Video\n", (int)mkv_ctx->avc_track_number);
+	}
+
+	mprint("\n");
+}
+
 int matroska_loop(struct lib_ccx_ctx *ctx)
 {
-	if (ccx_options.write_format_rewritten)
+	// If we're just listing tracks, completely disable ALL output during parsing
+	int original_debug_mask = 0;
+	if (ccx_options.list_tracks_only)
+	{
+		original_debug_mask = ccx_common_logging.debug_mask;
+		ccx_common_logging.debug_mask = 0;
+	}
+	else if (ccx_options.write_format_rewritten)
 	{
 		mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
 		mprint("--out=<format> will be ignored\n");
@@ -1448,6 +1479,21 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->avc_track_number = -1;
 
 	matroska_parse(mkv_ctx);
+
+	// Check if we're just listing tracks
+	if (ccx_options.list_tracks_only)
+	{
+		// Restore output capabilities for our specific output
+		ccx_common_logging.debug_mask = original_debug_mask;
+
+		// Print tracks in a clean format
+		print_track_list(mkv_ctx);
+
+		// Cleanup and exit early
+		matroska_free_all(mkv_ctx);
+		// mprint("\nTrack listing completed. Exiting as requested.\n");
+		return 0;
+	}
 
 	// 100% done
 	activity_progress(100, (int)(mkv_ctx->current_second / 60),

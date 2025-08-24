@@ -536,6 +536,7 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		}
 
 */
+
 int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
 	int mp4_ret = 0;
@@ -554,7 +555,11 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx;
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
-	mprint("Opening \'%s\': ", file);
+
+	// Only show opening message if not in list_tracks mode
+	if (!ccx_options.list_tracks_only)
+		mprint("Opening \'%s\': ", file);
+
 #ifdef MP4_DEBUG
 	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
 #endif
@@ -566,12 +571,94 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		return -2;
 	}
 
-	mprint("ok\n");
+	if (!ccx_options.list_tracks_only)
+		mprint("ok\n");
 
 	track_count = gf_isom_get_track_count(f);
-
 	avc_track_count = 0;
 	cc_track_count = 0;
+
+	// First pass: count tracks by type
+	for (i = 0; i < track_count; i++)
+	{
+		const u32 type = gf_isom_get_media_type(f, i + 1);
+		const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+
+		if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
+			cc_track_count++;
+		if (type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
+			avc_track_count++;
+	}
+
+	// If in track listing mode, show track information and exit
+	if (ccx_options.list_tracks_only)
+	{
+		mprint("\n");
+		mprint("Available tracks in input file:\n");
+		mprint("------------------------------\n");
+
+		for (i = 0; i < track_count; i++)
+		{
+			const u32 type = gf_isom_get_media_type(f, i + 1);
+			const u32 subtype = gf_isom_get_media_subtype(f, i + 1, 1);
+
+			mprint("Track %d: ", i + 1);
+
+			// Get descriptive track type
+			if (type == GF_ISOM_MEDIA_VISUAL)
+			{
+				if (subtype == GF_ISOM_SUBTYPE_AVC_H264)
+					mprint("Type: H.264 Video");
+				else if (subtype == GF_ISOM_SUBTYPE_XDVB)
+					mprint("Type: XDVB Video");
+				else
+					mprint("Type: Video");
+			}
+			else if (type == GF_ISOM_MEDIA_AUDIO)
+			{
+				mprint("Type: Audio");
+			}
+			else if (type == GF_ISOM_MEDIA_CLOSED_CAPTION)
+			{
+				if (subtype == GF_QT_SUBTYPE_C608)
+					mprint("Type: CEA-608 Closed Caption");
+				else if (subtype == GF_ISOM_SUBTYPE_C708)
+					mprint("Type: CEA-708 Closed Caption");
+				else
+					mprint("Type: Closed Caption");
+			}
+			else if (type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
+			{
+				if (subtype == GF_ISOM_SUBTYPE_TX3G)
+					mprint("Type: TX3G Subtitle");
+				else if (subtype == GF_ISOM_SUBTYPE_TEXT)
+					mprint("Type: Text Subtitle");
+				else
+					mprint("Type: Subtitle");
+			}
+			else
+			{
+				mprint("Type: Other (%c%c%c%c/%c%c%c%c)",
+				       (unsigned char)(type >> 24 % 0x100),
+				       (unsigned char)((type >> 16) % 0x100),
+				       (unsigned char)((type >> 8) % 0x100),
+				       (unsigned char)(type % 0x100),
+				       (unsigned char)(subtype >> 24 % 0x100),
+				       (unsigned char)((subtype >> 16) % 0x100),
+				       (unsigned char)((subtype >> 8) % 0x100),
+				       (unsigned char)(subtype % 0x100));
+			}
+
+			mprint("\n");
+		}
+
+		mprint("\nTrack listing completed. Exiting as requested.\n");
+		gf_isom_close(f);
+		freep(&dec_ctx->xds_ctx);
+		return 0;
+	}
+
+	// Regular processing for normal mode follows
 
 	for (i = 0; i < track_count; i++)
 	{
@@ -581,10 +668,6 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		       (unsigned char)((type >> 16) % 0x100), (unsigned char)((type >> 8) % 0x100), (unsigned char)(type % 0x100),
 		       (unsigned char)(subtype >> 24 % 0x100),
 		       (unsigned char)((subtype >> 16) % 0x100), (unsigned char)((subtype >> 8) % 0x100), (unsigned char)(subtype % 0x100));
-		if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_TEXT)
-			cc_track_count++;
-		if (type == GF_ISOM_MEDIA_VISUAL && subtype == GF_ISOM_SUBTYPE_AVC_H264)
-			avc_track_count++;
 	}
 
 	mprint("MP4: found %u tracks: %u avc and %u cc\n", track_count, avc_track_count, cc_track_count);

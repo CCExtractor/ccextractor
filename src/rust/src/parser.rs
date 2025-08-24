@@ -668,6 +668,10 @@ impl OptionsExt for Options {
             self.extract_chapters = true;
         }
 
+        if args.list_tracks {
+            self.list_tracks_only = true;
+        }
+
         if args.bufferinput {
             self.buffer_input = true;
         }

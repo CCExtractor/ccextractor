@@ -88,6 +88,8 @@ int start_ccx()
 
 	int show_myth_banner = 0;
 
+	// Only show params dump if we're not just listing tracks
+	// if (!api_options.list_tracks_only)
 	params_dump(ctx);
 
 	// default teletext page
@@ -161,6 +163,68 @@ int start_ccx()
 #endif // ENABLE_SHARING
 
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
+
+		// Check if we're listing tracks and we have an MKV file
+		if (api_options.list_tracks_only)
+		{
+			// Clear all output
+			ccx_common_logging.debug_mask = 0;
+
+			// Format-specific track listing
+			switch (stream_mode)
+			{
+				case CCX_SM_MKV:
+					ret = matroska_loop(ctx);
+					return ret;
+
+				case CCX_SM_MP4:
+					// MP4 will be handled in its own case
+					break;
+
+				case CCX_SM_TRANSPORT:
+				case CCX_SM_PROGRAM:
+					if (api_options.list_tracks_only)
+					{
+						mprint("\nCCExtractor Track Listing\n");
+						mprint("------------------------\n");
+
+						// Process some packets to populate program information
+						struct demuxer_data *data = NULL;
+						int i, ret = 0;
+
+						// Read enough packets to detect program info (PAT and PMT)
+						// Usually this information appears early in the stream
+						for (i = 0; i < 2000 && !ctx->demux_ctx->nb_program; i++)
+						{
+							ret = ts_readstream(ctx->demux_ctx, &data);
+							if (ret == CCX_EOF)
+								break;
+							if (data)
+								delete_demuxer_data(data);
+							data = NULL;
+						}
+
+						// Now list the tracks with the populated program information
+						list_ts_tracks(ctx);
+						return EXIT_OK;
+					}
+
+					if (!api_options.use_gop_as_pts) // If !0 then the user selected something
+						api_options.use_gop_as_pts = 0;
+					if (api_options.ignore_pts_jumps)
+						ccx_common_timing_settings.disable_sync_check = 1;
+					mprint("\rAnalyzing data in general mode\n");
+					tmp = general_loop(ctx);
+					if (!ret)
+						ret = tmp;
+					break;
+
+				default:
+					mprint("\nTrack listing is only supported for MKV, MP4 and TS files.\n");
+					return EXIT_OK;
+			}
+		}
+
 		// Disable sync check for raw formats - they have the right timeline.
 		// Also true for bin formats, but -nosync might have created a
 		// broken timeline for debug purposes.
@@ -178,6 +242,7 @@ int start_ccx()
 			default:
 				break;
 		}
+
 		/* -----------------------------------------------------------------
 		MAIN LOOP
 		----------------------------------------------------------------- */
@@ -465,6 +530,11 @@ int main(int argc, char *argv[])
 	else if (compile_ret != EXIT_OK)
 	{
 		exit(compile_ret);
+	}
+	if (api_options->list_tracks_only)
+	{
+		// Disable all logger output except for our specific track listing
+		ccx_common_logging.debug_mask = 0;
 	}
 
 	int start_ret = start_ccx();
