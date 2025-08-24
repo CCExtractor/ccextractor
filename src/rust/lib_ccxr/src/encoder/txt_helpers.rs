@@ -282,10 +282,10 @@ pub fn get_str_basic(
         info!("WARNING: Encoding is not yet supported\n");
         out_buffer.clear();
         out_buffer.push(0);
-        return 0;
+        0
     } else {
         out_buffer.push(0);
-        return len;
+        len
     }
 }
 

@@ -10,6 +10,9 @@
 #include <leptonica/allheaders.h>
 #include <tesseract/capi.h>
 #include "hardsubx.h"
+#ifdef ENABLE_FFMPEG
+#include "ffmpeg_intgr.h"
+#endif
 
 void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int timestamp)
 {

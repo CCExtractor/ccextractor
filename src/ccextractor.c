@@ -138,27 +138,10 @@ int start_ccx()
 #endif
 	terminate_asap = 0;
 
-#ifdef ENABLE_SHARING
-	if (ccx_options.translate_enabled && ctx->num_input_files > 1)
-	{
-		mprint("[share] WARNING: simultaneous translation of several input files is not supported yet\n");
-		ccx_options.translate_enabled = 0;
-		ccx_options.sharing_enabled = 0;
-	}
-	if (ccx_options.translate_enabled)
-	{
-		mprint("[share] launching translate service\n");
-		ccx_share_launch_translator(ccx_options.translate_langs, ccx_options.translate_key);
-	}
-#endif // ENABLE_SHARING
 	ret = 0;
 	while (switch_to_next_file(ctx, 0))
 	{
 		prepare_for_new_file(ctx);
-#ifdef ENABLE_SHARING
-		if (ccx_options.sharing_enabled)
-			ccx_share_start(ctx->basefilename);
-#endif // ENABLE_SHARING
 
 		stream_mode = ctx->demux_ctx->get_stream_mode(ctx->demux_ctx);
 		// Disable sync check for raw formats - they have the right timeline.
@@ -309,14 +292,6 @@ int start_ccx()
 			cb_708 = 0;
 			dec_ctx->timing->fts_now = 0;
 			dec_ctx->timing->fts_max = 0;
-
-#ifdef ENABLE_SHARING
-			if (ccx_options.sharing_enabled)
-			{
-				ccx_share_stream_done(ctx->basefilename);
-				ccx_share_stop();
-			}
-#endif // ENABLE_SHARING
 
 			if (dec_ctx->total_pulldownframes)
 				mprint("incl. pulldown frames:  %s  (%u frames at %.2ffps)\n",

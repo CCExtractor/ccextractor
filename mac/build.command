@@ -43,7 +43,8 @@ if [[ "$HARDSUBX" == "true" ]]; then
     BLD_FLAGS="$BLD_FLAGS -DENABLE_HARDSUBX"
 fi
 
-BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/protobuf-c -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include `pkg-config --cflags --silence-errors gpac`"
+BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/
+-c -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include `pkg-config --cflags --silence-errors gpac`"
 
 if [[ "$ENABLE_OCR" == "true" ]]; then
     BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
@@ -52,7 +53,6 @@ fi
 SRC_CCX="$(find ../src/lib_ccx -name '*.c')"
 SRC_LIB_HASH="$(find ../src/thirdparty/lib_hash -name '*.c')"
 SRC_LIBPNG="$(find ../src/thirdparty/libpng -name '*.c')"
-SRC_PROTOBUF="$(find ../src/thirdparty/protobuf-c -name '*.c')"
 SRC_UTF8="../src/thirdparty/utf8proc/utf8proc.c"
 SRC_ZLIB="$(find ../src/thirdparty/zlib -name '*.c')"
 SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
@@ -97,7 +97,7 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c \
    ../src/thirdparty/freetype/type42/type42.c \
    ../src/thirdparty/freetype/winfonts/winfnt.c"
 
-BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX $SRC_LIB_HASH $SRC_LIBPNG $SRC_PROTOBUF $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE"
+BLD_SOURCES="../src/ccextractor.c $SRC_API $SRC_CCX $SRC_LIB_HASH $SRC_LIBPNG $SRC_UTF8 $SRC_ZLIB $SRC_ZVBI $SRC_FREETYPE"
 
 BLD_LINKER="-lm -liconv -lpthread -ldl `pkg-config --libs --silence-errors gpac`"
 

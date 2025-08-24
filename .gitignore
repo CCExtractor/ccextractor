@@ -106,8 +106,6 @@ src/lib_hash/.deps/
 src/lib_hash/.dirstamp
 src/libpng/.deps/
 src/libpng/.dirstamp
-src/protobuf-c/.deps/
-src/protobuf-c/.dirstamp
 src/utf8proc/.deps/
 src/utf8proc/.dirstamp
 src/zlib/.deps/

@@ -56,9 +56,6 @@ if (WITH_OCR)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
-if (WITH_SHARING)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
-endif (WITH_SHARING)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
