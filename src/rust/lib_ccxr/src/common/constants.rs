@@ -215,6 +215,7 @@ pub enum StreamType {
     AudioAac = 0x0f,
     VideoMpeg4 = 0x10,
     VideoH264 = 0x1b,
+    VideoHevc = 0x24,
     PrivateUserMpeg2 = 0x80,
     AudioAc3 = 0x81,
     AudioHdmvDts = 0x82,
