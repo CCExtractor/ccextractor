@@ -65,7 +65,6 @@ void *init_ffmpeg(const char *path)
 	int stream_index = 0;
 	struct ffmpeg_ctx *ctx;
 	AVCodec *dec = NULL;
-	avcodec_register_all();
 
 	if (ccx_options.debug_mask & CCX_DMT_VERBOSE)
 		av_log_set_level(AV_LOG_INFO);
@@ -105,7 +104,7 @@ void *init_ffmpeg(const char *path)
 		goto fail;
 	}
 	stream_index = ret;
-	ctx->dec_ctx = ctx->ifmt->streams[stream_index]->codec;
+	ctx->dec_ctx = ctx->ifmt->streams[stream_index]->codecpar;
 	ctx->stream_index = stream_index;
 	ret = avcodec_open2(ctx->dec_ctx, dec, NULL);
 	if (ret < 0)
@@ -149,7 +148,7 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 		return AVERROR(EAGAIN);
 	}
 
-	avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
+	avcodec_send_packet(ctx->dec_ctx, &packet);
 	ret = avcodec_receive_frame(ctx->dec_ctx, ctx->frame);
 	if (ret < 0)
 	{
@@ -159,7 +158,7 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 	{
 		return AVERROR(EAGAIN);
 	}
-	//	current_pts = av_frame_get_best_effort_timestamp(ctx->frame);
+	//	current_pts = ctx->frame->best_effort_timestamp;
 	//	if(!pts_set)
 	//		pts_set = 1;
 	//	set_fts();
@@ -167,7 +166,7 @@ int ff_get_ccframe(void *arg, unsigned char *data, int maxlen)
 	{
 		if (ctx->frame->side_data[i]->type == AV_FRAME_DATA_A53_CC)
 		{
-			ctx->frame->pts = av_frame_get_best_effort_timestamp(ctx->frame);
+			ctx->frame->pts = ctx->frame->best_effort_timestamp;
 			if (ctx->frame->side_data[i]->size > maxlen)
 				av_log(NULL, AV_LOG_ERROR, "Please consider increasing length of data\n");
 			else
