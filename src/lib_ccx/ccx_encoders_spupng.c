@@ -29,18 +29,6 @@ FT_Face face_regular = NULL;
 FT_Face face_italics = NULL;
 FT_Face face = NULL;
 
-struct spupng_t
-{
-	FILE *fpxml;
-	FILE *fppng;
-	char *dirname;
-	char *pngfile;
-	char *relative_path_png;
-	int fileIndex;
-	int xOffset;
-	int yOffset;
-};
-
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
 
 static int initialized = 0;
