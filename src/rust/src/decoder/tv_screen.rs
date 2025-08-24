@@ -17,6 +17,7 @@ use crate::{
     bindings::*,
     utils::{is_false, is_true},
 };
+use encoding_rs::Encoding;
 
 use log::{debug, warn};
 
@@ -232,8 +233,17 @@ impl dtvcc_tv_screen {
                 };
                 debug!("Charset: {}", charset);
 
-                let op = iconv::decode(&buf, charset).map_err(|err| err.to_string())?;
-                writer.write_to_file(op.as_bytes())?;
+                // Look up the encoding by label (name)
+                if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
+                    let (cow, _encoding_used, had_errors) = encoding.decode(&buf);
+                    if had_errors {
+                        println!("Warning: Had errors during encoding from {charset} to UTF-8");
+                    }
+                    if _encoding_used != encoding {
+                        println!("Warning: Encoding specified ({}) does not match encoding detected ({})",charset,_encoding_used.name());
+                    }
+                    writer.write_to_file(cow.as_bytes())?;
+                }
             }
         } else {
             writer.write_to_file(&buf)?;
@@ -484,7 +494,7 @@ impl dtvcc_tv_screen {
                         buf.push(' ');
                     }
                     let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
-                    buf = format!("{}{:x}", buf, adjusted_val);
+                    buf = format!("{buf}{adjusted_val:x}");
                     bytes_written += 1;
                 }
                 // add 0x80 padding and form byte pair if the last byte pair is not form
@@ -615,7 +625,7 @@ impl dtvcc_tv_screen {
                 red *= 255 / 3;
                 green *= 255 / 3;
                 blue *= 255 / 3;
-                let font_tag = format!("<font color=\"#{:02x}{:02x}{:02x}\">", red, green, blue);
+                let font_tag = format!("<font color=\"#{red:02x}{green:02x}{blue:02x}\">");
                 buf.extend_from_slice(font_tag.as_bytes());
             }
         }

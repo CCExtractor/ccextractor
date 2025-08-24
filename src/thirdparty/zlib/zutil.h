@@ -130,7 +130,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  endif
 #endif
 
-#if defined(MACOS) || defined(TARGET_OS_MAC)
+#if defined(MACOS) // for older macOS 
 #  define OS_CODE  7
 #  ifndef Z_SOLO
 #    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
@@ -141,6 +141,8 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #      endif
 #    endif
 #  endif
+#elif defined(__MACH__) && defined(__APPLE__) && defined(TARGET_OS_MAC) // for newer macOS(Ventura/Sonoma/Sequoia)
+// do nothing because fdopen is defined already by XCode command-line-tools in these macOS versions
 #endif
 
 #ifdef __acorn

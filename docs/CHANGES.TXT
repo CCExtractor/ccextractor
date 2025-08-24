@@ -1,6 +1,15 @@
 1.0 (to be released)
 -----------------
 - Added Support to just show list of subtitle tracks in the file.
+- Fix: Regression failures on DVD files
+- Fix: Segmentation faults on MP4 files with CEA-708 captions
+- Refactor: Remove API structures from ccextractor
+- New: Add Encoder Module to Rust
+- Fix: Elementary stream regressions
+- Fix: Segmentation faults on XDS files
+- Fix: Clippy Errors Based on Rust 1.88
+- IMPROVEMENT: Refactor and optimize Dockerfile
+- Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)
@@ -38,6 +47,9 @@
 - Improvement: Ignore MXF Caption Essence Container version byte to enhance SRT subtitle extraction compatibility
 - New: Add tesseract page segmentation modes control with `--psm` flag
 - Fix: Resolve compile-time error about implicit declarations (#1646)
+- Fix: fatal out of memory error extracting from a VOB PS
+- Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
+- Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
 
 0.94 (2021-12-14)
 -----------------

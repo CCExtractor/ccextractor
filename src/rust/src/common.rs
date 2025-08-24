@@ -353,8 +353,8 @@ impl CType<u32> for Encoding {
         match self {
             Encoding::Line21 => ccx_encoding_type_CCX_ENC_ASCII as _,
             Encoding::Latin1 => ccx_encoding_type_CCX_ENC_LATIN_1 as _,
-            Encoding::Utf8 => ccx_encoding_type_CCX_ENC_UTF_8 as _,
-            Encoding::Ucs2 => ccx_encoding_type_CCX_ENC_UNICODE as _,
+            Encoding::UTF8 => ccx_encoding_type_CCX_ENC_UTF_8 as _,
+            Encoding::UCS2 => ccx_encoding_type_CCX_ENC_UNICODE as _,
         }
     }
 }
