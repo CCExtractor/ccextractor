@@ -11,10 +11,6 @@ while [[ $# -gt 0 ]]; do
       RUST_LIB="rust/debug/libccx_rust.a"
       shift
       ;;
-    -without-rust)
-      WITHOUT_RUST=true
-      shift
-      ;;
     -hardsubx)
       HARDSUBX=true
       RUST_FEATURES="--features hardsubx_ocr"
@@ -91,33 +87,28 @@ echo "Running pre-build script..."
 ./pre-build.sh
 echo "Trying to compile..."
 
-if [ "$WITHOUT_RUST" = true ]; then
-    echo "Building without rust files..."
-    BLD_FLAGS="$BLD_FLAGS -DDISABLE_RUST"
-else 
-    BLD_LINKER="$BLD_LINKER ./libccx_rust.a"
-    echo "Checking for cargo..."
-    if ! [ -x "$(command -v cargo)" ]; then
-        echo 'Error: cargo is not installed.' >&2
-        exit 1
-    fi
-
-    rustc_version="$(rustc --version)"
-    semver=( ${rustc_version//./ } )
-    version="${semver[1]}.${semver[2]}.${semver[3]}"
-    MSRV="1.54.0"
-    if [ "$(printf '%s\n' "$MSRV" "$version" | sort -V | head -n1)" = "$MSRV" ]; then 
-        echo "rustc >= MSRV(${MSRV})"
-    else
-        echo "Minimum supported rust version(MSRV) is ${MSRV}, please upgrade rust"
-        exit 1
-    fi 
-    
-    echo "Building rust files..."
-    (cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build $RUST_PROFILE $RUST_FEATURES) || { echo "Failed. " ; exit 1; }
-
-    cp $RUST_LIB ./libccx_rust.a
+BLD_LINKER="$BLD_LINKER ./libccx_rust.a"
+echo "Checking for cargo..."
+if ! [ -x "$(command -v cargo)" ]; then
+    echo 'Error: cargo is not installed.' >&2
+    exit 1
 fi
+
+rustc_version="$(rustc --version)"
+semver=( ${rustc_version//./ } )
+version="${semver[1]}.${semver[2]}.${semver[3]}"
+MSRV="1.54.0"
+if [ "$(printf '%s\n' "$MSRV" "$version" | sort -V | head -n1)" = "$MSRV" ]; then
+    echo "rustc >= MSRV(${MSRV})"
+else
+    echo "Minimum supported rust version(MSRV) is ${MSRV}, please upgrade rust"
+    exit 1
+fi
+
+echo "Building rust files..."
+(cd ../src/rust && CARGO_TARGET_DIR=../../linux/rust cargo build $RUST_PROFILE $RUST_FEATURES) || { echo "Failed. " ; exit 1; }
+
+cp $RUST_LIB ./libccx_rust.a
 
 echo "Building ccextractor"
 out=$((LC_ALL=C gcc $BLD_FLAGS $BLD_INCLUDE -o ccextractor $BLD_SOURCES $BLD_LINKER)2>&1)

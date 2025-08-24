@@ -333,12 +333,7 @@ ccextractor_LDADD += $(TESS_LIB)
 ccextractor_LDADD += $(LEPT_LIB)
 endif
 
-if WITH_RUST
 ccextractor_LDADD += ./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a
-else
-ccextractor_CFLAGS += -DDISABLE_RUST
-ccextractor_CPPFLAGS += -DDISABLE_RUST
-endif
 
 if DEBUG_RELEASE
 CARGO_RELEASE_ARGS=
