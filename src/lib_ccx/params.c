@@ -40,7 +40,6 @@ extern void ccxr_init_logger();
 
 static int inputfile_capacity = 0;
 
-
 void set_binary_mode()
 {
 #ifdef WIN32
@@ -795,7 +794,6 @@ void version(char *location)
 	mprint("	nuklear\n");
 	mprint("	libzvbi\n");
 }
-
 
 int atoi_hex(char *s)
 {

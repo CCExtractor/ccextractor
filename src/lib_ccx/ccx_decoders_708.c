@@ -824,7 +824,6 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 	}
 }
 
-
 //---------------------------------- COMMANDS ------------------------------------
 
 void dtvcc_handle_CWx_SetCurrentWindow(dtvcc_service_decoder *decoder, int window_id)
