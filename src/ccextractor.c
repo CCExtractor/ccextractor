@@ -443,15 +443,9 @@ int main(int argc, char *argv[])
 	// See docs/ccextractor.cnf.sample for more info.
 	parse_configuration(&ccx_options);
 
-#ifndef DISABLE_RUST
 	ccxr_init_basic_logger();
-#endif
 
-#ifndef DISABLE_RUST
 	int compile_ret = ccxr_parse_parameters(argc, argv);
-#else
-	int compile_ret = parse_parameters(&ccx_options, argc, argv);
-#endif
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
