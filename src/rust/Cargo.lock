@@ -161,7 +161,6 @@ dependencies = [
  "env_logger",
  "leptonica-sys",
  "lib_ccxr",
- "libc",
  "log",
  "num-integer",
  "palette",

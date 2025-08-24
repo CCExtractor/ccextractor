@@ -18,10 +18,10 @@ num_enum = "0.6.1"
 
 [features]
 default = [
-    "wtv_debug",
-    "enable_ffmpeg",
-    "debug",
-    "with_libcurl",
+  "wtv_debug",
+  "enable_ffmpeg",
+  "debug",
+  "with_libcurl",
 ]
 wtv_debug = []
 enable_ffmpeg = []

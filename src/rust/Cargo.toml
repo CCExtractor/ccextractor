@@ -28,7 +28,6 @@ num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
 encoding_rs = "0.8.5"
-libc = "0.2.172"
 
 
 [build-dependencies]
