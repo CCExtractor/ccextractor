@@ -13,18 +13,6 @@ unsafe fn copy_bitstream_from_rust_to_c(
     bitstream_ptr: *mut bitstream,
     rust_bitstream: &BitStreamRust,
 ) {
-    // Handle empty slice case
-    if rust_bitstream.data.is_empty() {
-        (*bitstream_ptr).pos = std::ptr::null_mut();
-        (*bitstream_ptr).bpos = 8;
-        (*bitstream_ptr).end = std::ptr::null_mut();
-        (*bitstream_ptr).bitsleft = 0;
-        (*bitstream_ptr).error = c_int::from(rust_bitstream.error);
-        (*bitstream_ptr)._i_pos = std::ptr::null_mut();
-        (*bitstream_ptr)._i_bpos = 0;
-        return;
-    }
-
     // Get the original pos (which is the base of our slice)
     let base_ptr = rust_bitstream.data.as_ptr() as *mut c_uchar;
     let end_ptr = base_ptr.add(rust_bitstream.data.len());
@@ -63,19 +51,15 @@ unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'stat
         // Calculate total buffer length from pos to end
         let total_len = (*value).end.offset_from((*value).pos) as usize;
 
-        if total_len > 0 {
-            // Create slice from current position to end
-            slice = std::slice::from_raw_parts((*value).pos, total_len);
-            // Current position in this slice is 0 (since slice starts from current pos)
-            current_pos_in_slice = 0;
+        // Create slice from current position to end, zero-length slices are also valid
+        slice = std::slice::from_raw_parts((*value).pos, total_len);
+        // Current position in this slice is 0 (since slice starts from current pos)
+        current_pos_in_slice = 0;
 
-            // Calculate _i_pos relative to the slice start (which is current pos)
-            if !(*value)._i_pos.is_null() {
-                let i_offset = (*value)._i_pos.offset_from((*value).pos);
-                i_pos_in_slice = i_offset.max(0) as usize;
-            }
-        } else if (*value).pos == (*value).end {
-            slice = std::slice::from_raw_parts((*value).pos, 1);
+        // Calculate _i_pos relative to the slice start (which is current pos)
+        if !(*value)._i_pos.is_null() {
+            let i_offset = (*value)._i_pos.offset_from((*value).pos);
+            i_pos_in_slice = i_offset.max(0) as usize;
         }
     }
 
