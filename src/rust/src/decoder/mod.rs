@@ -296,7 +296,7 @@ impl dtvcc_symbol {
     }
     /// Create a new 16 bit symbol
     pub fn new_16(data1: u8, data2: u8) -> Self {
-        let sym = (data1 as u16) << 8 | data2 as u16;
+        let sym = ((data1 as u16) << 8) | data2 as u16;
         Self { init: 1, sym }
     }
     /// Check if symbol is initialized
@@ -319,13 +319,27 @@ impl PartialEq for dtvcc_symbol {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
 
     use crate::utils::get_zero_allocated_obj;
 
     use super::*;
 
+    pub fn initialize_dtvcc_ctx() -> Box<dtvcc_ctx> {
+        let mut ctx = get_zero_allocated_obj::<dtvcc_ctx>();
+
+        // Initialize the required pointers to avoid null pointer dereference
+        let report = Box::new(ccx_decoder_dtvcc_report::default());
+        ctx.report = Box::into_raw(report);
+
+        let encoder = Box::new(encoder_ctx::default());
+        ctx.encoder = Box::into_raw(encoder) as *mut _ as *mut std::os::raw::c_void;
+
+        let timing = Box::new(ccx_common_timing_ctx::default());
+        ctx.timing = Box::into_raw(timing);
+        ctx
+    }
     #[test]
     fn test_process_cc_data() {
         set_logger(CCExtractorLogger::new(
@@ -372,7 +386,7 @@ mod test {
 
         assert_eq!(decoder.packet, vec![0xC2, 0x23, 0x45, 0x67, 0x01, 0x02]);
         assert_eq!(decoder.packet_length, 6);
-        assert_eq!(decoder.is_header_parsed, true);
+        assert!(decoder.is_header_parsed);
     }
 
     #[test]

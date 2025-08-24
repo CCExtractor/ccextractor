@@ -13,13 +13,6 @@
 // userdefined rgb color
 unsigned char usercolor_rgb[8] = "";
 
-struct word_list
-{
-	char **words;
-	size_t len;
-	size_t capacity;
-};
-
 struct word_list capitalization_list = {
     .words = NULL,
     .len = 0,

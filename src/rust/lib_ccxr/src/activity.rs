@@ -11,7 +11,7 @@ impl ActivityExt for Options {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             let version = env!("CARGO_PKG_VERSION");
-            writeln!(stderr, "###VERSION#CCExtractor#{}", version).unwrap();
+            writeln!(stderr, "###VERSION#CCExtractor#{version}").unwrap();
             stderr.flush().unwrap();
         }
     }

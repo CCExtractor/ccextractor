@@ -104,6 +104,12 @@ Notes on adding credits:
   to display the message for at least the specified time.
 
 Notes on the CEA-708 decoder:
+	By default, ccextractor now extracts both CEA-608 and CEA-708 subtitles
+	if they are present in the input. This results in two output files: one
+	for CEA-608 and one for CEA-708.
+	To extract only CEA-608 subtitles, use -1, -2, or -12.
+	To extract only CEA-708 subtitles, use -svc.
+	To extract both CEA-608 and CEA-708 subtitles, use both -1/-2/-12 and -svc.
   While it is starting to be useful, it's
   a work in progress. A number of things don't work yet in the decoder
   itself, and many of the auxiliary tools (case conversion to name one)
@@ -156,7 +162,7 @@ pub struct Args {
     pub pesheader: bool,
     /// Write the DVB subtitle debug traces to console.
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
-    pub debugdvdsub: bool,
+    pub debugdvbsub: bool,
     /// Ignore PTS jumps (default).
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub ignoreptsjumps: bool,
@@ -600,6 +606,25 @@ pub struct Args {
     /// Tesseract v4 : default mode is 1.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub oem: Option<u8>,
+    /// Select the PSM mode for Tesseract.
+    /// Available Page segmentation modes:
+    /// 0    Orientation and script detection (OSD) only.
+    /// 1    Automatic page segmentation with OSD.
+    /// 2    Automatic page segmentation, but no OSD, or OCR.
+    /// 3    Fully automatic page segmentation, but no OSD. (Default)
+    /// 4    Assume a single column of text of variable sizes.
+    /// 5    Assume a single uniform block of vertically aligned text.
+    /// 6    Assume a single uniform block of text.
+    /// 7    Treat the image as a single text line.
+    /// 8    Treat the image as a single word.
+    /// 9    Treat the image as a single word in a circle.
+    /// 10    Treat the image as a single character.
+    /// 11    Sparse text. Find as much text as possible in no particular order.
+    /// 12    Sparse text with OSD.
+    /// 13    Raw line. Treat the image as a single text line,
+    /// bypassing hacks that are Tesseract-specific.
+    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub psm: Option<u8>,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic

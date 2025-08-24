@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::Write;
 use std::num::TryFromIntError;
-use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use derive_more::{Add, Neg, Sub};
@@ -11,10 +10,6 @@ use time::{
     macros::{datetime, format_description},
     Duration,
 };
-
-extern "C" {
-    static mut MPEG_CLOCK_FREQ: c_int;
-}
 
 /// Represents a timestamp in milliseconds.
 ///
@@ -231,7 +226,7 @@ impl Timestamp {
         let s = millis / 1000 - 3600 * h - 60 * m;
         let u = millis - 3600000 * h - 60000 * m - 1000 * s;
         if h > 24 {
-            println!("{}", h)
+            println!("{h}")
         }
         Ok((h.try_into()?, m as u8, s as u8, u as u16))
     }
@@ -248,7 +243,7 @@ impl Timestamp {
     /// ```
     pub fn write_srt_time(&self, output: &mut String) -> Result<(), TimestampError> {
         let (h, m, s, u) = self.as_hms_millis()?;
-        write!(output, "{:02}:{:02}:{:02},{:03}", h, m, s, u)?;
+        write!(output, "{h:02}:{m:02}:{s:02},{u:03}")?;
         Ok(())
     }
 
@@ -264,7 +259,7 @@ impl Timestamp {
     /// ```
     pub fn write_vtt_time(&self, output: &mut String) -> Result<(), TimestampError> {
         let (h, m, s, u) = self.as_hms_millis()?;
-        write!(output, "{:02}:{:02}:{:02}.{:03}", h, m, s, u)?;
+        write!(output, "{h:02}:{m:02}:{s:02}.{u:03}")?;
         Ok(())
     }
 
@@ -288,7 +283,7 @@ impl Timestamp {
         let sign = if self.millis < 0 { "-" } else { "" };
         let timestamp = if self.millis < 0 { -*self } else { *self };
         let (h, m, s, u) = timestamp.as_hms_millis()?;
-        write!(output, "{}{:02}:{:02}:{:02}{}{:03}", sign, h, m, s, sep, u)?;
+        write!(output, "{sign}{h:02}:{m:02}:{s:02}{sep}{u:03}")?;
         Ok(())
     }
 
@@ -325,12 +320,12 @@ impl Timestamp {
             TimestampFormat::None => Ok(()),
             TimestampFormat::HHMMSS => {
                 let (h, m, s, _) = self.as_hms_millis()?;
-                write!(output, "{:02}:{:02}:{:02}", h, m, s)?;
+                write!(output, "{h:02}:{m:02}:{s:02}")?;
                 Ok(())
             }
             TimestampFormat::Seconds { millis_separator } => {
                 let (sec, millis) = self.as_sec_millis()?;
-                write!(output, "{}{}{:03}", sec, millis_separator, millis)?;
+                write!(output, "{sec}{millis_separator}{millis:03}")?;
                 Ok(())
             }
             TimestampFormat::Date { millis_separator } => {
@@ -395,6 +390,18 @@ impl Timestamp {
         let mut s = String::new();
         self.write_hms_millis_time(&mut s, sep)?;
         Ok(s)
+    }
+
+    /// SCC time formatting
+    pub fn to_scc_time(&self) -> Result<String, TimestampError> {
+        let mut result = String::new();
+
+        let (h, m, s, _) = self.as_hms_millis()?;
+        let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * 29.97 / 1000.0;
+
+        write!(result, "{h:02}:{m:02}:{s:02};{frame:02}")?;
+
+        Ok(result)
     }
 
     /// Returns a formatted [`Timestamp`] using ctime's format.
@@ -470,11 +477,6 @@ impl Timestamp {
 pub struct MpegClockTick(i64);
 
 impl MpegClockTick {
-    /// Returns the ratio to convert a clock tick to time duration.
-    pub fn mpeg_clock_freq() -> i64 {
-        unsafe { MPEG_CLOCK_FREQ.into() }
-    }
-
     /// Create a value representing `ticks` clock ticks.
     pub fn new(ticks: i64) -> MpegClockTick {
         MpegClockTick(ticks)
@@ -487,9 +489,9 @@ impl MpegClockTick {
 
     /// Converts the clock ticks to its equivalent time duration.
     ///
-    /// The conversion ratio used is [`MpegClockTick::MPEG_CLOCK_FREQ`].
-    pub fn as_timestamp(&self) -> Timestamp {
-        Timestamp::from_millis(self.0 / (MpegClockTick::mpeg_clock_freq() / 1000))
+    /// The conversion ratio used is governed by `mpeg_clock_freq`
+    pub fn as_timestamp(&self, mpeg_clock_freq: i64) -> Timestamp {
+        Timestamp::from_millis(self.0 / (mpeg_clock_freq / 1000))
     }
 }
 
@@ -519,9 +521,9 @@ impl FrameCount {
 
     /// Converts the frames to its equivalent number of clock ticks.
     ///
-    /// The conversion ratio used is [`MpegClockTick::MPEG_CLOCK_FREQ`] and `fps`.
-    pub fn as_mpeg_clock_tick(&self, fps: f64) -> MpegClockTick {
-        MpegClockTick::new(((self.0 * MpegClockTick::mpeg_clock_freq() as u64) as f64 / fps) as i64)
+    /// The conversion ratio used is governed by `fps` and `mpeg_clock_freq`
+    pub fn as_mpeg_clock_tick(&self, fps: f64, mpeg_clock_freq: i64) -> MpegClockTick {
+        MpegClockTick::new(((self.0 * mpeg_clock_freq as u64) as f64 / fps) as i64)
     }
 }
 

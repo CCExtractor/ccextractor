@@ -679,6 +679,23 @@ void print_usage(void)
 	mprint("                       Default value depends on the tesseract version linked :\n");
 	mprint("                       Tesseract v3 : default mode is 0,\n");
 	mprint("                       Tesseract v4 : default mode is 1.\n");
+	mprint("                 --psm: Select the PSM mode for Tesseract.\n");
+	mprint("                       Available Page segmentation modes:\n");
+	mprint("                       0    Orientation and script detection (OSD) only.\n");
+	mprint("                       1    Automatic page segmentation with OSD.\n");
+	mprint("                       2    Automatic page segmentation, but no OSD, or OCR.\n");
+	mprint("                       3    Fully automatic page segmentation, but no OSD. (Default)\n");
+	mprint("                       4    Assume a single column of text of variable sizes.\n");
+	mprint("                       5    Assume a single uniform block of vertically aligned text.\n");
+	mprint("                       6    Assume a single uniform block of text.\n");
+	mprint("                       7    Treat the image as a single text line.\n");
+	mprint("                       8    Treat the image as a single word.\n");
+	mprint("                       9    Treat the image as a single word in a circle.\n");
+	mprint("                       10    Treat the image as a single character.\n");
+	mprint("                       11    Sparse text. Find as much text as possible in no particular order.\n");
+	mprint("                       12    Sparse text with OSD.\n");
+	mprint("                       13    Raw line. Treat the image as a single text line,\n");
+	mprint("                       bypassing hacks that are Tesseract-specific.\n");
 	mprint("             --mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");
@@ -952,17 +969,17 @@ void print_usage(void)
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
 	mprint("  parameters.\n");
 	mprint("\n");
-	mprint("Notes on times:\n"
-	       "  --startat and --endat times are used first, then -delay.\n");
+	mprint("Notes on times:\n");
+	mprint("  --startat and --endat times are used first, then -delay.\n");
 	mprint("  So if you use --srt -startat 3:00 --endat 5:00 --delay 120000, ccextractor will\n");
 	mprint("  generate a .srt file, with only data from 3:00 to 5:00 in the input file(s)\n");
 	mprint("  and then add that (huge) delay, which would make the final file start at\n");
 	mprint("  5:00 and end at 7:00.\n");
 	mprint("\n");
 	mprint("Notes on codec options:\n");
-	mprint("  If codec type is not selected then first elementary stream suitable for \n"
-	       "  subtitle is selected, please consider --teletext -noteletext override this\n"
-	       "  option.\n");
+	mprint("  If codec type is not selected then first elementary stream suitable for\n");
+	mprint("  subtitle is selected, please consider --teletext --noteletext override this\n");
+	mprint("  option.\n");
 	mprint("  no-codec and codec parameter must not be same if found to be same \n"
 	       "  then parameter of no-codec is ignored, this flag should be passed \n"
 	       "  once, more then one are not supported yet and last parameter would \n"
@@ -975,8 +992,14 @@ void print_usage(void)
 	mprint("  The start window must be between the times given and must have enough time\n");
 	mprint("  to display the message for at least the specified time.\n");
 	mprint("\n");
-	mprint("Notes on the CEA-708 decoder:\n"
-	       "  While it is starting to be useful, it's\n");
+	mprint("Notes on the CEA-708 decoder:\n");
+	mprint("  By default, ccextractor now extracts both CEA-608 and CEA-708 subtitles\n");
+	mprint("  if they are present in the input. This results in two output files: one\n");
+	mprint("  for CEA-608 and one for CEA-708.\n");
+	mprint("  To extract only CEA-608 subtitles, use -1, -2, or -12.\n");
+	mprint("  To extract only CEA-708 subtitles, use -svc.\n");
+	mprint("  To extract both CEA-608 and CEA-708 subtitles, use both -1/-2/-12 and -svc.\n\n");
+	mprint("  While it is starting to be useful, it's\n");
 	mprint("  a work in progress. A number of things don't work yet in the decoder\n");
 	mprint("  itself, and many of the auxiliary tools (case conversion to name one)\n");
 	mprint("  won't do anything yet. Feel free to submit samples that cause problems\n");
@@ -1694,6 +1717,27 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			else
 			{
 				fatal(EXIT_MALFORMED_PARAMETER, "--oem has no argument.\n");
+			}
+		}
+		if (strcmp(argv[i], "--psm") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+
+				char *str = (char *)malloc(sizeof(argv[i]));
+				sprintf(str, "%s", argv[i]);
+				opt->psm = atoi(str);
+				if (opt->psm < 0 || opt->psm > 13)
+				{
+					fatal(EXIT_MALFORMED_PARAMETER, "--psm must be between 0 and 13\n");
+				}
+
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "--psm has no argument.\n");
 			}
 		}
 		if (strcmp(argv[i], "--mkvlang") == 0)

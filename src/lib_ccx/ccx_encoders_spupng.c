@@ -1,6 +1,6 @@
 #include "ccfont2.xbm" // CC font from libzvbi
 #include "ccx_common_common.h"
-#include "ccx_encoders_common.h"
+#include "ccx_encoders_spupng.h"
 #include <png.h>
 #include <ft2build.h>
 #include <math.h>
@@ -28,18 +28,6 @@ FT_Library ft_library = NULL;
 FT_Face face_regular = NULL;
 FT_Face face_italics = NULL;
 FT_Face face = NULL;
-
-struct spupng_t
-{
-	FILE *fpxml;
-	FILE *fppng;
-	char *dirname;
-	char *pngfile;
-	char *relative_path_png;
-	int fileIndex;
-	int xOffset;
-	int yOffset;
-};
 
 #define CCPL (ccfont2_width / CCW * ccfont2_height / CCH)
 
@@ -704,7 +692,7 @@ uint32_t *utf8_to_utf32(char *src)
 }
 
 // Convert big-endian and little-endian
-#define BigtoLittle32(A) ((((uint32_t)(A)&0xff000000) >> 24) | (((uint32_t)(A)&0x00ff0000) >> 8) | (((uint32_t)(A)&0x0000ff00) << 8) | (((uint32_t)(A)&0x000000ff) << 24))
+#define BigtoLittle32(A) ((((uint32_t)(A) & 0xff000000) >> 24) | (((uint32_t)(A) & 0x00ff0000) >> 8) | (((uint32_t)(A) & 0x0000ff00) << 8) | (((uint32_t)(A) & 0x000000ff) << 24))
 
 // Generate PNG file from an UTF-8 string (str)
 // PNG file will be stored at output

@@ -193,10 +193,10 @@ pub fn decode_hamming_24_18(mut value: u32) -> Option<u32> {
     }
 
     Some(
-        (value & 0x000004) >> 2
-            | (value & 0x000070) >> 3
-            | (value & 0x007f00) >> 4
-            | (value & 0x7f0000) >> 5,
+        ((value & 0x000004) >> 2)
+            | ((value & 0x000070) >> 3)
+            | ((value & 0x007f00) >> 4)
+            | ((value & 0x7f0000) >> 5),
     )
 }
 
@@ -229,10 +229,10 @@ mod tests {
 
     #[test]
     fn test_get_parity() {
-        assert_eq!(get_parity(0), false);
-        assert_eq!(get_parity(1), true);
-        assert_eq!(get_parity(128), true);
-        assert_eq!(get_parity(255), false);
+        assert!(!get_parity(0));
+        assert!(get_parity(1));
+        assert!(get_parity(128));
+        assert!(!get_parity(255));
     }
 
     #[test]

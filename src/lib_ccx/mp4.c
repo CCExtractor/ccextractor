@@ -558,6 +558,9 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	if (enc_ctx)
 		enc_ctx->timing = dec_ctx->timing;
 
+	// WARN: otherwise cea-708 will not work
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx;
+
 	memset(&dec_sub, 0, sizeof(dec_sub));
 	mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
