@@ -106,7 +106,8 @@ char *probe_tessdata_location(const char *lang)
 	    "/usr/share/tesseract-ocr/",
 	    "/usr/share/tesseract-ocr/4.00/",
 	    "/usr/share/tesseract-ocr/5/",
-	    "/usr/share/tesseract/"};
+	    "/usr/share/tesseract/",
+	    "C:\\Program Files\\Tesseract-OCR\\"};
 
 	for (int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
 	{
