@@ -9,7 +9,6 @@
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 volatile sig_atomic_t change_filename_requested = 0;
 
-#ifndef DISABLE_RUST
 extern int ccxr_verify_crc32(uint8_t *buf, int len);
 extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
@@ -17,7 +16,6 @@ extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
 extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
 extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
 extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
-#endif
 
 static uint32_t crc32_table[] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
@@ -87,182 +85,37 @@ static uint32_t crc32_table[] = {
 
 int verify_crc32(uint8_t *buf, int len)
 {
-#ifndef DISABLE_RUST
 	return ccxr_verify_crc32(buf, len);
-#endif
-
-	int i = 0;
-	int32_t crc = -1;
-	for (i = 0; i < len; i++)
-		crc = (crc << 8) ^ crc32_table[((crc >> 24) ^ (buf[i] & 0xff)) & 0xff];
-	return crc ? CCX_FALSE : CCX_TRUE;
 }
 
 int stringztoms(const char *s, struct ccx_boundary_time *bt)
 {
-#ifndef DISABLE_RUST
 	return ccxr_stringztoms(s, bt);
-#endif
-
-	unsigned ss = 0, mm = 0, hh = 0;
-	int value = -1;
-	int colons = 0;
-	const char *c = s;
-	while (*c)
-	{
-		if (*c == ':')
-		{
-			if (value == -1) // : at the start, or ::, etc
-				return -1;
-			colons++;
-			if (colons > 2) // Max 2, for HH:MM:SS
-				return -1;
-			hh = mm;
-			mm = ss;
-			ss = value;
-			value = -1;
-		}
-		else
-		{
-			if (!isdigit(*c)) // Only : or digits, so error
-				return -1;
-			if (value == -1)
-				value = *c - '0';
-			else
-				value = value * 10 + *c - '0';
-		}
-		c++;
-	}
-	hh = mm;
-	mm = ss;
-	ss = value;
-	if (mm > 59 || ss > 59)
-		return -1;
-	bt->set = 1;
-	bt->hh = hh;
-	bt->mm = mm;
-	bt->ss = ss;
-	LLONG secs = (hh * 3600 + mm * 60 + ss);
-	bt->time_in_ms = secs * 1000;
-	return 0;
 }
 void timestamp_to_srttime(uint64_t timestamp, char *buffer)
 {
-#ifndef DISABLE_RUST
 	return ccxr_timestamp_to_srttime(timestamp, buffer);
-#endif
-
-	uint64_t p = timestamp;
-	uint8_t h = (uint8_t)(p / 3600000);
-	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
-	uint8_t s = (uint8_t)(p / 1000 - 3600 * h - 60 * m);
-	uint16_t u = (uint16_t)(p - 3600000 * h - 60000 * m - 1000 * s);
-	sprintf(buffer, "%02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 ",%03" PRIu16, h, m, s, u);
 }
 void timestamp_to_vtttime(uint64_t timestamp, char *buffer)
 {
-#ifndef DISABLE_RUST
 	return ccxr_timestamp_to_vtttime(timestamp, buffer);
-#endif
-
-	uint64_t p = timestamp;
-	uint8_t h = (uint8_t)(p / 3600000);
-	uint8_t m = (uint8_t)(p / 60000 - 60 * h);
-	uint8_t s = (uint8_t)(p / 1000 - 3600 * h - 60 * m);
-	uint16_t u = (uint16_t)(p - 3600000 * h - 60000 * m - 1000 * s);
-	sprintf(buffer, "%02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 ".%03" PRIu16, h, m, s, u);
 }
 
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
 int levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len)
 {
-#ifndef DISABLE_RUST
 	return ccxr_levenshtein_dist(s1, s2, s1len, s2len);
-#endif
-
-	unsigned int x, y, v, lastdiag, olddiag;
-	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
-	for (y = 1; y <= s1len; y++)
-		column[y] = y;
-	for (x = 1; x <= s2len; x++)
-	{
-		column[0] = x;
-		for (y = 1, lastdiag = x - 1; y <= s1len; y++)
-		{
-			olddiag = column[y];
-			column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + (s1[y - 1] == s2[x - 1] ? 0 : 1));
-			lastdiag = olddiag;
-		}
-	}
-	v = column[s1len];
-	free(column);
-	return v;
 }
 
 int levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len)
 {
-#ifndef DISABLE_RUST
 	return ccxr_levenshtein_dist_char(s1, s2, s1len, s2len);
-#endif
-	unsigned int x, y, v, lastdiag, olddiag;
-	unsigned int *column = (unsigned *)malloc((s1len + 1) * sizeof(unsigned int));
-	for (y = 1; y <= s1len; y++)
-		column[y] = y;
-	for (x = 1; x <= s2len; x++)
-	{
-		column[0] = x;
-		for (y = 1, lastdiag = x - 1; y <= s1len; y++)
-		{
-			olddiag = column[y];
-			column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + (s1[y - 1] == s2[x - 1] ? 0 : 1));
-			lastdiag = olddiag;
-		}
-	}
-	v = column[s1len];
-	free(column);
-	return v;
 }
 
 void millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator)
 {
-#ifndef DISABLE_RUST
 	return ccxr_millis_to_date(timestamp, buffer, date_format, millis_separator);
-#endif
-
-	time_t secs;
-	unsigned int millis;
-	char c_temp[80];
-	struct tm *time_struct = NULL;
-	switch (date_format)
-	{
-		case ODF_NONE:
-			buffer[0] = 0;
-			break;
-		case ODF_HHMMSS:
-			timestamp_to_srttime(timestamp, buffer);
-			buffer[8] = 0;
-			break;
-		case ODF_HHMMSSMS:
-			timestamp_to_srttime(timestamp, buffer);
-			break;
-		case ODF_SECONDS:
-			secs = (time_t)(timestamp / 1000);
-			millis = (time_t)(timestamp % 1000);
-			sprintf(buffer, "%lu%c%03u", (unsigned long)secs,
-				millis_separator, (unsigned)millis);
-			break;
-		case ODF_DATE:
-			secs = (time_t)(timestamp / 1000);
-			millis = (unsigned int)(timestamp % 1000);
-			time_struct = gmtime(&secs);
-			strftime(c_temp, sizeof(c_temp), "%Y%m%d%H%M%S", time_struct);
-			sprintf(buffer, "%s%c%03u", c_temp, millis_separator, millis);
-			break;
-
-		default:
-			fatal(CCX_COMMON_EXIT_BUG_BUG, "Invalid value for date_format in millis_to_date()\n");
-	}
 }
 
 bool_t in_array(uint16_t *array, uint16_t length, uint16_t element)

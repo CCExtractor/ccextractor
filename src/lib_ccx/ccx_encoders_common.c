@@ -16,10 +16,8 @@ int fsync(int fd)
 }
 #endif
 
-#ifndef DISABLE_RUST
 int ccxr_get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
 		       enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len);
-#endif
 // These are the default settings for plain transcripts. No times, no CC or caption mode, and no XDS.
 ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
     {
@@ -118,223 +116,10 @@ void find_limit_characters(const unsigned char *line, int *first_non_blank, int 
 	}
 }
 
-unsigned int utf8_to_latin1_map(const unsigned int code)
-{
-	/* Code points 0 to U+00FF are the same in both. */
-	if (code < 256U)
-		return code;
-
-	switch (code)
-	{
-		case 0x0152U:
-			return 188U; /* U+0152 = 0xBC: OE ligature */
-		case 0x0153U:
-			return 189U; /* U+0153 = 0xBD: oe ligature */
-		case 0x0160U:
-			return 166U; /* U+0160 = 0xA6: S with caron */
-		case 0x0161U:
-			return 168U; /* U+0161 = 0xA8: s with caron */
-		case 0x0178U:
-			return 190U; /* U+0178 = 0xBE: Y with diaresis */
-		case 0x017DU:
-			return 180U; /* U+017D = 0xB4: Z with caron */
-		case 0x017EU:
-			return 184U; /* U+017E = 0xB8: z with caron */
-		case 0x20ACU:
-			return 164U; /* U+20AC = 0xA4: Euro */
-		default:
-			return 256U;
-	}
-}
-
-int change_utf8_encoding(unsigned char *dest, unsigned char *src, int len, enum ccx_encoding_type out_enc)
-{
-	unsigned char *orig = dest;    // Keep for calculating length
-	unsigned char *orig_src = src; // Keep for calculating length
-	for (int i = 0; src < orig_src + len;)
-	{
-		unsigned char c = src[i];
-		int c_len = 0;
-
-		if (c < 0x80)
-			c_len = 1;
-		else if ((c & 0x20) == 0)
-			c_len = 2;
-		else if ((c & 0x10) == 0)
-			c_len = 3;
-		else if ((c & 0x08) == 0)
-			c_len = 4;
-		else if ((c & 0x04) == 0)
-			c_len = 5;
-
-		switch (out_enc)
-		{
-			case CCX_ENC_UTF_8:
-				memcpy(dest, src, len);
-				return len;
-			case CCX_ENC_LATIN_1:
-				if (c_len == 1)
-					*dest++ = *src;
-				else if (c_len == 2)
-				{
-					if ((src[1] & 0x40) == 0)
-					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x1F)) << 6) | ((unsigned int)(src[1] & 0x3F)));
-						if (cp < 256)
-							*dest++ = cp;
-						else
-							*dest++ = '?';
-					}
-					else
-						*dest++ = '?';
-				}
-				else if (c_len == 3)
-				{
-					if ((src[1] & 0x40) == 0 && (src[2] & 0x40) == 0)
-					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x0F)) << 12) | (((unsigned int)(src[1] & 0x3F)) << 6) | ((unsigned int)(src[2] & 0x3F)));
-						if (cp < 256)
-							*dest++ = cp;
-						else
-							*dest++ = '?';
-					}
-				}
-				else if (c_len == 4)
-				{
-					if ((src[1] & 0x40) == 0 &&
-					    (src[2] & 0x40) == 0 &&
-					    (src[3] & 0x40) == 0)
-					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x07)) << 18) | (((unsigned int)(src[1] & 0x3F)) << 12) | (((unsigned int)(src[2] & 0x3F)) << 6) | ((unsigned int)(src[3] & 0x3F)));
-						if (cp < 256)
-							*(dest++) = cp;
-						else
-							*dest++ = '?';
-					}
-					else
-						*dest++ = '?';
-				}
-				else if (c_len == 5)
-				{
-					if ((src[1] & 0x40) == 0 &&
-					    (src[2] & 0x40) == 0 &&
-					    (src[3] & 0x40) == 0 &&
-					    (src[4] & 0x40) == 0)
-					{
-						int cp = utf8_to_latin1_map((((unsigned int)(src[0] & 0x03)) << 24U) | (((unsigned int)(src[1] & 0x3F)) << 18U) | (((unsigned int)(src[2] & 0x3F)) << 12U) | (((unsigned int)(src[3] & 0x3F)) << 6U) | ((unsigned int)(src[4] & 0x3FU)));
-						if (cp < 256)
-							*(dest++) = cp;
-						else
-							*dest++ = '?';
-					}
-					else
-						*dest++ = '?';
-				}
-				else
-					*dest++ = '?';
-				break;
-			case CCX_ENC_UNICODE:
-				return CCX_ENOSUPP;
-			case CCX_ENC_ASCII:
-				if (c_len == 1)
-					*dest++ = *src;
-				else
-					*dest++ = '?';
-			default:
-				return CCX_ENOSUPP;
-		}
-		src += c_len;
-	}
-	*dest = 0;
-	return (dest - orig); // Return length
-}
-
-int change_latin1_encoding(unsigned char *dest, unsigned char *src, int len, enum ccx_encoding_type out_enc)
-{
-	return CCX_ENOSUPP;
-}
-
-int change_unicode_encoding(unsigned char *dest, unsigned char *src, int len, enum ccx_encoding_type out_enc)
-{
-	return CCX_ENOSUPP;
-}
-
-int change_ascii_encoding(unsigned char *dest, unsigned char *src, int len, enum ccx_encoding_type out_enc)
-{
-	unsigned char *orig = dest; // Keep for calculating length
-	int bytes = 0;
-	for (int i = 0; i < len; i++)
-	{
-		char c = src[i];
-		switch (out_enc)
-		{
-			case CCX_ENC_UTF_8:
-				bytes = get_char_in_utf_8(dest, c);
-				break;
-			case CCX_ENC_LATIN_1:
-				get_char_in_latin_1(dest, c);
-				bytes = 1;
-				break;
-			case CCX_ENC_UNICODE:
-				get_char_in_unicode(dest, c);
-				bytes = 2;
-				break;
-			case CCX_ENC_ASCII:
-				memcpy(dest, src, len);
-				return len;
-			default:
-				return CCX_ENOSUPP;
-		}
-		dest += bytes;
-	}
-	*dest = 0;
-	return (dest - orig); // Return length
-}
-
 int get_str_basic(unsigned char *out_buffer, unsigned char *in_buffer, int trim_subs,
 		  enum ccx_encoding_type in_enc, enum ccx_encoding_type out_enc, int max_len)
 {
-#ifndef DISABLE_RUST
 	return ccxr_get_str_basic(out_buffer, in_buffer, trim_subs, in_enc, out_enc, max_len);
-#else
-	int last_non_blank = -1;
-	int first_non_blank = -1;
-	int len = 0;
-	find_limit_characters(in_buffer, &first_non_blank, &last_non_blank, max_len);
-	if (!trim_subs)
-		first_non_blank = 0;
-
-	if (first_non_blank == -1)
-	{
-		*out_buffer = 0;
-		return 0;
-	}
-	// change encoding only when required
-	switch (in_enc)
-	{
-		case CCX_ENC_UTF_8:
-			len = change_utf8_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank - first_non_blank + 1, out_enc);
-			break;
-		case CCX_ENC_LATIN_1:
-			len = change_latin1_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank - first_non_blank + 1, out_enc);
-			break;
-		case CCX_ENC_UNICODE:
-			len = change_unicode_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank - first_non_blank + 1, out_enc);
-			break;
-		case CCX_ENC_ASCII:
-			len = change_ascii_encoding(out_buffer, in_buffer + first_non_blank, last_non_blank - first_non_blank + 1, out_enc);
-			break;
-	}
-	if (len < 0)
-		mprint("WARNING: Could not encode in specified format\n");
-	else if (len == CCX_ENOSUPP)
-		// we only support ASCII to other encoding std
-		mprint("WARNING: Encoding is not yet supported\n");
-	else
-		return (unsigned)len; // Return length
-
-	return 0; // Return length
-#endif
 }
 
 int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
@@ -873,10 +658,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			if (!cfg->services_enabled[i])
 			{
 				ctx->dtvcc_writers[i].fd = -1;
-#ifndef DISABLE_RUST
 				ctx->dtvcc_writers[i].fhandle = NULL;
 				ctx->dtvcc_writers[i].charset = NULL;
-#endif
 				ctx->dtvcc_writers[i].filename = NULL;
 				ctx->dtvcc_writers[i].cd = (iconv_t)-1;
 				continue;
@@ -885,10 +668,8 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			if (cfg->cc_to_stdout)
 			{
 				ctx->dtvcc_writers[i].fd = STDOUT_FILENO;
-#ifndef DISABLE_RUST
 				ctx->dtvcc_writers[i].fhandle = NULL;
 				ctx->dtvcc_writers[i].charset = NULL;
-#endif
 				ctx->dtvcc_writers[i].filename = NULL;
 				ctx->dtvcc_writers[i].cd = (iconv_t)-1;
 			}

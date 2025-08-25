@@ -4,7 +4,7 @@
 #include "utility.h"
 #include "ccx_common_common.h"
 
-#if !defined(DISABLE_RUST) && defined(WIN32)
+#if defined(WIN32)
 extern void ccxr_close_handle(void *handle);
 #endif
 
@@ -590,10 +590,8 @@ void dtvcc_writer_init(dtvcc_writer_ctx *writer,
 
 	char *charset = cfg->all_services_charset ? cfg->all_services_charset : cfg->services_charsets[service_number - 1];
 
-#ifndef DISABLE_RUST
 	writer->fhandle = NULL;
 	writer->charset = charset;
-#endif
 
 	if (charset)
 	{
@@ -611,7 +609,7 @@ void dtvcc_writer_cleanup(dtvcc_writer_ctx *writer)
 {
 	if (writer->fd >= 0 && writer->fd != STDOUT_FILENO)
 		close(writer->fd);
-#if !defined(DISABLE_RUST) && defined(WIN32)
+#if defined(WIN32)
 	ccxr_close_handle(writer->fhandle);
 	writer->charset = NULL;
 #endif

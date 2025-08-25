@@ -15,10 +15,8 @@ made to reuse, not duplicate, as many functions as possible */
 #include "ccx_encoders_mcc.h"
 #include "ccx_dtvcc.h"
 
-#ifndef DISABLE_RUST
 extern int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_decoder *decoder);
-#endif
 
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
@@ -54,9 +52,7 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 		return 0;
 	}
 
-#ifndef DISABLE_RUST
 	ret = ccxr_process_cc_data(dec_ctx, cc_data, cc_count);
-#endif
 
 	for (int j = 0; j < cc_count * 3; j = j + 3)
 	{
@@ -198,18 +194,7 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				}
 				if (timeok)
 				{
-					if (ctx->write_format != CCX_OF_RCWT)
-					{
-#ifdef DISABLE_RUST
-						char temp[4];
-						temp[0] = cc_valid;
-						temp[1] = cc_type;
-						temp[2] = cc_block[1];
-						temp[3] = cc_block[2];
-						dtvcc_process_data(ctx->dtvcc, (const unsigned char *)temp);
-#endif
-					}
-					else
+					if (ctx->write_format == CCX_OF_RCWT)
 						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_708++;
@@ -451,11 +436,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			if (decoder->cc_count > 0)
 			{
 				ctx->current_field = 3;
-#ifndef DISABLE_RUST
 				ccxr_flush_decoder(ctx->dtvcc, decoder);
-#else
-				dtvcc_decoder_flush(ctx->dtvcc, decoder);
-#endif
 			}
 		}
 	}
