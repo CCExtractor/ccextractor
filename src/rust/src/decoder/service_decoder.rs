@@ -882,15 +882,19 @@ impl dtvcc_service_decoder {
             tv.cc_count += 1;
             let sn = tv.service_number;
             let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
-
             tv.update_time_hide(timing.get_visible_end(3));
+            let transcript_settings = if !encoder.transcript_settings.is_null() {
+                &*encoder.transcript_settings
+            } else {
+                &ccx_encoders_transcript_format::default()
+            };
             let mut writer = Writer::new(
                 &mut encoder.cea_708_counter,
                 encoder.subs_delay,
                 encoder.write_format,
                 writer_ctx,
                 encoder.no_font_color,
-                &*encoder.transcript_settings,
+                transcript_settings,
                 encoder.no_bom,
             );
             tv.writer_output(&mut writer).unwrap();
@@ -1185,6 +1189,13 @@ impl dtvcc_service_decoder {
     }
     /// Flush the decoder of any remaining subtitles
     pub fn flush(&self, encoder: &mut encoder_ctx) {
+        let transcript_settings = unsafe {
+            if !encoder.transcript_settings.is_null() {
+                &*encoder.transcript_settings
+            } else {
+                &ccx_encoders_transcript_format::default()
+            }
+        };
         unsafe {
             let tv = &mut (*self.tv);
             let sn = tv.service_number;
@@ -1196,7 +1207,7 @@ impl dtvcc_service_decoder {
                 encoder.write_format,
                 writer_ctx,
                 encoder.no_font_color,
-                &*encoder.transcript_settings,
+                transcript_settings,
                 encoder.no_bom,
             );
             writer.write_done();
@@ -1209,7 +1220,12 @@ impl dtvcc_service_decoder {
 extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_service_decoder) {
     debug!("dtvcc_decoder_flush: Flushing decoder");
     let timing = unsafe { &mut *((*dtvcc).timing) };
-    let encoder = unsafe { &mut *((*dtvcc).encoder as *mut encoder_ctx) };
+    let mut encoder = Box::into_raw(Box::new(encoder_ctx::default()));
+    unsafe {
+        if !(*dtvcc).encoder.is_null() {
+            encoder = &mut *((*dtvcc).encoder as *mut encoder_ctx);
+        }
+    }
     let decoder = unsafe { &mut *decoder };
 
     let mut screen_content_changed = false;
@@ -1222,10 +1238,13 @@ extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_serv
             decoder.windows[i as usize].visible = 0
         }
     }
-    if screen_content_changed {
-        decoder.screen_print(encoder, timing);
+    unsafe {
+        let encoder_ctx = &mut *encoder;
+        if screen_content_changed {
+            decoder.screen_print(encoder_ctx, timing);
+        }
+        decoder.flush(encoder_ctx);
     }
-    decoder.flush(encoder);
 }
 
 #[cfg(test)]
