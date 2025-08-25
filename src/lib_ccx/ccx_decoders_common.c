@@ -194,7 +194,8 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				}
 				if (timeok)
 				{
-					writercwtdata(ctx, cc_block, sub);
+					if (ctx->write_format == CCX_OF_RCWT)
+						writercwtdata(ctx, cc_block, sub);
 				}
 				cb_708++;
 				// Check for bytes read
