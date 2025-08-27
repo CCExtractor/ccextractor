@@ -231,15 +231,15 @@ enum ccx_bufferdata_type
 	CCX_PES = 1,
 	CCX_RAW = 2,
 	CCX_H264 = 3,
-	CCX_HEVC = 4,
-	CCX_HAUPPAGE = 5,
-	CCX_TELETEXT = 6,
-	CCX_PRIVATE_MPEG2_CC = 7,
-	CCX_DVB_SUBTITLE = 8,
-	CCX_ISDB_SUBTITLE = 9,
+	CCX_HAUPPAGE = 4,        // Restored to original value
+	CCX_TELETEXT = 5,        // Restored to original value  
+	CCX_PRIVATE_MPEG2_CC = 6, // Restored to original value
+	CCX_DVB_SUBTITLE = 7,    // Restored to original value
+	CCX_ISDB_SUBTITLE = 8,   // Restored to original value
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
-	CCX_RAW_TYPE = 10,
-	CCX_DVD_SUBTITLE = 11
+	CCX_RAW_TYPE = 9,        // Restored to original value
+	CCX_DVD_SUBTITLE = 10,   // Restored to original value
+	CCX_HEVC = 11            // Moved to end to avoid breaking existing code
 };
 
 enum ccx_frame_type
