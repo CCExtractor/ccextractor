@@ -125,7 +125,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		av_frame_free(&ctx->frame);
 	if (ctx->rgb_frame)
 		av_frame_free(&ctx->rgb_frame);
-	avcodec_close(ctx->codec_ctx);
+	avcodec_free_context(&ctx->codec_ctx);
 	avformat_close_input(&ctx->format_ctx);
 }
 

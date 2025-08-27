@@ -70,12 +70,6 @@
     <Filter Include="Header Files\lib_ccx">
       <UniqueIdentifier>{7ef5506d-d575-4661-84a1-dbbb99780e32}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\protobuf-c">
-      <UniqueIdentifier>{3c0bdb0a-e3f8-4fc4-a27b-b795ed32c965}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\protobuf-c">
-      <UniqueIdentifier>{fce551b0-7304-4677-8e66-61b475fdb924}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\utf8proc">
       <UniqueIdentifier>{6e23dd8b-166b-4a80-92e2-194e7b6e6c86}</UniqueIdentifier>
     </Filter>
@@ -165,12 +159,6 @@
     <ClInclude Include="..\src\lib_ccx\ccx_common_option.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\ccx_share.h">
-      <Filter>Header Files\lib_ccx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\lib_ccx\ccx_sub_entry_message.pb-c.h">
-      <Filter>Header Files\lib_ccx</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h">
       <Filter>Header Files\lib_ccx</Filter>
     </ClInclude>
@@ -184,9 +172,6 @@
       <Filter>Header Files\lib_ccx\ccx_encoders</Filter>
     </ClInclude>
     <ClInclude Include="..\src\thirdparty\lib_hash\sha2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\protobuf-c\protobuf-c.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\thirdparty\utf8proc\utf8proc.h">
@@ -383,12 +368,6 @@
     <ClCompile Include=" ..\src\lib_ccx\ccx_gxf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include=" ..\src\lib_ccx\ccx_share.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include=" ..\src\lib_ccx\ccx_sub_entry_message.pb-c.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\cc_bitstream.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -483,9 +462,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\thirdparty\lib_hash\sha2.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include=" ..\src\thirdparty\protobuf-c\protobuf-c.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\thirdparty\utf8proc\utf8proc.c">
@@ -617,8 +593,5 @@
     <ClCompile Include=" ..\src\thirdparty\freetype\winfonts\winfnt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=" ..\src\lib_ccx\ccx_sub_entry_message.proto" />
   </ItemGroup>
 </Project>
