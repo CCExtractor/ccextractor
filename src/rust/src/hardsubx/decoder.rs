@@ -40,6 +40,14 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
     // function that calls the classifier functions
     match (*ctx).ocr_mode {
         0 => {
+            let ret_char_arr = get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh);
+            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
+            match text_out_result {
+                Ok(T) => T,
+                Err(_E) => "".to_string(),
+            }
+        }
+        1 => {
             let ret_char_arr = get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh);
             if ret_char_arr.is_null() {
                 "".to_string()
@@ -49,17 +57,8 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
                     .into_owned()
             }
         }
-        1 => {
-            let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
-            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
-            match text_out_result {
-                Ok(T) => T,
-                Err(_E) => "".to_string(),
-            }
-        }
-
         2 => {
-            let ret_char_arr = get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh);
+            let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
             let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
             match text_out_result {
                 Ok(T) => T,
@@ -70,7 +69,6 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
         _ => {
             eprintln!("Invalid OCR Mode");
             exit(EXIT_MALFORMED_PARAMETER);
-            // "".to_string()
         }
     }
 }
@@ -117,7 +115,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
     let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
     let mut sobel_edge_im: *mut Pix =
         pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES.try_into().unwrap());
-    let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 1);
+    let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 11);
     let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
 
     let mut feat_im: *mut Pix = pixCreate(width, height, 32);
