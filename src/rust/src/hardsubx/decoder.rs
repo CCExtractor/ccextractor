@@ -41,9 +41,13 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
     match (*ctx).ocr_mode {
         0 => {
             let ret_char_arr = get_ocr_text_wordwise_threshold(ctx, im, (*ctx).conf_thresh);
-            ffi::CStr::from_ptr(ret_char_arr)
-                .to_string_lossy()
-                .into_owned()
+            if ret_char_arr.is_null() {
+                "".to_string()
+            } else {
+                ffi::CStr::from_ptr(ret_char_arr)
+                    .to_string_lossy()
+                    .into_owned()
+            }
         }
         1 => {
             let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
