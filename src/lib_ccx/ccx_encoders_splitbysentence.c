@@ -27,10 +27,6 @@
 #define LOG_DEBUG(...)
 #endif
 
-#ifdef ENABLE_SHARING
-#include "ccx_share.h"
-#endif // ENABLE_SHARING
-
 //---------------------------
 // BEGIN of #BUG639
 // HACK: this is workaround for https://github.com/CCExtractor/ccextractor/issues/639

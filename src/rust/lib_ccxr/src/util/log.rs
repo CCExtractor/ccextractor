@@ -86,9 +86,6 @@ bitflags! {
         const DVB            = 0x2000;
         /// Dump defective TS packets
         const DUMP_DEF       = 0x4000;
-        /// Extracted captions sharing service
-        #[cfg(feature = "enable_sharing")]
-        const SHARE          = 0x8000;
     }
 }
 
