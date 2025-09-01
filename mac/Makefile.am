@@ -95,10 +95,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_gxf.c \
 				../src/lib_ccx/ccx_gxf.h \
 				../src/lib_ccx/ccx_mp4.h \
-				../src/lib_ccx/ccx_share.c \
-				../src/lib_ccx/ccx_share.h \
-				../src/lib_ccx/ccx_sub_entry_message.pb-c.c \
-				../src/lib_ccx/ccx_sub_entry_message.pb-c.h \
 				../src/lib_ccx/compile_info.h \
 				../src/lib_ccx/compile_info_real.h \
 				../src/lib_ccx/configuration.c \
@@ -178,8 +174,6 @@ ccextractor_SOURCES = \
 				../src/thirdparty/utf8proc/utf8proc.h \
 				../src/thirdparty/lib_hash/sha2.c \
 				../src/thirdparty/lib_hash/sha2.h \
-				../src/thirdparty/protobuf-c/protobuf-c.c \
-				../src/thirdparty/protobuf-c/protobuf-c.h \
 				../src/lib_ccx/zvbi/bcd.h \
 				../src/lib_ccx/zvbi/bit_slicer.c \
 				../src/lib_ccx/zvbi/bit_slicer.h \
@@ -247,7 +241,7 @@ ccextractor_CFLAGS = -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFF
 ccextractor_LDFLAGS = $(shell pkg-config --libs gpac)
 GPAC_CPPFLAGS = $(shell pkg-config --cflags gpac)
 
-ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty/protobuf-c/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
+ccextractor_CPPFLAGS =-I../src/lib_ccx/ -I../src/thirdparty/libpng/ -I../src/thirdparty/zlib/ -I../src/lib_ccx/zvbi/ -I../src/thirdparty/lib_hash/ -I../src/thirdparty -I../src/ -I../src/thirdparty/freetype/include/
 ccextractor_CPPFLAGS += $(GPAC_CPPFLAGS)
 ccextractor_CPPFLAGS += $(FFMPEG_CPPFLAGS)
 
