@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
     - uses: actions/checkout@v4
     - name: build
-      run: ./build
+      run: ./build -hardsubx
       working-directory: ./linux
     - name: Display version information
       run: ./ccextractor --version
