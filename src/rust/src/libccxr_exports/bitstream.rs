@@ -9,7 +9,7 @@ use std::os::raw::{c_int, c_uchar};
 /// This function is unsafe because it:
 /// - Dereferences a raw pointer (`bitstream_ptr`)
 /// - Performs pointer arithmetic and assumes valid memory layout
-unsafe fn copy_bitstream_from_rust_to_c(
+pub unsafe fn copy_bitstream_from_rust_to_c(
     bitstream_ptr: *mut bitstream,
     rust_bitstream: &BitStreamRust,
 ) {
@@ -41,7 +41,7 @@ unsafe fn copy_bitstream_from_rust_to_c(
 /// # Safety
 /// This function is unsafe because it Dereferences a raw pointer (`value`) without null checking and
 /// Performs pointer arithmetic and offset calculations assuming valid pointer relationships
-unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'static> {
+pub unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'static> {
     // We need to work with the original buffer, not just from current position
     let mut slice: &[u8] = &[];
     let mut current_pos_in_slice = 0;

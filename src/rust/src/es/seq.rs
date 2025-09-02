@@ -191,7 +191,7 @@ pub fn read_seq_info(
     // should we run out of data in esstream this is where we want to restart
     // after getting more.
     let video_seq_start_pos = esstream.pos;
-    let video_seq_start_bpos = esstream.bpos;
+    let video_seq_start_end = esstream.data.len();
 
     sequence_header(ctx, esstream, ccx_options)?;
     sequence_ext(ctx, esstream)?;
@@ -204,7 +204,7 @@ pub fn read_seq_info(
     }
 
     if esstream.bits_left < 0 {
-        esstream.init_bitstream(video_seq_start_pos, video_seq_start_bpos as usize)?;
+        esstream.init_bitstream(video_seq_start_pos, video_seq_start_end)?;
         return Ok(false);
     }
 

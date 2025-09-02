@@ -162,7 +162,7 @@ pub unsafe fn read_pic_info(
     // should we run out of data in esstream this is where we want to restart
     // after getting more.
     let pic_info_start_pos = esstream.pos;
-    let pic_info_start_bpos = esstream.bpos;
+    let pic_info_start_end = esstream.data.len();
 
     pic_header(dec_ctx, esstream)?;
     pic_coding_ext(dec_ctx, esstream)?;
@@ -172,7 +172,7 @@ pub unsafe fn read_pic_info(
     }
 
     if esstream.bits_left < 0 {
-        esstream.init_bitstream(pic_info_start_pos, pic_info_start_bpos as _)?;
+        esstream.init_bitstream(pic_info_start_pos, pic_info_start_end)?;
         return Ok(false);
     }
 
