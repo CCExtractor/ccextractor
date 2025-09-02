@@ -206,7 +206,8 @@ unsafe fn gop_header(
             // next GOP.
             // This effect will also lead to captions being one GOP early
             // for DVD captions.
-            fts_at_gop_start = ccxr_get_fts_max(dec_ctx.timing) + (1000.0 / current_fps) as i64;
+            fts_at_gop_start =
+                (ccxr_get_fts_max(dec_ctx.timing) as i32 + (1000.0 / current_fps) as i32) as _;
         }
 
         if ccx_options.debug_mask & 4 != 0 {
