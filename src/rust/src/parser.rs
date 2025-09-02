@@ -767,7 +767,7 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref ocrlang) = args.ocrlang {
-            self.ocrlang = PathBuf::from_str(ocrlang.as_str()).unwrap_or_default();
+            self.ocrlang = Some(Language::from_str(ocrlang.as_str()).unwrap());
         }
 
         if let Some(ref quant) = args.quant {

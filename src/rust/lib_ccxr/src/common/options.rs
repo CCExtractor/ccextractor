@@ -452,7 +452,7 @@ pub struct Options {
     /// The name of the language stream for DVB
     pub dvblang: Option<Language>,
     /// The name of the .traineddata file to be loaded with tesseract
-    pub ocrlang: PathBuf,
+    pub ocrlang: Option<Language>,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
     pub ocr_oem: i8,
     /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
