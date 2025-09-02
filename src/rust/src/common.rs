@@ -150,8 +150,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     if let Some(dvblang) = options.dvblang {
         (*ccx_s_options).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
     }
-    if options.ocrlang.try_exists().unwrap_or_default() {
-        (*ccx_s_options).ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
+    if let Some(ocrlang) = options.ocrlang {
+        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.to_ctype().as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
