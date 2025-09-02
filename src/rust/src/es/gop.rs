@@ -39,7 +39,7 @@ pub unsafe fn read_gop_info(
     // should we run out of data in esstream this is where we want to restart
     // after getting more.
     let gop_info_start_pos = esstream.pos;
-    let gop_info_start_bpos = esstream.bpos;
+    let gop_info_start_end = esstream.data.len();
 
     gop_header(enc_ctx, dec_ctx, esstream, sub)?;
     // extension_and_user_data(esstream);
@@ -49,7 +49,7 @@ pub unsafe fn read_gop_info(
     }
 
     if esstream.bits_left < 0 {
-        esstream.init_bitstream(gop_info_start_pos, gop_info_start_bpos as usize)?;
+        esstream.init_bitstream(gop_info_start_pos, gop_info_start_end)?;
         return Ok(false);
     }
 
