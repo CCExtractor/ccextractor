@@ -1,7 +1,7 @@
-use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
+use crate::bindings::{cc_subtitle, encoder_ctx, gop_time_code, lib_cc_decode};
 use crate::libccxr_exports::time::{
-    ccxr_get_fts_max, ccxr_print_debug_timing, ccxr_set_current_pts, ccxr_set_fts,
-    write_gop_time_code,
+    ccxr_calculate_ms_gop_time, ccxr_get_fts_max, ccxr_gop_accepted, ccxr_print_debug_timing,
+    ccxr_set_current_pts, ccxr_set_fts,
 };
 use crate::process_hdcc;
 use crate::{
@@ -10,8 +10,8 @@ use crate::{
 };
 use lib_ccxr::common::{BitStreamRust, BitstreamError};
 use lib_ccxr::dbg_es;
-use lib_ccxr::time::c_functions::{calculate_ms_gop_time, gop_accepted, print_mstime_static};
-use lib_ccxr::time::{GopTimeCode, Timestamp};
+use lib_ccxr::time::c_functions::print_mstime_static;
+use lib_ccxr::time::Timestamp;
 use lib_ccxr::util::log::{DebugMessageFlag, ExitCause};
 use lib_ccxr::{debug, fatal, info};
 
@@ -80,24 +80,29 @@ unsafe fn gop_header(
     }
 
     let drop_frame_flag = esstream.read_bits(1)? as u32;
-    let mut gtc = GopTimeCode {
-        drop_frame: drop_frame_flag != 0,
-        time_code_hours: esstream.read_bits(5)? as u8,
-        time_code_minutes: esstream.read_bits(6)? as u8,
+
+    let mut gtc = gop_time_code {
+        drop_frame_flag: drop_frame_flag as i32,
+        time_code_hours: esstream.read_bits(5)? as i32,
+        time_code_minutes: esstream.read_bits(6)? as i32,
+        marker_bit: 0, // Will be skipped
         time_code_seconds: 0,
         time_code_pictures: 0,
-        timestamp: Default::default(),
+        inited: 1, // Set inited flag like in C code
+        ms: 0,
     };
+
     esstream.skip_bits(1)?; // Marker bit
-    gtc.time_code_seconds = esstream.read_bits(6)? as u8;
-    gtc.time_code_pictures = esstream.read_bits(6)? as u8;
-    calculate_ms_gop_time(gtc);
+    gtc.time_code_seconds = esstream.read_bits(6)? as i32;
+    gtc.time_code_pictures = esstream.read_bits(6)? as i32;
+
+    ccxr_calculate_ms_gop_time(&mut gtc as *mut gop_time_code);
 
     if esstream.bits_left < 0 {
         return Ok(false);
     }
 
-    if gop_accepted(gtc) {
+    if ccxr_gop_accepted(&mut gtc as *mut gop_time_code) != 0 {
         // Do GOP padding during GOP header. The previous GOP and all
         // included captions are written. Use the current GOP time to
         // do the padding.
@@ -127,11 +132,11 @@ unsafe fn gop_header(
 
         // Report synchronization jumps between GOPs. Warn if there
         // are 20% or more deviation.
-        if (ccx_options.debug_mask & 4 != 0)
-            && ((gtc.timestamp.millis() - gop_time.ms // more than 20% longer
-                > (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps * 1.2) as i64)
-                || (gtc.timestamp.millis() - gop_time.ms // or 20% shorter
-                    < (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps * 0.8) as i64))
+        if (ccx_options.debug_mask & 4 != 0)  // CCX_DMT_TIME = 4
+            && ((gtc.ms - gop_time.ms // more than 20% longer
+            > (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps * 1.2) as i64)
+            || (gtc.ms - gop_time.ms // or 20% shorter
+            < (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps * 0.8) as i64))
             && first_gop_time.inited != 0
         {
             info!("\rWarning: Jump in GOP timing.");
@@ -149,11 +154,14 @@ unsafe fn gop_header(
                 ),
                 dec_ctx.frames_since_last_gop
             );
-            info!("  !=  (new) {}", print_mstime_static(gtc.timestamp, ':'));
+            info!(
+                "  !=  (new) {}",
+                print_mstime_static(Timestamp::from_millis(gtc.ms), ':')
+            );
         }
 
         if first_gop_time.inited == 0 {
-            first_gop_time = write_gop_time_code(Some(gtc));
+            first_gop_time = gtc;
 
             // It needs to be "+1" because the frame count starts at 0 and we
             // need the length of all frames.
@@ -176,7 +184,7 @@ unsafe fn gop_header(
                       (*dec_ctx.timing).fts_fc_offset);
         }
 
-        gop_time = write_gop_time_code(Some(gtc));
+        gop_time = gtc;
 
         dec_ctx.frames_since_last_gop = 0;
         // Indicate that we read a gop header (since last frame number 0)
@@ -186,7 +194,7 @@ unsafe fn gop_header(
         if ccx_options.use_gop_as_pts == 1 {
             ccxr_set_current_pts(
                 dec_ctx.timing,
-                (gtc.timestamp.millis() as i32 * (MPEG_CLOCK_FREQ / 1000)) as _,
+                (gtc.ms * (MPEG_CLOCK_FREQ as i64 / 1000)) as _,
             );
             (*dec_ctx.timing).current_tref = 0;
             frames_since_ref_time = 0;
@@ -198,13 +206,13 @@ unsafe fn gop_header(
             // next GOP.
             // This effect will also lead to captions being one GOP early
             // for DVD captions.
-            fts_at_gop_start =
-                (ccxr_get_fts_max(dec_ctx.timing) as i32 + (1000.0 / current_fps) as i32) as _;
+            fts_at_gop_start = ccxr_get_fts_max(dec_ctx.timing) + (1000.0 / current_fps) as i64;
         }
 
         if ccx_options.debug_mask & 4 != 0 {
+            // CCX_DMT_TIME = 4
             debug!(msg_type = DebugMessageFlag::TIME; "\nNew GOP:");
-            debug!(msg_type = DebugMessageFlag::TIME;  "\nDrop frame flag: {}:", drop_frame_flag);
+            debug!(msg_type = DebugMessageFlag::TIME; "\nDrop frame flag: {}:", drop_frame_flag);
             ccxr_print_debug_timing(dec_ctx.timing);
         }
     }
