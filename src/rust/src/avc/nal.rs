@@ -414,7 +414,9 @@ pub unsafe fn slice_header(
     }
 
     if (*dec_ctx.avc_ctx).pic_order_cnt_type == 1 {
-        panic!("In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.");
+        return Err(
+            "In slice_header: AVC: ctx->avc_ctx->pic_order_cnt_type == 1 not yet supported.".into(),
+        );
     }
 
     // Ignore slice with same pic order or pts
