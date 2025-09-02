@@ -29,7 +29,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
@@ -80,7 +80,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
