@@ -7,6 +7,8 @@ use crate::libccxr_exports::time::ccxr_set_fts;
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use std::arch::x86_64::*;
 use std::os::raw::c_void;
 use std::slice;
 
@@ -336,6 +338,32 @@ pub enum AvcError {
     ForbiddenZeroBit(String),
     Other(String),
 }
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+fn find_next_zero(slice: &[u8]) -> Option<usize> {
+    let len = slice.len();
+    let mut i = 0;
+    let ptr = slice.as_ptr();
+    if is_x86_feature_detected!("sse2") {
+        unsafe {
+            let zero = _mm_set1_epi8(0);
+            while i + 16 <= len {
+                let chunk = _mm_loadu_si128(ptr.add(i) as *const __m128i);
+                let cmp = _mm_cmpeq_epi8(chunk, zero);
+                let mask = _mm_movemask_epi8(cmp);
+                if mask != 0 {
+                    return Some(i + mask.trailing_zeros() as usize);
+                }
+                i += 16;
+            }
+        }
+    }
+    slice[i..]
+        .iter()
+        .position(|&b| b == 0x00)
+        .map(|pos| i + pos)
+}
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
 fn find_next_zero(slice: &[u8]) -> Option<usize> {
     slice.iter().position(|&b| b == 0x00)
 }
