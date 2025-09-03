@@ -49,4 +49,6 @@ void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, c
 
 void ccx_encoders_helpers_perform_shellsort_words(void);
 void ccx_encoders_helpers_setup(enum ccx_encoding_type encoding, int no_font_color, int no_type_setting, int trim_subs);
+
+void webvtt_write_minimal_header(void);
 #endif
