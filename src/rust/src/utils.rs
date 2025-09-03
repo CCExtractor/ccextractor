@@ -1,3 +1,10 @@
+use std::io;
+use std::os::raw::{c_int, c_void, c_char};
+use libc::size_t;
+
+extern "C" {
+    fn write(fd: c_int, buf: *const c_void, count: size_t) -> isize;
+}
 //! Some utility functions to deal with values from C bindings
 use std::ffi;
 
@@ -73,4 +80,21 @@ pub fn get_zero_allocated_obj<T>() -> Box<T> {
 
         Box::from_raw(allocation)
     }
+}
+
+pub fn write_wrapper_os(fd: c_int, mut buf: &[u8])-> Result<(), io::Error>{
+    while !buf.is_empty() {
+        let written = unsafe {
+            write(fd, buf.as_ptr() as *const c_void, buf.len() as size_t)
+        };
+
+        if written == -1 {
+            return Err(io::Error::last_os_error());
+        }
+
+        // Move the slice forward by the number of bytes written
+        buf = &buf[written as usize..];
+    }
+
+    Ok(())
 }
