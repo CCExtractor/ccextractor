@@ -9,10 +9,6 @@
 #include "ccx_encoders_helpers.h"
 #include "lib_ccx.h"
 
-#ifdef ENABLE_SHARING
-#include "ccx_share.h"
-#endif // ENABLE_SHARING
-
 int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
 	int ret = 0;

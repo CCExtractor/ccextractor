@@ -10,6 +10,9 @@
 #include <leptonica/allheaders.h>
 #include <tesseract/capi.h>
 #include "hardsubx.h"
+#ifdef ENABLE_FFMPEG
+#include "ffmpeg_intgr.h"
+#endif
 
 #ifdef DISABLE_RUST
 char *_process_frame_white_basic(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int height, int index)

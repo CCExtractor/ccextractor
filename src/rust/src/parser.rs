@@ -760,7 +760,7 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref ocrlang) = args.ocrlang {
-            self.ocrlang = PathBuf::from_str(ocrlang.as_str()).unwrap_or_default();
+            self.ocrlang = Some(Language::from_str(ocrlang.as_str()).unwrap());
         }
 
         if let Some(ref quant) = args.quant {
@@ -1117,15 +1117,6 @@ impl OptionsExt for Options {
             tlt_config.verbose = true;
         }
 
-        #[cfg(feature = "enable_sharing")]
-        {
-            if args.sharing_debug {
-                self.debug_mask =
-                    DebugMessageMask::new(DebugMessageFlag::SHARE, DebugMessageFlag::VERBOSE);
-                tlt_config.verbose = true;
-            }
-        }
-
         if args.fullbin {
             self.fullbin = true;
         }
@@ -1413,27 +1404,6 @@ impl OptionsExt for Options {
             use url::Url;
             if let Some(ref curlposturl) = args.curlposturl {
                 self.curlposturl = Url::from_str(curlposturl).ok();
-            }
-        }
-
-        #[cfg(feature = "enable_sharing")]
-        {
-            if args.enable_sharing {
-                self.sharing_enabled = true;
-            }
-
-            if let Some(ref sharingurl) = args.sharing_url {
-                self.sharing_url = Some(sharingurl.to_string().parse().unwrap());
-            }
-
-            if let Some(ref translate) = args.translate {
-                self.translate_enabled = true;
-                self.sharing_enabled = true;
-                self.translate_langs = Some(translate.to_string());
-            }
-
-            if let Some(ref translateauth) = args.translate_auth {
-                self.translate_key = Some(translateauth.to_string());
             }
         }
 
