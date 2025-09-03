@@ -11,6 +11,9 @@
 static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end,
 					  int out_fh, unsigned int *srt_counter)
 {
+	#ifndef DISABLE_RUST
+		return ccxr_write_stringz_srt(context, string, ms_start, ms_end);
+	#endif
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;

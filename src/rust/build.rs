@@ -69,6 +69,7 @@ fn main() {
         "eia608_screen",
         "uint8_t",
         "word_list",
+        "ccx_s_write",
     ]);
 
     #[cfg(feature = "hardsubx_ocr")]
