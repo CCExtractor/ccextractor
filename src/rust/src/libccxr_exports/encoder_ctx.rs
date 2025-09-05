@@ -1,6 +1,6 @@
 use crate::bindings::{encoder_ctx,ccx_s_write};
+use crate::encoder::FromCType;
 use lib_ccxr::util::encoding::Encoding;
-use std::os::raw::{c_int, c_uint};
 
 /// Rust representation of encoder_ctx
 #[derive(Debug)]
@@ -24,13 +24,11 @@ pub fn copy_encoder_ctx_c_to_rust(c_ctx: *mut encoder_ctx) -> EncoderCtxRust{
     };
 
     // Copy encoded_crlf into String
-    let encoded_crlf = if !c.encoded_crlf.is_null() {
-        let bytes = unsafe { std::slice::from_raw_parts(c.encoded_crlf, 16) };
+    let encoded_crlf = {
+        let bytes = &c.encoded_crlf;
         // trim at first 0
         let len = bytes.iter().position(|&b| b == 0).unwrap_or(16);
         Some(String::from_utf8_lossy(&bytes[..len]).to_string())
-    } else {
-        None
     };
 
     // Single output pointer
@@ -67,11 +65,9 @@ pub unsafe fn copy_encoder_ctx_rust_to_c(rust_ctx: &mut EncoderCtxRust, c_ctx: *
     
     // Copy encoded_crlf back if it exists
     if let Some(ref crlf) = rust_ctx.encoded_crlf {
-        if !c.encoded_crlf.is_null() {
-            let crlf_bytes = crlf.as_bytes();
-            let copy_len = std::cmp::min(crlf_bytes.len(), 15); // Leave room for null terminator
-            std::ptr::copy_nonoverlapping(crlf_bytes.as_ptr(), c.encoded_crlf, copy_len);
-            *c.encoded_crlf.add(copy_len) = 0; // Null terminate
-        }
+        let crlf_bytes = crlf.as_bytes();
+        let copy_len = std::cmp::min(crlf_bytes.len(), 15); // Leave room for null terminator
+        c.encoded_crlf[..copy_len].copy_from_slice(&crlf_bytes[..copy_len]);
+        c.encoded_crlf[copy_len] = 0; // Null terminate
     }
 }

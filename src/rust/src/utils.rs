@@ -1,11 +1,6 @@
+//! Some utility functions to deal with values from C bindings
 use std::io;
 use std::os::raw::{c_int, c_void, c_char};
-use libc::size_t;
-
-extern "C" {
-    fn write(fd: c_int, buf: *const c_void, count: size_t) -> isize;
-}
-//! Some utility functions to deal with values from C bindings
 use std::ffi;
 
 /// Check if the value is true (Set to 1). Use only for values from C bindings
@@ -47,7 +42,6 @@ pub fn null_pointer<T>() -> *mut T {
     std::ptr::null_mut()
 }
 
-use std::os::raw::c_char;
 
 pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
     let mut c_strs: Vec<*mut c_char> = Vec::new();
@@ -85,7 +79,7 @@ pub fn get_zero_allocated_obj<T>() -> Box<T> {
 pub fn write_wrapper_os(fd: c_int, mut buf: &[u8])-> Result<(), io::Error>{
     while !buf.is_empty() {
         let written = unsafe {
-            write(fd, buf.as_ptr() as *const c_void, buf.len() as size_t)
+            libc::write(fd, buf.as_ptr() as *const c_void, buf.len())
         };
 
         if written == -1 {

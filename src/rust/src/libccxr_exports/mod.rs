@@ -2,6 +2,7 @@
 
 pub mod bitstream;
 pub mod time;
+pub mod encoder_ctx;
 use crate::ccx_options;
 use lib_ccxr::util::log::*;
 use lib_ccxr::util::{bits::*, levenshtein::*};
