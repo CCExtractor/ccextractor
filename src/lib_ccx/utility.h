@@ -34,6 +34,7 @@ extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
 extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
 extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
 extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
+extern int ccxr_write_stringz_srt(struct encoder_ctx *context, const char *string, LLONG ms_start, LLONG ms_end);
 #endif
 
 int levenshtein_dist_char (const char *s1, const char *s2, unsigned s1len, unsigned s2len);
