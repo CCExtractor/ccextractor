@@ -1,10 +1,11 @@
 use crate::utils::write_wrapper_os;
 use crate::common::encode_line;
 use crate::libccxr_exports::time::ccxr_millis_to_time;
+use crate::libccxr_exports::encoder_ctx::{copy_encoder_ctx_c_to_rust, copy_encoder_ctx_rust_to_c, EncoderCtxRust};
+use lib_ccxr::util::encoding::Encoding;
 use std::ffi::CString;
 use std::io;
 use std::os::raw::{c_int, c_void};
-use crate::encoder::context::EncoderCtx; // assuming you have this
 use crate::bindings::ccx_s_write;
 
 /// Safe wrapper to get the file handle from EncoderCtxRust
@@ -20,35 +21,87 @@ fn get_out_fh(out: Option<*mut ccx_s_write>) -> io::Result<i32> {
     }
 }
 
+/// Safe wrapper for the existing encode_line function that works with EncoderCtxRust
+fn safe_encode_line(
+    rust_ctx: &mut EncoderCtxRust,
+    c_ctx: *mut crate::bindings::encoder_ctx,
+    text: &[u8],
+) -> Result<usize, io::Error> {
+    if rust_ctx.buffer.is_none() {
+        return Err(io::Error::new(io::ErrorKind::Other, "No buffer available"));
+    }
+    
+    // Temporarily copy Rust context to C context for encoding
+    unsafe {
+        copy_encoder_ctx_rust_to_c(rust_ctx, c_ctx);
+    }
+    
+    let c_ctx_ref = unsafe { &mut *c_ctx };
+    let buffer_slice = unsafe {
+        std::slice::from_raw_parts_mut(c_ctx_ref.buffer, c_ctx_ref.capacity as usize)
+    };
+    
+    // Use the existing encode_line function from common.rs
+    let used = encode_line(c_ctx_ref, buffer_slice, text);
+    
+    // Copy the encoded buffer back to Rust context
+    if let Some(ref mut buffer) = rust_ctx.buffer {
+        let copy_len = std::cmp::min(used as usize, buffer.len());
+        buffer[..copy_len].copy_from_slice(&buffer_slice[..copy_len]);
+    }
+    
+    Ok(used as usize)
+}
+
 /// Rewrite of write_stringz_srt_r using EncoderCtxRust
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_write_stringz_srt(
-    string: &str,
-    context_ptr: &mut crate::EncoderCtxRust,
+    context: *mut crate::bindings::encoder_ctx,
+    string: *const std::os::raw::c_char,
     ms_start: i64,
     ms_end: i64,
-) -> Result<(), io::Error> {
-    if string.is_empty() {
-        return Ok(());
+) -> c_int {
+    if context.is_null() || string.is_null() {
+        return 0;
     }
-    let mut context = copy_encoder_ctx_c_to_rust(context_ptr);
+
+    let string_cstr = match std::ffi::CStr::from_ptr(string).to_str() {
+        Ok(s) => s,
+        Err(_) => return 0,
+    };
+
+    if string_cstr.is_empty() {
+        return 0;
+    }
+
+    // Copy C context to safe Rust context
+    let mut rust_context = copy_encoder_ctx_c_to_rust(context);
+    
     // Convert times
     let (h1, m1, s1, ms1) = ccxr_millis_to_time(ms_start);
     let (h2, m2, s2, ms2) = ccxr_millis_to_time(ms_end - 1);
 
     // Increment counter
-    context.srt_counter += 1;
+    rust_context.srt_counter += 1;
 
     // Get encoded CRLF string
-    let crlf = context.encoded_crlf.as_deref().unwrap_or("\r\n");
+    let crlf = rust_context.encoded_crlf.as_deref().unwrap_or("\r\n");
 
     // Get file handle
-    let fh = get_out_fh(context.out)?;
+    let fh = match get_out_fh(rust_context.out) {
+        Ok(fh) => fh,
+        Err(_) => return 0,
+    };
 
     // Timeline counter line
-    let timeline = format!("{}{}", context.srt_counter, crlf);
-    let used = encode_line(&timeline, &mut context.buffer)?;
-    write_wrapper_os(fh, &context.buffer[..used])?;
+    let timeline = format!("{}{}", rust_context.srt_counter, crlf);
+    let used = match safe_encode_line(&mut rust_context, context, timeline.as_bytes()) {
+        Ok(u) => u,
+        Err(_) => return 0,
+    };
+    if write_wrapper_os(fh, &rust_context.buffer.as_ref().unwrap()[..used]).is_err() {
+        return 0;
+    }
 
     // Timeline timecode line
     let timeline = format!(
@@ -57,13 +110,18 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
         h2, m2, s2, ms2,
         crlf
     );
-    let used = encode_line(&timeline, &mut context.buffer)?;
-    write_wrapper_os(fh, &context.buffer[..used])?;
+    let used = match safe_encode_line(&mut rust_context, context, timeline.as_bytes()) {
+        Ok(u) => u,
+        Err(_) => return 0,
+    };
+    if write_wrapper_os(fh, &rust_context.buffer.as_ref().unwrap()[..used]).is_err() {
+        return 0;
+    }
 
     // --- Handle the text itself ---
-    let mut unescaped = Vec::with_capacity(string.len() + 1);
+    let mut unescaped = Vec::with_capacity(string_cstr.len() + 1);
 
-    let mut chars = string.chars().peekable();
+    let mut chars = string_cstr.chars().peekable();
     while let Some(c) = chars.next() {
         if c == '\\' && chars.peek() == Some(&'n') {
             unescaped.push(0u8);
@@ -80,9 +138,16 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
             let slice = &unescaped[pos..pos + end];
             if !slice.is_empty() {
                 let line = String::from_utf8_lossy(slice);
-                let used = encode_line(&line, &mut context.buffer)?;
-                write_wrapper_os(fh, &context.buffer[..used])?;
-                write_wrapper_os(fh, crlf.as_bytes())?;
+                let used = match safe_encode_line(&mut rust_context, context, line.as_bytes()) {
+                    Ok(u) => u,
+                    Err(_) => return 0,
+                };
+                if write_wrapper_os(fh, &rust_context.buffer.as_ref().unwrap()[..used]).is_err() {
+                    return 0;
+                }
+                if write_wrapper_os(fh, crlf.as_bytes()).is_err() {
+                    return 0;
+                }
             }
             pos += end + 1;
         } else {
@@ -91,7 +156,12 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     }
 
     // Final CRLF
-    write_wrapper_os(fh, crlf.as_bytes())?;
+    if write_wrapper_os(fh, crlf.as_bytes()).is_err() {
+        return 0;
+    }
 
-    Ok(())
+    // Copy the updated Rust context back to C context
+    copy_encoder_ctx_rust_to_c(&mut rust_context, context);
+
+    1 // Success
 }
