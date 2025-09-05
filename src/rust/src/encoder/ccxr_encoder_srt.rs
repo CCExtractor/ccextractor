@@ -1,11 +1,9 @@
 use crate::utils::write_wrapper_os;
-use crate::common::encode_line;
+use crate::encoder::common::encode_line;
 use crate::libccxr_exports::time::ccxr_millis_to_time;
 use crate::libccxr_exports::encoder_ctx::{copy_encoder_ctx_c_to_rust, copy_encoder_ctx_rust_to_c, EncoderCtxRust};
-use lib_ccxr::util::encoding::Encoding;
-use std::ffi::CString;
 use std::io;
-use std::os::raw::{c_int, c_void};
+use std::os::raw::c_int;
 use crate::bindings::ccx_s_write;
 
 /// Safe wrapper to get the file handle from EncoderCtxRust
@@ -78,14 +76,27 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     let mut rust_context = copy_encoder_ctx_c_to_rust(context);
     
     // Convert times
-    let (h1, m1, s1, ms1) = ccxr_millis_to_time(ms_start);
-    let (h2, m2, s2, ms2) = ccxr_millis_to_time(ms_end - 1);
+    let mut h1 = 0u32;
+    let mut m1 = 0u32;
+    let mut s1 = 0u32;
+    let mut ms1 = 0u32;
+    unsafe {
+        ccxr_millis_to_time(ms_start, &mut h1, &mut m1, &mut s1, &mut ms1);
+    }
+    
+    let mut h2 = 0u32;
+    let mut m2 = 0u32;
+    let mut s2 = 0u32;
+    let mut ms2 = 0u32;
+    unsafe {
+        ccxr_millis_to_time(ms_end - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
+    }
 
     // Increment counter
     rust_context.srt_counter += 1;
 
     // Get encoded CRLF string
-    let crlf = rust_context.encoded_crlf.as_deref().unwrap_or("\r\n");
+    let crlf = rust_context.encoded_crlf.as_deref().unwrap_or("\r\n").to_string();
 
     // Get file handle
     let fh = match get_out_fh(rust_context.out) {
