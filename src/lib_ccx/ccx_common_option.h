@@ -198,17 +198,6 @@ struct ccx_s_options // Options from user parameters
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif
-
-
-#ifdef ENABLE_SHARING
-	//CC sharing
-	int sharing_enabled;
-	char *sharing_url;
-	//Translating
-	int translate_enabled;
-	char *translate_langs;
-	char *translate_key;
-#endif
 };
 
 extern struct ccx_s_options ccx_options;
