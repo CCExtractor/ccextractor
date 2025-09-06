@@ -14,6 +14,7 @@ pub mod bindings {
 }
 
 pub mod args;
+pub mod avc;
 pub mod common;
 pub mod ctorust;
 pub mod decoder;
@@ -23,7 +24,6 @@ pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod hlist;
-pub mod avc;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;

@@ -353,10 +353,12 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
                 .expect("Invalid language"),
         );
     }
-
     // Handle ocrlang (C string to PathBuf)
     if !(*ccx_s_options).ocrlang.is_null() {
-        options.ocrlang = PathBuf::from(c_char_to_string((*ccx_s_options).ocrlang));
+        options.ocrlang = Some(
+            Language::from_str(&c_char_to_string((*ccx_s_options).ocrlang))
+                .expect("Invalid language"),
+        );
     }
 
     options.ocr_oem = (*ccx_s_options).ocr_oem as i8;
@@ -482,26 +484,6 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     if !(*ccx_s_options).curlposturl.is_null() {
         let url_str = c_char_to_string((*ccx_s_options).curlposturl);
         options.curlposturl = url_str.parse::<Url>().ok();
-    }
-
-    #[cfg(feature = "enable_sharing")]
-    {
-        options.sharing_enabled = (*ccx_s_options).sharing_enabled != 0;
-
-        if !(*ccx_s_options).sharing_url.is_null() {
-            let url_str = c_char_to_string((*ccx_s_options).sharing_url);
-            options.sharing_url = url_str.parse::<Url>().ok();
-        }
-
-        options.translate_enabled = (*ccx_s_options).translate_enabled != 0;
-
-        if !(*ccx_s_options).translate_langs.is_null() {
-            options.translate_langs = Some(c_char_to_string((*ccx_s_options).translate_langs));
-        }
-
-        if !(*ccx_s_options).translate_key.is_null() {
-            options.translate_key = Some(c_char_to_string((*ccx_s_options).translate_key));
-        }
     }
 
     options
