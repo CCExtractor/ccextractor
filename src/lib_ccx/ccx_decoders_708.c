@@ -1025,6 +1025,18 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	if (anchor_horizontal > CCX_DTVCC_SCREENGRID_COLUMNS - col_count)
 		anchor_horizontal = CCX_DTVCC_SCREENGRID_COLUMNS - col_count;
 
+	if (window->is_defined)
+	{
+		if (row_count < window->row_count)
+		{
+			// Remove the oldest row if the row count is reduced
+			for (int i = row_count; i < window->row_count; i++)
+			{
+				dtvcc_window_rollup(decoder, window);
+			}
+		}
+	}
+
 	window->priority = priority;
 	window->col_lock = col_lock;
 	window->row_lock = row_lock;
