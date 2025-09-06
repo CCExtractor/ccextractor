@@ -18,6 +18,7 @@ pub mod avc;
 pub mod common;
 pub mod decoder;
 pub mod encoder;
+pub mod es;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod libccxr_exports;
@@ -84,7 +85,18 @@ cfg_if! {
             sub: *mut cc_subtitle,
         ){}
         fn anchor_hdcc(ctx: *mut lib_cc_decode, seq: c_int){}
-
+        fn do_cb(
+            ctx: *mut lib_cc_decode,
+            cc_block: *mut c_uchar,
+            sub: *mut cc_subtitle,
+        ) -> c_int{0}
+        fn decode_vbi(
+            dec_ctx: *mut lib_cc_decode,
+            field: u8,
+            buffer: *mut c_uchar,
+            len: usize,
+            sub: *mut cc_subtitle,
+        ) -> c_int{0}
     }
 }
 
@@ -124,7 +136,14 @@ extern "C" {
         sub: *mut cc_subtitle,
     );
     fn anchor_hdcc(ctx: *mut lib_cc_decode, seq: c_int);
-
+    fn do_cb(ctx: *mut lib_cc_decode, cc_block: *mut c_uchar, sub: *mut cc_subtitle) -> c_int;
+    fn decode_vbi(
+        dec_ctx: *mut lib_cc_decode,
+        field: u8,
+        buffer: *mut c_uchar,
+        len: usize,
+        sub: *mut cc_subtitle,
+    ) -> c_int;
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -159,7 +178,7 @@ extern "C" fn ccxr_process_cc_data(
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb_dtvcc(dec_ctx, &mut dtvcc, cc_block);
         if success {
             ret = 0;
         }
@@ -203,7 +222,7 @@ pub fn verify_parity(data: u8) -> bool {
 }
 
 /// Process CC data according to its type
-pub fn do_cb(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
+pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;
@@ -386,7 +405,7 @@ mod test {
         let mut decoder_ctx = lib_cc_decode::default();
         let cc_block = [0x97, 0x1F, 0x3C];
 
-        assert!(do_cb(&mut decoder_ctx, &mut dtvcc, &cc_block));
+        assert!(do_cb_dtvcc(&mut decoder_ctx, &mut dtvcc, &cc_block));
         assert_eq!(decoder_ctx.current_field, 3);
         assert_eq!(decoder_ctx.cc_stats[3], 1);
         assert_eq!(decoder_ctx.processed_enough, 0);

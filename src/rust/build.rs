@@ -13,10 +13,12 @@ fn main() {
         "version",
         "set_binary_mode",
         "net_send_header", // shall be removed after NET
-        "realloc",
-        "anchor_hdcc",
         "process_hdcc",
+        "anchor_hdcc",
         "store_hdcc",
+        "do_cb",
+        "decode_vbi",
+        "realloc",
         "write_spumux_footer",
         "write_spumux_header",
     ]);

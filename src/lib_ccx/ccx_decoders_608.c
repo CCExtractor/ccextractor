@@ -1288,7 +1288,7 @@ unsigned char *debug_608_to_ASC(unsigned char *cc_data, int channel)
 		if (hi >= 0x20)
 		{
 			output[0] = hi;
-			output[1] = (lo >= 20 ? lo : '.');
+			output[1] = (lo >= 0x20 ? lo : '.');
 			output[2] = '\x00';
 		}
 		else
