@@ -325,7 +325,9 @@ unsafe fn write_back_from_timing_info() {
 }
 
 /// Construct a [`GopTimeCode`] from `gop_time_code`.
-unsafe fn generate_gop_time_code(g: gop_time_code) -> Option<GopTimeCode> {
+/// # Safety
+/// This function is unsafe because it calls `from_raw_parts` which is unsafe.
+pub unsafe fn generate_gop_time_code(g: gop_time_code) -> Option<GopTimeCode> {
     if g.inited == 0 {
         None
     } else {
@@ -341,7 +343,9 @@ unsafe fn generate_gop_time_code(g: gop_time_code) -> Option<GopTimeCode> {
 }
 
 /// Construct a `gop_time_code` from [`GopTimeCode`].
-unsafe fn write_gop_time_code(g: Option<GopTimeCode>) -> gop_time_code {
+/// # Safety
+/// This function is unsafe because it calls `as_raw_parts` which is unsafe.
+pub unsafe fn write_gop_time_code(g: Option<GopTimeCode>) -> gop_time_code {
     if let Some(gop) = g {
         let (
             drop_frame,
