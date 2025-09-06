@@ -87,10 +87,6 @@ if (WITH_HARDSUBX)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (WITH_HARDSUBX)
 
-if (WITHOUT_RUST)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
-endif (WITHOUT_RUST)
-
 file (GLOB HeaderFiles *.h)
 file (WRITE ccx.pc "prefix=${CMAKE_INSTALL_PREFIX}\n"
                   "includedir=\${prefix}/include\n"
