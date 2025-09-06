@@ -275,11 +275,11 @@ impl CcxDemuxer<'_> {
         }
         // MythTV detection logic
         match ccx_options.auto_myth {
-            Some(false) => {
+            Some(true) => {
                 // Force stream mode to myth
                 self.stream_mode = StreamMode::Myth;
             }
-            Some(true) => {
+            Some(false) => {
                 if matches!(
                     self.stream_mode,
                     StreamMode::ElementaryOrNotFound | StreamMode::Program
