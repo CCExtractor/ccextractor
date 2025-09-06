@@ -11,10 +11,11 @@ thiserror = "1.0.69"
 time = { version = "0.3.39", features = ["macros", "formatting"] }
 derive_more = "0.99.19"
 url = "2.5.4"
+num_enum = "0.7.3"
+socket2 = "0.5.7"
 strum = "0.26.3"
 strum_macros = "0.26.4"
 crc32fast = "1.4.2"
-num_enum = "0.6.1"
 
 [features]
 default = [
