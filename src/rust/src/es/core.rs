@@ -201,26 +201,26 @@ pub unsafe fn dump(start: *const u8, l: i32, abs_start: u64, clear_high_bit: u32
 
     let mut x = 0;
     while x < l {
-        info!("{:08} | ", x + abs_start as i32);
+        debug!(msg_type = DebugMessageFlag::VERBOSE;"{:08} | ", x + abs_start as i32);
 
         for j in 0..16 {
             if x + j < l {
-                info!("{:02X} ", data[(x + j) as usize]);
+                debug!(msg_type = DebugMessageFlag::VERBOSE;"{:02X} ", data[(x + j) as usize]);
             } else {
-                info!("   ");
+                debug!(msg_type = DebugMessageFlag::VERBOSE;"   ");
             }
         }
-        info!(" | ");
+        debug!(msg_type = DebugMessageFlag::VERBOSE;" | ");
 
         for j in 0..16 {
             if x + j < l && data[(x + j) as usize] >= b' ' {
                 let ch = data[(x + j) as usize] & (if clear_high_bit != 0 { 0x7F } else { 0xFF });
-                info!("{}", ch as char);
+                debug!(msg_type = DebugMessageFlag::VERBOSE;"{}", ch as char);
             } else {
-                info!(" ");
+                debug!(msg_type = DebugMessageFlag::VERBOSE;" ");
             }
         }
-        info!("\n");
+        debug!(msg_type = DebugMessageFlag::VERBOSE;"\n");
         x += 16;
     }
 }

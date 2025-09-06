@@ -2,6 +2,8 @@ use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::ccx_options;
 use crate::es::core::process_m2v;
 use lib_ccxr::common::Options;
+use lib_ccxr::debug;
+use lib_ccxr::util::log::DebugMessageFlag;
 
 pub mod core;
 pub mod eau;
@@ -31,7 +33,7 @@ pub unsafe extern "C" fn ccxr_process_m2v(
     };
 
     let data_slice = std::slice::from_raw_parts(data, length);
-    process_m2v(
+    let processedvalue = process_m2v(
         &mut *enc_ctx,
         &mut *dec_ctx,
         data_slice,
@@ -39,5 +41,7 @@ pub unsafe extern "C" fn ccxr_process_m2v(
         &mut *sub,
         &mut CcxOptions,
     )
-    .unwrap_or(0)
+    .unwrap_or(0);
+    debug!(msg_type = DebugMessageFlag::VERBOSE;"Data slice is {:p} with length {} \n", data, length);
+    processedvalue
 }

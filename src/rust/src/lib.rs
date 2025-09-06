@@ -150,6 +150,25 @@ extern "C" {
         len: usize,
         sub: *mut cc_subtitle,
     ) -> c_int;
+    fn print_file_report(ctx: *mut lib_ccx_ctx);
+    #[allow(dead_code)]
+    #[cfg(feature = "enable_ffmpeg")]
+    fn init_ffmpeg(path: *const c_char);
+    pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int;
+    pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int;
+    pub fn net_udp_read(
+        socket: c_int,
+        buffer: *mut c_void,
+        length: usize,
+        src_str: *const c_char,
+        addr_str: *const c_char,
+    ) -> c_int;
+    pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int;
+    pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int;
+    pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext;
+    #[allow(clashing_extern_declarations)]
+    pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
+    pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
 }
 
 /// Initialize env logger with custom format, using stdout as target
@@ -290,29 +309,6 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
         // File will close automatically (due to Drop) once it goes out of scope
         let _file = File::from_raw_handle(handle);
     }
-}
-
-extern "C" {
-    #[allow(dead_code)]
-    fn print_file_report(ctx: *mut lib_ccx_ctx);
-    #[allow(dead_code)]
-    #[cfg(feature = "enable_ffmpeg")]
-    fn init_ffmpeg(path: *const c_char);
-    pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int;
-    pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int;
-    pub fn net_udp_read(
-        socket: c_int,
-        buffer: *mut c_void,
-        length: usize,
-        src_str: *const c_char,
-        addr_str: *const c_char,
-    ) -> c_int;
-    pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int;
-    pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int;
-    pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext;
-    #[allow(clashing_extern_declarations)]
-    pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
-    pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
 }
 
 /// # Safety

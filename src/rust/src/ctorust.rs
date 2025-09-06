@@ -131,7 +131,7 @@ impl FromCType<ccx_decoder_dtvcc_settings> for DecoderDtvccSettings {
             print_file_reports: settings.print_file_reports != 0,
             no_rollup: settings.no_rollup != 0,
             report: if !settings.report.is_null() {
-                Some(DecoderDtvccReport::from_ctype(*settings.report)?)
+                Some(DecoderDtvccReport::from_ctype(settings.report)?)
             } else {
                 None
             },
@@ -143,11 +143,16 @@ impl FromCType<ccx_decoder_dtvcc_settings> for DecoderDtvccSettings {
 }
 
 // Implementation for DecoderDtvccReport
-impl FromCType<ccx_decoder_dtvcc_report> for DecoderDtvccReport {
-    unsafe fn from_ctype(report: ccx_decoder_dtvcc_report) -> Option<Self> {
+impl FromCType<*const ccx_decoder_dtvcc_report> for DecoderDtvccReport {
+    unsafe fn from_ctype(report_ptr: *const ccx_decoder_dtvcc_report) -> Option<Self> {
+        if report_ptr.is_null() {
+            return None;
+        }
+
+        let report = &*report_ptr; // Get a reference instead of copying
         Some(DecoderDtvccReport {
             reset_count: report.reset_count,
-            services: report.services.map(|svc| svc),
+            services: report.services,
         })
     }
 }
