@@ -20,8 +20,8 @@ pub mod ctorust;
 pub mod decoder;
 pub mod demuxer;
 pub mod encoder;
-pub mod file_functions;
 pub mod es;
+pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod hlist;

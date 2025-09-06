@@ -1,13 +1,7 @@
-use crate::bindings::{
-    cc_subtitle, ccx_frame_type, ccx_frame_type_CCX_FRAME_TYPE_B_FRAME,
-    ccx_frame_type_CCX_FRAME_TYPE_D_FRAME, ccx_frame_type_CCX_FRAME_TYPE_I_FRAME,
-    ccx_frame_type_CCX_FRAME_TYPE_P_FRAME, ccx_frame_type_CCX_FRAME_TYPE_RESET_OR_UNKNOWN,
-    encoder_ctx, lib_cc_decode,
-};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::ccx_options;
-use crate::encoder::FromCType;
 use crate::es::core::process_m2v;
-use lib_ccxr::common::{FrameType, Options};
+use lib_ccxr::common::Options;
 
 pub mod core;
 pub mod eau;
@@ -16,19 +10,6 @@ pub mod pic;
 pub mod seq;
 pub mod userdata;
 
-impl FromCType<ccx_frame_type> for FrameType {
-    // TODO move to ctorust.rs when demuxer is merged
-    unsafe fn from_ctype(c_value: ccx_frame_type) -> Option<Self> {
-        match c_value {
-            ccx_frame_type_CCX_FRAME_TYPE_RESET_OR_UNKNOWN => Some(FrameType::ResetOrUnknown),
-            ccx_frame_type_CCX_FRAME_TYPE_I_FRAME => Some(FrameType::IFrame),
-            ccx_frame_type_CCX_FRAME_TYPE_P_FRAME => Some(FrameType::PFrame),
-            ccx_frame_type_CCX_FRAME_TYPE_B_FRAME => Some(FrameType::BFrame),
-            ccx_frame_type_CCX_FRAME_TYPE_D_FRAME => Some(FrameType::DFrame),
-            _ => None,
-        }
-    }
-}
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers from C structs
 #[no_mangle]

@@ -1,10 +1,11 @@
 #![allow(clippy::unnecessary_cast)] // we have to do this as windows has different types for some C types
+use crate::avc::common_types::AvcContextRust;
 use crate::bindings::*;
 use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
 use lib_ccxr::common::{
-    BufferdataType, Codec, CommonTimingCtx, Decoder608ColorCode, Decoder608Report,
+    AvcNalType, BufferdataType, Codec, CommonTimingCtx, Decoder608ColorCode, Decoder608Report,
     Decoder608Settings, DecoderDtvccReport, DecoderDtvccSettings, DtvccServiceCharset,
     EncoderConfig, FrameType, SelectCodec, StreamMode, StreamType, DTVCC_MAX_SERVICES,
 };
@@ -15,6 +16,7 @@ use std::convert::TryInto;
 use std::ffi::CStr;
 use std::os::raw::{c_int, c_uint};
 use std::path::PathBuf;
+
 // C to Rust
 pub trait FromCType<T> {
     /// # Safety
@@ -751,9 +753,116 @@ impl FromCType<PMT_entry> for PMTEntry {
         })
     }
 }
-pub fn from_ctype_DebugMessageMask(mask_on_normal: u32, mask_on_debug: u32) -> DebugMessageMask {
-    DebugMessageMask::new(
-        DebugMessageFlag::from_bits_truncate(mask_on_normal as u16),
-        DebugMessageFlag::from_bits_truncate(mask_on_debug as u16),
-    )
+impl FromCType<(u32, u32)> for DebugMessageMask {
+    unsafe fn from_ctype((mask_on_normal, mask_on_debug): (u32, u32)) -> Option<Self> {
+        Some(DebugMessageMask::new(
+            DebugMessageFlag::from_bits_truncate(mask_on_normal as u16),
+            DebugMessageFlag::from_bits_truncate(mask_on_debug as u16),
+        ))
+    }
+}
+
+impl FromCType<u8> for AvcNalType {
+    unsafe fn from_ctype(value: u8) -> Option<AvcNalType> {
+        let returnvalue = match value {
+            0 => AvcNalType::Unspecified0,
+            1 => AvcNalType::CodedSliceNonIdrPicture1,
+            2 => AvcNalType::CodedSlicePartitionA,
+            3 => AvcNalType::CodedSlicePartitionB,
+            4 => AvcNalType::CodedSlicePartitionC,
+            5 => AvcNalType::CodedSliceIdrPicture,
+            6 => AvcNalType::Sei,
+            7 => AvcNalType::SequenceParameterSet7,
+            8 => AvcNalType::PictureParameterSet,
+            9 => AvcNalType::AccessUnitDelimiter9,
+            10 => AvcNalType::EndOfSequence,
+            11 => AvcNalType::EndOfStream,
+            12 => AvcNalType::FillerData,
+            13 => AvcNalType::SequenceParameterSetExtension,
+            14 => AvcNalType::PrefixNalUnit,
+            15 => AvcNalType::SubsetSequenceParameterSet,
+            16 => AvcNalType::Reserved16,
+            17 => AvcNalType::Reserved17,
+            18 => AvcNalType::Reserved18,
+            19 => AvcNalType::CodedSliceAuxiliaryPicture,
+            20 => AvcNalType::CodedSliceExtension,
+            21 => AvcNalType::Reserved21,
+            22 => AvcNalType::Reserved22,
+            23 => AvcNalType::Reserved23,
+            24 => AvcNalType::Unspecified24,
+            25 => AvcNalType::Unspecified25,
+            26 => AvcNalType::Unspecified26,
+            27 => AvcNalType::Unspecified27,
+            28 => AvcNalType::Unspecified28,
+            29 => AvcNalType::Unspecified29,
+            30 => AvcNalType::Unspecified30,
+            31 => AvcNalType::Unspecified31,
+            _ => AvcNalType::Unspecified0, // Default fallback
+        };
+        Some(returnvalue)
+    }
+}
+impl FromCType<ccx_frame_type> for FrameType {
+    // TODO move to ctorust.rs when demuxer is merged
+    unsafe fn from_ctype(c_value: ccx_frame_type) -> Option<Self> {
+        match c_value {
+            ccx_frame_type_CCX_FRAME_TYPE_RESET_OR_UNKNOWN => Some(FrameType::ResetOrUnknown),
+            ccx_frame_type_CCX_FRAME_TYPE_I_FRAME => Some(FrameType::IFrame),
+            ccx_frame_type_CCX_FRAME_TYPE_P_FRAME => Some(FrameType::PFrame),
+            ccx_frame_type_CCX_FRAME_TYPE_B_FRAME => Some(FrameType::BFrame),
+            ccx_frame_type_CCX_FRAME_TYPE_D_FRAME => Some(FrameType::DFrame),
+            _ => None,
+        }
+    }
+}
+
+impl FromCType<avc_ctx> for AvcContextRust {
+    unsafe fn from_ctype(ctx: avc_ctx) -> Option<Self> {
+        // Convert cc_data from C pointer to Vec
+        let cc_data = if !ctx.cc_data.is_null() && ctx.cc_databufsize > 0 {
+            std::slice::from_raw_parts(ctx.cc_data, ctx.cc_databufsize as usize).to_vec()
+        } else {
+            Vec::with_capacity(1024)
+        };
+
+        Some(AvcContextRust {
+            cc_count: ctx.cc_count,
+            cc_data,
+            cc_databufsize: ctx.cc_databufsize as usize,
+            cc_buffer_saved: ctx.cc_buffer_saved != 0,
+
+            got_seq_para: ctx.got_seq_para != 0,
+            nal_ref_idc: ctx.nal_ref_idc,
+            seq_parameter_set_id: ctx.seq_parameter_set_id,
+            log2_max_frame_num: ctx.log2_max_frame_num,
+            pic_order_cnt_type: ctx.pic_order_cnt_type,
+            log2_max_pic_order_cnt_lsb: ctx.log2_max_pic_order_cnt_lsb,
+            frame_mbs_only_flag: ctx.frame_mbs_only_flag != 0,
+
+            num_nal_unit_type_7: ctx.num_nal_unit_type_7 as _,
+            num_vcl_hrd: ctx.num_vcl_hrd as _,
+            num_nal_hrd: ctx.num_nal_hrd as _,
+            num_jump_in_frames: ctx.num_jump_in_frames as _,
+            num_unexpected_sei_length: ctx.num_unexpected_sei_length as _,
+
+            ccblocks_in_avc_total: ctx.ccblocks_in_avc_total,
+            ccblocks_in_avc_lost: ctx.ccblocks_in_avc_lost,
+
+            frame_num: ctx.frame_num,
+            lastframe_num: ctx.lastframe_num,
+            currref: ctx.currref,
+            maxidx: ctx.maxidx,
+            lastmaxidx: ctx.lastmaxidx,
+
+            minidx: ctx.minidx,
+            lastminidx: ctx.lastminidx,
+
+            maxtref: ctx.maxtref,
+            last_gop_maxtref: ctx.last_gop_maxtref,
+
+            currefpts: ctx.currefpts,
+            last_pic_order_cnt_lsb: ctx.last_pic_order_cnt_lsb,
+            last_slice_pts: ctx.last_slice_pts,
+        })
+    }
 }

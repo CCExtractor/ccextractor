@@ -13,10 +13,6 @@ fn main() {
         "version",
         "set_binary_mode",
         "print_file_report",
-        "start_upd_srv", // shall be removed after NET
-        "start_tcp_srv", // shall be removed after NET
-        "net_tcp_read",  // shall be removed after NET
-        "net_udp_read",  // shall be removed after NET
         "ccx_probe_mxf", // shall be removed after mxf
         "ccx_mxf_init",  // shall be removed after mxf
         "ccx_gxf_probe", // shall be removed after gxf

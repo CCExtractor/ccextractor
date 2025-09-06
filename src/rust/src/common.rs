@@ -1,5 +1,6 @@
+use crate::avc::common_types::AvcContextRust;
 use crate::bindings::*;
-use crate::ctorust::{from_ctype_DebugMessageMask, FromCType};
+use crate::ctorust::FromCType;
 use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
@@ -28,7 +29,7 @@ use lib_ccxr::teletext::TeletextConfig;
 use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
-use lib_ccxr::util::log::OutputTarget;
+use lib_ccxr::util::log::{DebugMessageMask, OutputTarget};
 use std::os::raw::{c_int, c_long};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -398,10 +399,11 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.use_ass_instead_of_ssa = (*ccx_s_options).use_ass_instead_of_ssa != 0;
     options.use_webvtt_styling = (*ccx_s_options).use_webvtt_styling != 0;
     // Handle debug_mask - assuming DebugMessageMask has a constructor or from method
-    options.debug_mask = from_ctype_DebugMessageMask(
+    options.debug_mask = DebugMessageMask::from_ctype((
         (*ccx_s_options).debug_mask as u32,
         (*ccx_s_options).debug_mask_on_debug as u32,
-    );
+    ))
+    .unwrap_or(DebugMessageMask::default());
 
     // Handle string pointers
     if !(*ccx_s_options).udpsrc.is_null() {
@@ -1040,6 +1042,58 @@ impl CType<ccx_rational> for CcxRational {
         ccx_rational {
             num: self.num,
             den: self.den,
+        }
+    }
+}
+
+impl CType<avc_ctx> for AvcContextRust {
+    unsafe fn to_ctype(&self) -> avc_ctx {
+        // Allocate cc_data buffer
+        let cc_data_ptr = if !self.cc_data.is_empty() {
+            let data_box = self.cc_data.clone().into_boxed_slice();
+            Box::into_raw(data_box) as *mut u8
+        } else {
+            std::ptr::null_mut()
+        };
+
+        avc_ctx {
+            cc_count: self.cc_count,
+            cc_data: cc_data_ptr,
+            cc_databufsize: self.cc_databufsize as _,
+            cc_buffer_saved: if self.cc_buffer_saved { 1 } else { 0 },
+
+            got_seq_para: if self.got_seq_para { 1 } else { 0 },
+            nal_ref_idc: self.nal_ref_idc,
+            seq_parameter_set_id: self.seq_parameter_set_id,
+            log2_max_frame_num: self.log2_max_frame_num,
+            pic_order_cnt_type: self.pic_order_cnt_type,
+            log2_max_pic_order_cnt_lsb: self.log2_max_pic_order_cnt_lsb,
+            frame_mbs_only_flag: if self.frame_mbs_only_flag { 1 } else { 0 },
+
+            num_nal_unit_type_7: self.num_nal_unit_type_7 as _,
+            num_vcl_hrd: self.num_vcl_hrd as _,
+            num_nal_hrd: self.num_nal_hrd as _,
+            num_jump_in_frames: self.num_jump_in_frames as _,
+            num_unexpected_sei_length: self.num_unexpected_sei_length as _,
+
+            ccblocks_in_avc_total: self.ccblocks_in_avc_total,
+            ccblocks_in_avc_lost: self.ccblocks_in_avc_lost,
+
+            frame_num: self.frame_num,
+            lastframe_num: self.lastframe_num,
+            currref: self.currref,
+            maxidx: self.maxidx,
+            lastmaxidx: self.lastmaxidx,
+
+            minidx: self.minidx,
+            lastminidx: self.lastminidx,
+
+            maxtref: self.maxtref,
+            last_gop_maxtref: self.last_gop_maxtref,
+
+            currefpts: self.currefpts,
+            last_pic_order_cnt_lsb: self.last_pic_order_cnt_lsb,
+            last_slice_pts: self.last_slice_pts,
         }
     }
 }

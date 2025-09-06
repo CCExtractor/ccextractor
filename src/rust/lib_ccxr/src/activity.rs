@@ -46,6 +46,9 @@ impl ActivityExt for Options {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             writeln!(stderr, "###DATAREAD#{}", (*net_activity_gui) / 1000).unwrap();
+            stderr.flush().unwrap();
+        }
+    }
     fn activity_video_info(
         &mut self,
         hor_size: u32,
