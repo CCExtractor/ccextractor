@@ -17,7 +17,6 @@ use std::ffi::CStr;
 use std::os::raw::{c_int, c_uint};
 use std::path::PathBuf;
 
-// C to Rust
 pub trait FromCType<T> {
     /// # Safety
     /// This function is unsafe because it uses raw pointers to get data from C types.
@@ -26,13 +25,11 @@ pub trait FromCType<T> {
         Self: Sized;
 }
 
-// Helper struct for DtvccServiceCharset conversion
 pub struct DtvccServiceCharsetArgs {
     pub services_charsets: *mut *mut ::std::os::raw::c_char,
     pub all_services_charset: *mut ::std::os::raw::c_char,
 }
 
-// Implementation for Decoder608ColorCode
 impl FromCType<ccx_decoder_608_color_code> for Decoder608ColorCode {
     unsafe fn from_ctype(color: ccx_decoder_608_color_code) -> Option<Self> {
         Some(match color {
@@ -50,7 +47,6 @@ impl FromCType<ccx_decoder_608_color_code> for Decoder608ColorCode {
     }
 }
 
-// Implementation for Decoder608Report
 impl FromCType<ccx_decoder_608_report> for Decoder608Report {
     unsafe fn from_ctype(report: ccx_decoder_608_report) -> Option<Self> {
         Some(Decoder608Report {
@@ -60,7 +56,6 @@ impl FromCType<ccx_decoder_608_report> for Decoder608Report {
     }
 }
 
-// Implementation for Decoder608Settings
 impl FromCType<ccx_decoder_608_settings> for Decoder608Settings {
     unsafe fn from_ctype(settings: ccx_decoder_608_settings) -> Option<Self> {
         Some(Decoder608Settings {
@@ -78,7 +73,6 @@ impl FromCType<ccx_decoder_608_settings> for Decoder608Settings {
     }
 }
 
-// Implementation for CommonTimingCtx
 impl FromCType<*const ccx_common_timing_ctx> for CommonTimingCtx {
     unsafe fn from_ctype(ctx: *const ccx_common_timing_ctx) -> Option<Self> {
         let ctx = ctx.as_ref()?;
@@ -113,7 +107,6 @@ impl FromCType<*const ccx_common_timing_ctx> for CommonTimingCtx {
     }
 }
 
-// Implementation for DecoderDtvccSettings
 impl FromCType<ccx_decoder_dtvcc_settings> for DecoderDtvccSettings {
     unsafe fn from_ctype(settings: ccx_decoder_dtvcc_settings) -> Option<Self> {
         let mut services_enabled = [false; DTVCC_MAX_SERVICES];
@@ -142,7 +135,6 @@ impl FromCType<ccx_decoder_dtvcc_settings> for DecoderDtvccSettings {
     }
 }
 
-// Implementation for DecoderDtvccReport
 impl FromCType<*const ccx_decoder_dtvcc_report> for DecoderDtvccReport {
     unsafe fn from_ctype(report_ptr: *const ccx_decoder_dtvcc_report) -> Option<Self> {
         if report_ptr.is_null() {
@@ -157,7 +149,6 @@ impl FromCType<*const ccx_decoder_dtvcc_report> for DecoderDtvccReport {
     }
 }
 
-// Implementation for OutputTarget
 impl FromCType<c_int> for OutputTarget {
     unsafe fn from_ctype(target: c_int) -> Option<Self> {
         Some(match target {
@@ -168,7 +159,6 @@ impl FromCType<c_int> for OutputTarget {
     }
 }
 
-// Implementation for OcrMode
 impl FromCType<c_int> for lib_ccxr::hardsubx::OcrMode {
     unsafe fn from_ctype(mode: c_int) -> Option<Self> {
         Some(match mode {
@@ -179,7 +169,6 @@ impl FromCType<c_int> for lib_ccxr::hardsubx::OcrMode {
     }
 }
 
-// Implementation for ColorHue
 impl FromCType<c_int> for lib_ccxr::hardsubx::ColorHue {
     unsafe fn from_ctype(hue: c_int) -> Option<Self> {
         Some(match hue {
@@ -194,7 +183,6 @@ impl FromCType<c_int> for lib_ccxr::hardsubx::ColorHue {
     }
 }
 
-// Implementation for EncodersTranscriptFormat
 impl FromCType<ccx_encoders_transcript_format> for lib_ccxr::common::EncodersTranscriptFormat {
     unsafe fn from_ctype(format: ccx_encoders_transcript_format) -> Option<Self> {
         Some(lib_ccxr::common::EncodersTranscriptFormat {
@@ -210,7 +198,6 @@ impl FromCType<ccx_encoders_transcript_format> for lib_ccxr::common::EncodersTra
     }
 }
 
-// Implementation for TimestampFormat
 impl FromCType<ccx_output_date_format> for lib_ccxr::time::TimestampFormat {
     unsafe fn from_ctype(format: ccx_output_date_format) -> Option<Self> {
         Some(match format {
@@ -227,7 +214,6 @@ impl FromCType<ccx_output_date_format> for lib_ccxr::time::TimestampFormat {
     }
 }
 
-// Implementation for OutputFormat
 impl FromCType<ccx_output_format> for lib_ccxr::common::OutputFormat {
     unsafe fn from_ctype(format: ccx_output_format) -> Option<Self> {
         Some(match format {
@@ -252,7 +238,6 @@ impl FromCType<ccx_output_format> for lib_ccxr::common::OutputFormat {
     }
 }
 
-// Implementation for DemuxerConfig
 impl FromCType<demuxer_cfg> for lib_ccxr::common::DemuxerConfig {
     unsafe fn from_ctype(cfg: demuxer_cfg) -> Option<Self> {
         Some(lib_ccxr::common::DemuxerConfig {
@@ -275,7 +260,6 @@ impl FromCType<demuxer_cfg> for lib_ccxr::common::DemuxerConfig {
     }
 }
 
-// Implementation for StreamMode
 impl FromCType<ccx_stream_mode_enum> for StreamMode {
     unsafe fn from_ctype(mode: ccx_stream_mode_enum) -> Option<Self> {
         Some(match mode {
@@ -300,7 +284,6 @@ impl FromCType<ccx_stream_mode_enum> for StreamMode {
     }
 }
 
-// Implementation for SelectCodec
 impl FromCType<ccx_code_type> for SelectCodec {
     unsafe fn from_ctype(codec: ccx_code_type) -> Option<Self> {
         Some(match codec {
@@ -314,7 +297,6 @@ impl FromCType<ccx_code_type> for SelectCodec {
     }
 }
 
-// Implementation for StreamType
 impl FromCType<c_uint> for StreamType {
     unsafe fn from_ctype(stream_type: c_uint) -> Option<Self> {
         Some(match stream_type {
@@ -343,7 +325,6 @@ impl FromCType<c_uint> for StreamType {
     }
 }
 
-// Implementation for EncoderConfig
 impl FromCType<encoder_cfg> for EncoderConfig {
     unsafe fn from_ctype(cfg: encoder_cfg) -> Option<Self> {
         let output_filename = if !cfg.output_filename.is_null() {
@@ -465,7 +446,6 @@ impl FromCType<encoder_cfg> for EncoderConfig {
     }
 }
 
-// Implementation for Encoding
 impl FromCType<ccx_encoding_type> for Encoding {
     unsafe fn from_ctype(encoding: ccx_encoding_type) -> Option<Self> {
         Some(match encoding {
@@ -478,7 +458,6 @@ impl FromCType<ccx_encoding_type> for Encoding {
     }
 }
 
-// Implementation for DtvccServiceCharset
 impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
     unsafe fn from_ctype(args: DtvccServiceCharsetArgs) -> Option<Self> {
         // First check if all_services_charset is not null (Same variant)
@@ -489,7 +468,6 @@ impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
             return Some(DtvccServiceCharset::Same(charset_str));
         }
 
-        // Then check if services_charsets is not null (Unique variant)
         if !args.services_charsets.is_null() {
             let mut charsets = Vec::with_capacity(DTVCC_MAX_SERVICES);
 
@@ -507,7 +485,6 @@ impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
                 charsets.push(charset_str);
             }
 
-            // Convert Vec to Box<[String; DTVCC_MAX_SERVICES]>
             let boxed_array = match charsets.try_into() {
                 Ok(array) => Box::new(array),
                 Err(_) => {
@@ -525,14 +502,12 @@ impl FromCType<DtvccServiceCharsetArgs> for DtvccServiceCharset {
     }
 }
 
-// Implementation for Timestamp
 impl FromCType<ccx_boundary_time> for Timestamp {
     unsafe fn from_ctype(ts: ccx_boundary_time) -> Option<Self> {
         Some(Timestamp::from_millis(ts.time_in_ms))
     }
 }
 
-// Implementation for Codec
 impl FromCType<ccx_code_type> for Codec {
     unsafe fn from_ctype(codec: ccx_code_type) -> Option<Self> {
         Some(match codec {
@@ -545,7 +520,6 @@ impl FromCType<ccx_code_type> for Codec {
     }
 }
 
-// Implementation for ProgramInfo
 impl FromCType<program_info> for ProgramInfo {
     unsafe fn from_ctype(info: program_info) -> Option<Self> {
         let mut name_bytes = [0u8; 128];
@@ -570,7 +544,6 @@ impl FromCType<program_info> for ProgramInfo {
     }
 }
 
-// Implementation for CapInfo
 impl FromCType<cap_info> for CapInfo {
     unsafe fn from_ctype(info: cap_info) -> Option<Self> {
         Some(CapInfo {
@@ -605,7 +578,6 @@ impl FromCType<cap_info> for CapInfo {
     }
 }
 
-// Implementation for PSIBuffer (returns a pointer)
 impl FromCType<*mut PSI_buffer> for *mut PSIBuffer {
     unsafe fn from_ctype(buffer_ptr: *mut PSI_buffer) -> Option<Self> {
         if buffer_ptr.is_null() {
