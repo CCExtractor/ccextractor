@@ -155,6 +155,7 @@ pub const UTF8_MAX_BYTES: usize = 6;
 pub const XMLRPC_CHUNK_SIZE: usize = 64 * 1024; // 64 Kb per chunk, to avoid too many realloc()
 
 // AVC NAL types
+#[derive(Debug, Eq, PartialEq)]
 pub enum AvcNalType {
     Unspecified0 = 0,
     CodedSliceNonIdrPicture1 = 1,

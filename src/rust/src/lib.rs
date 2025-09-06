@@ -23,6 +23,7 @@ pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod hlist;
+pub mod avc;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod utils;
@@ -76,6 +77,18 @@ cfg_if! {
 
         unsafe extern "C" fn version(_location: *const c_char) {}
         unsafe extern "C" fn set_binary_mode() {}
+        fn process_hdcc(enc_ctx: *mut encoder_ctx, ctx: *mut lib_cc_decode, sub: *mut cc_subtitle){}
+        fn store_hdcc(
+            enc_ctx: *mut encoder_ctx,
+            ctx: *mut lib_cc_decode,
+            cc_data: *mut c_uchar,
+            cc_count: c_int,
+            sequence_number: c_int,
+            current_fts_now: LLONG,
+            sub: *mut cc_subtitle,
+        ){}
+        fn anchor_hdcc(ctx: *mut lib_cc_decode, seq: c_int){}
+
     }
 }
 
@@ -106,6 +119,17 @@ extern "C" {
 
     fn version(location: *const c_char);
     fn set_binary_mode();
+    fn process_hdcc(enc_ctx: *mut encoder_ctx, ctx: *mut lib_cc_decode, sub: *mut cc_subtitle);
+    fn store_hdcc(
+        enc_ctx: *mut encoder_ctx,
+        ctx: *mut lib_cc_decode,
+        cc_data: *mut c_uchar,
+        cc_count: c_int,
+        sequence_number: c_int,
+        current_fts_now: LLONG,
+        sub: *mut cc_subtitle,
+    );
+    fn anchor_hdcc(ctx: *mut lib_cc_decode, seq: c_int);
 }
 
 /// Initialize env logger with custom format, using stdout as target

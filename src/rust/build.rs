@@ -28,6 +28,10 @@ fn main() {
         #[cfg(feature = "enable_ffmpeg")]
         "init_ffmpeg",
         "net_send_header", // shall be removed after NET
+        "realloc",
+        "anchor_hdcc",
+        "process_hdcc",
+        "store_hdcc",
         "write_spumux_footer",
         "write_spumux_header",
     ]);
