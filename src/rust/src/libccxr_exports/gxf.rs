@@ -113,9 +113,14 @@ unsafe fn c_array_to_string(c_array: &[c_char; 256]) -> String {
         return String::new();
     }
 
-    // Convert to CStr and then to String
+    // Convert to u8 slice
     let slice = std::slice::from_raw_parts(ptr as *const u8, len);
-    String::from_utf8_lossy(slice).into_owned()
+
+    // Try UTF-8 first (for valid Unicode), but preserve original bytes if invalid
+    match std::str::from_utf8(slice) {
+        Ok(valid_utf8) => valid_utf8.to_string(),
+        Err(_) => slice.iter().map(|&b| b as char).collect(),
+    }
 }
 
 // Read functions for the three structs
