@@ -22,7 +22,11 @@ fn debug_608_to_asc(cc_data: &[u8], channel: i32) -> String {
         let hi = cc_data[1] & 0x7F; // Get rid of parity bit
         let lo = cc_data[2] & 0x7F; // Get rid of parity bit
         if hi >= 0x20 {
-            output = format!("{}{}", hi as char, if lo >= 20 { lo as char } else { '.' });
+            output = format!(
+                "{}{}",
+                hi as char,
+                if lo >= 0x20 { lo as char } else { '.' }
+            );
         } else {
             output = "<>".to_string();
         }
