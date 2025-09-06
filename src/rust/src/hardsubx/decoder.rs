@@ -41,10 +41,14 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
     match (*ctx).ocr_mode {
         0 => {
             let ret_char_arr = get_ocr_text_simple_threshold(ctx, im, (*ctx).conf_thresh);
-            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
-            match text_out_result {
-                Ok(T) => T,
-                Err(_E) => "".to_string(),
+            if ret_char_arr.is_null() {
+                "".to_string()
+            } else {
+                let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
+                match text_out_result {
+                    Ok(T) => T,
+                    Err(_E) => "".to_string(),
+                }
             }
         }
         1 => {
@@ -59,10 +63,14 @@ pub unsafe fn dispatch_classifier_functions(ctx: *mut lib_hardsubx_ctx, im: *mut
         }
         2 => {
             let ret_char_arr = get_ocr_text_letterwise_threshold(ctx, im, (*ctx).conf_thresh);
-            let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
-            match text_out_result {
-                Ok(T) => T,
-                Err(_E) => "".to_string(),
+            if ret_char_arr.is_null() {
+                "".to_string()
+            } else {
+                let text_out_result = ffi::CString::from_raw(ret_char_arr).into_string();
+                match text_out_result {
+                    Ok(T) => T,
+                    Err(_E) => "".to_string(),
+                }
             }
         }
 
