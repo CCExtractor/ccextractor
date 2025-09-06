@@ -791,8 +791,7 @@ pub unsafe fn parse_track_sec(
             let result = buffered_skip(demux, track_len as u32, ccx_options);
             demux.past += result as i64;
             if result != track_len as usize {
-                ret = Err(DemuxerError::EOF);
-                break;
+                return Err(DemuxerError::EOF);
             }
             continue;
         }
@@ -863,12 +862,6 @@ pub unsafe fn parse_ad_pyld(
     {
         let mut i: usize;
 
-        // Read 16-bit little-endian values from buffered input:
-        let d_id = buffered_get_le16(demux, ccx_options);
-        let sd_id = buffered_get_le16(demux, ccx_options);
-        // Read dc and mask to 8 bits.
-        let _dc = buffered_get_le16(demux, ccx_options) & 0xFF;
-
         let ctx = &mut *(demux.private_data as *mut CcxGxf);
 
         // Adjust length (remove the 6 header bytes)
@@ -877,6 +870,13 @@ pub unsafe fn parse_ad_pyld(
             info!("Invalid ancillary data payload length: {}", rem_len);
             return Err(DemuxerError::InvalidArgument);
         }
+
+        // Read 16-bit little-endian values from buffered input:
+        let d_id = buffered_get_le16(demux, ccx_options);
+        let sd_id = buffered_get_le16(demux, ccx_options);
+        // Read dc and mask to 8 bits.
+        let _dc = buffered_get_le16(demux, ccx_options) & 0xFF;
+
         // If ctx.cdp buffer is too small, reallocate it.
         if ctx.cdp_len < (rem_len / 2) as usize {
             // Allocate a new buffer of size (rem_len/2)
@@ -899,8 +899,8 @@ pub unsafe fn parse_ad_pyld(
         if ((d_id & 0xFF) == CLOSED_CAP_DID as u16) && ((sd_id & 0xFF) == CLOSED_C708_SDID as u16) {
             if let Some(ref mut cdp) = ctx.cdp {
                 i = 0;
-                let mut remaining_len = rem_len;
-                while remaining_len > 2 && i < ctx.cdp_len {
+                // leaving 2 byte of checksum - modify rem_len in place like the C version
+                while rem_len > 2 && i < ctx.cdp_len {
                     let dat = buffered_get_le16(demux, ccx_options);
                     cdp[i] = match dat {
                         0x2FE => 0xFF,
@@ -908,10 +908,8 @@ pub unsafe fn parse_ad_pyld(
                         _ => (dat & 0xFF) as u8,
                     };
                     i += 1;
-                    remaining_len -= 2;
+                    rem_len -= 2; // Modify rem_len in place to match C behavior
                 }
-                // Call parse_ad_cdp on the newly filled buffer.
-                // (Assume parse_ad_cdp returns Ok(()) on success.)
                 let _ = parse_ad_cdp(ctx.cdp.as_ref().unwrap(), data);
             }
         }
