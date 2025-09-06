@@ -14,11 +14,11 @@ pub mod bindings {
 }
 
 pub mod args;
+pub mod avc;
 pub mod common;
 pub mod decoder;
 pub mod encoder;
 pub mod es;
-pub mod avc;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod libccxr_exports;
