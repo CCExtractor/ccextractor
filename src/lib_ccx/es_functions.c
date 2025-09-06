@@ -22,14 +22,8 @@ static int read_pic_data(struct bitstream *esstream);
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
-#ifndef DISABLE_RUST
-size_t ccxr_process_m2v(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *data, size_t length, struct cc_subtitle *sub);
-#endif
 size_t process_m2v(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *data, size_t length, struct cc_subtitle *sub)
 {
-#ifndef DISABLE_RUST
-	return ccxr_process_m2v(enc_ctx, dec_ctx, data, length, sub);
-#endif
 	if (length < 8) // Need to look ahead 8 bytes
 		return length;
 
