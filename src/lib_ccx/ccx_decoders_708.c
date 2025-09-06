@@ -824,27 +824,6 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 	}
 }
 
-void dtvcc_decoder_flush(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder)
-{
-	ccx_common_logging.debug_ftn(
-	    CCX_DMT_708, "[CEA-708] dtvcc_decoder_flush: Flushing decoder\n");
-	int screen_content_changed = 0;
-	for (int i = 0; i < CCX_DTVCC_MAX_WINDOWS; i++)
-	{
-		dtvcc_window *window = &decoder->windows[i];
-		if (window->visible)
-		{
-			screen_content_changed = 1;
-			dtvcc_window_update_time_hide(window, dtvcc->timing);
-			dtvcc_window_copy_to_screen(decoder, window);
-			window->visible = 0;
-		}
-	}
-	if (screen_content_changed)
-		dtvcc_screen_print(dtvcc, decoder);
-	dtvcc_write_done(decoder->tv, dtvcc->encoder);
-}
-
 //---------------------------------- COMMANDS ------------------------------------
 
 void dtvcc_handle_CWx_SetCurrentWindow(dtvcc_service_decoder *decoder, int window_id)

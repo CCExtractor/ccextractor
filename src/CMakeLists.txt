@@ -6,7 +6,6 @@ include (CTest)
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
-option (WITHOUT_RUST "Build without Rust library" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -237,12 +236,10 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 # Build with Rust library
 ########################################################
 
-if (PKG_CONFIG_FOUND AND NOT WITHOUT_RUST)
+if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
-else ()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
-endif (PKG_CONFIG_FOUND AND NOT WITHOUT_RUST)
+endif (PKG_CONFIG_FOUND)
 
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
