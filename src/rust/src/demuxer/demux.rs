@@ -99,9 +99,11 @@ impl CcxDemuxer<'_> {
             } else {
                 self.pids_seen[..MAX_PID].fill(0);
             }
-            // Set each min_pts[i] to u64::MAX for i in 0..=MAX_PSI_PID.
-            for i in 0..=MAX_PSI_PID {
-                if !self.min_pts.is_empty() {
+            if self.min_pts.len() != MAX_PSI_PID + 1 {
+                self.min_pts.resize(MAX_PSI_PID + 1, u64::MAX);
+            } else {
+                // Set each min_pts[i] to u64::MAX for i in 0..=MAX_PSI_PID.
+                for i in 0..=MAX_PSI_PID {
                     self.min_pts[i] = u64::MAX;
                 }
             }
