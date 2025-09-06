@@ -292,9 +292,6 @@ impl CcxDemuxer<'_> {
         }
         0
     }
-    pub fn get_stream_mode(&mut self) -> i32 {
-        self.stream_mode as i32
-    }
     pub fn print_cfg(&mut self) {
         match self.auto_stream {
             StreamMode::ElementaryOrNotFound => {
@@ -716,13 +713,5 @@ mod tests {
             pos_before, pos_after,
             "File position should be restored after calling get_file_size"
         );
-    }
-    // Tests for ccx_demuxer_get_stream_mode
-    #[test]
-    fn test_ccx_demuxer_get_stream_mode() {
-        let mut demuxer = CcxDemuxer::default();
-        demuxer.stream_mode = StreamMode::ElementaryOrNotFound;
-        let result = demuxer.get_stream_mode();
-        assert_eq!(result, StreamMode::ElementaryOrNotFound as i32);
     }
 }
