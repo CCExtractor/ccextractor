@@ -2,6 +2,7 @@ pub mod activity;
 pub mod common;
 pub mod encoder;
 pub mod hardsubx;
+pub mod net;
 pub mod subtitle;
 pub mod teletext;
 pub mod time;

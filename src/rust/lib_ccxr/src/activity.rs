@@ -9,6 +9,13 @@ pub trait ActivityExt {
     fn activity_input_file_closed(&mut self);
     fn activity_input_file_open(&mut self, filename: &str);
     fn activity_report_data_read(&mut self, net_activity_gui: &mut c_ulong);
+    fn activity_video_info(
+        &mut self,
+        hor_size: u32,
+        vert_size: u32,
+        aspect_ratio: &str,
+        framerate: &str,
+    );
 }
 impl ActivityExt for Options {
     fn activity_report_version(&mut self) {
@@ -39,6 +46,21 @@ impl ActivityExt for Options {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
             writeln!(stderr, "###DATAREAD#{}", (*net_activity_gui) / 1000).unwrap();
+    fn activity_video_info(
+        &mut self,
+        hor_size: u32,
+        vert_size: u32,
+        aspect_ratio: &str,
+        framerate: &str,
+    ) {
+        if self.gui_mode_reports {
+            let mut stderr = io::stderr();
+            writeln!(
+                stderr,
+                "###VIDEOINFO#{}#{}#{}#{}",
+                hor_size, vert_size, aspect_ratio, framerate
+            )
+            .unwrap();
             stderr.flush().unwrap();
         }
     }
