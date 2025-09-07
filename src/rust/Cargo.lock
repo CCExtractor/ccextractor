@@ -111,6 +111,29 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
+version = "0.69.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
+dependencies = [
+ "bitflags 2.9.4",
+ "cexpr",
+ "clang-sys",
+ "itertools 0.12.1",
+ "lazy_static",
+ "lazycell",
+ "log",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash 1.1.0",
+ "shlex",
+ "syn 2.0.106",
+ "which",
+]
+
+[[package]]
+name = "bindgen"
 version = "0.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f58bf3d7db68cfbac37cfc485a8d711e87e064c3d0fe0435b92f7a407f9d6b3"
@@ -118,7 +141,7 @@ dependencies = [
  "bitflags 2.9.4",
  "cexpr",
  "clang-sys",
- "itertools",
+ "itertools 0.13.0",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -187,7 +210,8 @@ dependencies = [
  "num-integer",
  "palette",
  "pkg-config",
- "rsmpeg",
+ "rsmpeg 0.14.2+ffmpeg.6.1",
+ "rsmpeg 0.18.0+ffmpeg.8.0",
  "strum 0.25.0",
  "strum_macros 0.25.3",
  "tesseract-sys",
@@ -597,6 +621,15 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
 name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
@@ -945,13 +978,25 @@ checksum = "caf4aa5b0f434c91fe5c7f1ecb6a5ece2130b02ad2a590589dda5146df959001"
 
 [[package]]
 name = "rsmpeg"
+version = "0.14.2+ffmpeg.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "927012cd6ae43519f519741f4a69602ce3a47cf84750784da124dffd03527cc0"
+dependencies = [
+ "libc",
+ "paste",
+ "rusty_ffmpeg 0.13.3+ffmpeg.6.1",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "rsmpeg"
 version = "0.18.0+ffmpeg.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523351495c9ff0bf4b99ed1f42f1415fc709526ddb63526cff85022b387c5811"
 dependencies = [
  "bon",
  "paste",
- "rusty_ffmpeg",
+ "rusty_ffmpeg 0.16.7+ffmpeg.8",
  "thiserror 2.0.16",
 ]
 
@@ -994,6 +1039,20 @@ name = "rustversion"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
+
+[[package]]
+name = "rusty_ffmpeg"
+version = "0.13.3+ffmpeg.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "716adffa5f909c8533611b1dab9ab5666bece35687845865b75ed6a990fc239c"
+dependencies = [
+ "bindgen 0.69.5",
+ "camino",
+ "libc",
+ "once_cell",
+ "pkg-config",
+ "vcpkg",
+]
 
 [[package]]
 name = "rusty_ffmpeg"
