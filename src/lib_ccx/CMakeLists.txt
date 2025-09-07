@@ -56,9 +56,6 @@ if (WITH_OCR)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
-if (WITH_SHARING)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_SHARING")
-endif (WITH_SHARING)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
@@ -89,10 +86,6 @@ if (WITH_HARDSUBX)
 
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (WITH_HARDSUBX)
-
-if (WITHOUT_RUST)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
-endif (WITHOUT_RUST)
 
 file (GLOB HeaderFiles *.h)
 file (WRITE ccx.pc "prefix=${CMAKE_INSTALL_PREFIX}\n"

@@ -151,8 +151,14 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
 // The number of processed bytes is returned.
+#ifndef DISABLE_RUST
+size_t ccxr_process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub);
+#endif
 size_t process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_process_avc(enc_ctx, dec_ctx, avcbuf, avcbuflen, sub);
+#else
 	unsigned char *buffer_position = avcbuf;
 	unsigned char *NAL_start;
 	unsigned char *NAL_stop;
@@ -254,6 +260,7 @@ size_t process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, u
 	}
 
 	return avcbuflen;
+#endif
 }
 
 #define ZEROBYTES_SHORTSTARTCODE 2

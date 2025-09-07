@@ -9,22 +9,10 @@ use std::os::raw::{c_int, c_uchar};
 /// This function is unsafe because it:
 /// - Dereferences a raw pointer (`bitstream_ptr`)
 /// - Performs pointer arithmetic and assumes valid memory layout
-unsafe fn copy_bitstream_from_rust_to_c(
+pub unsafe fn copy_bitstream_from_rust_to_c(
     bitstream_ptr: *mut bitstream,
     rust_bitstream: &BitStreamRust,
 ) {
-    // Handle empty slice case
-    if rust_bitstream.data.is_empty() {
-        (*bitstream_ptr).pos = std::ptr::null_mut();
-        (*bitstream_ptr).bpos = 8;
-        (*bitstream_ptr).end = std::ptr::null_mut();
-        (*bitstream_ptr).bitsleft = 0;
-        (*bitstream_ptr).error = c_int::from(rust_bitstream.error);
-        (*bitstream_ptr)._i_pos = std::ptr::null_mut();
-        (*bitstream_ptr)._i_bpos = 0;
-        return;
-    }
-
     // Get the original pos (which is the base of our slice)
     let base_ptr = rust_bitstream.data.as_ptr() as *mut c_uchar;
     let end_ptr = base_ptr.add(rust_bitstream.data.len());
@@ -53,7 +41,7 @@ unsafe fn copy_bitstream_from_rust_to_c(
 /// # Safety
 /// This function is unsafe because it Dereferences a raw pointer (`value`) without null checking and
 /// Performs pointer arithmetic and offset calculations assuming valid pointer relationships
-unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'static> {
+pub unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'static> {
     // We need to work with the original buffer, not just from current position
     let mut slice: &[u8] = &[];
     let mut current_pos_in_slice = 0;
@@ -63,17 +51,15 @@ unsafe fn copy_bitstream_c_to_rust(value: *mut bitstream) -> BitStreamRust<'stat
         // Calculate total buffer length from pos to end
         let total_len = (*value).end.offset_from((*value).pos) as usize;
 
-        if total_len > 0 {
-            // Create slice from current position to end
-            slice = std::slice::from_raw_parts((*value).pos, total_len);
-            // Current position in this slice is 0 (since slice starts from current pos)
-            current_pos_in_slice = 0;
+        // Create slice from current position to end, zero-length slices are also valid
+        slice = std::slice::from_raw_parts((*value).pos, total_len);
+        // Current position in this slice is 0 (since slice starts from current pos)
+        current_pos_in_slice = 0;
 
-            // Calculate _i_pos relative to the slice start (which is current pos)
-            if !(*value)._i_pos.is_null() {
-                let i_offset = (*value)._i_pos.offset_from((*value).pos);
-                i_pos_in_slice = i_offset.max(0) as usize;
-            }
+        // Calculate _i_pos relative to the slice start (which is current pos)
+        if !(*value)._i_pos.is_null() {
+            let i_offset = (*value)._i_pos.offset_from((*value).pos);
+            i_pos_in_slice = i_offset.max(0) as usize;
         }
     }
 
@@ -307,7 +293,7 @@ mod tests {
     // FFI binding tests
     #[test]
     fn test_ffi_next_bits() {
-        let data = vec![0b10101010];
+        let data = [0b10101010];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -323,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_ffi_read_bits() {
-        let data = vec![0b10101010];
+        let data = [0b10101010];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -339,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_ffi_byte_alignment() {
-        let data = vec![0xFF];
+        let data = [0xFF];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -411,7 +397,7 @@ mod tests {
 
     #[test]
     fn test_ffi_state_updates() {
-        let data = vec![0xAA, 0xBB];
+        let data = [0xAA, 0xBB];
         let mut c_bs = crate::bindings::bitstream {
             pos: data.as_ptr() as *mut u8,
             bpos: 8,
@@ -465,7 +451,7 @@ mod bitstream_copying_tests {
             assert_eq!(c_stream._i_bpos, 5);
 
             // Verify pointer arithmetic
-            assert!(verify_pointer_bounds(&c_stream));
+            assert!(verify_pointer_bounds(c_stream));
             assert_eq!(c_stream.end.offset_from(c_stream.pos), 100);
             assert_eq!(c_stream._i_pos.offset_from(c_stream.pos), 10);
 
@@ -496,7 +482,7 @@ mod bitstream_copying_tests {
             // Verify basic field conversions
             assert_eq!(rust_stream.bpos, 7);
             assert_eq!(rust_stream.bits_left, 400);
-            assert_eq!(rust_stream.error, true);
+            assert!(rust_stream.error);
             assert_eq!(rust_stream._i_pos, 15);
             assert_eq!(rust_stream._i_bpos, 2);
 
@@ -635,7 +621,7 @@ mod bitstream_copying_tests {
 
             assert_eq!(reconstructed.bpos, 7);
             assert_eq!(reconstructed.bits_left, i64::MAX);
-            assert_eq!(reconstructed.error, true);
+            assert!(reconstructed.error);
             assert_eq!(reconstructed._i_pos, 255);
             assert_eq!(reconstructed._i_bpos, 7);
         }
@@ -660,7 +646,7 @@ mod bitstream_copying_tests {
             let reconstructed = copy_bitstream_c_to_rust(c_s);
 
             assert_eq!(reconstructed.bits_left, -100);
-            assert_eq!(reconstructed.error, false);
+            assert!(!reconstructed.error);
         }
     }
 
@@ -778,7 +764,7 @@ mod bitstream_copying_tests {
                 copy_bitstream_from_rust_to_c(c_s, &rust_stream);
                 let new_rust_stream = copy_bitstream_c_to_rust(c_s);
 
-                assert_eq!(new_rust_stream.error, true);
+                assert!(new_rust_stream.error);
                 assert_eq!(new_rust_stream.data.len(), 64);
                 assert_eq!(new_rust_stream._i_pos, 32);
 
@@ -836,7 +822,7 @@ mod bitstream_copying_tests {
             let c_stream = &mut *c_s;
 
             // Verify all pointers are within bounds
-            assert!(verify_pointer_bounds(&c_stream));
+            assert!(verify_pointer_bounds(c_stream));
 
             // Verify we can safely access the boundaries
             let first_byte = *c_stream.pos;

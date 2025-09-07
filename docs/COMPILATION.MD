@@ -113,7 +113,6 @@ sudo make install
 
 `cmake` also accepts the options:
      `-DWITH_OCR=ON` to enable OCR
-     `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
      
 ([OPTIONAL] For hardsubx, you also need to set these environment variables correctly according to your machine)
@@ -176,7 +175,6 @@ make
 
 `cmake` also accepts the options:
      `-DWITH_OCR=ON` to enable OCR
-     `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
 
 #### Standard compilation through Autoconf scripts:
