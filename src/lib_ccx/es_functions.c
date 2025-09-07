@@ -28,7 +28,6 @@ static int ccxr_read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 static int ccxr_read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
 static int ccxr_read_pic_data(struct bitstream *esstream);
 
-
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
