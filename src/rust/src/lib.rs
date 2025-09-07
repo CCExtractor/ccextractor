@@ -101,6 +101,24 @@ cfg_if! {
             len: usize,
             sub: *mut cc_subtitle,
         ) -> c_int{0}
+        fn print_file_report(ctx: *mut lib_ccx_ctx){}
+        #[cfg(feature = "enable_ffmpeg")]
+        fn init_ffmpeg(path: *const c_char){}
+        pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int{0}
+        pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int{0}
+        pub fn net_udp_read(
+            socket: c_int,
+            buffer: *mut c_void,
+            length: usize,
+            src_str: *const c_char,
+            addr_str: *const c_char,
+        ) -> c_int{0}
+        pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int{0}
+        pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int{0}
+        pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext{std::ptr::null_mut()}
+        #[allow(clashing_extern_declarations)]
+        pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int{0}
+        pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf{std::ptr::null_mut()}
     }
 }
 

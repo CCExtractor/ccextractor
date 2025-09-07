@@ -459,7 +459,6 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *mut ccx_demuxer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::demuxer::common_types::{PMTEntry, PSIBuffer};
     use lib_ccxr::common::{Codec, StreamMode, StreamType};
     use std::ptr;
     // Working helper function to create ccx_demuxer on heap

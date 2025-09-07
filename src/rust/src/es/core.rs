@@ -8,6 +8,9 @@ use lib_ccxr::dbg_es;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
 use std::slice;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static NOSKIPMESSAGE: AtomicBool = AtomicBool::new(true);
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
@@ -51,7 +54,6 @@ pub fn es_video_sequence(
 ) -> Result<bool, BitstreamError> {
     // Avoid "Skip forward" message on first call and later only
     // once per search.
-    static mut NOSKIPMESSAGE: bool = true;
 
     dbg_es!("es_video_sequence()\n");
 
@@ -63,22 +65,18 @@ pub fn es_video_sequence(
         // all data until a new sequence_header_code or group_start_code
         // is found.
 
-        unsafe {
-            if !NOSKIPMESSAGE {
-                // Avoid unnecessary output.
-                info!("\nSkip forward to the next Sequence or GOP start.\n");
-            } else {
-                NOSKIPMESSAGE = false;
-            }
+        if !NOSKIPMESSAGE.load(Ordering::Relaxed) {
+            // Avoid unnecessary output.
+            info!("\nSkip forward to the next Sequence or GOP start.\n");
+        } else {
+            NOSKIPMESSAGE.store(false, Ordering::Relaxed);
         }
 
         loop {
             // search_start_code() cannot produce esstream->error
             let startcode = esstream.search_start_code()?;
             if esstream.bits_left < 0 {
-                unsafe {
-                    NOSKIPMESSAGE = true;
-                }
+                NOSKIPMESSAGE.store(true, Ordering::Relaxed);
                 return Ok(false);
             }
 

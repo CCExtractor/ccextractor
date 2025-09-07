@@ -19,6 +19,16 @@ static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_de
 static int read_pic_data(struct bitstream *esstream);
 
 #define debug(...) ccx_common_logging.debug_ftn(CCX_DMT_VERBOSE, __VA_ARGS__)
+
+static uint8_t ccxr_search_start_code(struct bitstream *esstream);
+static uint8_t ccxr_next_start_code(struct bitstream *esstream);
+static int ccxr_read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream);
+static int ccxr_read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int ccxr_read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub);
+static int ccxr_read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
+static int ccxr_read_pic_data(struct bitstream *esstream);
+
+
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
  * Defined in ISO/IEC 13818-2 6.2 */
@@ -50,6 +60,7 @@ size_t process_m2v(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, u
 // found
 static uint8_t search_start_code(struct bitstream *esstream)
 {
+	return ccxr_search_start_code(esstream);
 	make_byte_aligned(esstream);
 
 	// Keep a negative esstream->bitsleft, but correct it.
@@ -115,6 +126,7 @@ static uint8_t search_start_code(struct bitstream *esstream)
 // that byte.
 static uint8_t next_start_code(struct bitstream *esstream)
 {
+	return ccxr_next_start_code(esstream);
 	if (esstream->error || esstream->bitsleft < 0)
 	{
 		return 0xB4;
@@ -327,6 +339,7 @@ static int es_video_sequence(struct encoder_ctx *enc_ctx, struct lib_cc_decode *
 // will point to where we want to restart after getting more.
 static int read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstream)
 {
+	return ccxr_read_seq_info(ctx, esstream);
 	debug("Read Sequence Info\n");
 
 	// We only get here after seeing that start code
@@ -503,6 +516,7 @@ static int sequence_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // will point to where we want to restart after getting more.
 static int read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
+	return ccxr_read_gop_info(enc_ctx, dec_ctx, esstream, sub);
 	debug("Read GOP Info\n");
 
 	// We only get here after seeing that start code
@@ -666,6 +680,7 @@ static int gop_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx
 // will point to where we want to restart after getting more.
 static int read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub)
 {
+	return ccxr_read_pic_info(enc_ctx, dec_ctx, esstream, sub);
 	debug("Read PIC Info\n");
 
 	// We only get here after seeing that start code
@@ -902,6 +917,7 @@ static int pic_coding_ext(struct lib_cc_decode *ctx, struct bitstream *esstream)
 // will point to where we want to restart after getting more.
 static int read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub)
 {
+	return ccxr_read_eau_info(enc_ctx, dec_ctx, esstream, udtype, sub);
 	debug("Read Extension and User Info\n");
 
 	// We only get here after seeing that start code
@@ -1023,6 +1039,7 @@ static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_de
 // will point to where we want to restart after getting more.
 static int read_pic_data(struct bitstream *esstream)
 {
+	return ccxr_read_pic_data(esstream);
 	debug("Read PIC Data\n");
 
 	uint8_t startcode = next_start_code(esstream);
