@@ -596,7 +596,7 @@ pub unsafe fn slice_header(
            pic_order_cnt_lsb, (*dec_ctx.timing).current_tref,
            current_index, (*dec_ctx.avc_ctx).currref, (*dec_ctx.avc_ctx).lastmaxidx, (*dec_ctx.avc_ctx).maxtref);
 
-    let mut buf = [c_char::from(0i8); 64];
+    let mut buf = [0 as c_char; 64];
     debug!(
         msg_type = DebugMessageFlag::TIME;
         "  sync_pts:{} ({:8})",
