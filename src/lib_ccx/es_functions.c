@@ -1038,7 +1038,7 @@ static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_de
 // will point to where we want to restart after getting more.
 static int read_pic_data(struct bitstream *esstream)
 {
-    return ccxr_read_pic_data(esstream);
+	return ccxr_read_pic_data(esstream);
 	debug("Read PIC Data\n");
 
 	uint8_t startcode = next_start_code(esstream);

@@ -260,7 +260,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
         .PIDs_programs
         .iter()
         .filter_map(|&buffer_ptr| {
-            if buffer_ptr.is_null() || buffer_ptr as usize == 0xcdcdcdcdcdcdcdcd{
+            if buffer_ptr.is_null() || buffer_ptr as usize == 0xcdcdcdcdcdcdcdcd {
                 None
             } else {
                 Some(Box::into_raw(Box::new(PMTEntry::from_ctype(*buffer_ptr)?)))
