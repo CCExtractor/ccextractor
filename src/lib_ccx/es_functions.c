@@ -26,7 +26,6 @@ static int ccxr_read_seq_info(struct lib_cc_decode *ctx, struct bitstream *esstr
 static int ccxr_read_gop_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int ccxr_read_pic_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, struct cc_subtitle *sub);
 static int ccxr_read_eau_info(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct bitstream *esstream, int udtype, struct cc_subtitle *sub);
-static int ccxr_read_pic_data(struct bitstream *esstream);
 
 /* Process a mpeg-2 data stream with "length" bytes in buffer "data".
  * The number of processed bytes is returned.
@@ -1038,7 +1037,6 @@ static int extension_and_user_data(struct encoder_ctx *enc_ctx, struct lib_cc_de
 // will point to where we want to restart after getting more.
 static int read_pic_data(struct bitstream *esstream)
 {
-	return ccxr_read_pic_data(esstream);
 	debug("Read PIC Data\n");
 
 	uint8_t startcode = next_start_code(esstream);
