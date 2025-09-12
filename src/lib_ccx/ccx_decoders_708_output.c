@@ -156,7 +156,10 @@ void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, i
 		}
 		else
 		{
-			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len);
+			unsigned char *buffer = buf + buf_len;
+			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buffer);
+			if (size == 1)
+				size = ascii_to_html(*buffer, buffer);
 			buf_len += size;
 		}
 	}
