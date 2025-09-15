@@ -1321,24 +1321,33 @@ impl OptionsExt for Options {
 
         // Network stuff
         if let Some(ref udp) = args.udp {
-            if let Some(at) = udp.find('@') {
-                let addr = &udp[0..at];
-                let port = &udp[at + 1..];
+            let mut remaining_udp = udp.as_str();
 
-                self.udpsrc = Some(udp.clone());
-                self.udpaddr = Some(addr.to_owned());
-                self.udpport = port.parse().unwrap();
-            } else if let Some(colon) = udp.find(':') {
-                let addr = &udp[0..colon];
-                let port = get_atoi_hex(&udp[colon + 1..]);
+            if let Some(at) = remaining_udp.find('@') {
+                let src = &remaining_udp[0..at];
+                self.udpsrc = Some(src.to_owned());
 
-                self.udpsrc = None;
+                remaining_udp = &remaining_udp[at + 1..];
+            }
+
+            if let Some(colon) = remaining_udp.find(':') {
+                let addr = &remaining_udp[0..colon];
+                let port = get_atoi_hex(&remaining_udp[colon + 1..]);
+
                 self.udpaddr = Some(addr.to_owned());
                 self.udpport = port;
             } else {
-                self.udpsrc = None;
-                self.udpaddr = None;
-                self.udpport = udp.parse().unwrap();
+                match remaining_udp.parse() {
+                    Ok(port) => {
+                        self.udpport = port;
+                    }
+                    Err(_) => {
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid UDP parameter\n"
+                        );
+                    }
+                }
             }
 
             self.input_source = DataSource::Network;
