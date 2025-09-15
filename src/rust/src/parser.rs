@@ -1332,10 +1332,11 @@ impl OptionsExt for Options {
                 let addr = &udp[0..colon];
                 let port = get_atoi_hex(&udp[colon + 1..]);
 
-                self.udpsrc = Some(udp.clone());
+                self.udpsrc = None;
                 self.udpaddr = Some(addr.to_owned());
                 self.udpport = port;
             } else {
+                self.udpsrc = None;
                 self.udpaddr = None;
                 self.udpport = udp.parse().unwrap();
             }
