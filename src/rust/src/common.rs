@@ -154,6 +154,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
         (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.to_ctype().as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
+    (*ccx_s_options).psm = options.psm as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
     if let Some(mkvlang) = options.mkvlang {
         (*ccx_s_options).mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
