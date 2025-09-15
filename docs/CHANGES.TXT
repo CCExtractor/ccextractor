@@ -1,4 +1,4 @@
-1.0 (to be released)
+0.95 (2025-09-15)
 -----------------
 - Fix: HardSubX OCR on Rust
 - Removed the Share Module
