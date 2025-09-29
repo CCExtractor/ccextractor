@@ -249,7 +249,7 @@ pub unsafe fn read_pic_info(
     if dec_ctx.repeat_first_field != 0 {
         dec_ctx.pulldownfields += 1;
         dec_ctx.total_pulldownfields += 1;
-        if dec_ctx.current_progressive_sequence != 0 || (dec_ctx.total_pulldownfields % 2) == 0 {
+        if dec_ctx.current_progressive_sequence != 0 || dec_ctx.total_pulldownfields.is_multiple_of(2) {
             extraframe = 1;
         }
         if dec_ctx.current_progressive_sequence != 0 && dec_ctx.top_field_first != 0 {
