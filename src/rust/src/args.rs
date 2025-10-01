@@ -174,10 +174,9 @@ pub struct Args {
     pub segmentonkeyonly: bool,
     /// Read the input via UDP (listening in the specified port)
     /// instead of reading a file.
-    /// Host can be a
-    /// hostname or IPv4 address. If host is not specified
-    /// then listens on the local host.
-    #[arg(long, value_name="[host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    /// Host and src can be a hostname or IPv4 address.
+    /// If host is not specified then listens on the local host.
+    #[arg(long, value_name="[[src@]host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub udp: Option<String>,
     /// Can be a hostname or IPv4 address.
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
