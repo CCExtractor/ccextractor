@@ -3,6 +3,9 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 #include "ccx_decoders_common.h"
+#include "ccx_encoders_common.h"
+#include "utility.h"
+#include "lib_ccx.h"
 
 #include <assert.h>
 
@@ -486,4 +489,36 @@ void ccx_encoders_helpers_perform_shellsort_words(void)
 {
 	shell_sort(capitalization_list.words, capitalization_list.len, sizeof(*capitalization_list.words), string_cmp_function, NULL);
 	shell_sort(profane.words, profane.len, sizeof(*profane.words), string_cmp_function, NULL);
+}
+
+void webvtt_write_minimal_header()
+{
+	struct lib_ccx_ctx *ctx = NULL;
+	// Initialize CCExtractor libraries
+	ctx = init_libraries(&ccx_options);
+
+	struct encoder_ctx *enc_ctx = NULL;
+
+	if (ccx_options.write_format == CCX_OF_WEBVTT && ccx_options.timestamp_map)
+	{
+		// Initialize encoder with encoder_cfg
+		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+
+		if (enc_ctx)
+		{
+			const char *xtimestamp_line = ccx_options.enc_cfg.line_terminator_lf
+							  ? "X-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n\n"
+							  : "X-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\r\n\r\n";
+
+			int used = encode_line(enc_ctx, enc_ctx->buffer, (unsigned char *)xtimestamp_line);
+
+			// fh is already an int fd
+			write_wrapped(enc_ctx->out->fh, (const char *)enc_ctx->buffer, used);
+
+			enc_ctx->wrote_webvtt_header = 1;
+
+			// Proper cleanup
+			dinit_encoder(&enc_ctx, 0);
+		}
+	}
 }
