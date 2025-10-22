@@ -103,6 +103,7 @@ char *probe_tessdata_location(const char *lang)
 	    "./",
 	    "/usr/share/",
 	    "/usr/local/share/",
+	    "/opt/homebrew/share/",
 	    "/usr/share/tesseract-ocr/",
 	    "/usr/share/tesseract-ocr/4.00/",
 	    "/usr/share/tesseract-ocr/5/",

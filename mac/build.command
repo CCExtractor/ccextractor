@@ -20,7 +20,13 @@ while [[ $# -gt 0 ]]; do
       ;;
     -hardsubx)
       HARDSUBX=true
-      RUST_FEATURES="--features hardsubx_ocr"
+      ENABLE_OCR=true
+      # Allow overriding FFmpeg version via environment variable
+      if [ -n "$FFMPEG_VERSION" ]; then
+        RUST_FEATURES="--features hardsubx_ocr,$FFMPEG_VERSION"
+      else
+        RUST_FEATURES="--features hardsubx_ocr"
+      fi
       shift
       ;;
     -*)
@@ -48,6 +54,53 @@ if [[ "$HARDSUBX" == "true" ]]; then
 fi
 
 BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include `pkg-config --cflags --silence-errors gpac`"
+
+# Add FFmpeg include path for Mac
+if [[ -d "/opt/homebrew/Cellar/ffmpeg" ]]; then
+    FFMPEG_VERSION=$(ls -1 /opt/homebrew/Cellar/ffmpeg | head -1)
+    if [[ -n "$FFMPEG_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/opt/homebrew/Cellar/ffmpeg/$FFMPEG_VERSION/include"
+    fi
+elif [[ -d "/usr/local/Cellar/ffmpeg" ]]; then
+    FFMPEG_VERSION=$(ls -1 /usr/local/Cellar/ffmpeg | head -1)
+    if [[ -n "$FFMPEG_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/usr/local/Cellar/ffmpeg/$FFMPEG_VERSION/include"
+    fi
+fi
+
+# Add Leptonica include path for Mac
+if [[ -d "/opt/homebrew/Cellar/leptonica" ]]; then
+    LEPT_VERSION=$(ls -1 /opt/homebrew/Cellar/leptonica | head -1)
+    if [[ -n "$LEPT_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/opt/homebrew/Cellar/leptonica/$LEPT_VERSION/include"
+    fi
+elif [[ -d "/usr/local/Cellar/leptonica" ]]; then
+    LEPT_VERSION=$(ls -1 /usr/local/Cellar/leptonica | head -1)
+    if [[ -n "$LEPT_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/usr/local/Cellar/leptonica/$LEPT_VERSION/include"
+    fi
+elif [[ -d "/opt/homebrew/include/leptonica" ]]; then
+    BLD_INCLUDE="$BLD_INCLUDE -I/opt/homebrew/include"
+elif [[ -d "/usr/local/include/leptonica" ]]; then
+    BLD_INCLUDE="$BLD_INCLUDE -I/usr/local/include"
+fi
+
+# Add Tesseract include path for Mac  
+if [[ -d "/opt/homebrew/Cellar/tesseract" ]]; then
+    TESS_VERSION=$(ls -1 /opt/homebrew/Cellar/tesseract | head -1)
+    if [[ -n "$TESS_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/opt/homebrew/Cellar/tesseract/$TESS_VERSION/include"
+    fi
+elif [[ -d "/usr/local/Cellar/tesseract" ]]; then
+    TESS_VERSION=$(ls -1 /usr/local/Cellar/tesseract | head -1)
+    if [[ -n "$TESS_VERSION" ]]; then
+        BLD_INCLUDE="$BLD_INCLUDE -I/usr/local/Cellar/tesseract/$TESS_VERSION/include"
+    fi
+elif [[ -d "/opt/homebrew/include/tesseract" ]]; then
+    BLD_INCLUDE="$BLD_INCLUDE -I/opt/homebrew/include"
+elif [[ -d "/usr/local/include/tesseract" ]]; then
+    BLD_INCLUDE="$BLD_INCLUDE -I/usr/local/include"
+fi
 
 if [[ "$ENABLE_OCR" == "true" ]]; then
     BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
@@ -109,7 +162,42 @@ if [[ "$ENABLE_OCR" == "true" ]]; then
 fi
 
 if [[ "$HARDSUBX" == "true" ]]; then
-    BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter"
+    # Add FFmpeg library path for Mac
+    if [[ -d "/opt/homebrew/Cellar/ffmpeg" ]]; then
+        FFMPEG_VERSION=$(ls -1 /opt/homebrew/Cellar/ffmpeg | head -1)
+        if [[ -n "$FFMPEG_VERSION" ]]; then
+            BLD_LINKER="$BLD_LINKER -L/opt/homebrew/Cellar/ffmpeg/$FFMPEG_VERSION/lib"
+        fi
+    elif [[ -d "/usr/local/Cellar/ffmpeg" ]]; then
+        FFMPEG_VERSION=$(ls -1 /usr/local/Cellar/ffmpeg | head -1)
+        if [[ -n "$FFMPEG_VERSION" ]]; then
+            BLD_LINKER="$BLD_LINKER -L/usr/local/Cellar/ffmpeg/$FFMPEG_VERSION/lib"
+        fi
+    fi
+    
+    # Add library paths for Leptonica and Tesseract from Cellar
+    if [[ -d "/opt/homebrew/Cellar/leptonica" ]]; then
+        LEPT_VERSION=$(ls -1 /opt/homebrew/Cellar/leptonica | head -1)
+        if [[ -n "$LEPT_VERSION" ]]; then
+            BLD_LINKER="$BLD_LINKER -L/opt/homebrew/Cellar/leptonica/$LEPT_VERSION/lib"
+        fi
+    fi
+    
+    if [[ -d "/opt/homebrew/Cellar/tesseract" ]]; then
+        TESS_VERSION=$(ls -1 /opt/homebrew/Cellar/tesseract | head -1)
+        if [[ -n "$TESS_VERSION" ]]; then
+            BLD_LINKER="$BLD_LINKER -L/opt/homebrew/Cellar/tesseract/$TESS_VERSION/lib"
+        fi
+    fi
+    
+    # Also add homebrew lib path as fallback
+    if [[ -d "/opt/homebrew/lib" ]]; then
+        BLD_LINKER="$BLD_LINKER -L/opt/homebrew/lib"
+    elif [[ -d "/usr/local/lib" ]]; then
+        BLD_LINKER="$BLD_LINKER -L/usr/local/lib"
+    fi
+    
+    BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter -lleptonica -ltesseract"
 fi
 
 echo "Running pre-build script..."
