@@ -1,5 +1,6 @@
 1.0 (to be released)
 -----------------
+- Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
 - Fix: HardSubX OCR on Rust
 - Removed the Share Module
 - Fix: Regression failures on DVD files
