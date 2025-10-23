@@ -265,7 +265,7 @@ pub unsafe fn user_data(
                 debug!(msg_type = DebugMessageFlag::VERBOSE; "Reading {} HDTV CC blocks", cc_count);
 
                 let mut proceed = true;
-                let cc_data = ustream.read_bytes(cc_count as usize * 3)?;
+                let cc_data = ustream.read_bytes(cc_count as usize * 3 + 1)?;
                 if ustream.bits_left < 0 {
                     fatal!(cause = ExitCause::Bug; "In user_data: ustream->bitsleft < 0. Cannot continue.");
                 }
