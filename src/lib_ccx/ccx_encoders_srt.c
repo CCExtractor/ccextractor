@@ -83,9 +83,6 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
-	#ifndef DISABLE_RUST
-		return ccxr_write_cc_bitmap_as_srt(sub, context);
-	#endif
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap *rect;
