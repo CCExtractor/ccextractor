@@ -146,20 +146,6 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     1 // Success
 }
 
-
-#[no_mangle]
-pub unsafe extern "C" fn ccxr_write_cc_bitmap_as_srt(
-    sub: *mut cc_subtitle,
-    context: *mut encoder_ctx,
-) -> c_int {
-    // Call the C implementation since OCR functions may not be available
-    extern "C" {
-        fn write_cc_bitmap_as_srt(sub: *mut cc_subtitle, context: *mut encoder_ctx) -> c_int;
-    }
-    
-    write_cc_bitmap_as_srt(sub, context)
-}
-
 /// Write text-based cc_subtitle structures as SRT
 /// This is a port of write_cc_subtitle_as_srt from C
 /// Simplified version that just calls ccxr_write_stringz_srt
