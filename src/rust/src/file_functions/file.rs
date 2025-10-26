@@ -664,7 +664,7 @@ pub unsafe fn buffered_read(
 
         if ccx_options.gui_mode_reports && ccx_options.input_source == DataSource::Network {
             net_activity_gui += 1;
-            if (net_activity_gui % 1000) == 0 {
+            if net_activity_gui.is_multiple_of(1000) {
                 #[allow(static_mut_refs)]
                 ccx_options.activity_report_data_read(&mut net_activity_gui);
             }
