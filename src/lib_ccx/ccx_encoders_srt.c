@@ -83,6 +83,9 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
+	#ifndef DISABLE_RUST
+		return ccxr_write_cc_bitmap_as_srt(sub, context);
+	#endif
 	int ret = 0;
 #ifdef ENABLE_OCR
 	struct cc_bitmap *rect;
@@ -145,6 +148,9 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
+	#ifndef DISABLE_RUST
+		return ccxr_write_cc_subtitle_as_srt(sub, context);
+	#endif
 	int ret = 0;
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
@@ -173,6 +179,9 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *contex
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	#ifndef DISABLE_RUST
+		return ccxr_write_cc_buffer_as_srt(data, context);
+	#endif
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;

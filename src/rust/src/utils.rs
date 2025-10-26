@@ -1,6 +1,5 @@
 //! Some utility functions to deal with values from C bindings
-use std::io;
-use std::os::raw::{c_int, c_void, c_char};
+use std::os::raw::c_char;
 use std::ffi;
 
 /// Check if the value is true (Set to 1). Use only for values from C bindings
@@ -76,19 +75,3 @@ pub fn get_zero_allocated_obj<T>() -> Box<T> {
     }
 }
 
-pub fn write_wrapper_os(fd: c_int, mut buf: &[u8])-> Result<(), io::Error>{
-    while !buf.is_empty() {
-        let written = unsafe {
-            libc::write(fd, buf.as_ptr() as *const c_void, buf.len())
-        };
-
-        if written == -1 {
-            return Err(io::Error::last_os_error());
-        }
-
-        // Move the slice forward by the number of bytes written
-        buf = &buf[written as usize..];
-    }
-
-    Ok(())
-}

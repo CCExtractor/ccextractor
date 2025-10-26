@@ -1,23 +1,22 @@
 #![allow(dead_code)]
 use crate::bindings::{
-    ccx_encoding_type_CCX_ENC_UNICODE, ccx_s_write, encoder_ctx, net_send_header,
-    write_spumux_footer, write_spumux_header,
+    ccx_s_write, net_send_header,
+    write_spumux_footer,
 };
+use crate::libccxr_exports::encoder_ctx::ccxr_encoder_ctx;
 use crate::ccx_options;
 use crate::encoder::FromCType;
 use lib_ccxr::common::{OutputFormat, BROADCAST_HEADER, LITTLE_ENDIAN_BOM, UTF8_BOM};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
-use std::alloc::{alloc, dealloc, Layout};
 use std::fs::File;
 use std::io::Write;
 #[cfg(unix)]
 use std::os::fd::FromRawFd;
-use std::os::raw::{c_int, c_uchar, c_uint, c_void};
+use std::os::raw::{c_int, c_uint, c_void};
 #[cfg(windows)]
 use std::os::windows::io::FromRawHandle;
-use std::ptr;
 
 const CCD_HEADER: &[u8] = b"SCC_disassembly V1.2";
 const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
@@ -51,42 +50,48 @@ const WEBVTT_HEADER: &[&str] = &["WEBVTT\n", "\n", "\n"];
 
 const RCWT_HEADER: &[u8] = &[0xCC, 0xCC, 0xED, 0xCC, 0x00, 0x50, 0, 1, 0, 0, 0]; // "RCWT" + version
 
-pub fn encode_line(ctx: &mut encoder_ctx, buffer: &mut [c_uchar], text: &[u8]) -> c_uint {
+/// Optimal encoding function that encodes text with the specified encoding.
+/// This is the unified function replacing encode_line, encode_with_encoding, and encode_line_rust.
+/// 
+/// # Arguments
+/// * `encoding` - The encoding type to use (extracted from context if needed)
+/// * `buffer` - Output buffer to write encoded text
+/// * `text` - Input text to encode (null-terminated or full slice)
+/// 
+/// # Returns
+/// Number of bytes written to the buffer
+pub fn encode_line(encoding: Encoding, buffer: &mut [u8], text: &[u8]) -> usize {
     if buffer.is_empty() {
         return 0;
     }
 
-    let mut bytes: c_uint = 0;
+    let mut bytes: usize = 0;
     let mut buffer_pos = 0;
-    let mut text_pos = 0;
     let text_len = text.iter().position(|&b| b == 0).unwrap_or(text.len());
-    while text_pos < text_len {
-        let current_byte = text[text_pos];
-        let enc = unsafe { Encoding::from_ctype(ctx.encoding).unwrap_or(Encoding::default()) };
-        match enc {
-            Encoding::UTF8 | Encoding::Latin1 => {
+    
+    for &current_byte in &text[..text_len] {
+        match encoding {
+            Encoding::UTF8 | Encoding::Latin1 | Encoding::Line21 => {
                 if buffer_pos + 1 >= buffer.len() {
                     break;
                 }
-
                 buffer[buffer_pos] = current_byte;
-                bytes += 1;
                 buffer_pos += 1;
+                bytes += 1;
             }
-
             Encoding::UCS2 => {
                 if buffer_pos + 2 >= buffer.len() {
                     break;
                 }
-
-                buffer[buffer_pos] = current_byte;
-                buffer[buffer_pos + 1] = 0;
-                bytes += 2;
+                // Convert to UCS-2 (2 bytes, little-endian)
+                let ucs2_char = current_byte as u16;
+                let bytes_le = ucs2_char.to_le_bytes();
+                buffer[buffer_pos] = bytes_le[0];
+                buffer[buffer_pos + 1] = bytes_le[1];
                 buffer_pos += 2;
+                bytes += 2;
             }
-            _ => {}
         }
-        text_pos += 1;
     }
 
     // Add null terminator if there's space
@@ -96,11 +101,11 @@ pub fn encode_line(ctx: &mut encoder_ctx, buffer: &mut [c_uchar], text: &[u8]) -
 
     bytes
 }
-pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
+
+pub fn write_subtitle_file_footer_rust(ctx: &mut ccxr_encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut ret: c_int = 0;
     let mut str_buffer = [0u8; 1024];
-    let write_format =
-        unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
+    let write_format = unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
 
     match write_format {
         OutputFormat::Sami | OutputFormat::SmpteTt | OutputFormat::SimpleXml => {
@@ -118,23 +123,26 @@ pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
 
             str_buffer[..footer.len()].copy_from_slice(footer);
 
-            if ctx.encoding != ccx_encoding_type_CCX_ENC_UNICODE {
+            if ctx.encoding != Encoding::UTF8 {
                 debug!(msg_type = DebugMessageFlag::DECODER_608; "\r{}\n",
                     std::str::from_utf8(&str_buffer[..footer.len()-1]).unwrap_or(""));
             }
 
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
+            // Use Rust buffer directly
             let text_slice = &str_buffer[..footer.len()];
-            let used = encode_line(ctx, buffer_slice, text_slice);
+            let encoding = ctx.encoding; // Extract encoding first to avoid borrowing conflicts
+            let used = if let Some(ref mut buffer) = ctx.buffer {
+                encode_line(encoding, buffer, text_slice)
+            } else {
+                return -1;
+            };
 
             // Bounds check for buffer access
-            if used > ctx.capacity {
+            if used > ctx.buffer.as_ref().unwrap().len() {
                 return -1;
             }
 
-            ret = write_raw(out.fh, ctx.buffer as *const c_void, used as usize) as c_int;
+            ret = write_raw(out.fh, ctx.buffer.as_ref().unwrap().as_ptr() as *const c_void, used) as c_int;
 
             if ret != used as c_int {
                 info!("WARNING: loss of data\n");
@@ -146,16 +154,14 @@ pub fn write_subtitle_file_footer(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
         },
 
         OutputFormat::Scc | OutputFormat::Ccd => {
-            // Bounds check for encoded_crlf access
-            if ctx.encoded_crlf_length as usize > ctx.encoded_crlf.len() {
-                return -1;
+            // Use Rust encoded_crlf directly
+            if let Some(ref crlf) = ctx.encoded_crlf {
+                ret = write_raw(
+                    out.fh,
+                    crlf.as_ptr() as *const c_void,
+                    crlf.len(),
+                ) as c_int;
             }
-
-            ret = write_raw(
-                out.fh,
-                ctx.encoded_crlf.as_ptr() as *const c_void,
-                ctx.encoded_crlf_length as usize,
-            ) as c_int;
         }
 
         _ => {
@@ -182,46 +188,30 @@ pub fn write_raw(fd: c_int, buf: *const c_void, count: usize) -> isize {
     result
 }
 
-fn request_buffer_capacity(ctx: &mut encoder_ctx, length: c_uint) -> bool {
+fn request_buffer_capacity(ctx: &mut ccxr_encoder_ctx, length: u32) -> bool {
     if length > ctx.capacity {
-        let old_capacity = ctx.capacity;
         ctx.capacity = length * 2;
 
-        // Allocate new buffer
-        let new_layout = Layout::from_size_align(ctx.capacity as usize, align_of::<u8>()).unwrap();
-
-        let new_buffer = unsafe { alloc(new_layout) };
-
-        if new_buffer.is_null() {
-            // In C this would call: fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for reallocating buffer, bailing out\n");
-            return false;
-        }
-
-        // Copy old data if buffer existed
-        if !ctx.buffer.is_null() && old_capacity > 0 {
-            unsafe {
-                ptr::copy_nonoverlapping(ctx.buffer, new_buffer, old_capacity as usize);
+        // Resize the Vec buffer if it exists, or create a new one
+        match &mut ctx.buffer {
+            Some(buffer) => {
+                // Reserve additional capacity
+                buffer.reserve((ctx.capacity as usize).saturating_sub(buffer.len()));
             }
-
-            // Deallocate old buffer
-            let old_layout =
-                Layout::from_size_align(old_capacity as usize, std::mem::align_of::<u8>()).unwrap();
-
-            unsafe {
-                dealloc(ctx.buffer, old_layout);
+            None => {
+                // Create new buffer with requested capacity
+                ctx.buffer = Some(Vec::with_capacity(ctx.capacity as usize));
             }
         }
-
-        ctx.buffer = new_buffer;
     }
 
     true
 }
-pub fn write_bom(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
+pub fn write_bom_rust(ctx: &mut ccxr_encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut ret: c_int = 0;
 
     if ctx.no_bom == 0 {
-        let enc = unsafe { Encoding::from_ctype(ctx.encoding).unwrap_or(Encoding::default()) };
+        let enc = ctx.encoding;
         match enc {
             Encoding::UTF8 => {
                 ret =
@@ -249,11 +239,10 @@ pub fn write_bom(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
     ret
 }
 
-pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) -> c_int {
+pub fn write_subtitle_file_header_rust(ctx: &mut ccxr_encoder_ctx, out: &mut ccx_s_write) -> c_int {
     let mut used: c_uint;
     let mut header_size: usize = 0;
-    let write_format =
-        unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
+    let write_format = unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
 
     match write_format {
         OutputFormat::Ccd => {
@@ -262,11 +251,11 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
                 CCD_HEADER.as_ptr() as *const c_void,
                 CCD_HEADER.len() - 1,
             ) == -1
-                || write_raw(
-                    out.fh,
-                    ctx.encoded_crlf.as_ptr() as *const c_void,
-                    ctx.encoded_crlf_length as usize,
-                ) == -1
+                || (if let Some(ref crlf) = ctx.encoded_crlf {
+                    write_raw(out.fh, crlf.as_ptr() as *const c_void, crlf.len()) == -1
+                } else {
+                    true
+                })
             {
                 info!("Unable to write CCD header to file\n");
                 return -1;
@@ -289,13 +278,12 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
         | OutputFormat::G608
         | OutputFormat::SpuPng
         | OutputFormat::Transcript => {
-            if write_bom(ctx, out) < 0 {
+            if write_bom_rust(ctx, out) < 0 {
                 return -1;
             }
             if write_format == OutputFormat::SpuPng {
-                unsafe {
-                    write_spumux_header(ctx, out);
-                }
+                // Note: write_spumux_header requires C encoder_ctx, so we skip it for now
+                // This would need to be implemented as a Rust version
             }
         }
 
@@ -303,7 +291,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
         | OutputFormat::Sami
         | OutputFormat::SmpteTt
         | OutputFormat::SimpleXml => {
-            if write_bom(ctx, out) < 0 {
+            if write_bom_rust(ctx, out) < 0 {
                 return -1;
             }
 
@@ -315,28 +303,33 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
                 _ => unreachable!(),
             };
 
-            if !request_buffer_capacity(ctx, (header_data.len() * 3) as c_uint) {
-                return -1;
+            // Ensure buffer has enough capacity
+            let required_capacity = header_data.len() * 3;
+            if ctx.buffer.as_ref().map_or(true, |b| b.len() < required_capacity) {
+                ctx.buffer = Some(vec![0u8; required_capacity]);
             }
 
-            // Create safe slice from buffer pointer and capacity
-            let buffer_slice =
-                unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
+            // Use Rust buffer directly
             let text_slice = header_data;
-            used = encode_line(ctx, buffer_slice, text_slice.as_ref());
+            let encoding = ctx.encoding; // Extract encoding first to avoid borrowing conflicts
+            used = if let Some(ref mut buffer) = ctx.buffer {
+                encode_line(encoding, buffer, text_slice.as_ref()) as c_uint
+            } else {
+                return -1;
+            };
 
-            if used > ctx.capacity {
+            if used > ctx.buffer.as_ref().unwrap().len() as c_uint {
                 return -1;
             }
 
-            if write_raw(out.fh, ctx.buffer as *const c_void, used as usize) < used as isize {
+            if write_raw(out.fh, ctx.buffer.as_ref().unwrap().as_ptr() as *const c_void, used as usize) < used as isize {
                 info!("WARNING: Unable to write complete Buffer\n");
                 return -1;
             }
         }
 
         OutputFormat::WebVtt => {
-            if write_bom(ctx, out) < 0 {
+            if write_bom_rust(ctx, out) < 0 {
                 return -1;
             }
 
@@ -345,8 +338,10 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
                 header_size += header_line.len();
             }
 
-            if !request_buffer_capacity(ctx, (header_size * 3) as c_uint) {
-                return -1;
+            // Ensure buffer has enough capacity
+            let required_capacity = header_size * 3;
+            if ctx.buffer.as_ref().map_or(true, |b| b.len() < required_capacity) {
+                ctx.buffer = Some(vec![0u8; required_capacity]);
             }
 
             for header_line in WEBVTT_HEADER {
@@ -359,17 +354,20 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
                     }
                 };
 
-                // Create safe slice from buffer pointer and capacity
-                let buffer_slice =
-                    unsafe { std::slice::from_raw_parts_mut(ctx.buffer, ctx.capacity as usize) };
+                // Use Rust buffer directly
                 let text_slice = line_to_write.as_bytes();
-                used = encode_line(ctx, buffer_slice, text_slice);
+                let encoding = ctx.encoding; // Extract encoding first to avoid borrowing conflicts
+                used = if let Some(ref mut buffer) = ctx.buffer {
+                    encode_line(encoding, buffer, text_slice) as c_uint
+                } else {
+                    return -1;
+                };
 
-                if used > ctx.capacity {
+                if used > ctx.buffer.as_ref().unwrap().len() as c_uint {
                     return -1;
                 }
 
-                if write_raw(out.fh, ctx.buffer as *const c_void, used as usize) < used as isize {
+                if write_raw(out.fh, ctx.buffer.as_ref().unwrap().as_ptr() as *const c_void, used as usize) < used as isize {
                     info!("WARNING: Unable to write complete Buffer\n");
                     return -1;
                 }

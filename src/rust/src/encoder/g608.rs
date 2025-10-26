@@ -184,7 +184,8 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
     // Encode and write counter line
     let buffer_slice =
         unsafe { std::slice::from_raw_parts_mut(context.buffer, context.capacity as usize) };
-    let used = encode_line(context, buffer_slice, counter_line.as_bytes());
+    let encoding = unsafe { Encoding::from_ctype(context.encoding).unwrap_or(Encoding::default()) };
+    let used = encode_line(encoding, buffer_slice, counter_line.as_bytes());
 
     if write_wrapped(unsafe { (*context.out).fh }, &buffer_slice[..used as usize]).is_err() {
         return 0;
@@ -196,7 +197,7 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
     );
 
     // Encode and write timestamp line
-    let used = encode_line(context, buffer_slice, timestamp_line.as_bytes());
+    let used = encode_line(encoding, buffer_slice, timestamp_line.as_bytes());
 
     if write_wrapped(unsafe { (*context.out).fh }, &buffer_slice[..used as usize]).is_err() {
         return 0;
