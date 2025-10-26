@@ -93,7 +93,7 @@ pub struct ccxr_encoder_ctx {
     
     // WebVTT header flag
     pub wrote_webvtt_header: u32,
-    pub wrote_ccd_channel_header: i8,
+    pub wrote_ccd_channel_header: u8,
     
     // Input outputs
     pub send_to_srv: u32, // Flag giving hint that output is send to server through network
@@ -141,7 +141,7 @@ pub struct ccxr_encoder_ctx {
     pub subs_delay: i64,
     pub last_displayed_subs_ms: i64,
     pub date_format: crate::bindings::ccx_output_date_format, // enum ccx_output_date_format
-    pub millis_separator: i8,
+    pub millis_separator: u8,
     
     // Credit stuff
     pub startcredits_displayed: i32,
@@ -246,7 +246,7 @@ impl Default for ccxr_encoder_ctx {
             subs_delay: 0,
             last_displayed_subs_ms: 0,
             date_format: unsafe { std::mem::transmute(0i32) }, // 0 = ISO (ccx_output_date_format_CCX_DF_ISO)
-            millis_separator: b',' as i8,
+            millis_separator: b',',
             
             // Credit stuff
             startcredits_displayed: 0,
@@ -371,7 +371,7 @@ impl ccxr_encoder_ctx {
             
             // WebVTT header flag
             wrote_webvtt_header: c_ref.wrote_webvtt_header,
-            wrote_ccd_channel_header: c_ref.wrote_ccd_channel_header,
+            wrote_ccd_channel_header: c_ref.wrote_ccd_channel_header as u8,
             
             // Input outputs
             send_to_srv: c_ref.send_to_srv,
@@ -431,7 +431,7 @@ impl ccxr_encoder_ctx {
             subs_delay: c_ref.subs_delay,
             last_displayed_subs_ms: c_ref.last_displayed_subs_ms,
             date_format: c_ref.date_format,
-            millis_separator: c_ref.millis_separator,
+            millis_separator: c_ref.millis_separator as u8,
             
             // Credit stuff
             startcredits_displayed: c_ref.startcredits_displayed,
