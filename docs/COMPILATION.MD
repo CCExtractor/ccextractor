@@ -15,7 +15,7 @@ git clone https://github.com/CCExtractor/ccextractor.git
 CCExtractor's hardsubx feature extracts burned-in subtitles from videos using OCR. It requires FFmpeg libraries. The build system automatically selects appropriate FFmpeg versions for each platform:
 
 - **Linux**: FFmpeg 6.x (default)
-- **Windows**: FFmpeg 7.x (default)
+- **Windows**: FFmpeg 6.x (default)
 - **macOS**: FFmpeg 8.x (default)
 
 You can override the default by setting the `FFMPEG_VERSION` environment variable to `ffmpeg6`, `ffmpeg7`, or `ffmpeg8` before building. This flexibility ensures compatibility with different FFmpeg installations across platforms.
@@ -75,7 +75,7 @@ cd ccextractor/linux
 # compile with hardsubx (burned-in subtitle extraction)
 # Hardsubx requires FFmpeg libraries. Different FFmpeg versions are used by default:
 #   - Linux: FFmpeg 6.x (automatic)
-#   - Windows: FFmpeg 7.x (automatic)
+#   - Windows: FFmpeg 6.x (automatic)
 #   - macOS: FFmpeg 8.x (automatic)
 
 ./build -hardsubx         # uses platform-specific FFmpeg version
@@ -136,10 +136,10 @@ sudo make install
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles (requires FFmpeg)
      
 For hardsubx with specific FFmpeg versions:
-     Set `FFMPEG_VERSION=ffmpeg6` for FFmpeg 6.x
+     Set `FFMPEG_VERSION=ffmpeg6` for FFmpeg 6.x (default on Linux and Windows)
      Set `FFMPEG_VERSION=ffmpeg7` for FFmpeg 7.x  
      Set `FFMPEG_VERSION=ffmpeg8` for FFmpeg 8.x
-     (Defaults: Linux=FFmpeg 6, Windows=FFmpeg 7, macOS=FFmpeg 8)
+     (Defaults: Linux=FFmpeg 6, Windows=FFmpeg 6, macOS=FFmpeg 8)
 
 ([OPTIONAL] For custom FFmpeg installations, set these environment variables)
 
@@ -253,7 +253,7 @@ Other dependencies are required through vcpkg, so you can follow below steps:
      ```
      vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static
      ```
-     Note: Windows builds use FFmpeg 7 by default. To override:
+     Note: Windows builds use FFmpeg 6 by default. To override:
      ```
      set FFMPEG_VERSION=ffmpeg8
      msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
