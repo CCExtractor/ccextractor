@@ -1,5 +1,6 @@
-1.0 (to be released)
+0.95 (2025-09-15)
 -----------------
+- Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
 - Fix: HardSubX OCR on Rust
 - Removed the Share Module
 - Fix: Regression failures on DVD files
@@ -50,6 +51,7 @@
 - Fix: Resolve compile-time error about implicit declarations (#1646)
 - Fix: fatal out of memory error extracting from a VOB PS
 - Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
+- Fix: Support for MINGW-w64 cross compiling
 - Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
 
 0.94 (2021-12-14)

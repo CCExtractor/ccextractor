@@ -139,13 +139,7 @@ pub struct Decoder608Report {
     pub cc_channels: [u8; 4],
 }
 
-impl Default for Decoder608ColorCode {
-    fn default() -> Self {
-        Self::Userdefined
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum Decoder608ColorCode {
     White = 0,
     Green = 1,
@@ -154,6 +148,7 @@ pub enum Decoder608ColorCode {
     Red = 4,
     Yellow = 5,
     Magenta = 6,
+    #[default]
     Userdefined = 7,
     Black = 8,
     Transparent = 9,
