@@ -179,11 +179,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                 }
             }
 
-            if text_out.is_empty() {
-                text_out = word;
-            } else {
-                text_out = format!("{} {}", text_out, word);
-            }
+            text_out = format!("{} {}", text_out, word);
         }
     }
 
@@ -238,7 +234,7 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
     let mut total_conf: std::os::raw::c_float = 0.0;
     let mut num_characters: std::os::raw::c_int = 0;
 
-    let mut first_iter: bool = true;
+    let mut first_iter: bool = false;
 
     if it != null::<TessResultIterator>() as *mut TessResultIterator {
         loop {
@@ -249,25 +245,17 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
             }
 
             let letter = _tess_string_helper(it, level);
-            if letter.is_empty() {
-                continue;
-            }
+            text_out = format!("{}{}", text_out, letter);
 
-            // Check confidence BEFORE adding to output
-            let mut should_add = true;
             if threshold > 0.0 {
                 // we don't even want to bother with this call if threshold is 0 or less
                 let conf: std::os::raw::c_float = TessResultIteratorConfidence(it, level);
                 if conf < threshold {
-                    should_add = false;
-                } else {
-                    total_conf += conf;
-                    num_characters += 1;
+                    continue;
                 }
-            }
 
-            if should_add {
-                text_out = format!("{}{}", text_out, letter);
+                total_conf += conf;
+                num_characters += 1;
             }
         }
     }
