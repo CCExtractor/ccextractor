@@ -13,7 +13,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     -hardsubx)
       HARDSUBX=true
-      RUST_FEATURES="--features hardsubx_ocr"
+      # Allow overriding FFmpeg version via environment variable
+      if [ -n "$FFMPEG_VERSION" ]; then
+        RUST_FEATURES="--features hardsubx_ocr,$FFMPEG_VERSION"
+      else
+        RUST_FEATURES="--features hardsubx_ocr"
+      fi
       BLD_FLAGS="$BLD_FLAGS -DENABLE_HARDSUBX"
       BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter -lxcb-shm -lxcb -lX11 -llzma -lswresample"
       shift
