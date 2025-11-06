@@ -618,8 +618,8 @@ mod tests {
         let mut demuxer = CcxDemuxer::default();
         let file_name = ""; // Replace with actual file name
         let result = unsafe { demuxer.open(file_name, &mut Options::default()) };
-        assert_eq!(demuxer.infd, 3);
         assert_eq!(result, 0);
+        assert_eq!(demuxer.infd, 3);
     }
 
     /// Helper: Create a temporary file with the given content and return its file descriptor.
