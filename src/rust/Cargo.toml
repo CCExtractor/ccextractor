@@ -17,14 +17,14 @@ palette = "0.6.1"
 tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
-strum = "0.25"
 strum_macros = "0.25.3"
 time = "0.3.39"
 cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
-encoding_rs = "0.8.5"
+serial_test = "3.2.0"
+encoding_rs = "0.8.35"
 
 # Use rsmpeg with platform-specific FFmpeg features and versions
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -41,6 +41,10 @@ rsmpeg = { version = "0.18.0", default-features = false, features = ["ffmpeg8", 
 bindgen = "0.64.0"
 pkg-config = "0.3.32"
 
+[dev-dependencies]
+tempfile = "3.20.0"
+
+
 [features]
 wtv_debug = []
 enable_ffmpeg = []
@@ -48,6 +52,7 @@ with_libcurl = []
 
 # hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+sanity_check = []
 
 [profile.release-with-debug]
 inherits = "release"
