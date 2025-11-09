@@ -71,3 +71,10 @@ For more information visit the CCExtractor website: [https://www.ccextractor.org
 ## License
 
 GNU General Public License version 2.0 (GPL-2.0)
+
+### Windows Package Managers
+
+CCExtractor is also available via [Scoop](https://scoop.sh):
+```
+scoop install ccextractor
+```
