@@ -6,6 +6,7 @@ include (CTest)
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
+option(USE_SYSTEM_ZLIB "Use system zlib instead of bundled" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -65,11 +66,18 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   endif()
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+# ZLIB
+if(USE_SYSTEM_ZLIB)
+  find_package(ZLIB REQUIRED)
+  set(EXTRA_LIBS ${EXTRA_LIBS} ${ZLIB_LIBRARIES})
+  set(EXTRA_INCLUDES ${EXTRA_INCLUDES} ${ZLIB_INCLUDE_DIRS})
+else()
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
-aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+endif()
 aux_source_directory(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi/ SOURCEFILE)
 
 set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
