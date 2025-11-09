@@ -260,10 +260,9 @@ int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)
 	struct lib_cc_decode *dec_ctx;
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		if (dec_ctx->processed_enough == CCX_TRUE && ctx->multiprogram == CCX_FALSE)
+		if (dec_ctx->processed_enough == CCX_TRUE)
 			return CCX_TRUE;
 	}
-
 	return CCX_FALSE;
 }
 struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
