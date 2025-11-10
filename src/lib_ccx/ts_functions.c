@@ -676,13 +676,23 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	struct cap_info *cinfo;
 	struct ts_payload payload;
 	int j;
+	// FIX FOR BUG#1754: Add termination condition for TS files with no subtitles
+	long max_packets_without_subtitles = 50000; // Reasonable limit
+	int subtitle_found = 0;
+	// END FIX
 
 	memset(&payload, 0, sizeof(payload));
 
 	do
 	{
 		pcount++;
-
+		// FIX FOR BUG #1754: Terminate if no subtitles found after reasonable number of packets
+		if (pcount > max_packets_without_subtitles && !subtitle_found) {
+			dbg_print(CCX_DMT_PARSE, "No subtitle streams detected after %ld packets, stopping processing\n", pcount);
+			ret = CCX_EOF;
+			break;
+		}
+		// END FIX
 		// Exit the loop at EOF
 		ret = ts_readpacket(ctx, &payload);
 		if (ret != CCX_OK)
@@ -911,7 +921,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		{
 			dbg_print(CCX_DMT_PARSE, "\nPES finished (%ld bytes/%ld PES packets/%ld total packets)\n",
 				  cinfo->capbuflen, pespcount, pcount);
-
+			subtitle_found = 1; // We found  subtitle data
 			// Keep the data from capbuf to be worked on
 			ret = copy_capbuf_demux_data(ctx, data, cinfo);
 			cinfo->capbuflen = 0;
