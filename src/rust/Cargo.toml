@@ -14,9 +14,6 @@ crate-type = ["staticlib"]
 log = "0.4.26"
 env_logger = "0.8.4"
 palette = "0.6.1"
-rsmpeg = { version = "0.14.2", optional = true, features = [
-    "link_system_ffmpeg",
-] }
 tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
@@ -29,6 +26,17 @@ lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
 encoding_rs = "0.8.5"
 
+# Use rsmpeg with platform-specific FFmpeg features and versions
+[target.'cfg(target_os = "linux")'.dependencies]
+rsmpeg = { version = "0.14.2", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+rsmpeg = { version = "0.14.2", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+
+# Fallback for other platforms (FreeBSD, etc.)
+[target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
+rsmpeg = { version = "0.18.0", default-features = false, features = ["ffmpeg8", "link_system_ffmpeg"], optional = true }
+
 [build-dependencies]
 bindgen = "0.64.0"
 pkg-config = "0.3.32"
@@ -37,6 +45,8 @@ pkg-config = "0.3.32"
 wtv_debug = []
 enable_ffmpeg = []
 with_libcurl = []
+
+# hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
 
 [profile.release-with-debug]

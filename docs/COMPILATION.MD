@@ -10,6 +10,16 @@ Clone the latest repository from Github
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
+### Hardsubx (Burned-in Subtitles) and FFmpeg Versions
+
+CCExtractor's hardsubx feature extracts burned-in subtitles from videos using OCR. It requires FFmpeg libraries. The build system automatically selects appropriate FFmpeg versions for each platform:
+
+- **Linux**: FFmpeg 6.x (default)
+- **Windows**: FFmpeg 6.x (default)
+- **macOS**: FFmpeg 8.x (default)
+
+You can override the default by setting the `FFMPEG_VERSION` environment variable to `ffmpeg6`, `ffmpeg7`, or `ffmpeg8` before building. This flexibility ensures compatibility with different FFmpeg installations across platforms.
+
 ## Docker
 You can now use docker image to build latest source of CCExtractor without any environmental hustle. Follow these [instructions](https://github.com/CCExtractor/ccextractor/tree/master/docker/README.md) for building docker image & usage of it.
 
@@ -62,12 +72,22 @@ cd ccextractor/linux
 # compile with debug info
 ./build -debug            # same as ./builddebug
 
-# compile with hardsubx
-[Optional] You need to set these environment variables correctly according to your machine,
-     FFMPEG_INCLUDE_DIR=/usr/include 
-     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
+# compile with hardsubx (burned-in subtitle extraction)
+# Hardsubx requires FFmpeg libraries. Different FFmpeg versions are used by default:
+#   - Linux: FFmpeg 6.x (automatic)
+#   - Windows: FFmpeg 6.x (automatic)
+#   - macOS: FFmpeg 8.x (automatic)
 
-./build -hardsubx         # same as ./build_hardsubx
+./build -hardsubx         # uses platform-specific FFmpeg version
+
+# To override the default FFmpeg version, set FFMPEG_VERSION:
+FFMPEG_VERSION=ffmpeg8 ./build -hardsubx  # force FFmpeg 8 on any platform
+FFMPEG_VERSION=ffmpeg6 ./build -hardsubx  # force FFmpeg 6 on any platform
+FFMPEG_VERSION=ffmpeg7 ./build -hardsubx  # force FFmpeg 7 on any platform
+
+# [Optional] For custom FFmpeg installations, set these environment variables:
+FFMPEG_INCLUDE_DIR=/usr/include 
+FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
 # compile in debug mode without rust
 ./build -debug -without-rust
@@ -113,9 +133,15 @@ sudo make install
 
 `cmake` also accepts the options:
      `-DWITH_OCR=ON` to enable OCR
-     `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
+     `-DWITH_HARDSUBX=ON` to enable burned-in subtitles (requires FFmpeg)
      
-([OPTIONAL] For hardsubx, you also need to set these environment variables correctly according to your machine)
+For hardsubx with specific FFmpeg versions:
+     Set `FFMPEG_VERSION=ffmpeg6` for FFmpeg 6.x (default on Linux and Windows)
+     Set `FFMPEG_VERSION=ffmpeg7` for FFmpeg 7.x  
+     Set `FFMPEG_VERSION=ffmpeg8` for FFmpeg 8.x
+     (Defaults: Linux=FFmpeg 6, Windows=FFmpeg 6, macOS=FFmpeg 8)
+
+([OPTIONAL] For custom FFmpeg installations, set these environment variables)
 
      FFMPEG_INCLUDE_DIR=/usr/include 
      FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
@@ -136,6 +162,8 @@ brew install cmake gpac
 # optional if you want OCR:
 brew install tesseract
 brew install leptonica
+# optional if you want hardsubx (burned-in subtitle extraction):
+brew install ffmpeg
 ```
 
 If configuring OCR, use pkg-config to verify tesseract and leptonica dependencies, e.g.
@@ -151,7 +179,12 @@ pkg-config --exists --print-errors lept
 
 ```bash
 cd ccextractor/mac
-./build.command  #   OR ./build.command OCR
+./build.command              # basic build
+./build.command -ocr         # build with OCR support
+./build.command -hardsubx    # build with hardsubx (uses FFmpeg 8 by default on macOS)
+
+# Override FFmpeg version if needed:
+FFMPEG_VERSION=ffmpeg7 ./build.command -hardsubx
 
 # test your build
 ./ccextractor
@@ -220,6 +253,12 @@ Other dependencies are required through vcpkg, so you can follow below steps:
      ```
      vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static
      ```
+     Note: Windows builds use FFmpeg 6 by default. To override:
+     ```
+     set FFMPEG_VERSION=ffmpeg8
+     msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
+     ```
+     
      otherwise if you have Debug, Release
      ```
      vcpkg install libpng --triplet x64-windows-static

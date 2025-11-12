@@ -47,7 +47,7 @@ http://www.ccextractor.org
 #[command(
     help_template = "{name} {version}, {author}.\n{about}\n {all-args} {tab}\n
 An example command for burned-in subtitle extraction is as follows:
-ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60
+ccextractor video.mp4 --hardsubx --subcolor white --detect-italics --whiteness-thresh 90 --conf-thresh 60
 
 Notes on File name related options:
   You can pass as many input files as you need. They will be processed in order.
@@ -174,10 +174,9 @@ pub struct Args {
     pub segmentonkeyonly: bool,
     /// Read the input via UDP (listening in the specified port)
     /// instead of reading a file.
-    /// Host can be a
-    /// hostname or IPv4 address. If host is not specified
-    /// then listens on the local host.
-    #[arg(long, value_name="[host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    /// Host and src can be a hostname or IPv4 address.
+    /// If host is not specified then listens on the local host.
+    #[arg(long, value_name="[[src@]host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub udp: Option<String>,
     /// Can be a hostname or IPv4 address.
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
@@ -876,7 +875,7 @@ pub struct Args {
     /// or letter wise.
     /// e.g. --ocr-mode frame (default), --ocr-mode word,
     /// --ocr-mode letter
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "ocr-mode", verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub ocr_mode: Option<String>,
     /// Specify the color of the subtitles
     /// Possible values are in the set
@@ -893,21 +892,21 @@ pub struct Args {
     /// A lower value gives better results, but takes more
     /// processing time.
     /// The recommended value is 0.5 (default).
-    /// e.g. --min_sub_duration 1.0 (for a duration of 1 second)
-    #[arg(long, verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    /// e.g. --min-sub-duration 1.0 (for a duration of 1 second)
+    #[arg(long = "min-sub-duration", verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub min_sub_duration: Option<f32>,
     /// Specify whether italics are to be detected from the
     /// OCR text.
     /// Italic detection automatically enforces the OCR mode
     /// to be word-wise
-    #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "detect-italics", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub detect_italics: bool,
     /// Specify the classifier confidence threshold between
     /// 1 and 100.
     /// Try and use a threshold which works for you if you get
     /// a lot of garbage text.
-    /// e.g. --conf_thresh 50
-    #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    /// e.g. --conf-thresh 50
+    #[arg(long = "conf-thresh", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub conf_thresh: Option<f32>,
     /// For white subtitles only, specify the luminance
     /// threshold between 1 and 100
@@ -915,7 +914,7 @@ pub struct Args {
     /// values may give you better results
     /// Recommended values are in the range 80 to 100.
     /// The default value is 95
-    #[arg(long, verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "whiteness-thresh", verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub whiteness_thresh: Option<f32>,
     /// This option will be used if the file should have both
     /// closed captions and burned in subtitles
