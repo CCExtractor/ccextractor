@@ -28,6 +28,12 @@ jobs:
   build_release:
     runs-on: windows-2022
     steps:
+      - name: Remove possibly corrupted libxml2 download
+        shell: pwsh
+        run: |
+          $dl = Join-Path $env:GITHUB_WORKSPACE "vcpkg\downloads\*libxml2*"
+          Write-Host "Removing: $dl"
+          Remove-Item -Path $dl -Force -ErrorAction SilentlyContinue
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Setup MSBuild.exe
