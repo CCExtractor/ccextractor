@@ -4,7 +4,7 @@ env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
-  VCPKG_COMMIT: fba75d09065fcc76a25dcf386b1d00d33f5175af
+  # VCPKG_COMMIT removed - will use latest
 
 on:
   workflow_dispatch:
@@ -30,34 +30,76 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
           msbuild-architecture: x64
+          
       - name: Install gpac
         run: choco install gpac --version 2.4.0
+        
       - name: Setup vcpkg
         run: mkdir C:\vcpkg\.cache
+        
+      - name: Get vcpkg commit hash
+        id: vcpkg-commit
+        run: |
+          $commit = (git ls-remote https://github.com/microsoft/vcpkg HEAD | Select-Object -First 1).Split()[0]
+          echo "hash=$commit" >> $env:GITHUB_OUTPUT
+          echo "Using vcpkg commit: $commit"
+          
       - name: Cache vcpkg
         id: cache
         uses: actions/cache@v4
         with:
           path: |
             C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+          key: vcpkg-${{ runner.os }}-${{ steps.vcpkg-commit.outputs.hash }}
+          
       - name: Build vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg
+          cd vcpkg
+          git pull origin master
+          cd ..
           ./vcpkg/bootstrap-vcpkg.bat
-      - name: Install dependencies
-        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+          
+      - name: Install dependencies with retry
+        run: |
+          $maxRetries = 3
+          $retryCount = 0
+          $success = $false
+          
+          while (-not $success -and $retryCount -lt $maxRetries) {
+            try {
+              Write-Host "Attempt $($retryCount + 1) of $maxRetries"
+              & "${{ github.workspace }}/vcpkg/vcpkg.exe" install --x-install-root "${{ github.workspace }}/vcpkg/installed/"
+              $success = $true
+              Write-Host "Dependencies installed successfully"
+            }
+            catch {
+              $retryCount++
+              if ($retryCount -lt $maxRetries) {
+                Write-Host "Installation failed. Retrying in 10 seconds..."
+                Start-Sleep -Seconds 10
+              }
+              else {
+                Write-Host "Installation failed after $maxRetries attempts"
+                exit 1
+              }
+            }
+          }
         working-directory: windows
+        
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+        
       - name: build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
@@ -67,48 +109,93 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
+        
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
+        
       - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Release build
           path: |
             ./windows/x64/Release-Full/ccextractorwinfull.exe
             ./windows/x64/Release-Full/*.dll
+            
   build_debug:
     runs-on: windows-2022
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
           msbuild-architecture: x64
+          
       - name: Install gpac
         run: choco install gpac --version 2.4.0
+        
       - name: Setup vcpkg
         run: mkdir C:\vcpkg\.cache
+        
+      - name: Get vcpkg commit hash
+        id: vcpkg-commit
+        run: |
+          $commit = (git ls-remote https://github.com/microsoft/vcpkg HEAD | Select-Object -First 1).Split()[0]
+          echo "hash=$commit" >> $env:GITHUB_OUTPUT
+          echo "Using vcpkg commit: $commit"
+          
       - name: Cache vcpkg
         id: cache
         uses: actions/cache@v4
         with:
           path: |
             C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+          key: vcpkg-${{ runner.os }}-${{ steps.vcpkg-commit.outputs.hash }}
+          
       - name: Build vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg
+          cd vcpkg
+          git pull origin master
+          cd ..
           ./vcpkg/bootstrap-vcpkg.bat
-      - name: Install dependencies
-        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+          
+      - name: Install dependencies with retry
+        run: |
+          $maxRetries = 3
+          $retryCount = 0
+          $success = $false
+          
+          while (-not $success -and $retryCount -lt $maxRetries) {
+            try {
+              Write-Host "Attempt $($retryCount + 1) of $maxRetries"
+              & "${{ github.workspace }}/vcpkg/vcpkg.exe" install --x-install-root "${{ github.workspace }}/vcpkg/installed/"
+              $success = $true
+              Write-Host "Dependencies installed successfully"
+            }
+            catch {
+              $retryCount++
+              if ($retryCount -lt $maxRetries) {
+                Write-Host "Installation failed. Retrying in 10 seconds..."
+                Start-Sleep -Seconds 10
+              }
+              else {
+                Write-Host "Installation failed after $maxRetries attempts"
+                exit 1
+              }
+            }
+          }
         working-directory: windows
+        
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+        
       - name: build Debug-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
@@ -118,10 +205,12 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
+        
       - name: Display version information
         continue-on-error: true
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Debug-Full
+        
       - uses: actions/upload-artifact@v4
         with:
           name: CCExtractor Windows Debug build
