@@ -19,7 +19,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Format code
         run: |
           find src/ -type f -not -path "src/thirdparty/*" -not -path "src/lib_ccx/zvbi/*" -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
@@ -33,7 +33,7 @@ jobs:
       run:
         working-directory: ${{ matrix.workdir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: cache 
         uses: actions/cache@v4
         with:
