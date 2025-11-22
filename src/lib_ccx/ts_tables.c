@@ -11,6 +11,7 @@ void process_ccx_mpeg_descriptor(unsigned char *data, unsigned length);
 unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 {
 	enum ccx_stream_type tmp_stream_type = stream_type;
+
 	switch (stream_type)
 	{
 		case CCX_STREAM_TYPE_VIDEO_MPEG2:
@@ -33,6 +34,11 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 		case CCX_STREAM_TYPE_AUDIO_DTS:
 		case CCX_STREAM_TYPE_AUDIO_HDMV_DTS:
 			break;
+
+		case 0x24: // HEVC / H.265
+			tmp_stream_type = CCX_STREAM_TYPE_VIDEO_HEVC;
+			break;
+
 		default:
 			if (stream_type >= 0x80 && stream_type <= 0xFF)
 				tmp_stream_type = CCX_STREAM_TYPE_PRIVATE_USER_MPEG2;
@@ -40,6 +46,7 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 				tmp_stream_type = CCX_STREAM_TYPE_UNKNOWNSTREAM;
 			break;
 	}
+
 	return tmp_stream_type;
 }
 
@@ -408,11 +415,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			}
 		}
 
-		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
+		// Support H.264 and HEVC video streams
+		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2 || stream_type == 0x24)
 		{
+			if (stream_type == 0x24)
+				mprint("Detected HEVC video stream (0x24) - enabling ATSC CC parsing.\n");
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
-			// mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-			//	program_number , desc[stream_type], stream_type, elementary_PID);
 		}
 
 		if (need_cap_info_for_pid(ctx, elementary_PID) == CCX_TRUE)

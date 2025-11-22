@@ -122,6 +122,7 @@ enum ccx_stream_type
 	CCX_STREAM_TYPE_AUDIO_AAC              = 0x0f,
 	CCX_STREAM_TYPE_VIDEO_MPEG4            = 0x10,
 	CCX_STREAM_TYPE_VIDEO_H264             = 0x1b,
+	CCX_STREAM_TYPE_VIDEO_HEVC             = 0x24,
 	CCX_STREAM_TYPE_PRIVATE_USER_MPEG2     = 0x80,
 	CCX_STREAM_TYPE_AUDIO_AC3              = 0x81,
 	CCX_STREAM_TYPE_AUDIO_HDMV_DTS         = 0x82,
