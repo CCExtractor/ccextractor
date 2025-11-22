@@ -250,7 +250,7 @@ pub unsafe fn read_pic_info(
         dec_ctx.pulldownfields += 1;
         dec_ctx.total_pulldownfields += 1;
         if dec_ctx.current_progressive_sequence != 0
-            || dec_ctx.total_pulldownfields % 2 == 0
+            || dec_ctx.total_pulldownfields.is_multiple_of(2)
         {
             extraframe = 1;
         }
