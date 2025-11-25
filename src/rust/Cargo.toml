@@ -28,17 +28,17 @@ encoding_rs = "0.8.5"
 
 # Use rsmpeg with platform-specific FFmpeg features and versions
 [target.'cfg(target_os = "linux")'.dependencies]
-rsmpeg = { version = "0.15.1", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+rsmpeg = { version = "0.14.2", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-rsmpeg = { version = "0.15.1", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+rsmpeg = { version = "0.13.0", default-features = false, features = ["ffmpeg5", "link_system_ffmpeg"], optional = true }
 
 # Fallback for other platforms (FreeBSD, etc.)
 [target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
 rsmpeg = { version = "0.18.0", default-features = false, features = ["ffmpeg8", "link_system_ffmpeg"], optional = true }
 
 [build-dependencies]
-bindgen = "0.69.5"
+bindgen = "0.64.0"
 pkg-config = "0.3.32"
 
 [features]
