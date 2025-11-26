@@ -31,7 +31,7 @@ encoding_rs = "0.8.5"
 rsmpeg = { version = "0.14.2", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-rsmpeg = { version = "0.14.2", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+rsmpeg = "0.12.0"
 
 # Fallback for other platforms (FreeBSD, etc.)
 [target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
