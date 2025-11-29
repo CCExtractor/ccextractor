@@ -89,6 +89,7 @@
 - Fix: Memory safety issues in ccx_decoders_common
 - Fix: Null checks after malloc calls in dvb_subtitle_decoder
 - Fix: Memory safety checks and memory leaks in Matroska parser
+- Port: hex_to_int function from C to Rust
 
 0.94 (2021-12-14)
 -----------------
