@@ -13,6 +13,7 @@
 pub mod bits;
 pub mod encoders_helper;
 pub mod encoding;
+pub mod hex;
 pub mod levenshtein;
 pub mod log;
 pub mod time;
