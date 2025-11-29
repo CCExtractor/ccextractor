@@ -52,6 +52,7 @@
 - Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
 - Fix: Support for MINGW-w64 cross compiling
 - Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
+- Port: hex_to_int function from C to Rust
 
 0.94 (2021-12-14)
 -----------------
