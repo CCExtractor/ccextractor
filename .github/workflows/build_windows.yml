@@ -4,7 +4,7 @@ env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
-  VCPKG_COMMIT: fba75d09065fcc76a25dcf386b1d00d33f5175af
+  VCPKG_COMMIT: 5e5d0e1cd7785623065e77eff011afdeec1a3574
 
 on:
   workflow_dispatch:
@@ -48,6 +48,9 @@ jobs:
       - name: Build vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg
+          cd vcpkg
+          git checkout ${{ env.VCPKG_COMMIT }}
+          cd ..
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
@@ -99,6 +102,9 @@ jobs:
       - name: Build vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg
+          cd vcpkg
+          git checkout ${{ env.VCPKG_COMMIT }}
+          cd ..
           ./vcpkg/bootstrap-vcpkg.bat
       - name: Install dependencies
         run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
