@@ -96,23 +96,38 @@ void delete_ocr(void **arg)
  */
 char *probe_tessdata_location(const char *lang)
 {
-	int ret = 0;
+	char *tessdata_prefix = getenv("TESSDATA_PREFIX");
+	static char normalized_prefix[1024];
+
+	// Fix for Issue #1162: Normalize TESSDATA_PREFIX by ensuring it ends with a slash
+	if (tessdata_prefix && *tessdata_prefix)
+	{
+		size_t len = strlen(tessdata_prefix);
+		if (tessdata_prefix[len - 1] != '/' && tessdata_prefix[len - 1] != '\\')
+		{
+			snprintf(normalized_prefix, sizeof(normalized_prefix), "%s/", tessdata_prefix);
+			mprint("TESSDATA_PREFIX did not end with '/', auto-fixed to: %s\n",
+			       normalized_prefix);
+			tessdata_prefix = normalized_prefix;
+		}
+	}
 
 	const char *paths[] = {
-	    getenv("TESSDATA_PREFIX"),
-	    "./",
-	    "/usr/share/",
-	    "/usr/local/share/",
-	    "/opt/homebrew/share/",
-	    "/usr/share/tesseract-ocr/",
-	    "/usr/share/tesseract-ocr/4.00/",
-	    "/usr/share/tesseract-ocr/5/",
-	    "/usr/share/tesseract/",
-	    "C:\\Program Files\\Tesseract-OCR\\"};
+		tessdata_prefix,
+		"./",
+		"/usr/share/",
+		"/usr/local/share/",
+		"/opt/homebrew/share/",
+		"/usr/share/tesseract-ocr/",
+		"/usr/share/tesseract-ocr/4.00/",
+		"/usr/share/tesseract-ocr/5/",
+		"/usr/share/tesseract/",
+		"C:\\Program Files\\Tesseract-OCR\\"
+	};
 
-	for (int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
+	for (int i = 0; i < (int)(sizeof(paths) / sizeof(paths[0])); i++)
 	{
-		if (!search_language_pack(paths[i], lang))
+		if (paths[i] && !search_language_pack(paths[i], lang))
 			return (char *)paths[i];
 	}
 

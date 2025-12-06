@@ -121,3 +121,15 @@ after downloading the tesseract-ocr-3.02.eng.tar.gz extract the tar file and put
 tessdata folder where you have kept CCExtractor executable  
 
 Copy the tesseract and leptonica dll from lib folder downloaded from above link to folder of executable or in system32.
+
+## TESSDATA_PREFIX
+
+CCExtractor uses the `TESSDATA_PREFIX` environment variable to locate the Tesseract data folder (the directory containing the `tessdata` directory).
+
+### Example
+
+```bash
+export TESSDATA_PREFIX=/usr/share/tessdata
+```
+
+**Note:** If the trailing slash is omitted, CCExtractor automatically appends it internally. Users do not need to include the slash manually.
