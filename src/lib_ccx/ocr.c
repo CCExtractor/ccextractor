@@ -113,17 +113,16 @@ char *probe_tessdata_location(const char *lang)
 	}
 
 	const char *paths[] = {
-		tessdata_prefix,
-		"./",
-		"/usr/share/",
-		"/usr/local/share/",
-		"/opt/homebrew/share/",
-		"/usr/share/tesseract-ocr/",
-		"/usr/share/tesseract-ocr/4.00/",
-		"/usr/share/tesseract-ocr/5/",
-		"/usr/share/tesseract/",
-		"C:\\Program Files\\Tesseract-OCR\\"
-	};
+	    tessdata_prefix,
+	    "./",
+	    "/usr/share/",
+	    "/usr/local/share/",
+	    "/opt/homebrew/share/",
+	    "/usr/share/tesseract-ocr/",
+	    "/usr/share/tesseract-ocr/4.00/",
+	    "/usr/share/tesseract-ocr/5/",
+	    "/usr/share/tesseract/",
+	    "C:\\Program Files\\Tesseract-OCR\\"};
 
 	for (int i = 0; i < (int)(sizeof(paths) / sizeof(paths[0])); i++)
 	{
