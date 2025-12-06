@@ -102,6 +102,9 @@ void delete_ocr(void **arg)
  * 1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
  * 2. tessdata in current working directory
  * 3. tessdata in /usr/share
+ *
+ * Note: This function uses a static buffer for the normalized path and is not thread-safe.
+ * It should only be called during initialization.
  */
 char *probe_tessdata_location(const char *lang)
 {
@@ -112,12 +115,31 @@ char *probe_tessdata_location(const char *lang)
 	if (tessdata_prefix && *tessdata_prefix)
 	{
 		size_t len = strlen(tessdata_prefix);
-		if (tessdata_prefix[len - 1] != '/' && tessdata_prefix[len - 1] != '\\')
+		// Check if path is too long (need room for trailing slash and null terminator)
+		if (len >= sizeof(normalized_prefix) - 1)
 		{
-			snprintf(normalized_prefix, sizeof(normalized_prefix), "%s/", tessdata_prefix);
-			mprint("TESSDATA_PREFIX did not end with '/', auto-fixed to: %s\n",
-			       normalized_prefix);
-			tessdata_prefix = normalized_prefix;
+			mprint("TESSDATA_PREFIX is too long (max %zu characters), ignoring it\n",
+			       sizeof(normalized_prefix) - 2);
+			tessdata_prefix = NULL;
+		}
+		else if (tessdata_prefix[len - 1] != '/' && tessdata_prefix[len - 1] != '\\')
+		{
+			// Use snprintf which safely handles the copy and adds trailing slash
+			int written = snprintf(normalized_prefix, sizeof(normalized_prefix), "%s/", tessdata_prefix);
+			// Verify snprintf succeeded (it should, given our length check above)
+			if (written > 0 && written < (int)sizeof(normalized_prefix))
+			{
+				// Safe to print: normalized_prefix is under our control and null-terminated
+				mprint("TESSDATA_PREFIX did not end with '/', auto-fixed to: %s\n",
+				       normalized_prefix);
+				tessdata_prefix = normalized_prefix;
+			}
+			else
+			{
+				// This shouldn't happen given our length check, but be safe
+				mprint("Failed to normalize TESSDATA_PREFIX, ignoring it\n");
+				tessdata_prefix = NULL;
+			}
 		}
 	}
 
