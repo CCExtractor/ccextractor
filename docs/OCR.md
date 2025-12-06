@@ -124,12 +124,16 @@ Copy the tesseract and leptonica dll from lib folder downloaded from above link 
 
 ## TESSDATA_PREFIX
 
-CCExtractor uses the `TESSDATA_PREFIX` environment variable to locate the Tesseract data folder (the directory containing the `tessdata` directory).
+CCExtractor uses the `TESSDATA_PREFIX` environment variable to locate the Tesseract data folder. This should be set to the directory **containing** the `tessdata` subdirectory (not the `tessdata` directory itself).
 
 ### Example
 
 ```bash
-export TESSDATA_PREFIX=/usr/share/tessdata
+# If your tessdata directory is at /usr/share/tessdata/, then:
+export TESSDATA_PREFIX=/usr/share/
+
+# Or on some systems:
+export TESSDATA_PREFIX=/usr/share/tesseract-ocr/
 ```
 
-**Note:** If the trailing slash is omitted, CCExtractor automatically appends it internally. Users do not need to include the slash manually.
+**Note:** A trailing slash (`/`) is automatically appended by CCExtractor if omitted, so both `/usr/share` and `/usr/share/` will work correctly.
