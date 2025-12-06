@@ -663,21 +663,21 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
-{
-    // Allow Teletext processing in extraction AND report mode
-    if (enc_ctx || ccx_options.print_file_reports)
-    {
-        int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+	{
+		// Allow Teletext processing in extraction AND report mode
+		if (enc_ctx || ccx_options.print_file_reports)
+		{
+			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
 
-        ret = tlt_process_pes_packet(dec_ctx, data_node->buffer,
-                                     data_node->len, dec_sub, sentence_cap);
+			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer,
+						     data_node->len, dec_sub, sentence_cap);
 
-        if (ret == CCX_EINVAL)
-            return ret;
-    }
+			if (ret == CCX_EINVAL)
+				return ret;
+		}
 
-    got = data_node->len;
-}
+		got = data_node->len;
+	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
 		got = data_node->len; // Do nothing. Still don't know how to process it
