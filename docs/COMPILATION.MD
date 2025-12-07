@@ -101,6 +101,7 @@ FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 sudo apt-get install autoconf  # dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
+./configure
 make
 
 # test your build
