@@ -46,23 +46,24 @@ if (WITH_OCR)
 
   pkg_check_modules (TESSERACT REQUIRED tesseract)
   pkg_check_modules (LEPTONICA REQUIRED lept)
-    pkg_check_modules (TESSERACT REQUIRED tesseract)
-    pkg_check_modules (LEPTONICA REQUIRED lept)
 
-    # Add include directories reported by pkg-config
+  # Add include directories reported by pkg-config
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
 
     set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
     set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
 
-    # Some pkg-config files for leptonica report the include dir as
-    # .../include/leptonica which causes <leptonica/allheaders.h> to
-    # expand incorrectly. Add the parent include directory as well.
-    get_filename_component(LEPTONICA_PARENT_DIR "${LEPTONICA_INCLUDE_DIRS}" DIRECTORY)
-    if(LEPTONICA_PARENT_DIR)
-        set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_PARENT_DIR})
+  # Some pkg-config files for leptonica report the include dir as
+  # .../include/leptonica which causes <leptonica/allheaders.h> to
+  # expand incorrectly. Add the parent include directory as well.
+  # Handle multiple include paths by iterating over each one.
+  foreach(LEPT_INC ${LEPTONICA_INCLUDE_DIRS})
+    get_filename_component(LEPT_PARENT "${LEPT_INC}" DIRECTORY)
+    if(LEPT_PARENT)
+      list(APPEND EXTRA_INCLUDES ${LEPT_PARENT})
     endif()
+  endforeach()
 
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
