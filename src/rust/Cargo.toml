@@ -27,15 +27,16 @@ url = "2.5.4"
 encoding_rs = "0.8.5"
 
 # Use CCExtractor's forked rsmpeg with FFmpeg 7 support
+# use_prebuilt_binding ensures consistent FFmpeg 7 API signatures regardless of system FFmpeg version
 [target.'cfg(target_os = "linux")'.dependencies]
-rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg"], optional = true }
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg", "use_prebuilt_binding"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_vcpkg_ffmpeg"], optional = true }
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_vcpkg_ffmpeg", "use_prebuilt_binding"], optional = true }
 
 # Fallback for other platforms (macOS, FreeBSD, etc.)
 [target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
-rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg"], optional = true }
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg", "use_prebuilt_binding"], optional = true }
 
 [build-dependencies]
 bindgen = "0.64.0"
