@@ -37,7 +37,7 @@ use bindings::*;
 use cfg_if::cfg_if;
 use clap::{error::ErrorKind, Parser};
 use common::{copy_from_rust, CType, CType2};
-use decoder::Dtvcc;
+use decoder::{Dtvcc, DtvccRust};
 use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
 use parser::OptionsExt;
 use utils::is_true;
@@ -197,6 +197,165 @@ pub extern "C" fn ccxr_init_logger() {
         .filter_level(LevelFilter::Debug)
         .target(Target::Stdout)
         .init();
+}
+
+// =============================================================================
+// FFI functions for persistent DtvccRust context
+// =============================================================================
+//
+// These functions provide a C-compatible interface for managing the persistent
+// Rust CEA-708 decoder context. They are designed to be called from C code
+// and will be used in Phase 2-3 of the implementation.
+// See: https://github.com/CCExtractor/ccextractor/issues/1499
+
+/// Create a new persistent DtvccRust context.
+///
+/// This function allocates and initializes a new `DtvccRust` struct on the heap
+/// and returns an opaque pointer to it. The context persists until freed with
+/// `ccxr_dtvcc_free()`.
+///
+/// # Safety
+/// - `opts_ptr` must be a valid pointer to `ccx_decoder_dtvcc_settings`
+/// - `opts.report` and `opts.timing` must not be null
+/// - The returned pointer must be freed with `ccxr_dtvcc_free()` when done
+///
+/// # Returns
+/// An opaque pointer to the DtvccRust context, or null if opts_ptr is null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_dtvcc_init(
+    opts_ptr: *const ccx_decoder_dtvcc_settings,
+) -> *mut std::ffi::c_void {
+    if opts_ptr.is_null() {
+        return std::ptr::null_mut();
+    }
+    let opts = &*opts_ptr;
+    let dtvcc = Box::new(DtvccRust::new(opts));
+    Box::into_raw(dtvcc) as *mut std::ffi::c_void
+}
+
+/// Free a DtvccRust context.
+///
+/// This function properly frees all memory associated with the DtvccRust context,
+/// including owned decoders and their tv_screens.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - `dtvcc_ptr` must not be used after this call
+/// - It is safe to call with a null pointer (no-op)
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_free(dtvcc_ptr: *mut std::ffi::c_void) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+
+    let dtvcc = unsafe { Box::from_raw(dtvcc_ptr as *mut DtvccRust) };
+
+    // Free owned decoders and their tv_screens
+    for (i, decoder_opt) in dtvcc.decoders.iter().enumerate() {
+        if i >= dtvcc.services_active.len() || !is_true(dtvcc.services_active[i]) {
+            continue;
+        }
+
+        if let Some(decoder) = decoder_opt {
+            // Free windows rows if memory was reserved
+            for window in decoder.windows.iter() {
+                if is_true(window.memory_reserved) {
+                    for row_ptr in window.rows.iter() {
+                        if !row_ptr.is_null() {
+                            unsafe {
+                                drop(Box::from_raw(*row_ptr));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Free the tv_screen
+            if !decoder.tv.is_null() {
+                unsafe {
+                    drop(Box::from_raw(decoder.tv));
+                }
+            }
+        }
+    }
+
+    // The Box containing dtvcc will be dropped here, freeing the DtvccRust struct
+    drop(dtvcc);
+}
+
+/// Set the encoder for a DtvccRust context.
+///
+/// The encoder is typically not available at initialization time, so it must
+/// be set separately before processing begins.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - `encoder` can be null (processing will skip service blocks if so)
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_set_encoder(
+    dtvcc_ptr: *mut std::ffi::c_void,
+    encoder: *mut encoder_ctx,
+) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.set_encoder(encoder);
+}
+
+/// Process CEA-708 CC data using the persistent DtvccRust context.
+///
+/// This function processes a single CC data unit (cc_valid, cc_type, data1, data2)
+/// using the persistent context, maintaining state across calls.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_process_data(
+    dtvcc_ptr: *mut std::ffi::c_void,
+    cc_valid: u8,
+    cc_type: u8,
+    data1: u8,
+    data2: u8,
+) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.process_cc_data(cc_valid, cc_type, data1, data2);
+}
+
+/// Flush all active service decoders in the DtvccRust context.
+///
+/// This writes out any pending caption data from all active services.
+/// Should be called when processing is complete or when switching contexts.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - It is safe to call with a null pointer (no-op)
+#[no_mangle]
+pub extern "C" fn ccxr_flush_active_decoders(dtvcc_ptr: *mut std::ffi::c_void) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.flush_active_decoders();
+}
+
+/// Check if the DtvccRust context is active.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+///
+/// # Returns
+/// 1 if active, 0 if not active or if pointer is null.
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_is_active(dtvcc_ptr: *mut std::ffi::c_void) -> i32 {
+    if dtvcc_ptr.is_null() {
+        return 0;
+    }
+    let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+    if dtvcc.is_active { 1 } else { 0 }
 }
 
 /// Process cc_data
