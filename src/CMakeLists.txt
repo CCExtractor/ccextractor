@@ -55,7 +55,11 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
 
 # Check if the operating system is macOS (Darwin)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+  # Detect Apple Silicon / ARM macs using several CMake variables since
+  # different CMake versions/hosts may populate different names.
+  if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "arm64|aarch64" OR
+     CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64" OR
+     CMAKE_OSX_ARCHITECTURES MATCHES "arm64|aarch64")
     # ARM Macs
     include_directories("/opt/homebrew/include")
     include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
@@ -69,7 +73,20 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
-aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+
+# Gather zlib sources; on Windows build a static library and link it to
+# avoid depending on an external `zlib.lib` (which causes LNK1104 when
+# it's not available). On other platforms keep the old behavior of
+# compiling the sources directly into the main executable.
+file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
+if (WIN32)
+  add_library(zlib_static STATIC ${ZLIB_SOURCES})
+  target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+  set (EXTRA_LIBS ${EXTRA_LIBS} zlib_static)
+else()
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+endif()
+
 aux_source_directory(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi/ SOURCEFILE)
 
 set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
@@ -197,9 +214,24 @@ if (PKG_CONFIG_FOUND AND WITH_OCR)
 
   pkg_check_modules (TESSERACT REQUIRED tesseract)
   pkg_check_modules (LEPTONICA REQUIRED lept)
+  pkg_check_modules (TESSERACT REQUIRED tesseract)
+  pkg_check_modules (LEPTONICA REQUIRED lept)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+
+  # Add include directories reported by pkg-config
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+
+  # Some pkg-config files for leptonica report the include dir as
+  # .../include/leptonica which causes <leptonica/allheaders.h> to
+  # expand to .../include/leptonica/leptonica/allheaders.h. Add the
+  # parent include directory as well so the include resolves.
+  get_filename_component(LEPTONICA_PARENT_DIR "${LEPTONICA_INCLUDE_DIRS}" DIRECTORY)
+  if(LEPTONICA_PARENT_DIR)
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_PARENT_DIR})
+  endif()
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (PKG_CONFIG_FOUND AND WITH_OCR)
