@@ -26,20 +26,19 @@ lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
 encoding_rs = "0.8.5"
 
-# Use CCExtractor's forked rsmpeg with FFmpeg 6 support
-# FFmpeg 6.1.1 is used consistently across all platforms:
-# - Linux: apt packages (libavcodec-dev, etc.)
-# - Windows: vcpkg with baseline pinned to FFmpeg 6.1.1
-# - macOS: Homebrew ffmpeg@6
+# Use CCExtractor's forked rsmpeg
+# - Linux: FFmpeg 6 from apt packages
+# - Windows: FFmpeg 7 from vcpkg
+# - macOS: FFmpeg 7 from Homebrew
 [target.'cfg(target_os = "linux")'.dependencies]
 rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg6", "link_vcpkg_ffmpeg"], optional = true }
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_vcpkg_ffmpeg"], optional = true }
 
-# Fallback for other platforms (macOS, FreeBSD, etc.)
+# macOS and other platforms use FFmpeg 7
 [target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
-rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg6", "link_system_ffmpeg"], optional = true }
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg"], optional = true }
 
 [build-dependencies]
 bindgen = "0.64.0"
