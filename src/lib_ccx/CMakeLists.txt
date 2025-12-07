@@ -48,11 +48,11 @@ if (WITH_OCR)
   pkg_check_modules (LEPTONICA REQUIRED lept)
 
   # Add include directories reported by pkg-config
-    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
-    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
 
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
 
   # Some pkg-config files for leptonica report the include dir as
   # .../include/leptonica which causes <leptonica/allheaders.h> to
@@ -64,8 +64,9 @@ if (WITH_OCR)
       list(APPEND EXTRA_INCLUDES ${LEPT_PARENT})
     endif()
   endforeach()
+  list(REMOVE_DUPLICATES EXTRA_INCLUDES)
 
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 
 
