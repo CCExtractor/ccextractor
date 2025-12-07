@@ -1,5 +1,6 @@
 0.95 (2025-09-15)
 -----------------
+- Fix: CMake build on Windows (zlib.lib LNK1104) and macOS (Leptonica includes, ARM/NEON detection)
 - Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
 - Fix: HardSubX OCR on Rust
 - Removed the Share Module
