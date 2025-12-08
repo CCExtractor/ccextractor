@@ -50,7 +50,16 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 
 	// Search for a tessdata folder in the specified directory
 	char *dirname = strdup(dir_name);
-	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + 1);
+	if (!dirname)
+		return -1;
+
+	char *temp = realloc(dirname, strlen(dirname) + strlen("tessdata/") + 1);
+	if (!temp)
+	{
+		free(dirname);
+		return -1;
+	}
+	dirname = temp;
 	strcat(dirname, "tessdata/");
 
 	DIR *dp;
@@ -93,13 +102,49 @@ void delete_ocr(void **arg)
  * 1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
  * 2. tessdata in current working directory
  * 3. tessdata in /usr/share
+ *
+ * Note: This function uses a static buffer for the normalized path and is not thread-safe.
+ * It should only be called during initialization.
  */
 char *probe_tessdata_location(const char *lang)
 {
-	int ret = 0;
+	char *tessdata_prefix = getenv("TESSDATA_PREFIX");
+	static char normalized_prefix[1024];
+
+	// Fix for Issue #1162: Normalize TESSDATA_PREFIX by ensuring it ends with a slash
+	if (tessdata_prefix && *tessdata_prefix)
+	{
+		size_t len = strlen(tessdata_prefix);
+		// Check if path is too long (need room for trailing slash and null terminator)
+		if (len >= sizeof(normalized_prefix) - 1)
+		{
+			mprint("TESSDATA_PREFIX is too long (max %zu characters), ignoring it\n",
+			       sizeof(normalized_prefix) - 2);
+			tessdata_prefix = NULL;
+		}
+		else if (tessdata_prefix[len - 1] != '/' && tessdata_prefix[len - 1] != '\\')
+		{
+			// Use snprintf which safely handles the copy and adds trailing slash
+			int written = snprintf(normalized_prefix, sizeof(normalized_prefix), "%s/", tessdata_prefix);
+			// Verify snprintf succeeded (it should, given our length check above)
+			if (written > 0 && written < (int)sizeof(normalized_prefix))
+			{
+				// Safe to print: normalized_prefix is under our control and null-terminated
+				mprint("TESSDATA_PREFIX did not end with '/', auto-fixed to: %s\n",
+				       normalized_prefix);
+				tessdata_prefix = normalized_prefix;
+			}
+			else
+			{
+				// This shouldn't happen given our length check, but be safe
+				mprint("Failed to normalize TESSDATA_PREFIX, ignoring it\n");
+				tessdata_prefix = NULL;
+			}
+		}
+	}
 
 	const char *paths[] = {
-	    getenv("TESSDATA_PREFIX"),
+	    tessdata_prefix,
 	    "./",
 	    "/usr/share/",
 	    "/usr/local/share/",
@@ -110,9 +155,9 @@ char *probe_tessdata_location(const char *lang)
 	    "/usr/share/tesseract/",
 	    "C:\\Program Files\\Tesseract-OCR\\"};
 
-	for (int i = 0; i < sizeof(paths) / sizeof(paths[0]); i++)
+	for (int i = 0; i < (int)(sizeof(paths) / sizeof(paths[0])); i++)
 	{
-		if (!search_language_pack(paths[i], lang))
+		if (paths[i] && !search_language_pack(paths[i], lang))
 			return (char *)paths[i];
 	}
 

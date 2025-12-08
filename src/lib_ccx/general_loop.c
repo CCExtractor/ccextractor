@@ -664,13 +664,18 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
-		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		if (enc_ctx)
+		// Allow Teletext processing in extraction AND report mode
+		if (enc_ctx || ccx_options.print_file_reports)
 		{
-			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
+			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+
+			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer,
+						     data_node->len, dec_sub, sentence_cap);
+
 			if (ret == CCX_EINVAL)
 				return ret;
 		}
+
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)

@@ -53,6 +53,14 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
             } else {
                 (*ctx).cur_conf = conf as std::os::raw::c_float;
             }
+        } else {
+            // Even with threshold 0, apply minimum confidence to filter noise
+            let conf = TessBaseAPIMeanTextConf((*ctx).tess_handle);
+            if (conf as std::os::raw::c_float) < 75.0 {
+                text_out = null::<c_char>() as *mut c_char;
+            } else {
+                (*ctx).cur_conf = conf as std::os::raw::c_float;
+            }
         }
         text_out
     }
@@ -153,6 +161,15 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
 
                 total_conf += conf;
                 num_words += 1;
+            } else {
+                // Even with threshold 0, apply minimum confidence to filter noise
+                let conf = TessResultIteratorConfidence(it, level);
+                if conf < 75.0 {
+                    continue;
+                }
+
+                total_conf += conf;
+                num_words += 1;
             }
 
             if (*ctx).detect_italics != 0 {
@@ -179,7 +196,11 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                 }
             }
 
-            text_out = format!("{} {}", text_out, word);
+            if text_out.is_empty() {
+                text_out = word;
+            } else {
+                text_out = format!("{} {}", text_out, word);
+            }
         }
     }
 
@@ -251,6 +272,15 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
                 // we don't even want to bother with this call if threshold is 0 or less
                 let conf: std::os::raw::c_float = TessResultIteratorConfidence(it, level);
                 if conf < threshold {
+                    continue;
+                }
+
+                total_conf += conf;
+                num_characters += 1;
+            } else {
+                // Even with threshold 0, apply minimum confidence to filter noise
+                let conf: std::os::raw::c_float = TessResultIteratorConfidence(it, level);
+                if conf < 75.0 {
                     continue;
                 }
 
