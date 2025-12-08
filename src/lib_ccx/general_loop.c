@@ -664,18 +664,20 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
-		// Allow Teletext processing in extraction AND report mode
-		if (enc_ctx || ccx_options.print_file_reports)
+		/* Process teletext packets even when no encoder exists (report mode).
+		   Use sentence_cap = 0 when enc_ctx is NULL to avoid deref. */
+		int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+
+		if (data_node->buffer && data_node->len > 0)
 		{
-			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
-
-			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer,
-						     data_node->len, dec_sub, sentence_cap);
-
+			ret = tlt_process_pes_packet(dec_ctx,
+						     data_node->buffer,
+						     data_node->len,
+						     dec_sub,
+						     sentence_cap);
 			if (ret == CCX_EINVAL)
 				return ret;
 		}
-
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
