@@ -355,7 +355,11 @@ pub extern "C" fn ccxr_dtvcc_is_active(dtvcc_ptr: *mut std::ffi::c_void) -> i32 
         return 0;
     }
     let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
-    if dtvcc.is_active { 1 } else { 0 }
+    if dtvcc.is_active {
+        1
+    } else {
+        0
+    }
 }
 
 /// Process cc_data

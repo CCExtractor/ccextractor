@@ -295,7 +295,8 @@ impl DtvccRust {
                 // Allocate decoder directly on heap using zeroed memory to avoid
                 // stack overflow (dtvcc_service_decoder is very large)
                 let decoder_layout = std::alloc::Layout::new::<dtvcc_service_decoder>();
-                let decoder_ptr = unsafe { std::alloc::alloc_zeroed(decoder_layout) } as *mut dtvcc_service_decoder;
+                let decoder_ptr = unsafe { std::alloc::alloc_zeroed(decoder_layout) }
+                    as *mut dtvcc_service_decoder;
                 if decoder_ptr.is_null() {
                     panic!("Failed to allocate dtvcc_service_decoder");
                 }
@@ -417,7 +418,8 @@ impl DtvccRust {
         let seq = (self.packet[0] & 0xC0) >> 6;
         log_debug!(
             "dtvcc_process_current_packet: Sequence: {}, packet length: {}",
-            seq, len
+            seq,
+            len
         );
         if self.packet_length == 0 {
             return;
@@ -494,7 +496,9 @@ impl DtvccRust {
 
         if len < 128 && self.packet[pos as usize] != 0 {
             // Null header is mandatory if there is room
-            log_debug!("dtvcc_process_current_packet: Warning: Null header expected but not found.");
+            log_debug!(
+                "dtvcc_process_current_packet: Warning: Null header expected but not found."
+            );
         }
     }
 
@@ -530,7 +534,10 @@ impl DtvccRust {
 
     /// Flush a specific service decoder by index.
     fn flush_decoder(&mut self, service_index: usize) {
-        log_debug!("dtvcc_decoder_flush: Flushing decoder for service {}", service_index + 1);
+        log_debug!(
+            "dtvcc_decoder_flush: Flushing decoder for service {}",
+            service_index + 1
+        );
 
         // Need encoder and timing to flush
         if self.encoder.is_null() || self.timing.is_null() {
