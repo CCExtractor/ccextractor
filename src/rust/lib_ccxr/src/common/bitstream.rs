@@ -1,5 +1,6 @@
 use crate::fatal;
 use crate::util::log::ExitCause;
+use crate::util::log::{debug, DebugMessageFlag};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -23,7 +24,12 @@ pub struct BitStreamRust<'a> {
     pub _i_pos: usize,
     pub _i_bpos: u8,
 }
-
+#[macro_export]
+macro_rules! dbg_es {
+    ($($args:expr),*) => {
+        debug!(msg_type = DebugMessageFlag::VERBOSE; "{}", format!($($args),*))
+    };
+}
 impl<'a> BitStreamRust<'a> {
     /// Create a new bitstream. Empty data is allowed (bits_left = 0).
     pub fn new(data: &'a [u8]) -> Result<Self, BitstreamError> {
@@ -332,6 +338,129 @@ impl<'a> BitStreamRust<'a> {
         }
 
         res
+    }
+    // Return the next startcode or sequence_error_code if not enough
+    // data was left in the bitstream. Also set esstream->bitsleft.
+    // The bitstream pointer shall be moved to the begin of the start
+    // code if found, or to the position where a search would continue
+    // would more data be made available.
+    // This function discards all data until the start code is
+    // found
+    pub fn search_start_code(&mut self) -> Result<u8, BitstreamError> {
+        self.make_byte_aligned()?;
+
+        // Keep a negative esstream->bitsleft, but correct it.
+        if self.bits_left <= 0 {
+            dbg_es!("search_start_code: bitsleft <= 0");
+            self.bits_left -= 8 * 4;
+            return Ok(0xB4);
+        }
+
+        let mut tpos = self.pos;
+
+        // Scan for 0x000001xx in header
+        loop {
+            // Find next 0x00 byte
+            let remaining_data = &self.data[tpos..];
+            if let Some(zero_offset) = remaining_data.iter().position(|&b| b == 0x00) {
+                tpos += zero_offset;
+            } else {
+                // We don't even have the starting 0x00
+                tpos = self.data.len();
+                self.bits_left = -8 * 4;
+                break;
+            }
+
+            if tpos + 3 >= self.data.len() {
+                // Not enough bytes left to check for 0x000001??
+                self.bits_left = 8 * (self.data.len() as i64 - (tpos + 4) as i64);
+                break;
+            } else if self.data[tpos + 1] == 0x00 && self.data[tpos + 2] == 0x01 {
+                // Found 0x000001??
+                self.bits_left = 8 * (self.data.len() as i64 - (tpos + 4) as i64);
+                break;
+            }
+            // Keep searching
+            tpos += 1;
+        }
+
+        self.pos = tpos;
+        if self.bits_left < 0 {
+            dbg_es!("search_start_code: bitsleft <= 0");
+            Ok(0xB4)
+        } else {
+            dbg_es!("search_start_code: Found {:02X}", self.data[tpos + 3]);
+            Ok(self.data[tpos + 3])
+        }
+    }
+
+    // Return the next startcode or sequence_error_code if not enough
+    // data was left in the bitstream. Also set esstream->bitsleft.
+    // The bitstream pointer shall be moved to the begin of the start
+    // code if found, or to the position where a search would continue
+    // would more data be made available.
+    // Only NULL bytes before the start code are discarded, if a non
+    // NULL byte is encountered esstream->error is set to TRUE and the
+    // function returns sequence_error_code with the pointer set after
+    // that byte.
+    pub fn next_start_code(&mut self) -> Result<u8, BitstreamError> {
+        if self.error || self.bits_left < 0 {
+            return Ok(0xB4);
+        }
+
+        self.make_byte_aligned()?;
+
+        // Only start looking if there is enough data. Adjust bitsleft.
+        if self.bits_left < 4 * 8 {
+            dbg_es!("next_start_code: bitsleft {} < 32", self.bits_left);
+            self.bits_left -= 8 * 4;
+            return Ok(0xB4);
+        }
+
+        let mut tmp: u8;
+        while (self.bitstream_get_num(4, false)? & 0x00FFFFFF) != 0x00010000 // LSB 0x000001??
+            && self.bits_left > 0
+        {
+            tmp = self.bitstream_get_num(1, true)? as u8;
+            if tmp != 0 {
+                dbg_es!("next_start_code: Non zero stuffing");
+                self.error = true;
+                return Ok(0xB4);
+            }
+        }
+
+        if self.bits_left < 8 {
+            self.bits_left -= 8;
+            dbg_es!("next_start_code: bitsleft <= 0");
+            Ok(0xB4)
+        } else {
+            dbg_es!("next_start_code: Found {:02X}", self.data[self.pos + 3]);
+
+            if self.data[self.pos + 3] == 0xB4 {
+                dbg_es!("B4: assume bitstream syntax error!");
+                self.error = true;
+            }
+
+            Ok(self.data[self.pos + 3])
+        }
+    }
+    pub fn init_bitstream(&mut self, start: usize, end: usize) -> Result<(), BitstreamError> {
+        if start > end || end > self.data.len() {
+            return Err(BitstreamError::InsufficientData);
+        }
+
+        self.pos = start;
+        self.bpos = 8;
+        self.bits_left = (end - start) as i64 * 8;
+        self.error = false;
+        self._i_pos = 0;
+        self._i_bpos = 0;
+
+        if self.bits_left < 0 {
+            return Err(BitstreamError::NegativeLength);
+        }
+
+        Ok(())
     }
 }
 #[cfg(test)]

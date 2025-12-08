@@ -19,7 +19,6 @@
 #include "lib_ccx/ccx_common_option.h"
 #include "lib_ccx/ccx_mp4.h"
 #include "lib_ccx/hardsubx.h"
-#include "lib_ccx/ccx_share.h"
 #ifdef WITH_LIBCURL
 CURL *curl;
 CURLcode res;

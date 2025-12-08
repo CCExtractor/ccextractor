@@ -45,7 +45,10 @@ impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
     pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
         let report = unsafe { &mut *ctx.report };
-        let encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
+        let mut encoder = Box::into_raw(Box::new(encoder_ctx::default()));
+        if !ctx.encoder.is_null() {
+            encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
+        }
         let timing = unsafe { &mut *ctx.timing };
 
         Self {
@@ -59,7 +62,7 @@ impl<'a> Dtvcc<'a> {
             packet_length: ctx.current_packet_length as u8,
             is_header_parsed: is_true(ctx.is_current_packet_header_parsed),
             last_sequence: ctx.last_sequence,
-            encoder,
+            encoder: unsafe { &mut *encoder },
             no_rollup: is_true(ctx.no_rollup),
             timing,
         }

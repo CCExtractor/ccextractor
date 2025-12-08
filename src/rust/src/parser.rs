@@ -548,13 +548,6 @@ impl OptionsExt for Options {
             }
         }
 
-        if self.inputfile.is_none() {
-            fatal!(
-                cause = ExitCause::NoInputFiles;
-               "No input file specified\n"
-            );
-        }
-
         #[cfg(feature = "hardsubx_ocr")]
         {
             use lib_ccxr::hardsubx::*;
@@ -767,7 +760,7 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref ocrlang) = args.ocrlang {
-            self.ocrlang = PathBuf::from_str(ocrlang.as_str()).unwrap_or_default();
+            self.ocrlang = Some(Language::from_str(ocrlang.as_str()).unwrap());
         }
 
         if let Some(ref quant) = args.quant {
@@ -1124,15 +1117,6 @@ impl OptionsExt for Options {
             tlt_config.verbose = true;
         }
 
-        #[cfg(feature = "enable_sharing")]
-        {
-            if args.sharing_debug {
-                self.debug_mask =
-                    DebugMessageMask::new(DebugMessageFlag::SHARE, DebugMessageFlag::VERBOSE);
-                tlt_config.verbose = true;
-            }
-        }
-
         if args.fullbin {
             self.fullbin = true;
         }
@@ -1337,23 +1321,33 @@ impl OptionsExt for Options {
 
         // Network stuff
         if let Some(ref udp) = args.udp {
-            if let Some(at) = udp.find('@') {
-                let addr = &udp[0..at];
-                let port = &udp[at + 1..];
+            let mut remaining_udp = udp.as_str();
 
-                self.udpsrc = Some(udp.clone());
-                self.udpaddr = Some(addr.to_owned());
-                self.udpport = port.parse().unwrap();
-            } else if let Some(colon) = udp.find(':') {
-                let addr = &udp[0..colon];
-                let port = get_atoi_hex(&udp[colon + 1..]);
+            if let Some(at) = remaining_udp.find('@') {
+                let src = &remaining_udp[0..at];
+                self.udpsrc = Some(src.to_owned());
 
-                self.udpsrc = Some(udp.clone());
+                remaining_udp = &remaining_udp[at + 1..];
+            }
+
+            if let Some(colon) = remaining_udp.find(':') {
+                let addr = &remaining_udp[0..colon];
+                let port = get_atoi_hex(&remaining_udp[colon + 1..]);
+
                 self.udpaddr = Some(addr.to_owned());
                 self.udpport = port;
             } else {
-                self.udpaddr = None;
-                self.udpport = udp.parse().unwrap();
+                match remaining_udp.parse() {
+                    Ok(port) => {
+                        self.udpport = port;
+                    }
+                    Err(_) => {
+                        fatal!(
+                            cause = ExitCause::MalformedParameter;
+                           "Invalid UDP parameter\n"
+                        );
+                    }
+                }
             }
 
             self.input_source = DataSource::Network;
@@ -1365,36 +1359,34 @@ impl OptionsExt for Options {
 
             self.xmltv = 2;
             self.xmltvliveinterval = Timestamp::from_millis(2000);
-            let mut _addr: String = addr.to_string();
+            let _addr: String = addr.to_string();
 
+            // Handle IPv6 addresses in [addr]:port format
             if let Some(saddr) = addr.strip_prefix('[') {
-                _addr = saddr.to_string();
-
-                let result = _addr.find(']');
-                if result.is_none() {
+                if let Some(end_bracket) = saddr.find(']') {
+                    let addr_part = &saddr[..end_bracket];
+                    let port_part = &saddr[end_bracket + 1..];
+                    self.srv_addr = Some(addr_part.to_string());
+                    if let Some(port) = port_part.strip_prefix(':') {
+                        self.srv_port = Some(port.parse().unwrap());
+                    }
+                } else {
                     fatal!(
                         cause = ExitCause::IncompatibleParameters;
-                       "Wrong address format, for IPv6 use [address]:port\n"
+                        "Wrong address format, for IPv6 use [address]:port\n"
                     );
                 }
-                let mut br = result.unwrap();
-                _addr = _addr.replace(']', "");
-
+            } else if let Some(colon) = _addr.rfind(':') {
+                // Handle IPv4 or hostname:port
+                let (host, port) = _addr.split_at(colon);
+                self.srv_addr = Some(host.to_string());
+                self.srv_port = Some(port[1..].parse().unwrap());
+            } else {
+                // No port specified, treat as address only
                 self.srv_addr = Some(_addr.clone());
-
-                br += 1;
-                if !_addr[br..].is_empty() {
-                    self.srv_port = Some(_addr[br..].parse().unwrap());
-                }
+                self.srv_port = None;
             }
-
-            self.srv_addr = Some(_addr.clone());
-
-            let colon = _addr.find(':').unwrap();
-            _addr = _addr.replace(':', "");
-            self.srv_port = Some(_addr[(colon + 1)..].parse().unwrap());
         }
-
         if let Some(ref tcp) = args.tcp {
             self.tcpport = Some(*tcp);
             self.input_source = DataSource::Tcp;
@@ -1422,27 +1414,6 @@ impl OptionsExt for Options {
             use url::Url;
             if let Some(ref curlposturl) = args.curlposturl {
                 self.curlposturl = Url::from_str(curlposturl).ok();
-            }
-        }
-
-        #[cfg(feature = "enable_sharing")]
-        {
-            if args.enable_sharing {
-                self.sharing_enabled = true;
-            }
-
-            if let Some(ref sharingurl) = args.sharing_url {
-                self.sharing_url = Some(sharingurl.to_string().parse().unwrap());
-            }
-
-            if let Some(ref translate) = args.translate {
-                self.translate_enabled = true;
-                self.sharing_enabled = true;
-                self.translate_langs = Some(translate.to_string());
-            }
-
-            if let Some(ref translateauth) = args.translate_auth {
-                self.translate_key = Some(translateauth.to_string());
             }
         }
 
@@ -1830,7 +1801,7 @@ pub mod tests {
         assert!(options.cc_to_stdout);
 
         assert_eq!(options.messages_target, OutputTarget::Quiet);
-        assert_eq!(options.nofontcolor, true);
+        assert!(options.nofontcolor);
     }
 
     #[test]

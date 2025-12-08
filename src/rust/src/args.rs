@@ -1,4 +1,3 @@
-use cfg_if::cfg_if;
 use clap::{Parser, ValueEnum};
 use strum_macros::Display;
 
@@ -26,13 +25,6 @@ const TRANSCRIPT_OPTIONS: &str = "Transcript customizing options";
 const COMMUNICATION_PROTOCOL: &str = "Communication with other programs and console output";
 const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 
-cfg_if! {
-    if #[cfg(feature = "enable_sharing")] {
-        const SHARING_EXTRACTED_CAPTIONS: &str = "Sharing extracted captions via TCP";
-        const CCTRANSLATE_INTEGRATION: &str = "CCTranslate application integration";
-    }
-}
-
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
@@ -55,7 +47,7 @@ http://www.ccextractor.org
 #[command(
     help_template = "{name} {version}, {author}.\n{about}\n {all-args} {tab}\n
 An example command for burned-in subtitle extraction is as follows:
-ccextractor video.mp4 --hardsubx --subcolor white --detect_italics --whiteness_thresh 90 --conf_thresh 60
+ccextractor video.mp4 --hardsubx --subcolor white --detect-italics --whiteness-thresh 90 --conf-thresh 60
 
 Notes on File name related options:
   You can pass as many input files as you need. They will be processed in order.
@@ -182,10 +174,9 @@ pub struct Args {
     pub segmentonkeyonly: bool,
     /// Read the input via UDP (listening in the specified port)
     /// instead of reading a file.
-    /// Host can be a
-    /// hostname or IPv4 address. If host is not specified
-    /// then listens on the local host.
-    #[arg(long, value_name="[host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    /// Host and src can be a hostname or IPv4 address.
+    /// If host is not specified then listens on the local host.
+    #[arg(long, value_name="[[src@]host:]port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub udp: Option<String>,
     /// Can be a hostname or IPv4 address.
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
@@ -818,10 +809,6 @@ pub struct Args {
     /// to find data in all packets by scanning.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub investigate_packets: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Print extracted CC sharing service messages
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
-    pub sharing_debug: bool,
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
     /// page is always 888, may vary in other countries.
@@ -874,23 +861,6 @@ pub struct Args {
     /// Don't write any message.
     #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
     pub quiet: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Enables real-time sharing of extracted captions
-    #[arg(long, verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
-    pub enable_sharing: bool,
-    #[cfg(feature = "enable_sharing")]
-    /// Set url for sharing service in nanomsg format. Default: tcp://*:3269
-    #[arg(long, value_name="url", verbatim_doc_comment, help_heading=SHARING_EXTRACTED_CAPTIONS)]
-    pub sharing_url: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    /// Enables real-time sharing of extracted captions
-    #[arg(long, value_name="languages", verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
-    pub translate: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    /// Set Translation Service authorization data to make translation possible
-    /// In case of Google Translate API - API Key
-    #[arg(long, verbatim_doc_comment, help_heading=CCTRANSLATE_INTEGRATION)]
-    pub translate_auth: Option<String>,
     /// Enable the burned-in subtitle extraction subsystem.
     ///
     /// NOTE: This is needed to use the below burned-in
@@ -905,7 +875,7 @@ pub struct Args {
     /// or letter wise.
     /// e.g. --ocr-mode frame (default), --ocr-mode word,
     /// --ocr-mode letter
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "ocr-mode", verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub ocr_mode: Option<String>,
     /// Specify the color of the subtitles
     /// Possible values are in the set
@@ -922,21 +892,21 @@ pub struct Args {
     /// A lower value gives better results, but takes more
     /// processing time.
     /// The recommended value is 0.5 (default).
-    /// e.g. --min_sub_duration 1.0 (for a duration of 1 second)
-    #[arg(long, verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    /// e.g. --min-sub-duration 1.0 (for a duration of 1 second)
+    #[arg(long = "min-sub-duration", verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub min_sub_duration: Option<f32>,
     /// Specify whether italics are to be detected from the
     /// OCR text.
     /// Italic detection automatically enforces the OCR mode
     /// to be word-wise
-    #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "detect-italics", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub detect_italics: bool,
     /// Specify the classifier confidence threshold between
     /// 1 and 100.
     /// Try and use a threshold which works for you if you get
     /// a lot of garbage text.
-    /// e.g. --conf_thresh 50
-    #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    /// e.g. --conf-thresh 50
+    #[arg(long = "conf-thresh", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub conf_thresh: Option<f32>,
     /// For white subtitles only, specify the luminance
     /// threshold between 1 and 100
@@ -944,7 +914,7 @@ pub struct Args {
     /// values may give you better results
     /// Recommended values are in the range 80 to 100.
     /// The default value is 95
-    #[arg(long, verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "whiteness-thresh", verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub whiteness_thresh: Option<f32>,
     /// This option will be used if the file should have both
     /// closed captions and burned in subtitles

@@ -150,10 +150,11 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     if let Some(dvblang) = options.dvblang {
         (*ccx_s_options).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
     }
-    if options.ocrlang.try_exists().unwrap_or_default() {
-        (*ccx_s_options).ocrlang = string_to_c_char(options.ocrlang.to_str().unwrap());
+    if let Some(ocrlang) = options.ocrlang {
+        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.to_ctype().as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
+    (*ccx_s_options).psm = options.psm as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
     if let Some(mkvlang) = options.mkvlang {
         (*ccx_s_options).mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
@@ -220,21 +221,6 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
         if options.curlposturl.is_some() {
             (*ccx_s_options).curlposturl =
                 string_to_c_char(&options.curlposturl.as_ref().unwrap_or_default().as_str());
-        }
-    }
-    #[cfg(feature = "enable_sharing")]
-    {
-        (*ccx_s_options).sharing_enabled = options.sharing_enabled as _;
-        if options.sharing_url.is_some() {
-            (*ccx_s_options).sharing_url =
-                string_to_c_char(&options.sharing_url.as_ref().unwrap().as_str());
-        }
-        (*ccx_s_options).translate_enabled = options.translate_enabled as _;
-        if options.translate_langs.is_some() {
-            (*ccx_s_options).translate_langs = string_to_c_char(&options.translate_langs.unwrap());
-        }
-        if options.translate_key.is_some() {
-            (*ccx_s_options).translate_key = string_to_c_char(&options.translate_key.unwrap());
         }
     }
 }

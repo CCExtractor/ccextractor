@@ -139,13 +139,7 @@ pub struct Decoder608Report {
     pub cc_channels: [u8; 4],
 }
 
-impl Default for Decoder608ColorCode {
-    fn default() -> Self {
-        Self::Userdefined
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum Decoder608ColorCode {
     White = 0,
     Green = 1,
@@ -154,6 +148,7 @@ pub enum Decoder608ColorCode {
     Red = 4,
     Yellow = 5,
     Magenta = 6,
+    #[default]
     Userdefined = 7,
     Black = 8,
     Transparent = 9,
@@ -452,7 +447,7 @@ pub struct Options {
     /// The name of the language stream for DVB
     pub dvblang: Option<Language>,
     /// The name of the .traineddata file to be loaded with tesseract
-    pub ocrlang: PathBuf,
+    pub ocrlang: Option<Language>,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
     pub ocr_oem: i8,
     /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
@@ -520,19 +515,6 @@ pub struct Options {
 
     #[cfg(feature = "with_libcurl")]
     pub curlposturl: Option<Url>,
-
-    //CC sharing
-    #[cfg(feature = "enable_sharing")]
-    pub sharing_enabled: bool,
-    #[cfg(feature = "enable_sharing")]
-    pub sharing_url: Option<Url>,
-    #[cfg(feature = "enable_sharing")]
-    //Translating
-    pub translate_enabled: bool,
-    #[cfg(feature = "enable_sharing")]
-    pub translate_langs: Option<String>,
-    #[cfg(feature = "enable_sharing")]
-    pub translate_key: Option<String>,
 }
 
 impl Default for Options {
@@ -634,11 +616,6 @@ impl Default for Options {
                 DebugMessageFlag::VERBOSE,
             ),
             curlposturl: Default::default(),
-            sharing_enabled: Default::default(),
-            sharing_url: Default::default(),
-            translate_enabled: Default::default(),
-            translate_langs: Default::default(),
-            translate_key: Default::default(),
         }
     }
 }

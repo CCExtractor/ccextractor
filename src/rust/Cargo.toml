@@ -14,9 +14,6 @@ crate-type = ["staticlib"]
 log = "0.4.26"
 env_logger = "0.8.4"
 palette = "0.6.1"
-rsmpeg = { version = "0.14.2", optional = true, features = [
-    "link_system_ffmpeg",
-] }
 tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
@@ -29,15 +26,28 @@ lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
 encoding_rs = "0.8.5"
 
+# Use CCExtractor's forked rsmpeg with FFmpeg 7
+# All platforms use ffmpeg7 feature with prebuilt bindings for API consistency
+[target.'cfg(target_os = "linux")'.dependencies]
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg", "use_prebuilt_binding"], optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_vcpkg_ffmpeg"], optional = true }
+
+# macOS and other platforms use FFmpeg 7
+[target.'cfg(not(any(target_os = "linux", target_os = "windows")))'.dependencies]
+rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg"], optional = true }
+
 [build-dependencies]
 bindgen = "0.64.0"
 pkg-config = "0.3.32"
 
 [features]
-enable_sharing = []
 wtv_debug = []
 enable_ffmpeg = []
 with_libcurl = []
+
+# hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
 
 [profile.release-with-debug]

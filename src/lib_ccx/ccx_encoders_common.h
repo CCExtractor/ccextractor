@@ -2,7 +2,11 @@
 #define _CC_ENCODER_COMMON_H
 
 #ifdef WIN32
-	#include "..\\thirdparty\\win_iconv\\iconv.h"
+	#if defined(__MINGW64__) || defined(__MINGW32__)
+		#include <iconv.h>
+	#else
+		#include "..\\thirdparty\\win_iconv\\iconv.h"
+	#endif
 #else
 	#include "iconv.h"
 #endif
@@ -24,12 +28,10 @@ if (ctx->buffer == NULL) { fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for 
 typedef struct dtvcc_writer_ctx
 {
 	int fd;
-#ifndef DISABLE_RUST
 	// File handle used to work with files on windows
 	void *fhandle;
 	// Charset of the subtitle
 	char *charset;
-#endif
 	char *filename;
 	iconv_t cd;
 } dtvcc_writer_ctx;

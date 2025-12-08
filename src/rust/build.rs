@@ -13,6 +13,12 @@ fn main() {
         "version",
         "set_binary_mode",
         "net_send_header", // shall be removed after NET
+        "process_hdcc",
+        "anchor_hdcc",
+        "store_hdcc",
+        "do_cb",
+        "decode_vbi",
+        "realloc",
         "write_spumux_footer",
         "write_spumux_header",
     ]);
@@ -59,6 +65,39 @@ fn main() {
     #[cfg(feature = "hardsubx_ocr")]
     {
         builder = builder.clang_arg("-DENABLE_HARDSUBX");
+
+        // Add FFmpeg include paths for Mac
+        if cfg!(target_os = "macos") {
+            // Try common Homebrew paths
+            if std::path::Path::new("/opt/homebrew/include").exists() {
+                builder = builder.clang_arg("-I/opt/homebrew/include");
+            } else if std::path::Path::new("/usr/local/include").exists() {
+                builder = builder.clang_arg("-I/usr/local/include");
+            }
+
+            // Check Homebrew Cellar for FFmpeg
+            let cellar_ffmpeg = "/opt/homebrew/Cellar/ffmpeg";
+            if std::path::Path::new(cellar_ffmpeg).exists() {
+                // Find the FFmpeg version directory
+                if let Ok(entries) = std::fs::read_dir(cellar_ffmpeg) {
+                    for entry in entries {
+                        if let Ok(entry) = entry {
+                            let include_path = entry.path().join("include");
+                            if include_path.exists() {
+                                builder =
+                                    builder.clang_arg(format!("-I{}", include_path.display()));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Also check environment variable
+            if let Ok(ffmpeg_include) = env::var("FFMPEG_INCLUDE_DIR") {
+                builder = builder.clang_arg(format!("-I{}", ffmpeg_include));
+            }
+        }
     }
 
     // Tell cargo to invalidate the built crate whenever any of the

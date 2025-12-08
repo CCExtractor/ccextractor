@@ -1,7 +1,12 @@
 for /f "delims=" %%i in ('cd') do set output=%%i
 set CARGO_TARGET_DIR=%output%
 cd ..\src\rust
-cargo build %1 --features "hardsubx_ocr" --target x86_64-pc-windows-msvc
+REM Allow overriding FFmpeg version via environment variable
+IF "%FFMPEG_VERSION%"=="" (
+    cargo build %1 --features "hardsubx_ocr" --target x86_64-pc-windows-msvc
+) ELSE (
+    cargo build %1 --features "hardsubx_ocr,%FFMPEG_VERSION%" --target x86_64-pc-windows-msvc
+)
 cd ..\..\windows
 IF "%~1"=="-r" (
 copy x86_64-pc-windows-msvc\release\ccx_rust.lib .\ccx_rust.lib
