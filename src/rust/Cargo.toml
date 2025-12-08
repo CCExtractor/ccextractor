@@ -17,14 +17,14 @@ palette = "0.6.1"
 tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
-strum = "0.25"
 strum_macros = "0.25.3"
 time = "0.3.39"
 cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
-encoding_rs = "0.8.5"
+serial_test = "3.2.0"
+encoding_rs = "0.8.35"
 
 # Use CCExtractor's forked rsmpeg with FFmpeg 7
 # All platforms use ffmpeg7 feature with prebuilt bindings for API consistency
@@ -42,6 +42,10 @@ rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features =
 bindgen = "0.64.0"
 pkg-config = "0.3.32"
 
+[dev-dependencies]
+tempfile = "3.20.0"
+
+
 [features]
 wtv_debug = []
 enable_ffmpeg = []
@@ -49,6 +53,7 @@ with_libcurl = []
 
 # hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+sanity_check = []
 
 [profile.release-with-debug]
 inherits = "release"
