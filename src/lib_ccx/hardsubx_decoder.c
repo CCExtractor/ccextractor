@@ -1,5 +1,6 @@
 #include "lib_ccx.h"
 #include "utility.h"
+#include <ctype.h>
 
 #ifdef ENABLE_HARDSUBX
 // TODO: Correct FFMpeg integration
@@ -158,10 +159,10 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 
 			// Decode the video stream packet
 			avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
-			if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0 && frame_number % 25 == 0)
+			if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0)
 			{
 				float diff = (float)convert_pts_to_ms(ctx->packet.pts - prev_packet_pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
-				if (fabsf(diff) < 1000 * ctx->min_sub_duration) // If the minimum duration of a subtitle line is exceeded, process packet
+				if (fabsf(diff) < 500 * ctx->min_sub_duration) // Reduce threshold for better timing accuracy
 					continue;
 
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
@@ -195,19 +196,39 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				}
 
-				if (subtitle_text)
+			if (subtitle_text)
+			{
+				char *double_enter = strstr(subtitle_text, "\n\n");
+				if (double_enter != NULL)
+					*(double_enter) = '\0';
+				
+				// Filter out very short text that is likely noise
+				size_t text_len = strlen(subtitle_text);
+				if (text_len < 3)
 				{
-					char *double_enter = strstr(subtitle_text, "\n\n");
-					if (double_enter != NULL)
-						*(double_enter) = '\0';
+					subtitle_text = NULL;
 				}
-
-				if (!prev_sub_encoded && prev_subtitle_text)
+				// Filter out text that is only numbers or special characters
+				else
+				{
+					int alpha_count = 0;
+					for (size_t i = 0; i < text_len; i++)
+					{
+						if (isalpha(subtitle_text[i]))
+							alpha_count++;
+					}
+					// Require at least 50% alphabetic characters
+					if (alpha_count < (int)(text_len * 0.5))
+					{
+						subtitle_text = NULL;
+					}
+				}
+			}				if (!prev_sub_encoded && prev_subtitle_text)
 				{
 					if (subtitle_text)
 					{
 						dist = edit_distance(subtitle_text, prev_subtitle_text, (int)strlen(subtitle_text), (int)strlen(prev_subtitle_text));
-						if (dist < (0.2 * MIN(strlen(subtitle_text), strlen(prev_subtitle_text))))
+						if (dist < (0.5 * MIN(strlen(subtitle_text), strlen(prev_subtitle_text))))
 						{
 							dist = -1;
 							subtitle_text = NULL;
@@ -426,8 +447,7 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 
 				avcodec_send_packet(hard_ctx->codec_ctx, &hard_ctx->packet);
 				if (avcodec_receive_frame(hard_ctx->codec_ctx,
-							  hard_ctx->frame) == 0 &&
-				    frame_number % 25 == 0)
+							  hard_ctx->frame) == 0)
 				{
 					float diff = (float)convert_pts_to_ms(hard_ctx->packet.pts - prev_packet_pts_hard,
 									      hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
@@ -485,7 +505,7 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 							if (subtitle_text_hard)
 							{
 								dist = edit_distance(subtitle_text_hard, prev_subtitle_text_hard, (int)strlen(subtitle_text_hard), (int)strlen(prev_subtitle_text_hard));
-								if (dist < (0.2 * MIN(strlen(subtitle_text_hard), strlen(prev_subtitle_text_hard))))
+								if (dist < (0.5 * MIN(strlen(subtitle_text_hard), strlen(prev_subtitle_text_hard))))
 								{
 									dist = -1;
 									subtitle_text_hard = NULL;
