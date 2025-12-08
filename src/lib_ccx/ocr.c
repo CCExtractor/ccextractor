@@ -50,7 +50,9 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 
 	// Search for a tessdata folder in the specified directory
 	char *dirname = strdup(dir_name);
-	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + 1);
+	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + (dirname[strlen(dirname) - 1] != '/') + 1);
+	if (dirname[strlen(dirname) - 1] != '/')
+		strcat(dirname, "/");
 	strcat(dirname, "tessdata/");
 
 	DIR *dp;
