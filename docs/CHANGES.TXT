@@ -12,6 +12,7 @@
 - Fix: Segmentation faults on XDS files
 - Fix: Clippy Errors Based on Rust 1.88
 - IMPROVEMENT: Refactor and optimize Dockerfile
+- New: Add demuxer and file_functions module in lib_ccxr (#1662)
 - Fix: Improved handling of IETF language tags in Matroska files (#1665)
 - New: Create unit test for rust code (#1615)
 - Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)

@@ -1,8 +1,8 @@
 use crate::avc::common_types::*;
 use crate::avc::nal::*;
 use crate::avc::sei::*;
-use crate::avc::FromCType;
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, realloc};
+use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::ccxr_set_fts;
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
