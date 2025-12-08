@@ -66,9 +66,6 @@ cd ccextractor/linux
 # compile without debug flags
 ./build
 
-# compile without rust
-./build -without-rust
-
 # compile with debug info
 ./build -debug            # same as ./builddebug
 
@@ -89,9 +86,6 @@ FFMPEG_VERSION=ffmpeg7 ./build -hardsubx  # force FFmpeg 7 on any platform
 FFMPEG_INCLUDE_DIR=/usr/include 
 FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
-# compile in debug mode without rust
-./build -debug -without-rust
-
 # test your build
 ./ccextractor
 ```
@@ -102,7 +96,7 @@ FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 sudo apt-get install autoconf  # dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure                    # OR ./configure --without-rust
+./configure                    # OR ./configure --without-rust (to build without Rust)
 make
 
 # test your build
