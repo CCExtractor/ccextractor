@@ -27,7 +27,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: build
       run: ./build.command
       working-directory: ./mac
@@ -38,14 +38,14 @@ jobs:
       run: mkdir ./mac/artifacts
     - name: Copy release artifact
       run: cp ./mac/ccextractor ./mac/artifacts/
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: CCExtractor mac build
         path: ./mac/artifacts
   build_autoconf:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install dependencies
       run: brew install pkg-config autoconf automake libtool gpac
     - name: run autogen
@@ -63,10 +63,10 @@ jobs:
   cmake:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: dependencies
       run: brew install gpac
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: cmake
       run: mkdir build && cd build && cmake ../src
     - name: build
@@ -77,7 +77,7 @@ jobs:
   cmake_ocr_hardsubx:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install dependencies
       run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
     - name: cmake
@@ -93,7 +93,7 @@ jobs:
   build_rust:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: cache 
         uses: actions/cache@v4
         with:

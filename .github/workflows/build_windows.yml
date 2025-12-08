@@ -4,7 +4,7 @@ env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
-  VCPKG_COMMIT: fba75d09065fcc76a25dcf386b1d00d33f5175af
+  VCPKG_COMMIT: ab2977be50c702126336e5088f4836060733c899
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
@@ -70,7 +70,7 @@ jobs:
       - name: Display version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: CCExtractor Windows Release build
           path: |
@@ -80,7 +80,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
@@ -122,7 +122,7 @@ jobs:
         continue-on-error: true
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: CCExtractor Windows Debug build
           path: |
