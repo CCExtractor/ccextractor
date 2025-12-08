@@ -167,7 +167,7 @@ pub unsafe extern "C" fn get_ocr_text_wordwise_threshold(
                 if conf < 75.0 {
                     continue;
                 }
-                
+
                 total_conf += conf;
                 num_words += 1;
             }
@@ -283,7 +283,7 @@ pub unsafe extern "C" fn get_ocr_text_letterwise_threshold(
                 if conf < 75.0 {
                     continue;
                 }
-                
+
                 total_conf += conf;
                 num_characters += 1;
             }

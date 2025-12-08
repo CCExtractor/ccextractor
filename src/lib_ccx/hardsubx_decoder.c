@@ -196,34 +196,35 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				}
 
-			if (subtitle_text)
-			{
-				char *double_enter = strstr(subtitle_text, "\n\n");
-				if (double_enter != NULL)
-					*(double_enter) = '\0';
-				
-				// Filter out very short text that is likely noise
-				size_t text_len = strlen(subtitle_text);
-				if (text_len < 3)
+				if (subtitle_text)
 				{
-					subtitle_text = NULL;
-				}
-				// Filter out text that is only numbers or special characters
-				else
-				{
-					int alpha_count = 0;
-					for (size_t i = 0; i < text_len; i++)
-					{
-						if (isalpha(subtitle_text[i]))
-							alpha_count++;
-					}
-					// Require at least 50% alphabetic characters
-					if (alpha_count < (int)(text_len * 0.5))
+					char *double_enter = strstr(subtitle_text, "\n\n");
+					if (double_enter != NULL)
+						*(double_enter) = '\0';
+
+					// Filter out very short text that is likely noise
+					size_t text_len = strlen(subtitle_text);
+					if (text_len < 3)
 					{
 						subtitle_text = NULL;
 					}
+					// Filter out text that is only numbers or special characters
+					else
+					{
+						int alpha_count = 0;
+						for (size_t i = 0; i < text_len; i++)
+						{
+							if (isalpha(subtitle_text[i]))
+								alpha_count++;
+						}
+						// Require at least 50% alphabetic characters
+						if (alpha_count < (int)(text_len * 0.5))
+						{
+							subtitle_text = NULL;
+						}
+					}
 				}
-			}				if (!prev_sub_encoded && prev_subtitle_text)
+				if (!prev_sub_encoded && prev_subtitle_text)
 				{
 					if (subtitle_text)
 					{
