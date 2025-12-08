@@ -27,7 +27,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: build
       run: ./build -hardsubx
       working-directory: ./linux
@@ -38,7 +38,7 @@ jobs:
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: CCExtractor Linux build
         path: ./linux/artifacts
@@ -47,7 +47,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: run autogen
       run: ./autogen.sh
       working-directory: ./linux
@@ -65,7 +65,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: cmake
       run: mkdir build && cd build && cmake ../src
     - name: build
@@ -76,7 +76,7 @@ jobs:
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install dependencies
       run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
     - name: cmake
@@ -94,7 +94,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: sudo apt update && sudo apt-get install libgpac-dev
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: cache 
         uses: actions/cache@v4
         with:

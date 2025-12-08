@@ -248,7 +248,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.85.0.lib;tesseract55.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -294,7 +294,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>
-        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.83.1.lib;tesseract53.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;charset.lib;iconv.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
+        ccx_rust.lib;UserEnv.lib;Crypt32.lib;WS2_32.Lib;ntdll.lib;Bcrypt.lib;Mfplat.lib;Mfuuid.lib;Secur32.lib;Strmiids.lib;Ole32.lib;User32.lib;libcrypto.lib;libcurl.lib;avcodec.lib;avformat.lib;avutil.lib;avfilter.lib;swscale.lib;swresample.lib;leptonica-1.85.0.lib;tesseract55.lib;gif.lib;archive.lib;avdevice.lib;bz2.lib;jpeg.lib;libpng16.lib;libsharpyuv.lib;libssl.lib;libwebp.lib;libwebpdecoder.lib;libwebpdemux.lib;libwebpmux.lib;libxml2.lib;lz4.lib;lzma.lib;openjp2.lib;tiff.lib;turbojpeg.lib;zlib.lib;zstd.lib;libgpac.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
