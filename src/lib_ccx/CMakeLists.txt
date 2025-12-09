@@ -53,6 +53,18 @@ if (WITH_OCR)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
 
+  # Some pkg-config files for leptonica report the include dir as
+  # .../include/leptonica which causes <leptonica/allheaders.h> to
+  # expand incorrectly. Add the parent include directory as well.
+  # Handle multiple include paths by iterating over each one.
+  foreach(LEPT_INC ${LEPTONICA_INCLUDE_DIRS})
+    get_filename_component(LEPT_PARENT "${LEPT_INC}" DIRECTORY)
+    if(LEPT_PARENT)
+      list(APPEND EXTRA_INCLUDES ${LEPT_PARENT})
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES EXTRA_INCLUDES)
+
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
 

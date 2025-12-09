@@ -139,8 +139,6 @@ jobs:
         uses: microsoft/setup-msbuild@v2.0.0
         with:
           msbuild-architecture: x64
-      - name: Install gpac
-        run: choco install gpac --version 2.4.0
       - name: Setup vcpkg
         run: mkdir C:\vcpkg\.cache
       - name: Cache vcpkg
