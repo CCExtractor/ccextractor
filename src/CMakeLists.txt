@@ -1,12 +1,14 @@
 cmake_minimum_required (VERSION 3.24.0)
+
+# On Windows, use static C runtime library to avoid UCRT symbol import issues
+# MUST be set before project() to take effect
+if (WIN32)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 project (CCExtractor)
 
 include (CTest)
-
-# On Windows, use static C runtime library to avoid UCRT symbol import issues
-if (WIN32 AND MSVC)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
