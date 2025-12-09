@@ -672,12 +672,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
 
 		ret = tlt_process_pes_packet(
-			dec_ctx,
-			data_node->buffer,
-			data_node->len,
-			dec_sub,
-			sentence_cap
-		);
+		    dec_ctx,
+		    data_node->buffer,
+		    data_node->len,
+		    dec_sub,
+		    sentence_cap);
 
 		/* If Teletext decoding fails with invalid data, abort processing */
 		if (ret == CCX_EINVAL)
