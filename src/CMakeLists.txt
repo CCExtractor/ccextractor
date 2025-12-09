@@ -6,7 +6,19 @@ if (WIN32)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project (CCExtractor)
+project (CCExtractor C)
+
+# Enable parallel compilation for faster builds
+if(MSVC)
+  add_compile_options(/MP)
+endif()
+
+# Use ccache if available for faster recompilation
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  message(STATUS "Using ccache for faster builds")
+endif()
 
 include (CTest)
 
@@ -85,6 +97,10 @@ file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
 if (WIN32)
   add_library(zlib_static STATIC ${ZLIB_SOURCES})
   target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+  # Suppress warnings in third-party code
+  if(MSVC)
+    target_compile_options(zlib_static PRIVATE /W0)
+  endif()
   set (EXTRA_LIBS ${EXTRA_LIBS} zlib_static)
 else()
   aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
@@ -254,6 +270,19 @@ endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 
+# Optimize compilation
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  if(MSVC)
+    target_compile_options(ccextractor PRIVATE /O2)
+  else()
+    target_compile_options(ccextractor PRIVATE -O3)
+  endif()
+endif()
+
 ########################################################
 # Build with Rust library
 ########################################################
@@ -263,8 +292,7 @@ if (PKG_CONFIG_FOUND)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
 endif (PKG_CONFIG_FOUND)
 
-
-target_link_libraries (ccextractor ${EXTRA_LIBS})
+target_link_libraries (ccextractor PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 install (TARGETS ccextractor DESTINATION bin)

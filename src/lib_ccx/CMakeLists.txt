@@ -2,6 +2,11 @@ cmake_policy (SET CMP0037 NEW)
 
 if(MSVC)
     set (CMAKE_C_FLAGS "-W3 /wd4005 /wd4996")
+    # Optimize for speed in release builds
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_compile_options(/O2 /GL)
+        add_link_options(/LTCG)
+    endif()
 else (MSVC)
     set (CMAKE_C_FLAGS "-Wall -Wno-pointer-sign -g -std=gnu99")
 endif(MSVC)
