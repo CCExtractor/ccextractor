@@ -13,15 +13,17 @@ endif(WIN32)
 # Try to find GPAC via pkg-config, or use manually specified variables
 if(NOT DEFINED GPAC_INCLUDE_DIRS OR NOT DEFINED GPAC_LIBRARIES)
   find_package(PkgConfig)
-  pkg_check_modules (GPAC REQUIRED gpac)
+  pkg_check_modules (GPAC gpac)
 endif()
 
-# Add GPAC include dirs and libraries (from either pkg-config or manual specification)
-if(GPAC_INCLUDE_DIRS)
+# Add GPAC include dirs and libraries if available
+if(GPAC_INCLUDE_DIRS AND GPAC_LIBRARIES)
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
-endif()
-if(GPAC_LIBRARIES)
   set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_GPAC")
+  message(STATUS "GPAC enabled")
+else()
+  message(WARNING "GPAC not found - MP4 support will be disabled")
 endif()
 
 if (WITH_FFMPEG)

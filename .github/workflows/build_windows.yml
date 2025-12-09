@@ -139,8 +139,6 @@ jobs:
         uses: microsoft/setup-msbuild@v2.0.0
         with:
           msbuild-architecture: x64
-      - name: Install gpac
-        run: choco install gpac --version 2.4.0
       - name: Setup vcpkg
         run: mkdir C:\vcpkg\.cache
       - name: Cache vcpkg
@@ -161,7 +159,7 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
-          cmake -S src -B cmake-build -A x64 -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DGPAC_INCLUDE_DIRS="C:/Program Files/GPAC/include" -DGPAC_LIBRARIES="C:/Program Files/GPAC/lib/libgpac_static.lib"
+          cmake -S src -B cmake-build -A x64 -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Build with CMake
         run: cmake --build cmake-build --config Release --target ccextractor
       - name: Display version information

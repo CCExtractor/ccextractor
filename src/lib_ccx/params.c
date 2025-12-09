@@ -1,7 +1,9 @@
 #include <png.h>
 #include "zlib.h"
+#ifdef ENABLE_GPAC
 #include "gpac/setup.h"
 #include "gpac/version.h"
+#endif
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "utility.h"
@@ -765,7 +767,9 @@ void version(char *location)
 	mprint("	Leptonica Version: %s\n", leptversion);
 	lept_free(leptversion);
 #endif // ENABLE_OCR
+#ifdef ENABLE_GPAC
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
+#endif
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char *)utf8proc_version());
 	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
