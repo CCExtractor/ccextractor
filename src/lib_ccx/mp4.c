@@ -865,9 +865,14 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
 
-int processmp4(struct ccx_s_mp4Cfg *cfg, struct ccx_demuxer *ctx)
+int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
 	return -1; // MP4 processing not available without GPAC
+}
+
+int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	return -1; // Chapter dumping not available without GPAC
 }
 
 #endif // ENABLE_GPAC
