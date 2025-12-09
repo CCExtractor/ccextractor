@@ -69,7 +69,20 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
-aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+
+# Gather zlib sources; on Windows build a static library and link it to
+# avoid depending on an external `zlib.lib` (which causes LNK1104 when
+# it's not available). On other platforms keep the old behavior of
+# compiling the sources directly into the main executable.
+file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
+if (WIN32)
+  add_library(zlib_static STATIC ${ZLIB_SOURCES})
+  target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+  set (EXTRA_LIBS ${EXTRA_LIBS} zlib_static)
+else()
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+endif()
+
 aux_source_directory(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi/ SOURCEFILE)
 
 set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
