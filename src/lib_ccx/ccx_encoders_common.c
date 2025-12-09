@@ -864,35 +864,34 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
-	int wrote_something = 0;
-	int ret = 0;
+    int wrote_something = 0;
+    int ret = 0;
 
-	if (!context)
-	{
-		/* Cleanup subtitle data if we are not encoding (report mode) to prevent memory leaks.
-		   Keep cleanup minimal and mirror allocation patterns used in the codebase. */
-		if (sub && sub->data)
-		{
-			if (sub->datatype == CC_DATATYPE_DVB)
-			{
-				/* Most DVB/bitmap handling places a cc_bitmap struct (or pointer) in sub->data.
-				   Free the bitmap internal buffers then free sub->data. */
-				struct cc_bitmap *bitmap = (struct cc_bitmap *)sub->data;
-				if (bitmap)
-				{
-					freep(&bitmap->data0);
-					freep(&bitmap->data1);
-#ifdef ENABLE_OCR
-					freep(&bitmap->ocr_text);
-#endif
-				}
-			}
-			/* Generic fallback: free sub->data container */
-			freep(&sub->data);
-			sub->nb_data = 0;
-		}
-		return CCX_OK;
-	}
+    /* If there is no encoder context (e.g. -out=report), we must still free
+       any allocated subtitle data to avoid memory leaks. */
+    if (!context)
+    {
+        if (sub)
+        {
+            /* DVB subtitles store bitmap planes inside cc_bitmap */
+            if (sub->datatype == CC_DATATYPE_DVB)
+            {
+                struct cc_bitmap *bitmap = (struct cc_bitmap *)sub->data;
+                if (bitmap)
+                {
+                    freep(&bitmap->data0);
+                    freep(&bitmap->data1);
+                }
+            }
+
+            /* Free generic subtitle payload buffer */
+            freep(&sub->data);
+            sub->nb_data = 0;
+        }
+
+        return CCX_OK;
+    }
+
 
 	context = change_filename(context);
 
