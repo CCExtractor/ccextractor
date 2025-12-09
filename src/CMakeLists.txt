@@ -5,8 +5,13 @@ include (CTest)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
-option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 option(USE_SYSTEM_ZLIB "Use system zlib instead of bundled" OFF)
+option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
+
+# Optional system libraries (OFF by default)
+option (USE_SYSTEM_ZLIB "Use system zlib instead of bundled" OFF)
+option (USE_SYSTEM_LIBPNG "Use system libpng instead of bundled" OFF)
+option (USE_SYSTEM_FREETYPE "Use system freetype instead of bundled" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -41,7 +46,17 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
-add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP)
+add_definitions(
+    -DVERSION_FILE_PRESENT
+    -DGPAC_DISABLE_VTT
+    -DGPAC_DISABLE_OD_DUMP
+    -DGPAC_DISABLE_REMOTERY
+    -DNO_GZIP
+)
+
+if (NOT USE_SYSTEM_FREETYPE)
+    add_definitions(-DFT2_BUILD_LIBRARY)
+endif ()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   add_definitions(-DGPAC_64_BITS)
@@ -52,12 +67,9 @@ include_directories(${PROJECT_SOURCE_DIR}/lib_ccx)
 include_directories(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
 
-# Check if the operating system is macOS (Darwin)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-    # ARM Macs
     include_directories("/opt/homebrew/include")
     include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
     aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
@@ -65,6 +77,25 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     include_directories("/usr/local/include")
   endif()
 endif()
+if (USE_SYSTEM_LIBPNG)
+    find_package(PNG REQUIRED)
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${PNG_LIBRARIES})
+    set(EXTRA_INCLUDES ${EXTRA_INCLUDES} ${PNG_INCLUDE_DIRS})
+else ()
+    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
+
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
+            include_directories("/opt/homebrew/include")
+            include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
+            aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
+        else ()
+            include_directories("/usr/local/include")
+        endif ()
+    endif ()
+
+    aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
+endif ()
 
 # ZLIB
 if(USE_SYSTEM_ZLIB)
@@ -73,7 +104,6 @@ if(USE_SYSTEM_ZLIB)
   set(EXTRA_INCLUDES ${EXTRA_INCLUDES} ${ZLIB_INCLUDE_DIRS})
 else()
   include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
   aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
@@ -82,49 +112,6 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi/ SOURCEFILE)
 
 set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
 
-set(FREETYPE_SOURCE
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/autofit/autofit.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbase.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbbox.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbdf.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftbitmap.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftcid.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftfntfmt.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftfstype.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftgasp.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftglyph.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftgxval.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftinit.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftlcdfil.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftmm.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftotval.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftpatent.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftpfr.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftstroke.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftsynth.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftsystem.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/fttype1.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/base/ftwinfnt.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/bdf/bdf.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/bzip2/ftbzip2.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cache/ftcache.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cff/cff.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/cid/type1cid.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/gzip/ftgzip.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/lzw/ftlzw.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pcf/pcf.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pfr/pfr.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/psaux/psaux.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/pshinter/pshinter.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/psnames/psnames.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/raster/raster.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/sfnt/sfnt.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/smooth/smooth.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/truetype/truetype.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/type1/type1.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/type42/type42.c
-        ${PROJECT_SOURCE_DIR}/thirdparty/freetype/winfonts/winfnt.c
-        )
 #Windows specific libraries and linker flags
 if(WIN32)
     if(NOT MINGW)
@@ -239,6 +226,7 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
+# Freetype: system vs bundled
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 
