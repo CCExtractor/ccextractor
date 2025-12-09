@@ -10,8 +10,11 @@ if(WIN32)
     add_definitions(-DWIN32)
 endif(WIN32)
 
-find_package(PkgConfig)
-pkg_check_modules (GPAC REQUIRED gpac)
+# Try to find GPAC via pkg-config, or use manually specified variables
+if(NOT DEFINED GPAC_INCLUDE_DIRS OR NOT DEFINED GPAC_LIBRARIES)
+  find_package(PkgConfig)
+  pkg_check_modules (GPAC REQUIRED gpac)
+endif()
 
 set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
 set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
