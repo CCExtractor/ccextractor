@@ -53,6 +53,7 @@
 - Fix: Resolve compile-time error about implicit declarations (#1646)
 - Fix: fatal out of memory error extracting from a VOB PS
 - Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
+- Fix: handle row_count decrease in CEA-708 C decoder
 - Fix: Support for MINGW-w64 cross compiling
 - Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
 
