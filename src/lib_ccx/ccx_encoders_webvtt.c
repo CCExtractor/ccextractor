@@ -202,36 +202,49 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	return 0;
 }
 
-void write_webvtt_header(struct encoder_ctx *context)
+void write_webvtt_header(struct encoder_ctx *context, struct ccx_s_write *out)
 {
 	if (context->wrote_webvtt_header) // Already done
 		return;
 
-	if (ccx_options.timestamp_map && context->timing != NULL && context->timing->sync_pts2fts_set)
+	// Use the provided output handle, or fall back to context->out if not provided
+	int fh = (out != NULL) ? out->fh : context->out->fh;
+
+	if (ccx_options.timestamp_map)
 	{
 		char header_string[200];
 		int used;
-		unsigned h1, m1, s1, ms1;
-		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
-		// If the user has enabled X-TIMESTAMP-MAP
-		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-			context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
-			ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+		if (context->timing != NULL && context->timing->sync_pts2fts_set)
+		{
+			unsigned h1, m1, s1, ms1;
+			millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
+
+			// X-TIMESTAMP-MAP with actual timing info from the stream
+			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
+				context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
+				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+		}
+		else
+		{
+			// Default X-TIMESTAMP-MAP when no timing info available (e.g., no subtitles found)
+			sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000%s",
+				ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+		}
 
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
-		write_wrapped(context->out->fh, context->buffer, used);
+		write_wrapped(fh, context->buffer, used);
 	}
 	else
 	{
 		// Must have another newline if X-TIMESTAMP-MAP is not used
 		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
-			write_wrapped(context->out->fh, "\n", 1);
+			write_wrapped(fh, "\n", 1);
 		}
 		else
 		{
-			write_wrapped(context->out->fh, "\r\n", 2);
+			write_wrapped(fh, "\r\n", 2);
 		}
 	}
 
@@ -252,21 +265,21 @@ void write_webvtt_header(struct encoder_ctx *context)
 
 		char *outline_css_file = (char *)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
 		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
-		write_wrapped(context->out->fh, outline_css_file, strlen(outline_css_file));
+		write_wrapped(fh, outline_css_file, strlen(outline_css_file));
 	}
 	else if (ccx_options.use_webvtt_styling)
 	{
-		write_wrapped(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
+		write_wrapped(fh, webvtt_inline_css, strlen(webvtt_inline_css));
 		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
 		{
-			write_wrapped(context->out->fh, "\n", 1);
+			write_wrapped(fh, "\n", 1);
 		}
 		else
 		{
-			write_wrapped(context->out->fh, "\r\n", 2);
+			write_wrapped(fh, "\r\n", 2);
 		}
-		write_wrapped(context->out->fh, "##\n", 3);
-		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		write_wrapped(fh, "##\n", 3);
+		write_wrapped(fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
 
 	context->wrote_webvtt_header = 1; // Do it even if couldn't write the header, because it won't be possible anyway
@@ -288,7 +301,7 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->nb_data == 0)
 		return 0;
 
-	write_webvtt_header(context);
+	write_webvtt_header(context, NULL);
 
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
@@ -425,7 +438,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	if (empty_buf) // Prevent writing empty screens. Not needed in .vtt
 		return 0;
 
-	write_webvtt_header(context);
+	write_webvtt_header(context, NULL);
 
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.

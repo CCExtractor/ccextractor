@@ -209,6 +209,7 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 {
 	struct lib_ccx_ctx *lctx = *ctx;
 	struct encoder_ctx *enc_ctx;
+	struct encoder_ctx *enc_ctx1;
 	struct lib_cc_decode *dec_ctx;
 	struct lib_cc_decode *dec_ctx1;
 	int i;
@@ -237,6 +238,17 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		{
 			list_del(&enc_ctx->list);
 			dinit_encoder(&enc_ctx, cfts);
+		}
+	}
+
+	// Cleanup any remaining encoders that weren't associated with a decoder
+	// (e.g., when no subtitles were found but output file was created)
+	if (!list_empty(&lctx->enc_ctx_head))
+	{
+		list_for_each_entry_safe(enc_ctx, enc_ctx1, &lctx->enc_ctx_head, list, struct encoder_ctx)
+		{
+			list_del(&enc_ctx->list);
+			dinit_encoder(&enc_ctx, 0);
 		}
 	}
 
