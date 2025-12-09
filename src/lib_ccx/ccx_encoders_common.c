@@ -867,8 +867,30 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	int wrote_something = 0;
 	int ret = 0;
 
+	/* If there is no encoder context (e.g. -out=report), we must still free
+	   any allocated subtitle data to avoid memory leaks. */
 	if (!context)
+	{
+		if (sub)
+		{
+			/* DVB subtitles store bitmap planes inside cc_bitmap */
+			if (sub->datatype == CC_DATATYPE_DVB)
+			{
+				struct cc_bitmap *bitmap = (struct cc_bitmap *)sub->data;
+				if (bitmap)
+				{
+					freep(&bitmap->data0);
+					freep(&bitmap->data1);
+				}
+			}
+
+			/* Free generic subtitle payload buffer */
+			freep(&sub->data);
+			sub->nb_data = 0;
+		}
+
 		return CCX_OK;
+	}
 
 	context = change_filename(context);
 
