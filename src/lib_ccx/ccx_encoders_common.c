@@ -1181,7 +1181,7 @@ unsigned int get_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 {
 	unsigned char *orig = buffer; // Keep for debugging
 	unsigned char *line = data->characters[line_num];
-	for (int i = 0; i < 33; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		int bytes = 0;
 		switch (ctx->encoding)
@@ -1215,7 +1215,6 @@ unsigned int get_color_encoded(struct encoder_ctx *ctx, unsigned char *buffer, i
 		else
 			*buffer++ = 'E';
 	}
-	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
 }
 unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
