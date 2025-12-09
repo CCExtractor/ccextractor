@@ -79,6 +79,8 @@ if (WIN32)
   add_library(zlib_static STATIC ${ZLIB_SOURCES})
   target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
   set (EXTRA_LIBS ${EXTRA_LIBS} zlib_static)
+  # Add Windows legacy POSIX and standard C library compatibility
+  set (EXTRA_LIBS ${EXTRA_LIBS} legacy_stdio_definitions.lib)
 else()
   aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
 endif()
