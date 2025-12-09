@@ -36,6 +36,10 @@ char *get_buffer_type_str(struct cap_info *cinfo)
 	{
 		return strdup("H.264");
 	}
+	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
+	{
+		return strdup("HEVC");
+	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC)
 	{
 		return strdup("ISDB CC subtitle");
@@ -129,6 +133,10 @@ enum ccx_bufferdata_type get_buffer_type(struct cap_info *cinfo)
 	{
 		return CCX_H264;
 	}
+	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
+	{
+		return CCX_H264; // HEVC uses same buffer type as H264
+	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
 		return CCX_DVB_SUBTITLE;
@@ -174,6 +182,7 @@ void init_ts(struct ccx_demuxer *ctx)
 	desc[CCX_STREAM_TYPE_AUDIO_AAC] = "AAC audio";
 	desc[CCX_STREAM_TYPE_VIDEO_MPEG4] = "MPEG-4 video";
 	desc[CCX_STREAM_TYPE_VIDEO_H264] = "H.264 video";
+	desc[CCX_STREAM_TYPE_VIDEO_HEVC] = "HEVC video";
 	desc[CCX_STREAM_TYPE_PRIVATE_USER_MPEG2] = "MPEG-2 User Private";
 	desc[CCX_STREAM_TYPE_AUDIO_AC3] = "AC3 audio";
 	desc[CCX_STREAM_TYPE_AUDIO_DTS] = "DTS audio";
