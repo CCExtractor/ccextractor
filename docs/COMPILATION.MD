@@ -43,6 +43,10 @@ Arch:
 ```bash
 sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
+or
+```bash
+sudo pacman -S glew glfw curl tesseract leptonica cmake gcc clang gpac
+```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
 
@@ -66,9 +70,6 @@ cd ccextractor/linux
 # compile without debug flags
 ./build
 
-# compile without rust
-./build -without-rust
-
 # compile with debug info
 ./build -debug            # same as ./builddebug
 
@@ -89,8 +90,6 @@ FFMPEG_VERSION=ffmpeg7 ./build -hardsubx  # force FFmpeg 7 on any platform
 FFMPEG_INCLUDE_DIR=/usr/include 
 FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
-# compile in debug mode without rust
-./build -debug -without-rust
 
 # test your build
 ./ccextractor
@@ -102,7 +101,7 @@ FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 sudo apt-get install autoconf  # dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure                    # OR ./configure --without-rust
+./configure
 make
 
 # test your build
@@ -215,7 +214,7 @@ make
 ```bash
 cd ccextractor/mac
 ./autogen.sh
-./configure         # OR ./configure --without-rust
+./configure         
 make
 
 # test your build
