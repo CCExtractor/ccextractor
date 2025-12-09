@@ -45,7 +45,7 @@ sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 or
 ```bash
-sudo pacman -S  glew glfw curl tesseract leptonica cmake gcc clang gpac
+sudo pacman -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
