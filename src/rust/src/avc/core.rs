@@ -278,7 +278,7 @@ pub fn hex_dump(data: &[u8]) {
 
         // Print hex bytes
         for byte in chunk {
-            print!("{:02X} ", byte);
+            print!("{byte:02X} ");
         }
 
         // Pad if less than 16 bytes

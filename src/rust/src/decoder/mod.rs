@@ -13,6 +13,7 @@ mod window;
 use log::debug as log_debug;
 
 use lib_ccxr::{
+    common::DTVCC_MAX_SERVICES,
     debug, fatal,
     util::log::{DebugMessageFlag, ExitCause},
 };
@@ -25,9 +26,6 @@ const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
 const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
-
-/// Maximum number of CEA-708 services
-pub const CCX_DTVCC_MAX_SERVICES: usize = 63;
 
 /// Context required for processing 708 data
 pub struct Dtvcc<'a> {
@@ -229,7 +227,7 @@ pub struct DtvccRust {
     pub services_active: Vec<i32>,
     pub report_enabled: bool,
     pub report: *mut ccx_decoder_dtvcc_report,
-    pub decoders: [Option<Box<dtvcc_service_decoder>>; CCX_DTVCC_MAX_SERVICES],
+    pub decoders: [Option<Box<dtvcc_service_decoder>>; DTVCC_MAX_SERVICES],
     pub packet: Vec<u8>,
     pub packet_length: u8,
     pub is_header_parsed: bool,
@@ -274,7 +272,7 @@ impl DtvccRust {
         // directly on the heap to avoid stack overflow.
         let decoders = {
             const INIT: Option<Box<dtvcc_service_decoder>> = None;
-            let mut decoders = [INIT; CCX_DTVCC_MAX_SERVICES];
+            let mut decoders = [INIT; DTVCC_MAX_SERVICES];
 
             for (i, d) in decoders.iter_mut().enumerate() {
                 if i >= opts.services_enabled.len() || !is_true(opts.services_enabled[i]) {
@@ -416,11 +414,7 @@ impl DtvccRust {
     /// Process current packet into service blocks
     fn process_current_packet(&mut self, len: u8) {
         let seq = (self.packet[0] & 0xC0) >> 6;
-        log_debug!(
-            "dtvcc_process_current_packet: Sequence: {}, packet length: {}",
-            seq,
-            len
-        );
+        log_debug!("dtvcc_process_current_packet: Sequence: {seq}, packet length: {len}");
         if self.packet_length == 0 {
             return;
         }
@@ -441,10 +435,7 @@ impl DtvccRust {
         while pos < len {
             let mut service_number = (self.packet[pos as usize] & 0xE0) >> 5; // 3 more significant bits
             let block_length = self.packet[pos as usize] & 0x1F; // 5 less significant bits
-            log_debug!(
-                "dtvcc_process_current_packet: Standard header Service number: {}, Block length: {}",
-                service_number, block_length
-            );
+            log_debug!("dtvcc_process_current_packet: Standard header Service number: {service_number}, Block length: {block_length}");
 
             if service_number == 7 {
                 // There is an extended header
@@ -452,10 +443,7 @@ impl DtvccRust {
                 pos += 1;
                 service_number = self.packet[pos as usize] & 0x3F; // 6 more significant bits
                 if service_number > 7 {
-                    log_debug!(
-                        "dtvcc_process_current_packet: Illegal service number in extended header: {}",
-                        service_number
-                    );
+                    log_debug!("dtvcc_process_current_packet: Illegal service number in extended header: {service_number}");
                 }
             }
 
@@ -518,7 +506,7 @@ impl DtvccRust {
             return;
         }
 
-        for i in 0..CCX_DTVCC_MAX_SERVICES {
+        for i in 0..DTVCC_MAX_SERVICES {
             if i >= self.services_active.len() || !is_true(self.services_active[i]) {
                 continue;
             }
