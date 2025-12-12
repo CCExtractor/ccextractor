@@ -6,7 +6,7 @@
 |-------|--------|--------|-----|
 | Phase 1: Rust Core | ✅ COMPLETE | `fix/1499-dtvcc-persistent-state` | #1782 |
 | Phase 2: C Headers | ✅ COMPLETE | `fix/1499-dtvcc-persistent-state` | #1782 |
-| Phase 3: C Implementation | 🔲 NOT STARTED | - | - |
+| Phase 3: C Implementation | ✅ COMPLETE | `fix/1499-dtvcc-persistent-state` | #1782 |
 | Phase 4: Testing | 🔲 NOT STARTED | - | - |
 
 ---
@@ -303,20 +303,20 @@ Also modifies `ccxr_process_cc_data` to not create new Dtvcc.
 - File: `src/lib_ccx/ccx_decoders_common.h`
 - Added extern declaration for `ccxr_flush_active_decoders`
 
-### Phase 3: C Implementation Changes
+### Phase 3: C Implementation Changes ✅ COMPLETE
 
-**Step 3.1: Update decoder initialization/destruction**
+**Step 3.1: Update decoder initialization/destruction** ✅
 - File: `src/lib_ccx/ccx_decoders_common.c`
 - In `init_cc_decode()`: Use `ccxr_dtvcc_init()` when Rust enabled
 - In `dinit_cc_decode()`: Use `ccxr_dtvcc_free()` when Rust enabled
 - In `flush_cc_decode()`: Use `ccxr_flush_active_decoders()` when Rust enabled
-- Remove old `ccxr_flush_decoder` extern declaration
+- Added `ccxr_dtvcc_is_active()` declaration to `ccx_dtvcc.h`
 
-**Step 3.2: Update encoder assignment points**
+**Step 3.2: Update encoder assignment points** ✅
 - File: `src/lib_ccx/general_loop.c`
-- Three locations need `ccxr_dtvcc_set_encoder()` calls
+- Three locations updated with `ccxr_dtvcc_set_encoder()` calls
 - File: `src/lib_ccx/mp4.c`
-- Use `ccxr_dtvcc_set_encoder()` and `ccxr_dtvcc_process_data()`
+- Updated with `ccxr_dtvcc_set_encoder()` and `ccxr_dtvcc_process_data()`
 
 ### Phase 4: Testing
 
@@ -364,13 +364,14 @@ Also modifies `ccxr_process_cc_data` to not create new Dtvcc.
 | `src/lib_ccx/lib_ccx.h` | C Header | ✅ | Added `ccxr_dtvcc_set_encoder` declaration |
 | `src/lib_ccx/ccx_decoders_common.h` | C Header | ✅ | Added `ccxr_flush_active_decoders` declaration |
 
-### Phase 3 (Pending)
+### Phase 3 (Complete)
 
 | File | Type | Status | Changes |
 |------|------|--------|---------|
-| `src/lib_ccx/ccx_decoders_common.c` | C | 🔲 | Use Rust init/free/flush |
-| `src/lib_ccx/general_loop.c` | C | 🔲 | Set encoder via Rust function |
-| `src/lib_ccx/mp4.c` | C | 🔲 | Use Rust processing for MP4 |
+| `src/lib_ccx/ccx_decoders_common.c` | C | ✅ | Use Rust init/free/flush with `#ifndef DISABLE_RUST` guards |
+| `src/lib_ccx/general_loop.c` | C | ✅ | Set encoder via `ccxr_dtvcc_set_encoder()` at 3 locations |
+| `src/lib_ccx/mp4.c` | C | ✅ | Use `ccxr_dtvcc_set_encoder()` and `ccxr_dtvcc_process_data()` |
+| `src/lib_ccx/ccx_dtvcc.h` | C Header | ✅ | Added `ccxr_dtvcc_is_active()` declaration |
 
 ---
 
@@ -378,7 +379,7 @@ Also modifies `ccxr_process_cc_data` to not create new Dtvcc.
 
 - **Phase 1 (Rust)**: ✅ COMPLETE - Added new struct alongside existing code
 - **Phase 2 (C Headers)**: ✅ COMPLETE - Added field and extern declarations
-- **Phase 3 (C Implementation)**: Low-Medium - conditional compilation blocks
+- **Phase 3 (C Implementation)**: ✅ COMPLETE - Added conditional compilation blocks
 - **Phase 4 (Testing)**: Medium - need to verify state persistence works correctly
 
 **Total estimate**: This is a significant change touching core decoder logic. Recommend implementing in small, testable increments.
