@@ -301,7 +301,7 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 
 #ifndef DISABLE_RUST
 	ctx->dtvcc_rust = ccxr_dtvcc_init(setting->settings_dtvcc);
-	ctx->dtvcc = NULL;  // Not used when Rust is enabled
+	ctx->dtvcc = NULL; // Not used when Rust is enabled
 #else
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	if (!ctx->dtvcc)
