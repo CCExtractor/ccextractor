@@ -554,7 +554,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	if (enc_ctx)
 		enc_ctx->timing = dec_ctx->timing;
 
-	// WARN: otherwise cea-708 will not work
+		// WARN: otherwise cea-708 will not work
 #ifndef DISABLE_RUST
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
 #else
