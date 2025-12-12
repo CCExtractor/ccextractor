@@ -422,6 +422,10 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext *)malloc(sizeof(DVBSubContext));
+	if (!ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_init_decoder: Out of memory.");
+	}
 	memset(ctx, 0, sizeof(DVBSubContext));
 
 	if (cfg)
@@ -1139,6 +1143,10 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 	if (!clut)
 	{
 		clut = (DVBSubCLUT *)malloc(sizeof(DVBSubCLUT));
+		if (!clut)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_clut_segment: Out of memory.");
+		}
 
 		memcpy(clut, &default_clut, sizeof(DVBSubCLUT));
 
@@ -1244,6 +1252,10 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 	{
 		dbg_print(CCX_DMT_DVB, " [new region allocated] ");
 		region = (struct DVBSubRegion *)malloc(sizeof(struct DVBSubRegion));
+		if (!region)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_region_segment: Out of memory allocating region.");
+		}
 		memset(region, 0, sizeof(struct DVBSubRegion));
 
 		region->id = region_id;
@@ -1272,6 +1284,10 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 		freep(&region->pbuf);
 		region->buf_size = region->width * region->height;
 		region->pbuf = (uint8_t *)malloc(region->buf_size);
+		if (!region->pbuf)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_region_segment: Out of memory allocating pbuf.");
+		}
 		fill = 1;
 		region->dirty = 0;
 	}
@@ -1313,6 +1329,10 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 		if (!object)
 		{
 			object = (struct DVBSubObject *)malloc(sizeof(struct DVBSubObject));
+			if (!object)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_region_segment: Out of memory allocating object.");
+			}
 			memset(object, 0, sizeof(struct DVBSubObject));
 
 			object->id = object_id;
@@ -1324,6 +1344,10 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 
 		display = (struct DVBSubObjectDisplay *)malloc(
 		    sizeof(struct DVBSubObjectDisplay));
+		if (!display)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_region_segment: Out of memory allocating display.");
+		}
 		memset(display, 0, sizeof(struct DVBSubObjectDisplay));
 
 		display->object_id = object_id;
@@ -1411,6 +1435,10 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 		{
 			display = (struct DVBSubRegionDisplay *)malloc(
 			    sizeof(struct DVBSubRegionDisplay));
+			if (!display)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_page_segment: Out of memory allocating display.");
+			}
 			memset(display, 0, sizeof(struct DVBSubRegionDisplay));
 		}
 
@@ -1523,7 +1551,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	rect = malloc(sizeof(struct cc_bitmap));
 	if (!rect)
-		return -1;
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_dvb_sub: Out of memory allocating rect.");
+	}
 	rect->data0 = NULL;
 	rect->data1 = NULL;
 
@@ -1603,6 +1633,10 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		if (rect->data1 == NULL)
 		{
 			rect->data1 = malloc(1024);
+			if (!rect->data1)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_dvb_sub: Out of memory allocating data1.");
+			}
 		}
 		memset(rect->data1, 0, 1024);
 		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
@@ -1621,8 +1655,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	rect->data0 = (uint8_t *)malloc(width * height);
 	if (!rect->data0)
 	{
-		mprint("write_dvb_sub: failed to alloc memory, need %d * %d = %d bytes\n", width, height, width * height);
-		return -1;
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_dvb_sub: Out of memory allocating data0 (%d * %d = %d bytes).", width, height, width * height);
 	}
 	memset(rect->data0, 0x0, width * height);
 
@@ -1731,6 +1764,10 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 
 	freep(&dec_ctx->prev->private_data);
 	dec_ctx->prev->private_data = malloc(sizeof(struct DVBSubContext));
+	if (!dec_ctx->prev->private_data)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_handle_display_segment: Out of memory allocating private_data.");
+	}
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
 	/* copy previous subtitle */
 	free_subtitle(sub->prev);
