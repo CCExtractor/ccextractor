@@ -321,6 +321,10 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 		return enc_ctx;
 	}
 	struct encoder_ctx *temp_encoder = malloc(sizeof(struct encoder_ctx));
+	if (!temp_encoder)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating temp_encoder.");
+	}
 	*temp_encoder = *enc_ctx;
 	if (enc_ctx->out->fh != -1)
 	{
@@ -328,38 +332,47 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 			close(enc_ctx->out->fh);
 		enc_ctx->out->fh = -1;
 		int iter;
-		char str_number[15];
-		char *current_name = malloc(sizeof(char) * (strlen(enc_ctx->out->filename) + 10));
-		strcpy(current_name, enc_ctx->out->filename);
+		size_t filename_len = strlen(enc_ctx->out->filename);
+		size_t current_name_size = filename_len + 16;
+		char *current_name = malloc(current_name_size);
+		if (!current_name)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating current_name.");
+		}
+		strncpy(current_name, enc_ctx->out->filename, current_name_size - 1);
+		current_name[current_name_size - 1] = '\0';
 		mprint("Creating %s\n", enc_ctx->out->filename);
 		if (enc_ctx->out->renaming_extension)
 		{
-			strcat(current_name, ".");
-			sprintf(str_number, "%d", enc_ctx->out->renaming_extension);
-			strcat(current_name, str_number);
+			size_t cur_len = strlen(current_name);
+			snprintf(current_name + cur_len, current_name_size - cur_len, ".%d", enc_ctx->out->renaming_extension);
 		}
 		enc_ctx->out->renaming_extension++;
 		for (iter = enc_ctx->out->renaming_extension; iter >= 1; iter--)
 		{
 			int ret;
-			char new_extension[6];
-			sprintf(new_extension, ".%d", iter);
-			char *newname = malloc(sizeof(char) * (strlen(enc_ctx->out->filename) + 10));
-			strcpy(newname, enc_ctx->out->filename);
-			strcat(newname, new_extension);
+			char new_extension[16];
+			snprintf(new_extension, sizeof(new_extension), ".%d", iter);
+			size_t newname_size = filename_len + 16;
+			char *newname = malloc(newname_size);
+			if (!newname)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating newname.");
+			}
+			snprintf(newname, newname_size, "%s%s", enc_ctx->out->filename, new_extension);
 			ret = rename(current_name, newname);
 			if (ret)
 			{
 				mprint("Failed to rename the file\n");
 			}
 			mprint("Creating %s\n", newname);
-			strcpy(current_name, enc_ctx->out->filename);
+			strncpy(current_name, enc_ctx->out->filename, current_name_size - 1);
+			current_name[current_name_size - 1] = '\0';
 
 			if (iter - 2 > 0)
 			{
-				strcat(current_name, ".");
-				sprintf(str_number, "%d", iter - 2);
-				strcat(current_name, str_number);
+				size_t cur_len = strlen(current_name);
+				snprintf(current_name + cur_len, current_name_size - cur_len, ".%d", iter - 2);
 			}
 			free(newname);
 		}
