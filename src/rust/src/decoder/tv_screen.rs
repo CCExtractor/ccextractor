@@ -454,7 +454,6 @@ impl dtvcc_tv_screen {
                 // Correct the frame delay
                 time_show.time_in_ms -= 1000 / 29.97 as i64;
                 buf.push_str(&(get_scc_time_str(time_show) + "\t942c 942c ").to_owned());
-                time_show.time_in_ms += 1000 / 29.97 as i64;
                 // Clear the buffer and start pop on caption
                 buf.push_str("94ae 94ae 9420 9420");
             }
@@ -466,14 +465,12 @@ impl dtvcc_tv_screen {
                 time_show.time_in_ms -= 1000 / 29.97 as i64;
                 // Clear the buffer and start pop on caption in new time
                 buf.push_str(&(get_scc_time_str(time_show) + "\t94ae 94ae 9420 9420").to_owned());
-                time_show.time_in_ms += 1000 / 29.97 as i64;
             }
             Ordering::Equal => {
                 time_show.time_in_ms -= 1000 / 29.97 as i64;
                 buf.push_str(
                     &(get_scc_time_str(time_show) + "\t942c 942c 94ae 94ae 9420 9420").to_owned(),
                 );
-                time_show.time_in_ms += 1000 / 29.97 as i64;
             }
         }
 
