@@ -31,7 +31,7 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
 void dtvcc_write_sami(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder);
-void add_needed_scc_labels(char *buf, int total_subtitle_count, int current_subtitle_count);
+void add_needed_scc_labels(char *buf, size_t buf_size, size_t *buf_len, int total_subtitle_count, int current_subtitle_count);
 void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 void dtvcc_write(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder);
 
