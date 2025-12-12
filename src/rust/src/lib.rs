@@ -367,6 +367,7 @@ pub extern "C" fn ccxr_dtvcc_is_active(dtvcc_ptr: *mut std::ffi::c_void) -> i32 
 /// # Safety
 /// dec_ctx should not be a null pointer
 /// data should point to cc_data of length cc_count
+/// dec_ctx.dtvcc_rust must point to a valid DtvccRust instance
 #[no_mangle]
 extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
@@ -378,13 +379,20 @@ extern "C" fn ccxr_process_cc_data(
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
     let dec_ctx = unsafe { &mut *dec_ctx };
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
+
+    // Use the persistent DtvccRust context from dtvcc_rust
+    let dtvcc_rust = dec_ctx.dtvcc_rust as *mut DtvccRust;
+    if dtvcc_rust.is_null() {
+        warn!("ccxr_process_cc_data: dtvcc_rust is null");
+        return ret;
+    }
+    let dtvcc = unsafe { &mut *dtvcc_rust };
+
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb_dtvcc(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb_dtvcc_rust(dec_ctx, dtvcc, cc_block);
         if success {
             ret = 0;
         }
@@ -427,8 +435,59 @@ pub fn verify_parity(data: u8) -> bool {
     false
 }
 
-/// Process CC data according to its type
+/// Process CC data according to its type (using Dtvcc)
 pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
+    let cc_valid = (cc_block[0] & 4) >> 2;
+    let cc_type = cc_block[0] & 3;
+    let mut timeok = true;
+
+    if ctx.write_format != ccx_output_format::CCX_OF_DVDRAW
+        && ctx.write_format != ccx_output_format::CCX_OF_RAW
+        && (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
+        && (cc_block[1] & 0x7F) == 0
+        && (cc_block[2] & 0x7F) == 0
+    {
+        return true;
+    }
+
+    if cc_valid == 1 || cc_type == 3 {
+        ctx.cc_stats[cc_type as usize] += 1;
+        match cc_type {
+            // Type 0 and 1 are for CEA-608 data. Handled by C code, do nothing
+            0 | 1 => {}
+            // Type 2 and 3 are for CEA-708 data.
+            2 | 3 => {
+                let current_time = if ctx.timing.is_null() {
+                    0
+                } else {
+                    unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) }
+                };
+                ctx.current_field = 3;
+
+                // Check whether current time is within start and end bounds
+                if is_true(ctx.extraction_start.set)
+                    && current_time < ctx.extraction_start.time_in_ms
+                {
+                    timeok = false;
+                }
+                if is_true(ctx.extraction_end.set) && current_time > ctx.extraction_end.time_in_ms {
+                    timeok = false;
+                    ctx.processed_enough = 1;
+                }
+
+                if timeok && ctx.write_format != ccx_output_format::CCX_OF_RAW {
+                    dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
+                }
+                unsafe { cb_708 += 1 }
+            }
+            _ => warn!("Invalid cc_type"),
+        }
+    }
+    true
+}
+
+/// Process CC data according to its type (using DtvccRust - persistent context)
+pub fn do_cb_dtvcc_rust(ctx: &mut lib_cc_decode, dtvcc: &mut DtvccRust, cc_block: &[u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     let mut timeok = true;
