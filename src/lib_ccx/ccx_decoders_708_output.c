@@ -6,24 +6,14 @@
 
 #if defined(WIN32)
 extern void ccxr_close_handle(void *handle);
-#endif
-
-int dtvcc_is_row_empty(dtvcc_tv_screen *tv, int row_index)
-{
-	for (int j = 0; j < CCX_DTVCC_SCREENGRID_COLUMNS; j++)
-	{
-		if (CCX_DTVCC_SYM_IS_SET(tv->chars[row_index][j]))
-			return 0;
-	}
-	return 1;
-}
-
-int dtvcc_is_screen_empty(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
-{
-	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
-	{
-		if (!dtvcc_is_row_empty(tv, i))
-		{
+#define SAMI_SNPRINTF(fmt, ...)                                                   \
+	do                                                                        \
+	{                                                                         \
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;                \
+		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
+		if (written > 0 && (size_t)written < remaining)                   \
+			buf_len += written;                                       \
+	} while (0)
 			// we will write subtitle
 			encoder->cea_708_counter++;
 			return 0;
@@ -361,13 +351,12 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	size_t remaining = INITIAL_ENC_BUFFER_CAPACITY;
 	int written;
 
-#define SAMI_SNPRINTF(fmt, ...)                                                   \
-	do                                                                        \
-	{                                                                         \
-		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;                \
+#define SAMI_SNPRINTF(fmt, ...)                                       \
+	do {                                                          \
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;    \
 		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
-		if (written > 0 && (size_t)written < remaining)                   \
-			buf_len += written;                                       \
+		if (written > 0 && (size_t)written < remaining)       \
+			buf_len += written;                           \
 	} while (0)
 
 	SAMI_SNPRINTF("<sami>%s", encoder->encoded_crlf);
@@ -540,6 +529,7 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> af5e36cd (style: fix clang-format issues in macro definitions)
 #define SCC_SNPRINTF(fmt, ...)                                                    \
@@ -551,18 +541,23 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		if (written > 0 && (size_t)written < remaining)                   \
 			buf_len += written;                                       \
 =======
+=======
+>>>>>>> bcf7eb2a (fix(708_output): replace sprintf with snprintf for buffer safety)
 #define SCC_SNPRINTF(fmt, ...)                                            \
 	do {                                                              \
 		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;        \
 		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
 		if (written > 0 && (size_t)written < remaining)           \
 			buf_len += written;                               \
+<<<<<<< HEAD
 >>>>>>> 8329257b (fix(708_output): replace sprintf with snprintf for buffer safety)
 =======
 		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
 		if (written > 0 && (size_t)written < remaining)                   \
 			buf_len += written;                                       \
 >>>>>>> af5e36cd (style: fix clang-format issues in macro definitions)
+=======
+>>>>>>> bcf7eb2a (fix(708_output): replace sprintf with snprintf for buffer safety)
 	} while (0)
 
 	if (tv->old_cc_time_end > time_show.time_in_ms)
