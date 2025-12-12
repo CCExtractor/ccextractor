@@ -438,6 +438,10 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 	pbuf = (uint8_t *)malloc(width * height);
+	if (!pbuf)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_spupng: Out of memory allocating pbuf.");
+	}
 	memset(pbuf, 0x0, width * height);
 
 	for (i = 0; i < sub->nb_data; i++)
@@ -535,6 +539,12 @@ int write_image(struct pixel_t *buffer, FILE *fp, int width, int height)
 
 	// Allocate memory for one row (4 bytes per pixel - RGBA)
 	row = (png_bytep)malloc(4 * width * sizeof(png_byte));
+	if (!row)
+	{
+		mprint("\nFailed to allocate memory for row in write_image.\n");
+		ret_code = 0;
+		goto finalise;
+	}
 
 	// Write image data
 	int x, y;
@@ -605,6 +615,10 @@ void center_justify(struct pixel_t *target, int target_w,
 	// Note that the copy is smaller than the line:
 	//   its width is set to just enough to contain the valid area
 	struct pixel_t *temp_buffer = malloc(valid_w * valid_h * sizeof(struct pixel_t));
+	if (!temp_buffer)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In center_justify: Out of memory allocating temp_buffer.");
+	}
 
 	// x,y here is input-based (i.e. `buffer`)
 	for (int x = 0; x < valid_w; ++x)
@@ -708,6 +722,10 @@ uint32_t *utf8_to_utf32(char *src)
 	len_dst = (len_src + 2) * 4; // one for FEFF and one for \0
 
 	uint32_t *string_utf32 = (uint32_t *)calloc(len_dst, 1);
+	if (!string_utf32)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In utf8_to_utf32: Out of memory allocating string_utf32.");
+	}
 	size_t inbufbytesleft = len_src;
 	size_t outbufbytesleft = len_dst;
 	char *inbuf = src;
@@ -762,8 +780,8 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 	struct pixel_t *buffer = malloc(canvas_width * canvas_height * sizeof(struct pixel_t));
 	if (buffer == NULL)
 	{
-		mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
-		       canvas_width * canvas_height * sizeof(struct pixel_t));
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In spupng_export_string2png: Out of memory allocating buffer. Need %lu bytes.",
+		      (unsigned long)(canvas_width * canvas_height * sizeof(struct pixel_t)));
 	}
 	memset(buffer, 0, canvas_width * canvas_height * sizeof(struct pixel_t));
 
@@ -771,7 +789,10 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 	char *tmp = strdup(str);
 
 	if (!tmp)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	char *token = strtok(tmp, "<>");
 
@@ -880,9 +901,11 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 				struct pixel_t *new_buffer = realloc(buffer, canvas_width * canvas_height * sizeof(struct pixel_t));
 				if (new_buffer == NULL)
 				{
-					mprint("\nFailed to alloc memory for buffer. Need %d bytes.\n",
-					       canvas_width * canvas_height * sizeof(struct pixel_t));
-					return 0;
+					free(buffer);
+					free(tmp);
+					free(string_utf32);
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In spupng_export_string2png: Out of memory expanding buffer. Need %lu bytes.",
+					      (unsigned long)(canvas_width * canvas_height * sizeof(struct pixel_t)));
 				}
 				memset(new_buffer + old_height * canvas_width, 0, (canvas_height - old_height) * canvas_width * sizeof(struct pixel_t));
 				buffer = new_buffer;
