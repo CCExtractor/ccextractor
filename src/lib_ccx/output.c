@@ -7,6 +7,59 @@
 #include <unistd.h>
 #endif
 
+/**
+ * Open output file on first write if not already open.
+ * This implements deferred file creation to prevent empty output files.
+ * Returns EXIT_OK on success or if already open, error code otherwise.
+ */
+int open_output_file_if_needed(struct ccx_s_write *wb)
+{
+	if (wb == NULL)
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+
+	// Already open or stdout
+	if (wb->fh >= 0)
+		return EXIT_OK;
+
+	// No filename means stdout or network mode
+	if (wb->filename == NULL)
+		return EXIT_OK;
+
+	// Open the file for the first time
+	if (!(wb->append_mode))
+		wb->fh = open(wb->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0644);
+	else
+		wb->fh = open(wb->filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, 0644);
+
+	if (wb->fh == -1)
+	{
+		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+	}
+
+	// Create semaphore file if needed
+	if (wb->with_semaphore && wb->semaphore_filename == NULL)
+	{
+		wb->semaphore_filename = (char *)malloc(strlen(wb->filename) + 6);
+		if (!wb->semaphore_filename)
+		{
+			close(wb->fh);
+			wb->fh = -1;
+			return EXIT_NOT_ENOUGH_MEMORY;
+		}
+		sprintf(wb->semaphore_filename, "%s.sem", wb->filename);
+		int t = open(wb->semaphore_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0644);
+		if (t == -1)
+		{
+			close(wb->fh);
+			wb->fh = -1;
+			return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+		}
+		close(t);
+	}
+
+	return EXIT_OK;
+}
+
 void dinit_write(struct ccx_s_write *wb)
 {
 	if (wb == NULL)
@@ -58,32 +111,40 @@ int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->temporarily_closed = 0;
 	wb->filename = filename;
 	wb->original_filename = strdup(filename);
+	wb->renaming_extension = 0;
+	wb->header_written = 0; // Initialize header flag for deferred file creation
 
 	wb->with_semaphore = with_semaphore;
 	wb->append_mode = ccx_options.enc_cfg.append_mode;
-	if (!(wb->append_mode))
-		wb->fh = open(filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-	else
+
+	// Deferred file creation: Don't open the file here.
+	// It will be opened on first write via open_output_file_if_needed().
+	// Exception: In append mode, we need to open immediately to check if file exists.
+	if (wb->append_mode)
+	{
 		wb->fh = open(filename, O_RDWR | O_CREAT | O_APPEND | O_BINARY, S_IREAD | S_IWRITE);
-	wb->renaming_extension = 0;
-	if (wb->fh == -1)
-	{
-		return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
-	}
-	if (with_semaphore)
-	{
-		wb->semaphore_filename = (char *)malloc(strlen(filename) + 6);
-		if (!wb->semaphore_filename)
-			return EXIT_NOT_ENOUGH_MEMORY;
-		sprintf(wb->semaphore_filename, "%s.sem", filename);
-		int t = open(wb->semaphore_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		if (t == -1)
+		if (wb->fh == -1)
 		{
-			close(wb->fh);
 			return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
 		}
-		close(t);
+
+		// Create semaphore immediately in append mode
+		if (with_semaphore)
+		{
+			wb->semaphore_filename = (char *)malloc(strlen(filename) + 6);
+			if (!wb->semaphore_filename)
+				return EXIT_NOT_ENOUGH_MEMORY;
+			sprintf(wb->semaphore_filename, "%s.sem", filename);
+			int t = open(wb->semaphore_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+			if (t == -1)
+			{
+				close(wb->fh);
+				return CCX_COMMON_EXIT_FILE_CREATION_FAILED;
+			}
+			close(t);
+		}
 	}
+
 	return EXIT_OK;
 }
 

@@ -239,6 +239,7 @@ int write_cc_bitmap_as_libcurl         (struct cc_subtitle *sub, struct encoder_
 
 void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out);
 void write_spumux_footer(struct ccx_s_write *out);
+int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out);
 
 struct cc_subtitle * reformat_cc_bitmap_through_sentence_buffer (struct cc_subtitle *sub, struct encoder_ctx *context);
 

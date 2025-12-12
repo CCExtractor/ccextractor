@@ -44,6 +44,10 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	if (el == NULL || unescaped == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory.\n");
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return;
+
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2);
 

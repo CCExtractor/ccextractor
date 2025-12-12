@@ -211,10 +211,25 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 }
 
 // Returns -1 on error and 0 on success
-static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
+int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 {
 	int used;
 	int header_size = 0;
+
+	// Check if header already written (for deferred file creation)
+	if (out->header_written)
+		return 0;
+
+	// Open output file on first write (deferred file creation)
+	if (open_output_file_if_needed(out) != EXIT_OK)
+	{
+		mprint("Failed to open output file for writing\n");
+		return -1;
+	}
+
+	// Mark header as written before actually writing to prevent recursion
+	out->header_written = 1;
+
 	switch (ctx->write_format)
 	{
 		case CCX_OF_CCD:
@@ -824,8 +839,10 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *)"<br>");
 
-	for (i = 0; i < ctx->nb_out; i++)
-		write_subtitle_file_header(ctx, ctx->out + i);
+	// Deferred file creation: Don't write headers during initialization.
+	// Headers will be written on first caption write.
+	// for (i = 0; i < ctx->nb_out; i++)
+	// 	write_subtitle_file_header(ctx, ctx->out + i);
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 

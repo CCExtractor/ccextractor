@@ -15,6 +15,10 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	if (!string || !string[0])
 		return 0;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
