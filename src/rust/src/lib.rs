@@ -529,7 +529,9 @@ pub fn do_cb_dtvcc_rust(ctx: &mut lib_cc_decode, dtvcc: &mut DtvccRust, cc_block
                 if timeok && ctx.write_format != ccx_output_format::CCX_OF_RAW {
                     dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
                 }
-                unsafe { cb_708 += 1 }
+                // Note: cb_708 is incremented by the C code in do_cb(), not here.
+                // Previously incrementing here caused a double-increment bug that
+                // resulted in incorrect start timestamps.
             }
             _ => warn!("Invalid cc_type"),
         }
