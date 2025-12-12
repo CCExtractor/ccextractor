@@ -104,7 +104,7 @@ if test "x$with_rust" = "xyes" ; then
     AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
 
     rustc_version=$(rustc --version)
-    MSRV="1.54.0"
+    MSRV="1.87.0"
     AX_COMPARE_VERSION($rustc_version, [ge], [$MSRV],
       [AC_MSG_RESULT(rustc >= $MSRV)],
       [AC_MSG_ERROR([Minimum supported rust version(MSRV) is $MSRV, please upgrade rust])])
