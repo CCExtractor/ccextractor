@@ -10,4 +10,12 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 dtvcc_ctx *dtvcc_init(ccx_decoder_dtvcc_settings *opts);
 void dtvcc_free(dtvcc_ctx **);
 
+#ifndef DISABLE_RUST
+// Rust FFI functions for persistent CEA-708 decoder
+extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *settings_dtvcc);
+extern void ccxr_dtvcc_free(void *dtvcc_rust);
+extern void ccxr_dtvcc_process_data(void *dtvcc_rust, const unsigned char cc_valid,
+	const unsigned char cc_type, const unsigned char data1, const unsigned char data2);
+#endif
+
 #endif //CCEXTRACTOR_CCX_DTVCC_H
