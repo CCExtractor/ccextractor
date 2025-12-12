@@ -360,7 +360,6 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	size_t buf_len = 0;
 	size_t remaining = INITIAL_ENC_BUFFER_CAPACITY;
 	int written;
-
 #define SAMI_SNPRINTF(fmt, ...)                                                   \
 	do                                                                        \
 	{                                                                         \
@@ -538,6 +537,7 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 	// when hiding subtract a frame (1 frame = 34 ms)
 	struct ccx_boundary_time time_end = get_time(tv->time_ms_hide + encoder->subs_delay - 34);
 
+<<<<<<< HEAD
 #define SCC_SNPRINTF(fmt, ...)                                                    \
 	do                                                                        \
 	{                                                                         \
@@ -545,6 +545,14 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
 		if (written > 0 && (size_t)written < remaining)                   \
 			buf_len += written;                                       \
+=======
+#define SCC_SNPRINTF(fmt, ...)                                            \
+	do {                                                              \
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;        \
+		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
+		if (written > 0 && (size_t)written < remaining)           \
+			buf_len += written;                               \
+>>>>>>> 8329257b (fix(708_output): replace sprintf with snprintf for buffer safety)
 	} while (0)
 
 	if (tv->old_cc_time_end > time_show.time_in_ms)
