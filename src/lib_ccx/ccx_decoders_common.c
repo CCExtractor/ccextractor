@@ -224,7 +224,12 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 void dinit_cc_decode(struct lib_cc_decode **ctx)
 {
 	struct lib_cc_decode *lctx = *ctx;
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_free(lctx->dtvcc_rust);
+	lctx->dtvcc_rust = NULL;
+#else
 	dtvcc_free(&lctx->dtvcc);
+#endif
 	dinit_avc(&lctx->avc_ctx);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_1);
 	ccx_decoder_608_dinit_library(&lctx->context_cc608_field_2);
@@ -294,10 +299,16 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->no_rollup = setting->no_rollup;
 	ctx->noscte20 = setting->noscte20;
 
+#ifndef DISABLE_RUST
+	ctx->dtvcc_rust = ccxr_dtvcc_init(setting->settings_dtvcc);
+	ctx->dtvcc = NULL;  // Not used when Rust is enabled
+#else
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
 	if (!ctx->dtvcc)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing dtvcc.");
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
+	ctx->dtvcc_rust = NULL;
+#endif
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
 	{
@@ -477,6 +488,13 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
+#ifndef DISABLE_RUST
+	if (ccxr_dtvcc_is_active(ctx->dtvcc_rust))
+	{
+		ctx->current_field = 3;
+		ccxr_flush_active_decoders(ctx->dtvcc_rust);
+	}
+#else
 	if (ctx->dtvcc->is_active)
 	{
 		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
@@ -491,6 +509,7 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
+#endif
 }
 struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
