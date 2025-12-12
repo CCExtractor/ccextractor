@@ -16,6 +16,7 @@ extern void *ccxr_dtvcc_init(struct ccx_decoder_dtvcc_settings *settings_dtvcc);
 extern void ccxr_dtvcc_free(void *dtvcc_rust);
 extern void ccxr_dtvcc_process_data(void *dtvcc_rust, const unsigned char cc_valid,
 	const unsigned char cc_type, const unsigned char data1, const unsigned char data2);
+extern int ccxr_dtvcc_is_active(void *dtvcc_rust);
 #endif
 
 #endif //CCEXTRACTOR_CCX_DTVCC_H
