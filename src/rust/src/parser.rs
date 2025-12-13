@@ -238,7 +238,7 @@ impl OptionsExt for Options {
             OutFormat::Ttxt => {
                 self.write_format = OutputFormat::Transcript;
                 if self.date_format == TimestampFormat::None {
-                    self.date_format = TimestampFormat::HHMMSS;
+                    self.date_format = TimestampFormat::HHMMSSFFF;
                 }
                 // Sets the right things so that timestamps and the mode are printed.
                 if !self.transcript_settings.is_final {
