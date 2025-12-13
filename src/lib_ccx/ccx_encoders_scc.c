@@ -545,8 +545,10 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	unsigned int bytes_written = 0;
 	enum font_bits current_font = FONT_REGULAR;
 	enum ccx_decoder_608_color_code current_color = COL_WHITE;
-	unsigned char current_row = 14;
-	unsigned char current_column = 0;
+	// Initialize to impossible values to ensure the first character always
+	// triggers a position code write (fixes issue #1776)
+	unsigned char current_row = UINT8_MAX;
+	unsigned char current_column = UINT8_MAX;
 
 	// 1. Load the caption
 	add_timestamp(context, data->start_time, disassemble);

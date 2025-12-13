@@ -131,7 +131,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 	switch (ctx->write_format)
 	{
 		case CCX_OF_SAMI:
-			sprintf((char *)str, "</BODY></SAMI>\n");
+			snprintf((char *)str, sizeof(str), "</BODY></SAMI>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -144,7 +144,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			}
 			break;
 		case CCX_OF_SMPTETT:
-			sprintf((char *)str, "    </div>\n  </body>\n</tt>\n");
+			snprintf((char *)str, sizeof(str), "    </div>\n  </body>\n</tt>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -160,7 +160,7 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			write_spumux_footer(out);
 			break;
 		case CCX_OF_SIMPLE_XML:
-			sprintf((char *)str, "</captions>\n");
+			snprintf((char *)str, sizeof(str), "</captions>\n");
 			if (ctx->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -1282,7 +1282,7 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 	}
 	const char *ext = get_file_extension(ctx->write_format);
 	char suffix[32];
-	sprintf(suffix, "_%d", track_id);
+	snprintf(suffix, sizeof(suffix), "_%d", track_id);
 	char *basename = get_basename(enc_ctx->out->original_filename);
 	if (basename != NULL)
 	{
