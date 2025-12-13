@@ -147,7 +147,11 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_field1++;
+				// For container formats (H.264, MPEG-2 PES), don't increment cb_field
+				// because the frame PTS already represents the correct timestamp.
+				// The cb_field offset is only meaningful for raw/elementary streams.
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_field1++;
 				break;
 			case 1:
 				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n", debug_608_to_ASC(cc_block, 1));
@@ -171,7 +175,9 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_field2++;
+				// For container formats, don't increment cb_field (see comment above)
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_field2++;
 				break;
 			case 2: // EIA-708
 				//  DTVCC packet data
@@ -196,7 +202,9 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					if (ctx->write_format == CCX_OF_RCWT)
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_708++;
+				// For container formats, don't increment cb_708 (see comment above)
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_708++;
 				// Check for bytes read
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;

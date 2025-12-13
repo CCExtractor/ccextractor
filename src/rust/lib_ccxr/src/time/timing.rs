@@ -215,8 +215,21 @@ impl TimingContext {
             self.pts_set = PtsSet::MinPtsSet;
 
             // Use this part only the first time min_pts is set. Later treat
-            // it as a reference clock change
-            if self.current_pts < self.min_pts && !pts_jump {
+            // it as a reference clock change.
+            // Important: Only set min_pts from the FIRST I-frame (when min_pts
+            // is still at its initial high value 0x01FFFFFFFF). Don't set min_pts
+            // from B/P frames because:
+            // 1. B-frames have lower PTS than I/P-frames due to temporal reordering
+            // 2. Trailing B/P frames at stream start (from truncated GOPs) have
+            //    earlier PTS than the first decodable I-frame
+            // FFmpeg's cc_dec uses the first decoded frame (I-frame) as reference,
+            // so we must do the same to match timing.
+            let min_pts_is_initial = self.min_pts.as_i64() == 0x01FFFFFFFF;
+            let is_i_frame = self.current_picture_coding_type == FrameType::IFrame;
+            // Only set min_pts from an I-frame to match FFmpeg's behavior.
+            // FFmpeg's cc_dec uses the first decoded frame (which must be an I-frame) as reference.
+            // Streams may have leading B/P frames from truncated GOPs that have earlier PTS.
+            if self.current_pts < self.min_pts && !pts_jump && min_pts_is_initial && is_i_frame {
                 // If this is the first GOP, and seq 0 was not encountered yet
                 // we might reset min_pts/fts_offset again
 
