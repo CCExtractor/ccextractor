@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdlib.h>
 
+#ifndef DISABLE_GPAC
 #include <gpac/isomedia.h>
 #include "lib_ccx.h"
 #include "utility.h"
@@ -855,3 +856,22 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		gf_fclose(t);
 	return mp4_ret;
 }
+
+#else // DISABLE_GPAC
+
+// Stub functions when GPAC is not available
+#include "lib_ccx.h"
+#include "ccx_common_option.h"
+#include "ccx_mp4.h"
+
+int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	return -1; // MP4 processing not available without GPAC
+}
+
+int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	return -1; // Chapter dumping not available without GPAC
+}
+
+#endif // !DISABLE_GPAC
