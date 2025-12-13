@@ -44,6 +44,8 @@ pub struct TimingContext {
     /// Tracks the minimum PTS seen while waiting for frame type determination.
     /// Used for H.264 streams where frame types are never set.
     pending_min_pts: MpegClockTick,
+    /// Counts set_fts() calls with unknown frame type. Used to trigger fallback for H.264.
+    unknown_frame_count: u32,
     pub current_pts: MpegClockTick,
     pub current_picture_coding_type: FrameType,
     /// Store temporal reference of current frame.
@@ -112,6 +114,7 @@ impl TimingContext {
             min_pts_adjusted: false,
             seen_known_frame_type: false,
             pending_min_pts: MpegClockTick::new(0x01FFFFFFFF),
+            unknown_frame_count: 0,
             current_pts: MpegClockTick::new(0),
             current_picture_coding_type: FrameType::ResetOrUnknown,
             current_tref: FrameCount::new(0),
@@ -254,25 +257,46 @@ impl TimingContext {
                 self.seen_known_frame_type = true;
             }
 
-            // Track the minimum PTS seen while we haven't determined the stream type yet.
-            // This is used as a fallback for H.264 streams where frame types are never set.
-            if is_frame_type_unknown && !self.seen_known_frame_type {
+            // Track the minimum PTS seen while frame type is unknown.
+            // This is used as a fallback for streams where frame types are never set (H.264).
+            if is_frame_type_unknown {
                 if self.current_pts < self.pending_min_pts {
                     self.pending_min_pts = self.current_pts;
                 }
+                self.unknown_frame_count += 1;
             }
 
             // Determine if we should allow setting min_pts on this frame.
-            // For best compatibility, allow setting min_pts from any frame type.
-            // The original code allowed this, and it works correctly for most cases.
-            // For MPEG-2, leading B/P frames may have earlier PTS, but the offset is
-            // usually small and consistent across the file.
-            let allow_min_pts_set = true;
-            if self.current_pts < self.min_pts && !pts_jump && min_pts_is_initial && allow_min_pts_set {
+            // Strategy:
+            // - If frame type is UNKNOWN: DON'T set min_pts yet, defer to pending_min_pts.
+            //   This is crucial because set_fts() is often called from PES layer BEFORE
+            //   the picture header is parsed, so frame type is unknown even for MPEG-2.
+            // - If frame type is KNOWN (I/B/P from MPEG-2 picture header):
+            //   - I-frame: Set min_pts from this frame
+            //   - B/P-frame: Don't set min_pts, wait for I-frame
+            // - Fallback: If we've processed many frames without seeing a known frame type
+            //   (H.264 in MPEG-PS), eventually use pending_min_pts after 100+ calls.
+            const FALLBACK_THRESHOLD: u32 = 100;
+            let (allow_min_pts_set, pts_for_min) = if is_frame_type_unknown {
+                // Frame type unknown - check if we should use fallback
+                if self.unknown_frame_count >= FALLBACK_THRESHOLD
+                    && !self.seen_known_frame_type
+                    && self.pending_min_pts.as_i64() != 0x01FFFFFFFF
+                {
+                    // H.264 fallback: Use pending_min_pts after threshold
+                    (true, self.pending_min_pts)
+                } else {
+                    (false, self.current_pts)
+                }
+            } else {
+                // Frame type is known (I/B/P), require I-frame
+                (is_i_frame, self.current_pts)
+            };
+            if pts_for_min < self.min_pts && !pts_jump && min_pts_is_initial && allow_min_pts_set {
                 // If this is the first GOP, and seq 0 was not encountered yet
                 // we might reset min_pts/fts_offset again
 
-                self.min_pts = self.current_pts;
+                self.min_pts = pts_for_min;
 
                 // Avoid next async test
                 self.sync_pts = self.current_pts
@@ -484,6 +508,7 @@ impl TimingContext {
         min_pts_adjusted: bool,
         seen_known_frame_type: bool,
         pending_min_pts: MpegClockTick,
+        unknown_frame_count: u32,
         current_pts: MpegClockTick,
         current_picture_coding_type: FrameType,
         current_tref: FrameCount,
@@ -505,6 +530,7 @@ impl TimingContext {
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            unknown_frame_count,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -536,6 +562,7 @@ impl TimingContext {
         bool,
         bool,
         MpegClockTick,
+        u32,
         MpegClockTick,
         FrameType,
         FrameCount,
@@ -557,6 +584,7 @@ impl TimingContext {
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            unknown_frame_count,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -579,6 +607,7 @@ impl TimingContext {
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            unknown_frame_count,
             current_pts,
             current_picture_coding_type,
             current_tref,
