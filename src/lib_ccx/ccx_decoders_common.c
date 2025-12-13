@@ -233,11 +233,27 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 
 	ctx = malloc(sizeof(struct lib_cc_decode));
 	if (!ctx)
-		return NULL;
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory allocating ctx.");
+
+	// Initialize all pointers to NULL
+	ctx->avc_ctx = NULL;
+	ctx->timing = NULL;
+	ctx->dtvcc = NULL;
+	ctx->context_cc608_field_1 = NULL;
+	ctx->context_cc608_field_2 = NULL;
+	ctx->xds_ctx = NULL;
+	ctx->vbi_decoder = NULL;
+	ctx->prev = NULL;
+	memset(&ctx->dec_sub, 0, sizeof(ctx->dec_sub));
 
 	ctx->avc_ctx = init_avc();
+	if (!ctx->avc_ctx)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing avc_ctx.");
+
 	ctx->codec = setting->codec;
 	ctx->timing = init_timing_ctx(&ccx_common_timing_settings);
+	if (!ctx->timing)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing timing.");
 
 	setting->settings_dtvcc->timing = ctx->timing;
 
@@ -247,6 +263,8 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 	ctx->noscte20 = setting->noscte20;
 
 	ctx->dtvcc = dtvcc_init(setting->settings_dtvcc);
+	if (!ctx->dtvcc)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing dtvcc.");
 	ctx->dtvcc->is_active = setting->settings_dtvcc->enabled;
 
 	if (setting->codec == CCX_CODEC_ATSC_CC)
@@ -260,6 +278,8 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 		    setting->cc_to_stdout,
 		    setting->output_format,
 		    ctx->timing);
+		if (!ctx->context_cc608_field_1)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing context_cc608_field_1.");
 		ctx->context_cc608_field_2 = ccx_decoder_608_init_library(
 		    setting->settings_608,
 		    setting->cc_channel,
@@ -268,11 +288,8 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 		    setting->cc_to_stdout,
 		    setting->output_format,
 		    ctx->timing);
-	}
-	else
-	{
-		ctx->context_cc608_field_1 = NULL;
-		ctx->context_cc608_field_2 = NULL;
+		if (!ctx->context_cc608_field_2)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing context_cc608_field_2.");
 	}
 	ctx->current_field = 1;
 	ctx->private_data = setting->private_data;
@@ -377,6 +394,8 @@ struct lib_cc_decode *init_cc_decode(struct ccx_decoders_common_settings_t *sett
 		setting->xds_write_to_file = 0;
 	}
 	ctx->xds_ctx = ccx_decoders_xds_init_library(ctx->timing, setting->xds_write_to_file);
+	if (!ctx->xds_ctx)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_cc_decode: Out of memory initializing xds_ctx.");
 
 	ctx->vbi_decoder = NULL;
 	ctx->ocr_quantmode = setting->ocr_quantmode;
@@ -445,47 +464,80 @@ struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
 	struct encoder_ctx *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct encoder_ctx));
+	if (!ctx_copy)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating ctx_copy.");
 	memcpy(ctx_copy, ctx, sizeof(struct encoder_ctx));
+
+	// Initialize copied pointers to NULL before re-allocating
+	ctx_copy->buffer = NULL;
+	ctx_copy->first_input_file = NULL;
+	ctx_copy->out = NULL;
+	ctx_copy->timing = NULL;
+	ctx_copy->transcript_settings = NULL;
+	ctx_copy->subline = NULL;
+	ctx_copy->start_credits_text = NULL;
+	ctx_copy->end_credits_text = NULL;
+	ctx_copy->prev = NULL;
+	ctx_copy->last_string = NULL;
 
 	if (ctx->buffer)
 	{
 		ctx_copy->buffer = malloc(ctx->capacity * sizeof(unsigned char));
+		if (!ctx_copy->buffer)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating buffer.");
 		memcpy(ctx_copy->buffer, ctx->buffer, ctx->capacity * sizeof(unsigned char));
 	}
 	if (ctx->first_input_file)
 	{
-		ctx_copy->first_input_file = malloc(strlen(ctx->first_input_file) * sizeof(char));
-		memcpy(ctx_copy->first_input_file, ctx->first_input_file, strlen(ctx->first_input_file) * sizeof(char));
+		size_t len = strlen(ctx->first_input_file) + 1;
+		ctx_copy->first_input_file = malloc(len);
+		if (!ctx_copy->first_input_file)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating first_input_file.");
+		memcpy(ctx_copy->first_input_file, ctx->first_input_file, len);
 	}
 	if (ctx->out)
 	{
 		ctx_copy->out = malloc(sizeof(struct ccx_s_write));
+		if (!ctx_copy->out)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating out.");
 		memcpy(ctx_copy->out, ctx->out, sizeof(struct ccx_s_write));
 	}
 	if (ctx->timing)
 	{
 		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
+		if (!ctx_copy->timing)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating timing.");
 		memcpy(ctx_copy->timing, ctx->timing, sizeof(struct ccx_common_timing_ctx));
 	}
 	if (ctx->transcript_settings)
 	{
 		ctx_copy->transcript_settings = malloc(sizeof(struct ccx_encoders_transcript_format));
+		if (!ctx_copy->transcript_settings)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating transcript_settings.");
 		memcpy(ctx_copy->transcript_settings, ctx->transcript_settings, sizeof(struct ccx_encoders_transcript_format));
 	}
 	if (ctx->subline)
 	{
 		ctx_copy->subline = malloc(SUBLINESIZE);
+		if (!ctx_copy->subline)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating subline.");
 		memcpy(ctx_copy->subline, ctx->subline, SUBLINESIZE);
 	}
 	if (ctx->start_credits_text)
 	{
-		ctx_copy->start_credits_text = malloc(strlen(ctx->start_credits_text) * sizeof(char));
-		memcpy(ctx_copy->start_credits_text, ctx->start_credits_text, (strlen(ctx->start_credits_text) + 1) * sizeof(char));
+		size_t len = strlen(ctx->start_credits_text) + 1;
+		ctx_copy->start_credits_text = malloc(len);
+		if (!ctx_copy->start_credits_text)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating start_credits_text.");
+		memcpy(ctx_copy->start_credits_text, ctx->start_credits_text, len);
 	}
 	if (ctx->end_credits_text)
 	{
-		ctx_copy->end_credits_text = malloc(strlen(ctx->end_credits_text) * sizeof(char));
-		memcpy(ctx_copy->end_credits_text, ctx->end_credits_text, (strlen(ctx->end_credits_text) + 1) * sizeof(char));
+		size_t len = strlen(ctx->end_credits_text) + 1;
+		ctx_copy->end_credits_text = malloc(len);
+		if (!ctx_copy->end_credits_text)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating end_credits_text.");
+		memcpy(ctx_copy->end_credits_text, ctx->end_credits_text, len);
 	}
 	return ctx_copy;
 }
@@ -493,42 +545,67 @@ struct lib_cc_decode *copy_decoder_context(struct lib_cc_decode *ctx)
 {
 	struct lib_cc_decode *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct lib_cc_decode));
+	if (!ctx_copy)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating ctx_copy.");
 	memcpy(ctx_copy, ctx, sizeof(struct lib_cc_decode));
+
+	// Initialize copied pointers to NULL before re-allocating
+	ctx_copy->context_cc608_field_1 = NULL;
+	ctx_copy->context_cc608_field_2 = NULL;
+	ctx_copy->timing = NULL;
+	ctx_copy->avc_ctx = NULL;
+	ctx_copy->private_data = NULL;
+	ctx_copy->dtvcc = NULL;
+	ctx_copy->xds_ctx = NULL;
+	ctx_copy->vbi_decoder = NULL;
 
 	if (ctx->context_cc608_field_1)
 	{
 		ctx_copy->context_cc608_field_1 = malloc(sizeof(struct ccx_decoder_608_context));
+		if (!ctx_copy->context_cc608_field_1)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating context_cc608_field_1.");
 		memcpy(ctx_copy->context_cc608_field_1, ctx->context_cc608_field_1, sizeof(struct ccx_decoder_608_context));
 	}
 	if (ctx->context_cc608_field_2)
 	{
 		ctx_copy->context_cc608_field_2 = malloc(sizeof(struct ccx_decoder_608_context));
+		if (!ctx_copy->context_cc608_field_2)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating context_cc608_field_2.");
 		memcpy(ctx_copy->context_cc608_field_2, ctx->context_cc608_field_2, sizeof(struct ccx_decoder_608_context));
 	}
 	if (ctx->timing)
 	{
 		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
+		if (!ctx_copy->timing)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating timing.");
 		memcpy(ctx_copy->timing, ctx->timing, sizeof(struct ccx_common_timing_ctx));
 	}
 	if (ctx->avc_ctx)
 	{
 		ctx_copy->avc_ctx = malloc(sizeof(struct avc_ctx));
+		if (!ctx_copy->avc_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating avc_ctx.");
 		memcpy(ctx_copy->avc_ctx, ctx->avc_ctx, sizeof(struct avc_ctx));
 	}
-	ctx_copy->private_data = NULL;
 	if (ctx->dtvcc)
 	{
 		ctx_copy->dtvcc = malloc(sizeof(struct dtvcc_ctx));
+		if (!ctx_copy->dtvcc)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating dtvcc.");
 		memcpy(ctx_copy->dtvcc, ctx->dtvcc, sizeof(struct dtvcc_ctx));
 	}
 	if (ctx->xds_ctx)
 	{
 		ctx_copy->xds_ctx = malloc(sizeof(struct ccx_decoders_xds_context));
+		if (!ctx_copy->xds_ctx)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating xds_ctx.");
 		memcpy(ctx_copy->xds_ctx, ctx->xds_ctx, sizeof(struct ccx_decoders_xds_context));
 	}
 	if (ctx->vbi_decoder)
 	{
 		ctx_copy->vbi_decoder = malloc(sizeof(struct ccx_decoder_vbi_ctx));
+		if (!ctx_copy->vbi_decoder)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating vbi_decoder.");
 		memcpy(ctx_copy->vbi_decoder, ctx->vbi_decoder, sizeof(struct ccx_decoder_vbi_ctx));
 	}
 	return ctx_copy;
@@ -537,12 +614,17 @@ struct cc_subtitle *copy_subtitle(struct cc_subtitle *sub)
 {
 	struct cc_subtitle *sub_copy = NULL;
 	sub_copy = malloc(sizeof(struct cc_subtitle));
+	if (!sub_copy)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating sub_copy.");
 	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
 	sub_copy->datatype = sub->datatype;
+	sub_copy->data = NULL;
 
 	if (sub->data)
 	{
 		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
+		if (!sub_copy->data)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating data.");
 		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
 	}
 	return sub_copy;
