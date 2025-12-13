@@ -17,6 +17,11 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 
 	if (sub->nb_data == 0)
 		return ret;
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	rect = sub->data;
 
 	if (sub->flags & SUB_EOD_MARKER)
@@ -337,6 +342,11 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int wrote_something = 0;
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
 
 	for (int i = 0; i < 15; i++)

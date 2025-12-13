@@ -26,6 +26,7 @@ struct ccx_s_write
 	char *playlist_filename; 
 	int renaming_extension; //Used for file rotations
 	int append_mode;        /* Append the file. Prevent overwriting of files */
+	int header_written;     /* Track if subtitle file header has been written (for deferred file creation) */
 
 };
 

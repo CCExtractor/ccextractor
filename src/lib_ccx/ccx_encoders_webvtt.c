@@ -128,6 +128,10 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	int written;
 	char timeline[128];
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
@@ -302,6 +306,10 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->nb_data == 0)
 		return 0;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	write_webvtt_header(context);
 
 	if (sub->flags & SUB_EOD_MARKER)
@@ -438,6 +446,10 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	}
 	if (empty_buf) // Prevent writing empty screens. Not needed in .vtt
 		return 0;
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
 
 	write_webvtt_header(context);
 
