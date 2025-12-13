@@ -347,9 +347,9 @@ void xds_do_copy_generation_management_system(struct cc_subtitle *sub, struct cc
 		const char *copytext[4] = {"Copy permitted (no restrictions)", "No more copies (one generation copy has been made)",
 					   "One generation of copies can be made", "No copying is permitted"};
 		const char *apstext[4] = {"No APS", "PSP On; Split Burst Off", "PSP On; 2 line Split Burst On", "PSP On; 4 line Split Burst On"};
-		sprintf(copy_permited, "CGMS: %s", copytext[cgms_a_b4 * 2 + cgms_a_b3]);
-		sprintf(aps, "APS: %s", apstext[aps_b2 * 2 + aps_b1]);
-		sprintf(rcd, "Redistribution Control Descriptor: %d", rcd0);
+		snprintf(copy_permited, sizeof(copy_permited), "CGMS: %s", copytext[cgms_a_b4 * 2 + cgms_a_b3]);
+		snprintf(aps, sizeof(aps), "APS: %s", apstext[aps_b2 * 2 + aps_b1]);
+		snprintf(rcd, sizeof(rcd), "Redistribution Control Descriptor: %d", rcd0);
 	}
 
 	xdsprint(sub, ctx, copy_permited);
@@ -407,30 +407,45 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 			const char *agetext[8] = {"None", "TV-Y (All Children)", "TV-Y7 (Older Children)",
 						  "TV-G (General Audience)", "TV-PG (Parental Guidance Suggested)",
 						  "TV-14 (Parents Strongly Cautioned)", "TV-MA (Mature Audience Only)", "None"};
-			sprintf(age, "ContentAdvisory: US TV Parental Guidelines. Age Rating: %s", agetext[g2 * 4 + g1 * 2 + g0]);
+			snprintf(age, sizeof(age), "ContentAdvisory: US TV Parental Guidelines. Age Rating: %s", agetext[g2 * 4 + g1 * 2 + g0]);
 			content[0] = 0;
+			size_t content_len = 0;
 			if (!g2 && g1 && !g0) // For TV-Y7 (Older children), the Violence bit is "fantasy violence"
 			{
 				if (FV)
-					strcpy(content, "[Fantasy Violence] ");
+				{
+					snprintf(content, sizeof(content), "[Fantasy Violence] ");
+					content_len = strlen(content);
+				}
 			}
 			else // For all others, is real
 			{
 				if (FV)
-					strcpy(content, "[Violence] ");
+				{
+					snprintf(content, sizeof(content), "[Violence] ");
+					content_len = strlen(content);
+				}
 			}
 			if (S)
-				strcat(content, "[Sexual Situations] ");
+			{
+				snprintf(content + content_len, sizeof(content) - content_len, "[Sexual Situations] ");
+				content_len = strlen(content);
+			}
 			if (La3)
-				strcat(content, "[Adult Language] ");
+			{
+				snprintf(content + content_len, sizeof(content) - content_len, "[Adult Language] ");
+				content_len = strlen(content);
+			}
 			if (Da2)
-				strcat(content, "[Sexually Suggestive Dialog] ");
+			{
+				snprintf(content + content_len, sizeof(content) - content_len, "[Sexually Suggestive Dialog] ");
+			}
 			supported = 1;
 		}
 		if (!a0) // MPA
 		{
 			const char *ratingtext[8] = {"N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated"};
-			sprintf(rating, "ContentAdvisory: MPA Rating: %s", ratingtext[r2 * 4 + r1 * 2 + r0]);
+			snprintf(rating, sizeof(rating), "ContentAdvisory: MPA Rating: %s", ratingtext[r2 * 4 + r1 * 2 + r0]);
 			supported = 1;
 		}
 		if (a0 && a1 && !Da2 && !La3) // Canadian English Language Rating
@@ -438,7 +453,7 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 			const char *ratingtext[8] = {"Exempt", "Children", "Children eight years and older",
 						     "General programming suitable for all audiences", "Parental Guidance",
 						     "Viewers 14 years and older", "Adult Programming", "[undefined]"};
-			sprintf(rating, "ContentAdvisory: Canadian English Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
+			snprintf(rating, sizeof(rating), "ContentAdvisory: Canadian English Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
 			supported = 1;
 		}
 		if (a0 && a1 && Da2 && !La3) // Canadian French Language Rating
@@ -447,7 +462,7 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 						     "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
 						     "Cette ?mission ne convient pas aux moins de 16 ans",
 						     "Cette ?mission est r?serv?e aux adultes", "[invalid]", "[invalid]"};
-			sprintf(rating, "ContentAdvisory: Canadian French Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
+			snprintf(rating, sizeof(rating), "ContentAdvisory: Canadian French Rating: %s", ratingtext[g2 * 4 + g1 * 2 + g0]);
 			supported = 1;
 		}
 	}
@@ -712,7 +727,8 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 				if (changed)
 				{
 					ccx_common_logging.log_ftn("\rXDS description line %d: %s\n", line_num, xds_desc);
-					strcpy(ctx->xds_program_description[line_num], xds_desc);
+					strncpy(ctx->xds_program_description[line_num], xds_desc, 32);
+					ctx->xds_program_description[line_num][32] = '\0';
 				}
 				else
 				{
@@ -749,7 +765,8 @@ int xds_do_channel(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx
 			if (strcmp(xds_network_name, ctx->current_xds_network_name)) // Change of station
 			{
 				ccx_common_logging.log_ftn("XDS Notice: Network is now %s\n", xds_network_name);
-				strcpy(ctx->current_xds_network_name, xds_network_name);
+				strncpy(ctx->current_xds_network_name, xds_network_name, 32);
+				ctx->current_xds_network_name[32] = '\0';
 			}
 			break;
 		case XDS_TYPE_CALL_LETTERS_AND_CHANNEL:
@@ -800,12 +817,19 @@ int xds_do_private_data(struct cc_subtitle *sub, struct ccx_decoders_xds_context
 	if (!ctx)
 		return CCX_EINVAL;
 
-	str = malloc((ctx->cur_xds_payload_length * 3) + 1);
+	size_t str_size = (ctx->cur_xds_payload_length * 3) + 1;
+	str = malloc(str_size);
 	if (str == NULL) // Only thing we can do with private data is dump it.
 		return 1;
 
+	str[0] = '\0';
+	size_t offset = 0;
 	for (i = 2; i < ctx->cur_xds_payload_length - 1; i++)
-		sprintf(str, "%02X ", ctx->cur_xds_payload[i]);
+	{
+		int written = snprintf(str + offset, str_size - offset, "%02X ", ctx->cur_xds_payload[i]);
+		if (written > 0)
+			offset += written;
+	}
 
 	xdsprint(sub, ctx, str);
 	free(str);
