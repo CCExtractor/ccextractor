@@ -35,6 +35,8 @@ void ccxr_set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 int ccxr_set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG ccxr_get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG ccxr_get_fts_max(struct ccx_common_timing_ctx *ctx);
+LLONG ccxr_get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field);
+LLONG ccxr_get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field);
 char *ccxr_print_mstime_static(LLONG mstime, char *buf);
 void ccxr_print_debug_timing(struct ccx_common_timing_ctx *ctx);
 void ccxr_calculate_ms_gop_time(struct gop_time_code *g);

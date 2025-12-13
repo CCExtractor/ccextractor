@@ -21,23 +21,22 @@ extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_dec
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
+LLONG ccxr_get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field);
+LLONG ccxr_get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field);
+
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
 LLONG get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx, current_field);
-	if (fts <= ctx->minimum_fts)
-		fts = ctx->minimum_fts + 1;
+	LLONG fts = ccxr_get_visible_start(ctx, current_field);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime_static(fts));
 	return fts;
 }
 
-/* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
+/* This function returns the current FTS and saves it so it can be used by get_visible_start */
 LLONG get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx, current_field);
-	if (fts > ctx->minimum_fts)
-		ctx->minimum_fts = fts;
+	LLONG fts = ccxr_get_visible_end(ctx, current_field);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime_static(fts));
 	return fts;
 }

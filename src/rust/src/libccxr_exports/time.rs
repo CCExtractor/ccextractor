@@ -462,6 +462,75 @@ pub unsafe extern "C" fn ccxr_get_fts(
     ans.millis().try_into().unwrap()
 }
 
+/// Rust equivalent for `get_visible_end` function in C. Uses C-native types as input and output.
+///
+/// Returns the base FTS (fts_now + fts_global) without the cb_field offset, and updates
+/// minimum_fts if the returned value is greater.
+///
+/// This provides accurate timing for container formats like MP4 where all caption data
+/// for a frame is bundled together and should use the frame's PTS directly.
+///
+/// # Safety
+///
+/// `ctx` must not be null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_get_visible_end(
+    ctx: *mut ccx_common_timing_ctx,
+    _current_field: c_int,
+) -> c_long {
+    apply_timing_info();
+    let mut context = generate_timing_context(ctx);
+
+    // Use base FTS without cb_field offset for accurate timing
+    let fts = context.fts_now.millis() + context.fts_global.millis();
+
+    // Update minimum_fts if this end time is later
+    if fts > context.minimum_fts.millis() {
+        context.minimum_fts = Timestamp::from_millis(fts);
+    }
+
+    write_back_to_common_timing_ctx(ctx, &context);
+    write_back_from_timing_info();
+
+    fts.try_into().unwrap()
+}
+
+/// Rust equivalent for `get_visible_start` function in C. Uses C-native types as input and output.
+///
+/// Returns the base FTS (fts_now + fts_global) without the cb_field offset, ensuring it's
+/// at least 1ms greater than minimum_fts to prevent timing overlaps.
+///
+/// This provides accurate timing for container formats like MP4 where all caption data
+/// for a frame is bundled together and should use the frame's PTS directly, rather than
+/// adding an offset based on the number of caption blocks processed.
+///
+/// # Safety
+///
+/// `ctx` must not be null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_get_visible_start(
+    ctx: *mut ccx_common_timing_ctx,
+    _current_field: c_int,
+) -> c_long {
+    apply_timing_info();
+    let context = generate_timing_context(ctx);
+
+    // Use base FTS without cb_field offset for accurate timing
+    let base_fts = context.fts_now.millis() + context.fts_global.millis();
+    let minimum_fts = context.minimum_fts.millis();
+
+    let fts = if base_fts <= minimum_fts {
+        minimum_fts + 1
+    } else {
+        base_fts
+    };
+
+    write_back_to_common_timing_ctx(ctx, &context);
+    write_back_from_timing_info();
+
+    fts.try_into().unwrap()
+}
+
 /// Rust equivalent for `get_fts_max` function in C. Uses C-native types as input and output.
 ///
 /// # Safety
