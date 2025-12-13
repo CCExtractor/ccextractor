@@ -47,6 +47,7 @@ typedef struct ccx_decoder_608_context
 	int new_channel;                // The new channel after a channel change
 	int my_field;                   // Used for sanity checks
 	int my_channel;                 // Used for sanity checks
+	int rollup_from_popon;          // Track transition from pop-on/paint-on to roll-up mode
 	long bytes_processed_608;       // To be written ONLY by process_608
 	int have_cursor_position;
 

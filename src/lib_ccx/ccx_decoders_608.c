@@ -147,10 +147,11 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_field = field;
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
+	data->rollup_from_popon = 0;
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
 	data->textprinted = 0;
-	data->ts_start_of_current_line = 0;
+	// Note: ts_start_of_current_line already set to -1 above
 
 	data->halt = halt;
 
@@ -225,7 +226,9 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 
 		if (use_buffer->empty)
 		{
-			if (MODE_POPON != context->mode)
+			// Don't set start time if we're in a transition from pop-on to roll-up
+			// In this case, start time will be set when CR causes scrolling
+			if (MODE_POPON != context->mode && !context->rollup_from_popon)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 		}
 		use_buffer->empty = 0;
@@ -720,6 +723,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				if (write_cc_buffer(context, sub))
 					context->screenfuls_counter++;
 				erase_memory(context, true);
+				// Track transition from pop-on/paint-on to roll-up for timing adjustment
+				// Start time will be set when CR causes scrolling (matching FFmpeg behavior)
+				context->rollup_from_popon = 1;
+				context->ts_start_of_current_line = -1;
 			}
 			erase_memory(context, false);
 
@@ -772,6 +779,15 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			changes = check_roll_up(context);
 			if (changes)
 			{
+				// Handle pop-on to roll-up transition timing
+				// Use ts_start_of_current_line (when current line started) as the start time
+				// This matches FFmpeg's behavior of timestamping when the display changed
+				if (context->rollup_from_popon && context->ts_start_of_current_line > 0)
+				{
+					context->current_visible_start_ms = context->ts_start_of_current_line;
+					context->rollup_from_popon = 0;
+				}
+
 				// Only if the roll up would actually cause a line to disappear we write the buffer
 				if (context->output_format != CCX_OF_TRANSCRIPT)
 				{
