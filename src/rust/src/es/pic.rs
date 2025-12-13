@@ -1,7 +1,9 @@
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::libccxr_exports::time::{ccxr_get_fts, ccxr_print_debug_timing, ccxr_set_fts};
 use crate::{anchor_hdcc, process_hdcc};
-use crate::{ccx_options, current_fps, frames_since_ref_time, fts_at_gop_start, total_frames_count};
+use crate::{
+    ccx_options, current_fps, frames_since_ref_time, fts_at_gop_start, total_frames_count,
+};
 use lib_ccxr::common::{BitStreamRust, BitstreamError, FrameType};
 use lib_ccxr::debug;
 use lib_ccxr::util::log::DebugMessageFlag;

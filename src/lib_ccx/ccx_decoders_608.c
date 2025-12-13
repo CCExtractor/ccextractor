@@ -797,7 +797,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 						erase_memory(context, true); // Make sure the lines we just wrote aren't written again
 				}
 			}
-			roll_up(context);			// The roll must be done anyway of course.
+			roll_up(context); // The roll must be done anyway of course.
 			// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
 			// preserve the CR time so the next caption uses the display state change time,
 			// not the character typing time. This matches FFmpeg's timing behavior.
