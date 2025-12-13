@@ -21,23 +21,22 @@ extern void ccxr_flush_decoder(struct dtvcc_ctx *dtvcc, struct dtvcc_service_dec
 uint64_t utc_refvalue = UINT64_MAX; /* _UI64_MAX/UINT64_MAX means don't use UNIX, 0 = use current system time as reference, +1 use a specific reference */
 extern int in_xds_mode;
 
+LLONG ccxr_get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field);
+LLONG ccxr_get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field);
+
 /* This function returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen. It shouldn't be needed
    obviously but it guarantees there's no timing overlap */
 LLONG get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx, current_field);
-	if (fts <= ctx->minimum_fts)
-		fts = ctx->minimum_fts + 1;
+	LLONG fts = ccxr_get_visible_start(ctx, current_field);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible Start time=%s\n", print_mstime_static(fts));
 	return fts;
 }
 
-/* This function returns the current FTS and saves it so it can be used by ctxget_visible_start */
+/* This function returns the current FTS and saves it so it can be used by get_visible_start */
 LLONG get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field)
 {
-	LLONG fts = get_fts(ctx, current_field);
-	if (fts > ctx->minimum_fts)
-		ctx->minimum_fts = fts;
+	LLONG fts = ccxr_get_visible_end(ctx, current_field);
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "Visible End time=%s\n", print_mstime_static(fts));
 	return fts;
 }
@@ -148,7 +147,11 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_field1++;
+				// For container formats (H.264, MPEG-2 PES), don't increment cb_field
+				// because the frame PTS already represents the correct timestamp.
+				// The cb_field offset is only meaningful for raw/elementary streams.
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_field1++;
 				break;
 			case 1:
 				dbg_print(CCX_DMT_CBRAW, "    ..   %s   ..\n", debug_608_to_ASC(cc_block, 1));
@@ -172,7 +175,9 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					else
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_field2++;
+				// For container formats, don't increment cb_field (see comment above)
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_field2++;
 				break;
 			case 2: // EIA-708
 				//  DTVCC packet data
@@ -197,7 +202,9 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 					if (ctx->write_format == CCX_OF_RCWT)
 						writercwtdata(ctx, cc_block, sub);
 				}
-				cb_708++;
+				// For container formats, don't increment cb_708 (see comment above)
+				if (ctx->in_bufferdatatype != CCX_H264 && ctx->in_bufferdatatype != CCX_PES)
+					cb_708++;
 				// Check for bytes read
 				// printf ("Warning: Losing EIA-708 data!\n");
 				break;

@@ -20,8 +20,11 @@ impl ccx_common_timing_ctx {
         }
     }
     /// Returns the current FTS and saves it so it can be used by [get_visible_start][Self::get_visible_start()]
-    pub fn get_visible_end(&mut self, current_field: u8) -> LLONG {
-        let fts = self.get_fts(current_field);
+    ///
+    /// Uses the base FTS (fts_now + fts_global) without the cb_field offset for accurate timing.
+    pub fn get_visible_end(&mut self, _current_field: u8) -> LLONG {
+        // Use base FTS without cb_field offset for accurate timing
+        let fts = self.fts_now + self.fts_global;
         if fts > self.minimum_fts {
             self.minimum_fts = fts;
         }
@@ -29,11 +32,18 @@ impl ccx_common_timing_ctx {
         fts
     }
     /// Returns a FTS that is guaranteed to be at least 1 ms later than the end of the previous screen, so that there's no timing overlap
-    pub fn get_visible_start(self, current_field: u8) -> LLONG {
-        let mut fts = self.get_fts(current_field);
-        if fts <= self.minimum_fts {
-            fts = self.minimum_fts + 1;
-        }
+    ///
+    /// Uses the base FTS (fts_now + fts_global) without the cb_field offset for accurate timing.
+    /// This provides correct timing for container formats like MP4 where all caption data
+    /// for a frame is bundled together and should use the frame's PTS directly.
+    pub fn get_visible_start(self, _current_field: u8) -> LLONG {
+        // Use base FTS without cb_field offset for accurate timing
+        let base_fts = self.fts_now + self.fts_global;
+        let fts = if base_fts <= self.minimum_fts {
+            self.minimum_fts + 1
+        } else {
+            base_fts
+        };
         debug!("Visible Start time={}", get_time_str(fts));
         fts
     }
@@ -111,13 +121,19 @@ mod test {
         let mut ctx = get_temp_timing_ctx();
         ctx.minimum_fts = 500;
 
-        // Case 1: fts < minimum_fts
-        assert_eq!(ctx.get_visible_end(3), 393);
+        // get_visible_end now uses base FTS (fts_now + fts_global = 20 + 40 = 60) without cb_field offset
+        // Case 1: base_fts (60) < minimum_fts (500), minimum_fts unchanged
+        assert_eq!(ctx.get_visible_end(3), 60);
         assert_eq!(ctx.minimum_fts, 500); // No change in minimum_fts
 
-        // Case 2: fts > minimum_fts
-        assert_eq!(ctx.get_visible_end(1), 727);
-        assert_eq!(ctx.minimum_fts, 727); // Change minimum_fts
+        // Case 2: base_fts (60) < minimum_fts (500), still unchanged
+        assert_eq!(ctx.get_visible_end(1), 60);
+        assert_eq!(ctx.minimum_fts, 500); // Still no change
+
+        // Case 3: base_fts > minimum_fts
+        ctx.minimum_fts = 50;
+        assert_eq!(ctx.get_visible_end(1), 60);
+        assert_eq!(ctx.minimum_fts, 60); // Updated to base_fts
     }
 
     #[test]
@@ -126,11 +142,16 @@ mod test {
         let mut ctx = get_temp_timing_ctx();
         ctx.minimum_fts = 500;
 
-        // Case 1: fts <= minimum_fts
+        // get_visible_start now uses base FTS (fts_now + fts_global = 20 + 40 = 60) without cb_field offset
+        // Case 1: base_fts (60) <= minimum_fts (500), so return minimum_fts + 1
         assert_eq!(ctx.get_visible_start(3), 501);
 
-        // Case 2: fts <= minimum_fts
-        assert_eq!(ctx.get_visible_start(1), 727);
+        // Case 2: same, base_fts (60) <= minimum_fts (500)
+        assert_eq!(ctx.get_visible_start(1), 501);
+
+        // Case 3: base_fts > minimum_fts
+        ctx.minimum_fts = 50;
+        assert_eq!(ctx.get_visible_start(1), 60);
     }
 
     #[test]

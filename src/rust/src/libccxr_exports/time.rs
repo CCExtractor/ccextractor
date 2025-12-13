@@ -146,6 +146,9 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
     };
 
     let min_pts_adjusted = (*ctx).min_pts_adjusted != 0;
+    let seen_known_frame_type = (*ctx).seen_known_frame_type != 0;
+    let pending_min_pts = MpegClockTick::new((*ctx).pending_min_pts);
+    let unknown_frame_count = (*ctx).unknown_frame_count;
     let current_pts = MpegClockTick::new((*ctx).current_pts);
 
     let current_picture_coding_type = match (*ctx).current_picture_coding_type {
@@ -174,6 +177,9 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
     TimingContext::from_raw_parts(
         pts_set,
         min_pts_adjusted,
+        seen_known_frame_type,
+        pending_min_pts,
+        unknown_frame_count,
         current_pts,
         current_picture_coding_type,
         current_tref,
@@ -206,6 +212,9 @@ unsafe fn write_back_to_common_timing_ctx(
     let (
         pts_set,
         min_pts_adjusted,
+        seen_known_frame_type,
+        pending_min_pts,
+        unknown_frame_count,
         current_pts,
         current_picture_coding_type,
         current_tref,
@@ -230,6 +239,9 @@ unsafe fn write_back_to_common_timing_ctx(
     };
 
     (*ctx).min_pts_adjusted = if min_pts_adjusted { 1 } else { 0 };
+    (*ctx).seen_known_frame_type = if seen_known_frame_type { 1 } else { 0 };
+    (*ctx).pending_min_pts = pending_min_pts.as_i64();
+    (*ctx).unknown_frame_count = unknown_frame_count;
     (*ctx).current_pts = current_pts.as_i64();
 
     (*ctx).current_picture_coding_type = match current_picture_coding_type {
@@ -460,6 +472,75 @@ pub unsafe extern "C" fn ccxr_get_fts(
     write_back_from_timing_info();
 
     ans.millis().try_into().unwrap()
+}
+
+/// Rust equivalent for `get_visible_end` function in C. Uses C-native types as input and output.
+///
+/// Returns the base FTS (fts_now + fts_global) without the cb_field offset, and updates
+/// minimum_fts if the returned value is greater.
+///
+/// This provides accurate timing for container formats like MP4 where all caption data
+/// for a frame is bundled together and should use the frame's PTS directly.
+///
+/// # Safety
+///
+/// `ctx` must not be null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_get_visible_end(
+    ctx: *mut ccx_common_timing_ctx,
+    _current_field: c_int,
+) -> c_long {
+    apply_timing_info();
+    let mut context = generate_timing_context(ctx);
+
+    // Use base FTS without cb_field offset for accurate timing
+    let fts = context.fts_now.millis() + context.fts_global.millis();
+
+    // Update minimum_fts if this end time is later
+    if fts > context.minimum_fts.millis() {
+        context.minimum_fts = Timestamp::from_millis(fts);
+    }
+
+    write_back_to_common_timing_ctx(ctx, &context);
+    write_back_from_timing_info();
+
+    fts.try_into().unwrap()
+}
+
+/// Rust equivalent for `get_visible_start` function in C. Uses C-native types as input and output.
+///
+/// Returns the base FTS (fts_now + fts_global) without the cb_field offset, ensuring it's
+/// at least 1ms greater than minimum_fts to prevent timing overlaps.
+///
+/// This provides accurate timing for container formats like MP4 where all caption data
+/// for a frame is bundled together and should use the frame's PTS directly, rather than
+/// adding an offset based on the number of caption blocks processed.
+///
+/// # Safety
+///
+/// `ctx` must not be null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_get_visible_start(
+    ctx: *mut ccx_common_timing_ctx,
+    _current_field: c_int,
+) -> c_long {
+    apply_timing_info();
+    let context = generate_timing_context(ctx);
+
+    // Use base FTS without cb_field offset for accurate timing
+    let base_fts = context.fts_now.millis() + context.fts_global.millis();
+    let minimum_fts = context.minimum_fts.millis();
+
+    let fts = if base_fts <= minimum_fts {
+        minimum_fts + 1
+    } else {
+        base_fts
+    };
+
+    write_back_to_common_timing_ctx(ctx, &context);
+    write_back_from_timing_info();
+
+    fts.try_into().unwrap()
 }
 
 /// Rust equivalent for `get_fts_max` function in C. Uses C-native types as input and output.
