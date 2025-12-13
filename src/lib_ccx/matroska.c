@@ -1043,7 +1043,7 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 		size_t lang_len = lang ? strlen(lang) : 0;
 		if (lang_len > 3)
 			lang_len = 3;
-		memset(codec_data, ' ', 3);  // Initialize with spaces (valid padding for language codes)
+		memset(codec_data, ' ', 3); // Initialize with spaces (valid padding for language codes)
 		if (lang_len > 0)
 			memcpy(codec_data, lang, lang_len);
 		// 2.subtitling_type (1 byte)

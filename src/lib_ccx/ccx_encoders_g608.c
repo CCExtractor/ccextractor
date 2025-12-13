@@ -18,7 +18,7 @@ int write_cc_buffer_as_g608(struct eia608_screen *data, struct encoder_ctx *cont
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	write_wrapped(context->out->fh, context->buffer, used);
 	snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 
 	write_wrapped(context->out->fh, context->buffer, used);
