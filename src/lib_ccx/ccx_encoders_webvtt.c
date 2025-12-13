@@ -292,6 +292,10 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->nb_data == 0)
 		return 0;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	write_webvtt_header(context);
 
 	if (sub->flags & SUB_EOD_MARKER)
@@ -428,6 +432,10 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 	}
 	if (empty_buf) // Prevent writing empty screens. Not needed in .vtt
 		return 0;
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
 
 	write_webvtt_header(context);
 

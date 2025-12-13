@@ -121,6 +121,10 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 #ifdef ENABLE_OCR
 	struct cc_bitmap *rect;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	rect = sub->data;
 
 	if (sub->flags & SUB_EOD_MARKER)
@@ -197,6 +201,10 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	int used;
 	int wrote_something = 0;
 	char str[1024];
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
 
 	sprintf(str, "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
 		(unsigned long long)data->start_time);

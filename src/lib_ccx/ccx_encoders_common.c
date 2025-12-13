@@ -430,6 +430,10 @@ int write_cc_buffer_as_simplexml(struct eia608_screen *data, struct encoder_ctx 
 {
 	int wrote_something = 0;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
@@ -839,10 +843,20 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *)"<br>");
 
-	// Deferred file creation: Don't write headers during initialization.
-	// Headers will be written on first caption write.
-	// for (i = 0; i < ctx->nb_out; i++)
-	// 	write_subtitle_file_header(ctx, ctx->out + i);
+	// Deferred file creation: Write headers immediately only for formats that need special initialization
+	// Text-based formats will have headers written on first caption write
+	for (i = 0; i < ctx->nb_out; i++)
+	{
+		// These formats need immediate initialization because their header functions
+		// do more than just write - they initialize structures or use fdopen()
+		if (ctx->write_format == CCX_OF_SPUPNG ||
+		    ctx->write_format == CCX_OF_RAW ||
+		    ctx->write_format == CCX_OF_RCWT ||
+		    ctx->write_format == CCX_OF_NULL)
+		{
+			write_subtitle_file_header(ctx, ctx->out + i);
+		}
+	}
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 

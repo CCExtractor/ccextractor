@@ -92,6 +92,10 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 	if (sub->nb_data == 0)
 		return 0;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 
@@ -167,6 +171,10 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	int wrote_something = 0;
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
 
 	int prev_line_start = -1, prev_line_end = -1;	    // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
