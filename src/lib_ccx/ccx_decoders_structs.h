@@ -209,6 +209,7 @@ struct lib_cc_decode
     int false_pict_header;
 
 	dtvcc_ctx *dtvcc;
+	void *dtvcc_rust;  // Persistent Rust CEA-708 decoder context
 	int current_field;
 	// Analyse/use the picture information
 	int maxtref; // Use to remember the temporal reference number
