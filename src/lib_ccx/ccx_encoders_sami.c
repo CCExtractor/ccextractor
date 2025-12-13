@@ -15,6 +15,10 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	unsigned char *el = NULL;
 	char str[1024];
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	snprintf(str, sizeof(str), "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)ms_start);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
@@ -197,6 +201,10 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	int used;
 	int wrote_something = 0;
 	char str[1024];
+
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
 
 	snprintf(str, sizeof(str), "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
 		 (unsigned long long)data->start_time);
