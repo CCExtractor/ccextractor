@@ -15,7 +15,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	unsigned char *el = NULL;
 	char str[1024];
 
-	sprintf(str, "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)ms_start);
+	snprintf(str, sizeof(str), "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)ms_start);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -85,7 +85,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 		begin += strlen((const char *)begin) + 1;
 	}
 
-	sprintf((char *)str, "</P></SYNC>\r\n");
+	snprintf(str, sizeof(str), "</P></SYNC>\r\n");
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -94,9 +94,9 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	ret = write(context->out->fh, context->buffer, used);
 	if (ret != used)
 		goto end;
-	sprintf((char *)str,
-		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
-		(unsigned long long)ms_end);
+	snprintf(str, sizeof(str),
+		 "<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
+		 (unsigned long long)ms_end);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -127,8 +127,8 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 
 	if (sub->data != NULL) // then we should write the sub
 	{
-		sprintf(buf,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)sub->start_time);
+		snprintf(buf, context->capacity,
+			 "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n", (unsigned long long)sub->start_time);
 		write_wrapped(context->out->fh, buf, strlen(buf));
 		for (int i = sub->nb_data - 1; i >= 0; i--)
 		{
@@ -137,7 +137,7 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 				if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 				{
 					token = strtok(rect[i].ocr_text, "\r\n");
-					sprintf(buf, "%s", token);
+					snprintf(buf, context->capacity, "%s", token);
 					token = strtok(NULL, "\r\n");
 					write_wrapped(context->out->fh, buf, strlen(buf));
 					if (i != 0)
@@ -146,13 +146,13 @@ int write_cc_bitmap_as_sami(struct cc_subtitle *sub, struct encoder_ctx *context
 				}
 			}
 		}
-		sprintf(buf, "</P></SYNC>\r\n");
+		snprintf(buf, context->capacity, "</P></SYNC>\r\n");
 		write_wrapped(context->out->fh, buf, strlen(buf));
 	}
 	else // we write an empty subtitle to clear the old one
 	{
-		sprintf(buf,
-			"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n", (unsigned long long)sub->start_time);
+		snprintf(buf, context->capacity,
+			 "<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n", (unsigned long long)sub->start_time);
 		write_wrapped(context->out->fh, buf, strlen(buf));
 	}
 #endif
@@ -194,8 +194,8 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 	int wrote_something = 0;
 	char str[1024];
 
-	sprintf(str, "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
-		(unsigned long long)data->start_time);
+	snprintf(str, sizeof(str), "<SYNC start=%llu><P class=\"UNKNOWNCC\">\r\n",
+		 (unsigned long long)data->start_time);
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
@@ -219,16 +219,16 @@ int write_cc_buffer_as_sami(struct eia608_screen *data, struct encoder_ctx *cont
 			write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 	}
-	sprintf((char *)str, "</P></SYNC>\r\n");
+	snprintf(str, sizeof(str), "</P></SYNC>\r\n");
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
 	used = encode_line(context, context->buffer, (unsigned char *)str);
 	write_wrapped(context->out->fh, context->buffer, used);
-	sprintf((char *)str,
-		"<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
-		(unsigned long long)data->end_time - 1); // - 1 to prevent overlap
+	snprintf(str, sizeof(str),
+		 "<SYNC start=%llu><P class=\"UNKNOWNCC\">&nbsp;</P></SYNC>\r\n\r\n",
+		 (unsigned long long)data->end_time - 1); // - 1 to prevent overlap
 	if (context->encoding != CCX_ENC_UNICODE)
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);

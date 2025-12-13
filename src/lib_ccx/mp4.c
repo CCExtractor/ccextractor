@@ -223,12 +223,12 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_I
 	return status;
 }
 
-static char *format_duration(u64 dur, u32 timescale, char *szDur)
+static char *format_duration(u64 dur, u32 timescale, char *szDur, size_t szDur_size)
 {
 	u32 h, m, s, ms;
 	if ((dur == (u64)-1) || (dur == (u32)-1))
 	{
-		strcpy(szDur, "Unknown");
+		snprintf(szDur, szDur_size, "Unknown");
 		return szDur;
 	}
 	dur = (u64)((((Double)(s64)dur) / timescale) * 1000);
@@ -238,7 +238,7 @@ static char *format_duration(u64 dur, u32 timescale, char *szDur)
 	ms = (u32)(dur)-h * 3600000 - m * 60000 - s * 1000;
 	if (h <= 24)
 	{
-		sprintf(szDur, "%02d:%02d:%02d.%03d", h, m, s, ms);
+		snprintf(szDur, szDur_size, "%02d:%02d:%02d.%03d", h, m, s, ms);
 	}
 	else
 	{
@@ -246,7 +246,7 @@ static char *format_duration(u64 dur, u32 timescale, char *szDur)
 		h = (u32)(dur / 3600000) - 24 * d;
 		if (d <= 365)
 		{
-			sprintf(szDur, "%d Days, %02d:%02d:%02d.%03d", d, h, m, s, ms);
+			snprintf(szDur, szDur_size, "%d Days, %02d:%02d:%02d.%03d", d, h, m, s, ms);
 		}
 		else
 		{
@@ -258,7 +258,7 @@ static char *format_duration(u64 dur, u32 timescale, char *szDur)
 				if (y % 4)
 					d--;
 			}
-			sprintf(szDur, "%d Years %d Days, %02d:%02d:%02d.%03d", y, d, h, m, s, ms);
+			snprintf(szDur, szDur_size, "%d Years %d Days, %02d:%02d:%02d.%03d", y, d, h, m, s, ms);
 		}
 	}
 	return szDur;
@@ -824,8 +824,7 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	{
 		if (file)
 		{
-			strcpy(szName, get_basename(file));
-			strcat(szName, ".txt");
+			snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
 
 			t = gf_fopen(szName, "wt");
 			if (!t)
@@ -847,9 +846,9 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	{
 		u64 chapter_time;
 		const char *name;
-		char szDur[20];
+		char szDur[64];
 		gf_isom_get_chapter(f, 0, i + 1, &chapter_time, &name);
-		fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur));
+		fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur, sizeof(szDur)));
 		fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, name);
 	}
 	if (file)
