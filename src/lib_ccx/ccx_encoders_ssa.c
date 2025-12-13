@@ -18,8 +18,8 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	sprintf(timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
-		h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
+	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+		 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
@@ -110,8 +110,8 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 			millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
 			millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-			sprintf(timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
-				h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
+			snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+				 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
 			write_wrapped(context->out->fh, context->buffer, used);
 			write_wrapped(context->out->fh, str, len);
@@ -181,8 +181,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
-	sprintf(timeline, "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
-		h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
+	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+		 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");

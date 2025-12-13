@@ -42,14 +42,14 @@ char *gui_data_string(void *val)
 {
 	static char sbuf[40];
 
-	sprintf(sbuf, "%08lX-%04X-%04X-",
-		(long)*((uint32_t *)((char *)val + 0)),
-		(int)*((uint16_t *)((char *)val + 4)),
-		(int)*((uint16_t *)((char *)val + 6)));
+	snprintf(sbuf, sizeof(sbuf), "%08lX-%04X-%04X-",
+		 (long)*((uint32_t *)((char *)val + 0)),
+		 (int)*((uint16_t *)((char *)val + 4)),
+		 (int)*((uint16_t *)((char *)val + 6)));
 	for (int ii = 0; ii < 2; ii++)
-		sprintf(sbuf + 19 + ii * 2, "%02X-", *((unsigned char *)val + 8 + ii));
+		snprintf(sbuf + 19 + ii * 2, sizeof(sbuf) - 19 - ii * 2, "%02X-", *((unsigned char *)val + 8 + ii));
 	for (int ii = 0; ii < 6; ii++)
-		sprintf(sbuf + 24 + ii * 2, "%02X", *((unsigned char *)val + 10 + ii));
+		snprintf(sbuf + 24 + ii * 2, sizeof(sbuf) - 24 - ii * 2, "%02X", *((unsigned char *)val + 10 + ii));
 
 	return sbuf;
 }
