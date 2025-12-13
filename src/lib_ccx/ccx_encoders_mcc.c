@@ -4,6 +4,7 @@
 #include <stdarg.h>
 
 #include "ccx_encoders_mcc.h"
+#include "lib_ccx.h"
 #include "utility.h"
 
 #define MORE_DEBUG CCX_FALSE
@@ -142,10 +143,16 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 	    caption_time.second, caption_time.frame, num_chars_needed);
 #endif
 
-	char *compressed_data_buffer = malloc(num_chars_needed + 13);
+	size_t compressed_data_size = num_chars_needed + 13;
+	char *compressed_data_buffer = malloc(compressed_data_size);
+	if (!compressed_data_buffer)
+	{
+		free(w_boilerplate_buffer);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In mcc_encode_cc_data: Out of memory allocating compressed_data_buffer.");
+	}
 
-	sprintf(compressed_data_buffer, "%02d:%02d:%02d:%02d\t", caption_time.hour, caption_time.minute,
-		caption_time.second, caption_time.frame);
+	snprintf(compressed_data_buffer, compressed_data_size, "%02d:%02d:%02d:%02d\t", caption_time.hour, caption_time.minute,
+		 caption_time.second, caption_time.frame);
 
 	compress_data(w_boilerplate_buffer, w_boilerplate_buff_size, (uint8 *)&compressed_data_buffer[12]);
 	free(w_boilerplate_buffer);
@@ -155,7 +162,12 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 	    caption_time.hour, caption_time.minute, caption_time.second, caption_time.frame);
 #endif
 
-	strcat(compressed_data_buffer, "\n");
+	size_t current_len = strlen(compressed_data_buffer);
+	if (current_len + 1 < compressed_data_size)
+	{
+		compressed_data_buffer[current_len] = '\n';
+		compressed_data_buffer[current_len + 1] = '\0';
+	}
 
 	write_wrapped(enc_ctx->out->fh, compressed_data_buffer, strlen(compressed_data_buffer));
 
@@ -168,58 +180,59 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 static void generate_mcc_header(int fh, int fr_code, int dropframe_flag)
 {
 	char uuid_str[50];
-	char date_str[50];
-	char time_str[30];
-	char tcr_str[25];
+	char date_str[64];
+	char time_str[32];
+	char tcr_str[32];
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 
-	sprintf(uuid_str, "UUID=");
+	snprintf(uuid_str, sizeof(uuid_str), "UUID=");
 	uuid4(&uuid_str[5]);
 	uuid_str[41] = '\n';
 	uuid_str[42] = '\0';
 
 	ASSERT(tm.tm_wday < 7);
 	ASSERT(tm.tm_mon < 12);
-	sprintf(date_str, "Creation Date=%s, %s %d, %d\n", DayOfWeekStr[tm.tm_wday], MonthStr[tm.tm_mon], tm.tm_mday, tm.tm_year + 1900);
-	sprintf(time_str, "Creation Time=%d:%02d:%02d\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+	snprintf(date_str, sizeof(date_str), "Creation Date=%s, %s %d, %d\n", DayOfWeekStr[tm.tm_wday], MonthStr[tm.tm_mon], tm.tm_mday, tm.tm_year + 1900);
+	snprintf(time_str, sizeof(time_str), "Creation Time=%d:%02d:%02d\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 	switch (fr_code)
 	{
 		case 1:
 		case 2:
-			sprintf(tcr_str, "Time Code Rate=24\n\n");
+			snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=24\n\n");
 			break;
 		case 3:
-			sprintf(tcr_str, "Time Code Rate=25\n\n");
+			snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=25\n\n");
 			break;
 		case 4:
 		case 5:
 			if (dropframe_flag == CCX_TRUE)
 			{
-				sprintf(tcr_str, "Time Code Rate=30DF\n\n");
+				snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=30DF\n\n");
 			}
 			else
 			{
-				sprintf(tcr_str, "Time Code Rate=30\n\n");
+				snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=30\n\n");
 			}
 			break;
 		case 6:
-			sprintf(tcr_str, "Time Code Rate=50\n\n");
+			snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=50\n\n");
 			break;
 		case 7:
 		case 8:
 			if (dropframe_flag == CCX_TRUE)
 			{
-				sprintf(tcr_str, "Time Code Rate=60DF\n\n");
+				snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=60DF\n\n");
 			}
 			else
 			{
-				sprintf(tcr_str, "Time Code Rate=60\n\n");
+				snprintf(tcr_str, sizeof(tcr_str), "Time Code Rate=60\n\n");
 			}
 			break;
 		default:
 			LOG("ERROR: Invalid Framerate Code: %d", fr_code);
+			tcr_str[0] = '\0';
 			break;
 	}
 
@@ -271,6 +284,10 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 
 	uint8 data_size = cc_count * 3;
 	uint8 *buff_ptr = malloc(data_size + 16);
+	if (!buff_ptr)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In add_boilerplate: Out of memory allocating buff_ptr.");
+	}
 	uint8 cdp_frame_rate = CDP_FRAME_RATE_FORBIDDEN;
 
 	switch (fr_code)
@@ -639,9 +656,10 @@ static void compress_data(uint8 *data_ptr, uint16 num_elements, uint8 *out_data_
 
 static void random_chars(char buffer[], int len)
 {
+	static const char hex_chars[] = "0123456789ABCDEF";
 	for (int i = 0; i < len; i++)
 	{
-		sprintf(buffer + i, "%X", rand() % 16);
+		buffer[i] = hex_chars[rand() % 16];
 	}
 }
 
@@ -674,14 +692,15 @@ static void debug_log(char *file, int line, ...)
 
 	va_start(args, line);
 	char *fmt = va_arg(args, char *);
-	vsprintf(message, fmt, args);
+	vsnprintf(message, sizeof(message), fmt, args);
 	va_end(args);
 
 	char *basename = strrchr(file, '/');
 	basename = basename ? basename + 1 : file;
 
-	if (message[(strlen(message) - 1)] == '\n')
-		message[(strlen(message) - 1)] = '\0';
+	size_t msg_len = strlen(message);
+	if (msg_len > 0 && message[msg_len - 1] == '\n')
+		message[msg_len - 1] = '\0';
 
 	dbg_print(CCX_DMT_VERBOSE, "[%s:%d] - %s\n", basename, line, message);
 } // debug_log()
