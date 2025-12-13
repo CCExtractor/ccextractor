@@ -938,6 +938,13 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 
 				if (data->format == SFORMAT_XDS)
 				{
+					// Write header on first caption (deferred file creation)
+					if (write_subtitle_file_header(context, out) != 0)
+					{
+						freep(&data->xds_str);
+						continue;
+					}
+
 					xds_write_transcript_line_prefix(context, out, data->start_time, data->end_time, data->cur_xds_packet_class);
 					if (data->xds_len > 0)
 					{
