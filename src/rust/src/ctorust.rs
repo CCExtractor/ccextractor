@@ -87,6 +87,8 @@ impl FromCType<*const ccx_common_timing_ctx> for CommonTimingCtx {
         Some(CommonTimingCtx {
             pts_set: ctx.pts_set,
             min_pts_adjusted: ctx.min_pts_adjusted,
+            seen_known_frame_type: ctx.seen_known_frame_type,
+            pending_min_pts: ctx.pending_min_pts,
             current_pts: ctx.current_pts,
             current_picture_coding_type,
             current_tref: ctx.current_tref,

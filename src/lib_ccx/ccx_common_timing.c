@@ -65,6 +65,8 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->current_pts = 0;
 	ctx->current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	ctx->min_pts_adjusted = 0;
+	ctx->seen_known_frame_type = 0;
+	ctx->pending_min_pts = 0x01FFFFFFFFLL;
 	ctx->min_pts = 0x01FFFFFFFFLL; // 33 bit
 	ctx->max_pts = 0;
 	ctx->sync_pts = 0;

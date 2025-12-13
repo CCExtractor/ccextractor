@@ -703,6 +703,8 @@ impl CType<ccx_common_timing_ctx> for CommonTimingCtx {
         ccx_common_timing_ctx {
             pts_set: self.pts_set,
             min_pts_adjusted: self.min_pts_adjusted,
+            seen_known_frame_type: self.seen_known_frame_type,
+            pending_min_pts: self.pending_min_pts,
             current_pts: self.current_pts,
             current_picture_coding_type: self.current_picture_coding_type as _,
             current_tref: self.current_tref,

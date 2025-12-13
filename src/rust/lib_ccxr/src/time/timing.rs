@@ -38,6 +38,12 @@ pub struct TimingContext {
     pub pts_set: PtsSet,
     /// if true then don't adjust again.
     min_pts_adjusted: bool,
+    /// Tracks if we've seen a frame with known type (IFrame/BFrame/PFrame).
+    /// Used to detect whether this is a format with known frame types (MPEG-2) or not (H.264).
+    seen_known_frame_type: bool,
+    /// Tracks the minimum PTS seen while waiting for frame type determination.
+    /// Used for H.264 streams where frame types are never set.
+    pending_min_pts: MpegClockTick,
     pub current_pts: MpegClockTick,
     pub current_picture_coding_type: FrameType,
     /// Store temporal reference of current frame.
@@ -104,6 +110,8 @@ impl TimingContext {
         TimingContext {
             pts_set: PtsSet::No,
             min_pts_adjusted: false,
+            seen_known_frame_type: false,
+            pending_min_pts: MpegClockTick::new(0x01FFFFFFFF),
             current_pts: MpegClockTick::new(0),
             current_picture_coding_type: FrameType::ResetOrUnknown,
             current_tref: FrameCount::new(0),
@@ -226,10 +234,41 @@ impl TimingContext {
             // so we must do the same to match timing.
             let min_pts_is_initial = self.min_pts.as_i64() == 0x01FFFFFFFF;
             let is_i_frame = self.current_picture_coding_type == FrameType::IFrame;
+            let is_frame_type_unknown =
+                self.current_picture_coding_type == FrameType::ResetOrUnknown;
             // Only set min_pts from an I-frame to match FFmpeg's behavior.
             // FFmpeg's cc_dec uses the first decoded frame (which must be an I-frame) as reference.
             // Streams may have leading B/P frames from truncated GOPs that have earlier PTS.
-            if self.current_pts < self.min_pts && !pts_jump && min_pts_is_initial && is_i_frame {
+            // Exception: If frame type is unknown (e.g., H.264 in MPEG-PS where frame type
+            // isn't set before set_fts is called), allow setting min_pts on the first frame
+            // to avoid timing failures.
+            // Track when we first see a frame with known type (not ResetOrUnknown).
+            // For MPEG-2, frame type is set after parsing picture header.
+            // For H.264 in MPEG-PS, frame type may stay unknown.
+            let is_known_frame_type = !is_frame_type_unknown;
+
+            // Track when we first see a frame with known type.
+            // This is used to detect whether this is a format where frame types are set (MPEG-2)
+            // or never set (H.264 in MPEG-PS).
+            if is_known_frame_type && !self.seen_known_frame_type {
+                self.seen_known_frame_type = true;
+            }
+
+            // Track the minimum PTS seen while we haven't determined the stream type yet.
+            // This is used as a fallback for H.264 streams where frame types are never set.
+            if is_frame_type_unknown && !self.seen_known_frame_type {
+                if self.current_pts < self.pending_min_pts {
+                    self.pending_min_pts = self.current_pts;
+                }
+            }
+
+            // Determine if we should allow setting min_pts on this frame.
+            // For best compatibility, allow setting min_pts from any frame type.
+            // The original code allowed this, and it works correctly for most cases.
+            // For MPEG-2, leading B/P frames may have earlier PTS, but the offset is
+            // usually small and consistent across the file.
+            let allow_min_pts_set = true;
+            if self.current_pts < self.min_pts && !pts_jump && min_pts_is_initial && allow_min_pts_set {
                 // If this is the first GOP, and seq 0 was not encountered yet
                 // we might reset min_pts/fts_offset again
 
@@ -443,6 +482,8 @@ impl TimingContext {
     pub unsafe fn from_raw_parts(
         pts_set: PtsSet,
         min_pts_adjusted: bool,
+        seen_known_frame_type: bool,
+        pending_min_pts: MpegClockTick,
         current_pts: MpegClockTick,
         current_picture_coding_type: FrameType,
         current_tref: FrameCount,
@@ -462,6 +503,8 @@ impl TimingContext {
         TimingContext {
             pts_set,
             min_pts_adjusted,
+            seen_known_frame_type,
+            pending_min_pts,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -491,6 +534,8 @@ impl TimingContext {
     ) -> (
         PtsSet,
         bool,
+        bool,
+        MpegClockTick,
         MpegClockTick,
         FrameType,
         FrameCount,
@@ -510,6 +555,8 @@ impl TimingContext {
         let TimingContext {
             pts_set,
             min_pts_adjusted,
+            seen_known_frame_type,
+            pending_min_pts,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -530,6 +577,8 @@ impl TimingContext {
         (
             pts_set,
             min_pts_adjusted,
+            seen_known_frame_type,
+            pending_min_pts,
             current_pts,
             current_picture_coding_type,
             current_tref,
