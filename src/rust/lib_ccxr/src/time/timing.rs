@@ -223,7 +223,10 @@ impl TimingContext {
 
         // Set min_pts, fts_offset
         if self.pts_set != PtsSet::No {
-            self.pts_set = PtsSet::MinPtsSet;
+            // Note: We set pts_set = MinPtsSet later, only after we actually set min_pts.
+            // This is crucial for formats like MP4 c608 tracks where frame type is never known
+            // and min_pts would never be set, causing fts_now calculation to use the initial
+            // huge min_pts value (0x01FFFFFFFF) which results in negative timestamps.
 
             // Use this part only the first time min_pts is set. Later treat
             // it as a reference clock change.
@@ -257,12 +260,13 @@ impl TimingContext {
                 self.seen_known_frame_type = true;
             }
 
-            // Track the minimum PTS seen while frame type is unknown.
-            // This is used as a fallback for streams where frame types are never set (H.264).
+            // Track the minimum PTS seen (regardless of frame type).
+            // This is used to detect if leading B/P frames are garbage (large gap to I-frame)
+            // or valid frames (small gap to I-frame).
+            if self.current_pts < self.pending_min_pts {
+                self.pending_min_pts = self.current_pts;
+            }
             if is_frame_type_unknown {
-                if self.current_pts < self.pending_min_pts {
-                    self.pending_min_pts = self.current_pts;
-                }
                 self.unknown_frame_count += 1;
             }
 
@@ -272,11 +276,17 @@ impl TimingContext {
             //   This is crucial because set_fts() is often called from PES layer BEFORE
             //   the picture header is parsed, so frame type is unknown even for MPEG-2.
             // - If frame type is KNOWN (I/B/P from MPEG-2 picture header):
-            //   - I-frame: Set min_pts from this frame
-            //   - B/P-frame: Don't set min_pts, wait for I-frame
+            //   - I-frame: Check if leading B/P frames were garbage or valid
+            //     - If gap between pending_min_pts and I-frame PTS is large (>100ms/3 frames):
+            //       These are garbage frames from truncated GOP, use I-frame PTS
+            //     - If gap is small (<=100ms): These are valid B-frames, use pending_min_pts
+            //   - B/P-frame: Don't set min_pts yet, wait for I-frame to decide
             // - Fallback: If we've processed many frames without seeing a known frame type
             //   (H.264 in MPEG-PS), eventually use pending_min_pts after 100+ calls.
             const FALLBACK_THRESHOLD: u32 = 100;
+            // Threshold for garbage detection: ~100ms (3 frames at 30fps)
+            // Gap larger than this suggests garbage leading frames from truncated GOP
+            const GARBAGE_GAP_THRESHOLD_MS: i64 = 100;
             let (allow_min_pts_set, pts_for_min) = if is_frame_type_unknown {
                 // Frame type unknown - check if we should use fallback
                 if self.unknown_frame_count >= FALLBACK_THRESHOLD
@@ -288,15 +298,47 @@ impl TimingContext {
                 } else {
                     (false, self.current_pts)
                 }
+            } else if is_i_frame {
+                // I-frame: Decide whether to use I-frame PTS or pending_min_pts
+                if self.pending_min_pts.as_i64() != 0x01FFFFFFFF {
+                    let gap_ticks = self.current_pts.as_i64() - self.pending_min_pts.as_i64();
+                    let gap_ms = if timing_info.mpeg_clock_freq > 0 {
+                        gap_ticks * 1000 / timing_info.mpeg_clock_freq
+                    } else {
+                        // Assume 90kHz if not set
+                        gap_ticks * 1000 / 90000
+                    };
+                    if gap_ms > GARBAGE_GAP_THRESHOLD_MS {
+                        // Large gap: leading frames are garbage, use I-frame PTS
+                        (true, self.current_pts)
+                    } else {
+                        // Small gap: leading frames are valid B-frames, use pending_min_pts
+                        (true, self.pending_min_pts)
+                    }
+                } else {
+                    // No pending_min_pts, use I-frame PTS directly
+                    (true, self.current_pts)
+                }
             } else {
-                // Frame type is known (I/B/P), require I-frame
-                (is_i_frame, self.current_pts)
+                // B/P-frame: Don't set min_pts yet, wait for I-frame
+                (false, self.current_pts)
             };
+            // Only set min_pts once (when min_pts_is_initial is true).
+            // This matches FFmpeg's behavior which uses the first I-frame's PTS.
+            // B-frames that arrive later (in decode order) with lower PTS (display order)
+            // should NOT update min_pts - they're normal B-frame reordering, not garbage frames.
+            //
+            // The garbage_gap threshold logic handles the case where:
+            // - Garbage frames come BEFORE the I-frame in the stream
+            // - They set pending_min_pts to a value much lower than I-frame PTS
+            // - When we see the I-frame, we check the gap and use pending_min_pts if small
             if pts_for_min < self.min_pts && !pts_jump && min_pts_is_initial && allow_min_pts_set {
                 // If this is the first GOP, and seq 0 was not encountered yet
                 // we might reset min_pts/fts_offset again
 
                 self.min_pts = pts_for_min;
+                // Mark that min_pts has been set - this enables fts_now calculation
+                self.pts_set = PtsSet::MinPtsSet;
 
                 // Avoid next async test
                 self.sync_pts = self.current_pts
@@ -384,8 +426,8 @@ impl TimingContext {
         // Avoid wrong "Calc. difference" and "Asynchronous by" numbers
         // for uninitialized min_pts
         // CFS: Remove or think decent condition
-        if self.pts_set != PtsSet::No {
-            // If pts_set is TRUE we have min_pts
+        if self.pts_set == PtsSet::MinPtsSet {
+            // min_pts has been set, we can calculate fts_now
             self.fts_now = (self.current_pts - self.min_pts)
                 .as_timestamp(timing_info.mpeg_clock_freq)
                 + self.fts_offset;
@@ -394,11 +436,13 @@ impl TimingContext {
                 self.sync_pts2fts_fts = self.fts_now;
                 self.sync_pts2fts_set = true;
             }
-        } else {
+        } else if self.pts_set == PtsSet::No {
             // No PTS info at all!!
             info!("Set PTS called without any global timestamp set\n");
             return false;
         }
+        // pts_set == Received: PTS received but min_pts not yet set (waiting for I-frame)
+        // Keep fts_now at its previous value until min_pts is established
 
         if self.fts_now > self.fts_max {
             self.fts_max = self.fts_now;
