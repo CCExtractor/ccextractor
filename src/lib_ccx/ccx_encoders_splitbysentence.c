@@ -438,7 +438,9 @@ void sbs_strcpy_without_dup(const unsigned char *str, sbs_context_t *context)
 			skip_ws++;
 		}
 
-		strcpy(context->buffer, context->buffer + skip_ws);
+		// Use memmove for overlapping memory regions (strcpy is undefined for overlapping buffers)
+		size_t remaining_len = strlen((char *)(context->buffer + skip_ws)) + 1;
+		memmove(context->buffer, context->buffer + skip_ws, remaining_len);
 		context->handled_len = 0;
 	}
 
@@ -451,10 +453,12 @@ void sbs_strcpy_without_dup(const unsigned char *str, sbs_context_t *context)
 	    && !isspace(context->buffer[sbs_len - 1]) // not a space char at the end of existing buf
 	)
 	{
-		strcat(context->buffer, " ");
+		// Capacity is guaranteed by sbs_append_string before calling this function
+		strncat((char *)context->buffer, " ", context->capacity - sbs_len - 1);
+		sbs_len++;
 	}
 
-	strcat(context->buffer, str);
+	strncat((char *)context->buffer, (char *)str, context->capacity - sbs_len - 1);
 }
 
 /**
