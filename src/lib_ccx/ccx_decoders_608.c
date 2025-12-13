@@ -798,7 +798,17 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				}
 			}
 			roll_up(context);			// The roll must be done anyway of course.
-			context->ts_start_of_current_line = -1; // Unknown.
+			// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
+			// preserve the CR time so the next caption uses the display state change time,
+			// not the character typing time. This matches FFmpeg's timing behavior.
+			if (context->rollup_from_popon && !changes)
+			{
+				context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+			}
+			else
+			{
+				context->ts_start_of_current_line = -1; // Unknown.
+			}
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
