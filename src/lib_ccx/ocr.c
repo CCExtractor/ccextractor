@@ -441,7 +441,26 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		int written_tag = 0;
 		TessResultIterator *ri = 0;
 		TessPageIteratorLevel level = RIL_WORD;
-		TessBaseAPISetImage2(ctx->api, color_pix_out);
+		PIX *color_pix_processed = NULL;  // Will hold preprocessed image for cleanup
+
+		// Preprocess color_pix_out for Tesseract the same way as cpix_gs
+		// Tesseract expects dark text on light background, but DVB subtitles typically
+		// have light text on dark background. Without preprocessing, Tesseract
+		// produces garbage results or crashes when iterating over words.
+		color_pix_processed = pixConvertRGBToGray(color_pix_out, 0.0, 0.0, 0.0);
+		if (color_pix_processed == NULL)
+		{
+			goto skip_color_detection;
+		}
+		pixInvert(color_pix_processed, color_pix_processed);
+		PIX *color_pix_enhanced = pixContrastNorm(NULL, color_pix_processed, 100, 100, 55, 1, 1);
+		if (color_pix_enhanced != NULL)
+		{
+			pixDestroy(&color_pix_processed);
+			color_pix_processed = color_pix_enhanced;
+		}
+
+		TessBaseAPISetImage2(ctx->api, color_pix_processed);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 		if (tess_ret != 0)
 		{
@@ -516,12 +535,42 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 				/* calculate histogram of image */
 				int firstpixel = copy->data[0]; // TODO: Verify this border pixel assumption holds
+
+				// Bounds check: validate bounding box coordinates
+				// The bounding box (x1,y1,x2,y2) is relative to the cropped image.
+				// With crop offset (x,y), the original coordinates are (x+x1, y+y1) to (x+x2, y+y2).
+				// Ensure we don't access outside the original image bounds.
+				int orig_x1 = x + x1;
+				int orig_y1 = y + y1;
+				int orig_x2 = x + x2;
+				int orig_y2 = y + y2;
+
+				if (orig_x1 < 0 || orig_y1 < 0 || orig_x2 >= w || orig_y2 >= h ||
+				    orig_x1 > orig_x2 || orig_y1 > orig_y2)
+				{
+					// Invalid bounding box - skip this word
+					freep(&histogram);
+					freep(&mcit);
+					freep(&iot);
+					if (word)
+						TessDeleteText(word);
+					continue;
+				}
+
 				for (int i = y1; i <= y2; i++)
 				{
 					for (int j = x1; j <= x2; j++)
 					{
-						if (copy->data[(y + i) * w + (x + j)] != firstpixel)
-							histogram[copy->data[(y + i) * w + (x + j)]]++;
+						int idx = (y + i) * w + (x + j);
+						if (idx >= 0 && idx < w * h)
+						{
+							int color_idx = copy->data[idx];
+							if (color_idx >= 0 && color_idx < copy->nb_colors)
+							{
+								if (color_idx != firstpixel)
+									histogram[color_idx]++;
+							}
+						}
 					}
 				}
 				/* sorted in increasing order of intensity */
@@ -801,7 +850,11 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				text_out = new_text_out;
 			}
 		}
-		TessResultIteratorDelete(ri);
+	skip_color_detection:
+		if (ri)
+			TessResultIteratorDelete(ri);
+		if (color_pix_processed)
+			pixDestroy(&color_pix_processed);
 	}
 	// End Color Detection
 	boxDestroy(&crop_points);
