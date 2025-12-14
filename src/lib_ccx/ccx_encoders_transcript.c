@@ -118,10 +118,6 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
 
-	// Write header on first caption (deferred file creation)
-	if (write_subtitle_file_header(context, context->out) != 0)
-		return -1;
-
 	while (sub)
 	{
 		if (sub->type == CC_TEXT)
@@ -143,6 +139,10 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
 			return 0;
 		}
+
+		// Write header on first caption (deferred file creation) - only after validating data
+		if (write_subtitle_file_header(context, context->out) != 0)
+			return -1;
 
 		str = sub->data;
 
