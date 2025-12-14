@@ -4,7 +4,7 @@ use crate::libccxr_exports::time::ccxr_millis_to_time;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::debug;
 
-use std::os::raw::{c_int, c_void};
+use std::os::raw::{c_int, c_void, c_char};
 use std::ffi::CStr;
 use std::io;
 
@@ -46,7 +46,8 @@ fn write_wrapped(fd: c_int, buf: &[u8]) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn write_stringz_as_smptett(
+/// Internal implementation of write_stringz_as_smptett
+fn write_stringz_as_smptett_internal(
     text: &str,
     context: &mut encoder_ctx,
     ms_start: i64,
@@ -117,22 +118,50 @@ fn write_stringz_as_smptett(
     }
 }
 
-pub fn write_cc_buffer_as_smptett(
-    data: &mut eia608_screen,
-    context: &mut encoder_ctx,
+/// C-callable wrapper for write_stringz_as_smptett
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers
+#[no_mangle]
+pub unsafe extern "C" fn write_stringz_as_smptett(
+    text: *const c_char,
+    context: *mut encoder_ctx,
+    ms_start: i64,
+    ms_end: i64,
+) {
+    if text.is_null() || context.is_null() {
+        return;
+    }
+    
+    let text_str = match CStr::from_ptr(text).to_str() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    
+    write_stringz_as_smptett_internal(text_str, &mut *context, ms_start, ms_end);
+}
+
+/// Write EIA-608 screen buffer as SMPTE-TT
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and performs FFI operations
+#[no_mangle]
+pub unsafe extern "C" fn write_cc_buffer_as_smptett(
+    data: *mut eia608_screen,
+    context: *mut encoder_ctx,
 ) -> c_int {
+    if data.is_null() || context.is_null() {
+        return 0;
+    }
+    let data = &mut *data;
+    let context = &mut *context;
+    
     let (mut h1, mut m1, mut s1, mut ms1) = (0, 0, 0, 0);
     let (mut h2, mut m2, mut s2, mut ms2) = (0, 0, 0, 0);
     let mut wrote_something = 0;
 
-    unsafe {
-        ccxr_millis_to_time(data.start_time, &mut h1, &mut m1, &mut s1, &mut ms1);
-        ccxr_millis_to_time(data.end_time - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
-    }
+    ccxr_millis_to_time(data.start_time, &mut h1, &mut m1, &mut s1, &mut ms1);
+    ccxr_millis_to_time(data.end_time - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
 
-    let buffer: &mut [u8] = unsafe {
-        std::slice::from_raw_parts_mut(context.buffer, context.capacity as usize)
-    };
+    let buffer: &mut [u8] = std::slice::from_raw_parts_mut(context.buffer, context.capacity as usize);
 
     for row in 0..15 {
         if data.row_used[row] == 0 {
@@ -173,33 +202,28 @@ pub fn write_cc_buffer_as_smptett(
         }
 
         let used = encode_line(context, buffer, opening.as_bytes());
-        unsafe {
-            let out = &*context.out;
-            let _ = write_wrapped(out.fh, &buffer[..used as usize]);
-        }
+        let out = &*context.out;
+        let _ = write_wrapped(out.fh, &buffer[..used as usize]);
 
         // Get the decoded line - store it in context.subline
-        unsafe {
-            // This function exists in the C code and should be available via bindings
-            extern "C" {
-                fn get_decoder_line_encoded(
-                    ctx: *mut encoder_ctx,
-                    buf: *mut u8,
-                    line_num: c_int,
-                    data: *const eia608_screen,
-                ) -> u32;
-            }
-            
-            get_decoder_line_encoded(
-                context as *mut encoder_ctx,
-                context.subline,
-                row as c_int,
-                data as *const eia608_screen,
-            );
+        extern "C" {
+            fn get_decoder_line_encoded(
+                ctx: *mut encoder_ctx,
+                buf: *mut u8,
+                line_num: c_int,
+                data: *const eia608_screen,
+            ) -> u32;
         }
+        
+        get_decoder_line_encoded(
+            context as *mut encoder_ctx,
+            context.subline,
+            row as c_int,
+            data as *const eia608_screen,
+        );
 
         // Convert subline to Rust string for processing
-        let line_text = unsafe {
+        let line_text = {
             let subline_slice = std::slice::from_raw_parts(
                 context.subline,
                 4096 // Max line length
@@ -212,17 +236,15 @@ pub fn write_cc_buffer_as_smptett(
         let formatted = process_line_styling(&line_text);
 
         let used = encode_line(context, buffer, formatted.as_bytes());
-        unsafe {
-            let out = &*context.out;
-            let _ = write_wrapped(out.fh, &buffer[..used as usize]);
+        let out = &*context.out;
+        let _ = write_wrapped(out.fh, &buffer[..used as usize]);
 
-            // Write CRLF
-            let crlf_slice = std::slice::from_raw_parts(
-                context.encoded_crlf.as_ptr(),
-                context.encoded_crlf_length as usize
-            );
-            let _ = write_wrapped(out.fh, crlf_slice);
-        }
+        // Write CRLF
+        let crlf_slice = std::slice::from_raw_parts(
+            context.encoded_crlf.as_ptr(),
+            context.encoded_crlf_length as usize
+        );
+        let _ = write_wrapped(out.fh, crlf_slice);
 
         // Write closing tags
         let closing = b"        <style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\"/></span>\n      </p>\n";
@@ -233,10 +255,8 @@ pub fn write_cc_buffer_as_smptett(
                 std::str::from_utf8(closing).unwrap_or(""));
         }
         
-        unsafe {
-            let out = &*context.out;
-            let _ = write_wrapped(out.fh, &buffer[..used as usize]);
-        }
+        let out = &*context.out;
+        let _ = write_wrapped(out.fh, &buffer[..used as usize]);
     }
 
     wrote_something
@@ -313,99 +333,112 @@ fn process_line_styling(line: &str) -> String {
     line.to_string()
 }
 
-pub fn write_cc_subtitle_as_smptett(sub: &mut cc_subtitle, context: &mut encoder_ctx) -> c_int {
+/// Write subtitle as SMPTE-TT
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and performs FFI operations
+#[no_mangle]
+pub unsafe extern "C" fn write_cc_subtitle_as_smptett(
+    sub: *mut cc_subtitle,
+    context: *mut encoder_ctx,
+) -> c_int {
+    if sub.is_null() || context.is_null() {
+        return 0;
+    }
+    let sub = &mut *sub;
+    let context = &mut *context;
+    
     let mut current = sub as *mut cc_subtitle;
     let original = current;
     
-    unsafe {
-        // Process all subtitles in the linked list
-        while !current.is_null() {
-            let sub_ref = &mut *current;
-            
-            // Check if it's CC_TEXT type (subtype_CC_TEXT = 0)
-            if sub_ref.type_ == subtype_CC_TEXT {
-                if !sub_ref.data.is_null() {
-                    // Convert C string to Rust string
-                    let c_str = CStr::from_ptr(sub_ref.data as *const i8);
-                    if let Ok(text) = c_str.to_str() {
-                        write_stringz_as_smptett(
-                            text,
-                            context,
-                            sub_ref.start_time,
-                            sub_ref.end_time,
-                        );
-                    }
-                    
-                    // Free the data using C free
-                    extern "C" {
-                        fn free(ptr: *mut c_void);
-                    }
-                    free(sub_ref.data);
-                    sub_ref.data = std::ptr::null_mut();
-                }
-                sub_ref.nb_data = 0;
-            }
-            
-            current = sub_ref.next;
-        }
+    // Process all subtitles in the linked list
+    while !current.is_null() {
+        let sub_ref = &mut *current;
         
-        // Free the subtitle list (going backwards to original)
-        current = original;
-        while !current.is_null() {
-            let sub_ref = &mut *current;
-            let next = sub_ref.next;
-            
-            if current != original {
+        // Check if it's CC_TEXT type (subtype_CC_TEXT = 0)
+        if sub_ref.type_ == subtype_CC_TEXT {
+            if !sub_ref.data.is_null() {
+                // Convert C string to Rust string
+                let c_str = CStr::from_ptr(sub_ref.data as *const i8);
+                if let Ok(text) = c_str.to_str() {
+                    write_stringz_as_smptett_internal(
+                        text,
+                        context,
+                        sub_ref.start_time,
+                        sub_ref.end_time,
+                    );
+                }
+                
+                // Free the data using C free
                 extern "C" {
                     fn free(ptr: *mut c_void);
                 }
-                free(current as *mut c_void);
+                free(sub_ref.data);
+                sub_ref.data = std::ptr::null_mut();
             }
-            
-            current = next;
+            sub_ref.nb_data = 0;
         }
+        
+        current = sub_ref.next;
+    }
+    
+    // Free the subtitle list (going backwards to original)
+    current = original;
+    while !current.is_null() {
+        let sub_ref = &mut *current;
+        let next = sub_ref.next;
+        
+        if current != original {
+            extern "C" {
+                fn free(ptr: *mut c_void);
+            }
+            free(current as *mut c_void);
+        }
+        
+        current = next;
     }
     
     0
 }
 
-pub fn write_cc_bitmap_as_smptett(
-    sub: &mut cc_subtitle,
-    _context: &mut encoder_ctx,
+/// Write bitmap subtitle as SMPTE-TT
+/// # Safety
+/// This function is unsafe because it dereferences raw pointers and performs FFI operations
+#[no_mangle]
+pub unsafe extern "C" fn write_cc_bitmap_as_smptett(
+    sub: *mut cc_subtitle,
+    _context: *mut encoder_ctx,
 ) -> c_int {
-    // This function handles OCR'd bitmap subtitles
-    // The implementation requires OCR features which may not be available
+    if sub.is_null() {
+        return 0;
+    }
+    let sub = &mut *sub;
     
     #[cfg(feature = "hardsubx_ocr")]
     {
         // Would implement bitmap OCR handling here similar to C code
         // For now, just clean up
-        unsafe {
-            if !sub.data.is_null() {
-                extern "C" {
-                    fn free(ptr: *mut c_void);
-                }
-                free(sub.data);
-                sub.data = std::ptr::null_mut();
+        if !sub.data.is_null() {
+            extern "C" {
+                fn free(ptr: *mut c_void);
             }
-            sub.nb_data = 0;
+            free(sub.data);
+            sub.data = std::ptr::null_mut();
         }
+        sub.nb_data = 0;
         0
     }
     
     #[cfg(not(feature = "hardsubx_ocr"))]
     {
         // Without OCR, just clean up and return
-        unsafe {
-            if !sub.data.is_null() {
-                extern "C" {
-                    fn free(ptr: *mut c_void);
-                }
-                free(sub.data);
-                sub.data = std::ptr::null_mut();
+        if !sub.data.is_null() {
+            extern "C" {
+                fn free(ptr: *mut c_void);
             }
-            sub.nb_data = 0;
+            free(sub.data);
+            sub.data = std::ptr::null_mut();
         }
+        sub.nb_data = 0;
         0
     }
 }
