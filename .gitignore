@@ -143,6 +143,9 @@ bazel*
 #Intellij IDEs
 .idea/
 
+# Plans (local only)
+plans/
+
 # Rust build and MakeFiles (and CMake files)
 src/rust/CMakeFiles/
 src/rust/CMakeCache.txt
