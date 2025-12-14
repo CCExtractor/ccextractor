@@ -699,6 +699,12 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					const LLONG timestamp = (LLONG)((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
 #endif
 					set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset) * MPEG_CLOCK_FREQ / timescale);
+					// For caption-only tracks (c608/c708), set frame type to I-frame
+					// so that set_fts() will set min_pts from the first sample.
+					// Without video frames, frame type would stay Unknown and
+					// min_pts would never be set, causing broken timestamps.
+					if (type == GF_ISOM_MEDIA_CLOSED_CAPTION)
+						dec_ctx->timing->current_picture_coding_type = CCX_FRAME_TYPE_I_FRAME;
 					set_fts(dec_ctx->timing);
 
 					int atomStart = 0;

@@ -1,7 +1,9 @@
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::libccxr_exports::time::{ccxr_get_fts, ccxr_print_debug_timing, ccxr_set_fts};
 use crate::{anchor_hdcc, process_hdcc};
-use crate::{ccx_options, frames_since_ref_time, fts_at_gop_start, total_frames_count};
+use crate::{
+    ccx_options, current_fps, frames_since_ref_time, fts_at_gop_start, total_frames_count,
+};
 use lib_ccxr::common::{BitStreamRust, BitstreamError, FrameType};
 use lib_ccxr::debug;
 use lib_ccxr::util::log::DebugMessageFlag;
@@ -269,6 +271,20 @@ pub unsafe fn read_pic_info(
     total_frames_count += 1 + extraframe;
     dec_ctx.frames_since_last_gop += (1 + extraframe) as c_int;
     frames_since_ref_time += (1 + extraframe) as c_int;
+
+    // For elementary streams with GOP timing, update fts_now for each frame
+    // based on the frame offset from GOP start. This is needed because
+    // set_fts() is not called for each picture when use_gop_as_pts == 1.
+    if ccx_options.use_gop_as_pts == 1 {
+        // Calculate current FTS based on GOP start time + frame offset
+        let frame_offset_ms = (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps) as i64;
+        (*dec_ctx.timing).fts_now = fts_at_gop_start as i64 + frame_offset_ms;
+
+        // Update fts_max if needed
+        if (*dec_ctx.timing).fts_now > (*dec_ctx.timing).fts_max {
+            (*dec_ctx.timing).fts_max = (*dec_ctx.timing).fts_now;
+        }
+    }
 
     dbg_es!("Read PIC Info - processed\n");
 

@@ -111,29 +111,6 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.69.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
-dependencies = [
- "bitflags 2.10.0",
- "cexpr",
- "clang-sys",
- "itertools 0.12.1",
- "lazy_static",
- "lazycell",
- "log",
- "prettyplease",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash 1.1.0",
- "shlex",
- "syn 2.0.108",
- "which",
-]
-
-[[package]]
-name = "bindgen"
 version = "0.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f58bf3d7db68cfbac37cfc485a8d711e87e064c3d0fe0435b92f7a407f9d6b3"
@@ -141,7 +118,7 @@ dependencies = [
  "bitflags 2.10.0",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -165,31 +142,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
-name = "bon"
-version = "3.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebeb9aaf9329dff6ceb65c689ca3db33dbf15f324909c60e4e5eef5701ce31b1"
-dependencies = [
- "bon-macros",
- "rustversion",
-]
-
-[[package]]
-name = "bon-macros"
-version = "3.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77e9d642a7e3a318e37c2c9427b5a6a48aa1ad55dcd986f3034ab2239045a645"
-dependencies = [
- "darling",
- "ident_case",
- "prettyplease",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn 2.0.108",
-]
-
-[[package]]
 name = "camino"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -210,8 +162,7 @@ dependencies = [
  "num-integer",
  "palette",
  "pkg-config",
- "rsmpeg 0.14.2+ffmpeg.6.1",
- "rsmpeg 0.18.0+ffmpeg.8.0",
+ "rsmpeg",
  "serial_test",
  "strum_macros 0.25.3",
  "tempfile",
@@ -308,41 +259,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darling"
-version = "0.21.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cdf337090841a411e2a7f3deb9187445851f91b309c0c0a29e05f74a00a48c0"
-dependencies = [
- "darling_core",
- "darling_macro",
-]
-
-[[package]]
-name = "darling_core"
-version = "0.21.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1247195ecd7e3c85f83c8d2a366e4210d588e802133e1e355180a9870b517ea4"
-dependencies = [
- "fnv",
- "ident_case",
- "proc-macro2",
- "quote",
- "strsim",
- "syn 2.0.108",
-]
-
-[[package]]
-name = "darling_macro"
-version = "0.21.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d38308df82d1080de0afee5d069fa14b0326a88c14f15c5ccda35b4a6c414c81"
-dependencies = [
- "darling_core",
- "quote",
- "syn 2.0.108",
-]
-
-[[package]]
 name = "deranged"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -433,12 +349,6 @@ checksum = "59a98bbaacea1c0eb6a0876280051b892eb73594fd90cf3b20e9c817029c57d2"
 dependencies = [
  "toml",
 ]
-
-[[package]]
-name = "fnv"
-version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "form_urlencoded"
@@ -668,12 +578,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ident_case"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
-
-[[package]]
 name = "idna"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -709,15 +613,6 @@ name = "is_terminal_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
-
-[[package]]
-name = "itertools"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
-dependencies = [
- "either",
-]
 
 [[package]]
 name = "itertools"
@@ -1140,25 +1035,11 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "rsmpeg"
-version = "0.14.2+ffmpeg.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "927012cd6ae43519f519741f4a69602ce3a47cf84750784da124dffd03527cc0"
+version = "0.15.3+ffmpeg.7.1"
+source = "git+https://github.com/CCExtractor/rsmpeg.git#2ddc3c05af684893ee9c6874924fc112bff0401e"
 dependencies = [
- "libc",
  "paste",
- "rusty_ffmpeg 0.13.3+ffmpeg.6.1",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "rsmpeg"
-version = "0.18.0+ffmpeg.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "523351495c9ff0bf4b99ed1f42f1415fc709526ddb63526cff85022b387c5811"
-dependencies = [
- "bon",
- "paste",
- "rusty_ffmpeg 0.16.7+ffmpeg.8",
+ "rusty_ffmpeg",
  "thiserror 2.0.17",
 ]
 
@@ -1217,28 +1098,14 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "rusty_ffmpeg"
-version = "0.13.3+ffmpeg.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "716adffa5f909c8533611b1dab9ab5666bece35687845865b75ed6a990fc239c"
-dependencies = [
- "bindgen 0.69.5",
- "camino",
- "libc",
- "once_cell",
- "pkg-config",
- "vcpkg",
-]
-
-[[package]]
-name = "rusty_ffmpeg"
 version = "0.16.7+ffmpeg.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f25d40a46450059278c9f9f2616018910b647877a66a2093a83f115f59763967"
+source = "git+https://github.com/CCExtractor/rusty_ffmpeg.git#bdbaf09d5fdda4f3fd1278cdd11abe2a47dd9a99"
 dependencies = [
  "bindgen 0.71.1",
  "camino",
  "once_cell",
  "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
