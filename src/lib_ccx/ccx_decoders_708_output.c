@@ -138,17 +138,13 @@ void dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, dtvcc_pen_attribs pen_attribs
 
 size_t write_utf16_char(unsigned short utf16_char, char *out)
 {
-	if ((utf16_char >> 8) != 0)
-	{
-		out[0] = (unsigned char)(utf16_char >> 8);
-		out[1] = (unsigned char)(utf16_char & 0xff);
-		return 2;
-	}
-	else
-	{
-		out[0] = (unsigned char)(utf16_char);
-		return 1;
-	}
+	// Always write 2 bytes for consistent UTF-16BE encoding.
+	// Previously, this function wrote 1 byte for ASCII characters and 2 bytes
+	// for non-ASCII, creating an invalid mix that iconv couldn't handle properly.
+	// This caused garbled output with Japanese/Chinese characters (issue #1451).
+	out[0] = (unsigned char)(utf16_char >> 8);
+	out[1] = (unsigned char)(utf16_char & 0xff);
+	return 2;
 }
 
 void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
