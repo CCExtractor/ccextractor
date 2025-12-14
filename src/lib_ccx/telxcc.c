@@ -718,7 +718,7 @@ page_is_empty:
 			{
 				if ((foreground_color != 0x7) && !tlt_config.nofontcolor)
 				{
-					sprintf(c_tempb, "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
+					snprintf(c_tempb, sizeof(c_tempb), "<font color=\"%s\">", TTXT_COLOURS[foreground_color]);
 					page_buffer_add_string(ctx, c_tempb);
 					font_tag_opened = YES;
 				}
@@ -743,7 +743,7 @@ page_is_empty:
 						// telxcc writes <font/> tags only when needed
 						if ((v > 0x0) && (v < 0x7))
 						{
-							sprintf(c_tempb, "<font color=\"%s\">", TTXT_COLOURS[v]);
+							snprintf(c_tempb, sizeof(c_tempb), "<font color=\"%s\">", TTXT_COLOURS[v]);
 							page_buffer_add_string(ctx, c_tempb);
 							font_tag_opened = YES;
 						}
@@ -893,7 +893,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		{
 			int thisp = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			char t1[10];
-			sprintf(t1, "%x", thisp); // Example: 1928 -> 788
+			snprintf(t1, sizeof(t1), "%x", thisp); // Example: 1928 -> 788
 			thisp = atoi(t1);
 			if (!ctx->seen_sub_page[thisp])
 			{

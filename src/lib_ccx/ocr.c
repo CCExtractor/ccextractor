@@ -50,7 +50,19 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 
 	// Search for a tessdata folder in the specified directory
 	char *dirname = strdup(dir_name);
-	dirname = realloc(dirname, strlen(dirname) + strlen("tessdata/") + (dirname[strlen(dirname) - 1] != '/') + 1);
+	if (!dirname)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory allocating dirname.");
+	}
+
+	size_t new_size = strlen(dirname) + strlen("tessdata/") + (dirname[strlen(dirname) - 1] != '/') + 1;
+	char *new_dirname = realloc(dirname, new_size);
+	if (!new_dirname)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory reallocating dirname.");
+	}
+	dirname = new_dirname;
+
 	if (dirname[strlen(dirname) - 1] != '/')
 		strcat(dirname, "/");
 	strcat(dirname, "tessdata/");
@@ -147,6 +159,7 @@ void *init_ocr(int lang_index)
 		if (lang_index == 1)
 		{
 			mprint("eng.traineddata not found! No Switching Possible\n");
+			free(ctx);
 			return NULL;
 		}
 		mprint("%s.traineddata not found! Switching to English\n", lang);
@@ -156,12 +169,24 @@ void *init_ocr(int lang_index)
 		if (!tessdata_path)
 		{
 			mprint("eng.traineddata not found! No Switching Possible\n");
+			free(ctx);
 			return NULL;
 		}
 	}
 
 	char *pars_vec = strdup("debug_file");
+	if (!pars_vec)
+	{
+		free(ctx);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_ocr: Out of memory allocating pars_vec.");
+	}
 	char *pars_values = strdup("tess.log");
+	if (!pars_values)
+	{
+		free(pars_vec);
+		free(ctx);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_ocr: Out of memory allocating pars_values.");
+	}
 
 	ctx->api = TessBaseAPICreate();
 	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
@@ -286,6 +311,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	color_pix = pixCreate(w, h, 32);
 	if (pix == NULL || color_pix == NULL)
 	{
+		if (pix)
+			pixDestroy(&pix);
+		if (color_pix)
+			pixDestroy(&color_pix);
 		return NULL;
 	}
 	wpl = pixGetWpl(pix);
@@ -343,6 +372,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		{
 			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
 
+			boxDestroy(&crop_points);
 			pixDestroy(&pix);
 			pixDestroy(&cpix);
 			pixDestroy(&cpix_gs);
@@ -360,6 +390,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	// and using it directly causes new/free() warnings.
 	char *text_out = strdup(text_out_from_tes);
 	TessDeleteText(text_out_from_tes);
+	if (!text_out)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating text_out.");
+	}
 
 	// Begin color detection
 	// Using tlt_config.nofontcolor (true when "--nofontcolor" parameter used) to skip color detection if not required
@@ -406,8 +440,20 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				int max_color = 2;
 
 				histogram = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
+				if (!histogram)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating histogram.");
+				}
 				iot = (uint8_t *)malloc(copy->nb_colors * sizeof(uint8_t));
+				if (!iot)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating iot.");
+				}
 				mcit = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
+				if (!mcit)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating mcit.");
+				}
 				struct transIntensity ti = {copy->alpha, copy->palette};
 				memset(histogram, 0, copy->nb_colors * sizeof(uint32_t));
 
@@ -555,7 +601,12 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						{
 							int index = pos - text_out;
 							// Insert `<font>` tag into `text_out` at the location of `word`/`pos`
-							text_out = realloc(text_out, text_out_len + substr_len + 1);
+							char *new_text_out = realloc(text_out, text_out_len + substr_len + 1);
+							if (!new_text_out)
+							{
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating text_out.");
+							}
+							text_out = new_text_out;
 							// Save the value is that is going to get overwritten by `sprintf`
 							char replaced_by_null = text_out[index];
 							memmove(text_out + index + substr_len + 1, text_out + index + 1, text_out_len - index);
@@ -567,7 +618,12 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						else if (!written_tag)
 						{
 							// Insert `substr` at the beginning of `text_out`
-							text_out = realloc(text_out, text_out_len + substr_len + 1);
+							char *new_text_out = realloc(text_out, text_out_len + substr_len + 1);
+							if (!new_text_out)
+							{
+								fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating text_out.");
+							}
+							text_out = new_text_out;
 							char replaced_by_null = *text_out;
 							memmove(text_out + substr_len + 1, text_out + 1, text_out_len);
 							sprintf(text_out, substr_format, r_avg, g_avg, b_avg);
@@ -596,6 +652,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				char *line_start = text_out;
 				int length = strlen(text_out) + length_closing_font * 10; // usually enough
 				char *new_text_out = malloc(length);
+				if (!new_text_out)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating new_text_out.");
+				}
 				char *new_text_out_iter = new_text_out;
 
 				char *last_valid_char = text_out; // last character that is not '\n' or '\0'
@@ -631,7 +691,12 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 						length = max(length * 1.5, length_needed);
 						long diff = new_text_out_iter - new_text_out;
-						new_text_out = realloc(new_text_out, length);
+						char *tmp = realloc(new_text_out, length);
+						if (!tmp)
+						{
+							fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating new_text_out.");
+						}
+						new_text_out = tmp;
 						new_text_out_iter = new_text_out + diff;
 					}
 
@@ -898,22 +963,25 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 
 	struct image_copy *copy;
 	copy = (struct image_copy *)malloc(sizeof(struct image_copy));
+	if (!copy)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy.");
+	}
 	copy->nb_colors = rect->nb_colors;
 	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
 	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
 	copy->bgcolor = bgcolor;
+	copy->data = NULL; // Initialize to NULL in case of early goto end
 
 	palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
 	if (!palette || !copy->palette)
 	{
-		ret = -1;
-		goto end;
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating palette.");
 	}
 	alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
 	if (!alpha || !copy->alpha)
 	{
-		ret = -1;
-		goto end;
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating alpha.");
 	}
 
 	mapclut_paletee(palette, alpha, (uint32_t *)rect->data1, rect->nb_colors);
@@ -931,6 +999,10 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 	}
 
 	copy->data = (unsigned char *)malloc(sizeof(unsigned char) * size);
+	if (!copy->data)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->data.");
+	}
 	for (int i = 0; i < size; i++)
 	{
 		copy->data[i] = rect->data0[i];
@@ -1068,7 +1140,9 @@ char *paraof_ocrtext(struct cc_subtitle *sub, struct encoder_ctx *context)
 	{
 		str = malloc(len + 1 + 10); // Extra space for possible trailing '/n's at the end of tesseract UTF8 text
 		if (!str)
-			return NULL;
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In paraof_ocrtext: Out of memory allocating str.");
+		}
 		*str = '\0';
 	}
 
