@@ -1039,7 +1039,13 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 		if (codec_data == NULL)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_private_codec_data: Out of memory.");
 		// 1.ISO_639_language_code (3 bytes)
-		strcpy((char *)codec_data, lang);
+		// Use memcpy with bounds check instead of strcpy to prevent buffer overflow
+		size_t lang_len = lang ? strlen(lang) : 0;
+		if (lang_len > 3)
+			lang_len = 3;
+		memset(codec_data, ' ', 3); // Initialize with spaces (valid padding for language codes)
+		if (lang_len > 0)
+			memcpy(codec_data, lang, lang_len);
 		// 2.subtitling_type (1 byte)
 		codec_data[3] = data[4];
 		// 3.composition_page_id (2 bytes)

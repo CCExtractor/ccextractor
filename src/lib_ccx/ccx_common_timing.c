@@ -113,15 +113,18 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 
 /**
  * SCC Time formatting
+ * Note: buf must have at least 32 bytes available from the write position
  */
 size_t print_scc_time(struct ccx_boundary_time time, char *buf)
 {
 	char *fmt = "%02u:%02u:%02u;%02u";
 	double frame;
+	// Format produces "HH:MM:SS;FF" = 11 chars + null, use 32 for safety
+	const size_t max_time_len = 32;
 
 	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * 29.97 / 1000);
 
-	return (size_t)sprintf(buf + time.set, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
+	return (size_t)snprintf(buf + time.set, max_time_len, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
 }
 
 struct ccx_boundary_time get_time(LLONG time)
@@ -142,11 +145,14 @@ struct ccx_boundary_time get_time(LLONG time)
 /**
  * Fill buffer with a time string using specified format
  * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
+ * Note: buf must have at least 32 bytes available from the write position
  */
 size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf)
 {
 	unsigned hh, mm, ss, ms;
 	int signoffset = (mstime < 0 ? 1 : 0);
+	// Typical format produces "HH:MM:SS:MSS" = 12 chars + null, use 32 for safety
+	const size_t max_time_len = 32;
 
 	if (mstime < 0) // Avoid loss of data warning with abs()
 		mstime = -mstime;
@@ -158,7 +164,7 @@ size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf)
 
 	buf[0] = '-';
 
-	return (size_t)sprintf(buf + signoffset, fmt, hh, mm, ss, ms);
+	return (size_t)snprintf(buf + signoffset, max_time_len, fmt, hh, mm, ss, ms);
 }
 
 /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding

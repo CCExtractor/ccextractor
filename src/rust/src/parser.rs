@@ -238,7 +238,7 @@ impl OptionsExt for Options {
             OutFormat::Ttxt => {
                 self.write_format = OutputFormat::Transcript;
                 if self.date_format == TimestampFormat::None {
-                    self.date_format = TimestampFormat::HHMMSS;
+                    self.date_format = TimestampFormat::HHMMSSFFF;
                 }
                 // Sets the right things so that timestamps and the mode are printed.
                 if !self.transcript_settings.is_final {
@@ -427,31 +427,17 @@ impl OptionsExt for Options {
         }
     }
 
-    fn append_file_to_queue(&mut self, filename: &str, inputfile_capacity: &mut i32) -> i32 {
+    fn append_file_to_queue(&mut self, filename: &str, _inputfile_capacity: &mut i32) -> i32 {
         if filename.is_empty() {
             return 0;
         }
 
-        let num_input_files = if let Some(ref inputfile) = self.inputfile {
-            inputfile.len()
-        } else {
-            0
-        };
-        if num_input_files >= *inputfile_capacity as usize {
-            *inputfile_capacity += 10;
-        }
-
-        let new_size = (*inputfile_capacity).try_into().unwrap_or(0);
-
         if self.inputfile.is_none() {
-            self.inputfile = Some(Vec::with_capacity(new_size));
+            self.inputfile = Some(Vec::new());
         }
 
         if let Some(ref mut inputfile) = self.inputfile {
-            inputfile.resize(new_size, String::new());
-
-            let index = num_input_files;
-            inputfile[index] = filename.to_string();
+            inputfile.push(filename.to_string());
         }
 
         0

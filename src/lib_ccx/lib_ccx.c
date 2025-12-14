@@ -380,14 +380,17 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	{
 		if (ctx->out_interval != -1)
 		{
-			int len;
-
-			len = strlen(ctx->basefilename) + 10 + strlen(extension);
+			// Format: "%s_%06d%s" needs: basefilename + '_' + up to 10 digits + extension + null
+			size_t len = strlen(ctx->basefilename) + 1 + 10 + strlen(extension) + 1;
 
 			freep(&ccx_options.enc_cfg.output_filename);
 			ccx_options.enc_cfg.output_filename = malloc(len);
+			if (!ccx_options.enc_cfg.output_filename)
+			{
+				return NULL;
+			}
 
-			sprintf(ccx_options.enc_cfg.output_filename, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
+			snprintf(ccx_options.enc_cfg.output_filename, len, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
 		}
 		if (list_empty(&ctx->enc_ctx_head))
 		{
@@ -401,9 +404,8 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	else
 	{
-		int len;
-
-		len = strlen(ctx->basefilename) + 10 + strlen(extension);
+		// Format: "%s_%d%s" needs: basefilename + '_' + up to 10 digits + extension + null
+		size_t len = strlen(ctx->basefilename) + 1 + 10 + strlen(extension) + 1;
 
 		ccx_options.enc_cfg.program_number = pn;
 		ccx_options.enc_cfg.output_filename = malloc(len);
@@ -412,7 +414,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			return NULL;
 		}
 
-		sprintf(ccx_options.enc_cfg.output_filename, "%s_%d%s", ctx->basefilename, pn, extension);
+		snprintf(ccx_options.enc_cfg.output_filename, len, "%s_%d%s", ctx->basefilename, pn, extension);
 		enc_ctx = init_encoder(&ccx_options.enc_cfg);
 		if (!enc_ctx)
 		{

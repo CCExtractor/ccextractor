@@ -212,8 +212,13 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     }
     if options.inputfile.is_some() {
         (*ccx_s_options).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
-        (*ccx_s_options).num_input_files =
-            options.inputfile.iter().filter(|s| !s.is_empty()).count() as _;
+        (*ccx_s_options).num_input_files = options
+            .inputfile
+            .as_ref()
+            .unwrap()
+            .iter()
+            .filter(|s| !s.is_empty())
+            .count() as _;
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
     (*ccx_s_options).enc_cfg = options.enc_cfg.to_ctype();
