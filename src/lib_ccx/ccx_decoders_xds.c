@@ -499,6 +499,10 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 	int was_proc = 0;
 
 	char *str = malloc(1024);
+	if (!str)
+	{
+		return CCX_ENOMEM;
+	}
 	char *tstr = NULL;
 	int str_len = 1024;
 

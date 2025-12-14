@@ -150,6 +150,10 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		    .StreamNumberLType = 0,
 		    .PacketLength = 0,
 		    .PaddingLength = 0};
+		// Check for allocation failure
+		if (!asf_data_container.parsebuf)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Out of memory allocating initial parse buffer.");
+
 		// Initialize the Payload Extension System
 		for (int stream = 0; stream < STREAMNUM; stream++)
 		{
