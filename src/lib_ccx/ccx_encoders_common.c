@@ -667,8 +667,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 			if (cfg->cc_to_stdout)
 			{
+#ifdef WIN32
+				ctx->dtvcc_writers[i].fd = -1;
+				ctx->dtvcc_writers[i].fhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+#else
 				ctx->dtvcc_writers[i].fd = STDOUT_FILENO;
 				ctx->dtvcc_writers[i].fhandle = NULL;
+#endif
 				ctx->dtvcc_writers[i].charset = NULL;
 				ctx->dtvcc_writers[i].filename = NULL;
 				ctx->dtvcc_writers[i].cd = (iconv_t)-1;

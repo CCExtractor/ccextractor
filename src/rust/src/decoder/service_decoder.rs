@@ -1094,7 +1094,6 @@ impl dtvcc_service_decoder {
 
     /// Process the character and add it to the current window
     pub fn process_character(&mut self, sym: dtvcc_symbol) {
-        debug!("{}", self.current_window);
         let window = &mut self.windows[self.current_window as usize];
         let window_state = if is_true(window.is_defined) {
             "OK"
