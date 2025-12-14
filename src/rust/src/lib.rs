@@ -210,11 +210,22 @@ extern "C" fn ccxr_process_cc_data(
     data: *const ::std::os::raw::c_uchar,
     cc_count: c_int,
 ) -> c_int {
+    // Null pointer and bounds checks
+    if dec_ctx.is_null() || data.is_null() || cc_count <= 0 {
+        return -1;
+    }
+
+    let dec_ctx = unsafe { &mut *dec_ctx };
+
+    // Check dtvcc pointer before dereferencing
+    if dec_ctx.dtvcc.is_null() {
+        return -1;
+    }
+
     let mut ret = -1;
     let mut cc_data: Vec<u8> = (0..cc_count * 3)
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
-    let dec_ctx = unsafe { &mut *dec_ctx };
     let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
     let mut dtvcc = Dtvcc::new(dtvcc_ctx);
     for cc_block in cc_data.chunks_exact_mut(3) {
@@ -335,15 +346,16 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// Parse parameters from argv and argc
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_char) -> c_int {
+    // Null pointer and bounds checks
+    if argv.is_null() || argc <= 0 {
+        return ExitCause::NoInputFiles.exit_code();
+    }
+
     // Convert argv to Vec<String> and pass it to parse_parameters
+    // Use to_string_lossy() to handle invalid UTF-8 gracefully instead of panicking
     let args = std::slice::from_raw_parts(argv, argc as usize)
         .iter()
-        .map(|&arg| {
-            CStr::from_ptr(arg)
-                .to_str()
-                .expect("Invalid UTF-8 sequence in argument")
-                .to_owned()
-        })
+        .map(|&arg| CStr::from_ptr(arg).to_string_lossy().into_owned())
         .collect::<Vec<String>>();
 
     if args.len() <= 1 {
