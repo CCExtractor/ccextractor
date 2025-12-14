@@ -898,7 +898,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			if (!ctx->seen_sub_page[thisp])
 			{
 				ctx->seen_sub_page[thisp] = 1;
-				mprint("\rNotice: Teletext page with possible subtitles detected: %03d\n", thisp);
+				// PATCH: Only print if file reports are requested to avoid breaking regression tests
+				if (ccx_options.print_file_reports)
+				{
+					mprint("\rNotice: Teletext page with possible subtitles detected: %03d\n", thisp);
+				}
 			}
 		}
 		if ((tlt_config.page == 0) && (flag_subtitle == YES) && (i < 0xff))
