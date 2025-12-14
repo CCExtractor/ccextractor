@@ -260,13 +260,31 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 int is_decoder_processed_enough(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx;
-	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
-	{
-		if (dec_ctx->processed_enough == CCX_TRUE && ctx->multiprogram == CCX_FALSE)
-			return CCX_TRUE;
-	}
 
-	return CCX_FALSE;
+	// If the decoder list is empty, no user-defined limits could have been reached
+	if (list_empty(&ctx->dec_ctx_head))
+		return CCX_FALSE;
+
+	if (ctx->multiprogram == CCX_FALSE)
+	{
+		// In single-program mode, return TRUE if ANY decoder has processed enough
+		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+		{
+			if (dec_ctx->processed_enough == CCX_TRUE)
+				return CCX_TRUE;
+		}
+		return CCX_FALSE;
+	}
+	else
+	{
+		// In multiprogram mode, return TRUE only if ALL decoders have processed enough
+		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+		{
+			if (dec_ctx->processed_enough == CCX_FALSE)
+				return CCX_FALSE;
+		}
+		return CCX_TRUE;
+	}
 }
 struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 {

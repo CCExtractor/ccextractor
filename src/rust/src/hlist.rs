@@ -112,17 +112,32 @@ macro_rules! list_for_each_entry {
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer.
 pub unsafe fn is_decoder_processed_enough(ctx: &mut lib_ccx_ctx) -> i32 {
-    {
+    // If the decoder list is empty, no user-defined limits could have been reached
+    if list_empty(&ctx.dec_ctx_head) {
+        return 0;
+    }
+
+    if ctx.multiprogram == 0 {
+        // In single-program mode, return 1 if ANY decoder has processed enough
         for dec_ctx in list_for_each_entry!(&mut ctx.dec_ctx_head, lib_cc_decode, list) {
             unsafe {
-                if (*dec_ctx).processed_enough == 1 && ctx.multiprogram == 0 {
+                if (*dec_ctx).processed_enough == 1 {
                     return 1;
                 }
             }
         }
+        0
+    } else {
+        // In multiprogram mode, return 1 only if ALL decoders have processed enough
+        for dec_ctx in list_for_each_entry!(&mut ctx.dec_ctx_head, lib_cc_decode, list) {
+            unsafe {
+                if (*dec_ctx).processed_enough == 0 {
+                    return 0;
+                }
+            }
+        }
+        1
     }
-
-    0
 }
 #[cfg(test)]
 mod tests {
@@ -347,6 +362,7 @@ mod tests {
             init_list_head(&mut ctx.dec_ctx_head);
 
             let result = is_decoder_processed_enough(&mut ctx);
+            // Empty list should return false (0) - no user-defined limits could have been reached
             assert_eq!(result, 0, "Empty list should return false (0)");
         }
     }
@@ -433,7 +449,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_decoder_processed_enough_multiprogram_mode() {
+    fn test_is_decoder_processed_enough_multiprogram_all_processed() {
         unsafe {
             let mut ctx = lib_ccx_ctx {
                 dec_ctx_head: list_head {
@@ -457,9 +473,53 @@ mod tests {
             list_add(&mut entry.list, &mut ctx.dec_ctx_head);
 
             let result = is_decoder_processed_enough(&mut ctx);
+            // In multiprogram mode, if ALL decoders have processed enough, return true (1)
+            assert_eq!(
+                result, 1,
+                "Should return true (1) in multiprogram mode when all processed"
+            );
+        }
+    }
+
+    #[test]
+    fn test_is_decoder_processed_enough_multiprogram_not_all_processed() {
+        unsafe {
+            let mut ctx = lib_ccx_ctx {
+                dec_ctx_head: list_head {
+                    next: ptr::null_mut(),
+                    prev: ptr::null_mut(),
+                },
+                multiprogram: 1, // Multi program mode
+                ..Default::default()
+            };
+            init_list_head(&mut ctx.dec_ctx_head);
+
+            let mut entry1 = lib_cc_decode {
+                list: list_head {
+                    next: ptr::null_mut(),
+                    prev: ptr::null_mut(),
+                },
+                processed_enough: 1, // Processed
+                ..Default::default()
+            };
+
+            let mut entry2 = lib_cc_decode {
+                list: list_head {
+                    next: ptr::null_mut(),
+                    prev: ptr::null_mut(),
+                },
+                processed_enough: 0, // NOT processed
+                ..Default::default()
+            };
+
+            list_add(&mut entry1.list, &mut ctx.dec_ctx_head);
+            list_add(&mut entry2.list, &mut ctx.dec_ctx_head);
+
+            let result = is_decoder_processed_enough(&mut ctx);
+            // In multiprogram mode, if NOT all decoders have processed enough, return false (0)
             assert_eq!(
                 result, 0,
-                "Should return false (0) in multiprogram mode even if processed"
+                "Should return false (0) in multiprogram mode when not all processed"
             );
         }
     }

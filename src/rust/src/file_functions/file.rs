@@ -21,7 +21,7 @@ use std::ptr::{copy, copy_nonoverlapping};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{mem, ptr, slice};
 
-use crate::hlist::is_decoder_processed_enough;
+use crate::hlist::{is_decoder_processed_enough, list_empty};
 #[cfg(feature = "sanity_check")]
 use std::os::fd::IntoRawFd;
 use std::os::raw::{c_char, c_void};
@@ -184,9 +184,17 @@ pub unsafe fn switch_to_next_file(
         }
 
         // Premature end check
+        // Only warn about premature ending if:
+        // 1. File has known size
+        // 2. User-defined limits were NOT reached (is_decoder_processed_enough == 0)
+        // 3. Less data was processed than file size
+        // 4. There are actually decoders active (decoder list not empty)
+        // If the decoder list is empty, it means no captions were found, which is a
+        // normal condition - don't warn about it.
         if ctx.inputsize > 0
             && is_decoder_processed_enough(ctx) == 0
             && (demux_ctx.past + bytes_in_buffer < ctx.inputsize)
+            && !list_empty(&ctx.dec_ctx_head)
         {
             debug!(msg_type = DebugMessageFlag::DECODER_708; "\n\n\n\nATTENTION!!!!!!");
             debug!(
