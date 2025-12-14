@@ -278,7 +278,7 @@ pub unsafe fn read_pic_info(
     if ccx_options.use_gop_as_pts == 1 {
         // Calculate current FTS based on GOP start time + frame offset
         let frame_offset_ms = (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps) as i64;
-        (*dec_ctx.timing).fts_now = fts_at_gop_start as i64 + frame_offset_ms;
+        (*dec_ctx.timing).fts_now = fts_at_gop_start + frame_offset_ms;
 
         // Update fts_max if needed
         if (*dec_ctx.timing).fts_now > (*dec_ctx.timing).fts_max {
