@@ -160,7 +160,7 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
         _ => panic!("Incorrect value for current_picture_coding_type"),
     };
 
-    let current_tref = FrameCount::new((*ctx).current_tref.try_into().unwrap());
+    let current_tref = FrameCount::new((*ctx).current_tref.try_into().unwrap_or(0));
     let min_pts = MpegClockTick::new((*ctx).min_pts);
     let sync_pts = MpegClockTick::new((*ctx).sync_pts);
     let minimum_fts = Timestamp::from_millis((*ctx).minimum_fts);
@@ -252,7 +252,7 @@ unsafe fn write_back_to_common_timing_ctx(
         FrameType::DFrame => ccx_frame_type_CCX_FRAME_TYPE_D_FRAME,
     };
 
-    (*ctx).current_tref = current_tref.as_u64().try_into().unwrap();
+    (*ctx).current_tref = current_tref.as_u64().try_into().unwrap_or(0);
     (*ctx).min_pts = min_pts.as_i64();
     (*ctx).sync_pts = sync_pts.as_i64();
     (*ctx).minimum_fts = minimum_fts.millis();
@@ -275,14 +275,19 @@ unsafe fn write_back_to_common_timing_ctx(
 ///
 /// All the static variables should be initialized and in valid state.
 unsafe fn apply_timing_info() {
-    let mut timing_info = GLOBAL_TIMING_INFO.write().unwrap();
+    let Ok(mut timing_info) = GLOBAL_TIMING_INFO.write() else {
+        // RwLock is poisoned, skip updating
+        return;
+    };
 
-    timing_info.cb_field1 = cb_field1.try_into().unwrap();
-    timing_info.cb_field2 = cb_field2.try_into().unwrap();
-    timing_info.cb_708 = cb_708.try_into().unwrap();
+    // Use unwrap_or(0) for conversions that might fail (e.g., negative values)
+    timing_info.cb_field1 = cb_field1.try_into().unwrap_or(0);
+    timing_info.cb_field2 = cb_field2.try_into().unwrap_or(0);
+    timing_info.cb_708 = cb_708.try_into().unwrap_or(0);
     timing_info.pts_big_change = pts_big_change != 0;
     timing_info.current_fps = current_fps;
-    timing_info.frames_since_ref_time = FrameCount::new(frames_since_ref_time.try_into().unwrap());
+    timing_info.frames_since_ref_time =
+        FrameCount::new(frames_since_ref_time.try_into().unwrap_or(0));
     timing_info.total_frames_count = FrameCount::new(total_frames_count.into());
     timing_info.gop_time = generate_gop_time_code(gop_time);
     timing_info.first_gop_time = generate_gop_time_code(first_gop_time);
@@ -302,19 +307,26 @@ unsafe fn apply_timing_info() {
 ///
 /// All the static variables should be initialized and in valid state.
 unsafe fn write_back_from_timing_info() {
-    let timing_info = GLOBAL_TIMING_INFO.read().unwrap();
+    let Ok(timing_info) = GLOBAL_TIMING_INFO.read() else {
+        // RwLock is poisoned, skip writing back
+        return;
+    };
 
-    cb_field1 = timing_info.cb_field1.try_into().unwrap();
-    cb_field2 = timing_info.cb_field2.try_into().unwrap();
-    cb_708 = timing_info.cb_708.try_into().unwrap();
+    cb_field1 = timing_info.cb_field1.try_into().unwrap_or(0);
+    cb_field2 = timing_info.cb_field2.try_into().unwrap_or(0);
+    cb_708 = timing_info.cb_708.try_into().unwrap_or(0);
     pts_big_change = if timing_info.pts_big_change { 1 } else { 0 };
     current_fps = timing_info.current_fps;
     frames_since_ref_time = timing_info
         .frames_since_ref_time
         .as_u64()
         .try_into()
-        .unwrap();
-    total_frames_count = timing_info.total_frames_count.as_u64().try_into().unwrap();
+        .unwrap_or(0);
+    total_frames_count = timing_info
+        .total_frames_count
+        .as_u64()
+        .try_into()
+        .unwrap_or(0);
     gop_time = write_gop_time_code(timing_info.gop_time);
     first_gop_time = write_gop_time_code(timing_info.first_gop_time);
     fts_at_gop_start = timing_info.fts_at_gop_start.millis() as c_long;
@@ -343,12 +355,13 @@ pub unsafe fn generate_gop_time_code(g: gop_time_code) -> Option<GopTimeCode> {
     if g.inited == 0 {
         None
     } else {
+        // Use unwrap_or to handle out-of-range values gracefully
         Some(GopTimeCode::from_raw_parts(
             g.drop_frame_flag != 0,
-            g.time_code_hours.try_into().unwrap(),
-            g.time_code_minutes.try_into().unwrap(),
-            g.time_code_seconds.try_into().unwrap(),
-            g.time_code_pictures.try_into().unwrap(),
+            g.time_code_hours.try_into().unwrap_or(0),
+            g.time_code_minutes.try_into().unwrap_or(0),
+            g.time_code_seconds.try_into().unwrap_or(0),
+            g.time_code_pictures.try_into().unwrap_or(0),
             Timestamp::from_millis(g.ms),
         ))
     }
@@ -471,7 +484,7 @@ pub unsafe extern "C" fn ccxr_get_fts(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis().try_into().unwrap()
+    ans.millis().try_into().unwrap_or(0)
 }
 
 /// Rust equivalent for `get_visible_end` function in C. Uses C-native types as input and output.
@@ -558,7 +571,7 @@ pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis().try_into().unwrap()
+    ans.millis().try_into().unwrap_or(0)
 }
 
 /// Rust equivalent for `print_mstime_static` function in C. Uses C-native types as input and output.
@@ -598,20 +611,42 @@ pub unsafe extern "C" fn ccxr_print_debug_timing(ctx: *mut ccx_common_timing_ctx
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_calculate_ms_gop_time(g: *mut gop_time_code) {
     apply_timing_info();
-    let timing_info = GLOBAL_TIMING_INFO.read().unwrap();
 
-    (*g).ms = GopTimeCode::new(
+    // Try to convert values, using fallback for out-of-range values
+    let hours: u8 = (*g).time_code_hours.try_into().unwrap_or(0);
+    let minutes: u8 = (*g).time_code_minutes.try_into().unwrap_or(0);
+    let seconds: u8 = (*g).time_code_seconds.try_into().unwrap_or(0);
+    let pictures: u8 = (*g).time_code_pictures.try_into().unwrap_or(0);
+
+    // Get timing info, with fallback defaults if lock is poisoned
+    let (fps_value, rollover_flag) = match GLOBAL_TIMING_INFO.read() {
+        Ok(timing_info) => (timing_info.current_fps, timing_info.gop_rollover),
+        Err(_) => (29.97, false), // Fallback defaults
+    };
+
+    // Ensure fps is valid
+    let fps = if fps_value > 0.0 { fps_value } else { 29.97 };
+
+    // Try to create a valid GopTimeCode, fall back to direct calculation if validation fails
+    (*g).ms = match GopTimeCode::new(
         (*g).drop_frame_flag != 0,
-        (*g).time_code_hours.try_into().unwrap(),
-        (*g).time_code_minutes.try_into().unwrap(),
-        (*g).time_code_seconds.try_into().unwrap(),
-        (*g).time_code_pictures.try_into().unwrap(),
-        timing_info.current_fps,
-        timing_info.gop_rollover,
-    )
-    .unwrap()
-    .timestamp()
-    .millis()
+        hours,
+        minutes,
+        seconds,
+        pictures,
+        fps,
+        rollover_flag,
+    ) {
+        Some(gop_time_code) => gop_time_code.timestamp().millis(),
+        None => {
+            // Fallback: calculate ms directly like the original C code would have
+            // This handles cases where values are out of MPEG spec range
+            let extra_hours: i64 = if rollover_flag { 24 } else { 0 };
+            let total_hours = (hours as i64) + extra_hours;
+            (total_hours * 3600 + (minutes as i64) * 60 + (seconds as i64)) * 1000
+                + (1000.0 * (pictures as f64) / fps) as i64
+        }
+    }
 }
 
 /// Rust equivalent for `gop_accepted` function in C. Uses C-native types as input and output.

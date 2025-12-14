@@ -570,11 +570,14 @@ impl GopTimeCode {
         rollover: bool,
     ) -> Option<GopTimeCode> {
         if hours < 24 && minutes < 60 && seconds < 60 && pictures < 60 {
-            let millis = (1000.0 * (pictures as f64) / fps) as u16;
+            // Ensure fps is valid to avoid division by zero or very large millis values
+            let safe_fps = if fps > 0.0 { fps } else { 29.97 };
+            let millis_raw = (1000.0 * (pictures as f64) / safe_fps) as u16;
+            // Cap millis to 999 to prevent from_hms_millis from failing
+            let millis = if millis_raw >= 1000 { 999 } else { millis_raw };
             let extra_hours = if rollover { 24 } else { 0 };
             let timestamp =
-                Timestamp::from_hms_millis(hours + extra_hours, minutes, seconds, millis)
-                    .expect("The fps given is probably too low");
+                Timestamp::from_hms_millis(hours + extra_hours, minutes, seconds, millis).ok()?;
 
             Some(GopTimeCode {
                 drop_frame,
