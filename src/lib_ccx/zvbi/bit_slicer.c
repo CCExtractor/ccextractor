@@ -14,8 +14,8 @@
  *  Library General Public License for more details.
  *
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the 
- *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *  Boston, MA  02110-1301  USA.
  */
 
@@ -57,249 +57,251 @@
    there's no guarantee the compiler really will inline. */
 
 /* Read a green sample, e.g. rrrrrggg gggbbbbb. endian is const. */
-#define GREEN2(raw, endian)						\
+#define GREEN2(raw, endian) \
 	(((raw)[0 + endian] + (raw)[1 - endian] * 256) & bs->green_mask)
 
 /* Read a sample with pixfmt conversion. pixfmt is const. */
 #if Z_BYTE_ORDER == Z_LITTLE_ENDIAN
-#define GREEN(raw)							\
-	((VBI_PIXFMT_RGB8 == pixfmt) ?					\
-	 *(const uint8_t *)(raw) & bs->green_mask :			\
-	 ((VBI_PIXFMT_RGB16_LE == pixfmt) ?				\
-	  *(const uint16_t *)(raw) & bs->green_mask :			\
-	  ((VBI_PIXFMT_RGB16_BE == pixfmt) ?				\
-	   GREEN2 (raw, 1) :						\
-	   (raw)[0])))
+#define GREEN(raw) \
+	((VBI_PIXFMT_RGB8 == pixfmt) ? *(const uint8_t *)(raw) & bs->green_mask : ((VBI_PIXFMT_RGB16_LE == pixfmt) ? *(const uint16_t *)(raw) & bs->green_mask : ((VBI_PIXFMT_RGB16_BE == pixfmt) ? GREEN2(raw, 1) : (raw)[0])))
 #elif Z_BYTE_ORDER == Z_BIG_ENDIAN
-#define GREEN(raw)							\
-	((VBI_PIXFMT_RGB8 == pixfmt) ?					\
-	 *(const uint8_t *)(raw) & bs->green_mask :			\
-	 ((VBI_PIXFMT_RGB16_LE == pixfmt) ?				\
-	  GREEN2 (raw, 0) :						\
-	  ((VBI_PIXFMT_RGB16_BE == pixfmt) ?				\
-	   *(const uint16_t *)(raw) & bs->green_mask :			\
-	   (raw)[0])))
+#define GREEN(raw) \
+	((VBI_PIXFMT_RGB8 == pixfmt) ? *(const uint8_t *)(raw) & bs->green_mask : ((VBI_PIXFMT_RGB16_LE == pixfmt) ? GREEN2(raw, 0) : ((VBI_PIXFMT_RGB16_BE == pixfmt) ? *(const uint16_t *)(raw) & bs->green_mask : (raw)[0])))
 #else
-#define GREEN(raw)							\
-	((VBI_PIXFMT_RGB8 == pixfmt) ?					\
-	 *(const uint8_t *)(raw) & bs->green_mask :			\
-	 ((VBI_PIXFMT_RGB16_LE == pixfmt) ?				\
-	  GREEN2 (raw, 0) :						\
-	  ((VBI_PIXFMT_RGB16_BE == pixfmt) ?				\
-	   GREEN2 (raw, 1) :						\
-	   (raw)[0])))
+#define GREEN(raw) \
+	((VBI_PIXFMT_RGB8 == pixfmt) ? *(const uint8_t *)(raw) & bs->green_mask : ((VBI_PIXFMT_RGB16_LE == pixfmt) ? GREEN2(raw, 0) : ((VBI_PIXFMT_RGB16_BE == pixfmt) ? GREEN2(raw, 1) : (raw)[0])))
 #endif
 
 /* raw0 = raw[index >> 8], linear interpolated. */
-#define SAMPLE(_kind)							\
-do {									\
-	const uint8_t *r;						\
-									\
-	r = raw + (i >> 8) * bpp;					\
-	raw0 = GREEN (r);						\
-	raw1 = GREEN (r + bpp);						\
-	raw0 = (int)(raw1 - raw0) * (i & 255) + (raw0 << 8);		\
-	if (collect_points) {						\
-		points->kind = _kind;					\
-		points->index = (raw - raw_start) * 256 + i;		\
-		points->level = raw0;					\
-		points->thresh = tr;					\
-		++points;						\
-	}								\
-} while (0)
+#define SAMPLE(_kind)                                                \
+	do                                                           \
+	{                                                            \
+		const uint8_t *r;                                    \
+                                                                     \
+		r = raw + (i >> 8) * bpp;                            \
+		raw0 = GREEN(r);                                     \
+		raw1 = GREEN(r + bpp);                               \
+		raw0 = (int)(raw1 - raw0) * (i & 255) + (raw0 << 8); \
+		if (collect_points)                                  \
+		{                                                    \
+			points->kind = _kind;                        \
+			points->index = (raw - raw_start) * 256 + i; \
+			points->level = raw0;                        \
+			points->thresh = tr;                         \
+			++points;                                    \
+		}                                                    \
+	} while (0)
 
-#define PAYLOAD()							\
-do {									\
-	i = bs->phase_shift; /* current bit position << 8 */		\
-	tr *= 256;							\
-	c = 0;								\
-									\
-	for (j = bs->frc_bits; j > 0; --j) {				\
-		SAMPLE (VBI3_FRC_BIT);					\
-		c = c * 2 + (raw0 >= tr);				\
-		i += bs->step; /* next bit */				\
-	}								\
-									\
-	if (c != bs->frc)						\
-		return CCX_FALSE;						\
-									\
-	switch (bs->endian) {						\
-	case 3: /* bitwise, lsb first */				\
-		for (j = 0; j < bs->payload; ++j) {			\
-			SAMPLE (VBI3_PAYLOAD_BIT);			\
-			c = (c >> 1) + ((raw0 >= tr) << 7);		\
-			i += bs->step;					\
-			if ((j & 7) == 7)				\
-				*buffer++ = c;				\
-		}							\
-		*buffer = c >> ((8 - bs->payload) & 7);			\
-		break;							\
-									\
-	case 2: /* bitwise, msb first */				\
-		for (j = 0; j < bs->payload; ++j) {			\
-			SAMPLE (VBI3_PAYLOAD_BIT);			\
-			c = c * 2 + (raw0 >= tr);			\
-			i += bs->step;					\
-			if ((j & 7) == 7)				\
-				*buffer++ = c;				\
-		}							\
-		*buffer = c & ((1 << (bs->payload & 7)) - 1);		\
-		break;							\
-									\
-	case 1: /* octets, lsb first */					\
-		for (j = bs->payload; j > 0; --j) {			\
-			for (k = 0, c = 0; k < 8; ++k) {		\
-				SAMPLE (VBI3_PAYLOAD_BIT);		\
-				c += (raw0 >= tr) << k;			\
-				i += bs->step;				\
-			}						\
-			*buffer++ = c;					\
-		}							\
-		break;							\
-									\
-	default: /* octets, msb first */				\
-		for (j = bs->payload; j > 0; --j) {			\
-			for (k = 0; k < 8; ++k) {			\
-				SAMPLE (VBI3_PAYLOAD_BIT);		\
-				c = c * 2 + (raw0 >= tr);		\
-				i += bs->step;				\
-			}						\
-			*buffer++ = c;					\
-		}							\
-		break;							\
-	}								\
-} while (0)
+#define PAYLOAD()                                                             \
+	do                                                                    \
+	{                                                                     \
+		i = bs->phase_shift; /* current bit position << 8 */          \
+		tr *= 256;                                                    \
+		c = 0;                                                        \
+                                                                              \
+		for (j = bs->frc_bits; j > 0; --j)                            \
+		{                                                             \
+			SAMPLE(VBI3_FRC_BIT);                                 \
+			c = c * 2 + (raw0 >= tr);                             \
+			i += bs->step; /* next bit */                         \
+		}                                                             \
+                                                                              \
+		if (c != bs->frc)                                             \
+			return CCX_FALSE;                                     \
+                                                                              \
+		switch (bs->endian)                                           \
+		{                                                             \
+			case 3: /* bitwise, lsb first */                      \
+				for (j = 0; j < bs->payload; ++j)             \
+				{                                             \
+					SAMPLE(VBI3_PAYLOAD_BIT);             \
+					c = (c >> 1) + ((raw0 >= tr) << 7);   \
+					i += bs->step;                        \
+					if ((j & 7) == 7)                     \
+						*buffer++ = c;                \
+				}                                             \
+				*buffer = c >> ((8 - bs->payload) & 7);       \
+				break;                                        \
+                                                                              \
+			case 2: /* bitwise, msb first */                      \
+				for (j = 0; j < bs->payload; ++j)             \
+				{                                             \
+					SAMPLE(VBI3_PAYLOAD_BIT);             \
+					c = c * 2 + (raw0 >= tr);             \
+					i += bs->step;                        \
+					if ((j & 7) == 7)                     \
+						*buffer++ = c;                \
+				}                                             \
+				*buffer = c & ((1 << (bs->payload & 7)) - 1); \
+				break;                                        \
+                                                                              \
+			case 1: /* octets, lsb first */                       \
+				for (j = bs->payload; j > 0; --j)             \
+				{                                             \
+					for (k = 0, c = 0; k < 8; ++k)        \
+					{                                     \
+						SAMPLE(VBI3_PAYLOAD_BIT);     \
+						c += (raw0 >= tr) << k;       \
+						i += bs->step;                \
+					}                                     \
+					*buffer++ = c;                        \
+				}                                             \
+				break;                                        \
+                                                                              \
+			default: /* octets, msb first */                      \
+				for (j = bs->payload; j > 0; --j)             \
+				{                                             \
+					for (k = 0; k < 8; ++k)               \
+					{                                     \
+						SAMPLE(VBI3_PAYLOAD_BIT);     \
+						c = c * 2 + (raw0 >= tr);     \
+						i += bs->step;                \
+					}                                     \
+					*buffer++ = c;                        \
+				}                                             \
+				break;                                        \
+		}                                                             \
+	} while (0)
 
-#define CRI()								\
-do {									\
-	unsigned int tavg;						\
-	unsigned char b; /* current bit */				\
-									\
-	tavg = (t + (oversampling / 2))	/ oversampling;			\
-	b = (tavg >= tr);						\
-									\
-	if (unlikely (b ^ b1)) {					\
-		cl = bs->oversampling_rate >> 1;			\
-	} else {							\
-		cl += bs->cri_rate;					\
-									\
-		if (cl >= bs->oversampling_rate) {			\
-			if (collect_points) {				\
-				points->kind = VBI3_CRI_BIT;		\
-				points->index = (raw - raw_start) << 8;	\
-				points->level = tavg << 8;		\
-				points->thresh = tr << 8;		\
-				++points;				\
-			}						\
-									\
-			cl -= bs->oversampling_rate;			\
-			c = c * 2 + b;					\
-			if ((c & bs->cri_mask) == bs->cri) {		\
-				PAYLOAD ();				\
-				if (collect_points) {			\
-					*n_points = points		\
-						- points_start;		\
-				}					\
-				return CCX_TRUE;				\
-			}						\
-		}							\
-	}								\
-									\
-	b1 = b;								\
-									\
-	if (oversampling > 1)						\
-		t += raw1;						\
-} while (0)
+#define CRI()                                                                      \
+	do                                                                         \
+	{                                                                          \
+		unsigned int tavg;                                                 \
+		unsigned char b; /* current bit */                                 \
+                                                                                   \
+		tavg = (t + (oversampling / 2)) / oversampling;                    \
+		b = (tavg >= tr);                                                  \
+                                                                                   \
+		if (unlikely(b ^ b1))                                              \
+		{                                                                  \
+			cl = bs->oversampling_rate >> 1;                           \
+		}                                                                  \
+		else                                                               \
+		{                                                                  \
+			cl += bs->cri_rate;                                        \
+                                                                                   \
+			if (cl >= bs->oversampling_rate)                           \
+			{                                                          \
+				if (collect_points)                                \
+				{                                                  \
+					points->kind = VBI3_CRI_BIT;               \
+					points->index = (raw - raw_start) << 8;    \
+					points->level = tavg << 8;                 \
+					points->thresh = tr << 8;                  \
+					++points;                                  \
+				}                                                  \
+                                                                                   \
+				cl -= bs->oversampling_rate;                       \
+				c = c * 2 + b;                                     \
+				if ((c & bs->cri_mask) == bs->cri)                 \
+				{                                                  \
+					PAYLOAD();                                 \
+					if (collect_points)                        \
+					{                                          \
+						*n_points = points - points_start; \
+					}                                          \
+					return CCX_TRUE;                           \
+				}                                                  \
+			}                                                          \
+		}                                                                  \
+                                                                                   \
+		b1 = b;                                                            \
+                                                                                   \
+		if (oversampling > 1)                                              \
+			t += raw1;                                                 \
+	} while (0)
 
-#define CORE()								\
-do {									\
-	const uint8_t *raw_start;					\
-	unsigned int i, j, k;						\
-	unsigned int cl;	/* clock */				\
-	unsigned int thresh0;	/* old 0/1 threshold */			\
-	unsigned int tr;	/* current threshold */			\
-	unsigned int c;		/* current byte */			\
-	unsigned int t;		/* t = raw[0] * j + raw[1] * (1 - j) */	\
-	unsigned int raw0;	/* oversampling temporary */		\
-	unsigned int raw1;						\
-	unsigned char b1;	/* previous bit */			\
-									\
-	thresh0 = bs->thresh;						\
-	raw_start = raw;						\
-	raw += bs->skip;						\
-									\
-	cl = 0;								\
-	c = 0;								\
-	b1 = 0;								\
-									\
-	for (i = bs->cri_samples; i > 0; --i) {				\
-		tr = bs->thresh >> thresh_frac;				\
-		raw0 = GREEN (raw);					\
-		raw1 = GREEN (raw + bpp);				\
-		raw1 -= raw0;						\
-		bs->thresh += (int)(raw0 - tr) * (int) ABS ((int) raw1); \
-		t = raw0 * oversampling;				\
-									\
-		for (j = oversampling; j > 0; --j)			\
-			CRI ();						\
-									\
-		raw += bpp;						\
-	}								\
-									\
-	bs->thresh = thresh0;						\
-									\
-	if (collect_points)						\
-		*n_points = points - points_start;			\
-									\
-	return CCX_FALSE;							\
-} while (0)
+#define CORE()                                                                \
+	do                                                                    \
+	{                                                                     \
+		const uint8_t *raw_start;                                     \
+		unsigned int i, j, k;                                         \
+		unsigned int cl;      /* clock */                             \
+		unsigned int thresh0; /* old 0/1 threshold */                 \
+		unsigned int tr;      /* current threshold */                 \
+		unsigned int c;	      /* current byte */                      \
+		unsigned int t;	      /* t = raw[0] * j + raw[1] * (1 - j) */ \
+		unsigned int raw0;    /* oversampling temporary */            \
+		unsigned int raw1;                                            \
+		unsigned char b1; /* previous bit */                          \
+                                                                              \
+		thresh0 = bs->thresh;                                         \
+		raw_start = raw;                                              \
+		raw += bs->skip;                                              \
+                                                                              \
+		cl = 0;                                                       \
+		c = 0;                                                        \
+		b1 = 0;                                                       \
+                                                                              \
+		for (i = bs->cri_samples; i > 0; --i)                         \
+		{                                                             \
+			tr = bs->thresh >> thresh_frac;                       \
+			raw0 = GREEN(raw);                                    \
+			raw1 = GREEN(raw + bpp);                              \
+			raw1 -= raw0;                                         \
+			bs->thresh += (int)(raw0 - tr) * (int)ABS((int)raw1); \
+			t = raw0 * oversampling;                              \
+                                                                              \
+			for (j = oversampling; j > 0; --j)                    \
+				CRI();                                        \
+                                                                              \
+			raw += bpp;                                           \
+		}                                                             \
+                                                                              \
+		bs->thresh = thresh0;                                         \
+                                                                              \
+		if (collect_points)                                           \
+			*n_points = points - points_start;                    \
+                                                                              \
+		return CCX_FALSE;                                             \
+	} while (0)
 
-#define BIT_SLICER(fmt, os, tf)						\
-static int								\
-bit_slicer_ ## fmt		(vbi3_bit_slicer *	bs,		\
-				 uint8_t *		buffer,		\
-				 vbi3_bit_slicer_point *points,		\
-				 unsigned int *		n_points,	\
-				 const uint8_t *	raw)		\
-{									\
-	static const vbi_pixfmt pixfmt = VBI_PIXFMT_ ## fmt;		\
-	unsigned int bpp =						\
-		vbi_pixfmt_bytes_per_pixel (VBI_PIXFMT_ ## fmt);	\
-	static const unsigned int oversampling = os;			\
-	static const vbi3_bit_slicer_point *points_start = NULL;	\
-	static const int collect_points = CCX_FALSE;			\
-	unsigned int thresh_frac = tf;					\
-									\
-	CORE ();							\
-}
+#define BIT_SLICER(fmt, os, tf)                                          \
+	static int                                                       \
+	    bit_slicer_##fmt(vbi3_bit_slicer *bs,                        \
+			     uint8_t *buffer,                            \
+			     vbi3_bit_slicer_point *points,              \
+			     unsigned int *n_points,                     \
+			     const uint8_t *raw)                         \
+	{                                                                \
+		static const vbi_pixfmt pixfmt = VBI_PIXFMT_##fmt;       \
+		unsigned int bpp =                                       \
+		    vbi_pixfmt_bytes_per_pixel(VBI_PIXFMT_##fmt);        \
+		static const unsigned int oversampling = os;             \
+		static const vbi3_bit_slicer_point *points_start = NULL; \
+		static const int collect_points = CCX_FALSE;             \
+		unsigned int thresh_frac = tf;                           \
+                                                                         \
+		CORE();                                                  \
+	}
 
 #define DEF_THR_FRAC 9
 
-BIT_SLICER (Y8, 4, DEF_THR_FRAC) /* any format with 0 bytes between Y or G */
-BIT_SLICER (YUYV, 4, DEF_THR_FRAC)               /* 1 byte */
-BIT_SLICER (RGB24_LE, 4, DEF_THR_FRAC)           /* 2 bytes */
-BIT_SLICER (RGBA24_LE, 4, DEF_THR_FRAC)          /* 3 bytes */
-BIT_SLICER (RGB16_LE, 4, bs->thresh_frac)
-BIT_SLICER (RGB16_BE, 4, bs->thresh_frac)
+BIT_SLICER(Y8, 4, DEF_THR_FRAC)	       /* any format with 0 bytes between Y or G */
+BIT_SLICER(YUYV, 4, DEF_THR_FRAC)      /* 1 byte */
+BIT_SLICER(RGB24_LE, 4, DEF_THR_FRAC)  /* 2 bytes */
+BIT_SLICER(RGBA24_LE, 4, DEF_THR_FRAC) /* 3 bytes */
+BIT_SLICER(RGB16_LE, 4, bs->thresh_frac)
+BIT_SLICER(RGB16_BE, 4, bs->thresh_frac)
 
-static const unsigned int	LP_AVG = 4;
+static const unsigned int LP_AVG = 4;
 
 static int
-low_pass_bit_slicer_Y8		(vbi3_bit_slicer *	bs,
-				 uint8_t *		buffer,
-				 vbi3_bit_slicer_point *points,
-				 unsigned int *		n_points,
-				 const uint8_t *	raw)
+low_pass_bit_slicer_Y8(vbi3_bit_slicer *bs,
+		       uint8_t *buffer,
+		       vbi3_bit_slicer_point *points,
+		       unsigned int *n_points,
+		       const uint8_t *raw)
 {
 	vbi3_bit_slicer_point *points_start;
 	const uint8_t *raw_start;
 	unsigned int i, j, k, m;
-	unsigned int cl;	/* clock */
-	unsigned int thresh0;	/* old 0/1 threshold */
-	unsigned int tr;	/* current threshold */
-	unsigned int c;		/* current byte */
-	unsigned int raw0;	/* oversampling temporary */
-	unsigned char b1;	/* previous bit */
+	unsigned int cl;      /* clock */
+	unsigned int thresh0; /* old 0/1 threshold */
+	unsigned int tr;      /* current threshold */
+	unsigned int c;	      /* current byte */
+	unsigned int raw0;    /* oversampling temporary */
+	unsigned char b1;     /* previous bit */
 	unsigned int bps;
 	unsigned int raw0sum;
 
@@ -317,37 +319,39 @@ low_pass_bit_slicer_Y8		(vbi3_bit_slicer *	bs,
 	b1 = 0;
 
 	raw0sum = raw[0];
-	for (m = bps; m < (bps << LP_AVG); m += bps) {
+	for (m = bps; m < (bps << LP_AVG); m += bps)
+	{
 		raw0sum += raw[m];
 	}
 
 	i = bs->cri_samples;
 
-	for (;;) {
+	for (;;)
+	{
 		unsigned char b; /* current bit */
 
 		tr = bs->thresh >> bs->thresh_frac;
 		raw0 = raw0sum;
-		raw0sum = raw0sum
-			+ raw[bps << LP_AVG]
-			- raw[0];
+		raw0sum = raw0sum + raw[bps << LP_AVG] - raw[0];
 		raw += bps;
-		bs->thresh += (int)(raw0 - tr)
-			* (int) ABS ((int)(raw0sum - raw0));
+		bs->thresh += (int)(raw0 - tr) * (int)ABS((int)(raw0sum - raw0));
 
 		b = (raw0 >= tr);
 
-		if (unlikely (b ^ b1)) {
+		if (unlikely(b ^ b1))
+		{
 			cl = bs->oversampling_rate >> 1;
-		} else {
+		}
+		else
+		{
 			cl += bs->cri_rate;
 
-			if (cl >= bs->oversampling_rate) {
-				if (unlikely (NULL != points)) {
+			if (cl >= bs->oversampling_rate)
+			{
+				if (unlikely(NULL != points))
+				{
 					points->kind = VBI3_CRI_BIT;
-					points->index =	(raw - raw_start)
-						* 256 / bs->bytes_per_sample
-						+ (1 << LP_AVG) * 128;
+					points->index = (raw - raw_start) * 256 / bs->bytes_per_sample + (1 << LP_AVG) * 128;
 					points->level = raw0 << (8 - LP_AVG);
 					points->thresh = tr << (8 - LP_AVG);
 					++points;
@@ -355,7 +359,8 @@ low_pass_bit_slicer_Y8		(vbi3_bit_slicer *	bs,
 
 				cl -= bs->oversampling_rate;
 				c = c * 2 + b;
-				if ((c & bs->cri_mask) == bs->cri) {
+				if ((c & bs->cri_mask) == bs->cri)
+				{
 					break;
 				}
 			}
@@ -363,40 +368,41 @@ low_pass_bit_slicer_Y8		(vbi3_bit_slicer *	bs,
 
 		b1 = b;
 
-		if (0 == --i) {
+		if (0 == --i)
+		{
 			bs->thresh = thresh0;
 
-			if (unlikely (NULL != points))
+			if (unlikely(NULL != points))
 				*n_points = points - points_start;
 
 			return CCX_FALSE;
 		}
 	}
 
-#define LP_SAMPLE(_kind)						\
-do {									\
-	unsigned int ii = (i >> 8) * bps;				\
-									\
-	raw0 = raw[ii];							\
-	for (m = bps; m < (bps << LP_AVG); m += bps)			\
-		raw0 += raw[ii + m];					\
-	if (unlikely (NULL != points)) {				\
-		points->kind = _kind;					\
-		points->index = (raw - raw_start)			\
-			* 256 / bs->bytes_per_sample			\
-			+ (1 << LP_AVG) * 128				\
-			+ ii * 256;					\
-		points->level = raw0 << (8 - LP_AVG);			\
-		points->thresh = tr << (8 - LP_AVG);			\
-		++points;						\
-	}								\
-} while (0)
+#define LP_SAMPLE(_kind)                                                                                                 \
+	do                                                                                                               \
+	{                                                                                                                \
+		unsigned int ii = (i >> 8) * bps;                                                                        \
+                                                                                                                         \
+		raw0 = raw[ii];                                                                                          \
+		for (m = bps; m < (bps << LP_AVG); m += bps)                                                             \
+			raw0 += raw[ii + m];                                                                             \
+		if (unlikely(NULL != points))                                                                            \
+		{                                                                                                        \
+			points->kind = _kind;                                                                            \
+			points->index = (raw - raw_start) * 256 / bs->bytes_per_sample + (1 << LP_AVG) * 128 + ii * 256; \
+			points->level = raw0 << (8 - LP_AVG);                                                            \
+			points->thresh = tr << (8 - LP_AVG);                                                             \
+			++points;                                                                                        \
+		}                                                                                                        \
+	} while (0)
 
 	i = bs->phase_shift; /* current bit position << 8 */
 	c = 0;
 
-	for (j = bs->frc_bits; j > 0; --j) {
-		LP_SAMPLE (VBI3_FRC_BIT);
+	for (j = bs->frc_bits; j > 0; --j)
+	{
+		LP_SAMPLE(VBI3_FRC_BIT);
 		c = c * 2 + (raw0 >= tr);
 		i += bs->step; /* next bit */
 	}
@@ -406,55 +412,63 @@ do {									\
 
 	c = 0;
 
-	switch (bs->endian) {
-	case 3: /* bitwise, lsb first */
-		for (j = 0; j < bs->payload; ++j) {
-			LP_SAMPLE (VBI3_PAYLOAD_BIT);
-			c = (c >> 1) + ((raw0 >= tr) << 7);
-			i += bs->step;
-			if ((j & 7) == 7)
-				*buffer++ = c;
-		}
-		*buffer = c >> ((8 - bs->payload) & 7);
-		break;
-
-	case 2: /* bitwise, msb first */
-		for (j = 0; j < bs->payload; ++j) {
-			LP_SAMPLE (VBI3_PAYLOAD_BIT);
-			c = c * 2 + (raw0 >= tr);
-			i += bs->step;
-			if ((j & 7) == 7)
-				*buffer++ = c;
-		}
-		*buffer = c & ((1 << (bs->payload & 7)) - 1);
-		break;
-
-	case 1: /* octets, lsb first */
-		j = bs->payload;
-		do {
-			for (k = 0; k < 8; ++k) {
-				LP_SAMPLE (VBI3_PAYLOAD_BIT);
+	switch (bs->endian)
+	{
+		case 3: /* bitwise, lsb first */
+			for (j = 0; j < bs->payload; ++j)
+			{
+				LP_SAMPLE(VBI3_PAYLOAD_BIT);
 				c = (c >> 1) + ((raw0 >= tr) << 7);
 				i += bs->step;
+				if ((j & 7) == 7)
+					*buffer++ = c;
 			}
-			*buffer++ = c;
-		} while (--j > 0);
-		break;
+			*buffer = c >> ((8 - bs->payload) & 7);
+			break;
 
-	default: /* octets, msb first */
-		j = bs->payload;
-		do {
-			for (k = 0; k < 8; ++k) {
-				LP_SAMPLE (VBI3_PAYLOAD_BIT);
+		case 2: /* bitwise, msb first */
+			for (j = 0; j < bs->payload; ++j)
+			{
+				LP_SAMPLE(VBI3_PAYLOAD_BIT);
 				c = c * 2 + (raw0 >= tr);
 				i += bs->step;
+				if ((j & 7) == 7)
+					*buffer++ = c;
 			}
-			*buffer++ = c;
-		} while (--j > 0);
-		break;
+			*buffer = c & ((1 << (bs->payload & 7)) - 1);
+			break;
+
+		case 1: /* octets, lsb first */
+			j = bs->payload;
+			do
+			{
+				for (k = 0; k < 8; ++k)
+				{
+					LP_SAMPLE(VBI3_PAYLOAD_BIT);
+					c = (c >> 1) + ((raw0 >= tr) << 7);
+					i += bs->step;
+				}
+				*buffer++ = c;
+			} while (--j > 0);
+			break;
+
+		default: /* octets, msb first */
+			j = bs->payload;
+			do
+			{
+				for (k = 0; k < 8; ++k)
+				{
+					LP_SAMPLE(VBI3_PAYLOAD_BIT);
+					c = c * 2 + (raw0 >= tr);
+					i += bs->step;
+				}
+				*buffer++ = c;
+			} while (--j > 0);
+			break;
 	}
 
-	if (unlikely (NULL != points)) {
+	if (unlikely(NULL != points))
+	{
 		*n_points = points - points_start;
 	}
 
@@ -462,19 +476,19 @@ do {									\
 }
 
 static int
-null_function			(vbi3_bit_slicer *	bs,
-				 uint8_t *		buffer,
-				 vbi3_bit_slicer_point *points,
-				 unsigned int *		n_points,
-				 const uint8_t *	raw)
+null_function(vbi3_bit_slicer *bs,
+	      uint8_t *buffer,
+	      vbi3_bit_slicer_point *points,
+	      unsigned int *n_points,
+	      const uint8_t *raw)
 {
 	buffer = buffer; /* unused */
 	points = points;
 	n_points = n_points;
 	raw = raw;
 
-	warning (&bs->log,
-		 "vbi3_bit_slicer_set_params() not called.");
+	warning(&bs->log,
+		"vbi3_bit_slicer_set_params() not called.");
 
 	return CCX_FALSE;
 }
@@ -495,7 +509,7 @@ null_function			(vbi3_bit_slicer *	bs,
  *   @a frc_bits and @a payload_bits given to vbi3_bit_slicer_new().
  * @param raw Input data. At least the number of pixels or samples
  *  given as @a samples_per_line to vbi3_bit_slicer_new().
- * 
+ *
  * Like vbi3_bit_slicer_slice() but additionally provides information
  * about where and how bits were sampled. This is mainly interesting
  * for debugging.
@@ -511,15 +525,13 @@ null_function			(vbi3_bit_slicer *	bs,
  * Currently this function is only implemented for
  * raw data in planar YUV formats and @c VBI3_PIXFMT_Y8.
  */
-int
-vbi3_bit_slicer_slice_with_points
-				(vbi3_bit_slicer *	bs,
-				 uint8_t *		buffer,
-				 unsigned int		buffer_size,
-				 vbi3_bit_slicer_point *points,
-				 unsigned int *		n_points,
-				 unsigned int		max_points,
-				 const uint8_t *	raw)
+int vbi3_bit_slicer_slice_with_points(vbi3_bit_slicer *bs,
+				      uint8_t *buffer,
+				      unsigned int buffer_size,
+				      vbi3_bit_slicer_point *points,
+				      unsigned int *n_points,
+				      unsigned int max_points,
+				      const uint8_t *raw)
 {
 	static const vbi_pixfmt pixfmt = VBI_PIXFMT_Y8;
 	static const unsigned int bpp = 1;
@@ -528,42 +540,47 @@ vbi3_bit_slicer_slice_with_points
 	static const int collect_points = CCX_TRUE;
 	vbi3_bit_slicer_point *points_start;
 
-	assert (NULL != bs);
-	assert (NULL != buffer);
-	assert (NULL != points);
-	assert (NULL != n_points);
-	assert (NULL != raw);
+	assert(NULL != bs);
+	assert(NULL != buffer);
+	assert(NULL != points);
+	assert(NULL != n_points);
+	assert(NULL != raw);
 
 	points_start = points;
 	*n_points = 0;
 
-	if (bs->payload > buffer_size * 8) {
-		warning (&bs->log,
-			 "buffer_size %u < %u bits of payload.",
-			 buffer_size * 8, bs->payload);
+	if (bs->payload > buffer_size * 8)
+	{
+		warning(&bs->log,
+			"buffer_size %u < %u bits of payload.",
+			buffer_size * 8, bs->payload);
 		return CCX_FALSE;
 	}
 
-	if (bs->total_bits > max_points) {
-		warning (&bs->log,
-			 "max_points %u < %u CRI, FRC and payload bits.",
-			 max_points, bs->total_bits);
+	if (bs->total_bits > max_points)
+	{
+		warning(&bs->log,
+			"max_points %u < %u CRI, FRC and payload bits.",
+			max_points, bs->total_bits);
 		return CCX_FALSE;
 	}
 
-	if (low_pass_bit_slicer_Y8 == bs->func) {
-		return bs->func (bs, buffer, points, n_points, raw);
-	} else if (bit_slicer_Y8 != bs->func) {
-		warning (&bs->log,
-			 "Function not implemented for pixfmt %u.",
-			 bs->sample_format);
-		return bs->func (bs, buffer,
-				 /* points */ NULL,
-				 /* n_points */ NULL,
-				 raw);
+	if (low_pass_bit_slicer_Y8 == bs->func)
+	{
+		return bs->func(bs, buffer, points, n_points, raw);
+	}
+	else if (bit_slicer_Y8 != bs->func)
+	{
+		warning(&bs->log,
+			"Function not implemented for pixfmt %u.",
+			bs->sample_format);
+		return bs->func(bs, buffer,
+				/* points */ NULL,
+				/* n_points */ NULL,
+				raw);
 	}
 
-	CORE ();
+	CORE();
 }
 
 /**
@@ -576,7 +593,7 @@ vbi3_bit_slicer_slice_with_points
  *   vbi3_bit_slicer_new().
  * @param raw Input data. At least the number of pixels or samples
  *  given as @a samples_per_line to vbi3_bit_slicer_new().
- * 
+ *
  * Decodes one scan line of raw vbi data. Note the bit slicer tries
  * to adapt to the average signal amplitude, you should avoid
  * using the same vbi3_bit_slicer object for data from different
@@ -589,27 +606,27 @@ vbi3_bit_slicer_slice_with_points
  * correction must be implemented at a higher layer. When the function
  * fails, the @a buffer remains unmodified.
  */
-int
-vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
-				 uint8_t *		buffer,
-				 unsigned int		buffer_size,
-				 const uint8_t *	raw)
+int vbi3_bit_slicer_slice(vbi3_bit_slicer *bs,
+			  uint8_t *buffer,
+			  unsigned int buffer_size,
+			  const uint8_t *raw)
 {
-	assert (NULL != bs);
-	assert (NULL != buffer);
-	assert (NULL != raw);
+	assert(NULL != bs);
+	assert(NULL != buffer);
+	assert(NULL != raw);
 
-	if (bs->payload > buffer_size * 8) {
-		warning (&bs->log,
-			 "buffer_size %u < %u bits of payload.",
-			 buffer_size * 8, bs->payload);
+	if (bs->payload > buffer_size * 8)
+	{
+		warning(&bs->log,
+			"buffer_size %u < %u bits of payload.",
+			buffer_size * 8, bs->payload);
 		return CCX_FALSE;
 	}
 
-	return bs->func (bs, buffer,
-			 /* points */ NULL,
-			 /* n_points */ NULL,
-			 raw);
+	return bs->func(bs, buffer,
+			/* points */ NULL,
+			/* n_points */ NULL,
+			raw);
 }
 
 /**
@@ -655,7 +672,7 @@ vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
  * @param payload_rate Payload bit rate in Hz, the number of payload
  *   bits transmitted per second.
  * @param modulation Modulation of the payload, see vbi3_modulation.
- * 
+ *
  * Initializes a vbi3_bit_slicer object for use with
  * vbi3_bit_slicer_slice(). This is a low level function, see also
  * vbi3_raw_decoder_new().
@@ -664,22 +681,21 @@ vbi3_bit_slicer_slice		(vbi3_bit_slicer *	bs,
  * @c CCX_FALSE when the parameters are invalid (e. g.
  * @a samples_per_line too small to contain CRI, FRC and payload).
  */
-int
-vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
-				 vbi_pixfmt		sample_format,
-				 unsigned int		sampling_rate,
-				 unsigned int		sample_offset,
-				 unsigned int		samples_per_line,
-				 unsigned int		cri,
-				 unsigned int		cri_mask,
-				 unsigned int		cri_bits,
-				 unsigned int		cri_rate,
-				 unsigned int		cri_end,
-				 unsigned int		frc,
-				 unsigned int		frc_bits,
-				 unsigned int		payload_bits,
-				 unsigned int		payload_rate,
-				 vbi3_modulation	modulation)
+int vbi3_bit_slicer_set_params(vbi3_bit_slicer *bs,
+			       vbi_pixfmt sample_format,
+			       unsigned int sampling_rate,
+			       unsigned int sample_offset,
+			       unsigned int samples_per_line,
+			       unsigned int cri,
+			       unsigned int cri_mask,
+			       unsigned int cri_bits,
+			       unsigned int cri_rate,
+			       unsigned int cri_end,
+			       unsigned int frc,
+			       unsigned int frc_bits,
+			       unsigned int payload_bits,
+			       unsigned int payload_rate,
+			       vbi3_modulation modulation)
 {
 	unsigned int c_mask;
 	unsigned int f_mask;
@@ -690,27 +706,29 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	unsigned int cri_samples;
 	unsigned int skip;
 
-	assert (NULL != bs);
-	assert (cri_bits <= 32);
-	assert (frc_bits <= 32);
-	assert (payload_bits <= 32767);
-	assert (samples_per_line <= 32767);
+	assert(NULL != bs);
+	assert(cri_bits <= 32);
+	assert(frc_bits <= 32);
+	assert(payload_bits <= 32767);
+	assert(samples_per_line <= 32767);
 
-	if (cri_rate > sampling_rate) {
-		warning (&bs->log,
-			 "cri_rate %u > sampling_rate %u.",
-			 cri_rate, sampling_rate);
+	if (cri_rate > sampling_rate)
+	{
+		warning(&bs->log,
+			"cri_rate %u > sampling_rate %u.",
+			cri_rate, sampling_rate);
 		goto failure;
 	}
 
-	if (payload_rate > sampling_rate) {
-		warning (&bs->log,
-			 "payload_rate %u > sampling_rate %u.",
-			 payload_rate, sampling_rate);
+	if (payload_rate > sampling_rate)
+	{
+		warning(&bs->log,
+			"payload_rate %u > sampling_rate %u.",
+			payload_rate, sampling_rate);
 		goto failure;
 	}
 
-	min_samples_per_bit = sampling_rate / MAX (cri_rate, payload_rate);
+	min_samples_per_bit = sampling_rate / MAX(cri_rate, payload_rate);
 
 	bs->sample_format = sample_format;
 
@@ -724,142 +742,148 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	bs->thresh = 105 << DEF_THR_FRAC;
 	bs->thresh_frac = DEF_THR_FRAC;
 
-	switch (sample_format) {
-	case VBI_PIXFMT_YUV420:
-		bs->bytes_per_sample = 1;
-		bs->func = bit_slicer_Y8;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+	switch (sample_format)
+	{
+		case VBI_PIXFMT_YUV420:
+			bs->bytes_per_sample = 1;
+			bs->func = bit_slicer_Y8;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_YUYV:
-	case VBI_PIXFMT_YVYU:
-		bs->bytes_per_sample = 2;
-		bs->func = bit_slicer_YUYV;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+		case VBI_PIXFMT_YUYV:
+		case VBI_PIXFMT_YVYU:
+			bs->bytes_per_sample = 2;
+			bs->func = bit_slicer_YUYV;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_UYVY:
-	case VBI_PIXFMT_VYUY:
-		skip = 1;
-		bs->bytes_per_sample = 2;
-		bs->func = bit_slicer_YUYV;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+		case VBI_PIXFMT_UYVY:
+		case VBI_PIXFMT_VYUY:
+			skip = 1;
+			bs->bytes_per_sample = 2;
+			bs->func = bit_slicer_YUYV;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_RGBA24_LE:
-	case VBI_PIXFMT_BGRA24_LE:
-		skip = 1;
-		bs->bytes_per_sample = 4;
-		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+		case VBI_PIXFMT_RGBA24_LE:
+		case VBI_PIXFMT_BGRA24_LE:
+			skip = 1;
+			bs->bytes_per_sample = 4;
+			bs->func = bit_slicer_RGBA24_LE;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_RGBA24_BE:
-	case VBI_PIXFMT_BGRA24_BE:
-		skip = 2;
-		bs->bytes_per_sample = 4;
-		bs->func = bit_slicer_RGBA24_LE;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+		case VBI_PIXFMT_RGBA24_BE:
+		case VBI_PIXFMT_BGRA24_BE:
+			skip = 2;
+			bs->bytes_per_sample = 4;
+			bs->func = bit_slicer_RGBA24_LE;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_RGB24_LE:
-	case VBI_PIXFMT_BGR24_LE:
-		skip = 1;
-		bs->bytes_per_sample = 3;
-	        bs->func = bit_slicer_RGB24_LE;
-		if (min_samples_per_bit > (3U << (LP_AVG - 1))) {
-			bs->func = low_pass_bit_slicer_Y8;
-			oversampling = 1;
-			bs->thresh <<= LP_AVG - 2;
-			bs->thresh_frac += LP_AVG - 2;
-		}
-		break;
+		case VBI_PIXFMT_RGB24_LE:
+		case VBI_PIXFMT_BGR24_LE:
+			skip = 1;
+			bs->bytes_per_sample = 3;
+			bs->func = bit_slicer_RGB24_LE;
+			if (min_samples_per_bit > (3U << (LP_AVG - 1)))
+			{
+				bs->func = low_pass_bit_slicer_Y8;
+				oversampling = 1;
+				bs->thresh <<= LP_AVG - 2;
+				bs->thresh_frac += LP_AVG - 2;
+			}
+			break;
 
-	case VBI_PIXFMT_RGB16_LE:
-	case VBI_PIXFMT_BGR16_LE:
-		bs->func = bit_slicer_RGB16_LE;
-		bs->green_mask = 0x07E0;
-		bs->thresh = 105 << (5 - 2 + 12);
-		bs->thresh_frac = 12;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_RGB16_LE:
+		case VBI_PIXFMT_BGR16_LE:
+			bs->func = bit_slicer_RGB16_LE;
+			bs->green_mask = 0x07E0;
+			bs->thresh = 105 << (5 - 2 + 12);
+			bs->thresh_frac = 12;
+			bs->bytes_per_sample = 2;
+			break;
 
-	case VBI_PIXFMT_RGB16_BE:
-	case VBI_PIXFMT_BGR16_BE:
-		bs->func = bit_slicer_RGB16_BE;
-		bs->green_mask = 0x07E0;
-		bs->thresh = 105 << (5 - 2 + 12);
-		bs->thresh_frac = 12;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_RGB16_BE:
+		case VBI_PIXFMT_BGR16_BE:
+			bs->func = bit_slicer_RGB16_BE;
+			bs->green_mask = 0x07E0;
+			bs->thresh = 105 << (5 - 2 + 12);
+			bs->thresh_frac = 12;
+			bs->bytes_per_sample = 2;
+			break;
 
-	case VBI_PIXFMT_RGBA15_LE:
-	case VBI_PIXFMT_BGRA15_LE:
-		bs->func = bit_slicer_RGB16_LE;
-		bs->green_mask = 0x03E0;
-		bs->thresh = 105 << (5 - 3 + 11);
-		bs->thresh_frac = 11;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_RGBA15_LE:
+		case VBI_PIXFMT_BGRA15_LE:
+			bs->func = bit_slicer_RGB16_LE;
+			bs->green_mask = 0x03E0;
+			bs->thresh = 105 << (5 - 3 + 11);
+			bs->thresh_frac = 11;
+			bs->bytes_per_sample = 2;
+			break;
 
-	case VBI_PIXFMT_RGBA15_BE:
-	case VBI_PIXFMT_BGRA15_BE:
-		bs->func = bit_slicer_RGB16_BE;
-		bs->green_mask = 0x03E0;
-		bs->thresh = 105 << (5 - 3 + 11);
-		bs->thresh_frac = 11;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_RGBA15_BE:
+		case VBI_PIXFMT_BGRA15_BE:
+			bs->func = bit_slicer_RGB16_BE;
+			bs->green_mask = 0x03E0;
+			bs->thresh = 105 << (5 - 3 + 11);
+			bs->thresh_frac = 11;
+			bs->bytes_per_sample = 2;
+			break;
 
-	case VBI_PIXFMT_ARGB15_LE:
-	case VBI_PIXFMT_ABGR15_LE:
-		bs->func = bit_slicer_RGB16_LE;
-		bs->green_mask = 0x07C0;
-		bs->thresh = 105 << (6 - 3 + 12);
-		bs->thresh_frac = 12;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_ARGB15_LE:
+		case VBI_PIXFMT_ABGR15_LE:
+			bs->func = bit_slicer_RGB16_LE;
+			bs->green_mask = 0x07C0;
+			bs->thresh = 105 << (6 - 3 + 12);
+			bs->thresh_frac = 12;
+			bs->bytes_per_sample = 2;
+			break;
 
-	case VBI_PIXFMT_ARGB15_BE:
-	case VBI_PIXFMT_ABGR15_BE:
-		bs->func = bit_slicer_RGB16_BE;
-		bs->green_mask = 0x07C0;
-		bs->thresh = 105 << (6 - 3 + 12);
-		bs->thresh_frac = 12;
-		bs->bytes_per_sample = 2;
-		break;
+		case VBI_PIXFMT_ARGB15_BE:
+		case VBI_PIXFMT_ABGR15_BE:
+			bs->func = bit_slicer_RGB16_BE;
+			bs->green_mask = 0x07C0;
+			bs->thresh = 105 << (6 - 3 + 12);
+			bs->thresh_frac = 12;
+			bs->bytes_per_sample = 2;
+			break;
 
-
-	default:
-		warning (&bs->log,
-			 "Unknown sample_format 0x%x.",
-			 (unsigned int) sample_format);
-		return CCX_FALSE;
+		default:
+			warning(&bs->log,
+				"Unknown sample_format 0x%x.",
+				(unsigned int)sample_format);
+			return CCX_FALSE;
 	}
 
 	bs->skip = sample_offset * bs->bytes_per_sample + skip;
@@ -870,28 +894,27 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	/* We stop searching for CRI when CRI, FRC and payload
 	   cannot possibly fit anymore. Additionally this eliminates
 	   a data end check in the payload loop. */
-	cri_samples = (sampling_rate * (int64_t) cri_bits) / cri_rate;
+	cri_samples = (sampling_rate * (int64_t)cri_bits) / cri_rate;
 
 	data_bits = payload_bits + frc_bits;
-	data_samples = (sampling_rate * (int64_t) data_bits) / payload_rate;
+	data_samples = (sampling_rate * (int64_t)data_bits) / payload_rate;
 
 	bs->total_bits = cri_bits + data_bits;
 
-	if ((sample_offset > samples_per_line)
-	    || ((cri_samples + data_samples)
-		> (samples_per_line - sample_offset))) {
-		warning (&bs->log,
-			 "%u samples_per_line too small for "
-			 "sample_offset %u + %u cri_bits (%u samples) "
-			 "+ %u frc_bits and %u payload_bits "
-			 "(%u samples).",
-			 samples_per_line, sample_offset,
-			 cri_bits, cri_samples,
-			 frc_bits, payload_bits, data_samples);
+	if ((sample_offset > samples_per_line) || ((cri_samples + data_samples) > (samples_per_line - sample_offset)))
+	{
+		warning(&bs->log,
+			"%u samples_per_line too small for "
+			"sample_offset %u + %u cri_bits (%u samples) "
+			"+ %u frc_bits and %u payload_bits "
+			"(%u samples).",
+			samples_per_line, sample_offset,
+			cri_bits, cri_samples,
+			frc_bits, payload_bits, data_samples);
 		goto failure;
 	}
 
-	cri_end = MIN (cri_end, samples_per_line - data_samples);
+	cri_end = MIN(cri_end, samples_per_line - data_samples);
 
 	bs->cri_samples = cri_end - sample_offset;
 	bs->cri_rate = cri_rate;
@@ -902,59 +925,58 @@ vbi3_bit_slicer_set_params	(vbi3_bit_slicer *	bs,
 	bs->frc_bits = frc_bits;
 
 	/* Payload bit distance in 1/256 raw samples. */
-	bs->step = (sampling_rate * (int64_t) 256) / payload_rate;
+	bs->step = (sampling_rate * (int64_t)256) / payload_rate;
 
-	if (payload_bits & 7) {
+	if (payload_bits & 7)
+	{
 		/* Use bit routines. */
 		bs->payload = payload_bits;
 		bs->endian = 3;
-	} else {
+	}
+	else
+	{
 		/* Use faster octet routines. */
 		bs->payload = payload_bits >> 3;
 		bs->endian = 1;
 	}
 
-	switch (modulation) {
-	case VBI3_MODULATION_NRZ_MSB:
-		--bs->endian;
+	switch (modulation)
+	{
+		case VBI3_MODULATION_NRZ_MSB:
+			--bs->endian;
 
-		/* fall through */
+			/* fall through */
 
-	case VBI3_MODULATION_NRZ_LSB:
-		bs->phase_shift	= (int)
-			(sampling_rate * 256.0 / cri_rate * .5
-			 + bs->step * .5 + 128);
-		break;
+		case VBI3_MODULATION_NRZ_LSB:
+			bs->phase_shift = (int)(sampling_rate * 256.0 / cri_rate * .5 + bs->step * .5 + 128);
+			break;
 
-	case VBI3_MODULATION_BIPHASE_MSB:
-		--bs->endian;
+		case VBI3_MODULATION_BIPHASE_MSB:
+			--bs->endian;
 
-		/* fall through */
+			/* fall through */
 
-	case VBI3_MODULATION_BIPHASE_LSB:
-		/* Phase shift between the NRZ modulated CRI and the
-		   biphase modulated rest. */
-		bs->phase_shift	= (int)
-			(sampling_rate * 256.0 / cri_rate * .5
-			 + bs->step * .25 + 128);
-		break;
+		case VBI3_MODULATION_BIPHASE_LSB:
+			/* Phase shift between the NRZ modulated CRI and the
+			   biphase modulated rest. */
+			bs->phase_shift = (int)(sampling_rate * 256.0 / cri_rate * .5 + bs->step * .25 + 128);
+			break;
 	}
 
 	return CCX_TRUE;
 
- failure:
+failure:
 	bs->func = null_function;
 
 	return CCX_FALSE;
 }
 
-void
-vbi3_bit_slicer_set_log_fn	(vbi3_bit_slicer *	bs,
-				 vbi_log_mask		mask,
-				 vbi_log_fn *		log_fn,
-				 void *			user_data)
+void vbi3_bit_slicer_set_log_fn(vbi3_bit_slicer *bs,
+				vbi_log_mask mask,
+				vbi_log_fn *log_fn,
+				void *user_data)
 {
-	assert (NULL != bs);
+	assert(NULL != bs);
 
 	if (NULL == log_fn)
 		mask = 0;
@@ -967,24 +989,22 @@ vbi3_bit_slicer_set_log_fn	(vbi3_bit_slicer *	bs,
 /**
  * @internal
  */
-void
-_vbi3_bit_slicer_destroy	(vbi3_bit_slicer *	bs)
+void _vbi3_bit_slicer_destroy(vbi3_bit_slicer *bs)
 {
-	assert (NULL != bs);
+	assert(NULL != bs);
 
 	/* Make unusable. */
-	CLEAR (*bs);
+	CLEAR(*bs);
 }
 
 /**
  * @internal
  */
-int
-_vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs)
+int _vbi3_bit_slicer_init(vbi3_bit_slicer *bs)
 {
-	assert (NULL != bs);
+	assert(NULL != bs);
 
-	CLEAR (*bs);
+	CLEAR(*bs);
 
 	bs->func = null_function;
 
@@ -997,15 +1017,14 @@ _vbi3_bit_slicer_init		(vbi3_bit_slicer *	bs)
  *
  * Deletes a vbi3_bit_slicer object.
  */
-void
-vbi3_bit_slicer_delete		(vbi3_bit_slicer *	bs)
+void vbi3_bit_slicer_delete(vbi3_bit_slicer *bs)
 {
 	if (NULL == bs)
 		return;
 
-	_vbi3_bit_slicer_destroy (bs);
+	_vbi3_bit_slicer_destroy(bs);
 
-	vbi_free (bs);
+	vbi_free(bs);
 }
 
 /**
@@ -1015,16 +1034,17 @@ vbi3_bit_slicer_delete		(vbi3_bit_slicer *	bs)
  * @c NULL when out of memory.
  */
 vbi3_bit_slicer *
-vbi3_bit_slicer_new		(void)
+vbi3_bit_slicer_new(void)
 {
 	vbi3_bit_slicer *bs;
 
-	bs = vbi_malloc (sizeof (*bs));
-	if (NULL == bs) {
+	bs = vbi_malloc(sizeof(*bs));
+	if (NULL == bs)
+	{
 		return NULL;
 	}
 
-	_vbi3_bit_slicer_init (bs);
+	_vbi3_bit_slicer_init(bs);
 
 	return bs;
 }

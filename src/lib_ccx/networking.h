@@ -11,13 +11,12 @@ int net_send_cc(const unsigned char *data, int length, void *private_data, struc
 void net_check_conn();
 
 void net_send_epg(
-		const char *start,
-		const char *stop,
-		const char *title,
-		const char *desc,
-		const char *lang,
-		const char *category
-		);
+    const char *start,
+    const char *stop,
+    const char *title,
+    const char *desc,
+    const char *lang,
+    const char *category);
 
 int net_tcp_read(int socket, void *buffer, size_t length);
 int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, const char *addr_str);

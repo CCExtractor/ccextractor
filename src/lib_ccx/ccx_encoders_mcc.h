@@ -9,22 +9,22 @@
 /*--                               Constants                                --*/
 /*----------------------------------------------------------------------------*/
 
-#define ANC_DID_CLOSED_CAPTIONING        0x61
-#define ANC_SDID_CEA_708                 0x01
-#define CDP_IDENTIFIER_VALUE_HIGH        0x96
-#define CDP_IDENTIFIER_VALUE_LOW         0x69
-#define CC_DATA_ID                       0x72
-#define CDP_FOOTER_ID                    0x74
+#define ANC_DID_CLOSED_CAPTIONING 0x61
+#define ANC_SDID_CEA_708 0x01
+#define CDP_IDENTIFIER_VALUE_HIGH 0x96
+#define CDP_IDENTIFIER_VALUE_LOW 0x69
+#define CC_DATA_ID 0x72
+#define CDP_FOOTER_ID 0x74
 
-#define CDP_FRAME_RATE_FORBIDDEN         0x00
-#define CDP_FRAME_RATE_23_976            0x01
-#define CDP_FRAME_RATE_24                0x02
-#define CDP_FRAME_RATE_25                0x03
-#define CDP_FRAME_RATE_29_97             0x04
-#define CDP_FRAME_RATE_30                0x05
-#define CDP_FRAME_RATE_50                0x06
-#define CDP_FRAME_RATE_59_94             0x07
-#define CDP_FRAME_RATE_60                0x08
+#define CDP_FRAME_RATE_FORBIDDEN 0x00
+#define CDP_FRAME_RATE_23_976 0x01
+#define CDP_FRAME_RATE_24 0x02
+#define CDP_FRAME_RATE_25 0x03
+#define CDP_FRAME_RATE_29_97 0x04
+#define CDP_FRAME_RATE_30 0x05
+#define CDP_FRAME_RATE_50 0x06
+#define CDP_FRAME_RATE_59_94 0x07
+#define CDP_FRAME_RATE_60 0x08
 
 /*----------------------------------------------------------------------------*/
 /*--                                Types                                   --*/
@@ -46,7 +46,9 @@ typedef long long int64;
 /*----------------------------------------------------------------------------*/
 
 #define LOG(...) debug_log(__FILE__, __LINE__, __VA_ARGS__)
-#define ASSERT(x) if(!(x)) debug_log(__FILE__, __LINE__, "ASSERT FAILED!")
+#define ASSERT(x) \
+	if (!(x)) \
+	debug_log(__FILE__, __LINE__, "ASSERT FAILED!")
 
 /*----------------------------------------------------------------------------*/
 /*--                          Exposed Variables                             --*/

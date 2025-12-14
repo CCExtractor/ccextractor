@@ -5,20 +5,22 @@
 #ifndef teletext_h_included
 #define teletext_h_included
 
-//#include <inttypes.h>
+// #include <inttypes.h>
 
 #define MAX_TLT_PAGES 1000
 
-typedef struct {
-	uint64_t show_timestamp; // show at timestamp (in ms)
-	uint64_t hide_timestamp; // hide at timestamp (in ms)
-	uint16_t text[25][40]; // 25 lines x 40 cols (1 screen/page) of wide chars
+typedef struct
+{
+	uint64_t show_timestamp;	 // show at timestamp (in ms)
+	uint64_t hide_timestamp;	 // hide at timestamp (in ms)
+	uint16_t text[25][40];		 // 25 lines x 40 cols (1 screen/page) of wide chars
 	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
-	uint8_t tainted; // 1 = text variable contains any data
+	uint8_t tainted;		 // 1 = text variable contains any data
 } teletext_page_t;
 
 // application states -- flags for notices that should be printed only once
-struct s_states {
+struct s_states
+{
 	uint8_t programme_info_processed;
 	uint8_t pts_initialized;
 };
@@ -38,23 +40,22 @@ typedef enum
 	DATA_UNIT_CLOSED_CAPTIONS = 0xc5
 } data_unit_t;
 
-
 struct TeletextCtx
 {
 	short int seen_sub_page[MAX_TLT_PAGES];
-	uint8_t verbose : 1; // should telxcc be verbose?
-	uint16_t page; // teletext page containing cc we want to filter
-	uint16_t tid; // 13-bit packet ID for teletext stream
-	double offset; // time offset in seconds
-	uint8_t bom : 1; // print UTF-8 BOM characters at the beginning of output
-	uint8_t nonempty : 1; // produce at least one (dummy) frame
-						  // uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
-						  // uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
-	uint16_t user_page; // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
-	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
+	uint8_t verbose : 1;					   // should telxcc be verbose?
+	uint16_t page;						   // teletext page containing cc we want to filter
+	uint16_t tid;						   // 13-bit packet ID for teletext stream
+	double offset;						   // time offset in seconds
+	uint8_t bom : 1;					   // print UTF-8 BOM characters at the beginning of output
+	uint8_t nonempty : 1;					   // produce at least one (dummy) frame
+								   // uint8_t se_mode : 1; // search engine compatible mode => Uses CCExtractor's write_format
+								   // uint64_t utc_refvalue; // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
+	uint16_t user_page;					   // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	int levdistmincnt, levdistmaxpct;			   // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
-	enum ccx_output_format write_format; // 0=Raw, 1=srt, 2=SMI
-	int gui_mode_reports; // If 1, output in stderr progress updates so the GUI can grab them
+	enum ccx_output_format write_format;			   // 0=Raw, 1=srt, 2=SMI
+	int gui_mode_reports;					   // If 1, output in stderr progress updates so the GUI can grab them
 	enum ccx_output_date_format date_format;
 	int noautotimeref; // Do NOT set time automatically?
 	unsigned send_to_srv;
@@ -97,7 +98,7 @@ struct TeletextCtx
 	int64_t delta;
 	uint32_t t0;
 
-	int sentence_cap;//Set to 1 if -sc is passed
+	int sentence_cap; // Set to 1 if -sc is passed
 	int new_sentence;
 	int splitbysentence;
 };

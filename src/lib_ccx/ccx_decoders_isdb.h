@@ -9,5 +9,4 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 void delete_isdb_decoder(void **isdb_ctx);
 void *init_isdb_decoder(void);
 
-
 #endif
