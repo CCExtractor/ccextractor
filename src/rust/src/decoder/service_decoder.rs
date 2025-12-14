@@ -49,7 +49,14 @@ impl dtvcc_service_decoder {
                 }
                 used as u8
             } else {
-                let mut used = self.handle_extended_char(&block[1..]);
+                // EXT1 command - process extended character from next position
+                if i + 1 >= block.len() {
+                    warn!(
+                        "dtvcc_process_service_block: EXT1 at end of block with no following data"
+                    );
+                    return;
+                }
+                let mut used = self.handle_extended_char(&block[(i + 1)..]);
                 used += 1; // Since we had CCX_DTVCC_C0_EXT1
                 used
             };
@@ -1067,6 +1074,12 @@ impl dtvcc_service_decoder {
     /// WARN: This code is completely untested due to lack of samples. Just following specs!
     /// Returns number of used bytes, usually 1 (since EXT1 is not counted).
     pub fn handle_extended_char(&mut self, block: &[c_uchar]) -> u8 {
+        // Bounds check: need at least 1 byte for the code
+        if block.is_empty() {
+            warn!("dtvcc_handle_extended_char: empty block");
+            return 1;
+        }
+
         let code = block[0];
         debug!(
             "dtvcc_handle_extended_char, first data code: [{}], length: [{}]",
@@ -1082,7 +1095,18 @@ impl dtvcc_service_decoder {
                 self.process_character(sym);
                 1
             }
-            0x80..=0x9F => commands::handle_C3(code, block[1]),
+            0x80..=0x9F => {
+                // C3 commands need at least 2 bytes
+                if block.len() < 2 {
+                    warn!(
+                        "dtvcc_handle_extended_char: C3 command {:02X} requires 2 bytes but only {} available",
+                        code,
+                        block.len()
+                    );
+                    return 1;
+                }
+                commands::handle_C3(code, block[1])
+            }
             _ => {
                 let val = unsafe { dtvcc_get_internal_from_G3(code) };
                 let sym = dtvcc_symbol::new(val as u16);
@@ -1738,6 +1762,75 @@ mod test {
         unsafe {
             assert_eq!(decoder.windows[0].rows[0].add(1).read().sym, 0x20);
         }
+
+        cleanup_test_decoder(&mut decoder);
+    }
+
+    #[test]
+    fn test_handle_extended_char_empty_block() {
+        // Test that empty block doesn't panic (bounds check fix for issue #1616)
+        let mut decoder = setup_test_decoder_with_memory();
+
+        // Empty block should return 1 and not panic
+        let return_value = decoder.handle_extended_char(&[]);
+        assert_eq!(return_value, 1);
+
+        cleanup_test_decoder(&mut decoder);
+    }
+
+    #[test]
+    fn test_handle_extended_char_c3_insufficient_bytes() {
+        // Test that C3 command (0x80-0x9F) with only 1 byte doesn't panic (issue #1616)
+        let mut decoder = setup_test_decoder_with_memory();
+
+        // C3 commands need 2 bytes, but we only provide 1
+        // This should not panic, just return 1 and log a warning
+        let return_value = decoder.handle_extended_char(&[0x80]); // C3 code with no second byte
+        assert_eq!(return_value, 1);
+
+        let return_value = decoder.handle_extended_char(&[0x90]); // Another C3 code
+        assert_eq!(return_value, 1);
+
+        let return_value = decoder.handle_extended_char(&[0x9F]); // Edge of C3 range
+        assert_eq!(return_value, 1);
+
+        cleanup_test_decoder(&mut decoder);
+    }
+
+    #[test]
+    fn test_process_service_block_ext1_at_end() {
+        // Test that EXT1 (0x10) at end of block doesn't panic (issue #1616)
+        let mut decoder = setup_test_decoder_with_memory();
+        let mut encoder = encoder_ctx::default();
+        let mut timing = ccx_common_timing_ctx::default();
+
+        // Block with EXT1 at the end with no following data
+        // EXT1 = 0x10 = DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1
+        let block = [0x10_u8]; // Just EXT1, no following byte
+
+        // This should not panic, just return early
+        decoder.process_service_block(&block, &mut encoder, &mut timing, false);
+
+        // Block with some valid data followed by EXT1 at the end
+        let block_with_ext1_at_end = [0x20_u8, 0x10]; // G0 char, then EXT1 with no following
+
+        decoder.process_service_block(&block_with_ext1_at_end, &mut encoder, &mut timing, false);
+
+        cleanup_test_decoder(&mut decoder);
+    }
+
+    #[test]
+    fn test_process_service_block_ext1_with_truncated_c3() {
+        // Test EXT1 followed by C3 command with insufficient bytes (issue #1616)
+        let mut decoder = setup_test_decoder_with_memory();
+        let mut encoder = encoder_ctx::default();
+        let mut timing = ccx_common_timing_ctx::default();
+
+        // EXT1 (0x10) followed by C3 code (0x80-0x9F) but no second byte for C3
+        let block = [0x10_u8, 0x85]; // EXT1 + C3 code, but C3 needs another byte
+
+        // This should not panic
+        decoder.process_service_block(&block, &mut encoder, &mut timing, false);
 
         cleanup_test_decoder(&mut decoder);
     }
