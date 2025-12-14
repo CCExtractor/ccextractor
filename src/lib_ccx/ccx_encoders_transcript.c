@@ -118,6 +118,10 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
 
+	// Write header on first caption (deferred file creation)
+	if (write_subtitle_file_header(context, context->out) != 0)
+		return -1;
+
 	while (sub)
 	{
 		if (sub->type == CC_TEXT)

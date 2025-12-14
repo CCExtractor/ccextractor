@@ -852,6 +852,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		if (ctx->write_format == CCX_OF_SPUPNG ||
 		    ctx->write_format == CCX_OF_RAW ||
 		    ctx->write_format == CCX_OF_RCWT ||
+		    ctx->write_format == CCX_OF_DVDRAW ||
 		    ctx->write_format == CCX_OF_NULL)
 		{
 			write_subtitle_file_header(ctx, ctx->out + i);
