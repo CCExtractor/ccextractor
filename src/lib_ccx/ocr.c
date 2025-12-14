@@ -441,7 +441,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		int written_tag = 0;
 		TessResultIterator *ri = 0;
 		TessPageIteratorLevel level = RIL_WORD;
-		PIX *color_pix_processed = NULL;  // Will hold preprocessed image for cleanup
+		PIX *color_pix_processed = NULL; // Will hold preprocessed image for cleanup
 
 		// Preprocess color_pix_out for Tesseract the same way as cpix_gs
 		// Tesseract expects dark text on light background, but DVB subtitles typically
