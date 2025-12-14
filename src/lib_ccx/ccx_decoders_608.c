@@ -127,6 +127,8 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	ccx_decoder_608_context *data = NULL;
 
 	data = malloc(sizeof(ccx_decoder_608_context));
+	if (!data)
+		return NULL;
 
 	data->cursor_column = 0;
 	data->cursor_row = 0;

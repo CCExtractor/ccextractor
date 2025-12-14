@@ -345,6 +345,11 @@ static struct ISDBText *allocate_text_node(ISDBSubLayout *ls)
 
 	text->used = 0;
 	text->buf = malloc(128);
+	if (!text->buf)
+	{
+		free(text);
+		return NULL;
+	}
 	text->len = 128;
 	*text->buf = 0;
 	return text;

@@ -474,6 +474,10 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			{
 				color_events = (int *)calloc(COLUMNS + 1, sizeof(int));
 				font_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				if (!color_events || !font_events)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory allocating color/font events.");
+				}
 
 				get_color_events(color_events, i, data);
 				get_font_events(font_events, i, data);

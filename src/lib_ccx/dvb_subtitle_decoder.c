@@ -1485,11 +1485,11 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 	{
 		display_def = (struct DVBSubDisplayDefinition *)malloc(
 		    sizeof(*display_def));
+		if (!display_def)
+			return;
 		memset(display_def, 0, sizeof(*display_def));
 		ctx->display_definition = display_def;
 	}
-	if (!display_def)
-		return;
 
 	display_def->version = dds_version;
 	display_def->x = 0;

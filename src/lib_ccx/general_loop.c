@@ -360,6 +360,10 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 {
 	size_t max = (size_t)ctx->inputsize + 1; // Enough for the whole thing. Hex dumps are small so we can be lazy here
 	char *line = (char *)malloc(max);
+	if (!line)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory allocating line buffer.");
+	}
 	/* const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present */
 	FILE *fr = fopen(filename, "rt");
 	unsigned char *bytes = NULL;
@@ -430,7 +434,6 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		bytes = (unsigned char *)malloc(byte_count);
 		if (!bytes)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
-		unsigned char *bytes = (unsigned char *)malloc(byte_count);
 		for (unsigned i = 0; i < byte_count; i++)
 		{
 			unsigned char high = c2[0];
@@ -1251,6 +1254,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 
 	// Generic buffer to hold some data
 	parsebuf = (unsigned char *)malloc(1024);
+	if (!parsebuf)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
+	}
 
 	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;

@@ -114,12 +114,12 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 		ctx->eit_programs = (struct EIT_program *)malloc(sizeof(struct EIT_program) * (TS_PMT_MAP_SIZE + 1));
 		ctx->eit_current_events = (int32_t *)malloc(sizeof(int32_t) * (TS_PMT_MAP_SIZE + 1));
 		ctx->ATSC_source_pg_map = (int16_t *)malloc(sizeof(int16_t) * (0xffff));
+		if (!ctx->epg_buffers || !ctx->eit_programs || !ctx->eit_current_events || !ctx->ATSC_source_pg_map)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
 		memset(ctx->epg_buffers, 0, sizeof(struct PSI_buffer) * (0xfff + 1));
 		memset(ctx->eit_programs, 0, sizeof(struct EIT_program) * (TS_PMT_MAP_SIZE + 1));
 		memset(ctx->eit_current_events, 0, sizeof(int32_t) * (TS_PMT_MAP_SIZE + 1));
 		memset(ctx->ATSC_source_pg_map, 0, sizeof(int16_t) * (0xffff));
-		if (!ctx->epg_buffers || !ctx->eit_programs || !ctx->eit_current_events || !ctx->ATSC_source_pg_map)
-			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "lib_ccx_ctx");
 	}
 	else
 	{
@@ -173,6 +173,8 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->subs_delay = opt->subs_delay;
 
 	ctx->pesheaderbuf = (unsigned char *)malloc(188); // Never larger anyway
+	if (!ctx->pesheaderbuf)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "init_libraries: Not enough memory allocating pesheaderbuf");
 
 	ctx->cc_to_stdout = opt->cc_to_stdout;
 	ctx->pes_header_to_stdout = opt->pes_header_to_stdout;
@@ -290,6 +292,8 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 		{
 			dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
 			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+			if (!dec_ctx->prev || !dec_ctx->dec_sub.prev)
+				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list: Not enough memory for DVB context");
 			memset(dec_ctx->dec_sub.prev, 0, sizeof(struct cc_subtitle));
 		}
 	}
