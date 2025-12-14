@@ -14,8 +14,8 @@
  *  Library General Public License for more details.
  *
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the 
- *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *  Boston, MA  02110-1301  USA.
  */
 
@@ -26,7 +26,6 @@
 
 #include "bcd.h"
 #include "sliced.h"
-
 
 /* Bit slicer */
 
@@ -125,13 +124,14 @@
 </table>
 @endhtmlonly */
 /* Attn: keep this in sync with rte, don't change order */
-typedef enum {
+typedef enum
+{
 	VBI_PIXFMT_YUV420 = 1,
 	VBI_PIXFMT_YUYV,
 	VBI_PIXFMT_YVYU,
 	VBI_PIXFMT_UYVY,
 	VBI_PIXFMT_VYUY,
-        VBI_PIXFMT_PAL8,
+	VBI_PIXFMT_PAL8,
 	VBI_PIXFMT_RGBA32_LE = 32,
 	VBI_PIXFMT_RGBA32_BE,
 	VBI_PIXFMT_BGRA32_LE,
@@ -161,39 +161,35 @@ typedef enum {
 typedef uint64_t vbi_pixfmt_set;
 
 #define VBI_MAX_PIXFMTS 64
-#define VBI_PIXFMT_SET(pixfmt) (((vbi_pixfmt_set) 1) << (pixfmt))
-#define VBI_PIXFMT_SET_YUV (VBI_PIXFMT_SET (VBI_PIXFMT_YUV420) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_YUYV) |		\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_YVYU) |		\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_UYVY) |		\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_VYUY))
-#define VBI_PIXFMT_SET_RGB (VBI_PIXFMT_SET (VBI_PIXFMT_RGBA32_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA32_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA32_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA32_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB24) |		\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR24) |		\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB16_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGB16_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR16_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGR16_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA15_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_RGBA15_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA15_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_BGRA15_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_ARGB15_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_ARGB15_BE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_ABGR15_LE) |	\
-			    VBI_PIXFMT_SET (VBI_PIXFMT_ABGR15_BE))
-#define VBI_PIXFMT_SET_ALL (VBI_PIXFMT_SET_YUV |			\
+#define VBI_PIXFMT_SET(pixfmt) (((vbi_pixfmt_set)1) << (pixfmt))
+#define VBI_PIXFMT_SET_YUV (VBI_PIXFMT_SET(VBI_PIXFMT_YUV420) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_YUYV) |   \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_YVYU) |   \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_UYVY) |   \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_VYUY))
+#define VBI_PIXFMT_SET_RGB (VBI_PIXFMT_SET(VBI_PIXFMT_RGBA32_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGBA32_BE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGRA32_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGRA32_BE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGB24) |     \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGR24) |     \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGB16_LE) |  \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGB16_BE) |  \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGR16_LE) |  \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGR16_BE) |  \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGBA15_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_RGBA15_BE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGRA15_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_BGRA15_BE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_ARGB15_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_ARGB15_BE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_ABGR15_LE) | \
+			    VBI_PIXFMT_SET(VBI_PIXFMT_ABGR15_BE))
+#define VBI_PIXFMT_SET_ALL (VBI_PIXFMT_SET_YUV | \
 			    VBI_PIXFMT_SET_RGB)
 
-#define VBI_PIXFMT_BPP(fmt)						\
-	(((fmt) == VBI_PIXFMT_YUV420) ? 1 :				\
-	 (((fmt) >= VBI_PIXFMT_RGBA32_LE				\
-	   && (fmt) <= VBI_PIXFMT_BGRA32_BE) ? 4 :			\
-	  (((fmt) == VBI_PIXFMT_RGB24					\
-	    || (fmt) == VBI_PIXFMT_BGR24) ? 3 : 2)))
+#define VBI_PIXFMT_BPP(fmt) \
+	(((fmt) == VBI_PIXFMT_YUV420) ? 1 : (((fmt) >= VBI_PIXFMT_RGBA32_LE && (fmt) <= VBI_PIXFMT_BGRA32_BE) ? 4 : (((fmt) == VBI_PIXFMT_RGB24 || (fmt) == VBI_PIXFMT_BGR24) ? 3 : 2)))
 
 /* Public */
 
@@ -201,7 +197,8 @@ typedef uint64_t vbi_pixfmt_set;
  * @ingroup Rawdec
  * @brief Modulation used for VBI data transmission.
  */
-typedef enum {
+typedef enum
+{
 	/**
 	 * The data is 'non-return to zero' coded, logical '1' bits
 	 * are described by high sample values, logical '0' bits by
@@ -233,41 +230,42 @@ typedef enum {
  * The contents of this structure are private,
  * use vbi_bit_slicer_init() to initialize.
  */
-typedef struct vbi_bit_slicer {
-	int	(* func)(struct vbi_bit_slicer *slicer,
-				 uint8_t *raw, uint8_t *buf);
-	unsigned int	cri;
-	unsigned int	cri_mask;
-	int		thresh;
-	int		cri_bytes;
-	int		cri_rate;
-	int		oversampling_rate;
-	int		phase_shift;
-	int		step;
-	unsigned int	frc;
-	int		frc_bits;
-	int		payload;
-	int		endian;
-	int		skip;
+typedef struct vbi_bit_slicer
+{
+	int (*func)(struct vbi_bit_slicer *slicer,
+		    uint8_t *raw, uint8_t *buf);
+	unsigned int cri;
+	unsigned int cri_mask;
+	int thresh;
+	int cri_bytes;
+	int cri_rate;
+	int oversampling_rate;
+	int phase_shift;
+	int step;
+	unsigned int frc;
+	int frc_bits;
+	int payload;
+	int endian;
+	int skip;
 } vbi_bit_slicer;
 
 /**
  * @addtogroup Rawdec
  * @{
  */
-extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
-					    int raw_samples, int sampling_rate,
-					    int cri_rate, int bit_rate,
-					    unsigned int cri_frc, unsigned int cri_mask,
-					    int cri_bits, int frc_bits, int payload,
-					    vbi_modulation modulation, vbi_pixfmt fmt);
+extern void vbi_bit_slicer_init(vbi_bit_slicer *slicer,
+				int raw_samples, int sampling_rate,
+				int cri_rate, int bit_rate,
+				unsigned int cri_frc, unsigned int cri_mask,
+				int cri_bits, int frc_bits, int payload,
+				vbi_modulation modulation, vbi_pixfmt fmt);
 /**
  * @param slicer Pointer to initialized vbi_bit_slicer object.
  * @param raw Input data. At least the number of pixels or samples
  *  given as @a raw_samples to vbi_bit_slicer_init().
  * @param buf Output data. The buffer must be large enough to store
  *   the number of bits given as @a payload to vbi_bit_slicer_init().
- * 
+ *
  * Decode one scan line of raw vbi data. Note the bit slicer tries
  * to adapt to the average signal amplitude, you should avoid
  * using the same vbi_bit_slicer object for data from different
@@ -276,7 +274,7 @@ extern void		vbi_bit_slicer_init(vbi_bit_slicer *slicer,
  * @note As a matter of speed this function does not lock the
  * @a slicer. When you want to share a vbi_bit_slicer object between
  * multiple threads you must implement your own locking mechanism.
- * 
+ *
  * @return
  * @c FALSE if the raw data does not contain the expected
  * information, i. e. the CRI/FRC has not been found. This may also
@@ -298,51 +296,52 @@ vbi_bit_slice(vbi_bit_slicer *slicer, uint8_t *raw, uint8_t *buf)
  * vbi_raw_decoder_parameters() and vbi_raw_decoder_add_services()
  * for usage.
  */
-typedef struct vbi_raw_decoder {
+typedef struct vbi_raw_decoder
+{
 	/* Sampling parameters */
 
 	/**
 	 * Either 525 (M/NTSC, M/PAL) or 625 (PAL, SECAM), describing the
 	 * scan line system all line numbers refer to.
 	 */
-	int			scanning;
+	int scanning;
 	/**
 	 * Format of the raw vbi data.
 	 */
-	vbi_pixfmt		sampling_format;
+	vbi_pixfmt sampling_format;
 	/**
 	 * Sampling rate in Hz, the number of samples or pixels
 	 * captured per second.
 	 */
-	int			sampling_rate;		/* Hz */
+	int sampling_rate; /* Hz */
 	/**
 	 * Number of samples or pixels captured per scan line,
 	 * in bytes. This determines the raw vbi image width and you
 	 * want it large enough to cover all data transmitted in the line (with
 	 * headroom).
 	 */
-	int			bytes_per_line;
+	int bytes_per_line;
 	/**
 	 * The distance from 0H (leading edge hsync, half amplitude point)
 	 * to the first sample (pixel) captured, in samples (pixels). You want
 	 * an offset small enough not to miss the start of the data
 	 * transmitted.
 	 */
-	int			offset;			/* 0H, samples */
+	int offset; /* 0H, samples */
 	/**
 	 * First scan line to be captured, first and second field
 	 * respectively, according to the ITU-R line numbering scheme
 	 * (see vbi_sliced). Set to zero if the exact line number isn't
 	 * known.
 	 */
-	int			start[2];		/* ITU-R numbering */
+	int start[2]; /* ITU-R numbering */
 	/**
 	 * Number of scan lines captured, first and second
 	 * field respectively. This can be zero if only data from one
 	 * field is required. The sum @a count[0] + @a count[1] determines the
 	 * raw vbi image height.
 	 */
-	int			count[2];		/* field lines */
+	int count[2]; /* field lines */
 	/**
 	 * In the raw vbi image, normally all lines of the second
 	 * field are supposed to follow all lines of the first field. When
@@ -350,7 +349,7 @@ typedef struct vbi_raw_decoder {
 	 * will be interleaved in memory. This implies @a count[0] and @a count[1]
 	 * are equal.
 	 */
-	int		interlaced;
+	int interlaced;
 	/**
 	 * Fields must be stored in temporal order, i. e. as the
 	 * lines have been captured. It is assumed that the first field is
@@ -358,38 +357,39 @@ typedef struct vbi_raw_decoder {
 	 * distinguish fields this flag shall be cleared, which disables
 	 * decoding of data services depending on the field number.
 	 */
-	int		synchronous;
+	int synchronous;
 
-	unsigned int		services;
-	int			num_jobs;
+	unsigned int services;
+	int num_jobs;
 
-	int8_t *		pattern;
-	struct _vbi_raw_decoder_job {
-		unsigned int		id;
-		int			offset;
-		vbi_bit_slicer		slicer;
-	}			jobs[8];
+	int8_t *pattern;
+	struct _vbi_raw_decoder_job
+	{
+		unsigned int id;
+		int offset;
+		vbi_bit_slicer slicer;
+	} jobs[8];
 } vbi_raw_decoder;
 
 /**
  * @addtogroup Rawdec
  * @{
  */
-extern void		vbi_raw_decoder_init(vbi_raw_decoder *rd);
-extern void		vbi_raw_decoder_reset(vbi_raw_decoder *rd);
-extern void		vbi_raw_decoder_destroy(vbi_raw_decoder *rd);
-extern unsigned int	vbi_raw_decoder_add_services(vbi_raw_decoder *rd,
-						     unsigned int services,
-						     int strict);
-extern unsigned int     vbi_raw_decoder_check_services(vbi_raw_decoder *rd,
-						     unsigned int services, int strict);
-extern unsigned int	vbi_raw_decoder_remove_services(vbi_raw_decoder *rd,
-							unsigned int services);
-extern void             vbi_raw_decoder_resize( vbi_raw_decoder *rd,
-						int * start, unsigned int * count );
-extern unsigned int	vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int services,
-						   int scanning, int *max_rate);
-extern int		vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out);
+extern void vbi_raw_decoder_init(vbi_raw_decoder *rd);
+extern void vbi_raw_decoder_reset(vbi_raw_decoder *rd);
+extern void vbi_raw_decoder_destroy(vbi_raw_decoder *rd);
+extern unsigned int vbi_raw_decoder_add_services(vbi_raw_decoder *rd,
+						 unsigned int services,
+						 int strict);
+extern unsigned int vbi_raw_decoder_check_services(vbi_raw_decoder *rd,
+						   unsigned int services, int strict);
+extern unsigned int vbi_raw_decoder_remove_services(vbi_raw_decoder *rd,
+						    unsigned int services);
+extern void vbi_raw_decoder_resize(vbi_raw_decoder *rd,
+				   int *start, unsigned int *count);
+extern unsigned int vbi_raw_decoder_parameters(vbi_raw_decoder *rd, unsigned int services,
+					       int scanning, int *max_rate);
+extern int vbi_raw_decode(vbi_raw_decoder *rd, uint8_t *raw, vbi_sliced *out);
 /** @} */
 
 /* Private */

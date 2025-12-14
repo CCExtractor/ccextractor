@@ -6,7 +6,7 @@
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
 
-#define CCX_DTVCC_MAX_PACKET_LENGTH 128 //According to EIA-708B, part 5
+#define CCX_DTVCC_MAX_PACKET_LENGTH 128 // According to EIA-708B, part 5
 #define CCX_DTVCC_MAX_SERVICES 63
 
 #define CCX_DTVCC_MAX_ROWS 15
@@ -14,7 +14,7 @@
  * This value should be 32, but there were 16-bit encoded samples (from Korea),
  * where RowCount calculated another way and equals 46 (23[8bit]*2)
  */
-#define CCX_DTVCC_MAX_COLUMNS (32*2)
+#define CCX_DTVCC_MAX_COLUMNS (32 * 2)
 
 #define CCX_DTVCC_SCREENGRID_ROWS 75
 #define CCX_DTVCC_SCREENGRID_COLUMNS 210
@@ -30,14 +30,14 @@
 
 enum DTVCC_COMMANDS_C0_CODES
 {
-	DTVCC_C0_NUL = 	0x00,
-	DTVCC_C0_ETX = 	0x03,
-	DTVCC_C0_BS = 	0x08,
-	DTVCC_C0_FF = 	0x0c,
-	DTVCC_C0_CR = 	0x0d,
-	DTVCC_C0_HCR = 	0x0e,
+	DTVCC_C0_NUL = 0x00,
+	DTVCC_C0_ETX = 0x03,
+	DTVCC_C0_BS = 0x08,
+	DTVCC_C0_FF = 0x0c,
+	DTVCC_C0_CR = 0x0d,
+	DTVCC_C0_HCR = 0x0e,
 	DTVCC_C0_EXT1 = 0x10,
-	DTVCC_C0_P16 = 	0x18
+	DTVCC_C0_P16 = 0x18
 };
 
 enum DTVCC_COMMANDS_C1_CODES
@@ -86,21 +86,21 @@ struct DTVCC_S_COMMANDS_C1
 
 enum dtvcc_window_justify
 {
-	DTVCC_WINDOW_JUSTIFY_LEFT	= 0,
-	DTVCC_WINDOW_JUSTIFY_RIGHT	= 1,
-	DTVCC_WINDOW_JUSTIFY_CENTER	= 2,
-	DTVCC_WINDOW_JUSTIFY_FULL	= 3
+	DTVCC_WINDOW_JUSTIFY_LEFT = 0,
+	DTVCC_WINDOW_JUSTIFY_RIGHT = 1,
+	DTVCC_WINDOW_JUSTIFY_CENTER = 2,
+	DTVCC_WINDOW_JUSTIFY_FULL = 3
 };
 
-enum dtvcc_window_pd //Print Direction
+enum dtvcc_window_pd // Print Direction
 {
-	DTVCC_WINDOW_PD_LEFT_RIGHT = 0, //left -> right
+	DTVCC_WINDOW_PD_LEFT_RIGHT = 0, // left -> right
 	DTVCC_WINDOW_PD_RIGHT_LEFT = 1,
 	DTVCC_WINDOW_PD_TOP_BOTTOM = 2,
 	DTVCC_WINDOW_PD_BOTTOM_TOP = 3
 };
 
-enum dtvcc_window_sd //Scroll Direction
+enum dtvcc_window_sd // Scroll Direction
 {
 	DTVCC_WINDOW_SD_LEFT_RIGHT = 0,
 	DTVCC_WINDOW_SD_RIGHT_LEFT = 1,
@@ -108,14 +108,14 @@ enum dtvcc_window_sd //Scroll Direction
 	DTVCC_WINDOW_SD_BOTTOM_TOP = 3
 };
 
-enum dtvcc_window_sde //Scroll Display Effect
+enum dtvcc_window_sde // Scroll Display Effect
 {
 	DTVCC_WINDOW_SDE_SNAP = 0,
 	DTVCC_WINDOW_SDE_FADE = 1,
 	DTVCC_WINDOW_SDE_WIPE = 2
 };
 
-enum dtvcc_window_ed //Effect Direction
+enum dtvcc_window_ed // Effect Direction
 {
 	DTVCC_WINDOW_ED_LEFT_RIGHT = 0,
 	DTVCC_WINDOW_ED_RIGHT_LEFT = 1,
@@ -123,91 +123,91 @@ enum dtvcc_window_ed //Effect Direction
 	DTVCC_WINDOW_ED_BOTTOM_TOP = 3
 };
 
-enum dtvcc_window_fo //Fill Opacity
+enum dtvcc_window_fo // Fill Opacity
 {
-	DTVCC_WINDOW_FO_SOLID		= 0,
-	DTVCC_WINDOW_FO_FLASH		= 1,
-	DTVCC_WINDOW_FO_TRANSLUCENT	= 2,
+	DTVCC_WINDOW_FO_SOLID = 0,
+	DTVCC_WINDOW_FO_FLASH = 1,
+	DTVCC_WINDOW_FO_TRANSLUCENT = 2,
 	DTVCC_WINDOW_FO_TRANSPARENT = 3
 };
 
 enum dtvcc_window_border
 {
-	DTVCC_WINDOW_BORDER_NONE			= 0,
-	DTVCC_WINDOW_BORDER_RAISED			= 1,
-	DTVCC_WINDOW_BORDER_DEPRESSED		= 2,
-	DTVCC_WINDOW_BORDER_UNIFORM			= 3,
-	DTVCC_WINDOW_BORDER_SHADOW_LEFT		= 4,
-	DTVCC_WINDOW_BORDER_SHADOW_RIGHT	= 5
+	DTVCC_WINDOW_BORDER_NONE = 0,
+	DTVCC_WINDOW_BORDER_RAISED = 1,
+	DTVCC_WINDOW_BORDER_DEPRESSED = 2,
+	DTVCC_WINDOW_BORDER_UNIFORM = 3,
+	DTVCC_WINDOW_BORDER_SHADOW_LEFT = 4,
+	DTVCC_WINDOW_BORDER_SHADOW_RIGHT = 5
 };
 
 enum dtvcc_pen_size
 {
-	DTVCC_PEN_SIZE_SMALL 	= 0,
+	DTVCC_PEN_SIZE_SMALL = 0,
 	DTVCC_PEN_SIZE_STANDART = 1,
-	DTVCC_PEN_SIZE_LARGE	= 2
+	DTVCC_PEN_SIZE_LARGE = 2
 };
 
 enum dtvcc_pen_font_style
 {
-	DTVCC_PEN_FONT_STYLE_DEFAULT_OR_UNDEFINED					= 0,
-	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITH_SERIFS					= 1,
-	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITH_SERIFS		= 2,
-	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITHOUT_SERIFS				= 3,
-	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITHOUT_SERIFS	= 4,
-	DTVCC_PEN_FONT_STYLE_CASUAL_FONT_TYPE						= 5,
-	DTVCC_PEN_FONT_STYLE_CURSIVE_FONT_TYPE						= 6,
-	DTVCC_PEN_FONT_STYLE_SMALL_CAPITALS							= 7
+	DTVCC_PEN_FONT_STYLE_DEFAULT_OR_UNDEFINED = 0,
+	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITH_SERIFS = 1,
+	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITH_SERIFS = 2,
+	DTVCC_PEN_FONT_STYLE_MONOSPACED_WITHOUT_SERIFS = 3,
+	DTVCC_PEN_FONT_STYLE_PROPORTIONALLY_SPACED_WITHOUT_SERIFS = 4,
+	DTVCC_PEN_FONT_STYLE_CASUAL_FONT_TYPE = 5,
+	DTVCC_PEN_FONT_STYLE_CURSIVE_FONT_TYPE = 6,
+	DTVCC_PEN_FONT_STYLE_SMALL_CAPITALS = 7
 };
 
 enum dtvcc_pen_text_tag
 {
-	DTVCC_PEN_TEXT_TAG_DIALOG						= 0,
-	DTVCC_PEN_TEXT_TAG_SOURCE_OR_SPEAKER_ID			= 1,
-	DTVCC_PEN_TEXT_TAG_ELECTRONIC_VOICE				= 2,
-	DTVCC_PEN_TEXT_TAG_FOREIGN_LANGUAGE				= 3,
-	DTVCC_PEN_TEXT_TAG_VOICEOVER					= 4,
-	DTVCC_PEN_TEXT_TAG_AUDIBLE_TRANSLATION			= 5,
-	DTVCC_PEN_TEXT_TAG_SUBTITLE_TRANSLATION			= 6,
-	DTVCC_PEN_TEXT_TAG_VOICE_QUALITY_DESCRIPTION	= 7,
-	DTVCC_PEN_TEXT_TAG_SONG_LYRICS					= 8,
-	DTVCC_PEN_TEXT_TAG_SOUND_EFFECT_DESCRIPTION		= 9,
-	DTVCC_PEN_TEXT_TAG_MUSICAL_SCORE_DESCRIPTION	= 10,
-	DTVCC_PEN_TEXT_TAG_EXPLETIVE					= 11,
-	DTVCC_PEN_TEXT_TAG_UNDEFINED_12					= 12,
-	DTVCC_PEN_TEXT_TAG_UNDEFINED_13					= 13,
-	DTVCC_PEN_TEXT_TAG_UNDEFINED_14					= 14,
-	DTVCC_PEN_TEXT_TAG_NOT_TO_BE_DISPLAYED			= 15
+	DTVCC_PEN_TEXT_TAG_DIALOG = 0,
+	DTVCC_PEN_TEXT_TAG_SOURCE_OR_SPEAKER_ID = 1,
+	DTVCC_PEN_TEXT_TAG_ELECTRONIC_VOICE = 2,
+	DTVCC_PEN_TEXT_TAG_FOREIGN_LANGUAGE = 3,
+	DTVCC_PEN_TEXT_TAG_VOICEOVER = 4,
+	DTVCC_PEN_TEXT_TAG_AUDIBLE_TRANSLATION = 5,
+	DTVCC_PEN_TEXT_TAG_SUBTITLE_TRANSLATION = 6,
+	DTVCC_PEN_TEXT_TAG_VOICE_QUALITY_DESCRIPTION = 7,
+	DTVCC_PEN_TEXT_TAG_SONG_LYRICS = 8,
+	DTVCC_PEN_TEXT_TAG_SOUND_EFFECT_DESCRIPTION = 9,
+	DTVCC_PEN_TEXT_TAG_MUSICAL_SCORE_DESCRIPTION = 10,
+	DTVCC_PEN_TEXT_TAG_EXPLETIVE = 11,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_12 = 12,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_13 = 13,
+	DTVCC_PEN_TEXT_TAG_UNDEFINED_14 = 14,
+	DTVCC_PEN_TEXT_TAG_NOT_TO_BE_DISPLAYED = 15
 };
 
 enum dtvcc_pen_offset
 {
-	DTVCC_PEN_OFFSET_SUBSCRIPT		= 0,
-	DTVCC_PEN_OFFSET_NORMAL			= 1,
-	DTVCC_PEN_OFFSET_SUPERSCRIPT	= 2
+	DTVCC_PEN_OFFSET_SUBSCRIPT = 0,
+	DTVCC_PEN_OFFSET_NORMAL = 1,
+	DTVCC_PEN_OFFSET_SUPERSCRIPT = 2
 };
 
 enum dtvcc_pen_edge
 {
-	DTVCC_PEN_EDGE_NONE					= 0,
-	DTVCC_PEN_EDGE_RAISED				= 1,
-	DTVCC_PEN_EDGE_DEPRESSED			= 2,
-	DTVCC_PEN_EDGE_UNIFORM				= 3,
-	DTVCC_PEN_EDGE_LEFT_DROP_SHADOW		= 4,
-	DTVCC_PEN_EDGE_RIGHT_DROP_SHADOW	= 5
+	DTVCC_PEN_EDGE_NONE = 0,
+	DTVCC_PEN_EDGE_RAISED = 1,
+	DTVCC_PEN_EDGE_DEPRESSED = 2,
+	DTVCC_PEN_EDGE_UNIFORM = 3,
+	DTVCC_PEN_EDGE_LEFT_DROP_SHADOW = 4,
+	DTVCC_PEN_EDGE_RIGHT_DROP_SHADOW = 5
 };
 
 enum dtvcc_pen_anchor_point
 {
-	DTVCC_ANCHOR_POINT_TOP_LEFT 		= 0,
-	DTVCC_ANCHOR_POINT_TOP_CENTER 		= 1,
-	DTVCC_ANCHOR_POINT_TOP_RIGHT 		= 2,
-	DTVCC_ANCHOR_POINT_MIDDLE_LEFT 		= 3,
-	DTVCC_ANCHOR_POINT_MIDDLE_CENTER 	= 4,
-	DTVCC_ANCHOR_POINT_MIDDLE_RIGHT 	= 5,
-	DTVCC_ANCHOR_POINT_BOTTOM_LEFT 		= 6,
-	DTVCC_ANCHOR_POINT_BOTTOM_CENTER 	= 7,
-	DTVCC_ANCHOR_POINT_BOTTOM_RIGHT 	= 8
+	DTVCC_ANCHOR_POINT_TOP_LEFT = 0,
+	DTVCC_ANCHOR_POINT_TOP_CENTER = 1,
+	DTVCC_ANCHOR_POINT_TOP_RIGHT = 2,
+	DTVCC_ANCHOR_POINT_MIDDLE_LEFT = 3,
+	DTVCC_ANCHOR_POINT_MIDDLE_CENTER = 4,
+	DTVCC_ANCHOR_POINT_MIDDLE_RIGHT = 5,
+	DTVCC_ANCHOR_POINT_BOTTOM_LEFT = 6,
+	DTVCC_ANCHOR_POINT_BOTTOM_CENTER = 7,
+	DTVCC_ANCHOR_POINT_BOTTOM_RIGHT = 8
 };
 
 typedef struct dtvcc_pen_color
@@ -252,12 +252,20 @@ typedef struct dtvcc_window_attribs
  */
 typedef struct dtvcc_symbol
 {
-	unsigned short sym; //symbol itself, at least 16 bit
-	unsigned char init; //initialized or not. could be 0 or 1
+	unsigned short sym; // symbol itself, at least 16 bit
+	unsigned char init; // initialized or not. could be 0 or 1
 } dtvcc_symbol;
 
-#define CCX_DTVCC_SYM_SET(x, c) {x.init = 1; x.sym = c;}
-#define CCX_DTVCC_SYM_SET_16(x, c1, c2) {x.init = 1; x.sym = (c1 << 8) | c2;}
+#define CCX_DTVCC_SYM_SET(x, c) \
+	{                       \
+		x.init = 1;     \
+		x.sym = c;      \
+	}
+#define CCX_DTVCC_SYM_SET_16(x, c1, c2) \
+	{                               \
+		x.init = 1;             \
+		x.sym = (c1 << 8) | c2; \
+	}
 #define CCX_DTVCC_SYM(x) ((unsigned char)(x.sym))
 #define CCX_DTVCC_SYM_IS_EMPTY(x) (x.init == 0)
 #define CCX_DTVCC_SYM_IS_SET(x) (x.init == 1)
@@ -344,7 +352,7 @@ typedef struct dtvcc_ctx
 {
 	int is_active;
 	int active_services_count;
-	int services_active[CCX_DTVCC_MAX_SERVICES]; //0 - inactive, 1 - active
+	int services_active[CCX_DTVCC_MAX_SERVICES]; // 0 - inactive, 1 - active
 	int report_enabled;
 
 	ccx_decoder_dtvcc_report *report;
@@ -357,11 +365,10 @@ typedef struct dtvcc_ctx
 
 	int last_sequence;
 
-	void *encoder; //we can't include header, so keeping it this way
+	void *encoder; // we can't include header, so keeping it this way
 	int no_rollup;
 	struct ccx_common_timing_ctx *timing;
 } dtvcc_ctx;
-
 
 void dtvcc_clear_packet(dtvcc_ctx *ctx);
 void dtvcc_windows_reset(dtvcc_service_decoder *decoder);
@@ -369,9 +376,9 @@ void dtvcc_decoder_flush(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder);
 
 void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len);
 void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
-									 dtvcc_service_decoder *decoder,
-									 unsigned char *data,
-									 int data_length);
+				 dtvcc_service_decoder *decoder,
+				 unsigned char *data,
+				 int data_length);
 
 void dtvcc_tv_clear(dtvcc_service_decoder *decoder);
 int dtvcc_decoder_has_visible_windows(dtvcc_service_decoder *decoder);
@@ -381,9 +388,9 @@ void dtvcc_window_clear(dtvcc_service_decoder *decoder, int window_id);
 void dtvcc_window_apply_style(dtvcc_window *window, dtvcc_window_attribs *style);
 
 #ifdef DTVCC_PRINT_DEBUG
-	int dtvcc_is_win_row_empty(dtvcc_window *window, int row_index);
-	void dtvcc_get_win_write_interval(dtvcc_window *window, int row_index, int *first, int *last);
-	void dtvcc_window_dump(dtvcc_service_decoder *decoder, dtvcc_window *window);
+int dtvcc_is_win_row_empty(dtvcc_window *window, int row_index);
+void dtvcc_get_win_write_interval(dtvcc_window *window, int row_index, int *first, int *last);
+void dtvcc_window_dump(dtvcc_service_decoder *decoder, dtvcc_window *window);
 #endif
 
 void dtvcc_decoders_reset(dtvcc_ctx *dtvcc);
@@ -406,7 +413,7 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 void dtvcc_handle_CWx_SetCurrentWindow(dtvcc_service_decoder *decoder, int window_id);
 void dtvcc_handle_CLW_ClearWindows(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder, int windows_bitmap);
 void dtvcc_handle_DSW_DisplayWindows(dtvcc_service_decoder *decoder, int windows_bitmap, struct ccx_common_timing_ctx *timing);
-void dtvcc_handle_HDW_HideWindows(dtvcc_ctx *dtvcc,dtvcc_service_decoder *decoder,
+void dtvcc_handle_HDW_HideWindows(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder,
 				  int windows_bitmap);
 void dtvcc_handle_TGW_ToggleWindows(dtvcc_ctx *dtvcc,
 				    dtvcc_service_decoder *decoder,
@@ -426,13 +433,13 @@ void dtvcc_handle_C0_P16(dtvcc_service_decoder *decoder, unsigned char *data);
 int dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_G1(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
-		     dtvcc_service_decoder *decoder,
-		     unsigned char *data,
-		     int data_length);
+		    dtvcc_service_decoder *decoder,
+		    unsigned char *data,
+		    int data_length);
 int dtvcc_handle_C1(dtvcc_ctx *dtvcc,
-		     dtvcc_service_decoder *decoder,
-		     unsigned char *data,
-		     int data_length);
+		    dtvcc_service_decoder *decoder,
+		    unsigned char *data,
+		    int data_length);
 int dtvcc_handle_C2(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_C3(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
 int dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *data, int data_length);
