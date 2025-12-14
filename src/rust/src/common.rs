@@ -158,8 +158,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     if let Some(dvblang) = options.dvblang {
         (*ccx_s_options).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
     }
-    if let Some(ocrlang) = options.ocrlang {
-        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.to_ctype().as_str());
+    if let Some(ref ocrlang) = options.ocrlang {
+        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;
@@ -360,12 +360,9 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
                 .expect("Invalid language"),
         );
     }
-    // Handle ocrlang (C string to PathBuf)
+    // Handle ocrlang (C string to String - accepts Tesseract language names directly)
     if !(*ccx_s_options).ocrlang.is_null() {
-        options.ocrlang = Some(
-            Language::from_str(&c_char_to_string((*ccx_s_options).ocrlang))
-                .expect("Invalid language"),
-        );
+        options.ocrlang = Some(c_char_to_string((*ccx_s_options).ocrlang));
     }
 
     options.ocr_oem = (*ccx_s_options).ocr_oem as i8;

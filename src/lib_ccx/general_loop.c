@@ -936,6 +936,15 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			{
 				*min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
 				set_current_pts((*dec_ctx)->timing, *min_pts);
+				// For DVB subtitles, we need to directly set min_pts because set_fts()
+				// relies on video frame type detection which doesn't work for DVB-only streams.
+				// This fixes negative subtitle timestamps.
+				if ((*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL)
+				{
+					(*dec_ctx)->timing->min_pts = *min_pts;
+					(*dec_ctx)->timing->pts_set = 2; // MinPtsSet
+					(*dec_ctx)->timing->sync_pts = *min_pts;
+				}
 				set_fts((*dec_ctx)->timing);
 			}
 		}
@@ -957,6 +966,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			else
 				pts = (*data_node)->pts;
 			set_current_pts((*dec_ctx)->timing, pts);
+			// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
+			if ((*dec_ctx)->codec == CCX_CODEC_DVB && (*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL)
+			{
+				(*dec_ctx)->timing->min_pts = pts;
+				(*dec_ctx)->timing->pts_set = 2; // MinPtsSet
+				(*dec_ctx)->timing->sync_pts = pts;
+			}
 			set_fts((*dec_ctx)->timing);
 		}
 
@@ -1133,6 +1149,13 @@ int general_loop(struct lib_ccx_ctx *ctx)
 						{
 							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
 							set_current_pts(dec_ctx->timing, min_pts);
+							// For DVB subtitles, directly set min_pts to fix negative timestamps
+							if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+							{
+								dec_ctx->timing->min_pts = min_pts;
+								dec_ctx->timing->pts_set = 2; // MinPtsSet
+								dec_ctx->timing->sync_pts = min_pts;
+							}
 							set_fts(dec_ctx->timing);
 						}
 					}
@@ -1145,7 +1168,16 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					continue;
 
 				if (data_node->pts != CCX_NOPTS)
+				{
 					set_current_pts(dec_ctx->timing, data_node->pts);
+					// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
+					if (dec_ctx->codec == CCX_CODEC_DVB && dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+					{
+						dec_ctx->timing->min_pts = data_node->pts;
+						dec_ctx->timing->pts_set = 2; // MinPtsSet
+						dec_ctx->timing->sync_pts = data_node->pts;
+					}
+				}
 
 				ret = process_data(enc_ctx, dec_ctx, data_node);
 				if (enc_ctx != NULL)

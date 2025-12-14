@@ -742,11 +742,18 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.dvblang {
-            self.dvblang = Some(Language::from_str(lang.as_str()).unwrap());
+            self.dvblang = Some(Language::from_str(lang.as_str()).unwrap_or_else(|_| {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Invalid dvblang value '{}'. Use a 3-letter ISO 639-2 language code (e.g., 'chi', 'eng', 'chs').",
+                    lang
+                );
+            }));
         }
 
         if let Some(ref ocrlang) = args.ocrlang {
-            self.ocrlang = Some(Language::from_str(ocrlang.as_str()).unwrap());
+            // Accept Tesseract language names directly (e.g., "chi_tra", "chi_sim", "eng")
+            self.ocrlang = Some(ocrlang.clone());
         }
 
         if let Some(ref quant) = args.quant {
