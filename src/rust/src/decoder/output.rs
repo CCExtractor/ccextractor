@@ -85,15 +85,14 @@ impl<'a> Writer<'a> {
 
 /// Write the symbol to the provided buffer
 ///
-/// If symbol is 8-bit, then it's written to the buffer
-/// If symbol is 16-bit, then two 8-bit symbols are written to the buffer
+/// Always writes 2 bytes for consistent UTF-16BE encoding.
+/// Previously, this function wrote 1 byte for ASCII characters and 2 bytes
+/// for non-ASCII, creating an invalid mix that encoding conversion couldn't
+/// handle properly. This caused garbled output with Japanese/Chinese characters
+/// (issue #1451).
 pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>) {
-    if sym.sym >> 8 != 0 {
-        buf.push((sym.sym >> 8) as u8);
-        buf.push((sym.sym & 0xff) as u8);
-    } else {
-        buf.push(sym.sym as u8);
-    }
+    buf.push((sym.sym >> 8) as u8);
+    buf.push((sym.sym & 0xff) as u8);
 }
 
 /// Convert from CEA-708 color representation to hex code
