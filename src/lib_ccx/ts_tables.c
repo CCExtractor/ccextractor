@@ -35,8 +35,7 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 		case CCX_STREAM_TYPE_AUDIO_HDMV_DTS:
 			break;
 
-		case 0x24: // HEVC / H.265
-			tmp_stream_type = CCX_STREAM_TYPE_VIDEO_HEVC;
+		case CCX_STREAM_TYPE_VIDEO_HEVC:
 			break;
 
 		default:
@@ -415,10 +414,10 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			}
 		}
 
-		// Support H.264 and HEVC video streams
-		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2 || stream_type == 0x24)
+		// Support H.264, MPEG-2 and HEVC video streams
+		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2 || stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
 		{
-			if (stream_type == 0x24)
+			if (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
 				mprint("Detected HEVC video stream (0x24) - enabling ATSC CC parsing.\n");
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
 		}
