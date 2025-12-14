@@ -533,6 +533,7 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             nohtmlescape: self.nohtmlescape.into(),
             millis_separator: value.millis_separator() as _,
             latrusmap: self.latrusmap.into(),
+            forceg0latin: self.forceg0latin.into(),
         };
         config.set_verbose(self.verbose.into());
         config.set_bom(1);

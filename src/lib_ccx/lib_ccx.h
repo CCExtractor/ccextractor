@@ -66,7 +66,8 @@ struct ccx_s_teletext_config
 	int nofontcolor;
 	int nohtmlescape;
 	char millis_separator;
-    int latrusmap;
+	int latrusmap;
+	int forceg0latin;  // Force G0 Latin charset, ignore Cyrillic designations (issue #1395)
 };
 
 struct ccx_s_mp4Cfg

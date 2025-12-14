@@ -396,6 +396,14 @@ uint32_t unham_24_18(uint32_t a)
 void set_g0_charset(uint32_t triplet)
 {
 	// ETS 300 706, Table 32
+	// If user requested to force Latin charset, always use it (issue #1395)
+	// Some broadcasts incorrectly signal Cyrillic when content is actually Latin
+	if (tlt_config.forceg0latin)
+	{
+		default_g0_charset = LATIN;
+		return;
+	}
+
 	if ((triplet & 0x3c00) == 0x1000)
 	{
 		if ((triplet & 0x0380) == 0x0000)
