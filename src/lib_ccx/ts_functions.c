@@ -361,12 +361,71 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 	if (payload->length < 4 || ctx->PIDs_seen[payload->pid] == 3) // Second thing means we already inspected this PID
 		return;
 
+	// Check for PES header to detect video streams (no PAT/PMT mode)
+	if (payload->pesstart && payload->length >= 9)
+	{
+		// Check for PES start code (00 00 01)
+		if (payload->start[0] == 0x00 && payload->start[1] == 0x00 && payload->start[2] == 0x01)
+		{
+			unsigned char stream_id = payload->start[3];
+			// Video stream IDs are 0xE0-0xEF
+			if (stream_id >= 0xE0 && stream_id <= 0xEF)
+			{
+				// This is a video stream - check if we need to register it
+				struct cap_info *cinfo = get_cinfo(ctx, payload->pid);
+				if (cinfo == NULL)
+				{
+					// Not registered yet - determine video type from elementary stream
+					// Look for MPEG-2 sequence header (00 00 01 B3) or H.264 NAL unit
+					unsigned char pes_header_len = 0;
+					if (payload->length > 8)
+						pes_header_len = payload->start[8];
+
+					unsigned int es_start = 9 + pes_header_len;
+					if (es_start + 4 < payload->length)
+					{
+						unsigned char *es_data = payload->start + es_start;
+						enum ccx_stream_type stream_type = CCX_STREAM_TYPE_VIDEO_MPEG2; // Default to MPEG-2
+
+						// Check for H.264/H.265 NAL start codes
+						if (es_data[0] == 0x00 && es_data[1] == 0x00 && es_data[2] == 0x00 && es_data[3] == 0x01)
+						{
+							// Could be H.264 or H.265 - check NAL type
+							unsigned char nal_type = es_data[4] & 0x1F;
+							if (nal_type == 7 || nal_type == 8) // SPS or PPS
+								stream_type = CCX_STREAM_TYPE_VIDEO_H264;
+						}
+
+						mprint("PID %u detected as video stream (no PAT/PMT) - assuming %s.\n",
+						       payload->pid,
+						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" : "MPEG-2");
+
+						// Register this PID as a video stream that may contain captions
+						update_capinfo(ctx, payload->pid, stream_type, CCX_CODEC_ATSC_CC, 0, NULL);
+						ctx->PIDs_seen[payload->pid] = 3;
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	// Look for GA94 caption marker
 	for (i = 0; i < (payload->length - 3); i++)
 	{
 		if (payload->start[i] == 'G' && payload->start[i + 1] == 'A' &&
 		    payload->start[i + 2] == '9' && payload->start[i + 3] == '4')
 		{
 			mprint("PID %u seems to contain CEA-608 captions.\n", payload->pid);
+
+			// Register this PID if not already registered (no PAT/PMT mode)
+			struct cap_info *cinfo = get_cinfo(ctx, payload->pid);
+			if (cinfo == NULL)
+			{
+				mprint("Registering PID %u as MPEG-2 video with captions (no PAT/PMT detected).\n", payload->pid);
+				update_capinfo(ctx, payload->pid, CCX_STREAM_TYPE_VIDEO_MPEG2, CCX_CODEC_ATSC_CC, 0, NULL);
+			}
+
 			ctx->PIDs_seen[payload->pid] = 3;
 			return;
 		}
@@ -674,6 +733,9 @@ uint64_t get_pts(uint8_t *buffer)
 	return UINT64_MAX;
 }
 
+// Threshold for enabling packet analysis mode when no PAT is found (in bytes)
+#define NO_PAT_THRESHOLD (188 * 1000) // After ~1000 packets
+
 long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
@@ -685,6 +747,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	struct cap_info *cinfo;
 	struct ts_payload payload;
 	int j;
+	static int no_pat_warning_shown = 0;
 
 	memset(&payload, 0, sizeof(payload));
 
@@ -761,6 +824,19 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				if (parse_PMT(ctx, ctx->PID_buffers[payload.pid]->buffer + 1, ctx->PID_buffers[payload.pid]->buffer_length - 1, pinfo))
 					gotpes = 1; // Signals that something changed and that we must flush the buffer
 			continue;
+		}
+
+		// Enable packet analysis mode if no PAT has been found after reading enough data
+		// This handles TS files that don't have PAT/PMT tables (e.g., some DVR recordings)
+		if (ctx->nb_program == 0 && ctx->past > NO_PAT_THRESHOLD && !packet_analysis_mode)
+		{
+			packet_analysis_mode = 1;
+			if (!no_pat_warning_shown)
+			{
+				mprint("\nNo PAT/PMT found after %lld bytes. Enabling packet analysis mode to detect video streams.\n",
+				       ctx->past);
+				no_pat_warning_shown = 1;
+			}
 		}
 
 		switch (ctx->PIDs_seen[payload.pid])
