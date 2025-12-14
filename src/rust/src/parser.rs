@@ -1214,6 +1214,10 @@ impl OptionsExt for Options {
             tlt_config.latrusmap = true;
         }
 
+        if args.ttxtforcelatin {
+            tlt_config.forceg0latin = true;
+        }
+
         if args.tickertext {
             self.tickertext = true;
         }
