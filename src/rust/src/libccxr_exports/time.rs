@@ -310,7 +310,11 @@ unsafe fn write_back_from_timing_info() {
         .as_u64()
         .try_into()
         .unwrap_or(0);
-    total_frames_count = timing_info.total_frames_count.as_u64().try_into().unwrap_or(0);
+    total_frames_count = timing_info
+        .total_frames_count
+        .as_u64()
+        .try_into()
+        .unwrap_or(0);
     gop_time = write_gop_time_code(timing_info.gop_time);
     first_gop_time = write_gop_time_code(timing_info.first_gop_time);
     fts_at_gop_start = timing_info.fts_at_gop_start.millis() as c_long;
