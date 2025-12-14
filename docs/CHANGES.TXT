@@ -1,5 +1,6 @@
 0.95 (2025-09-15)
 -----------------
+- FIX: Add HEVC/H.265 stream type recognition to prevent crashes on ATSC 3.0 streams
 - Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
 - Fix: HardSubX OCR on Rust
 - Removed the Share Module
