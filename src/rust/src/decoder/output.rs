@@ -117,14 +117,16 @@ mod tests {
     fn test_write_char() {
         let mut buf = Vec::new();
 
-        // Write 8-bit symbol
+        // Write ASCII symbol - UTF-16BE always uses 2 bytes
+        // 'A' (0x41) becomes [0x00, 0x41] in UTF-16BE
         let sym = dtvcc_symbol { sym: 0x41, init: 0 };
         write_char(&sym, &mut buf);
-        assert_eq!(buf, vec![0x41]);
+        assert_eq!(buf, vec![0x00, 0x41]);
 
         buf.clear();
 
-        // Write 16-bit symbol
+        // Write non-ASCII symbol (e.g., Japanese character)
+        // Already 16-bit, writes as [high_byte, low_byte]
         let sym = dtvcc_symbol {
             sym: 0x1234,
             init: 0,
