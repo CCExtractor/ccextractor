@@ -36,13 +36,17 @@ void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG m
 	unsigned h2, m2, s2, ms2;
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	if (!unescaped)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory for unescaped buffer.\n");
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
+	if (!el)
+	{
+		free(unescaped);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory for el buffer.\n");
+	}
 	int pos_r = 0;
 	int pos_w = 0;
 	char str[1024];
-
-	if (el == NULL || unescaped == NULL)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory.\n");
 
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2);
