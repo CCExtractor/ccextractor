@@ -1644,6 +1644,9 @@ pub mod tests {
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
 
+    /// # Safety
+    ///
+    /// This function is a no-op stub and is always safe to call.
     #[no_mangle]
     pub unsafe extern "C" fn set_binary_mode() {}
 
@@ -1749,10 +1752,10 @@ pub mod tests {
 
         match options.enc_cfg.services_charsets {
             DtvccServiceCharset::None => {
-                assert!(false);
+                unreachable!("Expected DtvccServiceCharset::Unique");
             }
             DtvccServiceCharset::Same(_) => {
-                assert!(false);
+                unreachable!("Expected DtvccServiceCharset::Unique");
             }
             DtvccServiceCharset::Unique(charsets) => {
                 assert_eq!(charsets[1], "UTF-8");
