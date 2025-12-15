@@ -510,9 +510,13 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						// Save the data and process once we know the sequence number
 						if (((ctx->cc_count + local_cc_count) * 3) + 1 > ctx->cc_databufsize)
 						{
-							ctx->cc_data = (unsigned char *)realloc(ctx->cc_data, (size_t)((ctx->cc_count + local_cc_count) * 6) + 1);
-							if (!ctx->cc_data)
+							unsigned char *tmp = (unsigned char *)realloc(ctx->cc_data, (size_t)((ctx->cc_count + local_cc_count) * 6) + 1);
+							if (!tmp)
+							{
+								free(ctx->cc_data);
 								fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Out of memory to allocate buffer for CC data.");
+							}
+							ctx->cc_data = tmp;
 							ctx->cc_databufsize = (long)((ctx->cc_count + local_cc_count) * 6) + 1;
 						}
 						// Copy new cc data into cc_data
@@ -581,9 +585,13 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 			// Save the data and process once we know the sequence number
 			if ((((local_cc_count + ctx->cc_count) * 3) + 1) > ctx->cc_databufsize)
 			{
-				ctx->cc_data = (unsigned char *)realloc(ctx->cc_data, (size_t)(((local_cc_count + ctx->cc_count) * 6) + 1));
-				if (!ctx->cc_data)
+				unsigned char *tmp = (unsigned char *)realloc(ctx->cc_data, (size_t)(((local_cc_count + ctx->cc_count) * 6) + 1));
+				if (!tmp)
+				{
+					free(ctx->cc_data);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In user_data_registered_itu_t_t35: Not enough memory trying to allocate buffer for CC data.");
+				}
+				ctx->cc_data = tmp;
 				ctx->cc_databufsize = (long)(((local_cc_count + ctx->cc_count) * 6) + 1);
 			}
 			// Copy new cc data into cc_data - replace command below.

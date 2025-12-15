@@ -149,7 +149,10 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->dec_global_setting = init_decoder_setting(opt);
 	if (!ctx->dec_global_setting)
 	{
+		free(report_608);
 		free(report_dtvcc);
+		EPG_free(ctx);
+		free(ctx);
 		return NULL;
 	}
 
@@ -201,6 +204,10 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 end:
 	if (ret != EXIT_OK)
 	{
+		dinit_decoder_setting(&ctx->dec_global_setting);
+		free(ctx->freport.data_from_608);
+		free(ctx->freport.data_from_708);
+		EPG_free(ctx);
 		free(ctx);
 		return NULL;
 	}

@@ -539,15 +539,17 @@ LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational
 char *str_reallocncat(char *dst, char *src)
 {
 	int nl = dst == NULL ? (strlen(src) + 1) : (strlen(dst) + strlen(src) + 1);
-	char *orig = dst;
-	dst = (char *)realloc(dst, nl);
-	if (!dst)
+	char *tmp = (char *)realloc(dst, nl);
+	if (!tmp)
+	{
+		free(dst);
 		return NULL;
-	if (orig == NULL)
-		strcpy(dst, src);
+	}
+	if (dst == NULL)
+		strcpy(tmp, src);
 	else
-		strcat(dst, src);
-	return dst;
+		strcat(tmp, src);
+	return tmp;
 }
 
 #ifdef _WIN32
