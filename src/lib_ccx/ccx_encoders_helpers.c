@@ -410,10 +410,13 @@ int add_word(struct word_list *list, const char *word)
 	if (list->len == list->capacity)
 	{
 		list->capacity += 50;
-		if ((list->words = realloc(list->words, list->capacity * sizeof(char *))) == NULL)
+		char **tmp = realloc(list->words, list->capacity * sizeof(char *));
+		if (!tmp)
 		{
+			list->capacity -= 50; // Restore original capacity
 			return -1;
 		}
+		list->words = tmp;
 	}
 
 	size_t word_len = strlen(word);
@@ -466,6 +469,11 @@ void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, c
 {
 	unsigned char *lbase = (unsigned char *)base;
 	unsigned char *tmp = (unsigned char *)malloc(size);
+	if (!tmp)
+	{
+		// Cannot sort without temporary buffer, return silently
+		return;
+	}
 	for (int gap = nb / 2; gap > 0; gap = gap / 2)
 	{
 		int p, j;
