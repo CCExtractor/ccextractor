@@ -86,14 +86,14 @@ void *init_ffmpeg(const char *path)
 	if (ret < 0)
 	{
 		av_log(NULL, AV_LOG_ERROR, "could not open input(%s) format\n", path);
-		goto fail;
+		goto fail_ctx;
 	}
 
 	ret = avformat_find_stream_info(ctx->ifmt, NULL);
 	if (ret < 0)
 	{
 		av_log(NULL, AV_LOG_ERROR, "could not find any stream\n");
-		goto fail;
+		goto fail_ifmt;
 	}
 
 	/* first search in strean if not found search the video stream */
@@ -101,23 +101,46 @@ void *init_ffmpeg(const char *path)
 	if (ret < 0)
 	{
 		av_log(NULL, AV_LOG_ERROR, "no suitable subtitle or caption\n");
-		goto fail;
+		goto fail_ifmt;
 	}
 	stream_index = ret;
-	ctx->dec_ctx = ctx->ifmt->streams[stream_index]->codecpar;
+	ctx->dec_ctx = avcodec_alloc_context3(dec);
+	if (!ctx->dec_ctx)
+	{
+		av_log(NULL, AV_LOG_ERROR, "could not allocate codec context\n");
+		goto fail_ifmt;
+	}
+	ret = avcodec_parameters_to_context(ctx->dec_ctx, ctx->ifmt->streams[stream_index]->codecpar);
+	if (ret < 0)
+	{
+		av_log(NULL, AV_LOG_ERROR, "could not copy codec parameters\n");
+		goto fail_dec_ctx;
+	}
 	ctx->stream_index = stream_index;
 	ret = avcodec_open2(ctx->dec_ctx, dec, NULL);
 	if (ret < 0)
 	{
 		av_log(NULL, AV_LOG_ERROR, "unable to open codec\n");
-		goto fail;
+		goto fail_dec_ctx;
 	}
 
 	// Initialize frame where input frame will be stored
 	ctx->frame = av_frame_alloc();
+	if (!ctx->frame)
+	{
+		av_log(NULL, AV_LOG_ERROR, "could not allocate frame\n");
+		goto fail_dec_ctx;
+	}
 
-fail:
 	return ctx;
+
+fail_dec_ctx:
+	avcodec_free_context(&ctx->dec_ctx);
+fail_ifmt:
+	avformat_close_input(&ctx->ifmt);
+fail_ctx:
+	av_free(ctx);
+	return NULL;
 }
 
 /**

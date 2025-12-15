@@ -141,6 +141,12 @@ void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, ui
 	}
 
 	cb->buffer = (uint8_t *)malloc(size);
+	if (!cb->buffer)
+	{
+		mprint("\nOut of memory allocating buffer of %i bytes!\n", size);
+		cb->buffer_size = 0;
+		return;
+	}
 	cb->buffer_size = size;
 	uint64_t start = cb->filepos;
 
@@ -184,11 +190,17 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 
 	uint8_t *parsebuf;
 	parsebuf = (uint8_t *)malloc(1024);
+	if (!parsebuf)
+	{
+		mprint("\nOut of memory allocating parse buffer!\n");
+		return CCX_EOF;
+	}
 	result = buffered_read(ctx, parsebuf, 0x42);
 	ctx->past += result;
 	if (result != 0x42)
 	{
 		mprint("\nPremature end of file!\n");
+		free(parsebuf);
 		return CCX_EOF;
 	}
 	// Expecting WTV header
@@ -269,6 +281,12 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 			dbg_print(CCX_DMT_PARSE, "text_len: %x\n", text_len);
 			char *string;
 			string = (char *)malloc(text_len + 1); // alloc for ascii
+			if (!string)
+			{
+				mprint("\nOut of memory allocating string buffer!\n");
+				free(parsebuf);
+				return CCX_EOF;
+			}
 			string[text_len] = '\0';
 			for (x = 0; x < text_len; x++)
 			{
@@ -364,13 +382,16 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 
 			dbg_print(CCX_DMT_PARSE, "WTV EOF\n");
 			parsebuf = (uint8_t *)malloc(1024);
-			do
+			if (parsebuf)
 			{
-				result = buffered_read(ctx->demux_ctx, parsebuf, 1024);
-				ctx->demux_ctx->past += 1024;
-			} while (result == 1024);
-			ctx->demux_ctx->past += result;
-			free(parsebuf);
+				do
+				{
+					result = buffered_read(ctx->demux_ctx, parsebuf, 1024);
+					ctx->demux_ctx->past += 1024;
+				} while (result == 1024);
+				ctx->demux_ctx->past += result;
+				free(parsebuf);
+			}
 			free(cb->buffer);
 			cb->buffer = NULL;
 			// return one more byte so the final percentage is shown correctly
