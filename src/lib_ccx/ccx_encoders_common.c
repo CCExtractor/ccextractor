@@ -709,9 +709,17 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 		return;
 	for (i = 0; i < ctx->nb_out; i++)
 	{
-		if (ctx->end_credits_text != NULL)
-			try_to_add_end_credits(ctx, ctx->out + i, current_fts);
-		write_subtitle_file_footer(ctx, ctx->out + i);
+		struct ccx_s_write *out = ctx->out + i;
+		if (out->wrote_data)
+		{
+			if (ctx->end_credits_text != NULL)
+				try_to_add_end_credits(ctx, out, current_fts);
+			write_subtitle_file_footer(ctx, out);
+		}
+		else if (ctx->generates_file && out->filename != NULL && out->fh != STDOUT_FILENO)
+		{
+			remove(out->filename);
+		}
 	}
 
 	free_encoder_context(ctx->prev);
@@ -940,6 +948,7 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					}
 					freep(&data->xds_str);
 					write_newline(context, 0);
+					out->wrote_data = 1;
 					continue;
 				}
 
@@ -1015,7 +1024,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						break;
 				}
 				if (wrote_something)
+				{
+					out->wrote_data = 1;
 					context->last_displayed_subs_ms = data->end_time;
+				}
 
 				if (context->gui_mode_reports)
 					write_cc_buffer_to_gui(sub->data, context);
@@ -1093,6 +1105,9 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				default:
 					break;
 			}
+
+			if (wrote_something && context->nb_out > 0)
+				context->out->wrote_data = 1;
 			break;
 		case CC_RAW:
 			if (context->send_to_srv)
@@ -1105,6 +1120,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					mprint("WARNING: Loss of data\n");
 				}
 			}
+			context->out->wrote_data = 1;
+			wrote_something = 1;
 			sub->nb_data = 0;
 			break;
 		case CC_TEXT:
@@ -1147,6 +1164,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				default:
 					break;
 			}
+			if (wrote_something && context->nb_out > 0)
+				context->out->wrote_data = 1;
 			sub->nb_data = 0;
 			break;
 	}

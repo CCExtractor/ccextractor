@@ -25,6 +25,7 @@ struct ccx_s_write
 	char *semaphore_filename;
 	int with_playlist; // For m3u8 /webvtt: If 1, we'll generate a playlist and segments
 	char *playlist_filename;
+	int wrote_data; // Tracks whether any payload was written so empty outputs can be skipped
 	int renaming_extension; // Used for file rotations
 	int append_mode;	/* Append the file. Prevent overwriting of files */
 };
