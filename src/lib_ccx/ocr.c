@@ -55,7 +55,9 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory allocating dirname.");
 	}
 
-	size_t new_size = strlen(dirname) + strlen("tessdata/") + (dirname[strlen(dirname) - 1] != '/') + 1;
+	size_t dirname_len = strlen(dirname);
+	int need_slash = (dirname[dirname_len - 1] != '/');
+	size_t new_size = dirname_len + strlen("tessdata/") + need_slash + 1;
 	char *new_dirname = realloc(dirname, new_size);
 	if (!new_dirname)
 	{
@@ -64,9 +66,8 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 	}
 	dirname = new_dirname;
 
-	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
-	strcat(dirname, "tessdata/");
+	// Append "/" if needed and "tessdata/" using snprintf
+	snprintf(dirname + dirname_len, new_size - dirname_len, "%stessdata/", need_slash ? "/" : "");
 
 	DIR *dp;
 	struct dirent *dirp;
@@ -289,23 +290,23 @@ void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 	PIXA *pixa = NULL;
 
 	pix = TessBaseAPIGetInputImage(ctx->api);
-	sprintf(str, "%sinput_%d.jpg", dump_path, i);
+	snprintf(str, sizeof(str), "%sinput_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
 	pix = TessBaseAPIGetThresholdedImage(ctx->api);
-	sprintf(str, "%sthresholded_%d.jpg", dump_path, i);
+	snprintf(str, sizeof(str), "%sthresholded_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetRegions(ctx->api, &pixa);
-	sprintf(str, "%sregion_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%sregion_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetTextlines(ctx->api, &pixa, NULL);
-	sprintf(str, "%slines_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%slines_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetWords(ctx->api, &pixa);
-	sprintf(str, "%swords_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%swords_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	i++;
@@ -710,10 +711,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 								fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating text_out.");
 							}
 							text_out = new_text_out;
-							// Save the value is that is going to get overwritten by `sprintf`
+							// Save the value is that is going to get overwritten by `snprintf`
 							char replaced_by_null = text_out[index];
 							memmove(text_out + index + substr_len + 1, text_out + index + 1, text_out_len - index);
-							sprintf(text_out + index, substr_format, r_avg, g_avg, b_avg);
+							snprintf(text_out + index, substr_len + 1, substr_format, r_avg, g_avg, b_avg);
 							text_out[index + substr_len] = replaced_by_null;
 							text_out_len += substr_len;
 							written_tag = 1;
@@ -729,7 +730,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 							text_out = new_text_out;
 							char replaced_by_null = *text_out;
 							memmove(text_out + substr_len + 1, text_out + 1, text_out_len);
-							sprintf(text_out, substr_format, r_avg, g_avg, b_avg);
+							snprintf(text_out, substr_len + 1, substr_format, r_avg, g_avg, b_avg);
 							text_out[substr_len] = replaced_by_null;
 							text_out_len += substr_len;
 							written_tag = 1;

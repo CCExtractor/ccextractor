@@ -530,11 +530,11 @@ void telx_case_fix(struct TeletextCtx *context)
 
 void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
-	char info[4];
+	char info[8]; // Enough for any page number + null terminator
 	if (!ctx->page_buffer_prev)
 		return;
 
-	snprintf(info, 4, "%.3u", bcd_page_to_int(tlt_config.page));
+	snprintf(info, sizeof(info), "%.3u", bcd_page_to_int(tlt_config.page));
 	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
 			ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 

@@ -67,17 +67,21 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "Cannot open %s: %s\n",
 					     out->filename, strerror(errno));
 	}
+	size_t filename_len = strlen(out->filename);
 	sp->dirname = (char *)malloc(
-	    sizeof(char) * (strlen(out->filename) + 3));
+	    sizeof(char) * (filename_len + 3));
 	if (NULL == sp->dirname)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->dirname)");
 
-	strcpy(sp->dirname, out->filename);
+	memcpy(sp->dirname, out->filename, filename_len + 1);
 	char *p = strrchr(sp->dirname, '.');
 	if (NULL == p)
 		p = sp->dirname + strlen(sp->dirname);
 	*p = '\0';
-	strcat(sp->dirname, ".d");
+	// Buffer size is filename_len + 3, current length is at most filename_len, appending ".d" (2 chars)
+	size_t current_len = strlen(sp->dirname);
+	size_t remaining = filename_len + 3 - current_len;
+	strncat(sp->dirname, ".d", remaining - 1);
 	if (0 != mkdir(sp->dirname, 0777))
 	{
 		if (errno != EEXIST)
@@ -90,22 +94,23 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 	}
 
 	// enough to append /subNNNN.png
-	sp->pngfile = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
-	sp->relative_path_png = (char *)malloc(sizeof(char) * (strlen(sp->dirname) + 13));
+	size_t pngfile_size = strlen(sp->dirname) + 13;
+	sp->pngfile = (char *)malloc(sizeof(char) * pngfile_size);
+	sp->relative_path_png = (char *)malloc(sizeof(char) * pngfile_size);
 
 	if (NULL == sp->pngfile || NULL == sp->relative_path_png)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->pngfile)");
 	sp->fileIndex = 0;
-	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+	snprintf(sp->pngfile, pngfile_size, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
 	// Make relative path
 	char *last_slash = strrchr(sp->dirname, '/');
 	if (last_slash == NULL)
 		last_slash = strrchr(sp->dirname, '\\');
 	if (last_slash != NULL)
-		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
+		snprintf(sp->relative_path_png, pngfile_size, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
 	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
-		strcpy(sp->relative_path_png, sp->pngfile);
+		memcpy(sp->relative_path_png, sp->pngfile, strlen(sp->pngfile) + 1);
 
 	// For NTSC closed captions and 720x480 DVD subtitle resolution:
 	// Each character is 16x26.
@@ -228,16 +233,17 @@ char *get_spupng_filename(void *ctx)
 void inc_spupng_fileindex(struct spupng_t *sp)
 {
 	sp->fileIndex++;
-	sprintf(sp->pngfile, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
+	size_t pngfile_size = strlen(sp->dirname) + 13;
+	snprintf(sp->pngfile, pngfile_size, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
 	// Make relative path
 	char *last_slash = strrchr(sp->dirname, '/');
 	if (last_slash == NULL)
 		last_slash = strrchr(sp->dirname, '\\');
 	if (last_slash != NULL)
-		sprintf(sp->relative_path_png, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
+		snprintf(sp->relative_path_png, pngfile_size, "%s/sub%04d.png", last_slash + 1, sp->fileIndex);
 	else // do NOT do sp->relative_path_png = sp->pngfile (to avoid double free).
-		strcpy(sp->relative_path_png, sp->pngfile);
+		memcpy(sp->relative_path_png, sp->pngfile, strlen(sp->pngfile) + 1);
 }
 void set_spupng_offset(void *ctx, int x, int y)
 {
@@ -998,11 +1004,13 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 // Convert EIA608 Data(buffer) to string
 // out must have at least 256 characters' space
 // Return value is the length of the output string
+#define EIA608_OUT_SIZE 256
 int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char *out)
 {
 
 	int str_len = 0;
 	int first = 1;
+	out[0] = '\0'; // Initialize output buffer
 	for (int row = 0; row < ROWS; row++)
 	{
 		if (data->row_used[row])
@@ -1051,11 +1059,22 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 
 			if (!first)
 			{ // Add '\n' if it is not the first line.
-				strcat(out, "\n");
-				str_len += 2;
+				if (str_len + 1 < EIA608_OUT_SIZE)
+				{
+					out[str_len++] = '\n';
+					out[str_len] = '\0';
+				}
+				str_len++; // Count the newline even if truncated (for return value)
 			}
 			first = 0;
-			strncat(out, start, len);
+			// Copy at most what fits in remaining buffer
+			size_t remaining = (str_len < EIA608_OUT_SIZE - 1) ? (EIA608_OUT_SIZE - 1 - str_len) : 0;
+			size_t to_copy = (len < remaining) ? len : remaining;
+			if (to_copy > 0)
+			{
+				memcpy(out + str_len, start, to_copy);
+				out[str_len + to_copy] = '\0';
+			}
 			str_len += len;
 		}
 	}

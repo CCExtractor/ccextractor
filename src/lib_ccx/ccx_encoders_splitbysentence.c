@@ -232,7 +232,7 @@ char *sbs_find_insert_point_partial(char *old_tail, const char *new_start, size_
 	{
 		/*
 #ifdef DEBUG_SBS
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
+		snprintf(fmtbuf, sizeof(fmtbuf), "SBS: sbs_find_insert_point_partial: compare\n\
 \tnot EQ:          [TRUE]\n\
 \tmaxerr:          [%%d]\n\
 \tL buffer:          [%%.%zus]\n\
@@ -301,7 +301,7 @@ char *sbs_find_insert_point_partial(char *old_tail, const char *new_start, size_
 
 	/*
 #ifdef DEBUG_SBS
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
+		snprintf(fmtbuf, sizeof(fmtbuf), "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
 \tmaxerr:          [%%d]\n\
 \tL buffer:        [%%.%zus]\n\
 \tL string:        [%%.%zus]\n\
