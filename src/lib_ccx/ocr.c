@@ -59,6 +59,7 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 	char *new_dirname = realloc(dirname, new_size);
 	if (!new_dirname)
 	{
+		free(dirname);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory reallocating dirname.");
 	}
 	dirname = new_dirname;
@@ -516,11 +517,14 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				iot = (uint8_t *)malloc(copy->nb_colors * sizeof(uint8_t));
 				if (!iot)
 				{
+					free(histogram);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating iot.");
 				}
 				mcit = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
 				if (!mcit)
 				{
+					free(histogram);
+					free(iot);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating mcit.");
 				}
 				struct transIntensity ti = {copy->alpha, copy->palette};
@@ -793,6 +797,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						char *tmp = realloc(new_text_out, length);
 						if (!tmp)
 						{
+							free(new_text_out);
 							fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating new_text_out.");
 						}
 						new_text_out = tmp;
@@ -1071,19 +1076,40 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy.");
 	}
 	copy->nb_colors = rect->nb_colors;
-	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
-	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
 	copy->bgcolor = bgcolor;
-	copy->data = NULL; // Initialize to NULL in case of early goto end
+	copy->data = NULL;    // Initialize to NULL in case of early goto end
+	copy->palette = NULL; // Initialize to NULL for safe cleanup
+	copy->alpha = NULL;   // Initialize to NULL for safe cleanup
+
+	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
+	if (!copy->palette)
+	{
+		free(copy);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->palette.");
+	}
+	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
+	if (!copy->alpha)
+	{
+		free(copy->palette);
+		free(copy);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->alpha.");
+	}
 
 	palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
-	if (!palette || !copy->palette)
+	if (!palette)
 	{
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating palette.");
 	}
 	alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
-	if (!alpha || !copy->alpha)
+	if (!alpha)
 	{
+		free(palette);
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating alpha.");
 	}
 
@@ -1104,6 +1130,11 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 	copy->data = (unsigned char *)malloc(sizeof(unsigned char) * size);
 	if (!copy->data)
 	{
+		free(alpha);
+		free(palette);
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->data.");
 	}
 	for (int i = 0; i < size; i++)

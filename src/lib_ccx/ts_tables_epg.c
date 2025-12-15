@@ -907,6 +907,7 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 				event->text = malloc(number_bytes + 1);
 				if (!event->text)
 				{
+					free(event->event_name);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_ATSC_decode_multiple_string: Out of memory allocating text.");
 				}
 				memcpy(event->text, &offset[0], number_bytes);
@@ -1249,6 +1250,7 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 		uint8_t *new_buffer = (uint8_t *)realloc(ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length + payload_length);
 		if (!new_buffer)
 		{
+			free(ctx->epg_buffers[buffer_map].buffer);
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_EPG_packet: Out of memory reallocating buffer.");
 		}
 		ctx->epg_buffers[buffer_map].buffer = new_buffer;
