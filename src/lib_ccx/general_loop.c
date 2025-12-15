@@ -668,12 +668,24 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		if (enc_ctx)
-		{
-			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
-			if (ret == CCX_EINVAL)
-				return ret;
-		}
+
+		/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
+		   This enables tlt_process_pes_packet() to detect subtitle pages by populating
+		   the seen_sub_page[] array inside the teletext decoder. */
+		int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+
+		ret = tlt_process_pes_packet(
+		    dec_ctx,
+		    data_node->buffer,
+		    data_node->len,
+		    dec_sub,
+		    sentence_cap);
+
+		/* If Teletext decoding fails with invalid data, abort processing */
+		if (ret == CCX_EINVAL)
+			return ret;
+
+		/* Mark processed byte count */
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
