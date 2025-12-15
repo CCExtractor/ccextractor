@@ -684,9 +684,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	newcapbuflen = cinfo->capbuflen + payload->length;
 	if (newcapbuflen > cinfo->capbufsize)
 	{
-		cinfo->capbuf = (unsigned char *)realloc(cinfo->capbuf, newcapbuflen);
-		if (!cinfo->capbuf)
+		unsigned char *new_capbuf = (unsigned char *)realloc(cinfo->capbuf, newcapbuflen);
+		if (!new_capbuf)
 			return -1;
+		cinfo->capbuf = new_capbuf;
 		cinfo->capbufsize = newcapbuflen;
 	}
 	memcpy(cinfo->capbuf + cinfo->capbuflen, payload->start, payload->length);
@@ -913,9 +914,13 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			int haup_newcapbuflen = haup_capbuflen + payload.length;
 			if (haup_newcapbuflen > haup_capbufsize)
 			{
-				haup_capbuf = (unsigned char *)realloc(haup_capbuf, haup_newcapbuflen);
-				if (!haup_capbuf)
+				unsigned char *new_haup_capbuf = (unsigned char *)realloc(haup_capbuf, haup_newcapbuflen);
+				if (!new_haup_capbuf)
+				{
+					free(haup_capbuf);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to store hauppauge packets");
+				}
+				haup_capbuf = new_haup_capbuf;
 				haup_capbufsize = haup_newcapbuflen;
 			}
 			memcpy(haup_capbuf + haup_capbuflen, payload.start, payload.length);

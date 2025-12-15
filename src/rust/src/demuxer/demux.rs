@@ -348,6 +348,7 @@ impl CcxDemuxer<'_> {
 }
 
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
     use crate::bindings::{lib_ccx_ctx, list_head};
@@ -366,7 +367,6 @@ mod tests {
     use std::os::windows::io::AsRawHandle;
     #[cfg(windows)]
     use std::os::windows::io::RawHandle;
-    use std::slice;
     use std::sync::Once;
     use tempfile::NamedTempFile;
 
@@ -440,7 +440,6 @@ mod tests {
     }
 
     #[allow(unused)]
-
     fn new_cap_info(codec: Codec) -> Box<CapInfo> {
         Box::new(CapInfo {
             codec,
@@ -469,7 +468,7 @@ mod tests {
         let mut node = list_head::default();
         head.next = &mut node;
         head.prev = &mut node;
-        let result = list_empty(&mut head);
+        let result = list_empty(&head);
         assert!(!result);
     }
 
@@ -515,7 +514,7 @@ mod tests {
         assert_eq!(ctx.bytesinbuffer, 123);
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
                 ctx.filebuffer,
                 FILEBUFFERSIZE as usize,
             ));

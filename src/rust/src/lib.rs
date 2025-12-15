@@ -44,7 +44,9 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
-use std::os::raw::{c_uchar, c_ulong, c_void};
+#[cfg(not(test))]
+use std::os::raw::c_ulong;
+use std::os::raw::{c_uchar, c_void};
 use std::{
     ffi::CStr,
     io::Write,
@@ -78,47 +80,48 @@ cfg_if! {
 
         unsafe extern "C" fn version(_location: *const c_char) {}
         unsafe extern "C" fn set_binary_mode() {}
-        fn process_hdcc(enc_ctx: *mut encoder_ctx, ctx: *mut lib_cc_decode, sub: *mut cc_subtitle){}
+        fn process_hdcc(_enc_ctx: *mut encoder_ctx, _ctx: *mut lib_cc_decode, _sub: *mut cc_subtitle){}
         fn store_hdcc(
-            enc_ctx: *mut encoder_ctx,
-            ctx: *mut lib_cc_decode,
-            cc_data: *mut c_uchar,
-            cc_count: c_int,
-            sequence_number: c_int,
-            current_fts_now: LLONG,
-            sub: *mut cc_subtitle,
+            _enc_ctx: *mut encoder_ctx,
+            _ctx: *mut lib_cc_decode,
+            _cc_data: *mut c_uchar,
+            _cc_count: c_int,
+            _sequence_number: c_int,
+            _current_fts_now: LLONG,
+            _sub: *mut cc_subtitle,
         ){}
-        fn anchor_hdcc(ctx: *mut lib_cc_decode, seq: c_int){}
+        fn anchor_hdcc(_ctx: *mut lib_cc_decode, _seq: c_int){}
         fn do_cb(
-            ctx: *mut lib_cc_decode,
-            cc_block: *mut c_uchar,
-            sub: *mut cc_subtitle,
+            _ctx: *mut lib_cc_decode,
+            _cc_block: *mut c_uchar,
+            _sub: *mut cc_subtitle,
         ) -> c_int{0}
         fn decode_vbi(
-            dec_ctx: *mut lib_cc_decode,
-            field: u8,
-            buffer: *mut c_uchar,
-            len: usize,
-            sub: *mut cc_subtitle,
+            _dec_ctx: *mut lib_cc_decode,
+            _field: u8,
+            _buffer: *mut c_uchar,
+            _len: usize,
+            _sub: *mut cc_subtitle,
         ) -> c_int{0}
-        fn print_file_report(ctx: *mut lib_ccx_ctx){}
+        #[allow(dead_code)]
+        fn print_file_report(_ctx: *mut lib_ccx_ctx){}
         #[cfg(feature = "enable_ffmpeg")]
         fn init_ffmpeg(path: *const c_char){}
-        pub fn start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int{0}
-        pub fn start_upd_srv(src: *const c_char, addr: *const c_char, port: c_uint) -> c_int{0}
+        pub fn start_tcp_srv(_port: *const c_char, _pwd: *const c_char) -> c_int{0}
+        pub fn start_upd_srv(_src: *const c_char, _addr: *const c_char, _port: c_uint) -> c_int{0}
         pub fn net_udp_read(
-            socket: c_int,
-            buffer: *mut c_void,
-            length: usize,
-            src_str: *const c_char,
-            addr_str: *const c_char,
+            _socket: c_int,
+            _buffer: *mut c_void,
+            _length: usize,
+            _src_str: *const c_char,
+            _addr_str: *const c_char,
         ) -> c_int{0}
-        pub fn net_tcp_read(socket: c_int, buffer: *mut c_void, length: usize) -> c_int{0}
-        pub fn ccx_probe_mxf(ctx: *mut ccx_demuxer) -> c_int{0}
-        pub fn ccx_mxf_init(demux: *mut ccx_demuxer) -> *mut MXFContext{std::ptr::null_mut()}
+        pub fn net_tcp_read(_socket: c_int, _buffer: *mut c_void, _length: usize) -> c_int{0}
+        pub fn ccx_probe_mxf(_ctx: *mut ccx_demuxer) -> c_int{0}
+        pub fn ccx_mxf_init(_demux: *mut ccx_demuxer) -> *mut MXFContext{std::ptr::null_mut()}
         #[allow(clashing_extern_declarations)]
-        pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int{0}
-        pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf{std::ptr::null_mut()}
+        pub fn ccx_gxf_probe(_buf: *const c_uchar, _len: c_int) -> c_int{0}
+        pub fn ccx_gxf_init(_arg: *mut ccx_demuxer) -> *mut ccx_gxf{std::ptr::null_mut()}
     }
 }
 
@@ -190,6 +193,12 @@ extern "C" {
 }
 
 /// Initialize env logger with custom format, using stdout as target
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It initializes the global
+/// logger, so it should only be called once during program startup. Subsequent
+/// calls will have no effect (env_logger silently ignores duplicate init).
 #[no_mangle]
 pub extern "C" fn ccxr_init_logger() {
     builder()
@@ -326,6 +335,14 @@ pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) 
     true
 }
 
+/// Close a Windows handle by wrapping it in a File and dropping it.
+///
+/// # Safety
+///
+/// - `handle` must be a valid Windows file handle or null
+/// - If non-null, the handle must not be used after this call
+/// - The handle must have been obtained from a valid file operation
+/// - Passing an invalid (non-null) handle results in undefined behavior
 #[cfg(windows)]
 #[no_mangle]
 extern "C" fn ccxr_close_handle(handle: RawHandle) {

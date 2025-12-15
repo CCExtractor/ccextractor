@@ -495,6 +495,11 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	if (ctx->PID_buffers[pid] == NULL)
 	{ // First packet for this pid. Create a buffer
 		ctx->PID_buffers[pid] = malloc(sizeof(struct PSI_buffer));
+		if (ctx->PID_buffers[pid] == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory allocating PSI buffer for PID %u.\n", pid);
+			return;
+		}
 		ctx->PID_buffers[pid]->buffer = NULL;
 		ctx->PID_buffers[pid]->buffer_length = 0;
 		ctx->PID_buffers[pid]->ccounter = 0;
@@ -523,6 +528,12 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 			// must be first packet for PID
 		}
 		ctx->PID_buffers[pid]->buffer = (uint8_t *)malloc(payload_length);
+		if (ctx->PID_buffers[pid]->buffer == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory allocating buffer for PID %u.\n", pid);
+			ctx->PID_buffers[pid]->buffer_length = 0;
+			return;
+		}
 		memcpy(ctx->PID_buffers[pid]->buffer, payload_start, payload_length);
 		ctx->PID_buffers[pid]->buffer_length = payload_length;
 		ctx->PID_buffers[pid]->ccounter++;
@@ -530,7 +541,13 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	else if (ccounter == ctx->PID_buffers[pid]->prev_ccounter + 1 || (ctx->PID_buffers[pid]->prev_ccounter == 0x0f && ccounter == 0))
 	{
 		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
-		ctx->PID_buffers[pid]->buffer = (uint8_t *)realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
+		void *tmp = realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
+		if (tmp == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory reallocating buffer for PID %u.\n", pid);
+			return;
+		}
+		ctx->PID_buffers[pid]->buffer = (uint8_t *)tmp;
 		memcpy(ctx->PID_buffers[pid]->buffer + ctx->PID_buffers[pid]->buffer_length, payload_start, payload_length);
 		ctx->PID_buffers[pid]->ccounter++;
 		ctx->PID_buffers[pid]->buffer_length += payload_length;

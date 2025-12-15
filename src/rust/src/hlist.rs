@@ -162,16 +162,16 @@ mod tests {
             prev: null_mut(),
         };
         crate::hlist::init_list_head(&mut head);
-        assert!(list_empty(&mut head));
+        assert!(list_empty(&head));
 
         // Test list insertion/deletion
         unsafe {
             let cap = create_capinfo();
             crate::hlist::list_add(&mut (*cap).all_stream, &mut head);
-            assert!(!list_empty(&mut head));
+            assert!(!list_empty(&head));
 
             list_del(&mut (*cap).all_stream);
-            assert!(list_empty(&mut head));
+            assert!(list_empty(&head));
 
             let _ = Box::from_raw(cap);
         }

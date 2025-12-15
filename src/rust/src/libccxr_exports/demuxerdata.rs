@@ -39,8 +39,8 @@ pub unsafe fn copy_demuxer_data_to_rust(c_data: *const demuxer_data) -> DemuxerD
 pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: &DemuxerData) {
     (*c_data).program_number = rust_data.program_number as c_int;
     (*c_data).stream_pid = rust_data.stream_pid as c_int;
-    if rust_data.codec.is_some() {
-        (*c_data).codec = rust_data.codec.unwrap().to_ctype();
+    if let Some(codec) = rust_data.codec {
+        (*c_data).codec = codec.to_ctype();
     }
     (*c_data).bufferdatatype = rust_data.bufferdatatype.to_ctype();
 

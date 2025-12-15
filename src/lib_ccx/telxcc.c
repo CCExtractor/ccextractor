@@ -323,10 +323,15 @@ void page_buffer_add_string(struct TeletextCtx *ctx, const char *s)
 	if (ctx->page_buffer_cur_size < (ctx->page_buffer_cur_used + strlen(s) + 1))
 	{
 		int add = strlen(s) + 4096; // So we don't need to realloc often
-		ctx->page_buffer_cur_size = ctx->page_buffer_cur_size + add;
-		ctx->page_buffer_cur = (char *)realloc(ctx->page_buffer_cur, ctx->page_buffer_cur_size);
-		if (!ctx->page_buffer_cur)
+		size_t new_size = ctx->page_buffer_cur_size + add;
+		char *tmp = (char *)realloc(ctx->page_buffer_cur, new_size);
+		if (!tmp)
+		{
+			free(ctx->page_buffer_cur);
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
+		}
+		ctx->page_buffer_cur = tmp;
+		ctx->page_buffer_cur_size = new_size;
 	}
 	memcpy(ctx->page_buffer_cur + ctx->page_buffer_cur_used, s, strlen(s));
 	ctx->page_buffer_cur_used += strlen(s);
@@ -338,10 +343,15 @@ void ucs2_buffer_add_char(struct TeletextCtx *ctx, uint64_t c)
 	if (ctx->ucs2_buffer_cur_size < (ctx->ucs2_buffer_cur_used + 2))
 	{
 		int add = 4096; // So we don't need to realloc often
-		ctx->ucs2_buffer_cur_size = ctx->ucs2_buffer_cur_size + add;
-		ctx->ucs2_buffer_cur = (uint64_t *)realloc(ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_size * sizeof(uint64_t));
-		if (!ctx->ucs2_buffer_cur)
+		size_t new_size = ctx->ucs2_buffer_cur_size + add;
+		uint64_t *tmp = (uint64_t *)realloc(ctx->ucs2_buffer_cur, new_size * sizeof(uint64_t));
+		if (!tmp)
+		{
+			free(ctx->ucs2_buffer_cur);
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to process teletext page.\n");
+		}
+		ctx->ucs2_buffer_cur = tmp;
+		ctx->ucs2_buffer_cur_size = new_size;
 	}
 	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used++] = c;
 	ctx->ucs2_buffer_cur[ctx->ucs2_buffer_cur_used] = 0;
@@ -520,11 +530,11 @@ void telx_case_fix(struct TeletextCtx *context)
 
 void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
-	char info[4];
+	char info[8]; // Enough for any page number + null terminator
 	if (!ctx->page_buffer_prev)
 		return;
 
-	snprintf(info, 4, "%.3u", bcd_page_to_int(tlt_config.page));
+	snprintf(info, sizeof(info), "%.3u", bcd_page_to_int(tlt_config.page));
 	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
 			ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 

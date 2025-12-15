@@ -1218,6 +1218,13 @@ impl dtvcc_service_decoder {
 }
 
 /// Flush service decoder
+///
+/// # Safety
+///
+/// - `dtvcc` must be a valid pointer to a properly initialized `dtvcc_ctx`
+/// - `decoder` must be a valid pointer to a `dtvcc_service_decoder`
+/// - `dtvcc.timing` must be a valid pointer if `dtvcc` is non-null
+/// - `dtvcc.encoder` must be a valid pointer or null
 #[no_mangle]
 extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_service_decoder) {
     debug!("dtvcc_decoder_flush: Flushing decoder");

@@ -770,6 +770,7 @@ pub unsafe fn buffered_skip(ctx: &mut CcxDemuxer, bytes: u32, ccx_options: &mut 
     }
 }
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
     use crate::libccxr_exports::demuxer::copy_demuxer_from_rust_to_c;
@@ -777,7 +778,6 @@ mod tests {
     use lib_ccxr::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
     use serial_test::serial;
     use std::ffi::CString;
-    use std::io::Write;
     #[cfg(feature = "sanity_check")]
     use std::io::Write;
     use std::os::raw::{c_char, c_int, c_ulong, c_void};
@@ -1182,7 +1182,10 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, 0);
         // Clean up the filebuffer.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1213,7 +1216,10 @@ mod tests {
         }
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1244,7 +1250,10 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, data_len);
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1270,7 +1279,10 @@ mod tests {
         assert_eq!(read_bytes, content.len());
         assert_eq!(&out_buf, content);
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1299,7 +1311,10 @@ mod tests {
         assert_eq!(&out_buf, content);
         // Check that NET_ACTIVITY_GUI has been incremented.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
     // Tests for buffered_read_byte
