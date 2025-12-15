@@ -81,6 +81,9 @@ struct cc_subtitle
 	/** Used for DVB end time in ms */
 	int time_out;
 
+	/** Raw PTS value when this subtitle started (for DVB timing) */
+	LLONG start_pts;
+
 	struct cc_subtitle *next;
 	struct cc_subtitle *prev;
 };

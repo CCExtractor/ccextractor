@@ -1713,16 +1713,55 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 				   struct lib_cc_decode *dec_ctx,
-				   struct cc_subtitle *sub)
+				   struct cc_subtitle *sub,
+				   LLONG pre_fts_max)
 {
 	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
+	LLONG current_pts = dec_ctx->timing->current_pts;
 	if (!enc_ctx)
 		return;
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
-		enc_ctx->prev->last_string = NULL;									    // Reset last recognized sub text
-		sub->prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); // we set the end time of the previous sub the current pts
-		if (sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
+		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
+		// Get the current FTS, which will be the start_time of the new subtitle
+		LLONG next_start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+		// For DVB subtitles, a subtitle is displayed until the next one appears.
+		// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
+		// This prevents any overlap between consecutive subtitles.
+		if (next_start_time > sub->prev->start_time)
+		{
+			sub->prev->end_time = next_start_time;
+		}
+		else
+		{
+			// PTS jump or timeline reset - next_start is at or before our start.
+			// Calculate duration from raw PTS, but cap to reasonable maximum (5 seconds)
+			// to avoid creating subtitles that overlap excessively with subsequent ones.
+			LLONG duration_ms = 0;
+			if (sub->prev->start_pts > 0 && current_pts > sub->prev->start_pts)
+			{
+				duration_ms = (current_pts - sub->prev->start_pts) / (MPEG_CLOCK_FREQ / 1000);
+			}
+			// Cap duration to 4 seconds or timeout if smaller
+			LLONG max_duration = 4000; // 4 seconds
+			if (sub->prev->time_out > 0 && sub->prev->time_out < max_duration)
+			{
+				max_duration = sub->prev->time_out;
+			}
+			if (duration_ms > max_duration)
+			{
+				duration_ms = max_duration;
+			}
+			sub->prev->end_time = sub->prev->start_time + duration_ms;
+		}
+		// Sanity check: if end_time still <= start_time, use minimal duration
+		if (sub->prev->end_time <= sub->prev->start_time)
+		{
+			dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
+			sub->prev->end_time = sub->prev->start_time + 1;
+		}
+		// Apply timeout limit if specified
+		if (sub->prev->time_out > 0 && sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
 		{
 			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
 		}
@@ -1774,7 +1813,10 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	sub->time_out = ctx->time_out;
 	sub->prev = NULL;
 	sub->prev = copy_subtitle(sub);
-	sub->prev->start_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000); // we set the start time of the previous sub the current pts
+	// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
+	sub->prev->start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+	// Store the raw PTS for accurate duration calculation (not affected by PTS jump handling)
+	sub->prev->start_pts = current_pts;
 
 	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
 	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
@@ -1822,6 +1864,10 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 	p = buf;
 	p_end = buf + buf_size;
+
+	// Capture the max FTS before set_fts() processes any PTS jumps.
+	// This will be used as the end time for the previous subtitle.
+	LLONG pre_fts_max = get_fts_max(dec_ctx->timing);
 
 	dec_ctx->timing->current_tref = 0;
 	set_fts(dec_ctx->timing);
@@ -1882,7 +1928,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 					break;
 				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
-					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
+					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
 					got_segment |= 16;
 					break;
 				default:
@@ -1898,7 +1944,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	// segments then we need no further data.
 	if (got_segment == 15)
 	{
-		dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub);
+		dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
 		got_segment |= 16;
 	}
 end:

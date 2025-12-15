@@ -116,6 +116,15 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 	uint16_t pi_length;
 
+	// Minimum PMT size: table_id(1) + section_length(2) + program_number(2) +
+	// version/current(1) + section_number(1) + last_section_number(1) +
+	// PCR_PID(2) + program_info_length(2) + CRC(4) = 16 bytes
+	if (len < 16)
+	{
+		dbg_print(CCX_DMT_PMT, "PMT packet too short (%d bytes), ignoring\n", len);
+		return 0;
+	}
+
 	crc = (*(int32_t *)(sbuf + olen - 4));
 	table_id = buf[0];
 
@@ -170,6 +179,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 	if (!current_next_indicator && pinfo->version != 0xFF) // 0xFF means we don't have one yet
 		return 0;
 
+	// Bounds check: saved_section is 1021 bytes
+	if (len > 1021)
+	{
+		dbg_print(CCX_DMT_PMT, "PMT section too large (%d bytes), truncating to 1021\n", len);
+		len = 1021;
+	}
 	memcpy(pinfo->saved_section, buf, len);
 
 	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)

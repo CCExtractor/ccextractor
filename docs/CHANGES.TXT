@@ -1,5 +1,12 @@
 0.95 (2025-09-15)
 -----------------
+- Fix: DVB subtitle extraction improvements for Chinese broadcasts (#224):
+  - Fix crash in parse_PMT() due to missing bounds checks
+  - Fix negative timestamps in DVB subtitle output
+  - Fix crash in ignore_alpha_at_edge() OCR cropping
+  - Improve DVB subtitle OCR accuracy with image inversion
+  - Fix --ocrlang to accept Tesseract language names (chi_tra, chi_sim, etc.)
+  - Add case-insensitive matching for --dvblang parameter
 - FIX: Add HEVC/H.265 stream type recognition to prevent crashes on ATSC 3.0 streams
 - Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
 - Fix: HardSubX OCR on Rust
