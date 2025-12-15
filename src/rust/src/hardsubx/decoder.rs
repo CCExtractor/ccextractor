@@ -112,8 +112,7 @@ pub unsafe extern "C" fn _process_frame_white_basic(
     }
 
     let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
-    let mut sobel_edge_im: *mut Pix =
-        pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
+    let mut sobel_edge_im: *mut Pix = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
     let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 11);
     let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
 
@@ -190,8 +189,7 @@ pub unsafe extern "C" fn _process_frame_color_basic(
     }
 
     let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
-    let mut sobel_edge_im: *mut Pix =
-        pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
+    let mut sobel_edge_im: *mut Pix = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
     let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 1);
     let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
 
@@ -288,8 +286,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
     }
 
     let mut gray_im: *mut Pix = pixConvertRGBToGray(im, 0.0, 0.0, 0.0);
-    let mut sobel_edge_im: *mut Pix =
-        pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
+    let mut sobel_edge_im: *mut Pix = pixSobelEdgeFilter(gray_im, L_VERTICAL_EDGES as i32);
     let mut dilate_gray_im: *mut Pix = pixDilateGray(sobel_edge_im, 21, 11);
     let mut edge_im: *mut Pix = pixThresholdToBinary(dilate_gray_im, 50);
 

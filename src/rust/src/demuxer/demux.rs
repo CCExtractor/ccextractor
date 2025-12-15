@@ -514,7 +514,10 @@ mod tests {
         assert_eq!(ctx.bytesinbuffer, 123);
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE as usize));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE as usize,
+            ));
         }
     }
 

@@ -22,7 +22,11 @@ pub unsafe extern "C" fn ccxr_connect_to_srv(
     };
 
     let port = if !port.is_null() {
-        match CStr::from_ptr(port).to_str().ok().and_then(|s| s.parse().ok()) {
+        match CStr::from_ptr(port)
+            .to_str()
+            .ok()
+            .and_then(|s| s.parse().ok())
+        {
             Some(p) => Some(p),
             None => return, // Invalid port, cannot proceed
         }
@@ -192,7 +196,11 @@ pub unsafe extern "C" fn ccxr_net_udp_read(
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int {
     let port = if !port.is_null() {
-        match CStr::from_ptr(port).to_str().ok().and_then(|s| s.parse().ok()) {
+        match CStr::from_ptr(port)
+            .to_str()
+            .ok()
+            .and_then(|s| s.parse().ok())
+        {
             Some(p) => Some(p),
             None => return -1, // Invalid port
         }

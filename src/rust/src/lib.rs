@@ -44,9 +44,9 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
-use std::os::raw::{c_uchar, c_void};
 #[cfg(not(test))]
 use std::os::raw::c_ulong;
+use std::os::raw::{c_uchar, c_void};
 use std::{
     ffi::CStr,
     io::Write,

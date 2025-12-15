@@ -1182,7 +1182,10 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, 0);
         // Clean up the filebuffer.
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1213,7 +1216,10 @@ mod tests {
         }
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1244,7 +1250,10 @@ mod tests {
         assert_eq!(ctx.filebuffer_pos, data_len);
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1270,7 +1279,10 @@ mod tests {
         assert_eq!(read_bytes, content.len());
         assert_eq!(&out_buf, content);
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
 
@@ -1299,7 +1311,10 @@ mod tests {
         assert_eq!(&out_buf, content);
         // Check that NET_ACTIVITY_GUI has been incremented.
         unsafe {
-            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(ctx.filebuffer, FILEBUFFERSIZE));
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+                ctx.filebuffer,
+                FILEBUFFERSIZE,
+            ));
         };
     }
     // Tests for buffered_read_byte
