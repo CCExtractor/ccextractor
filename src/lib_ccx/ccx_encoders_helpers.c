@@ -316,7 +316,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			}
 			if (color_text[its_color][1][0]) // That means a <font> was added to the buffer
 			{
-				strcat(tagstack, "F");
+				strncat(tagstack, "F", sizeof(tagstack) - strlen(tagstack) - 1);
 				changed_font++;
 			}
 			color = its_color;
@@ -326,7 +326,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
 		{
 			buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
-			strcat(tagstack, "U");
+			strncat(tagstack, "U", sizeof(tagstack) - strlen(tagstack) - 1);
 			underlined++;
 		}
 		if (is_underlined == 0 && underlined && !ctx->no_type_setting) // Close underline
@@ -338,7 +338,7 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
 			buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
-			strcat(tagstack, "I");
+			strncat(tagstack, "I", sizeof(tagstack) - strlen(tagstack) - 1);
 			italics++;
 		}
 		if (has_ita == 0 && italics && !ctx->no_type_setting) // Close italics
@@ -410,10 +410,13 @@ int add_word(struct word_list *list, const char *word)
 	if (list->len == list->capacity)
 	{
 		list->capacity += 50;
-		if ((list->words = realloc(list->words, list->capacity * sizeof(char *))) == NULL)
+		char **tmp = realloc(list->words, list->capacity * sizeof(char *));
+		if (!tmp)
 		{
+			list->capacity -= 50; // Restore original capacity
 			return -1;
 		}
+		list->words = tmp;
 	}
 
 	size_t word_len = strlen(word);
@@ -422,7 +425,7 @@ int add_word(struct word_list *list, const char *word)
 		return -1;
 	}
 
-	strcpy(list->words[list->len++], word);
+	memcpy(list->words[list->len++], word, word_len + 1);
 	return word_len;
 }
 
@@ -466,6 +469,11 @@ void shell_sort(void *base, int nb, size_t size, int (*compar)(const void *p1, c
 {
 	unsigned char *lbase = (unsigned char *)base;
 	unsigned char *tmp = (unsigned char *)malloc(size);
+	if (!tmp)
+	{
+		// Cannot sort without temporary buffer, return silently
+		return;
+	}
 	for (int gap = nb / 2; gap > 0; gap = gap / 2)
 	{
 		int p, j;

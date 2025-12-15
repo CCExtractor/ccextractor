@@ -747,6 +747,8 @@ pub struct TeletextConfig {
     pub nofontcolor: bool,
     pub nohtmlescape: bool,
     pub latrusmap: bool,
+    /// Force Latin G0 charset, ignore Cyrillic designations (issue #1395)
+    pub forceg0latin: bool,
 }
 
 impl Default for TeletextConfig {
@@ -766,6 +768,7 @@ impl Default for TeletextConfig {
             nofontcolor: false,
             nohtmlescape: false,
             latrusmap: false,
+            forceg0latin: false,
         }
     }
 }

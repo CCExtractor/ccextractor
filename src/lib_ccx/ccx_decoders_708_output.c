@@ -57,6 +57,7 @@ void dtvcc_change_pen_colors(dtvcc_tv_screen *tv, dtvcc_pen_color pen_color, int
 		return;
 
 	char *buf = (char *)encoder->buffer;
+	size_t remaining = INITIAL_ENC_BUFFER_CAPACITY - *buf_len;
 
 	dtvcc_pen_color new_pen_color;
 	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
@@ -66,7 +67,11 @@ void dtvcc_change_pen_colors(dtvcc_tv_screen *tv, dtvcc_pen_color pen_color, int
 	if (pen_color.fg_color != new_pen_color.fg_color)
 	{
 		if (pen_color.fg_color != 0x3f && !open)
-			(*buf_len) += sprintf(buf + (*buf_len), "</font>"); // should close older non-white color
+		{
+			int written = snprintf(buf + (*buf_len), remaining, "</font>"); // should close older non-white color
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
+		}
 
 		if (new_pen_color.fg_color != 0x3f && open)
 		{
@@ -75,7 +80,10 @@ void dtvcc_change_pen_colors(dtvcc_tv_screen *tv, dtvcc_pen_color pen_color, int
 			red = (255 / 3) * red;
 			green = (255 / 3) * green;
 			blue = (255 / 3) * blue;
-			(*buf_len) += sprintf(buf + (*buf_len), "<font color=\"#%02x%02x%02x\">", red, green, blue);
+			remaining = INITIAL_ENC_BUFFER_CAPACITY - *buf_len;
+			int written = snprintf(buf + (*buf_len), remaining, "<font color=\"#%02x%02x%02x\">", red, green, blue);
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
 		}
 	}
 }
@@ -86,6 +94,8 @@ void dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, dtvcc_pen_attribs pen_attribs
 		return;
 
 	char *buf = (char *)encoder->buffer;
+	size_t remaining;
+	int written;
 
 	dtvcc_pen_attribs new_pen_attribs;
 	if (column_index >= CCX_DTVCC_SCREENGRID_COLUMNS)
@@ -94,33 +104,47 @@ void dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, dtvcc_pen_attribs pen_attribs
 		new_pen_attribs = tv->pen_attribs[row_index][column_index];
 	if (pen_attribs.italic != new_pen_attribs.italic)
 	{
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - *buf_len;
 		if (pen_attribs.italic && !open)
-			(*buf_len) += sprintf(buf + (*buf_len), "</i>");
+		{
+			written = snprintf(buf + (*buf_len), remaining, "</i>");
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
+		}
 		if (!pen_attribs.italic && open)
-			(*buf_len) += sprintf(buf + (*buf_len), "<i>");
+		{
+			written = snprintf(buf + (*buf_len), remaining, "<i>");
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
+		}
 	}
 	if (pen_attribs.underline != new_pen_attribs.underline)
 	{
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - *buf_len;
 		if (pen_attribs.underline && !open)
-			(*buf_len) += sprintf(buf + (*buf_len), "</u>");
+		{
+			written = snprintf(buf + (*buf_len), remaining, "</u>");
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
+		}
 		if (!pen_attribs.underline && open)
-			(*buf_len) += sprintf(buf + (*buf_len), "<u>");
+		{
+			written = snprintf(buf + (*buf_len), remaining, "<u>");
+			if (written > 0 && (size_t)written < remaining)
+				(*buf_len) += written;
+		}
 	}
 }
 
 size_t write_utf16_char(unsigned short utf16_char, char *out)
 {
-	if ((utf16_char >> 8) != 0)
-	{
-		out[0] = (unsigned char)(utf16_char >> 8);
-		out[1] = (unsigned char)(utf16_char & 0xff);
-		return 2;
-	}
-	else
-	{
-		out[0] = (unsigned char)(utf16_char);
-		return 1;
-	}
+	// Always write 2 bytes for consistent UTF-16BE encoding.
+	// Previously, this function wrote 1 byte for ASCII characters and 2 bytes
+	// for non-ASCII, creating an invalid mix that iconv couldn't handle properly.
+	// This caused garbled output with Japanese/Chinese characters (issue #1451).
+	out[0] = (unsigned char)(utf16_char >> 8);
+	out[1] = (unsigned char)(utf16_char & 0xff);
+	return 2;
 }
 
 void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
@@ -207,16 +231,31 @@ void dtvcc_write_srt(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 
 	char *buf = (char *)encoder->buffer;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
+	size_t buf_len = 0;
+	size_t remaining = INITIAL_ENC_BUFFER_CAPACITY;
+	int written;
 
-	sprintf(buf, "%u%s", encoder->cea_708_counter, encoder->encoded_crlf);
+	written = snprintf(buf, remaining, "%u%s", encoder->cea_708_counter, encoder->encoded_crlf);
+	if (written > 0 && (size_t)written < remaining)
+		buf_len += written;
+	remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
 	print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
-			  "%02u:%02u:%02u,%03u", buf + strlen(buf));
-	sprintf(buf + strlen(buf), " --> ");
+			  "%02u:%02u:%02u,%03u", buf + buf_len);
+	buf_len = strlen(buf);
+	remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
+	written = snprintf(buf + buf_len, remaining, " --> ");
+	if (written > 0 && (size_t)written < remaining)
+		buf_len += written;
+	remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
 	print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
-			  "%02u:%02u:%02u,%03u", buf + strlen(buf));
-	sprintf(buf + strlen(buf), "%s", (char *)encoder->encoded_crlf);
+			  "%02u:%02u:%02u,%03u", buf + buf_len);
+	buf_len = strlen(buf);
+	remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
+	written = snprintf(buf + buf_len, remaining, "%s", (char *)encoder->encoded_crlf);
+	if (written > 0 && (size_t)written < remaining)
+		buf_len += written;
 
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
@@ -263,28 +302,47 @@ void dtvcc_write_transcript(dtvcc_writer_ctx *writer, dtvcc_service_decoder *dec
 		return;
 
 	char *buf = (char *)encoder->buffer;
+	size_t buf_len;
+	size_t remaining;
+	int written;
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
 		if (!dtvcc_is_row_empty(tv, i))
 		{
 			buf[0] = 0;
+			buf_len = 0;
 
 			if (encoder->transcript_settings->showStartTime)
+			{
 				print_mstime_buff(tv->time_ms_show + encoder->subs_delay,
-						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+						  "%02u:%02u:%02u,%03u|", buf + buf_len);
+				buf_len = strlen(buf);
+			}
 
 			if (encoder->transcript_settings->showEndTime)
+			{
 				print_mstime_buff(tv->time_ms_hide + encoder->subs_delay,
-						  "%02u:%02u:%02u,%03u|", buf + strlen(buf));
+						  "%02u:%02u:%02u,%03u|", buf + buf_len);
+				buf_len = strlen(buf);
+			}
 
 			if (encoder->transcript_settings->showCC)
-				sprintf(buf + strlen(buf), "CC1|"); // always CC1 because CEA-708 is field-independent
+			{
+				remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
+				written = snprintf(buf + buf_len, remaining, "CC1|"); // always CC1 because CEA-708 is field-independent
+				if (written > 0 && (size_t)written < remaining)
+					buf_len += written;
+			}
 
 			if (encoder->transcript_settings->showMode)
-				sprintf(buf + strlen(buf), "POP|"); // TODO caption mode(pop, rollup, etc.)
+			{
+				remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;
+				written = snprintf(buf + buf_len, remaining, "POP|"); // TODO caption mode(pop, rollup, etc.)
+				if (written > 0 && (size_t)written < remaining)
+					buf_len += written;
+			}
 
-			const size_t buf_len = strlen(buf);
 			if (buf_len != 0)
 				write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 
@@ -300,22 +358,33 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 	char *buf = (char *)encoder->buffer;
 	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
 	size_t buf_len = 0;
+	size_t remaining = INITIAL_ENC_BUFFER_CAPACITY;
+	int written;
 
-	buf_len += sprintf(buf + buf_len, "<sami>%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "<head>%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "<style type=\"text/css\">%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "<!--%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len,
-			   "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;%s",
-			   encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len,
-			   "text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}%s",
-			   encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, ".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "-->%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "</style>%s", encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "</head>%s%s", encoder->encoded_crlf, encoder->encoded_crlf);
-	buf_len += sprintf(buf + buf_len, "<body>%s", encoder->encoded_crlf);
+#define SAMI_SNPRINTF(fmt, ...)                                                   \
+	do                                                                        \
+	{                                                                         \
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;                \
+		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
+		if (written > 0 && (size_t)written < remaining)                   \
+			buf_len += written;                                       \
+	} while (0)
+
+	SAMI_SNPRINTF("<sami>%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("<head>%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("<style type=\"text/css\">%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("<!--%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;%s",
+		      encoder->encoded_crlf);
+	SAMI_SNPRINTF("text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}%s",
+		      encoder->encoded_crlf);
+	SAMI_SNPRINTF(".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("-->%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("</style>%s", encoder->encoded_crlf);
+	SAMI_SNPRINTF("</head>%s%s", encoder->encoded_crlf, encoder->encoded_crlf);
+	SAMI_SNPRINTF("<body>%s", encoder->encoded_crlf);
+
+#undef SAMI_SNPRINTF
 
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, buf_len);
 }
@@ -323,8 +392,9 @@ void dtvcc_write_sami_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 void dtvcc_write_sami_footer(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	char *buf = (char *)encoder->buffer;
-	sprintf(buf, "</body></sami>");
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	int written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "</body></sami>");
+	if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
+		write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, written);
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd,
 		      encoder->encoded_crlf, encoder->encoded_crlf_length);
 }
@@ -342,12 +412,14 @@ void dtvcc_write_sami(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, 
 		dtvcc_write_sami_header(tv, encoder);
 
 	char *buf = (char *)encoder->buffer;
+	int written;
 
 	buf[0] = 0;
-	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">%s",
-		(unsigned long long)tv->time_ms_show + encoder->subs_delay,
-		encoder->encoded_crlf);
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "<sync start=%llu><p class=\"unknowncc\">%s",
+			   (unsigned long long)tv->time_ms_show + encoder->subs_delay,
+			   encoder->encoded_crlf);
+	if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
+		write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, written);
 
 	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
 	{
@@ -361,10 +433,11 @@ void dtvcc_write_sami(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, 
 		}
 	}
 
-	sprintf(buf, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
-		(unsigned long long)tv->time_ms_hide + encoder->subs_delay,
-		encoder->encoded_crlf, encoder->encoded_crlf);
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "<sync start=%llu><p class=\"unknowncc\">&nbsp;</p></sync>%s%s",
+			   (unsigned long long)tv->time_ms_hide + encoder->subs_delay,
+			   encoder->encoded_crlf, encoder->encoded_crlf);
+	if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
+		write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, written);
 }
 
 unsigned char adjust_odd_parity(const unsigned char value)
@@ -388,11 +461,12 @@ unsigned char adjust_odd_parity(const unsigned char value)
 void dtvcc_write_scc_header(dtvcc_tv_screen *tv, struct encoder_ctx *encoder)
 {
 	char *buf = (char *)encoder->buffer;
-	// 18 characters long + 2 new lines
-	memset(buf, 0, 20);
-	sprintf(buf, "Scenarist_SCC V1.0\n\n");
+	// 18 characters long + 2 new lines = 20 characters total
+	memset(buf, 0, INITIAL_ENC_BUFFER_CAPACITY);
+	int written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "Scenarist_SCC V1.0\n\n");
 
-	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
+		write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, written);
 }
 
 int count_captions_lines_scc(dtvcc_tv_screen *tv)
@@ -415,22 +489,31 @@ int count_captions_lines_scc(dtvcc_tv_screen *tv)
  * 2 line length subtitles can be placed in 14th and 15th row
  * 3 line length subtitles can be placed in 13th, 14th and 15th row
  */
-void add_needed_scc_labels(char *buf, int total_subtitle_count, int current_subtitle_count)
+void add_needed_scc_labels(char *buf, size_t buf_size, size_t *buf_len, int total_subtitle_count, int current_subtitle_count)
 {
+	size_t remaining = buf_size - *buf_len;
+	int written;
+	const char *label;
+
 	switch (total_subtitle_count)
 	{
 		case 1:
 			// row 15, column 00
-			sprintf(buf + strlen(buf), " 94e0 94e0");
+			label = " 94e0 94e0";
 			break;
 		case 2:
 			// 9440: row 14, column 00 | 94e0: row 15, column 00
-			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 9440 9440" : " 94e0 94e0");
+			label = (current_subtitle_count == 1) ? " 9440 9440" : " 94e0 94e0";
 			break;
 		default:
 			// 13e0: row 13, column 04 | 9440: row 14, column 00 | 94e0: row 15, column 00
-			sprintf(buf + strlen(buf), current_subtitle_count == 1 ? " 13e0 13e0" : (current_subtitle_count == 2 ? " 9440 9440" : " 94e0 94e0"));
+			label = (current_subtitle_count == 1) ? " 13e0 13e0" : ((current_subtitle_count == 2) ? " 9440 9440" : " 94e0 94e0");
+			break;
 	}
+
+	written = snprintf(buf + *buf_len, remaining, "%s", label);
+	if (written > 0 && (size_t)written < remaining)
+		*buf_len += written;
 }
 
 void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, struct encoder_ctx *encoder)
@@ -447,38 +530,55 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		dtvcc_write_scc_header(tv, encoder);
 
 	char *buf = (char *)encoder->buffer;
+	size_t buf_len;
+	size_t remaining;
+	int written;
+
 	struct ccx_boundary_time time_show = get_time(tv->time_ms_show + encoder->subs_delay);
 	// when hiding subtract a frame (1 frame = 34 ms)
 	struct ccx_boundary_time time_end = get_time(tv->time_ms_hide + encoder->subs_delay - 34);
+
+#define SCC_SNPRINTF(fmt, ...)                                                    \
+	do                                                                        \
+	{                                                                         \
+		remaining = INITIAL_ENC_BUFFER_CAPACITY - buf_len;                \
+		written = snprintf(buf + buf_len, remaining, fmt, ##__VA_ARGS__); \
+		if (written > 0 && (size_t)written < remaining)                   \
+			buf_len += written;                                       \
+	} while (0)
 
 	if (tv->old_cc_time_end > time_show.time_in_ms)
 	{
 		// Correct the frame delay
 		time_show.time_in_ms -= 1000 / 29.97;
 		print_scc_time(time_show, buf);
-		sprintf(buf + strlen(buf), "\t942c 942c");
+		buf_len = strlen(buf);
+		SCC_SNPRINTF("\t942c 942c");
 		time_show.time_in_ms += 1000 / 29.97;
 		// Clear the buffer and start pop on caption
-		sprintf(buf + strlen(buf), "94ae 94ae 9420 9420");
+		SCC_SNPRINTF("94ae 94ae 9420 9420");
 	}
 	else if (tv->old_cc_time_end < time_show.time_in_ms)
 	{
 		// Clear the screen for new caption
 		struct ccx_boundary_time time_to_display = get_time(tv->old_cc_time_end);
 		print_scc_time(time_to_display, buf);
-		sprintf(buf + strlen(buf), "\t942c 942c \n\n");
+		buf_len = strlen(buf);
+		SCC_SNPRINTF("\t942c 942c \n\n");
 		// Correct the frame delay
 		time_show.time_in_ms -= 1000 / 29.97;
 		// Clear the buffer and start pop on caption in new time
-		print_scc_time(time_show, buf);
-		sprintf(buf + strlen(buf), "\t94ae 94ae 9420 9420");
+		print_scc_time(time_show, buf + buf_len);
+		buf_len = strlen(buf);
+		SCC_SNPRINTF("\t94ae 94ae 9420 9420");
 		time_show.time_in_ms += 1000 / 29.97;
 	}
 	else
 	{
 		time_show.time_in_ms -= 1000 / 29.97;
 		print_scc_time(time_show, buf);
-		sprintf(buf + strlen(buf), "\t942c 942c 94ae 94ae 9420 9420");
+		buf_len = strlen(buf);
+		SCC_SNPRINTF("\t942c 942c 94ae 94ae 9420 9420");
 		time_show.time_in_ms += 1000 / 29.97;
 	}
 
@@ -490,27 +590,29 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		if (!dtvcc_is_row_empty(tv, i))
 		{
 			current_subtitle_count++;
-			add_needed_scc_labels(buf, total_subtitle_count, current_subtitle_count);
+			add_needed_scc_labels(buf, INITIAL_ENC_BUFFER_CAPACITY, &buf_len, total_subtitle_count, current_subtitle_count);
 
 			int first, last, bytes_written = 0;
 			dtvcc_get_write_interval(tv, i, &first, &last);
 			for (int j = first; j <= last; j++)
 			{
 				if (bytes_written % 2 == 0)
-					sprintf(buf + strlen(buf), " ");
-				sprintf(buf + strlen(buf), "%x", adjust_odd_parity(tv->chars[i][j].sym));
+					SCC_SNPRINTF(" ");
+				SCC_SNPRINTF("%x", adjust_odd_parity(tv->chars[i][j].sym));
 				bytes_written += 1;
 			}
 			// if byte pair are not even then make it even by adding 0x80 as padding
 			if (bytes_written % 2 == 1)
-				sprintf(buf + strlen(buf), "80 ");
+				SCC_SNPRINTF("80 ");
 			else
-				sprintf(buf + strlen(buf), " ");
+				SCC_SNPRINTF(" ");
 		}
 	}
 
 	// Display caption (942f 942f)
-	sprintf(buf + strlen(buf), "942f 942f \n\n");
+	SCC_SNPRINTF("942f 942f \n\n");
+
+#undef SCC_SNPRINTF
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
 
 	tv->old_cc_time_end = time_end.time_in_ms;
@@ -579,7 +681,7 @@ void dtvcc_writer_init(dtvcc_writer_ctx *writer,
 
 	const char *ext = get_file_extension(write_format);
 	char suffix[32];
-	sprintf(suffix, CCX_DTVCC_FILENAME_TEMPLATE, program_number, service_number);
+	snprintf(suffix, sizeof(suffix), CCX_DTVCC_FILENAME_TEMPLATE, program_number, service_number);
 
 	writer->filename = create_outfilename(base_filename, suffix, ext);
 	if (!writer->filename)

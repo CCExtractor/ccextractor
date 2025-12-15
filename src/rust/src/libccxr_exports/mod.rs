@@ -1,6 +1,8 @@
 //! Provides C-FFI functions that are direct equivalent of functions available in C.
 
 pub mod bitstream;
+pub mod demuxer;
+pub mod demuxerdata;
 pub mod net;
 pub mod time;
 use crate::ccx_options;
@@ -17,24 +19,31 @@ use std::ffi::{c_char, c_int, c_uint};
 /// `ccx_options` in C must initialized properly before calling this function.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_init_basic_logger() {
-    let debug_mask =
-        DebugMessageFlag::from_bits(ccx_options.debug_mask.try_into().unwrap()).unwrap();
-    let debug_mask_on_debug =
-        DebugMessageFlag::from_bits(ccx_options.debug_mask_on_debug.try_into().unwrap()).unwrap();
+    let debug_mask = ccx_options
+        .debug_mask
+        .try_into()
+        .ok()
+        .and_then(DebugMessageFlag::from_bits)
+        .unwrap_or(DebugMessageFlag::VERBOSE);
+    let debug_mask_on_debug = ccx_options
+        .debug_mask_on_debug
+        .try_into()
+        .ok()
+        .and_then(DebugMessageFlag::from_bits)
+        .unwrap_or(DebugMessageFlag::VERBOSE);
     let mask = DebugMessageMask::new(debug_mask, debug_mask_on_debug);
     let gui_mode_reports = ccx_options.gui_mode_reports != 0;
     let messages_target = match ccx_options.messages_target {
         0 => OutputTarget::Stdout,
         1 => OutputTarget::Stderr,
         2 => OutputTarget::Quiet,
-        _ => panic!("incorrect value for messages_target"),
+        _ => OutputTarget::Stderr, // Default to stderr for invalid values
     };
-    set_logger(CCExtractorLogger::new(
+    let _ = set_logger(CCExtractorLogger::new(
         messages_target,
         mask,
         gui_mode_reports,
-    ))
-    .expect("Failed to initialize and setup the logger");
+    ));
 }
 
 /// Rust equivalent for `verify_crc32` function in C. Uses C-native types as input and output.
@@ -65,13 +74,12 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist(
     s1len: c_uint,
     s2len: c_uint,
 ) -> c_int {
-    let s1 = std::slice::from_raw_parts(s1, s1len.try_into().unwrap());
-    let s2 = std::slice::from_raw_parts(s2, s2len.try_into().unwrap());
+    let s1 = std::slice::from_raw_parts(s1, s1len as usize);
+    let s2 = std::slice::from_raw_parts(s2, s2len as usize);
 
     let ans = levenshtein_dist(s1, s2);
 
-    ans.try_into()
-        .expect("Failed to convert the levenshtein distance to C int")
+    ans.min(c_int::MAX as usize) as c_int
 }
 
 /// Rust equivalent for `levenshtein_dist_char` function in C. Uses C-native types as input and output.
@@ -87,11 +95,10 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
     s1len: c_uint,
     s2len: c_uint,
 ) -> c_int {
-    let s1 = std::slice::from_raw_parts(s1, s1len.try_into().unwrap());
-    let s2 = std::slice::from_raw_parts(s2, s2len.try_into().unwrap());
+    let s1 = std::slice::from_raw_parts(s1, s1len as usize);
+    let s2 = std::slice::from_raw_parts(s2, s2len as usize);
 
     let ans = levenshtein_dist_char(s1, s2);
 
-    ans.try_into()
-        .expect("Failed to convert the levenshtein distance to C int")
+    ans.min(c_int::MAX as usize) as c_int
 }

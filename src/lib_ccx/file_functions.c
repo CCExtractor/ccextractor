@@ -143,7 +143,15 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		if (ccx_options.print_file_reports)
 			print_file_report(ctx);
 
-		if (ctx->inputsize > 0 && ((ctx->demux_ctx->past + bytesinbuffer) < ctx->inputsize) && is_decoder_processed_enough(ctx) == CCX_FALSE)
+		// Only warn about premature ending if:
+		// 1. File has known size
+		// 2. Less data was processed than file size
+		// 3. User-defined limits were NOT reached (processed_enough == FALSE)
+		// 4. There are actually decoders active (decoder list not empty)
+		// If the decoder list is empty, it means no captions were found, which is a
+		// normal condition - don't warn about it.
+		if (ctx->inputsize > 0 && ((ctx->demux_ctx->past + bytesinbuffer) < ctx->inputsize) &&
+		    is_decoder_processed_enough(ctx) == CCX_FALSE && !list_empty(&ctx->dec_ctx_head))
 		{
 			mprint("\n\n\n\nATTENTION!!!!!!\n");
 			mprint("In switch_to_next_file(): Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",

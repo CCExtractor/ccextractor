@@ -14,8 +14,8 @@
  *  Library General Public License for more details.
  *
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the 
- *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *  Boston, MA  02110-1301  USA.
  */
 
@@ -40,12 +40,12 @@
 
 /**
  * @ingroup HiDec
- * 
+ *
  * Teletext or Closed Caption page number. For Teletext pages
  * this is a packed bcd number in range 0x100 ... 0x8FF. Page
  * numbers containing digits 0xA to 0xF are reserved for various
  * system purposes, these pages are not intended for display.
- * 
+ *
  * Closed Caption page numbers between 1 ... 8 correspond
  * to the four Caption and Text channels:
  * <table>
@@ -96,11 +96,11 @@ typedef int vbi_subno;
 /**
  * @ingroup BCD
  * @param dec Decimal number.
- * 
+ *
  * Converts a two's complement binary between 0 ... 999 to a
  * packed bcd number in range  0x000 ... 0x999. Extra digits in
  * the input will be discarded.
- * 
+ *
  * @return
  * BCD number.
  */
@@ -118,11 +118,11 @@ inline unsigned int vbi_dec2bcd(unsigned int dec)
 /**
  * @ingroup BCD
  * @param bcd BCD number.
- * 
+ *
  * Converts a packed bcd number between 0x000 ... 0xFFF to a two's
  * complement binary in range 0 ... 999. Extra digits in the input
  * will be discarded.
- * 
+ *
  * @return
  * Decimal number. The result is undefined when the bcd number contains
  * hex digits 0xA ... 0xF.
@@ -142,12 +142,12 @@ inline unsigned int vbi_bcd2dec(unsigned int bcd)
  * @ingroup BCD
  * @param a BCD number.
  * @param b BCD number.
- * 
+ *
  * Adds two packed bcd numbers, returning a packed bcd sum. Arguments
  * and result are in range 0xF000&nbsp;0000 ... 0x0999&nbsp;9999, that
  * is -10**7 ... +10**7 - 1 in decimal notation. To subtract you can
  * add the 10's complement, e. g. -1 = 0xF999&nbsp;9999.
- * 
+ *
  * @return
  * Packed bcd number. The result is undefined when any of the arguments
  * contain hex digits 0xA ... 0xF.
@@ -157,9 +157,9 @@ inline unsigned int vbi_add_bcd(unsigned int a, unsigned int b)
 	unsigned int t;
 
 	a += 0x06666666;
-	t  = a + b;
+	t = a + b;
 	b ^= a ^ t;
-	b  = (~b & 0x11111110) >> 3;
+	b = (~b & 0x11111110) >> 3;
 	b |= b * 2;
 
 	return t - b;
@@ -168,10 +168,10 @@ inline unsigned int vbi_add_bcd(unsigned int a, unsigned int b)
 /**
  * @ingroup BCD
  * @param bcd BCD number.
- * 
+ *
  * Tests if @a bcd forms a valid BCD number. The argument must be
  * in range 0x0000&nbsp;0000 ... 0x0999&nbsp;9999.
- * 
+ *
  * @return
  * @c FALSE if @a bcd contains hex digits 0xA ... 0xF.
  */
@@ -197,7 +197,7 @@ inline int vbi_is_bcd(unsigned int bcd)
  *
  * @since 0.2.28
  */
-inline int vbi_bcd_digits_greater (unsigned int	bcd, unsigned int maximum)
+inline int vbi_bcd_digits_greater(unsigned int bcd, unsigned int maximum)
 {
 	maximum ^= ~0;
 

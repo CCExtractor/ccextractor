@@ -21,11 +21,11 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 	context->srt_counter++;
-	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
+	snprintf(timeline, sizeof(timeline), "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	write_wrapped(context->out->fh, context->buffer, used);
-	sprintf(timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+	snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
@@ -33,9 +33,14 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 	write_wrapped(context->out->fh, context->buffer, used);
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	if (!unescaped)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_srt() - not enough memory for unescaped buffer.\n");
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
-	if (el == NULL || unescaped == NULL)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_srt() - not enough memory.\n");
+	if (!el)
+	{
+		free(unescaped);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_srt() - not enough memory for el buffer.\n");
+	}
 	int pos_r = 0;
 	int pos_w = 0;
 	// Scan for \n in the string and replace it with a 0
@@ -112,11 +117,11 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 				millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
 				millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 				context->srt_counter++;
-				sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
+				snprintf(timeline, sizeof(timeline), "%u%s", context->srt_counter, context->encoded_crlf);
 				used = encode_line(context, context->buffer, (unsigned char *)timeline);
 				write_wrapped(context->out->fh, context->buffer, used);
-				sprintf(timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-					h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+				snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+					 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 				used = encode_line(context, context->buffer, (unsigned char *)timeline);
 				write_wrapped(context->out->fh, context->buffer, used);
 				len = strlen(str);
@@ -196,12 +201,12 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	char timeline[128];
 
 	++context->srt_counter;
-	sprintf(timeline, "%u%s", context->srt_counter, context->encoded_crlf);
+	snprintf(timeline, sizeof(timeline), "%u%s", context->srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	write_wrapped(context->out->fh, context->buffer, used);
 
-	sprintf(timeline, "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+	snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
+		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	write_wrapped(context->out->fh, context->buffer, used);
 

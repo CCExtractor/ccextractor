@@ -8,7 +8,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Corrosion)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(PROFILE "debug")
+    set(PROFILE "dev")
 else()
     set(PROFILE "release")
 endif()

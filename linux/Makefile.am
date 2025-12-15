@@ -294,12 +294,18 @@ ccextractor_CPPFLAGS+= ${libavformat_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavfilter_CFLAGS}
 ccextractor_CPPFLAGS+= ${libavutil_CFALGS}
 ccextractor_CPPFLAGS+= ${libswscale_CFLAGS}
+# HARDSUBX requires tesseract/leptonica for OCR (same as OCR feature)
+ccextractor_CPPFLAGS+= ${tesseract_CFLAGS}
+ccextractor_CPPFLAGS+= ${lept_CFLAGS}
 AV_LIB = ${libavcodec_LIBS}
 AV_LIB += ${libavformat_LIBS}
 AV_LIB += ${libavfilter_LIBS}
 AV_LIB += ${libavutil_LIBS}
 AV_LIB += ${libswscale_LIBS}
 ccextractor_LDADD += $(AV_LIB)
+# HARDSUBX requires tesseract/leptonica libs for OCR
+ccextractor_LDADD += ${tesseract_LIBS}
+ccextractor_LDADD += ${lept_LIBS}
 HARDSUBX_FEATURE_RUST += --features "hardsubx_ocr"
 endif
 

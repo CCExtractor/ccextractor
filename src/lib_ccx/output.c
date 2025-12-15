@@ -72,10 +72,12 @@ int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore)
 	}
 	if (with_semaphore)
 	{
-		wb->semaphore_filename = (char *)malloc(strlen(filename) + 6);
+		// Format: "%s.sem" needs: filename + ".sem" + null = strlen + 5, allocate 6 for safety
+		size_t sem_filename_len = strlen(filename) + 6;
+		wb->semaphore_filename = (char *)malloc(sem_filename_len);
 		if (!wb->semaphore_filename)
 			return EXIT_NOT_ENOUGH_MEMORY;
-		sprintf(wb->semaphore_filename, "%s.sem", filename);
+		snprintf(wb->semaphore_filename, sem_filename_len, "%s.sem", filename);
 		int t = open(wb->semaphore_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		if (t == -1)
 		{
@@ -94,9 +96,14 @@ int writeraw(const unsigned char *data, int length, void *private_data, struct c
 	if (data == NULL)
 		return -1;
 
-	sub->data = realloc(sub->data, length + sub->nb_data);
-	if (!sub->data)
+	void *tmp = realloc(sub->data, length + sub->nb_data);
+	if (!tmp)
+	{
+		free(sub->data);
+		sub->data = NULL;
 		return EXIT_NOT_ENOUGH_MEMORY;
+	}
+	sub->data = tmp;
 	sub_data = sub->data;
 	sub->datatype = CC_DATATYPE_GENERIC;
 	memcpy(sub_data + sub->nb_data, data, length);

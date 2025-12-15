@@ -4,7 +4,7 @@
 #include "ccx_decoders_structs.h"
 
 /**
- * @return DVD context 
+ * @return DVD context
  */
 void *init_dvdsub_decode();
 

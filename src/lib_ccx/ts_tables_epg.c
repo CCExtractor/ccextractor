@@ -66,7 +66,7 @@ void EPG_ATSC_calc_time(char *output, uint32_t time)
 	timeinfo.tm_hour = 0;
 	timeinfo.tm_isdst = -1;
 	mktime(&timeinfo);
-	sprintf(output, "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+	snprintf(output, 21, "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 }
 
 // Fills event.start_time_string in XMLTV format with passed DVB time
@@ -86,7 +86,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k * 12;
 
-		sprintf(event->start_time_string, "%02ld%02ld%02ld%06" PRIu64 "+0000", y, m, d, time & 0xffffff);
+		snprintf(event->start_time_string, sizeof(event->start_time_string), "%02ld%02ld%02ld%06" PRIu64 "+0000", y, m, d, time & 0xffffff);
 	}
 }
 
@@ -117,7 +117,7 @@ void EPG_DVB_calc_end_time(struct EPG_event *event, uint64_t time, uint32_t dura
 		timeinfo.tm_hour = ((time & 0x0f0000) >> 16) + (10 * ((time & 0xf00000) >> 4) >> 16) + ((duration & 0x0f0000) >> 16) + (10 * ((duration & 0xf00000) >> 4) >> 16);
 		timeinfo.tm_isdst = -1;
 		mktime(&timeinfo);
-		sprintf(event->end_time_string, "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+		snprintf(event->end_time_string, sizeof(event->end_time_string), "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 	}
 }
 
@@ -347,9 +347,20 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	if (!c)
 		return;
 
-	filename = malloc(strlen(ctx->basefilename) + 30);
-	sprintf(filename, "%s_%i.xml.part", ctx->basefilename, ctx->epg_last_live_output);
+	size_t filename_size = strlen(ctx->basefilename) + 30;
+	filename = malloc(filename_size);
+	if (!filename)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_output_live: Out of memory allocating filename.");
+	}
+	snprintf(filename, filename_size, "%s_%i.xml.part", ctx->basefilename, ctx->epg_last_live_output);
 	f = fopen(filename, "w");
+	if (!f)
+	{
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rUnable to open %s\n", filename);
+		free(filename);
+		return;
+	}
 
 	fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tv SYSTEM \"xmltv.dtd\">\n\n<tv>\n");
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
@@ -370,6 +381,11 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	fprintf(f, "</tv>");
 	fclose(f);
 	finalfilename = malloc(strlen(filename) + 30);
+	if (!finalfilename)
+	{
+		free(filename);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_output_live: Out of memory allocating finalfilename.");
+	}
 	memcpy(finalfilename, filename, strlen(filename) - 5);
 	finalfilename[strlen(filename) - 5] = '\0';
 	rename(filename, finalfilename);
@@ -385,12 +401,12 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	char *filename;
 	int i, j, ce;
 
-	filename = malloc(strlen(ctx->basefilename) + 9);
+	size_t filename_size = strlen(ctx->basefilename) + 9;
+	filename = malloc(filename_size);
 	if (filename == NULL)
 		return;
 
-	memcpy(filename, ctx->basefilename, strlen(ctx->basefilename) + 1);
-	strcat(filename, "_epg.xml");
+	snprintf(filename, filename_size, "%s_epg.xml", ctx->basefilename);
 	f = fopen(filename, "w");
 	if (!f)
 	{
@@ -505,6 +521,10 @@ void EPG_decode_content_descriptor(uint8_t *offset, uint32_t descriptor_length, 
 		return;
 	}
 	event->categories = malloc(1 * num_items);
+	if (!event->categories)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_decode_content_descriptor: Out of memory allocating categories.");
+	}
 	event->num_categories = num_items;
 	for (i = 0; i < num_items; i++)
 	{
@@ -527,6 +547,10 @@ void EPG_decode_parental_rating_descriptor(uint8_t *offset, uint32_t descriptor_
 		return;
 	}
 	event->ratings = malloc(sizeof(struct EPG_rating) * num_items);
+	if (!event->ratings)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_decode_parental_rating_descriptor: Out of memory allocating ratings.");
+	}
 
 	ratings = event->ratings;
 	event->num_ratings = num_items;
@@ -553,6 +577,10 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	uint8_t *out;
 	uint16_t decode_buffer_size = (size * 4) + 1;
 	uint8_t *decode_buffer = malloc(decode_buffer_size);
+	if (!decode_buffer)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_DVB_decode_string: Out of memory allocating decode_buffer.");
+	}
 	char *dp = &decode_buffer[0];
 	size_t obl = decode_buffer_size;
 	uint16_t osize = 0;
@@ -713,6 +741,11 @@ char *EPG_DVB_decode_string(uint8_t *in, size_t size)
 	}
 	osize = strlen(decode_buffer);
 	out = malloc(osize + 1);
+	if (!out)
+	{
+		free(decode_buffer);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_DVB_decode_string: Out of memory allocating out.");
+	}
 	memcpy(out, decode_buffer, osize);
 	out[osize] = 0x00;
 	free(decode_buffer);
@@ -745,6 +778,9 @@ void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_leng
 	if (text_length + event_name_length + 4 > descriptor_length)
 	{
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
+		free(event->event_name);
+		event->event_name = NULL;
+		event->has_simple = false;
 		return;
 	}
 	event->text = EPG_DVB_decode_string(&offset[5 + event_name_length], text_length);
@@ -778,7 +814,6 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 		return;
 	}
 
-	// TODO: can this leak memory with a malformed descriptor?
 	if (descriptor_number > 0)
 	{
 		if (offset[1] < 0x20)
@@ -787,13 +822,23 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 			text_length--;
 		}
 		uint8_t *net = malloc(strlen(event->extended_text) + text_length + 1);
+		if (!net)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_decode_extended_event_descriptor: Out of memory allocating net.");
+		}
 		oldlen = strlen(event->extended_text);
 		memcpy(net, event->extended_text, strlen(event->extended_text));
 		free(event->extended_text);
 		event->extended_text = net;
 	}
 	else
+	{
 		event->extended_text = malloc(text_length + 1);
+		if (!event->extended_text)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_decode_extended_event_descriptor: Out of memory allocating extended_text.");
+		}
+	}
 
 	memcpy(&event->extended_text[oldlen], &offset[1], text_length);
 
@@ -854,9 +899,18 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 				event->ISO_639_language_code[2] = ISO_639_language_code[2];
 				event->ISO_639_language_code[3] = 0x00;
 				event->event_name = malloc(number_bytes + 1);
+				if (!event->event_name)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_ATSC_decode_multiple_string: Out of memory allocating event_name.");
+				}
 				memcpy(event->event_name, &offset[0], number_bytes);
 				event->event_name[number_bytes] = '\0';
 				event->text = malloc(number_bytes + 1);
+				if (!event->text)
+				{
+					free(event->event_name);
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_ATSC_decode_multiple_string: Out of memory allocating text.");
+				}
 				memcpy(event->text, &offset[0], number_bytes);
 				event->text[number_bytes] = '\0';
 			}
@@ -1069,6 +1123,7 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 			if (descp[1] + 2 == 0)
 			{
 				dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT descriptor_length detected.\n");
+				EPG_free_event(&event);
 				return;
 			}
 			descp = descp + (descp[1] + 2);
@@ -1182,6 +1237,10 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 			// must be first EIT packet
 		}
 		ctx->epg_buffers[buffer_map].buffer = (uint8_t *)malloc(payload_length);
+		if (!ctx->epg_buffers[buffer_map].buffer)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_EPG_packet: Out of memory allocating buffer.");
+		}
 		memcpy(ctx->epg_buffers[buffer_map].buffer, payload_start, payload_length);
 		ctx->epg_buffers[buffer_map].buffer_length = payload_length;
 		ctx->epg_buffers[buffer_map].ccounter++;
@@ -1189,7 +1248,13 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 	else if (ccounter == ctx->epg_buffers[buffer_map].prev_ccounter + 1 || (ctx->epg_buffers[buffer_map].prev_ccounter == 0x0f && ccounter == 0))
 	{
 		ctx->epg_buffers[buffer_map].prev_ccounter = ccounter;
-		ctx->epg_buffers[buffer_map].buffer = (uint8_t *)realloc(ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length + payload_length);
+		uint8_t *new_buffer = (uint8_t *)realloc(ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length + payload_length);
+		if (!new_buffer)
+		{
+			free(ctx->epg_buffers[buffer_map].buffer);
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_EPG_packet: Out of memory reallocating buffer.");
+		}
+		ctx->epg_buffers[buffer_map].buffer = new_buffer;
 		memcpy(ctx->epg_buffers[buffer_map].buffer + ctx->epg_buffers[buffer_map].buffer_length, payload_start, payload_length);
 		ctx->epg_buffers[buffer_map].ccounter++;
 		ctx->epg_buffers[buffer_map].buffer_length += payload_length;

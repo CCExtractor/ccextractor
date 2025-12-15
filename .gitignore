@@ -155,3 +155,9 @@ windows/*/debug/*
 windows/*/CACHEDIR.TAG
 windows/.rustc_info.json
 linux/configure~
+
+# Plans and temporary files
+plans/
+tess.log
+**/tess.log
+ut=srt*
