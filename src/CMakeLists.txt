@@ -93,8 +93,9 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
 # avoid depending on an external `zlib.lib` (which causes LNK1104 when
 # it's not available). On other platforms keep the old behavior of
 # compiling the sources directly into the main executable.
-file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
+
 if (WIN32)
+  file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
   add_library(zlib_static STATIC ${ZLIB_SOURCES})
   target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
   # Suppress warnings in third-party code
