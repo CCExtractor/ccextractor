@@ -30,7 +30,7 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.useColors = 1,
 	.isFinal = 0};
 
-// TODO sami header doesn't carry about CRLF/LF option
+// TODO sami header doesn't care about CRLF/LF option
 static const char *sami_header = // TODO: Revise the <!-- comments
     "<SAMI>\n\
 <HEAD>\n\
@@ -193,7 +193,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
 			if (ret < sizeof(UTF8_BOM))
 			{
-				mprint("WARNING: Unable tp write UTF BOM\n");
+				mprint("WARNING: Unable to write UTF BOM\n");
 				return -1;
 			}
 		}
