@@ -1635,6 +1635,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 			rect->data1 = malloc(1024);
 			if (!rect->data1)
 			{
+				free(rect);
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_dvb_sub: Out of memory allocating data1.");
 			}
 		}
@@ -1655,6 +1656,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	rect->data0 = (uint8_t *)malloc(width * height);
 	if (!rect->data0)
 	{
+		free(rect->data1);
+		free(rect);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_dvb_sub: Out of memory allocating data0 (%d * %d = %d bytes).", width, height, width * height);
 	}
 	memset(rect->data0, 0x0, width * height);

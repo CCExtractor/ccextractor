@@ -1299,6 +1299,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
+		free(parsebuf);
 		return -1;
 	}
 
@@ -1375,9 +1376,13 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		{
 			if (cbcount * 3 > parsebufsize)
 			{
-				parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
-				if (!parsebuf)
+				unsigned char *new_parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
+				if (!new_parsebuf)
+				{
+					free(parsebuf);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
+				}
+				parsebuf = new_parsebuf;
 				parsebufsize = cbcount * 3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount * 3);
