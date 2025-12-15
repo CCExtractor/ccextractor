@@ -25,6 +25,7 @@ typedef struct MXFContext
     MXFTrack tracks[32];
     int nb_tracks;
     int cap_count;
+    int found_anc_captions; // Flag to indicate if ANC captions have been found
     struct ccx_rational edit_rate;
 } MXFContext;
 

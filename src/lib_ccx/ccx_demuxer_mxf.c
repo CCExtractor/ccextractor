@@ -358,6 +358,8 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 	unsigned char vanc_header[16];
 	uint8_t DID;
 	uint8_t SDID;
+	struct MXFContext *ctx = demux->private_data;
+
 	// uint8_t count; /* Currently unused */
 
 	if (size < 19)
@@ -378,14 +380,19 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 		{
 			goto error;
 		}
+		  SDID = buffered_get_byte(demux);
+         len++;
+         if (SDID == 0x01){
+	     debug("Caption Type 708\n");
+	     ctx->found_anc_captions = 1;
+        }
+        else if (SDID == 0x02){
+	     debug("Caption Type 608\n");
+	     ctx->found_anc_captions = 1;
+        }
 
-		SDID = buffered_get_byte(demux);
-		len++;
-		if (SDID == 0x01)
-			debug("Caption Type 708\n");
-		else if (SDID == 0x02)
-			debug("Caption Type 608\n");
-
+        
+        
 		cdp_size = buffered_get_byte(demux);
 		if (cdp_size + 19 > size)
 		{
@@ -555,6 +562,7 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 {
 	int ret = 0;
 	struct demuxer_data *data;
+	struct MXFContext *mxf;
 
 	if (!*ppdata)
 	{
@@ -575,7 +583,15 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	}
 
 	ret = read_packet(ctx->demux_ctx, data);
-
+	/* If MXF ANC captions were detected but no caption data was emitted yet, 
+	avoid reporting a false "no captions found".
+	 */
+	mxf = ctx->demux_ctx->private_data;
+	if (ret <= 0 && mxf && mxf->found_anc_captions)
+	{
+		return 0;
+	}
+  
 	return ret;
 }
 
@@ -592,14 +608,30 @@ int ccx_probe_mxf(struct ccx_demuxer *ctx)
 	return CCX_FALSE;
 }
 
+// struct MXFContext *ccx_mxf_init(struct ccx_demuxer *demux)
+// {
+// 	struct MXFContext *ctx = NULL;
+
+// 	ctx = malloc(sizeof(*ctx));
+// 	if (!ctx)
+// 		return NULL;
+
+// 	memset(ctx, 0, sizeof(struct MXFContext));
+// 	return ctx;
+// }
 struct MXFContext *ccx_mxf_init(struct ccx_demuxer *demux)
 {
-	struct MXFContext *ctx = NULL;
+    struct MXFContext *ctx = NULL;
 
-	ctx = malloc(sizeof(*ctx));
-	if (!ctx)
-		return NULL;
+    ctx = malloc(sizeof(*ctx));
+    if (!ctx)
+        return NULL;
 
-	memset(ctx, 0, sizeof(struct MXFContext));
-	return ctx;
+    memset(ctx, 0, sizeof(struct MXFContext));
+
+    /* Track whether ANC caption packets are present */
+    ctx->found_anc_captions = 0;
+
+    return ctx;
 }
+
