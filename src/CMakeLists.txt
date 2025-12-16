@@ -246,8 +246,15 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 # Build with Rust library
 ########################################################
 
+# Rust is REQUIRED for DTVCC and SMPTE-TT functionality
+find_program(RUSTC rustc REQUIRED)
+message(STATUS "Found rustc: ${RUSTC}")
+
+# Build Rust library
 add_subdirectory (rust)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+set(RUST_AVAILABLE TRUE)
+message(STATUS "Rust available, using Rust implementations")
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
