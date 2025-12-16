@@ -246,11 +246,8 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 # Build with Rust library
 ########################################################
 
-if (PKG_CONFIG_FOUND)
-  add_subdirectory (rust)
-  set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
-endif (PKG_CONFIG_FOUND)
-
+add_subdirectory (rust)
+set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
