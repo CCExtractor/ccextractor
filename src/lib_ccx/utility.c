@@ -321,6 +321,10 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 		return enc_ctx;
 	}
 	struct encoder_ctx *temp_encoder = malloc(sizeof(struct encoder_ctx));
+	if (!temp_encoder)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating temp_encoder.");
+	}
 	*temp_encoder = *enc_ctx;
 	if (enc_ctx->out->fh != -1)
 	{
@@ -328,38 +332,47 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 			close(enc_ctx->out->fh);
 		enc_ctx->out->fh = -1;
 		int iter;
-		char str_number[15];
-		char *current_name = malloc(sizeof(char) * (strlen(enc_ctx->out->filename) + 10));
-		strcpy(current_name, enc_ctx->out->filename);
+		size_t filename_len = strlen(enc_ctx->out->filename);
+		size_t current_name_size = filename_len + 16;
+		char *current_name = malloc(current_name_size);
+		if (!current_name)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating current_name.");
+		}
+		strncpy(current_name, enc_ctx->out->filename, current_name_size - 1);
+		current_name[current_name_size - 1] = '\0';
 		mprint("Creating %s\n", enc_ctx->out->filename);
 		if (enc_ctx->out->renaming_extension)
 		{
-			strcat(current_name, ".");
-			sprintf(str_number, "%d", enc_ctx->out->renaming_extension);
-			strcat(current_name, str_number);
+			size_t cur_len = strlen(current_name);
+			snprintf(current_name + cur_len, current_name_size - cur_len, ".%d", enc_ctx->out->renaming_extension);
 		}
 		enc_ctx->out->renaming_extension++;
 		for (iter = enc_ctx->out->renaming_extension; iter >= 1; iter--)
 		{
 			int ret;
-			char new_extension[6];
-			sprintf(new_extension, ".%d", iter);
-			char *newname = malloc(sizeof(char) * (strlen(enc_ctx->out->filename) + 10));
-			strcpy(newname, enc_ctx->out->filename);
-			strcat(newname, new_extension);
+			char new_extension[16];
+			snprintf(new_extension, sizeof(new_extension), ".%d", iter);
+			size_t newname_size = filename_len + 16;
+			char *newname = malloc(newname_size);
+			if (!newname)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In change_filename: Out of memory allocating newname.");
+			}
+			snprintf(newname, newname_size, "%s%s", enc_ctx->out->filename, new_extension);
 			ret = rename(current_name, newname);
 			if (ret)
 			{
 				mprint("Failed to rename the file\n");
 			}
 			mprint("Creating %s\n", newname);
-			strcpy(current_name, enc_ctx->out->filename);
+			strncpy(current_name, enc_ctx->out->filename, current_name_size - 1);
+			current_name[current_name_size - 1] = '\0';
 
 			if (iter - 2 > 0)
 			{
-				strcat(current_name, ".");
-				sprintf(str_number, "%d", iter - 2);
-				strcat(current_name, str_number);
+				size_t cur_len = strlen(current_name);
+				snprintf(current_name + cur_len, current_name_size - cur_len, ".%d", iter - 2);
 			}
 			free(newname);
 		}
@@ -397,7 +410,7 @@ char *get_basename(char *filename)
 		return NULL;
 	}
 
-	strcpy(basefilename, filename);
+	memcpy(basefilename, filename, len + 1);
 
 	for (c = basefilename + len; c > basefilename && *c != '.'; c--)
 	{
@@ -477,18 +490,15 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	if ((elen + slen + blen) <= 0)
 		return NULL;
 
-	ptr = malloc(elen + slen + blen + 1);
+	size_t total_len = elen + slen + blen + 1;
+	ptr = malloc(total_len);
 	if (!ptr)
 		return NULL;
 
-	ptr[0] = '\0';
-
-	if (basename)
-		strcat(ptr, basename);
-	if (suffix)
-		strcat(ptr, suffix);
-	if (extension)
-		strcat(ptr, extension);
+	snprintf(ptr, total_len, "%s%s%s",
+		 basename ? basename : "",
+		 suffix ? suffix : "",
+		 extension ? extension : "");
 	return ptr;
 }
 
@@ -525,16 +535,18 @@ LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational
 
 char *str_reallocncat(char *dst, char *src)
 {
-	int nl = dst == NULL ? (strlen(src) + 1) : (strlen(dst) + strlen(src) + 1);
-	char *orig = dst;
-	dst = (char *)realloc(dst, nl);
-	if (!dst)
+	size_t src_len = strlen(src);
+	size_t dst_len = dst == NULL ? 0 : strlen(dst);
+	size_t nl = dst_len + src_len + 1;
+	char *tmp = (char *)realloc(dst, nl);
+	if (!tmp)
+	{
+		free(dst);
 		return NULL;
-	if (orig == NULL)
-		strcpy(dst, src);
-	else
-		strcat(dst, src);
-	return dst;
+	}
+	// Copy src after existing content (or at start if dst was NULL)
+	memcpy(tmp + dst_len, src, src_len + 1);
+	return tmp;
 }
 
 #ifdef _WIN32

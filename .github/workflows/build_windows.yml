@@ -40,7 +40,7 @@ jobs:
         run: mkdir C:\vcpkg\.cache
       - name: Cache vcpkg
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             C:\vcpkg\.cache
@@ -91,7 +91,7 @@ jobs:
         run: mkdir C:\vcpkg\.cache
       - name: Cache vcpkg
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             C:\vcpkg\.cache

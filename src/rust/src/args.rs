@@ -530,6 +530,11 @@ pub struct Args {
     /// of Russian Teletext files (issue #1086)
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub latrusmap: bool,
+    /// Force Latin G0 charset for Teletext, ignoring any Cyrillic
+    /// designation in the stream. Use when broadcasts incorrectly
+    /// signal Cyrillic but content is Latin (issue #1395)
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub ttxtforcelatin: bool,
     /// In timed transcripts, all XDS information will be saved
     /// to the output file.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]

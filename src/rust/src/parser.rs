@@ -238,7 +238,7 @@ impl OptionsExt for Options {
             OutFormat::Ttxt => {
                 self.write_format = OutputFormat::Transcript;
                 if self.date_format == TimestampFormat::None {
-                    self.date_format = TimestampFormat::HHMMSS;
+                    self.date_format = TimestampFormat::HHMMSSFFF;
                 }
                 // Sets the right things so that timestamps and the mode are printed.
                 if !self.transcript_settings.is_final {
@@ -427,31 +427,17 @@ impl OptionsExt for Options {
         }
     }
 
-    fn append_file_to_queue(&mut self, filename: &str, inputfile_capacity: &mut i32) -> i32 {
+    fn append_file_to_queue(&mut self, filename: &str, _inputfile_capacity: &mut i32) -> i32 {
         if filename.is_empty() {
             return 0;
         }
 
-        let num_input_files = if let Some(ref inputfile) = self.inputfile {
-            inputfile.len()
-        } else {
-            0
-        };
-        if num_input_files >= *inputfile_capacity as usize {
-            *inputfile_capacity += 10;
-        }
-
-        let new_size = (*inputfile_capacity).try_into().unwrap_or(0);
-
         if self.inputfile.is_none() {
-            self.inputfile = Some(Vec::with_capacity(new_size));
+            self.inputfile = Some(Vec::new());
         }
 
         if let Some(ref mut inputfile) = self.inputfile {
-            inputfile.resize(new_size, String::new());
-
-            let index = num_input_files;
-            inputfile[index] = filename.to_string();
+            inputfile.push(filename.to_string());
         }
 
         0
@@ -756,11 +742,18 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.dvblang {
-            self.dvblang = Some(Language::from_str(lang.as_str()).unwrap());
+            self.dvblang = Some(Language::from_str(lang.as_str()).unwrap_or_else(|_| {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Invalid dvblang value '{}'. Use a 3-letter ISO 639-2 language code (e.g., 'chi', 'eng', 'chs').",
+                    lang
+                );
+            }));
         }
 
         if let Some(ref ocrlang) = args.ocrlang {
-            self.ocrlang = Some(Language::from_str(ocrlang.as_str()).unwrap());
+            // Accept Tesseract language names directly (e.g., "chi_tra", "chi_sim", "eng")
+            self.ocrlang = Some(ocrlang.clone());
         }
 
         if let Some(ref quant) = args.quant {
@@ -1228,6 +1221,10 @@ impl OptionsExt for Options {
             tlt_config.latrusmap = true;
         }
 
+        if args.ttxtforcelatin {
+            tlt_config.forceg0latin = true;
+        }
+
         if args.tickertext {
             self.tickertext = true;
         }
@@ -1647,6 +1644,9 @@ pub mod tests {
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
 
+    /// # Safety
+    ///
+    /// This function is a no-op stub and is always safe to call.
     #[no_mangle]
     pub unsafe extern "C" fn set_binary_mode() {}
 
@@ -1752,10 +1752,10 @@ pub mod tests {
 
         match options.enc_cfg.services_charsets {
             DtvccServiceCharset::None => {
-                assert!(false);
+                unreachable!("Expected DtvccServiceCharset::Unique");
             }
             DtvccServiceCharset::Same(_) => {
-                assert!(false);
+                unreachable!("Expected DtvccServiceCharset::Unique");
             }
             DtvccServiceCharset::Unique(charsets) => {
                 assert_eq!(charsets[1], "UTF-8");

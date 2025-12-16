@@ -578,7 +578,8 @@ mod test {
         let mut window = dtvcc_window::default();
         window.update_time_hide(&mut timing);
 
-        assert!(window.time_ms_hide == 393 || window.time_ms_hide == 427);
+        // get_visible_end now returns base FTS (fts_now + fts_global = 20 + 40 = 60) without cb_field offset
+        assert_eq!(window.time_ms_hide, 60);
     }
 
     fn create_window(anchor_point: i32, pts: (i32, i32, i32, i32)) -> dtvcc_window {

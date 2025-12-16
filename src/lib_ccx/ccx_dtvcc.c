@@ -115,10 +115,10 @@ dtvcc_ctx *dtvcc_init(struct ccx_decoder_dtvcc_settings *opts)
 		dtvcc_service_decoder *decoder = &ctx->decoders[i];
 		decoder->cc_count = 0;
 		decoder->tv = (dtvcc_tv_screen *)malloc(sizeof(dtvcc_tv_screen));
-		decoder->tv->service_number = i + 1;
-		decoder->tv->cc_count = 0;
 		if (!decoder->tv)
 			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "dtvcc_init");
+		decoder->tv->service_number = i + 1;
+		decoder->tv->cc_count = 0;
 
 		for (int j = 0; j < CCX_DTVCC_MAX_WINDOWS; j++)
 			decoder->windows[j].memory_reserved = 0;

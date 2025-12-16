@@ -11,16 +11,34 @@ const AV_TIME_BASE_Q: AVRational = AVRational {
     den: AV_TIME_BASE,
 };
 
+/// Convert presentation timestamp to nanoseconds.
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs arithmetic
+/// operations on primitive values with no memory access.
 #[no_mangle]
 pub extern "C" fn convert_pts_to_ns(pts: i64, time_base: AVRational) -> i64 {
     av_rescale_q(pts, time_base, AV_TIME_BASE_Q)
 }
 
+/// Convert presentation timestamp to milliseconds.
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs arithmetic
+/// operations on primitive values with no memory access.
 #[no_mangle]
 pub extern "C" fn convert_pts_to_ms(pts: i64, time_base: AVRational) -> i64 {
     av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000
 }
 
+/// Convert presentation timestamp to seconds.
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs arithmetic
+/// operations on primitive values with no memory access.
 #[no_mangle]
 pub extern "C" fn convert_pts_to_s(pts: i64, time_base: AVRational) -> i64 {
     av_rescale_q(pts, time_base, AV_TIME_BASE_Q) / 1000000

@@ -14,8 +14,8 @@
  *  Library General Public License for more details.
  *
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the 
- *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *  Boston, MA  02110-1301  USA.
  */
 
@@ -42,38 +42,35 @@ typedef uint64_t vbi_videostd_set;
 /* Private */
 
 extern vbi_service_set
-vbi_sampling_par_from_services (vbi_sampling_par *    sp,
-				unsigned int *         max_rate,
-				vbi_videostd_set      videostd_set,
-				vbi_service_set       services);
+vbi_sampling_par_from_services(vbi_sampling_par *sp,
+			       unsigned int *max_rate,
+			       vbi_videostd_set videostd_set,
+			       vbi_service_set services);
 extern vbi_service_set
-vbi_sampling_par_check_services
-                                (const vbi_sampling_par *sp,
-                                 vbi_service_set       services,
-                                 unsigned int           strict)
-  _vbi_pure;
+vbi_sampling_par_check_services(const vbi_sampling_par *sp,
+				vbi_service_set services,
+				unsigned int strict)
+    _vbi_pure;
 
 extern vbi_videostd_set
-_vbi_videostd_set_from_scanning	(int			scanning);
+_vbi_videostd_set_from_scanning(int scanning);
 
 extern vbi_service_set
-_vbi_sampling_par_from_services_log
-                                (vbi_sampling_par *    sp,
-                                 unsigned int *         max_rate,
-                                 vbi_videostd_set      videostd_set,
-                                 vbi_service_set       services,
-                                 _vbi_log_hook *       log);
+_vbi_sampling_par_from_services_log(vbi_sampling_par *sp,
+				    unsigned int *max_rate,
+				    vbi_videostd_set videostd_set,
+				    vbi_service_set services,
+				    _vbi_log_hook *log);
 extern vbi_service_set
-_vbi_sampling_par_check_services_log
-                                (const vbi_sampling_par *sp,
-                                 vbi_service_set       services,
-                                 unsigned int           strict,
-                                 _vbi_log_hook *       log)
-  _vbi_pure;
+_vbi_sampling_par_check_services_log(const vbi_sampling_par *sp,
+				     vbi_service_set services,
+				     unsigned int strict,
+				     _vbi_log_hook *log)
+    _vbi_pure;
 extern vbi_bool
-_vbi_sampling_par_valid_log    (const vbi_sampling_par *sp,
-                                 _vbi_log_hook *       log)
-  _vbi_pure;
+_vbi_sampling_par_valid_log(const vbi_sampling_par *sp,
+			    _vbi_log_hook *log)
+    _vbi_pure;
 
 VBI_END_DECLS
 

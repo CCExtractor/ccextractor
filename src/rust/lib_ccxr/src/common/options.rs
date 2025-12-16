@@ -50,8 +50,11 @@ pub enum FrameType {
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CommonTimingCtx {
-    pub pts_set: i32,          // 0 = No, 1 = received, 2 = min_pts set
-    pub min_pts_adjusted: i32, // 0 = No, 1=Yes (don't adjust again)
+    pub pts_set: i32,               // 0 = No, 1 = received, 2 = min_pts set
+    pub min_pts_adjusted: i32,      // 0 = No, 1=Yes (don't adjust again)
+    pub seen_known_frame_type: i32, // 0 = No, 1 = Yes. Tracks if we've seen a frame with known type
+    pub pending_min_pts: i64,       // Minimum PTS seen while waiting for frame type determination
+    pub unknown_frame_count: u32,   // Count of set_fts calls with unknown frame type
     pub current_pts: i64,
     pub current_picture_coding_type: FrameType,
     pub current_tref: i32, // Store temporal reference of current frame
@@ -447,7 +450,8 @@ pub struct Options {
     /// The name of the language stream for DVB
     pub dvblang: Option<Language>,
     /// The name of the .traineddata file to be loaded with tesseract
-    pub ocrlang: Option<Language>,
+    /// (accepts Tesseract language names directly, e.g., "chi_tra", "eng")
+    pub ocrlang: Option<String>,
     /// The Tesseract OEM mode, could be 0 (default), 1 or 2
     pub ocr_oem: i8,
     /// The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default

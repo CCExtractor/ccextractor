@@ -158,8 +158,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     if let Some(dvblang) = options.dvblang {
         (*ccx_s_options).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
     }
-    if let Some(ocrlang) = options.ocrlang {
-        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.to_ctype().as_str());
+    if let Some(ref ocrlang) = options.ocrlang {
+        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;
@@ -212,8 +212,13 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     }
     if options.inputfile.is_some() {
         (*ccx_s_options).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
-        (*ccx_s_options).num_input_files =
-            options.inputfile.iter().filter(|s| !s.is_empty()).count() as _;
+        (*ccx_s_options).num_input_files = options
+            .inputfile
+            .as_ref()
+            .unwrap()
+            .iter()
+            .filter(|s| !s.is_empty())
+            .count() as _;
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
     (*ccx_s_options).enc_cfg = options.enc_cfg.to_ctype();
@@ -355,12 +360,9 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
                 .expect("Invalid language"),
         );
     }
-    // Handle ocrlang (C string to PathBuf)
+    // Handle ocrlang (C string to String - accepts Tesseract language names directly)
     if !(*ccx_s_options).ocrlang.is_null() {
-        options.ocrlang = Some(
-            Language::from_str(&c_char_to_string((*ccx_s_options).ocrlang))
-                .expect("Invalid language"),
-        );
+        options.ocrlang = Some(c_char_to_string((*ccx_s_options).ocrlang));
     }
 
     options.ocr_oem = (*ccx_s_options).ocr_oem as i8;
@@ -528,6 +530,7 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             nohtmlescape: self.nohtmlescape.into(),
             millis_separator: value.millis_separator() as _,
             latrusmap: self.latrusmap.into(),
+            forceg0latin: self.forceg0latin.into(),
         };
         config.set_verbose(self.verbose.into());
         config.set_bom(1);
@@ -703,6 +706,9 @@ impl CType<ccx_common_timing_ctx> for CommonTimingCtx {
         ccx_common_timing_ctx {
             pts_set: self.pts_set,
             min_pts_adjusted: self.min_pts_adjusted,
+            seen_known_frame_type: self.seen_known_frame_type,
+            pending_min_pts: self.pending_min_pts,
+            unknown_frame_count: self.unknown_frame_count,
             current_pts: self.current_pts,
             current_picture_coding_type: self.current_picture_coding_type as _,
             current_tref: self.current_tref,

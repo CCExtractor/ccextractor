@@ -326,11 +326,11 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 	sub->nb_data = 1;
 
 	rect = malloc(sizeof(struct cc_bitmap) * sub->nb_data);
-	memset(rect, 0, sizeof(struct cc_bitmap) * sub->nb_data);
 	if (!rect)
 	{
 		return -1;
 	}
+	memset(rect, 0, sizeof(struct cc_bitmap) * sub->nb_data);
 
 	sub->got_output = 1;
 	sub->data = rect;
@@ -346,9 +346,24 @@ int write_dvd_sub(struct lib_cc_decode *dec_ctx, struct DVD_Ctx *ctx, struct cc_
 		return -1;
 	}
 	rect->data0 = malloc(w * h);
+	if (!rect->data0)
+	{
+		free(rect);
+		sub->data = NULL;
+		sub->nb_data = 0;
+		return -1;
+	}
 	memcpy(rect->data0, ctx->bitmap, w * h);
 
 	rect->data1 = malloc(1024);
+	if (!rect->data1)
+	{
+		free(rect->data0);
+		free(rect);
+		sub->data = NULL;
+		sub->nb_data = 0;
+		return -1;
+	}
 	memset(rect->data1, 0, 1024);
 	guess_palette(ctx, (uint32_t *)rect->data1, 0xffff00);
 
@@ -436,10 +451,24 @@ int process_spu(struct lib_cc_decode *dec_ctx, unsigned char *buff, int length, 
 void *init_dvdsub_decode()
 {
 	struct DVD_Ctx *ctx = malloc(sizeof(struct DVD_Ctx));
+	if (!ctx)
+	{
+		return NULL;
+	}
+	memset(ctx, 0, sizeof(struct DVD_Ctx));
 #ifdef ENABLE_OCR
 	ctx->ocr_ctx = init_ocr(1);
 #endif
 	ctx->ctrl = malloc(sizeof(struct ctrl_seq));
+	if (!ctx->ctrl)
+	{
+#ifdef ENABLE_OCR
+		if (ctx->ocr_ctx)
+			delete_ocr(&ctx->ocr_ctx);
+#endif
+		free(ctx);
+		return NULL;
+	}
 	ctx->append = 0;
 	return (void *)ctx;
 }

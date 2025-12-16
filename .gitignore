@@ -171,3 +171,8 @@ mac/configure~
 *.current
 
 
+# Plans and temporary files
+plans/
+tess.log
+**/tess.log
+ut=srt*

@@ -30,25 +30,27 @@
 // 10.13 - Undocumented DVR-MS properties
 #define DVRMS_PTS "\x2A\xC0\x3C\xFD\xDB\x06\xFA\x4C\x80\x1C\x72\x12\xD3\x87\x45\xE4"
 
-typedef struct {
+typedef struct
+{
 	int VideoStreamNumber;
 	int AudioStreamNumber;
 	int CaptionStreamNumber;
-	int CaptionStreamStyle;  // 1 = NTSC, 2 = ATSC
-	int DecodeStreamNumber;  // The stream that is chosen to be decoded
-	int DecodeStreamPTS;     // This will be used for the next returned block
+	int CaptionStreamStyle;	 // 1 = NTSC, 2 = ATSC
+	int DecodeStreamNumber;	 // The stream that is chosen to be decoded
+	int DecodeStreamPTS;	 // This will be used for the next returned block
 	int currDecodeStreamPTS; // Time of the data returned by the function
 	int prevDecodeStreamPTS; // Previous time
-	int VideoStreamMS;       // See ableve, just for video
+	int VideoStreamMS;	 // See ableve, just for video
 	int currVideoStreamMS;
 	int prevVideoStreamMS;
-	int VideoJump;           // Remember a jump in the video timeline
+	int VideoJump; // Remember a jump in the video timeline
 } asf_data_stream_properties;
 
-#define STREAMNUM  10
+#define STREAMNUM 10
 #define PAYEXTNUM 10
 
-typedef struct {
+typedef struct
+{
 	// Generic buffer to hold data
 	unsigned char *parsebuf;
 	long parsebufsize;
@@ -72,23 +74,23 @@ typedef struct {
 	uint32_t TotalDataPackets;
 	int VideoClosedCaptioningFlag;
 	// Payload data
-	int PayloadLType;            // ASF - Payload Length Type. <>0 for multiple payloads
-	uint32_t PayloadLength;      // ASF - Payload Length
-	int NumberOfPayloads;        // ASF - Number of payloads.
-	int payloadcur;              // local
+	int PayloadLType;	     // ASF - Payload Length Type. <>0 for multiple payloads
+	uint32_t PayloadLength;	     // ASF - Payload Length
+	int NumberOfPayloads;	     // ASF - Number of payloads.
+	int payloadcur;		     // local
 	int PayloadStreamNumber;     // ASF
-	int KeyFrame;                // ASF
+	int KeyFrame;		     // ASF
 	uint32_t PayloadMediaNumber; // ASF
 	// Data Object Loop
-	uint32_t datapacketcur;      // Current packet number
-	int64_t dobjectread;         // Bytes read in Data Object
+	uint32_t datapacketcur; // Current packet number
+	int64_t dobjectread;	// Bytes read in Data Object
 	// Payload parsing information
-	int MultiplePayloads;        // ASF
-	int PacketLType;             // ASF
-	int ReplicatedLType;         // ASF
-	int OffsetMediaLType;        // ASF
-	int MediaNumberLType;        // ASF
-	int StreamNumberLType;       // ASF
+	int MultiplePayloads;  // ASF
+	int PacketLType;       // ASF
+	int ReplicatedLType;   // ASF
+	int OffsetMediaLType;  // ASF
+	int MediaNumberLType;  // ASF
+	int StreamNumberLType; // ASF
 	uint32_t PacketLength;
 	uint32_t PaddingLength;
 } asf_data;

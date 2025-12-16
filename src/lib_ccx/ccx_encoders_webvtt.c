@@ -131,8 +131,8 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
-		h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+	snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
+		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
@@ -142,9 +142,14 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		return -1;
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	if (!unescaped)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory for unescaped buffer.\n");
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
-	if (el == NULL || unescaped == NULL)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory.\n");
+	if (!el)
+	{
+		free(unescaped);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory for el buffer.\n");
+	}
 	int pos_r = 0;
 	int pos_w = 0;
 	// Scan for \n in the string and replace it with a 0
@@ -215,9 +220,9 @@ void write_webvtt_header(struct encoder_ctx *context)
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
 		// If the user has enabled X-TIMESTAMP-MAP
-		sprintf(header_string, "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
-			context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
-			ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
+		snprintf(header_string, sizeof(header_string), "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
+			 context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
+			 ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 
 		used = encode_line(context, context->buffer, (unsigned char *)header_string);
 		write_wrapped(context->out->fh, context->buffer, used);
@@ -238,21 +243,35 @@ void write_webvtt_header(struct encoder_ctx *context)
 	if (ccx_options.webvtt_create_css)
 	{
 		char *basefilename = get_basename(context->first_input_file);
-		char *css_file_name = (char *)malloc((strlen(basefilename) + 4) * sizeof(char)); // strlen(".css") == 4
-		sprintf(css_file_name, "%s.css", basefilename);
+		size_t css_file_name_size = strlen(basefilename) + 5; // strlen(".css") + 1 for null
+		char *css_file_name = (char *)malloc(css_file_name_size);
+		if (!css_file_name)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating css_file_name.");
+		}
+		snprintf(css_file_name, css_file_name_size, "%s.css", basefilename);
 
 		FILE *f = fopen(css_file_name, "wb");
 		if (f == NULL)
 		{
 			mprint("Warning: Error creating the file %s\n", css_file_name);
+			free(css_file_name);
 			return;
 		}
 		fprintf(f, "%s", webvtt_inline_css);
 		fclose(f);
 
-		char *outline_css_file = (char *)malloc((strlen(css_file_name) + strlen(webvtt_outline_css)) * sizeof(char));
-		sprintf(outline_css_file, webvtt_outline_css, css_file_name);
+		size_t outline_css_file_size = strlen(css_file_name) + strlen(webvtt_outline_css) + 1;
+		char *outline_css_file = (char *)malloc(outline_css_file_size);
+		if (!outline_css_file)
+		{
+			free(css_file_name);
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating outline_css_file.");
+		}
+		snprintf(outline_css_file, outline_css_file_size, webvtt_outline_css, css_file_name);
 		write_wrapped(context->out->fh, outline_css_file, strlen(outline_css_file));
+		free(css_file_name);
+		free(outline_css_file);
 	}
 	else if (ccx_options.use_webvtt_styling)
 	{
@@ -301,8 +320,8 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 			millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
 			millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 			context->srt_counter++;					// Not needed for WebVTT but let's keep it around for now
-			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
-				h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
+			snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u%s",
+				 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
 			write_wrapped(context->out->fh, context->buffer, used);
 			len = strlen(str);
@@ -436,8 +455,8 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 		{
 			char timeline[128] = "";
 
-			sprintf(timeline, "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u line:%s%%%s",
-				h1, m1, s1, ms1, h2, m2, s2, ms2, webvtt_pac_row_percent[i], context->encoded_crlf);
+			snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u.%03u --> %02u:%02u:%02u.%03u line:%s%%%s",
+				 h1, m1, s1, ms1, h2, m2, s2, ms2, webvtt_pac_row_percent[i], context->encoded_crlf);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
 
 			dbg_print(CCX_DMT_DECODER_608, "\n- - - WEBVTT caption - - -\n");
@@ -459,7 +478,14 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			if (ccx_options.use_webvtt_styling)
 			{
 				color_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				if (!color_events)
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory allocating color_events.");
 				font_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				if (!font_events)
+				{
+					free(color_events);
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory allocating font_events.");
+				}
 
 				get_color_events(color_events, i, data);
 				get_font_events(font_events, i, data);

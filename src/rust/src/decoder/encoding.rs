@@ -12,17 +12,34 @@
 
 // NOTE: Same as `lib_ccx/ccx_decoder_708_encoding.c` file
 
+/// Convert G0 character to internal representation (identity mapping).
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs a simple
+/// value transformation with no memory access.
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G0(g0_char: u8) -> u8 {
     g0_char
 }
 
+/// Convert G1 character to internal representation (identity mapping).
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs a simple
+/// value transformation with no memory access.
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G1(g1_char: u8) -> u8 {
     g1_char
 }
 
 /// G2: Extended Control Code Set 1
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs a simple
+/// value transformation with no memory access.
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G2(g2_char: u8) -> u8 {
     match g2_char {
@@ -33,6 +50,11 @@ pub extern "C" fn dtvcc_get_internal_from_G2(g2_char: u8) -> u8 {
 }
 
 /// G3: Future Characters and Icon Expansion
+///
+/// # Safety
+///
+/// This function is safe to call from any context. It performs a simple
+/// value transformation with no memory access.
 #[no_mangle]
 pub extern "C" fn dtvcc_get_internal_from_G3(g3_char: u8) -> u8 {
     if g3_char == 0xa0 {

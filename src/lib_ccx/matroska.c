@@ -25,6 +25,8 @@ ULLONG get_current_byte(FILE *file)
 UBYTE *read_byte_block(FILE *file, ULLONG n)
 {
 	UBYTE *buffer = malloc((size_t)(sizeof(UBYTE) * n));
+	if (buffer == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In read_byte_block: Out of memory.");
 	if (fread(buffer, 1, (size_t)n, file) != n)
 		fatal(1, "reading from file");
 	return buffer;
@@ -33,6 +35,8 @@ UBYTE *read_byte_block(FILE *file, ULLONG n)
 char *read_bytes_signed(FILE *file, ULLONG n)
 {
 	char *buffer = malloc((size_t)(sizeof(UBYTE) * (n + 1)));
+	if (buffer == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In read_bytes_signed: Out of memory.");
 	if (fread(buffer, 1, (size_t)n, file) != n)
 		fatal(1, "reading from file");
 	buffer[n] = 0;
@@ -135,8 +139,12 @@ void parse_ebml(FILE *file)
 				read_vint_block_int(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_EBML_DOC_TYPE:
-				mprint("Document type: %s\n", read_vint_block_string(file));
+			{
+				char *doc_type = read_vint_block_string(file);
+				mprint("Document type: %s\n", doc_type);
+				free(doc_type);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 			case MATROSKA_EBML_DOC_TYPE_VERSION:
 				read_vint_block_int(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
@@ -186,8 +194,12 @@ void parse_segment_info(FILE *file)
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_INFO_SEGMENT_FILENAME:
-				mprint("Filename: %s\n", read_vint_block_string(file));
+			{
+				char *filename = read_vint_block_string(file);
+				mprint("Filename: %s\n", filename);
+				free(filename);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 			case MATROSKA_SEGMENT_INFO_PREV_UID:
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
@@ -216,14 +228,26 @@ void parse_segment_info(FILE *file)
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_INFO_TITLE:
-				mprint("Title: %s\n", read_vint_block_string(file));
+			{
+				char *title = read_vint_block_string(file);
+				mprint("Title: %s\n", title);
+				free(title);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 			case MATROSKA_SEGMENT_MUXING_APP:
-				mprint("Muxing app: %s\n", read_vint_block_string(file));
+			{
+				char *muxing_app = read_vint_block_string(file);
+				mprint("Muxing app: %s\n", muxing_app);
+				free(muxing_app);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 			case MATROSKA_SEGMENT_WRITING_APP:
-				mprint("Writing app: %s\n", read_vint_block_string(file));
+			{
+				char *writing_app = read_vint_block_string(file);
+				mprint("Writing app: %s\n", writing_app);
+				free(writing_app);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 
 				/* Misc ids */
 			case MATROSKA_VOID:
@@ -258,8 +282,10 @@ char *generate_timestamp_ass_ssa(ULLONG milliseconds)
 	milliseconds /= 60;
 	ULLONG hours = milliseconds;
 
-	char *buf = malloc(sizeof(char) * 15);
-	sprintf(buf, LLD ":%02" LLD_M ":%02" LLD_M ".%02" LLD_M, hours, minutes, seconds, millis);
+	char *buf = malloc(sizeof(char) * 32);
+	if (buf == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_timestamp_ass_ssa: Out of memory.");
+	snprintf(buf, 32, LLD ":%02" LLD_M ":%02" LLD_M ".%02" LLD_M, hours, minutes, seconds, millis);
 	return buf;
 }
 
@@ -297,6 +323,11 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 	struct matroska_sub_track *track = mkv_ctx->sub_tracks[sub_track_index];
 
 	struct matroska_sub_sentence *sentence = malloc(sizeof(struct matroska_sub_sentence));
+	if (sentence == NULL)
+	{
+		free(message);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block: Out of memory.");
+	}
 	ULLONG timestamp = timecode + cluster_timecode;
 	sentence->blockaddition = NULL;
 	sentence->time_end = 0; // Initialize time_end so that it is updated if it was not set
@@ -347,9 +378,16 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 	if (track->sentence_count == 0)
 	{
 		track->sentences = malloc(sizeof(struct matroska_sub_sentence *));
+		if (track->sentences == NULL)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block: Out of memory allocating sentences.");
 	}
 	else
-		track->sentences = realloc(track->sentences, (track->sentence_count + 1) * sizeof(struct matroska_sub_sentence *));
+	{
+		void *tmp = realloc(track->sentences, (track->sentence_count + 1) * sizeof(struct matroska_sub_sentence *));
+		if (tmp == NULL)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block: Out of memory reallocating sentences.");
+		track->sentences = tmp;
+	}
 	track->sentences[track->sentence_count] = sentence;
 	track->sentence_count++;
 
@@ -384,6 +422,8 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block_additions(
 
 	// parses message into block addition
 	struct block_addition *newBA = calloc(1, sizeof(struct block_addition));
+	if (newBA == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block_additions: Out of memory.");
 	char *current = message;
 	int lastIndex = 0;
 	int item = 0;
@@ -452,7 +492,10 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 				new_sentence = parse_segment_cluster_block_group_block(mkv_ctx, cluster_timecode);
 				if (new_sentence != NULL)
 				{
-					sentence_list = realloc(sentence_list, sizeof(struct matroska_sub_track *) * (sentence_count + 1));
+					void *tmp = realloc(sentence_list, sizeof(struct matroska_sub_track *) * (sentence_count + 1));
+					if (tmp == NULL)
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group: Out of memory.");
+					sentence_list = tmp;
 					sentence_list[sentence_count] = new_sentence;
 					sentence_count++;
 				}
@@ -793,9 +836,14 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACK_NAME:
-				mprint("    Name: %s\n", read_vint_block_string(file));
+			{
+				char *name = read_vint_block_string(file);
+				mprint("    Name: %s\n", name);
+				free(name);
 				MATROSKA_SWITCH_BREAK(code, code_len);
+			}
 			case MATROSKA_SEGMENT_TRACK_LANGUAGE:
+				free(lang); // Free previous value (strdup or previous read)
 				lang = read_vint_block_string(file);
 				mprint("    Language: %s\n", lang);
 				MATROSKA_SWITCH_BREAK(code, code_len);
@@ -927,6 +975,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
 	{
 		struct matroska_sub_track *sub_track = malloc(sizeof(struct matroska_sub_track));
+		if (sub_track == NULL)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating sub_track.");
 		sub_track->header = header;
 		sub_track->lang = lang;
 		sub_track->lang_ietf = lang_ietf;
@@ -936,10 +986,14 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 		sub_track->codec_id_string = codec_id_string;
 		sub_track->sentence_count = 0;
 		sub_track->last_timestamp = 0;
+		sub_track->sentences = NULL;
 		for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
 			if (strcmp((const char *)mkv_ctx->sub_tracks[i]->lang, (const char *)lang) == 0)
 				sub_track->lang_index++;
-		mkv_ctx->sub_tracks = realloc(mkv_ctx->sub_tracks, sizeof(struct matroska_sub_track *) * (mkv_ctx->sub_tracks_count + 1));
+		void *tmp = realloc(mkv_ctx->sub_tracks, sizeof(struct matroska_sub_track *) * (mkv_ctx->sub_tracks_count + 1));
+		if (tmp == NULL)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory reallocating sub_tracks.");
+		mkv_ctx->sub_tracks = tmp;
 		mkv_ctx->sub_tracks[mkv_ctx->sub_tracks_count] = sub_track;
 		mkv_ctx->sub_tracks_count++;
 	}
@@ -982,8 +1036,16 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 		data = read_byte_block(file, len);
 
 		unsigned char *codec_data = malloc(sizeof(char) * 8);
+		if (codec_data == NULL)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_private_codec_data: Out of memory.");
 		// 1.ISO_639_language_code (3 bytes)
-		strcpy(codec_data, lang);
+		// Use memcpy with bounds check instead of strcpy to prevent buffer overflow
+		size_t lang_len = lang ? strlen(lang) : 0;
+		if (lang_len > 3)
+			lang_len = 3;
+		memset(codec_data, ' ', 3); // Initialize with spaces (valid padding for language codes)
+		if (lang_len > 0)
+			memcpy(codec_data, lang, lang_len);
 		// 2.subtitling_type (1 byte)
 		codec_data[3] = data[4];
 		// 3.composition_page_id (2 bytes)
@@ -1120,16 +1182,22 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 
 char *generate_filename_from_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-	char *buf = malloc(sizeof(char) * 200);
 	// Use lang_ietf if available, otherwise fall back to lang
 	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
+	const char *basename = get_basename(mkv_ctx->filename);
+	const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
+
+	// Calculate needed size: basename + "_" + lang + "_" + index + "." + extension + null
+	size_t needed = strlen(basename) + strlen(lang_to_use) + strlen(extension) + 32;
+	char *buf = malloc(needed);
+	if (buf == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_filename_from_track: Out of memory.");
 
 	if (track->lang_index == 0)
-		sprintf(buf, "%s_%s.%s", get_basename(mkv_ctx->filename), lang_to_use,
-			matroska_track_text_subtitle_id_extensions[track->codec_id]);
+		snprintf(buf, needed, "%s_%s.%s", basename, lang_to_use, extension);
 	else
-		sprintf(buf, "%s_%s_" LLD ".%s", get_basename(mkv_ctx->filename), lang_to_use,
-			track->lang_index, matroska_track_text_subtitle_id_extensions[track->codec_id]);
+		snprintf(buf, needed, "%s_%s_" LLD ".%s", basename, lang_to_use,
+			 track->lang_index, extension);
 	return buf;
 }
 
@@ -1146,6 +1214,8 @@ char *ass_ssa_sentence_erase_read_order(char *text)
 	}
 	size_t len = strlen(text) - index;
 	char *buf = malloc(sizeof(char) * (len + 1));
+	if (buf == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ass_ssa_sentence_erase_read_order: Out of memory.");
 	memcpy(buf, &text[index], len);
 	buf[len] = '\0';
 	return buf;
@@ -1217,11 +1287,15 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 			// writing cue
 			char *timestamp_start = malloc(sizeof(char) * 80); // being generous
+			if (timestamp_start == NULL)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_sub_track: Out of memory.");
 			timestamp_to_vtttime(sentence->time_start, timestamp_start);
 			ULLONG time_end = sentence->time_end;
 			if (i + 1 < track->sentence_count)
 				time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
 			char *timestamp_end = malloc(sizeof(char) * 80);
+			if (timestamp_end == NULL)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_sub_track: Out of memory.");
 			timestamp_to_vtttime(time_end, timestamp_end);
 
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
@@ -1249,14 +1323,18 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		}
 		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8)
 		{
-			char number[9];
-			sprintf(number, "%d", i + 1);
+			char number[16];
+			snprintf(number, sizeof(number), "%d", i + 1);
 			char *timestamp_start = malloc(sizeof(char) * 80); // being generous
+			if (timestamp_start == NULL)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_sub_track: Out of memory.");
 			timestamp_to_srttime(sentence->time_start, timestamp_start);
 			ULLONG time_end = sentence->time_end;
 			if (i + 1 < track->sentence_count)
 				time_end = MIN(time_end, track->sentences[i + 1]->time_start - 1);
 			char *timestamp_end = malloc(sizeof(char) * 80);
+			if (timestamp_end == NULL)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_sub_track: Out of memory.");
 			timestamp_to_srttime(time_end, timestamp_end);
 
 			write_wrapped(desc, number, strlen(number));
@@ -1296,11 +1374,13 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
 			write_wrapped(desc, ",", 1);
 			char *text = ass_ssa_sentence_erase_read_order(sentence->text);
+			char *text_to_free = text; // Save original pointer for freeing
 			while ((text[0] == '\\') && (text[1] == 'n' || text[1] == 'N'))
 				text += 2;
 			write_wrapped(desc, text, strlen(text));
 			write_wrapped(desc, "\n", 1);
 
+			free(text_to_free);
 			free(timestamp_start);
 			free(timestamp_end);
 		}
@@ -1327,6 +1407,8 @@ void free_sub_track(struct matroska_sub_track *track)
 		free(sentence->text);
 		free(sentence);
 	}
+	if (track->sentences != NULL)
+		free(track->sentences);
 	free(track);
 }
 
@@ -1362,6 +1444,7 @@ void matroska_free_all(struct matroska_ctx *mkv_ctx)
 {
 	for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
 		free_sub_track(mkv_ctx->sub_tracks[i]);
+	free(mkv_ctx->sub_tracks);
 	free(mkv_ctx);
 }
 
@@ -1436,6 +1519,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	close_input_file(ctx);
 
 	struct matroska_ctx *mkv_ctx = malloc(sizeof(struct matroska_ctx));
+	if (mkv_ctx == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In matroska_loop: Out of memory allocating mkv_ctx.");
 	mkv_ctx->ctx = ctx;
 	mkv_ctx->sub_tracks_count = 0;
 	mkv_ctx->sentence_count = 0;
@@ -1443,6 +1528,8 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->filename = ctx->inputfile[ctx->current_file];
 	mkv_ctx->file = create_file(ctx);
 	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
+	if (mkv_ctx->sub_tracks == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In matroska_loop: Out of memory allocating sub_tracks.");
 	// EIA-608
 	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
 	mkv_ctx->avc_track_number = -1;
@@ -1454,18 +1541,23 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 			  (int)(mkv_ctx->current_second % 60));
 
 	matroska_save_all(mkv_ctx, ccx_options.mkvlang);
+
+	// Save values before freeing mkv_ctx
 	int sentence_count = mkv_ctx->sentence_count;
+	int avc_track_found = mkv_ctx->avc_track_number > -1;
+	int got_output = mkv_ctx->dec_sub.got_output;
+
 	matroska_free_all(mkv_ctx);
 
 	mprint("\n\n");
 
 	// Support only one AVC track by now
-	if (mkv_ctx->avc_track_number > -1)
+	if (avc_track_found)
 		mprint("Found AVC track. ");
 	else
 		mprint("Found no AVC track. ");
 
-	if (mkv_ctx->dec_sub.got_output)
+	if (got_output)
 		return 1;
 	return sentence_count;
 }

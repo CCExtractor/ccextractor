@@ -35,6 +35,8 @@ void ccxr_set_current_pts(struct ccx_common_timing_ctx *ctx, LLONG pts);
 int ccxr_set_fts(struct ccx_common_timing_ctx *ctx);
 LLONG ccxr_get_fts(struct ccx_common_timing_ctx *ctx, int current_field);
 LLONG ccxr_get_fts_max(struct ccx_common_timing_ctx *ctx);
+LLONG ccxr_get_visible_start(struct ccx_common_timing_ctx *ctx, int current_field);
+LLONG ccxr_get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field);
 char *ccxr_print_mstime_static(LLONG mstime, char *buf);
 void ccxr_print_debug_timing(struct ccx_common_timing_ctx *ctx);
 void ccxr_calculate_ms_gop_time(struct gop_time_code *g);
@@ -63,6 +65,9 @@ struct ccx_common_timing_ctx *init_timing_ctx(struct ccx_common_timing_settings_
 	ctx->current_pts = 0;
 	ctx->current_picture_coding_type = CCX_FRAME_TYPE_RESET_OR_UNKNOWN;
 	ctx->min_pts_adjusted = 0;
+	ctx->seen_known_frame_type = 0;
+	ctx->pending_min_pts = 0x01FFFFFFFFLL;
+	ctx->unknown_frame_count = 0;
 	ctx->min_pts = 0x01FFFFFFFFLL; // 33 bit
 	ctx->max_pts = 0;
 	ctx->sync_pts = 0;
@@ -108,15 +113,18 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 
 /**
  * SCC Time formatting
+ * Note: buf must have at least 32 bytes available from the write position
  */
 size_t print_scc_time(struct ccx_boundary_time time, char *buf)
 {
 	char *fmt = "%02u:%02u:%02u;%02u";
 	double frame;
+	// Format produces "HH:MM:SS;FF" = 11 chars + null, use 32 for safety
+	const size_t max_time_len = 32;
 
 	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * 29.97 / 1000);
 
-	return (size_t)sprintf(buf + time.set, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
+	return (size_t)snprintf(buf + time.set, max_time_len, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
 }
 
 struct ccx_boundary_time get_time(LLONG time)
@@ -137,11 +145,14 @@ struct ccx_boundary_time get_time(LLONG time)
 /**
  * Fill buffer with a time string using specified format
  * @param fmt has to contain 4 format specifiers for h, m, s and ms respectively
+ * Note: buf must have at least 32 bytes available from the write position
  */
 size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf)
 {
 	unsigned hh, mm, ss, ms;
 	int signoffset = (mstime < 0 ? 1 : 0);
+	// Typical format produces "HH:MM:SS:MSS" = 12 chars + null, use 32 for safety
+	const size_t max_time_len = 32;
 
 	if (mstime < 0) // Avoid loss of data warning with abs()
 		mstime = -mstime;
@@ -153,7 +164,7 @@ size_t print_mstime_buff(LLONG mstime, char *fmt, char *buf)
 
 	buf[0] = '-';
 
-	return (size_t)sprintf(buf + signoffset, fmt, hh, mm, ss, ms);
+	return (size_t)snprintf(buf + signoffset, max_time_len, fmt, hh, mm, ss, ms);
 }
 
 /* Fill a static buffer with a time string (hh:mm:ss:ms) corresponding
