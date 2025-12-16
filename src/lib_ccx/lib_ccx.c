@@ -186,6 +186,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->hauppauge_mode = opt->hauppauge_mode;
 	ctx->live_stream = opt->live_stream;
 	ctx->binary_concat = opt->binary_concat;
+	ctx->split_dvb_subs = opt->split_dvb_subs;  // Copy DVB multi-stream flag
 	build_parity_table();
 
 	ctx->demux_ctx = init_demuxer(ctx, &opt->demux_cfg);
@@ -495,7 +496,7 @@ struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
 
 int init_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx)
 {
-	if (!ctx->options.split_dvb_subs)
+	if (!ctx->split_dvb_subs)
 		return 0;  // Multi-stream mode not enabled
 	
 	mprint("Initializing DVB multi-stream pipeline\n");
@@ -508,7 +509,7 @@ int init_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx)
 
 void cleanup_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx)
 {
-	if (!ctx->options.split_dvb_subs)
+	if (!ctx->split_dvb_subs)
 		return;
 	
 	mprint("Cleaning up DVB multi-stream pipeline\n");
@@ -528,7 +529,7 @@ void cleanup_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx)
 
 int process_dvb_multi_stream(struct lib_ccx_ctx *ctx, struct demuxer_data *data, struct cc_subtitle *sub)
 {
-	if (!ctx->options.split_dvb_subs)
+	if (!ctx->split_dvb_subs)
 		return 0;  // Multi-stream mode not enabled
 	
 	// Find the stream metadata for this PID
@@ -538,7 +539,7 @@ int process_dvb_multi_stream(struct lib_ccx_ctx *ctx, struct demuxer_data *data,
 	{
 		struct ccx_stream_metadata *stream = &ctx->demux_ctx->potential_streams[i];
 		
-		if (stream->pid == data->pid && stream->stream_type == CCX_STREAM_TYPE_DVB_SUB)
+		if (stream->pid == data->stream_pid && stream->stream_type == CCX_STREAM_TYPE_DVB_SUB)
 		{
 			target_stream = stream;
 			break;
@@ -548,7 +549,7 @@ int process_dvb_multi_stream(struct lib_ccx_ctx *ctx, struct demuxer_data *data,
 	if (!target_stream)
 	{
 		// Stream not found in registry - this shouldn't happen if PMT parsing worked correctly
-		mprint("Warning: DVB stream PID 0x%x not found in stream registry\n", data->pid);
+		mprint("Warning: DVB stream PID 0x%x not found in stream registry\n", data->stream_pid);
 		return -1;
 	}
 	
@@ -562,7 +563,7 @@ int route_dvb_stream_to_decoder(struct lib_ccx_ctx *ctx, struct ccx_stream_metad
 	if (!stream->dvb_decoder_ctx)
 	{
 		mprint("Creating DVB decoder for stream PID 0x%x (lang: %s)\n", 
-		       stream->pid, stream->language[0] ? stream->language : "unknown");
+		       stream->pid, stream->lang[0] ? stream->lang : "unknown");
 		
 		// Create DVB config for this specific stream
 		struct dvb_config cfg;
@@ -592,7 +593,7 @@ int route_dvb_stream_to_decoder(struct lib_ccx_ctx *ctx, struct ccx_stream_metad
 	memset(&cinfo, 0, sizeof(cinfo));
 	cinfo.pid = stream->pid;
 	cinfo.codec = CCX_CODEC_DVB;
-	strcpy(cinfo.language, stream->language);
+	strcpy(cinfo.language, stream->lang);
 	
 	struct encoder_ctx *enc_ctx = update_encoder_list_cinfo(ctx, &cinfo);
 	if (!enc_ctx)

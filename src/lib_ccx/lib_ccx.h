@@ -148,6 +148,9 @@ struct lib_ccx_ctx
 	int segment_on_key_frames_only;
 	int segment_counter;
 	LLONG system_start_time;
+	
+	// DVB multi-stream support
+	int split_dvb_subs;  // If 1, extract each DVB stream to a separate file
 };
 
 struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);

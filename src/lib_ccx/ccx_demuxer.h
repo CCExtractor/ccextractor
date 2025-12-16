@@ -19,6 +19,7 @@ struct ccx_stream_metadata
     int stream_type; // Logical type (CCX_STREAM_TYPE_*)
     int mpeg_type;   // Raw MPEG type (0x06)
     char lang[4];    // ISO 639-2
+    struct ccx_decoders_dvb_context *dvb_decoder_ctx;  // DVB decoder context for this stream
 };
 
 /* Report information */
@@ -77,6 +78,7 @@ struct cap_info
 	int prev_counter;
 	void *codec_private_data;
 	int ignore;
+	char language[4];  // ISO 639-2 language code
 
 	/**
 	  List joining all stream in TS

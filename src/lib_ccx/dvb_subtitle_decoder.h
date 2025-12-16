@@ -45,6 +45,11 @@ typedef struct ccx_decoders_dvb_context
     // Dependencies
     struct ccx_common_timing_ctx *timing;
     struct encoder_ctx *encoder;
+    
+    // Internal data for multi-stream support
+    void *private_data;              // Internal DVBSubContext
+    struct dvb_config *cfg;          // Configuration
+    int initialized_ocr;             // OCR initialization flag
 } ccx_decoders_dvb_context;
 
 	struct dvb_config
@@ -60,11 +65,13 @@ typedef struct ccx_decoders_dvb_context
 	};
 
 	// [ADD: Lifecycle functions]
-	ccx_decoders_dvb_context *dvb_init_decoder(struct ccx_common_timing_ctx *timing, struct encoder_ctx *encoder);
-	void dvb_free_decoder(ccx_decoders_dvb_context *dvb_ctx);
+	ccx_decoders_dvb_context *dvb_init_decoder(struct dvb_config *cfg, int initialized_ocr);
+	void dvb_free_decoder(ccx_decoders_dvb_context **dvb_ctx);
 
 	// [MODIFY: Decode signature]
-	void dvb_decode(ccx_decoders_dvb_context *dvb_ctx, unsigned char *data, int length, struct cc_subtitle *sub);
+	int dvb_decode(ccx_decoders_dvb_context *dvb_ctx, struct encoder_ctx *enc_ctx, 
+	               struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, 
+	               struct cc_subtitle *sub);
 
 	// Legacy API (kept for compatibility)
 	/**
