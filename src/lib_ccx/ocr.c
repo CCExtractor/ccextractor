@@ -387,17 +387,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	if (cpix_gs != NULL)
 		pixInvert(cpix_gs, cpix_gs);
 
-	// Apply contrast enhancement to improve OCR accuracy
-	// This stretches the histogram to use the full range, improving character recognition
-	if (cpix_gs != NULL)
-	{
-		PIX *enhanced = pixContrastNorm(NULL, cpix_gs, 100, 100, 55, 1, 1);
-		if (enhanced != NULL)
-		{
-			pixDestroy(&cpix_gs);
-			cpix_gs = enhanced;
-		}
-	}
+	// Note: Upscaling was removed - testing showed it degrades OCR quality for DVB subtitles
+	// The original bitmap quality (e.g., 520x84) is sufficient for Tesseract
 
 	if (cpix_gs == NULL)
 		tess_ret = -1;
@@ -455,12 +446,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 			goto skip_color_detection;
 		}
 		pixInvert(color_pix_processed, color_pix_processed);
-		PIX *color_pix_enhanced = pixContrastNorm(NULL, color_pix_processed, 100, 100, 55, 1, 1);
-		if (color_pix_enhanced != NULL)
-		{
-			pixDestroy(&color_pix_processed);
-			color_pix_processed = color_pix_enhanced;
-		}
+
+		// Note: Upscaling removed from color detection pass as well
 
 		TessBaseAPISetImage2(ctx->api, color_pix_processed);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);

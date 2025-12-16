@@ -224,6 +224,7 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	list_for_each_entry_safe(dec_ctx, dec_ctx1, &lctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 		LLONG cfts;
+		void *saved_private_data = dec_ctx->private_data; // Save before close NULLs it
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
 		// Test memory for teletext
@@ -231,6 +232,18 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 		else if (dec_ctx->codec == CCX_CODEC_ISDB_CC)
 			delete_isdb_decoder(&dec_ctx->private_data);
+
+		// Also NULL out any cinfo entries that shared this private_data pointer
+		// to prevent double-free in dinit_cap
+		if (saved_private_data && lctx->demux_ctx)
+		{
+			struct cap_info *cinfo_iter;
+			list_for_each_entry(cinfo_iter, &lctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+			{
+				if (cinfo_iter->codec_private_data == saved_private_data)
+					cinfo_iter->codec_private_data = NULL;
+			}
+		}
 
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
 		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);

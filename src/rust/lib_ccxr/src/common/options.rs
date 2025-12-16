@@ -578,7 +578,7 @@ impl Default for Options {
             ocrlang: Default::default(),
             ocr_oem: -1,
             psm: 3,
-            ocr_quantmode: 1,
+            ocr_quantmode: 0, // No quantization - better OCR accuracy for DVB subtitles
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
             hardsubx_ocr_mode: Default::default(),

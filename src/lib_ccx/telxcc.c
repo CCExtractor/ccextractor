@@ -1567,7 +1567,12 @@ void telxcc_update_gt(void *codec, uint32_t global_timestamp)
 // Close output
 void telxcc_close(void **ctx, struct cc_subtitle *sub)
 {
-	struct TeletextCtx *ttext = *ctx;
+	struct TeletextCtx *ttext;
+
+	if (!ctx || !*ctx)
+		return;
+
+	ttext = *ctx;
 
 	if (!ttext)
 		return;
