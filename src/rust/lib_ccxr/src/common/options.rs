@@ -512,6 +512,8 @@ pub struct Options {
     /// If true, the program will ignore PTS jumps.
     /// Sometimes this parameter is required for DVB subs with > 30s pause time
     pub ignore_pts_jumps: bool,
+    /// If true, extract each DVB subtitle stream to a separate file
+    pub split_dvb_subs: bool,
     pub multiprogram: bool,
     pub out_interval: i32,
     pub segment_on_key_frames_only: bool,
@@ -612,6 +614,7 @@ impl Default for Options {
             cc_to_stdout: Default::default(),
             pes_header_to_stdout: Default::default(),
             ignore_pts_jumps: Default::default(),
+            split_dvb_subs: Default::default(),
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),

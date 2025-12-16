@@ -1008,6 +1008,10 @@ impl OptionsExt for Options {
                 DebugMessageMask::new(DebugMessageFlag::DVB, DebugMessageFlag::VERBOSE);
         }
 
+        if args.split_dvb_subs {
+            self.split_dvb_subs = true;
+        }
+
         if args.ignoreptsjumps {
             self.ignore_pts_jumps = true;
         }

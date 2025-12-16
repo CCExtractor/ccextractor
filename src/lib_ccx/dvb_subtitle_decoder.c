@@ -559,6 +559,71 @@ int dvbsub_close_decoder(void **dvb_ctx)
 	return 0;
 }
 
+// New context-based API for multi-stream support
+
+struct ccx_decoders_dvb_context *dvb_init_decoder(struct dvb_config *cfg, int initialized_ocr)
+{
+	struct ccx_decoders_dvb_context *dvb_ctx;
+	DVBSubContext *ctx;
+	
+	dvb_ctx = (struct ccx_decoders_dvb_context *)malloc(sizeof(struct ccx_decoders_dvb_context));
+	if (!dvb_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvb_init_decoder: Out of memory for context.");
+	}
+	memset(dvb_ctx, 0, sizeof(struct ccx_decoders_dvb_context));
+	
+	// Initialize the internal DVB context using existing function
+	ctx = (DVBSubContext *)dvbsub_init_decoder(cfg, initialized_ocr);
+	if (!ctx)
+	{
+		free(dvb_ctx);
+		return NULL;
+	}
+	
+	dvb_ctx->private_data = ctx;
+	dvb_ctx->cfg = cfg;
+	dvb_ctx->initialized_ocr = initialized_ocr;
+	
+	return dvb_ctx;
+}
+
+void dvb_free_decoder(struct ccx_decoders_dvb_context **dvb_ctx)
+{
+	if (!dvb_ctx || !*dvb_ctx)
+		return;
+	
+	// Free the internal DVB context using existing function
+	if ((*dvb_ctx)->private_data)
+	{
+		void *ctx = (*dvb_ctx)->private_data;
+		dvbsub_close_decoder(&ctx);
+	}
+	
+	free(*dvb_ctx);
+	*dvb_ctx = NULL;
+}
+
+int dvb_decode(struct ccx_decoders_dvb_context *dvb_ctx, struct encoder_ctx *enc_ctx, 
+              struct lib_cc_decode *dec_ctx, const unsigned char *buf, int buf_size, 
+              struct cc_subtitle *sub)
+{
+	if (!dvb_ctx || !dvb_ctx->private_data)
+		return -1;
+	
+	// Temporarily set the private_data for the existing decode function
+	void *original_private_data = dec_ctx->private_data;
+	dec_ctx->private_data = dvb_ctx->private_data;
+	
+	// Call the existing decode function
+	int result = dvbsub_decode(enc_ctx, dec_ctx, buf, buf_size, sub);
+	
+	// Restore original private_data
+	dec_ctx->private_data = original_private_data;
+	
+	return result;
+}
+
 static int dvbsub_read_2bit_string(uint8_t *destbuf, int dbuf_len,
 				   const uint8_t **srcbuf, int buf_size, int non_mod, uint8_t *map_table,
 				   int x_pos)

@@ -19,10 +19,33 @@
 #define MAX_LANGUAGE_PER_DESC 5
 
 #include "lib_ccx.h"
+#include "ccx_common_structs.h"
+#include "ccx_decoders_structs.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+// [ADD: Context structure]
+typedef struct ccx_decoders_dvb_context
+{
+    int page_time;
+    int prev_page_time;
+    int global_x;
+    int global_y;
+    
+    // Internal lists (opaque pointers here, defined in .c)
+    void *page_composition;
+    void *region_composition_list; 
+    void *clut_definition_list;
+    void *object_data_list;
+    void *display_definition;
+
+    // Dependencies
+    struct ccx_common_timing_ctx *timing;
+    struct encoder_ctx *encoder;
+} ccx_decoders_dvb_context;
 
 	struct dvb_config
 	{
@@ -36,6 +59,14 @@ extern "C"
 		unsigned short ancillary_id[MAX_LANGUAGE_PER_DESC];
 	};
 
+	// [ADD: Lifecycle functions]
+	ccx_decoders_dvb_context *dvb_init_decoder(struct ccx_common_timing_ctx *timing, struct encoder_ctx *encoder);
+	void dvb_free_decoder(ccx_decoders_dvb_context *dvb_ctx);
+
+	// [MODIFY: Decode signature]
+	void dvb_decode(ccx_decoders_dvb_context *dvb_ctx, unsigned char *data, int length, struct cc_subtitle *sub);
+
+	// Legacy API (kept for compatibility)
 	/**
 	 * @param cfg Structure containg configuration
 	 *

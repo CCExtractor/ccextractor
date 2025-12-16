@@ -629,7 +629,7 @@ void delete_datalist(struct demuxer_data *list)
 		delete_demuxer_data(slist);
 	}
 }
-int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
+int process_data(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct demuxer_data *data_node)
 {
 	size_t got; // Means 'consumed' from buffer actually
 	int ret = 0;
@@ -644,9 +644,19 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		// Check for multi-stream DVB processing
+		if (ctx->options.split_dvb_subs)
+		{
+			ret = process_dvb_multi_stream(ctx, data_node, dec_sub);
+		}
+		else
+		{
+			// Original single-stream processing
+			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+		}
+		
 		if (ret < 0)
-			mprint("Return from dvbsub_decode: %d\n", ret);
+			mprint("Return from DVB decode: %d\n", ret);
 		set_fts(dec_ctx->timing);
 		got = data_node->len;
 	}
@@ -1004,7 +1014,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		}
 		if ((*data_node)->bufferdatatype == CCX_TELETEXT && (*dec_ctx)->private_data) // if we have teletext subs, we set the min_pts here
 			set_tlt_delta(*dec_ctx, (*dec_ctx)->timing->current_pts);
-		ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+		ret = process_data(ctx, *enc_ctx, *dec_ctx, *data_node);
 		if (*enc_ctx != NULL)
 		{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
@@ -1192,7 +1202,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					}
 				}
 
-				ret = process_data(enc_ctx, dec_ctx, data_node);
+				ret = process_data(ctx, enc_ctx, dec_ctx, data_node);
 				if (enc_ctx != NULL)
 				{
 					if (

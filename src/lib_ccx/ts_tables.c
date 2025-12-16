@@ -350,6 +350,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				if (CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
+					int is_dvb_subtitle = 1;
 #ifndef ENABLE_OCR
 					if (ccx_options.write_format != CCX_OF_SPUPNG)
 					{
@@ -371,6 +372,44 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
+					
+					// [ADD THIS BLOCK: Stream Discovery]
+					if (ccx_options.split_dvb_subs)
+					{
+						if (ctx->potential_stream_count >= MAX_POTENTIAL_STREAMS)
+						{
+							mprint("Warning: Max subtitle streams reached in PMT parsing.\n");
+						}
+						else
+						{
+							int exists = 0;
+							for (int k = 0; k < ctx->potential_stream_count; k++)
+							{
+								// Check PID + Logical Type for uniqueness
+								if (ctx->potential_streams[k].pid == elementary_PID &&
+									ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_DVB_SUB)
+								{
+									exists = 1;
+									break;
+								}
+							}
+
+							if (!exists)
+							{
+								struct ccx_stream_metadata *meta = &ctx->potential_streams[ctx->potential_stream_count++];
+								meta->pid = elementary_PID;
+								meta->stream_type = CCX_STREAM_TYPE_DVB_SUB;
+								meta->mpeg_type = stream_type;
+								
+								// Extract language from DVB config
+								if (cnf.n_language > 0)
+									snprintf(meta->lang, 4, "%.3s", (char*)&cnf.lang_index[0]);
+								else
+									strcpy(meta->lang, "und");
+								meta->lang[3] = '\0';
+							}
+						}
+					}
 				}
 			}
 		}
@@ -411,9 +450,43 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				desc_len = (*es_info++);
 				if (!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
+				int is_teletext = 1;
 				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
 				mprint("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 				       elementary_PID, elementary_PID, program_number, program_number);
+				       
+				// [ADD THIS BLOCK: Teletext Stream Discovery]
+				if (ccx_options.split_dvb_subs && is_teletext)
+				{
+					if (ctx->potential_stream_count >= MAX_POTENTIAL_STREAMS)
+					{
+						mprint("Warning: Max subtitle streams reached in PMT parsing.\n");
+					}
+					else
+					{
+						int exists = 0;
+						for (int k = 0; k < ctx->potential_stream_count; k++)
+						{
+							// Check PID + Logical Type for uniqueness
+							if (ctx->potential_streams[k].pid == elementary_PID &&
+								ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_TELETEXT)
+							{
+								exists = 1;
+								break;
+							}
+						}
+
+						if (!exists)
+						{
+							struct ccx_stream_metadata *meta = &ctx->potential_streams[ctx->potential_stream_count++];
+							meta->pid = elementary_PID;
+							meta->stream_type = CCX_STREAM_TYPE_TELETEXT;
+							meta->mpeg_type = stream_type;
+							strcpy(meta->lang, "und"); // Teletext language extraction would need more work
+							meta->lang[3] = '\0';
+						}
+					}
+				}
 			}
 		}
 

@@ -7,6 +7,20 @@
 #include "activity.h"
 #include "utility.h"
 
+// [ADD THESE DEFINITIONS]
+#define MAX_POTENTIAL_STREAMS 64
+#define CCX_STREAM_TYPE_UNKNOWN 0
+#define CCX_STREAM_TYPE_DVB_SUB 1
+#define CCX_STREAM_TYPE_TELETEXT 2
+
+struct ccx_stream_metadata
+{
+    int pid;
+    int stream_type; // Logical type (CCX_STREAM_TYPE_*)
+    int mpeg_type;   // Raw MPEG type (0x06)
+    char lang[4];    // ISO 639-2
+};
+
 /* Report information */
 #define SUB_STREAMS_CNT 10
 #define MAX_PID 65536
@@ -142,6 +156,10 @@ struct ccx_demuxer
 	LLONG filebuffer_start;	     // Position of buffer start relative to file
 	unsigned int filebuffer_pos; // Position of pointer relative to buffer start
 	unsigned int bytesinbuffer;  // Number of bytes we actually have on buffer
+
+	// [ADD THESE]
+	struct ccx_stream_metadata potential_streams[MAX_POTENTIAL_STREAMS];
+	int potential_stream_count;
 
 	int warning_program_not_found_shown;
 

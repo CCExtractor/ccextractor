@@ -226,6 +226,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).cc_to_stdout = options.cc_to_stdout as _;
     (*ccx_s_options).pes_header_to_stdout = options.pes_header_to_stdout as _;
     (*ccx_s_options).ignore_pts_jumps = options.ignore_pts_jumps as _;
+    (*ccx_s_options).split_dvb_subs = options.split_dvb_subs as _;
     (*ccx_s_options).multiprogram = options.multiprogram as _;
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
@@ -480,6 +481,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.cc_to_stdout = (*ccx_s_options).cc_to_stdout != 0;
     options.pes_header_to_stdout = (*ccx_s_options).pes_header_to_stdout != 0;
     options.ignore_pts_jumps = (*ccx_s_options).ignore_pts_jumps != 0;
+    options.split_dvb_subs = (*ccx_s_options).split_dvb_subs != 0;
     options.multiprogram = (*ccx_s_options).multiprogram != 0;
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;

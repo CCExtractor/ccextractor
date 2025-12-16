@@ -326,4 +326,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
 int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buffer, size_t len, struct cc_subtitle *sub);
 
+// Multi-stream DVB subtitle processing pipeline
+int init_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx);
+void cleanup_dvb_multi_stream_pipeline(struct lib_ccx_ctx *ctx);
+int process_dvb_multi_stream(struct lib_ccx_ctx *ctx, struct demuxer_data *data, struct cc_subtitle *sub);
+int route_dvb_stream_to_decoder(struct lib_ccx_ctx *ctx, struct ccx_stream_metadata *stream, 
+                                const unsigned char *buf, int buf_size, struct cc_subtitle *sub);
+
 #endif
