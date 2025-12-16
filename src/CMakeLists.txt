@@ -1,5 +1,24 @@
 cmake_minimum_required (VERSION 3.24.0)
-project (CCExtractor)
+
+# On Windows, use static C runtime library to avoid UCRT symbol import issues
+# MUST be set before project() to take effect
+if (WIN32)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+project (CCExtractor C)
+
+# Enable parallel compilation for faster builds
+if(MSVC)
+  add_compile_options(/MP)
+endif()
+
+# Use ccache if available for faster recompilation
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  message(STATUS "Using ccache for faster builds")
+endif()
 
 include (CTest)
 
@@ -69,7 +88,25 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/zlib)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/freetype/include)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash/ SOURCEFILE)
 aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/ SOURCEFILE)
-aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+
+# Gather zlib sources; on Windows build a static library and link it to
+# avoid depending on an external `zlib.lib` (which causes LNK1104 when
+# it's not available). On other platforms keep the old behavior of
+# compiling the sources directly into the main executable.
+
+if (WIN32)
+  file(GLOB ZLIB_SOURCES "${PROJECT_SOURCE_DIR}/thirdparty/zlib/*.c")
+  add_library(zlib_static STATIC ${ZLIB_SOURCES})
+  target_include_directories(zlib_static PUBLIC ${PROJECT_SOURCE_DIR}/thirdparty/zlib)
+  # Suppress warnings in third-party code
+  if(MSVC)
+    target_compile_options(zlib_static PRIVATE /W0)
+  endif()
+  set (EXTRA_LIBS ${EXTRA_LIBS} zlib_static)
+else()
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/zlib/ SOURCEFILE)
+endif()
+
 aux_source_directory(${PROJECT_SOURCE_DIR}/lib_ccx/zvbi/ SOURCEFILE)
 
 set(UTF8PROC_SOURCE ${PROJECT_SOURCE_DIR}/thirdparty/utf8proc/utf8proc.c)
@@ -242,6 +279,19 @@ endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 
+# Optimize compilation
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  if(MSVC)
+    target_compile_options(ccextractor PRIVATE /O2)
+  else()
+    target_compile_options(ccextractor PRIVATE -O3)
+  endif()
+endif()
+
 ########################################################
 # Build with Rust library
 ########################################################
@@ -251,8 +301,7 @@ if (PKG_CONFIG_FOUND)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
 endif (PKG_CONFIG_FOUND)
 
-
-target_link_libraries (ccextractor ${EXTRA_LIBS})
+target_link_libraries (ccextractor PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 install (TARGETS ccextractor DESTINATION bin)

@@ -2,6 +2,11 @@ cmake_policy (SET CMP0037 NEW)
 
 if(MSVC)
     set (CMAKE_C_FLAGS "-W3 /wd4005 /wd4996")
+    # Optimize for speed in release builds
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_compile_options(/O2 /GL)
+        add_link_options(/LTCG)
+    endif()
 else (MSVC)
     set (CMAKE_C_FLAGS "-Wall -Wno-pointer-sign -g -std=gnu99")
 endif(MSVC)
@@ -10,11 +15,21 @@ if(WIN32)
     add_definitions(-DWIN32)
 endif(WIN32)
 
-find_package(PkgConfig)
-pkg_check_modules (GPAC REQUIRED gpac)
+# Try to find GPAC via pkg-config, or use manually specified variables
+if(NOT DEFINED GPAC_INCLUDE_DIRS OR NOT DEFINED GPAC_LIBRARIES)
+  find_package(PkgConfig)
+  pkg_check_modules (GPAC gpac)
+endif()
 
-set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
-set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+# Add GPAC include dirs and libraries if available
+if(GPAC_INCLUDE_DIRS AND GPAC_LIBRARIES)
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+  message(STATUS "GPAC enabled")
+else()
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_GPAC")
+  message(WARNING "GPAC not found - MP4 support will be disabled")
+endif()
 
 if (WITH_FFMPEG)
     find_package(PkgConfig)
@@ -52,6 +67,18 @@ if (WITH_OCR)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+
+  # Some pkg-config files for leptonica report the include dir as
+  # .../include/leptonica which causes <leptonica/allheaders.h> to
+  # expand incorrectly. Add the parent include directory as well.
+  # Handle multiple include paths by iterating over each one.
+  foreach(LEPT_INC ${LEPTONICA_INCLUDE_DIRS})
+    get_filename_component(LEPT_PARENT "${LEPT_INC}" DIRECTORY)
+    if(LEPT_PARENT)
+      list(APPEND EXTRA_INCLUDES ${LEPT_PARENT})
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES EXTRA_INCLUDES)
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (WITH_OCR)
