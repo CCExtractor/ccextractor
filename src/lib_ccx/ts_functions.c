@@ -748,7 +748,7 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	struct cap_info *cinfo;
 	struct ts_payload payload;
 	int j;
-	int all_pmts_analyzed = 0;  // Track if all programs have analyzed their PMT
+	int all_pmts_analyzed = 0; // Track if all programs have analyzed their PMT
 	int packets_after_pmt_analysis = 0;
 	static int no_pat_warning_shown = 0;
 
