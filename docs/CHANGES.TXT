@@ -1,5 +1,7 @@
 0.95 (2025-09-15)
 -----------------
+- FIX: Include ATSC VCT virtual channel numbers and call signs in XMLTV output
+- FIX: Restore ATSC XMLTV generation with ETT parsing for extended descriptions, multi-segment handling, extended table ID's (EIT/VCT), corrected <programme> XMLTV formatting, buffer bounds fixes
 - Fix: DVB subtitle extraction improvements for Chinese broadcasts (#224):
   - Fix crash in parse_PMT() due to missing bounds checks
   - Fix negative timestamps in DVB subtitle output

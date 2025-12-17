@@ -445,9 +445,33 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "    <display-name>%i</display-name>\n", ctx->demux_ctx->pinfo[i].program_number);
+
+		// Output virtual channel number if available (e.g., "2.1")
+		if (ctx->demux_ctx->pinfo[i].virtual_channel[0] != '\0')
+		{
+			fprintf(f, "    <display-name>%s</display-name>\n",
+				ctx->demux_ctx->pinfo[i].virtual_channel);
+		}
+
+		// Output call sign if available (e.g., "KTVU-HD")
+		if (ctx->demux_ctx->pinfo[i].name[0] != '\0')
+		{
+			fprintf(f, "    <display-name>");
+			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
+			fprintf(f, "</display-name>\n");
+		}
+
+		// Fallback to program number if nothing else available
+		if (ctx->demux_ctx->pinfo[i].name[0] == '\0' &&
+		    ctx->demux_ctx->pinfo[i].virtual_channel[0] == '\0')
+		{
+			fprintf(f, "    <display-name>%i</display-name>\n",
+				ctx->demux_ctx->pinfo[i].program_number);
+		}
+
 		fprintf(f, "  </channel>\n");
 	}
+
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		for (j = 0; j < ctx->eit_programs[i].array_len; j++)
@@ -499,14 +523,33 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "    <display-name>");
+
+		// Output virtual channel number if available (e.g., "2.1")
+		if (ctx->demux_ctx->pinfo[i].virtual_channel[0] != '\0')
+		{
+			fprintf(f, "    <display-name>%s</display-name>\n",
+				ctx->demux_ctx->pinfo[i].virtual_channel);
+		}
+
+		// Output call sign if available (e.g., "KTVU-HD")
 		if (ctx->demux_ctx->pinfo[i].name[0] != '\0')
+		{
+			fprintf(f, "    <display-name>");
 			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
-		else
-			fprintf(f, "%i\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "</display-name>\n");
+			fprintf(f, "</display-name>\n");
+		}
+
+		// Fallback to program number if nothing else available
+		if (ctx->demux_ctx->pinfo[i].name[0] == '\0' &&
+		    ctx->demux_ctx->pinfo[i].virtual_channel[0] == '\0')
+		{
+			fprintf(f, "    <display-name>%i</display-name>\n",
+				ctx->demux_ctx->pinfo[i].program_number);
+		}
+
 		fprintf(f, "  </channel>\n");
 	}
+
 	if (ccx_options.xmltvonlycurrent == 0)
 	{ // print all events
 		for (i = 0; i < ctx->demux_ctx->nb_program; i++)
@@ -1204,12 +1247,36 @@ void EPG_ATSC_decode_ETT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	}
 }
 
+// Converts ATSC VCT short_name (7 UTF-16BE chars) to UTF-8
+// ATSC A/65: short_name is 14 bytes (7 UTF-16 characters), typically ASCII
+static void atsc_shortname_to_utf8(uint8_t *in, char *out, size_t out_size)
+{
+	size_t i, o = 0;
+
+	// Process 7 UTF-16BE characters (14 bytes)
+	for (i = 0; i < 14 && o + 1 < out_size; i += 2)
+	{
+		uint16_t ch = (in[i] << 8) | in[i + 1];
+
+		// Stop at NULL or padding (0xFFFF)
+		if (ch == 0x0000 || ch == 0xFFFF)
+			break;
+
+		// ATSC short_name is typically ASCII-only
+		if (ch < 0x80)
+			out[o++] = (char)ch;
+		// Skip non-ASCII (rare in practice)
+	}
+
+	out[o] = '\0';
+}
+
 // decode ATSC VCT table.
 void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
 {
 	uint8_t num_channels_in_section;
 	uint8_t *offset;
-	int i;
+	int i, p;
 
 	if (size < 10)
 		return;
@@ -1219,23 +1286,69 @@ void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 	for (i = 0; i < num_channels_in_section && offset < payload_start + size; i++)
 	{
-		char shortname[7 * 2];
+		char shortname_raw[14];
+		char shortname_utf8[32] = {0};
 		uint16_t program_number;
 		uint16_t source_id;
 		uint16_t descriptors_loop_length;
+		uint16_t major_channel_num;
+		uint16_t minor_channel_num;
 
 		if (offset + 31 > payload_start + size)
 			break;
+
+		// Extract short_name (14 bytes, UTF-16BE)
+		memcpy(shortname_raw, &offset[0], 14);
+
+		// Extract major/minor channel numbers (ATSC A/65 Section 6.4)
+		major_channel_num = ((offset[14] & 0x0F) << 6) | ((offset[15] & 0xFC) >> 2);
+		minor_channel_num = ((offset[15] & 0x03) << 8) | offset[16];
 
 		program_number = (offset[24] << 8) | offset[25];
 		source_id = (offset[28] << 8) | offset[29];
 		descriptors_loop_length = ((offset[30] & 0x03) << 8) | offset[31];
 
-		memcpy(shortname, &offset[0], 7 * 2);
-
 		offset += 32 + descriptors_loop_length;
 
 		ctx->ATSC_source_pg_map[source_id] = program_number;
+
+		// Convert short_name and store in program info
+		atsc_shortname_to_utf8((uint8_t *)shortname_raw, shortname_utf8, sizeof(shortname_utf8));
+
+		// Trim trailing whitespace from VCT short_name
+		size_t len = strlen(shortname_utf8);
+		while (len > 0 && shortname_utf8[len - 1] == ' ')
+		{
+			shortname_utf8[--len] = '\0';
+		}
+
+		if (shortname_utf8[0] != '\0' || major_channel_num > 0)
+		{
+			// Find matching program and attach name + virtual channel
+			for (p = 0; p < ctx->demux_ctx->nb_program; p++)
+			{
+				if (ctx->demux_ctx->pinfo[p].program_number == program_number)
+				{
+					// Store call sign
+					if (shortname_utf8[0] != '\0')
+					{
+						strncpy(ctx->demux_ctx->pinfo[p].name,
+							shortname_utf8,
+							sizeof(ctx->demux_ctx->pinfo[p].name) - 1);
+						ctx->demux_ctx->pinfo[p].name[sizeof(ctx->demux_ctx->pinfo[p].name) - 1] = '\0';
+					}
+
+					// Store virtual channel (major.minor format)
+					if (major_channel_num > 0)
+					{
+						snprintf(ctx->demux_ctx->pinfo[p].virtual_channel,
+							 sizeof(ctx->demux_ctx->pinfo[p].virtual_channel),
+							 "%d.%d", major_channel_num, minor_channel_num);
+					}
+					break;
+				}
+			}
+		}
 	}
 }
 

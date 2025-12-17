@@ -1001,6 +1001,7 @@ impl CType<program_info> for ProgramInfo {
             pcr_pid: self.pcr_pid,
             got_important_streams_min_pts: min_pts_c,
             has_all_min_pts: self.has_all_min_pts as c_int,
+            virtual_channel: [0; 16],
         }
     }
 }
