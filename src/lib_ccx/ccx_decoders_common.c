@@ -241,7 +241,21 @@ void dinit_cc_decode(struct lib_cc_decode **ctx)
 			freep(&bitmap->data1);
 		}
 	}
+	/* Free any leftover XDS strings that weren't processed by the encoder */
+	if (lctx->dec_sub.type == CC_608 && lctx->dec_sub.data)
+	{
+		struct eia608_screen *data = (struct eia608_screen *)lctx->dec_sub.data;
+		for (int i = 0; i < lctx->dec_sub.nb_data; i++, data++)
+		{
+			if (data->format == SFORMAT_XDS && data->xds_str)
+			{
+				freep(&data->xds_str);
+			}
+		}
+	}
 	freep(&lctx->dec_sub.data);
+	/* Note: xds_ctx is freed in general_loop.c, mp4.c etc. during normal processing.
+	   Don't free it here as it may cause double-free if already freed elsewhere. */
 	freep(ctx);
 }
 
