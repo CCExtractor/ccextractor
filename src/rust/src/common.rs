@@ -250,12 +250,11 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
             &options.output_filename.clone().unwrap(),
         );
     }
-    if options.inputfile.is_some() {
-        // Free old input file array before allocating new one
-        free_rust_c_string_array(
-            (*ccx_s_options).inputfile,
-            (*ccx_s_options).num_input_files as usize,
-        );
+    // Only set inputfile if it's not already set (first call from ccxr_parse_parameters).
+    // Subsequent calls from ccxr_demuxer_open/close should NOT modify inputfile because
+    // C code holds references to those strings throughout processing.
+    // Freeing them would cause use-after-free and double-free errors.
+    if options.inputfile.is_some() && (*ccx_s_options).inputfile.is_null() {
         (*ccx_s_options).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
         (*ccx_s_options).num_input_files = options
             .inputfile
@@ -266,9 +265,12 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
             .count() as _;
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
-    // Free old Rust-allocated strings in enc_cfg before overwriting
-    free_encoder_cfg_strings(&(*ccx_s_options).enc_cfg);
-    (*ccx_s_options).enc_cfg = options.enc_cfg.to_ctype();
+    // Only set enc_cfg on the first call (when output_filename is null).
+    // Subsequent calls from ccxr_demuxer_open/close should NOT modify enc_cfg
+    // because it causes memory leaks (strings allocated but never freed).
+    if (*ccx_s_options).enc_cfg.output_filename.is_null() {
+        (*ccx_s_options).enc_cfg = options.enc_cfg.to_ctype();
+    }
     (*ccx_s_options).subs_delay = options.subs_delay.millis();
     (*ccx_s_options).cc_to_stdout = options.cc_to_stdout as _;
     (*ccx_s_options).pes_header_to_stdout = options.pes_header_to_stdout as _;
