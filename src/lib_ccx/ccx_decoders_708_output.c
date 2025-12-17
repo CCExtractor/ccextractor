@@ -538,6 +538,36 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 	// when hiding subtract a frame (1 frame = 34 ms)
 	struct ccx_boundary_time time_end = get_time(tv->time_ms_hide + encoder->subs_delay - 34);
 
+	/* ---- SCC accurate timing: byte budgeting ---- */
+	int bytes_required = 0;
+
+	/* Control codes: RCL + ENM + EOC (each = 2 bytes) */
+	bytes_required += 6;
+
+	for (int i = 0; i < CCX_DTVCC_SCREENGRID_ROWS; i++)
+	{
+		if (!dtvcc_is_row_empty(tv, i))
+		{
+			int first, last;
+			dtvcc_get_write_interval(tv, i, &first, &last);
+			bytes_required += (last - first + 1);
+		}
+	}
+
+	/* Pad to even number of bytes */
+	if (bytes_required % 2 != 0)
+		bytes_required++;
+
+	/* ---- SCC accurate timing: scheduling ---- */
+	int frames_required = (bytes_required + 1) / 2;
+	int tx_duration_ms = (int)(frames_required * (1000.0 / 29.97));
+
+	time_show.time_in_ms -= tx_duration_ms;
+
+	/* ---- SCC accurate timing: collision handling ---- */
+	if (encoder->last_scc_tx_end_ms >= 0 && time_show.time_in_ms < encoder->last_scc_tx_end_ms)
+		time_show.time_in_ms = encoder->last_scc_tx_end_ms;
+
 #define SCC_SNPRINTF(fmt, ...)                                                    \
 	do                                                                        \
 	{                                                                         \
@@ -614,6 +644,7 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 
 #undef SCC_SNPRINTF
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
+	encoder->last_scc_tx_end_ms = time_show.time_in_ms + tx_duration_ms;
 
 	tv->old_cc_time_end = time_end.time_in_ms;
 }

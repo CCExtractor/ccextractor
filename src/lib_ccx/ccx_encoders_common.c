@@ -829,6 +829,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->dtvcc_extract = opt->dtvcc_extract;
 
+	ctx->last_scc_tx_end_ms = -1;
 	ctx->segment_pending = 0;
 	ctx->segment_last_key_frame = 0;
 	ctx->nospupngocr = opt->nospupngocr;
