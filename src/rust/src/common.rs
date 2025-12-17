@@ -78,8 +78,18 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).extraction_start = options.extraction_start.to_ctype();
     (*ccx_s_options).extraction_end = options.extraction_end.to_ctype();
     (*ccx_s_options).print_file_reports = options.print_file_reports as _;
+    // Preserve the original C-managed report pointer to avoid dangling pointer issues.
+    let saved_608_report = (*ccx_s_options).settings_608.report;
     (*ccx_s_options).settings_608 = options.settings_608.to_ctype();
+    (*ccx_s_options).settings_608.report = saved_608_report;
+    // Preserve the original C-managed report and timing pointers to avoid dangling pointer issues.
+    // These pointers are allocated and managed by C code (init_libraries, init_cc_decode),
+    // and to_ctype() would create temporary stack values that become dangling.
+    let saved_report = (*ccx_s_options).settings_dtvcc.report;
+    let saved_timing = (*ccx_s_options).settings_dtvcc.timing;
     (*ccx_s_options).settings_dtvcc = options.settings_dtvcc.to_ctype();
+    (*ccx_s_options).settings_dtvcc.report = saved_report;
+    (*ccx_s_options).settings_dtvcc.timing = saved_timing;
     (*ccx_s_options).is_608_enabled = options.is_608_enabled as _;
     (*ccx_s_options).is_708_enabled = options.is_708_enabled as _;
     (*ccx_s_options).millis_separator = options.millis_separator() as _;
