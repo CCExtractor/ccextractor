@@ -669,24 +669,33 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	{
 		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
 
-		/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
-		   This enables tlt_process_pes_packet() to detect subtitle pages by populating
-		   the seen_sub_page[] array inside the teletext decoder. */
-		int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+		/* Check if teletext context is still valid (may have been freed by dinit_cap
+		   during PAT change while stream was being processed) */
+		if (!dec_ctx->private_data)
+		{
+			got = data_node->len; // Skip processing, context was freed
+		}
+		else
+		{
+			/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
+			   This enables tlt_process_pes_packet() to detect subtitle pages by populating
+			   the seen_sub_page[] array inside the teletext decoder. */
+			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
 
-		ret = tlt_process_pes_packet(
-		    dec_ctx,
-		    data_node->buffer,
-		    data_node->len,
-		    dec_sub,
-		    sentence_cap);
+			ret = tlt_process_pes_packet(
+			    dec_ctx,
+			    data_node->buffer,
+			    data_node->len,
+			    dec_sub,
+			    sentence_cap);
 
-		/* If Teletext decoding fails with invalid data, abort processing */
-		if (ret == CCX_EINVAL)
-			return ret;
+			/* If Teletext decoding fails with invalid data, abort processing */
+			if (ret == CCX_EINVAL)
+				return ret;
 
-		/* Mark processed byte count */
-		got = data_node->len;
+			/* Mark processed byte count */
+			got = data_node->len;
+		}
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
@@ -1030,11 +1039,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
-	enum ccx_stream_mode_enum stream_mode;
+	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
-	int ret;
+	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int ret = 0;
 	int caps = 0;
 
 	uint64_t min_pts = UINT64_MAX;
@@ -1115,7 +1124,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		else
 		{
 			struct cap_info *cinfo = NULL;
-			struct cap_info *program_iter;
+			struct cap_info *program_iter = NULL;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
 			struct encoder_ctx *enc_ctx = NULL;
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
