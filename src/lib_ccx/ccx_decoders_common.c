@@ -231,6 +231,17 @@ void dinit_cc_decode(struct lib_cc_decode **ctx)
 	dinit_timing_ctx(&lctx->timing);
 	free_decoder_context(lctx->prev);
 	free_subtitle(lctx->dec_sub.prev);
+	/* Free the embedded dec_sub's data field (allocated by write_cc_buffer) */
+	if (lctx->dec_sub.datatype == CC_DATATYPE_DVB)
+	{
+		struct cc_bitmap *bitmap = (struct cc_bitmap *)lctx->dec_sub.data;
+		if (bitmap)
+		{
+			freep(&bitmap->data0);
+			freep(&bitmap->data1);
+		}
+	}
+	freep(&lctx->dec_sub.data);
 	freep(ctx);
 }
 
