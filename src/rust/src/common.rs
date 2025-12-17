@@ -4,7 +4,10 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
+use crate::utils::free_rust_c_string;
+use crate::utils::free_rust_c_string_array;
 use crate::utils::null_pointer;
+use crate::utils::replace_rust_c_string;
 use crate::utils::string_to_c_char;
 use crate::utils::string_to_c_chars;
 use lib_ccxr::common::Decoder608Report;
@@ -108,7 +111,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).no_progress_bar = options.no_progress_bar as _;
 
     if options.sentence_cap_file.try_exists().unwrap_or_default() {
-        (*ccx_s_options).sentence_cap_file = string_to_c_char(
+        (*ccx_s_options).sentence_cap_file = replace_rust_c_string(
+            (*ccx_s_options).sentence_cap_file,
             options
                 .sentence_cap_file
                 .clone()
@@ -127,7 +131,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
         .try_exists()
         .unwrap_or_default()
     {
-        (*ccx_s_options).filter_profanity_file = string_to_c_char(
+        (*ccx_s_options).filter_profanity_file = replace_rust_c_string(
+            (*ccx_s_options).filter_profanity_file,
             options
                 .filter_profanity_file
                 .clone()
@@ -166,16 +171,22 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).hardsubx = options.hardsubx as _;
     (*ccx_s_options).hardsubx_and_common = options.hardsubx_and_common as _;
     if let Some(dvblang) = options.dvblang {
-        (*ccx_s_options).dvblang = string_to_c_char(dvblang.to_ctype().as_str());
+        (*ccx_s_options).dvblang =
+            replace_rust_c_string((*ccx_s_options).dvblang, dvblang.to_ctype().as_str());
     }
     if let Some(ref ocrlang) = options.ocrlang {
-        (*ccx_s_options).ocrlang = string_to_c_char(ocrlang.as_str());
+        // Cast const to mut for freeing - safe because we allocated this with string_to_c_char
+        (*ccx_s_options).ocrlang = replace_rust_c_string(
+            (*ccx_s_options).ocrlang as *mut _,
+            ocrlang.as_str(),
+        );
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
     if let Some(mkvlang) = options.mkvlang {
-        (*ccx_s_options).mkvlang = string_to_c_char(mkvlang.to_ctype().as_str());
+        (*ccx_s_options).mkvlang =
+            replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.to_ctype().as_str());
     }
     (*ccx_s_options).analyze_video_stream = options.analyze_video_stream as _;
     (*ccx_s_options).hardsubx_ocr_mode = options.hardsubx_ocr_mode.to_ctype();
@@ -193,34 +204,58 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).debug_mask = options.debug_mask.normal_mask().bits() as _;
     (*ccx_s_options).debug_mask_on_debug = options.debug_mask.debug_mask().bits() as _;
     if options.udpsrc.is_some() {
-        (*ccx_s_options).udpsrc = string_to_c_char(&options.udpsrc.clone().unwrap());
+        (*ccx_s_options).udpsrc =
+            replace_rust_c_string((*ccx_s_options).udpsrc, &options.udpsrc.clone().unwrap());
     }
     if options.udpaddr.is_some() {
-        (*ccx_s_options).udpaddr = string_to_c_char(&options.udpaddr.clone().unwrap());
+        (*ccx_s_options).udpaddr =
+            replace_rust_c_string((*ccx_s_options).udpaddr, &options.udpaddr.clone().unwrap());
     }
     (*ccx_s_options).udpport = options.udpport as _;
     if options.tcpport.is_some() {
-        (*ccx_s_options).tcpport = string_to_c_char(&options.tcpport.unwrap().to_string());
+        (*ccx_s_options).tcpport = replace_rust_c_string(
+            (*ccx_s_options).tcpport,
+            &options.tcpport.unwrap().to_string(),
+        );
     }
     if options.tcp_password.is_some() {
-        (*ccx_s_options).tcp_password = string_to_c_char(&options.tcp_password.clone().unwrap());
+        (*ccx_s_options).tcp_password = replace_rust_c_string(
+            (*ccx_s_options).tcp_password,
+            &options.tcp_password.clone().unwrap(),
+        );
     }
     if options.tcp_desc.is_some() {
-        (*ccx_s_options).tcp_desc = string_to_c_char(&options.tcp_desc.clone().unwrap());
+        (*ccx_s_options).tcp_desc = replace_rust_c_string(
+            (*ccx_s_options).tcp_desc,
+            &options.tcp_desc.clone().unwrap(),
+        );
     }
     if options.srv_addr.is_some() {
-        (*ccx_s_options).srv_addr = string_to_c_char(&options.srv_addr.clone().unwrap());
+        (*ccx_s_options).srv_addr = replace_rust_c_string(
+            (*ccx_s_options).srv_addr,
+            &options.srv_addr.clone().unwrap(),
+        );
     }
     if options.srv_port.is_some() {
-        (*ccx_s_options).srv_port = string_to_c_char(&options.srv_port.unwrap().to_string());
+        (*ccx_s_options).srv_port = replace_rust_c_string(
+            (*ccx_s_options).srv_port,
+            &options.srv_port.unwrap().to_string(),
+        );
     }
     (*ccx_s_options).noautotimeref = options.noautotimeref as _;
     (*ccx_s_options).input_source = options.input_source as _;
     if options.output_filename.is_some() {
-        (*ccx_s_options).output_filename =
-            string_to_c_char(&options.output_filename.clone().unwrap());
+        (*ccx_s_options).output_filename = replace_rust_c_string(
+            (*ccx_s_options).output_filename,
+            &options.output_filename.clone().unwrap(),
+        );
     }
     if options.inputfile.is_some() {
+        // Free old input file array before allocating new one
+        free_rust_c_string_array(
+            (*ccx_s_options).inputfile,
+            (*ccx_s_options).num_input_files as usize,
+        );
         (*ccx_s_options).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
         (*ccx_s_options).num_input_files = options
             .inputfile
@@ -231,6 +266,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
             .count() as _;
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
+    // Free old Rust-allocated strings in enc_cfg before overwriting
+    free_encoder_cfg_strings(&(*ccx_s_options).enc_cfg);
     (*ccx_s_options).enc_cfg = options.enc_cfg.to_ctype();
     (*ccx_s_options).subs_delay = options.subs_delay.millis();
     (*ccx_s_options).cc_to_stdout = options.cc_to_stdout as _;
@@ -242,8 +279,10 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
-            (*ccx_s_options).curlposturl =
-                string_to_c_char(&options.curlposturl.as_ref().unwrap_or_default().as_str());
+            (*ccx_s_options).curlposturl = replace_rust_c_string(
+                (*ccx_s_options).curlposturl,
+                options.curlposturl.as_ref().unwrap_or_default().as_str(),
+            );
         }
     }
 }
@@ -840,6 +879,24 @@ impl CType<[u32; 128]> for Vec<u32> {
         }
         array
     }
+}
+
+/// Free all Rust-allocated strings in an encoder_cfg struct.
+/// This must be called before overwriting enc_cfg with a new value to avoid memory leaks.
+/// # Safety
+/// The string pointers must have been allocated by Rust's `string_to_c_char` or be null.
+pub unsafe fn free_encoder_cfg_strings(cfg: &encoder_cfg) {
+    free_rust_c_string(cfg.output_filename);
+    free_rust_c_string(cfg.start_credits_text);
+    free_rust_c_string(cfg.end_credits_text);
+    free_rust_c_string(cfg.first_input_file);
+    free_rust_c_string(cfg.render_font);
+    free_rust_c_string(cfg.render_font_italics);
+    free_rust_c_string(cfg.all_services_charset);
+    #[cfg(feature = "with_libcurl")]
+    free_rust_c_string(cfg.curlposturl);
+    // Note: services_charsets is a *mut *mut c_char (array of strings)
+    // which would need special handling, but it's typically null in practice
 }
 
 impl CType<encoder_cfg> for EncoderConfig {
