@@ -748,6 +748,8 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	struct cap_info *cinfo;
 	struct ts_payload payload;
 	int j;
+	int all_pmts_analyzed = 0;  // Track if all programs have analyzed their PMT
+	int packets_after_pmt_analysis = 0;
 	static int no_pat_warning_shown = 0;
 
 	memset(&payload, 0, sizeof(payload));
@@ -755,6 +757,31 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	do
 	{
 		pcount++;
+
+		// Check if all PMTs have been analyzed
+		if (!all_pmts_analyzed)
+		{
+			all_pmts_analyzed = 1;
+			for (j = 0; j < ctx->nb_program; j++)
+			{
+				if (ctx->pinfo[j].analysed_PMT_once == CCX_FALSE)
+				{
+					all_pmts_analyzed = 0;
+					break;
+				}
+			}
+		}
+
+		// After all PMTs analyzed, if no caption streams found after reasonable packets, exit
+		if (all_pmts_analyzed)
+		{
+			packets_after_pmt_analysis++;
+			if (packets_after_pmt_analysis > 1000 && ctx->num_of_PIDs == 0)
+			{
+				dbg_print(CCX_DMT_PARSE, "\nNo caption/subtitle streams found in any PMT after %ld packets. This file contains no extractable subtitles.\n", pcount);
+				return CCX_EOF;
+			}
+		}
 
 		// Exit the loop at EOF
 		ret = ts_readpacket(ctx, &payload);
