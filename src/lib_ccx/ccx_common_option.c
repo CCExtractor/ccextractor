@@ -109,10 +109,10 @@ void init_options(struct ccx_s_options *options)
 	options->noautotimeref = 0;	     // Do NOT set time automatically?
 	options->input_source = CCX_DS_FILE; // Files, stdin or network
 	options->multiprogram = 0;
-	
+
 	// [ADD THIS]
 	options->split_dvb_subs = 0;
-	
+
 	options->out_interval = -1;
 	options->segment_on_key_frames_only = 0;
 

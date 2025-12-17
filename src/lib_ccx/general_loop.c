@@ -654,7 +654,7 @@ int process_data(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, struct li
 			// Original single-stream processing
 			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 		}
-		
+
 		if (ret < 0)
 			mprint("Return from DVB decode: %d\n", ret);
 		set_fts(dec_ctx->timing);

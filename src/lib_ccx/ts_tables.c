@@ -372,7 +372,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
 					max_dif = 30;
-					
+
 					// [ADD THIS BLOCK: Stream Discovery]
 					if (ccx_options.split_dvb_subs)
 					{
@@ -387,7 +387,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 							{
 								// Check PID + Logical Type for uniqueness
 								if (ctx->potential_streams[k].pid == elementary_PID &&
-									ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_DVB_SUB)
+								    ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_DVB_SUB)
 								{
 									exists = 1;
 									break;
@@ -400,10 +400,10 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 								meta->pid = elementary_PID;
 								meta->stream_type = CCX_STREAM_TYPE_DVB_SUB;
 								meta->mpeg_type = stream_type;
-								
+
 								// Extract language from DVB config
 								if (cnf.n_language > 0)
-									snprintf(meta->lang, 4, "%.3s", (char*)&cnf.lang_index[0]);
+									snprintf(meta->lang, 4, "%.3s", (char *)&cnf.lang_index[0]);
 								else
 									strcpy(meta->lang, "und");
 								meta->lang[3] = '\0';
@@ -454,7 +454,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
 				mprint("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 				       elementary_PID, elementary_PID, program_number, program_number);
-				       
+
 				// [ADD THIS BLOCK: Teletext Stream Discovery]
 				if (ccx_options.split_dvb_subs && is_teletext)
 				{
@@ -469,7 +469,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						{
 							// Check PID + Logical Type for uniqueness
 							if (ctx->potential_streams[k].pid == elementary_PID &&
-								ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_TELETEXT)
+							    ctx->potential_streams[k].stream_type == CCX_STREAM_TYPE_TELETEXT)
 							{
 								exists = 1;
 								break;
