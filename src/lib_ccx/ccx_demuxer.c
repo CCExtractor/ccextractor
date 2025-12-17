@@ -396,10 +396,10 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 
 	ctx->warning_program_not_found_shown = CCX_FALSE;
 	ctx->strangeheader = 0;
-	
+
 	// [ADD THIS]
 	ctx->potential_stream_count = 0;
-	
+
 	memset(&ctx->freport, 0, sizeof(ctx->freport));
 
 	for (i = 0; i < MAX_PSI_PID; i++)
