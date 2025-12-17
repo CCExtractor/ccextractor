@@ -1255,7 +1255,21 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	{
 
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		{
+			void *saved_private_data = dec_ctx->private_data;
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+			// NULL out any cinfo entries that shared this private_data pointer
+			// to prevent double-free in dinit_cap
+			if (saved_private_data && ctx->demux_ctx)
+			{
+				struct cap_info *cinfo_iter;
+				list_for_each_entry(cinfo_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+				{
+					if (cinfo_iter->codec_private_data == saved_private_data)
+						cinfo_iter->codec_private_data = NULL;
+				}
+			}
+		}
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
 			process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
