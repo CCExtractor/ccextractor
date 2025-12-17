@@ -1,4 +1,4 @@
-use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
+use crate::bindings::{ccx_demuxer, ccx_datasource_CCX_DS_FILE, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::FromCType;
@@ -10,6 +10,12 @@ use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint, c_void};
+
+// External C function declarations
+extern "C" {
+    fn activity_input_file_closed();
+    fn close(fd: c_int) -> c_int;
+}
 
 pub fn copy_c_array_to_rust_vec(
     c_bytes: &[u8; crate::demuxer::common_types::ARRAY_SIZE],
@@ -385,11 +391,15 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
     if ctx.is_null() {
         return;
     }
-    let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
-    demux_ctx.close(&mut CcxOptions);
-    copy_from_rust(&raw mut ccx_options, CcxOptions);
-    copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
+    // Work directly on the C struct to avoid memory allocations from copy operations
+    let c = &mut *ctx;
+    c.past = 0;
+    if c.infd != -1 && ccx_options.input_source == ccx_datasource_CCX_DS_FILE {
+        // Close the file descriptor using the C library close function
+        close(c.infd);
+        c.infd = -1;
+        activity_input_file_closed();
+    }
 }
 
 // Extern function for ccx_demuxer_isopen
@@ -400,8 +410,9 @@ pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *mut ccx_demuxer) -> c_int {
     if ctx.is_null() {
         return 0;
     }
-    let demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    if demux_ctx.is_open() {
+    // Directly check infd instead of copying the entire structure
+    // This avoids memory allocations that would leak
+    if (*ctx).infd != -1 {
         1
     } else {
         0

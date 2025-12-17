@@ -45,10 +45,13 @@ impl<'a> Dtvcc<'a> {
     /// Create a new dtvcc context
     pub fn new(ctx: &'a mut dtvcc_ctx) -> Self {
         let report = unsafe { &mut *ctx.report };
-        let mut encoder = Box::into_raw(Box::new(encoder_ctx::default()));
-        if !ctx.encoder.is_null() {
-            encoder = unsafe { &mut *(ctx.encoder as *mut encoder_ctx) };
-        }
+        // Only allocate a new encoder if ctx.encoder is null
+        // Previously this always allocated then threw away the allocation if not needed
+        let encoder = if ctx.encoder.is_null() {
+            Box::into_raw(Box::new(encoder_ctx::default()))
+        } else {
+            ctx.encoder as *mut encoder_ctx
+        };
         let timing = unsafe { &mut *ctx.timing };
 
         Self {
