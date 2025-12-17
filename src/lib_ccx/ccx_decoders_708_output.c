@@ -644,7 +644,7 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 
 #undef SCC_SNPRINTF
 	write_wrapped(encoder->dtvcc_writers[tv->service_number - 1].fd, buf, strlen(buf));
-	encoder->last_scc_tx_end_ms = time_show.time_in_ms + tx_duration_ms;
+	encoder->last_scc_tx_end_ms = tv->time_ms_show + encoder->subs_delay;
 
 	tv->old_cc_time_end = time_end.time_in_ms;
 }
