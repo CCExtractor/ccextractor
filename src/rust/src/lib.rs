@@ -192,7 +192,8 @@ extern "C" {
     pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
 }
 
-/// Initialize env logger with custom format, using stdout as target
+/// Initialize env logger with custom format, using stderr as target
+/// This ensures debug output doesn't pollute stdout when using --stdout option
 ///
 /// # Safety
 ///
@@ -204,7 +205,7 @@ pub extern "C" fn ccxr_init_logger() {
     builder()
         .format(|buf, record| writeln!(buf, "[CEA-708] {}", record.args()))
         .filter_level(LevelFilter::Debug)
-        .target(Target::Stdout)
+        .target(Target::Stderr)
         .init();
 }
 
