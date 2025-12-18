@@ -1,5 +1,13 @@
 0.95 (2025-09-15)
 -----------------
+- Fix: Garbled captions from HDHomeRun and I/P-only H.264 streams (#1109)
+- Fix: Enable stdout output for CEA-708 captions on Windows (#1693)
+- Fix: McPoodle DVD raw format read/write - properly handle loop markers (#1524)
+- Fix: Variable shadowing in general_loop causing false "premature end of file" messages
+- Fix: Double-free crash in teletext cleanup when processing multiple files
+- Fix: Uninitialized memory and memory leaks found by Valgrind testing
+- Fix: Dangling pointers in Rust FFI copy_from_rust functions
+- New: Improve -out=report to show detected Teletext subtitle pages (#1034)
 - FIX: Include ATSC VCT virtual channel numbers and call signs in XMLTV output
 - FIX: Restore ATSC XMLTV generation with ETT parsing for extended descriptions, multi-segment handling, extended table ID's (EIT/VCT), corrected <programme> XMLTV formatting, buffer bounds fixes
 - Fix: DVB subtitle extraction improvements for Chinese broadcasts (#224):
