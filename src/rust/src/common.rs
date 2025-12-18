@@ -5,7 +5,6 @@ use crate::demuxer::common_types::{
     CapInfo, CcxDemuxReport, CcxRational, PMTEntry, PSIBuffer, ProgramInfo,
 };
 use crate::utils::free_rust_c_string;
-use crate::utils::free_rust_c_string_array;
 use crate::utils::null_pointer;
 use crate::utils::replace_rust_c_string;
 use crate::utils::string_to_c_char;
