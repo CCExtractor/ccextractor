@@ -55,17 +55,19 @@ static int search_language_pack(const char *dir_name, const char *lang_name)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory allocating dirname.");
 	}
 
-	size_t new_size = strlen(dirname) + strlen("tessdata/") + (dirname[strlen(dirname) - 1] != '/') + 1;
+	size_t dirname_len = strlen(dirname);
+	int need_slash = (dirname[dirname_len - 1] != '/');
+	size_t new_size = dirname_len + strlen("tessdata/") + need_slash + 1;
 	char *new_dirname = realloc(dirname, new_size);
 	if (!new_dirname)
 	{
+		free(dirname);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In search_language_pack: Out of memory reallocating dirname.");
 	}
 	dirname = new_dirname;
 
-	if (dirname[strlen(dirname) - 1] != '/')
-		strcat(dirname, "/");
-	strcat(dirname, "tessdata/");
+	// Append "/" if needed and "tessdata/" using snprintf
+	snprintf(dirname + dirname_len, new_size - dirname_len, "%stessdata/", need_slash ? "/" : "");
 
 	DIR *dp;
 	struct dirent *dirp;
@@ -233,30 +235,48 @@ fail:
  */
 BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, PIX *in, PIX **out)
 {
-	int i, j, index, start_y = 0, end_y = 0;
-	int find_end_x = CCX_FALSE;
+	int i, j, index, start_x = -1, end_x = -1;
 	BOX *cropWindow;
-	for (j = 1; j < w - 1; j++)
+
+	// Find the leftmost and rightmost columns with visible (non-transparent) pixels
+	for (j = 0; j < w; j++)
 	{
 		for (i = 0; i < h; i++)
 		{
-			index = indata[i * w + (j)];
+			index = indata[i * w + j];
 			if (alpha[index] != 0)
 			{
-				if (find_end_x == CCX_FALSE)
-				{
-					start_y = j;
-					find_end_x = CCX_TRUE;
-				}
-				else
-				{
-					end_y = j;
-				}
+				if (start_x < 0)
+					start_x = j;
+				end_x = j;
+				break; // Found visible pixel in this column, move to next
 			}
 		}
 	}
-	cropWindow = boxCreate(start_y, 0, (w - (start_y + (w - end_y))), h - 1);
+
+	// Handle edge cases: no visible pixels or invalid dimensions
+	if (start_x < 0 || end_x < start_x || w <= 0 || h <= 0)
+	{
+		// Return the entire image as fallback
+		cropWindow = boxCreate(0, 0, w, h);
+		*out = pixClone(in);
+		return cropWindow;
+	}
+
+	int crop_width = end_x - start_x + 1;
+	if (crop_width <= 0)
+		crop_width = w;
+
+	cropWindow = boxCreate(start_x, 0, crop_width, h);
 	*out = pixClipRectangle(in, cropWindow, NULL);
+
+	// If clipping failed, return the original image
+	if (*out == NULL)
+	{
+		boxDestroy(&cropWindow);
+		cropWindow = boxCreate(0, 0, w, h);
+		*out = pixClone(in);
+	}
 
 	return cropWindow;
 }
@@ -270,23 +290,23 @@ void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 	PIXA *pixa = NULL;
 
 	pix = TessBaseAPIGetInputImage(ctx->api);
-	sprintf(str, "%sinput_%d.jpg", dump_path, i);
+	snprintf(str, sizeof(str), "%sinput_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
 	pix = TessBaseAPIGetThresholdedImage(ctx->api);
-	sprintf(str, "%sthresholded_%d.jpg", dump_path, i);
+	snprintf(str, sizeof(str), "%sthresholded_%d.jpg", dump_path, i);
 	pixWrite(str, pix, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetRegions(ctx->api, &pixa);
-	sprintf(str, "%sregion_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%sregion_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetTextlines(ctx->api, &pixa, NULL);
-	sprintf(str, "%slines_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%slines_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	TessBaseAPIGetWords(ctx->api, &pixa);
-	sprintf(str, "%swords_%d", dump_path, i);
+	snprintf(str, sizeof(str), "%swords_%d", dump_path, i);
 	pixaWriteFiles(str, pixa, IFF_JFIF_JPEG);
 
 	i++;
@@ -361,6 +381,15 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	// Converting image to grayscale for OCR to avoid issues with transparency
 	cpix_gs = pixConvertRGBToGray(cpix, 0.0, 0.0, 0.0);
 
+	// Invert the grayscale image for better OCR accuracy
+	// DVB subtitles typically have light text on dark background, but
+	// Tesseract expects dark text on light background
+	if (cpix_gs != NULL)
+		pixInvert(cpix_gs, cpix_gs);
+
+	// Note: Upscaling was removed - testing showed it degrades OCR quality for DVB subtitles
+	// The original bitmap quality (e.g., 520x84) is sufficient for Tesseract
+
 	if (cpix_gs == NULL)
 		tess_ret = -1;
 	else
@@ -396,15 +425,31 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	}
 
 	// Begin color detection
-	// Using tlt_config.nofontcolor (true when "--nofontcolor" parameter used) to skip color detection if not required
+	// Using tlt_config.nofontcolor or ccx_options.nofontcolor (true when "--no-fontcolor" parameter used) to skip color detection if not required
+	// This is also skipped if --no-spupngocr is set since the OCR output won't be used anyway
 	int text_out_len;
-	if ((text_out_len = strlen(text_out)) > 0 && !tlt_config.nofontcolor)
+	if ((text_out_len = strlen(text_out)) > 0 && !tlt_config.nofontcolor && !ccx_options.nofontcolor)
 	{
 		float h0 = -100;
 		int written_tag = 0;
 		TessResultIterator *ri = 0;
 		TessPageIteratorLevel level = RIL_WORD;
-		TessBaseAPISetImage2(ctx->api, color_pix_out);
+		PIX *color_pix_processed = NULL; // Will hold preprocessed image for cleanup
+
+		// Preprocess color_pix_out for Tesseract the same way as cpix_gs
+		// Tesseract expects dark text on light background, but DVB subtitles typically
+		// have light text on dark background. Without preprocessing, Tesseract
+		// produces garbage results or crashes when iterating over words.
+		color_pix_processed = pixConvertRGBToGray(color_pix_out, 0.0, 0.0, 0.0);
+		if (color_pix_processed == NULL)
+		{
+			goto skip_color_detection;
+		}
+		pixInvert(color_pix_processed, color_pix_processed);
+
+		// Note: Upscaling removed from color detection pass as well
+
+		TessBaseAPISetImage2(ctx->api, color_pix_processed);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 		if (tess_ret != 0)
 		{
@@ -417,13 +462,26 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 		if (!tess_ret && ri != 0)
 		{
+			int iteration_count = 0;
+			const int max_iterations = 10000; // Safety limit to prevent infinite loops
 			do
 			{
+				// Safety check: limit iterations to prevent crashes on malformed data
+				if (++iteration_count > max_iterations)
+				{
+					mprint("Warning: OCR color detection exceeded maximum iterations, skipping.\n");
+					break;
+				}
+
 				char *word = TessResultIteratorGetUTF8Text(ri, level);
 				// float conf = TessResultIteratorConfidence(ri,level);
 				int x1, y1, x2, y2;
 				if (!TessPageIteratorBoundingBox((TessPageIterator *)ri, level, &x1, &y1, &x2, &y2))
+				{
+					if (word)
+						TessDeleteText(word);
 					continue;
+				}
 				// printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d;",word, conf, x1, y1, x2, y2);
 				// printf("word: '%s';", word);
 				// {
@@ -447,11 +505,14 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				iot = (uint8_t *)malloc(copy->nb_colors * sizeof(uint8_t));
 				if (!iot)
 				{
+					free(histogram);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating iot.");
 				}
 				mcit = (uint32_t *)malloc(copy->nb_colors * sizeof(uint32_t));
 				if (!mcit)
 				{
+					free(histogram);
+					free(iot);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating mcit.");
 				}
 				struct transIntensity ti = {copy->alpha, copy->palette};
@@ -466,12 +527,42 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 				/* calculate histogram of image */
 				int firstpixel = copy->data[0]; // TODO: Verify this border pixel assumption holds
+
+				// Bounds check: validate bounding box coordinates
+				// The bounding box (x1,y1,x2,y2) is relative to the cropped image.
+				// With crop offset (x,y), the original coordinates are (x+x1, y+y1) to (x+x2, y+y2).
+				// Ensure we don't access outside the original image bounds.
+				int orig_x1 = x + x1;
+				int orig_y1 = y + y1;
+				int orig_x2 = x + x2;
+				int orig_y2 = y + y2;
+
+				if (orig_x1 < 0 || orig_y1 < 0 || orig_x2 >= w || orig_y2 >= h ||
+				    orig_x1 > orig_x2 || orig_y1 > orig_y2)
+				{
+					// Invalid bounding box - skip this word
+					freep(&histogram);
+					freep(&mcit);
+					freep(&iot);
+					if (word)
+						TessDeleteText(word);
+					continue;
+				}
+
 				for (int i = y1; i <= y2; i++)
 				{
 					for (int j = x1; j <= x2; j++)
 					{
-						if (copy->data[(y + i) * w + (x + j)] != firstpixel)
-							histogram[copy->data[(y + i) * w + (x + j)]]++;
+						int idx = (y + i) * w + (x + j);
+						if (idx >= 0 && idx < w * h)
+						{
+							int color_idx = copy->data[idx];
+							if (color_idx >= 0 && color_idx < copy->nb_colors)
+							{
+								if (color_idx != firstpixel)
+									histogram[color_idx]++;
+							}
+						}
 					}
 				}
 				/* sorted in increasing order of intensity */
@@ -607,10 +698,10 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 								fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating text_out.");
 							}
 							text_out = new_text_out;
-							// Save the value is that is going to get overwritten by `sprintf`
+							// Save the value is that is going to get overwritten by `snprintf`
 							char replaced_by_null = text_out[index];
 							memmove(text_out + index + substr_len + 1, text_out + index + 1, text_out_len - index);
-							sprintf(text_out + index, substr_format, r_avg, g_avg, b_avg);
+							snprintf(text_out + index, substr_len + 1, substr_format, r_avg, g_avg, b_avg);
 							text_out[index + substr_len] = replaced_by_null;
 							text_out_len += substr_len;
 							written_tag = 1;
@@ -626,7 +717,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 							text_out = new_text_out;
 							char replaced_by_null = *text_out;
 							memmove(text_out + substr_len + 1, text_out + 1, text_out_len);
-							sprintf(text_out, substr_format, r_avg, g_avg, b_avg);
+							snprintf(text_out, substr_len + 1, substr_format, r_avg, g_avg, b_avg);
 							text_out[substr_len] = replaced_by_null;
 							text_out_len += substr_len;
 							written_tag = 1;
@@ -694,6 +785,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						char *tmp = realloc(new_text_out, length);
 						if (!tmp)
 						{
+							free(new_text_out);
 							fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory reallocating new_text_out.");
 						}
 						new_text_out = tmp;
@@ -751,7 +843,11 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 				text_out = new_text_out;
 			}
 		}
-		TessResultIteratorDelete(ri);
+	skip_color_detection:
+		if (ri)
+			TessResultIteratorDelete(ri);
+		if (color_pix_processed)
+			pixDestroy(&color_pix_processed);
 	}
 	// End Color Detection
 	boxDestroy(&crop_points);
@@ -968,19 +1064,40 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy.");
 	}
 	copy->nb_colors = rect->nb_colors;
-	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
-	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
 	copy->bgcolor = bgcolor;
-	copy->data = NULL; // Initialize to NULL in case of early goto end
+	copy->data = NULL;    // Initialize to NULL in case of early goto end
+	copy->palette = NULL; // Initialize to NULL for safe cleanup
+	copy->alpha = NULL;   // Initialize to NULL for safe cleanup
+
+	copy->palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
+	if (!copy->palette)
+	{
+		free(copy);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->palette.");
+	}
+	copy->alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
+	if (!copy->alpha)
+	{
+		free(copy->palette);
+		free(copy);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->alpha.");
+	}
 
 	palette = (png_color *)malloc(rect->nb_colors * sizeof(png_color));
-	if (!palette || !copy->palette)
+	if (!palette)
 	{
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating palette.");
 	}
 	alpha = (png_byte *)malloc(rect->nb_colors * sizeof(png_byte));
-	if (!alpha || !copy->alpha)
+	if (!alpha)
 	{
+		free(palette);
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating alpha.");
 	}
 
@@ -1001,6 +1118,11 @@ int ocr_rect(void *arg, struct cc_bitmap *rect, char **str, int bgcolor, int ocr
 	copy->data = (unsigned char *)malloc(sizeof(unsigned char) * size);
 	if (!copy->data)
 	{
+		free(alpha);
+		free(palette);
+		free(copy->alpha);
+		free(copy->palette);
+		free(copy);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_rect: Out of memory allocating copy->data.");
 	}
 	for (int i = 0; i < size; i++)

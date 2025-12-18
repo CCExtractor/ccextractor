@@ -338,7 +338,7 @@ pub enum CcxTxt {
 }
 
 #[derive(Debug, Default, EnumString, Clone, Copy, PartialEq, Eq)]
-#[strum(serialize_all = "lowercase")]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum Language {
     #[default]
     Und, // Undefined

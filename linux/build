@@ -101,7 +101,7 @@ fi
 rustc_version="$(rustc --version)"
 semver=( ${rustc_version//./ } )
 version="${semver[1]}.${semver[2]}.${semver[3]}"
-MSRV="1.54.0"
+MSRV="1.87.0"
 if [ "$(printf '%s\n' "$MSRV" "$version" | sort -V | head -n1)" = "$MSRV" ]; then
     echo "rustc >= MSRV(${MSRV})"
 else

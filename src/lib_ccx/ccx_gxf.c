@@ -622,13 +622,14 @@ static int parse_ad_pyld(struct ccx_demuxer *demux, int len, struct demuxer_data
 
 	if (ctx->cdp_len < len / 2)
 	{
-		ctx->cdp = realloc(ctx->cdp, len / 2);
-		if (ctx->cdp == NULL)
+		void *tmp = realloc(ctx->cdp, len / 2);
+		if (tmp == NULL)
 		{
 			log("Could not allocate buffer %d\n", len / 2);
 			ret = CCX_ENOMEM;
 			goto error;
 		}
+		ctx->cdp = tmp;
 		/* exclude did sdid bytes in cdp_len */
 		ctx->cdp_len = ((len - 2) / 2);
 	}

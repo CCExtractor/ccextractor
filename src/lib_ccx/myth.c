@@ -836,10 +836,14 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 			LLONG length = saved + av.size;
 			if (length > desp_length) // Result of a lazy programmer. Make something decent.
 			{
-				desp_length = length * 2;			    // *2, just to reduce possible future reallocs
-				desp = (unsigned char *)realloc(desp, desp_length); // 16, some extra
-				if (!desp)
+				desp_length = length * 2; // *2, just to reduce possible future reallocs
+				void *tmp = realloc(desp, desp_length);
+				if (!tmp)
+				{
+					free(desp);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory.\n");
+				}
+				desp = (unsigned char *)tmp;
 			}
 			if (av.pts != AV_NOPTS_VALUE)
 			{

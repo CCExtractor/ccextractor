@@ -15,8 +15,8 @@
  *  Library General Public License for more details.
  *
  *  You should have received a copy of the GNU Library General Public
- *  License along with this library; if not, write to the 
- *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  *  Boston, MA  02110-1301  USA.
  */
 
@@ -30,10 +30,10 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
-#include <inttypes.h>		/* (u)intXX_t */
-#include <sys/types.h>		/* (s)size_t */
-#include <float.h>		/* DBL_MAX */
-#include <limits.h>		/* (S)SIZE_MAX */
+#include <inttypes.h>  /* (u)intXX_t */
+#include <sys/types.h> /* (s)size_t */
+#include <float.h>     /* DBL_MAX */
+#include <limits.h>    /* (S)SIZE_MAX */
 #include <assert.h>
 
 #include "macros.h"
@@ -41,17 +41,17 @@
 #include "../ccx_common_constants.h"
 #include "../ccx_common_structs.h"
 
-#define N_ELEMENTS(array) (sizeof (array) / sizeof (*(array)))
+#define N_ELEMENTS(array) (sizeof(array) / sizeof(*(array)))
 
 #ifdef __GNUC__
 
 #if __GNUC__ < 3
 /* Expect expression usually true/false, schedule accordingly. */
-#  define likely(expr) (expr)
-#  define unlikely(expr) (expr)
+#define likely(expr) (expr)
+#define unlikely(expr) (expr)
 #else
-#  define likely(expr) __builtin_expect(expr, 1)
-#  define unlikely(expr) __builtin_expect(expr, 0)
+#define likely(expr) __builtin_expect(expr, 1)
+#define unlikely(expr) __builtin_expect(expr, 0)
 #endif
 
 #undef __i386__
@@ -69,17 +69,17 @@
    safer than &x == (struct tm *) &x.tm_min. A NULL _ptr is safe and
    will return NULL, not -offsetof(_member). */
 #undef PARENT
-#define PARENT(_ptr, _type, _member) ({					\
-	__typeof__ (&((_type *) 0)->_member) _p = (_ptr);		\
-	(_p != 0) ? (_type *)(((char *) _p) - offsetof (_type,		\
-	  _member)) : (_type *) 0;					\
+#define PARENT(_ptr, _type, _member) ({                         \
+	__typeof__(&((_type *)0)->_member) _p = (_ptr);         \
+	(_p != 0) ? (_type *)(((char *)_p) - offsetof(_type,    \
+						      _member)) \
+		  : (_type *)0;                                 \
 })
 
 /* Like PARENT(), to be used with const _ptr. */
-#define CONST_PARENT(_ptr, _type, _member) ({				\
-	__typeof__ (&((const _type *) 0)->_member) _p = (_ptr);		\
-	(_p != 0) ? (const _type *)(((const char *) _p) - offsetof	\
-	 (const _type, _member)) : (const _type *) 0;			\
+#define CONST_PARENT(_ptr, _type, _member) ({                                                                \
+	__typeof__(&((const _type *)0)->_member) _p = (_ptr);                                                \
+	(_p != 0) ? (const _type *)(((const char *)_p) - offsetof(const _type, _member)) : (const _type *)0; \
 })
 
 /* Note the following macros have no side effects only when you
@@ -88,69 +88,73 @@
 /* Absolute value of int, long or long long without a branch.
    Note ABS (INT_MIN) -> INT_MAX + 1. */
 #undef ABS
-#define ABS(n) ({							\
-	register __typeof__ (n) _n = (n), _t = _n;			\
-	if (-1 == (-1 >> 1)) { /* do we have signed shifts? */		\
-		_t >>= sizeof (_t) * 8 - 1;				\
-		_n ^= _t;						\
-		_n -= _t;						\
-	} else if (_n < 0) { /* also warns if n is unsigned type */	\
-		_n = -_n;						\
-	}								\
-	/* return */ _n;						\
+#define ABS(n) ({                                 \
+	register __typeof__(n) _n = (n), _t = _n; \
+	if (-1 == (-1 >> 1))                      \
+	{ /* do we have signed shifts? */         \
+		_t >>= sizeof(_t) * 8 - 1;        \
+		_n ^= _t;                         \
+		_n -= _t;                         \
+	}                                         \
+	else if (_n < 0)                          \
+	{ /* also warns if n is unsigned type */  \
+		_n = -_n;                         \
+	}                                         \
+	/* return */ _n;                          \
 })
 
 #undef MIN
-#define MIN(x, y) ({							\
-	__typeof__ (x) _x = (x);					\
-	__typeof__ (y) _y = (y);					\
-	(void)(&_x == &_y); /* warn if types do not match */		\
-	/* return */ (_x < _y) ? _x : _y;				\
+#define MIN(x, y) ({                                         \
+	__typeof__(x) _x = (x);                              \
+	__typeof__(y) _y = (y);                              \
+	(void)(&_x == &_y); /* warn if types do not match */ \
+	/* return */ (_x < _y) ? _x : _y;                    \
 })
 
 #undef MAX
-#define MAX(x, y) ({							\
-	__typeof__ (x) _x = (x);					\
-	__typeof__ (y) _y = (y);					\
-	(void)(&_x == &_y); /* warn if types do not match */		\
-	/* return */ (_x > _y) ? _x : _y;				\
+#define MAX(x, y) ({                                         \
+	__typeof__(x) _x = (x);                              \
+	__typeof__(y) _y = (y);                              \
+	(void)(&_x == &_y); /* warn if types do not match */ \
+	/* return */ (_x > _y) ? _x : _y;                    \
 })
 
 /* Note other compilers may swap only int, long or pointer. */
 #undef SWAP
-#define SWAP(x, y)							\
-do {									\
-	__typeof__ (x) _x = x;						\
-	x = y;								\
-	y = _x;								\
-} while (0)
+#define SWAP(x, y)                    \
+	do                            \
+	{                             \
+		__typeof__(x) _x = x; \
+		x = y;                \
+		y = _x;               \
+	} while (0)
 
 #undef SATURATE
 #ifdef __i686__ /* has conditional move */
-#define SATURATE(n, min, max) ({					\
-	__typeof__ (n) _n = (n);					\
-	__typeof__ (n) _min = (min);					\
-	__typeof__ (n) _max = (max);					\
-	(void)(&_n == &_min); /* warn if types do not match */		\
-	(void)(&_n == &_max);						\
-	if (_n < _min)							\
-		_n = _min;						\
-	if (_n > _max)							\
-		_n = _max;						\
-	/* return */ _n;						\
+#define SATURATE(n, min, max) ({                               \
+	__typeof__(n) _n = (n);                                \
+	__typeof__(n) _min = (min);                            \
+	__typeof__(n) _max = (max);                            \
+	(void)(&_n == &_min); /* warn if types do not match */ \
+	(void)(&_n == &_max);                                  \
+	if (_n < _min)                                         \
+		_n = _min;                                     \
+	if (_n > _max)                                         \
+		_n = _max;                                     \
+	/* return */ _n;                                       \
 })
 #else
-#define SATURATE(n, min, max) ({					\
-	__typeof__ (n) _n = (n);					\
-	__typeof__ (n) _min = (min);					\
-	__typeof__ (n) _max = (max);					\
-	(void)(&_n == &_min); /* warn if types do not match */		\
-	(void)(&_n == &_max);						\
-	if (_n < _min)							\
-		_n = _min;						\
-	else if (_n > _max)						\
-		_n = _max;						\
-	/* return */ _n;						\
+#define SATURATE(n, min, max) ({                               \
+	__typeof__(n) _n = (n);                                \
+	__typeof__(n) _min = (min);                            \
+	__typeof__(n) _max = (max);                            \
+	(void)(&_n == &_min); /* warn if types do not match */ \
+	(void)(&_n == &_max);                                  \
+	if (_n < _min)                                         \
+		_n = _min;                                     \
+	else if (_n > _max)                                    \
+		_n = _max;                                     \
+	/* return */ _n;                                       \
 })
 #endif
 
@@ -162,20 +166,24 @@ do {									\
 #undef __i686__
 
 static char *
-PARENT_HELPER (char *p, unsigned int offset)
-{ return (0 == p) ? ((char *) 0) : p - offset; }
+PARENT_HELPER(char *p, unsigned int offset)
+{
+	return (0 == p) ? ((char *)0) : p - offset;
+}
 
 static const char *
-CONST_PARENT_HELPER (const char *p, unsigned int offset)
-{ return (0 == p) ? ((char *) 0) : p - offset; }
+CONST_PARENT_HELPER(const char *p, unsigned int offset)
+{
+	return (0 == p) ? ((char *)0) : p - offset;
+}
 
-#define PARENT(_ptr, _type, _member)					\
-	((0 == offsetof (_type, _member)) ? (_type *)(_ptr)		\
-	 : (_type *) PARENT_HELPER ((char *)(_ptr), offsetof (_type, _member)))
-#define CONST_PARENT(_ptr, _type, _member)				\
-	((0 == offsetof (const _type, _member)) ? (const _type *)(_ptr)	\
-	 : (const _type *) CONST_PARENT_HELPER ((const char *)(_ptr),	\
-	  offsetof (const _type, _member)))
+#define PARENT(_ptr, _type, _member)                       \
+	((0 == offsetof(_type, _member)) ? (_type *)(_ptr) \
+					 : (_type *)PARENT_HELPER((char *)(_ptr), offsetof(_type, _member)))
+#define CONST_PARENT(_ptr, _type, _member)                                                                \
+	((0 == offsetof(const _type, _member)) ? (const _type *)(_ptr)                                    \
+					       : (const _type *)CONST_PARENT_HELPER((const char *)(_ptr), \
+										    offsetof(const _type, _member)))
 
 #undef ABS
 #define ABS(n) (((n) < 0) ? -(n) : (n))
@@ -187,62 +195,61 @@ CONST_PARENT_HELPER (const char *p, unsigned int offset)
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 #undef SWAP
-#define SWAP(x, y)							\
-do {									\
-	long _x = x;							\
-	x = y;								\
-	y = _x;								\
-} while (0)
+#define SWAP(x, y)           \
+	do                   \
+	{                    \
+		long _x = x; \
+		x = y;       \
+		y = _x;      \
+	} while (0)
 
 #undef SATURATE
-#define SATURATE(n, min, max) MIN (MAX (min, n), max)
+#define SATURATE(n, min, max) MIN(MAX(min, n), max)
 
 #endif /* !__GNUC__ */
 
 /* 32 bit constant byte reverse, e.g. 0xAABBCCDD -> 0xDDCCBBAA. */
-#define SWAB32(m)							\
-	(+ (((m) & 0xFF000000) >> 24)					\
-	 + (((m) & 0xFF0000) >> 8)					\
-	 + (((m) & 0xFF00) << 8)					\
-	 + (((m) & 0xFF) << 24))
+#define SWAB32(m) \
+	(+(((m) & 0xFF000000) >> 24) + (((m) & 0xFF0000) >> 8) + (((m) & 0xFF00) << 8) + (((m) & 0xFF) << 24))
 
 #ifdef HAVE_BUILTIN_POPCOUNT
-#  define popcnt(x) __builtin_popcount ((uint32_t)(x))
+#define popcnt(x) __builtin_popcount((uint32_t)(x))
 #else
-#  define popcnt(x) _vbi_popcnt (x)
+#define popcnt(x) _vbi_popcnt(x)
 #endif
 
 extern unsigned int
-_vbi_popcnt			(uint32_t		x);
+_vbi_popcnt(uint32_t x);
 
 /* NB GCC inlines and optimizes these functions when size is const. */
-#define SET(var) memset (&(var), ~0, sizeof (var))
+#define SET(var) memset(&(var), ~0, sizeof(var))
 
-#define CLEAR(var) memset (&(var), 0, sizeof (var))
+#define CLEAR(var) memset(&(var), 0, sizeof(var))
 
 /* Useful to copy arrays, otherwise use assignment. */
-#define COPY(d, s)							\
-	(assert (sizeof (d) == sizeof (s)), memcpy (d, s, sizeof (d)))
+#define COPY(d, s) \
+	(assert(sizeof(d) == sizeof(s)), memcpy(d, s, sizeof(d)))
 
 /* Copy string const into char array. */
-#define STRACPY(array, s)						\
-do {									\
-	/* Complain if s is no string const or won't fit. */		\
-	const char t_[sizeof (array) - 1] _vbi_unused = s;		\
-									\
-	memcpy (array, s, sizeof (s));					\
-} while (0)
+#define STRACPY(array, s)                                            \
+	do                                                           \
+	{                                                            \
+		/* Complain if s is no string const or won't fit. */ \
+		const char t_[sizeof(array) - 1] _vbi_unused = s;    \
+                                                                     \
+		memcpy(array, s, sizeof(s));                         \
+	} while (0)
 
 /* Copy bits through mask. */
-#define COPY_SET_MASK(dest, from, mask)					\
+#define COPY_SET_MASK(dest, from, mask) \
 	(dest ^= (from) ^ (dest & (mask)))
 
 /* Set bits if cond is TRUE, clear if FALSE. */
-#define COPY_SET_COND(dest, bits, cond)					\
-	 ((cond) ? (dest |= (bits)) : (dest &= ~(bits)))
+#define COPY_SET_COND(dest, bits, cond) \
+	((cond) ? (dest |= (bits)) : (dest &= ~(bits)))
 
 /* Set and clear bits. */
-#define COPY_SET_CLEAR(dest, set, clear)				\
+#define COPY_SET_CLEAR(dest, set, clear) \
 	(dest = (dest & ~(clear)) | (set))
 
 /* For applications, debugging and fault injection during unit tests. */
@@ -258,7 +265,7 @@ do {									\
 /* Helper functions. */
 
 _vbi_inline int
-_vbi_to_ascii			(int			c)
+_vbi_to_ascii(int c)
 {
 	if (c < 0)
 		return '?';
@@ -271,30 +278,31 @@ _vbi_to_ascii			(int			c)
 	return c;
 }
 
-typedef struct {
-	const char *		key;
-	int			value;
+typedef struct
+{
+	const char *key;
+	int value;
 } _vbi_key_value_pair;
 
 extern vbi_bool
-_vbi_keyword_lookup		(int *			value,
-				 const char **		inout_s,
-				 const _vbi_key_value_pair * table,
-				 unsigned int		n_pairs)
-  _vbi_nonnull ((1, 2, 3));
+_vbi_keyword_lookup(int *value,
+		    const char **inout_s,
+		    const _vbi_key_value_pair *table,
+		    unsigned int n_pairs)
+    _vbi_nonnull((1, 2, 3));
 
 extern void
-_vbi_shrink_vector_capacity	(void **		vector,
-				 size_t *		capacity,
-				 size_t			min_capacity,
-				 size_t			element_size)
-  _vbi_nonnull ((1, 2));
+_vbi_shrink_vector_capacity(void **vector,
+			    size_t *capacity,
+			    size_t min_capacity,
+			    size_t element_size)
+    _vbi_nonnull((1, 2));
 extern vbi_bool
-_vbi_grow_vector_capacity	(void **		vector,
-				 size_t *		capacity,
-				 size_t			min_capacity,
-				 size_t			element_size)
-  _vbi_nonnull ((1, 2));
+_vbi_grow_vector_capacity(void **vector,
+			  size_t *capacity,
+			  size_t min_capacity,
+			  size_t element_size)
+    _vbi_nonnull((1, 2));
 
 #define debug1 debug
 #define debug2 debug
@@ -303,59 +311,69 @@ _vbi_grow_vector_capacity	(void **		vector,
 #define error log
 #define info debug
 
-#define debug(a, fmt, ...)							\
-	ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "VBI:%s:%d: "fmt , __FUNCTION__ ,__LINE__ , ##__VA_ARGS__)
-#define log(a, fmt, ...)							\
-	ccx_common_logging.log_ftn("VBI:%d: "fmt , __LINE__ , ##__VA_ARGS__)
+#define debug(a, fmt, ...) \
+	ccx_common_logging.debug_ftn(CCX_DMT_PARSE, "VBI:%s:%d: " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define log(a, fmt, ...) \
+	ccx_common_logging.log_ftn("VBI:%d: " fmt, __LINE__, ##__VA_ARGS__)
 
 /* Portability stuff. */
 
 /* These should be defined in inttypes.h. */
 #ifndef PRId64
-#  define PRId64 "lld"
+#define PRId64 "lld"
 #endif
 #ifndef PRIu64
-#  define PRIu64 "llu"
+#define PRIu64 "llu"
 #endif
 #ifndef PRIx64
-#  define PRIx64 "llx"
+#define PRIx64 "llx"
 #endif
 
 /* Should be defined in C99 limits.h? */
 #ifndef SIZE_MAX
-#  define SIZE_MAX ((size_t) -1)
+#define SIZE_MAX ((size_t)-1)
 #endif
 
 #ifndef TIME_MIN
-#  define TIME_MIN (_vbi_time_min ())
+#define TIME_MIN (_vbi_time_min())
 _vbi_inline time_t
-_vbi_time_min			(void)
+_vbi_time_min(void)
 {
-	const time_t t = (time_t) -1.25;
+	const time_t t = (time_t)-1.25;
 
-	if (t < -1) {
-		return (time_t)((sizeof (time_t) > 4) ? DBL_MIN : FLT_MIN);
-	} else if (t < 0) {
-		return ((uint64_t) 1) << (sizeof (time_t) * 8 - 1);
-	} else {
+	if (t < -1)
+	{
+		return (time_t)((sizeof(time_t) > 4) ? DBL_MIN : FLT_MIN);
+	}
+	else if (t < 0)
+	{
+		return ((uint64_t)1) << (sizeof(time_t) * 8 - 1);
+	}
+	else
+	{
 		return 0;
 	}
 }
 #endif
 
 #ifndef TIME_MAX
-#  define TIME_MAX (_vbi_time_max ())
+#define TIME_MAX (_vbi_time_max())
 _vbi_inline time_t
-_vbi_time_max			(void)
+_vbi_time_max(void)
 {
-	const time_t t = (time_t) -1.25;
+	const time_t t = (time_t)-1.25;
 
-	if (t < -1) {
-		return (time_t)((sizeof (time_t) > 4) ? DBL_MAX : FLT_MAX);
-	} else if (t < 0) {
+	if (t < -1)
+	{
+		return (time_t)((sizeof(time_t) > 4) ? DBL_MAX : FLT_MAX);
+	}
+	else if (t < 0)
+	{
 		/* Most likely signed 32 or 64 bit. */
-		return (((uint64_t) 1) << (sizeof (time_t) * 8 - 1)) - 1;
-	} else {
+		return (((uint64_t)1) << (sizeof(time_t) * 8 - 1)) - 1;
+	}
+	else
+	{
 		return -1;
 	}
 }
@@ -363,53 +381,57 @@ _vbi_time_max			(void)
 
 /* __va_copy is a GNU extension. */
 #ifndef __va_copy
-#  define __va_copy(ap1, ap2) do { ap1 = ap2; } while (0)
+#define __va_copy(ap1, ap2) \
+	do                  \
+	{                   \
+		ap1 = ap2;  \
+	} while (0)
 #endif
 
 /* Use this instead of strncpy(). strlcpy() is a BSD extension. */
 #ifndef HAVE_STRLCPY
-#  define strlcpy _vbi_strlcpy
+#define strlcpy _vbi_strlcpy
 #endif
 #undef strncpy
 #define strncpy use_strlcpy_instead
 
 extern size_t
-_vbi_strlcpy			(char *			dst,
-				 const char *		src,
-				 size_t			size)
-  _vbi_nonnull ((1, 2));
+_vbi_strlcpy(char *dst,
+	     const char *src,
+	     size_t size)
+    _vbi_nonnull((1, 2));
 
 /* strndup() is a BSD/GNU extension. */
 #ifndef HAVE_STRNDUP
-#  define strndup _vbi_strndup
+#define strndup _vbi_strndup
 #endif
 
 extern char *
-_vbi_strndup			(const char *		s,
-				 size_t			len)
-  _vbi_nonnull ((1));
+_vbi_strndup(const char *s,
+	     size_t len)
+    _vbi_nonnull((1));
 
 /* vasprintf() is a GNU extension. */
 #ifndef HAVE_VASPRINTF
-#  define vasprintf _vbi_vasprintf
+#define vasprintf _vbi_vasprintf
 #endif
 
 extern int
-_vbi_vasprintf			(char **		dstp,
-				 const char *		templ,
-				 va_list		ap)
-  _vbi_nonnull ((1, 2));
+_vbi_vasprintf(char **dstp,
+	       const char *templ,
+	       va_list ap)
+    _vbi_nonnull((1, 2));
 
 /* asprintf() is a GNU extension. */
 #ifndef HAVE_ASPRINTF
-#  define asprintf _vbi_asprintf
+#define asprintf _vbi_asprintf
 #endif
 
 extern int
-_vbi_asprintf			(char **		dstp,
-				 const char *		templ,
-				 ...)
-  _vbi_nonnull ((1, 2)) _vbi_format ((printf, 2, 3));
+_vbi_asprintf(char **dstp,
+	      const char *templ,
+	      ...)
+    _vbi_nonnull((1, 2)) _vbi_format((printf, 2, 3));
 
 #undef sprintf
 #define sprintf use_snprintf_or_asprintf_instead

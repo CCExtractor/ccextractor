@@ -391,18 +391,22 @@ impl TimingContext {
                         .as_timestamp(timing_info.current_fps);
                 self.fts_max = self.fts_offset;
 
-                // Start counting again from here
-                self.pts_set = PtsSet::Received; // Force min to be set again
-                self.sync_pts2fts_set = false; // Make note of the new conversion values
+                // Reset sync_pts2fts tracking for the new timeline
+                self.sync_pts2fts_set = false;
 
-                // Avoid next async test - the gap might have occured on
-                // current_tref != 0.
+                // Set new sync_pts accounting for any temporal reference offset.
+                // The gap might have occurred on current_tref != 0.
                 self.sync_pts = self.current_pts
                     - self
                         .current_tref
                         .as_mpeg_clock_tick(timing_info.current_fps, timing_info.mpeg_clock_freq);
-                // Set min_pts = sync_pts as this is used for fts_now
+
+                // Set min_pts to sync_pts and mark as set so fts_now calculation works.
+                // This is essential - without setting pts_set to MinPtsSet, fts_now would
+                // stop being updated after a PTS jump, causing all subsequent timestamps
+                // to be stuck (fixes issue #1277).
                 self.min_pts = self.sync_pts;
+                self.pts_set = PtsSet::MinPtsSet;
 
                 debug!(
                     msg_type = DebugMessageFlag::TIME;

@@ -127,6 +127,8 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	ccx_decoder_608_context *data = NULL;
 
 	data = malloc(sizeof(ccx_decoder_608_context));
+	if (!data)
+		return NULL;
 
 	data->cursor_column = 0;
 	data->cursor_row = 0;
@@ -314,12 +316,13 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
-		sub->data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
-		if (!sub->data)
+		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		if (!new_data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");
 			return 0;
 		}
+		sub->data = new_data;
 		sub->datatype = CC_DATATYPE_GENERIC;
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		sub->nb_data++;
@@ -383,12 +386,13 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty)
 	{
-		sub->data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
-		if (!sub->data)
+		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		if (!new_data)
 		{
 			ccx_common_logging.log_ftn("No Memory left");
 			return 0;
 		}
+		sub->data = new_data;
 		memcpy(((struct eia608_screen *)sub->data) + sub->nb_data, data, sizeof(*data));
 		data = (struct eia608_screen *)sub->data + sub->nb_data;
 		sub->datatype = CC_DATATYPE_GENERIC;

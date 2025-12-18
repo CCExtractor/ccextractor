@@ -80,10 +80,20 @@ ____sbs_context:   [%p]\n\
 		LOG_DEBUG("SBS: init_sbs_context: INIT\n");
 
 		____sbs_context = malloc(sizeof(sbs_context_t));
+		if (!____sbs_context)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_sbs_context: Out of memory allocating sbs_context_t.");
+		}
 		____sbs_context->time_from = -1;
 		____sbs_context->time_trim = -1;
 		____sbs_context->capacity = 16;
 		____sbs_context->buffer = malloc(____sbs_context->capacity * sizeof(unsigned char));
+		if (!____sbs_context->buffer)
+		{
+			free(____sbs_context);
+			____sbs_context = NULL;
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_sbs_context: Out of memory allocating buffer.");
+		}
 		____sbs_context->buffer[0] = 0;
 		____sbs_context->handled_len = 0;
 	}
@@ -222,7 +232,7 @@ char *sbs_find_insert_point_partial(char *old_tail, const char *new_start, size_
 	{
 		/*
 #ifdef DEBUG_SBS
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: compare\n\
+		snprintf(fmtbuf, sizeof(fmtbuf), "SBS: sbs_find_insert_point_partial: compare\n\
 \tnot EQ:          [TRUE]\n\
 \tmaxerr:          [%%d]\n\
 \tL buffer:          [%%.%zus]\n\
@@ -291,7 +301,7 @@ char *sbs_find_insert_point_partial(char *old_tail, const char *new_start, size_
 
 	/*
 #ifdef DEBUG_SBS
-		sprintf(fmtbuf, "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
+		snprintf(fmtbuf, sizeof(fmtbuf), "SBS: sbs_find_insert_point_partial: REPLACE ENTIRE TAIL !!\n\
 \tmaxerr:          [%%d]\n\
 \tL buffer:        [%%.%zus]\n\
 \tL string:        [%%.%zus]\n\
@@ -543,13 +553,16 @@ struct cc_subtitle *sbs_append_string(unsigned char *str, const LLONG time_from,
 					    : new_capacity;
 		}
 
-		context->buffer = (unsigned char *)realloc(
+		unsigned char *tmp = (unsigned char *)realloc(
 		    context->buffer,
 		    new_capacity * sizeof(/*unsigned char*/ context->buffer[0]));
 
-		if (!context->buffer)
+		if (!tmp)
+		{
+			free(context->buffer);
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In sbs_append_string: Not enough memory to append buffer");
-
+		}
+		context->buffer = tmp;
 		context->capacity = new_capacity;
 
 		LOG_DEBUG("SBS: sbs_append_string: REALLOC BUF DONE:\n\
@@ -603,6 +616,10 @@ struct cc_subtitle *sbs_append_string(unsigned char *str, const LLONG time_from,
 		{
 			// it is new sentence!
 			tmpsub = malloc(sizeof(struct cc_subtitle));
+			if (!tmpsub)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In sbs_append_string: Out of memory allocating cc_subtitle.");
+			}
 
 			tmpsub->type = CC_TEXT;
 			// length of new string:

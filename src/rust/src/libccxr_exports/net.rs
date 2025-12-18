@@ -1,7 +1,6 @@
 use crate::bindings::*;
 
 use lib_ccxr::net::c_functions::*;
-use std::convert::TryInto;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
@@ -17,38 +16,32 @@ pub unsafe extern "C" fn ccxr_connect_to_srv(
     cc_desc: *const c_char,
     pwd: *const c_char,
 ) {
-    let addr = CStr::from_ptr(addr)
-        .to_str()
-        .expect("Unable to convert Cstr to &str");
+    let addr = match CStr::from_ptr(addr).to_str() {
+        Ok(s) => s,
+        Err(_) => return, // Invalid UTF-8, cannot proceed
+    };
 
     let port = if !port.is_null() {
-        Some(
-            CStr::from_ptr(port)
-                .to_str()
-                .expect("Unable to convert Cstr to &str")
-                .parse()
-                .expect("Unable to parse into u16"),
-        )
+        match CStr::from_ptr(port)
+            .to_str()
+            .ok()
+            .and_then(|s| s.parse().ok())
+        {
+            Some(p) => Some(p),
+            None => return, // Invalid port, cannot proceed
+        }
     } else {
         None
     };
 
     let cc_desc = if !cc_desc.is_null() {
-        Some(
-            CStr::from_ptr(cc_desc)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(cc_desc).to_str().ok()
     } else {
         None
     };
 
     let pwd = if !pwd.is_null() {
-        Some(
-            CStr::from_ptr(pwd)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(pwd).to_str().ok()
     } else {
         None
     };
@@ -114,49 +107,35 @@ pub unsafe extern "C" fn ccxr_net_send_epg(
     lang: *const c_char,
     category: *const c_char,
 ) {
-    let start = CStr::from_ptr(start)
-        .to_str()
-        .expect("Unable to convert Cstr to &str");
-    let stop = CStr::from_ptr(stop)
-        .to_str()
-        .expect("Unable to convert Cstr to &str");
+    let start = match CStr::from_ptr(start).to_str() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let stop = match CStr::from_ptr(stop).to_str() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
 
     let title = if !title.is_null() {
-        Some(
-            CStr::from_ptr(title)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(title).to_str().ok()
     } else {
         None
     };
 
     let desc = if !desc.is_null() {
-        Some(
-            CStr::from_ptr(desc)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(desc).to_str().ok()
     } else {
         None
     };
 
     let lang = if !lang.is_null() {
-        Some(
-            CStr::from_ptr(lang)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(lang).to_str().ok()
     } else {
         None
     };
 
     let category = if !category.is_null() {
-        Some(
-            CStr::from_ptr(category)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(category).to_str().ok()
     } else {
         None
     };
@@ -179,7 +158,7 @@ pub unsafe extern "C" fn ccxr_net_tcp_read(
     let buffer = std::slice::from_raw_parts_mut(buffer as *mut u8, length);
     let ans = net_tcp_read(buffer);
     match ans {
-        Some(x) => x.try_into().unwrap(),
+        Some(x) => x.min(c_int::MAX as usize) as c_int,
         None => -1,
     }
 }
@@ -201,7 +180,7 @@ pub unsafe extern "C" fn ccxr_net_udp_read(
     let buffer = std::slice::from_raw_parts_mut(buffer as *mut u8, length);
     let ans = net_udp_read(buffer);
     match ans {
-        Some(x) => x.try_into().unwrap(),
+        Some(x) => x.min(c_int::MAX as usize) as c_int,
         None => -1,
     }
 }
@@ -217,23 +196,20 @@ pub unsafe extern "C" fn ccxr_net_udp_read(
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_start_tcp_srv(port: *const c_char, pwd: *const c_char) -> c_int {
     let port = if !port.is_null() {
-        Some(
-            CStr::from_ptr(port)
-                .to_str()
-                .expect("Unable to convert Cstr to &str")
-                .parse()
-                .expect("Unable to parse into u16"),
-        )
+        match CStr::from_ptr(port)
+            .to_str()
+            .ok()
+            .and_then(|s| s.parse().ok())
+        {
+            Some(p) => Some(p),
+            None => return -1, // Invalid port
+        }
     } else {
         None
     };
 
     let pwd = if !pwd.is_null() {
-        Some(
-            CStr::from_ptr(pwd)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(pwd).to_str().ok()
     } else {
         None
     };
@@ -258,26 +234,19 @@ pub unsafe extern "C" fn ccxr_start_udp_srv(
     port: c_uint,
 ) -> c_int {
     let src = if !src.is_null() {
-        Some(
-            CStr::from_ptr(src)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(src).to_str().ok()
     } else {
         None
     };
 
     let addr = if !addr.is_null() {
-        Some(
-            CStr::from_ptr(addr)
-                .to_str()
-                .expect("Unable to convert Cstr to &str"),
-        )
+        CStr::from_ptr(addr).to_str().ok()
     } else {
         None
     };
 
-    let port = port.try_into().unwrap();
+    // c_uint to u16 - truncate if too large
+    let port = port as u16;
 
     start_udp_srv(src, addr, port);
 

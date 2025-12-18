@@ -348,6 +348,7 @@ impl CcxDemuxer<'_> {
 }
 
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
     use crate::bindings::{lib_ccx_ctx, list_head};
@@ -366,7 +367,6 @@ mod tests {
     use std::os::windows::io::AsRawHandle;
     #[cfg(windows)]
     use std::os::windows::io::RawHandle;
-    use std::slice;
     use std::sync::Once;
     use tempfile::NamedTempFile;
 
@@ -440,7 +440,6 @@ mod tests {
     }
 
     #[allow(unused)]
-
     fn new_cap_info(codec: Codec) -> Box<CapInfo> {
         Box::new(CapInfo {
             codec,
@@ -469,22 +468,58 @@ mod tests {
         let mut node = list_head::default();
         head.next = &mut node;
         head.prev = &mut node;
-        let result = list_empty(&mut head);
+        let result = list_empty(&head);
         assert!(!result);
     }
 
     fn dummy_demuxer<'a>() -> CcxDemuxer<'a> {
+        // Can't use ..Default::default() because CcxDemuxer implements Drop
         CcxDemuxer {
+            infd: -1,
+            past: 0,
+            m2ts: 0,
+            auto_stream: StreamMode::ElementaryOrNotFound,
+            stream_mode: StreamMode::ElementaryOrNotFound,
+            ts_autoprogram: false,
+            ts_allprogram: false,
+            flag_ts_forced_pn: false,
+            ts_datastreamtype: StreamType::Unknownstream,
+            pinfo: Vec::new(),
+            nb_program: 0,
+            codec: Codec::Any,
+            flag_ts_forced_cappid: false,
+            nocodec: Codec::Any,
+            cinfo_tree: CapInfo::default(),
+            startbytes: vec![0; STARTBYTESLENGTH],
+            startbytes_pos: 0,
+            startbytes_avail: 0,
+            global_timestamp: Timestamp::from_millis(0),
+            min_global_timestamp: Timestamp::from_millis(0),
+            offset_global_timestamp: Timestamp::from_millis(0),
+            last_global_timestamp: Timestamp::from_millis(0),
+            global_timestamp_inited: Timestamp::from_millis(0),
+            pid_buffers: vec![],
+            pids_seen: vec![],
+            stream_id_of_each_pid: vec![],
+            min_pts: vec![0; MAX_PSI_PID + 1],
+            have_pids: vec![],
+            num_of_pids: 0,
+            pids_programs: vec![],
+            freport: CcxDemuxReport::default(),
+            hauppauge_warning_shown: false,
+            multi_stream_per_prog: 0,
+            last_pat_payload: null_mut(),
+            last_pat_length: 0,
             filebuffer: null_mut(),
             filebuffer_start: 999,
             filebuffer_pos: 999,
             bytesinbuffer: 999,
-            have_pids: vec![],
-            pids_seen: vec![],
-            min_pts: vec![0; MAX_PSI_PID + 1],
-            stream_id_of_each_pid: vec![],
-            pids_programs: vec![],
-            ..Default::default()
+            warning_program_not_found_shown: false,
+            strangeheader: 0,
+            parent: None,
+            private_data: null_mut(),
+            #[cfg(feature = "enable_ffmpeg")]
+            ffmpeg_ctx: null_mut(),
         }
     }
 
@@ -515,7 +550,7 @@ mod tests {
         assert_eq!(ctx.bytesinbuffer, 123);
         // Clean up.
         unsafe {
-            let _ = Box::from_raw(slice::from_raw_parts_mut(
+            let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
                 ctx.filebuffer,
                 FILEBUFFERSIZE as usize,
             ));

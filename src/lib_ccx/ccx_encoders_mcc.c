@@ -340,15 +340,15 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 	buff_ptr[5] = data_size + 12;
 	buff_ptr[6] = ((cdp_frame_rate << 4) | 0x0F);
 	buff_ptr[7] = 0x43; // Timecode not Present; Service Info not Present; Captions Present
-	buff_ptr[8] = (uint8)((ctx->cdp_hdr_seq & 0xF0) >> 8);
-	buff_ptr[9] = (uint8)(ctx->cdp_hdr_seq & 0x0F);
+	buff_ptr[8] = (uint8)((ctx->cdp_hdr_seq >> 8) & 0xFF);
+	buff_ptr[9] = (uint8)(ctx->cdp_hdr_seq & 0xFF);
 	buff_ptr[10] = CC_DATA_ID;
 	buff_ptr[11] = cc_count | 0xE0;
 	memcpy(&buff_ptr[12], cc_data, data_size);
 	uint8 *data_ptr = &buff_ptr[data_size + 12];
 	data_ptr[0] = CDP_FOOTER_ID;
-	data_ptr[1] = (uint8)((ctx->cdp_hdr_seq & 0xF0) >> 8);
-	data_ptr[2] = (uint8)(ctx->cdp_hdr_seq & 0x0F);
+	data_ptr[1] = (uint8)((ctx->cdp_hdr_seq >> 8) & 0xFF);
+	data_ptr[2] = (uint8)(ctx->cdp_hdr_seq & 0xFF);
 	data_ptr[3] = 0;
 
 	for (int loop = 0; loop < (data_size + 15); loop++)

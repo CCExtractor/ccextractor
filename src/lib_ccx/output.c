@@ -96,9 +96,14 @@ int writeraw(const unsigned char *data, int length, void *private_data, struct c
 	if (data == NULL)
 		return -1;
 
-	sub->data = realloc(sub->data, length + sub->nb_data);
-	if (!sub->data)
+	void *tmp = realloc(sub->data, length + sub->nb_data);
+	if (!tmp)
+	{
+		free(sub->data);
+		sub->data = NULL;
 		return EXIT_NOT_ENOUGH_MEMORY;
+	}
+	sub->data = tmp;
 	sub_data = sub->data;
 	sub->datatype = CC_DATATYPE_GENERIC;
 	memcpy(sub_data + sub->nb_data, data, length);

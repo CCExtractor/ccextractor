@@ -8,7 +8,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Corrosion)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(PROFILE "debug")
+    set(PROFILE "dev")
 else()
     set(PROFILE "release")
 endif()
@@ -20,7 +20,7 @@ else()
 endif()
 
 # Check rust version
-set(MSRV "1.54.0")
+set(MSRV "1.87.0")
 if(Rust_VERSION VERSION_GREATER_EQUAL ${MSRV})
     message(STATUS "rustc >= MSRV(${MSRV})")
 else()

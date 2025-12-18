@@ -360,6 +360,10 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 {
 	size_t max = (size_t)ctx->inputsize + 1; // Enough for the whole thing. Hex dumps are small so we can be lazy here
 	char *line = (char *)malloc(max);
+	if (!line)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory allocating line buffer.");
+	}
 	/* const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present */
 	FILE *fr = fopen(filename, "rt");
 	unsigned char *bytes = NULL;
@@ -430,7 +434,6 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		bytes = (unsigned char *)malloc(byte_count);
 		if (!bytes)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
-		unsigned char *bytes = (unsigned char *)malloc(byte_count);
 		for (unsigned i = 0; i < byte_count; i++)
 		{
 			unsigned char high = c2[0];
@@ -665,13 +668,34 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
 	{
 		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
-		if (enc_ctx)
+
+		/* Check if teletext context is still valid (may have been freed by dinit_cap
+		   during PAT change while stream was being processed) */
+		if (!dec_ctx->private_data)
 		{
-			ret = tlt_process_pes_packet(dec_ctx, data_node->buffer, data_node->len, dec_sub, enc_ctx->sentence_cap);
+			got = data_node->len; // Skip processing, context was freed
+		}
+		else
+		{
+			/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
+			   This enables tlt_process_pes_packet() to detect subtitle pages by populating
+			   the seen_sub_page[] array inside the teletext decoder. */
+			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+
+			ret = tlt_process_pes_packet(
+			    dec_ctx,
+			    data_node->buffer,
+			    data_node->len,
+			    dec_sub,
+			    sentence_cap);
+
+			/* If Teletext decoding fails with invalid data, abort processing */
 			if (ret == CCX_EINVAL)
 				return ret;
+
+			/* Mark processed byte count */
+			got = data_node->len;
 		}
-		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
@@ -933,6 +957,15 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			{
 				*min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
 				set_current_pts((*dec_ctx)->timing, *min_pts);
+				// For DVB subtitles, we need to directly set min_pts because set_fts()
+				// relies on video frame type detection which doesn't work for DVB-only streams.
+				// This fixes negative subtitle timestamps.
+				if ((*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL)
+				{
+					(*dec_ctx)->timing->min_pts = *min_pts;
+					(*dec_ctx)->timing->pts_set = 2; // MinPtsSet
+					(*dec_ctx)->timing->sync_pts = *min_pts;
+				}
 				set_fts((*dec_ctx)->timing);
 			}
 		}
@@ -954,6 +987,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			else
 				pts = (*data_node)->pts;
 			set_current_pts((*dec_ctx)->timing, pts);
+			// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
+			if ((*dec_ctx)->codec == CCX_CODEC_DVB && (*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL)
+			{
+				(*dec_ctx)->timing->min_pts = pts;
+				(*dec_ctx)->timing->pts_set = 2; // MinPtsSet
+				(*dec_ctx)->timing->sync_pts = pts;
+			}
 			set_fts((*dec_ctx)->timing);
 		}
 
@@ -985,7 +1025,8 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		{
 			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE && (*dec_ctx)->dec_sub.prev->end_time == 0)
 			{
-				(*dec_ctx)->dec_sub.prev->end_time = ((*dec_ctx)->timing->current_pts - (*dec_ctx)->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
+				// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
+				(*dec_ctx)->dec_sub.prev->end_time = get_fts((*dec_ctx)->timing, (*dec_ctx)->current_field);
 				if ((*enc_ctx) != NULL)
 					encode_sub((*enc_ctx)->prev, (*dec_ctx)->dec_sub.prev);
 				(*dec_ctx)->dec_sub.prev->got_output = 0;
@@ -998,11 +1039,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
-	enum ccx_stream_mode_enum stream_mode;
+	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
-	int ret;
+	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int ret = 0;
 	int caps = 0;
 
 	uint64_t min_pts = UINT64_MAX;
@@ -1083,7 +1124,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		else
 		{
 			struct cap_info *cinfo = NULL;
-			struct cap_info *program_iter;
+			struct cap_info *program_iter = NULL;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
 			struct encoder_ctx *enc_ctx = NULL;
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
@@ -1130,6 +1171,13 @@ int general_loop(struct lib_ccx_ctx *ctx)
 						{
 							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
 							set_current_pts(dec_ctx->timing, min_pts);
+							// For DVB subtitles, directly set min_pts to fix negative timestamps
+							if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+							{
+								dec_ctx->timing->min_pts = min_pts;
+								dec_ctx->timing->pts_set = 2; // MinPtsSet
+								dec_ctx->timing->sync_pts = min_pts;
+							}
 							set_fts(dec_ctx->timing);
 						}
 					}
@@ -1142,7 +1190,16 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					continue;
 
 				if (data_node->pts != CCX_NOPTS)
+				{
 					set_current_pts(dec_ctx->timing, data_node->pts);
+					// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
+					if (dec_ctx->codec == CCX_CODEC_DVB && dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+					{
+						dec_ctx->timing->min_pts = data_node->pts;
+						dec_ctx->timing->pts_set = 2; // MinPtsSet
+						dec_ctx->timing->sync_pts = data_node->pts;
+					}
+				}
 
 				ret = process_data(enc_ctx, dec_ctx, data_node);
 				if (enc_ctx != NULL)
@@ -1207,7 +1264,21 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	{
 
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		{
+			void *saved_private_data = dec_ctx->private_data;
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+			// NULL out any cinfo entries that shared this private_data pointer
+			// to prevent double-free in dinit_cap
+			if (saved_private_data && ctx->demux_ctx)
+			{
+				struct cap_info *cinfo_iter;
+				list_for_each_entry(cinfo_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+				{
+					if (cinfo_iter->codec_private_data == saved_private_data)
+						cinfo_iter->codec_private_data = NULL;
+				}
+			}
+		}
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
 			process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
@@ -1251,6 +1322,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 
 	// Generic buffer to hold some data
 	parsebuf = (unsigned char *)malloc(1024);
+	if (!parsebuf)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
+	}
 
 	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;
@@ -1259,6 +1334,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
+		free(parsebuf);
 		return -1;
 	}
 
@@ -1335,9 +1411,13 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		{
 			if (cbcount * 3 > parsebufsize)
 			{
-				parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
-				if (!parsebuf)
+				unsigned char *new_parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
+				if (!new_parsebuf)
+				{
+					free(parsebuf);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
+				}
+				parsebuf = new_parsebuf;
 				parsebufsize = cbcount * 3;
 			}
 			result = buffered_read(ctx->demux_ctx, parsebuf, cbcount * 3);
@@ -1368,6 +1448,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	/* Free XDS context - similar to cleanup in general_loop */
+	free(dec_ctx->xds_ctx);
 	free(parsebuf);
 	return caps;
 }

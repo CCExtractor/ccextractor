@@ -175,6 +175,8 @@ void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, con
 		if (n > -1 && n < size)
 		{
 			write_xds_string(sub, ctx, p, n);
+			/* Note: Don't free(p) here - the pointer is stored in data->xds_str
+			   and will be freed by the encoder or decoder cleanup code */
 			return;
 		}
 		/* Else try again with more space. */
@@ -499,6 +501,10 @@ int xds_do_current_and_future(struct cc_subtitle *sub, struct ccx_decoders_xds_c
 	int was_proc = 0;
 
 	char *str = malloc(1024);
+	if (!str)
+	{
+		return CCX_ENOMEM;
+	}
 	char *tstr = NULL;
 	int str_len = 1024;
 

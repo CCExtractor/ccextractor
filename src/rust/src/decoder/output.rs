@@ -85,15 +85,14 @@ impl<'a> Writer<'a> {
 
 /// Write the symbol to the provided buffer
 ///
-/// If symbol is 8-bit, then it's written to the buffer
-/// If symbol is 16-bit, then two 8-bit symbols are written to the buffer
+/// Always writes 2 bytes for consistent UTF-16BE encoding.
+/// Previously, this function wrote 1 byte for ASCII characters and 2 bytes
+/// for non-ASCII, creating an invalid mix that encoding conversion couldn't
+/// handle properly. This caused garbled output with Japanese/Chinese characters
+/// (issue #1451).
 pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>) {
-    if sym.sym >> 8 != 0 {
-        buf.push((sym.sym >> 8) as u8);
-        buf.push((sym.sym & 0xff) as u8);
-    } else {
-        buf.push(sym.sym as u8);
-    }
+    buf.push((sym.sym >> 8) as u8);
+    buf.push((sym.sym & 0xff) as u8);
 }
 
 /// Convert from CEA-708 color representation to hex code
@@ -118,14 +117,16 @@ mod tests {
     fn test_write_char() {
         let mut buf = Vec::new();
 
-        // Write 8-bit symbol
+        // Write ASCII symbol - UTF-16BE always uses 2 bytes
+        // 'A' (0x41) becomes [0x00, 0x41] in UTF-16BE
         let sym = dtvcc_symbol { sym: 0x41, init: 0 };
         write_char(&sym, &mut buf);
-        assert_eq!(buf, vec![0x41]);
+        assert_eq!(buf, vec![0x00, 0x41]);
 
         buf.clear();
 
-        // Write 16-bit symbol
+        // Write non-ASCII symbol (e.g., Japanese character)
+        // Already 16-bit, writes as [high_byte, low_byte]
         let sym = dtvcc_symbol {
             sym: 0x1234,
             init: 0,

@@ -142,9 +142,14 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		return -1;
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	if (!unescaped)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory for unescaped buffer.\n");
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
-	if (el == NULL || unescaped == NULL)
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory.\n");
+	if (!el)
+	{
+		free(unescaped);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_webvtt() - not enough memory for el buffer.\n");
+	}
 	int pos_r = 0;
 	int pos_w = 0;
 	// Scan for \n in the string and replace it with a 0
@@ -473,7 +478,14 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 			if (ccx_options.use_webvtt_styling)
 			{
 				color_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				if (!color_events)
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory allocating color_events.");
 				font_events = (int *)calloc(COLUMNS + 1, sizeof(int));
+				if (!font_events)
+				{
+					free(color_events);
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory allocating font_events.");
+				}
 
 				get_color_events(color_events, i, data);
 				get_font_events(font_events, i, data);

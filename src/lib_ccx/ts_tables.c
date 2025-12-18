@@ -11,6 +11,7 @@ void process_ccx_mpeg_descriptor(unsigned char *data, unsigned length);
 unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 {
 	enum ccx_stream_type tmp_stream_type = stream_type;
+
 	switch (stream_type)
 	{
 		case CCX_STREAM_TYPE_VIDEO_MPEG2:
@@ -33,6 +34,10 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 		case CCX_STREAM_TYPE_AUDIO_DTS:
 		case CCX_STREAM_TYPE_AUDIO_HDMV_DTS:
 			break;
+
+		case CCX_STREAM_TYPE_VIDEO_HEVC:
+			break;
+
 		default:
 			if (stream_type >= 0x80 && stream_type <= 0xFF)
 				tmp_stream_type = CCX_STREAM_TYPE_PRIVATE_USER_MPEG2;
@@ -40,6 +45,7 @@ unsigned get_printable_stream_type(enum ccx_stream_type stream_type)
 				tmp_stream_type = CCX_STREAM_TYPE_UNKNOWNSTREAM;
 			break;
 	}
+
 	return tmp_stream_type;
 }
 
@@ -110,6 +116,15 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 	uint16_t pi_length;
 
+	// Minimum PMT size: table_id(1) + section_length(2) + program_number(2) +
+	// version/current(1) + section_number(1) + last_section_number(1) +
+	// PCR_PID(2) + program_info_length(2) + CRC(4) = 16 bytes
+	if (len < 16)
+	{
+		dbg_print(CCX_DMT_PMT, "PMT packet too short (%d bytes), ignoring\n", len);
+		return 0;
+	}
+
 	crc = (*(int32_t *)(sbuf + olen - 4));
 	table_id = buf[0];
 
@@ -164,6 +179,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 	if (!current_next_indicator && pinfo->version != 0xFF) // 0xFF means we don't have one yet
 		return 0;
 
+	// Bounds check: saved_section is 1021 bytes
+	if (len > 1021)
+	{
+		dbg_print(CCX_DMT_PMT, "PMT section too large (%d bytes), truncating to 1021\n", len);
+		len = 1021;
+	}
 	memcpy(pinfo->saved_section, buf, len);
 
 	if (pinfo->analysed_PMT_once == CCX_TRUE && pinfo->version == version_number)
@@ -408,11 +429,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			}
 		}
 
-		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2)
+		// Support H.264, MPEG-2 and HEVC video streams
+		if (stream_type == CCX_STREAM_TYPE_VIDEO_H264 || stream_type == CCX_STREAM_TYPE_VIDEO_MPEG2 || stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
 		{
+			if (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
+				mprint("Detected HEVC video stream (0x24) - enabling ATSC CC parsing.\n");
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
-			// mprint ("Decode captions from program %d - %s stream [0x%02x]  -  PID: %u\n",
-			//	program_number , desc[stream_type], stream_type, elementary_PID);
 		}
 
 		if (need_cap_info_for_pid(ctx, elementary_PID) == CCX_TRUE)
@@ -473,6 +495,11 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	if (ctx->PID_buffers[pid] == NULL)
 	{ // First packet for this pid. Create a buffer
 		ctx->PID_buffers[pid] = malloc(sizeof(struct PSI_buffer));
+		if (ctx->PID_buffers[pid] == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory allocating PSI buffer for PID %u.\n", pid);
+			return;
+		}
 		ctx->PID_buffers[pid]->buffer = NULL;
 		ctx->PID_buffers[pid]->buffer_length = 0;
 		ctx->PID_buffers[pid]->ccounter = 0;
@@ -501,6 +528,12 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 			// must be first packet for PID
 		}
 		ctx->PID_buffers[pid]->buffer = (uint8_t *)malloc(payload_length);
+		if (ctx->PID_buffers[pid]->buffer == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory allocating buffer for PID %u.\n", pid);
+			ctx->PID_buffers[pid]->buffer_length = 0;
+			return;
+		}
 		memcpy(ctx->PID_buffers[pid]->buffer, payload_start, payload_length);
 		ctx->PID_buffers[pid]->buffer_length = payload_length;
 		ctx->PID_buffers[pid]->ccounter++;
@@ -508,7 +541,13 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	else if (ccounter == ctx->PID_buffers[pid]->prev_ccounter + 1 || (ctx->PID_buffers[pid]->prev_ccounter == 0x0f && ccounter == 0))
 	{
 		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
-		ctx->PID_buffers[pid]->buffer = (uint8_t *)realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
+		void *tmp = realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
+		if (tmp == NULL)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Out of memory reallocating buffer for PID %u.\n", pid);
+			return;
+		}
+		ctx->PID_buffers[pid]->buffer = (uint8_t *)tmp;
 		memcpy(ctx->PID_buffers[pid]->buffer + ctx->PID_buffers[pid]->buffer_length, payload_start, payload_length);
 		ctx->PID_buffers[pid]->ccounter++;
 		ctx->PID_buffers[pid]->buffer_length += payload_length;

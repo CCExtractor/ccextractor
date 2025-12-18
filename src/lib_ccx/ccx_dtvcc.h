@@ -10,4 +10,4 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 dtvcc_ctx *dtvcc_init(ccx_decoder_dtvcc_settings *opts);
 void dtvcc_free(dtvcc_ctx **);
 
-#endif //CCEXTRACTOR_CCX_DTVCC_H
+#endif // CCEXTRACTOR_CCX_DTVCC_H

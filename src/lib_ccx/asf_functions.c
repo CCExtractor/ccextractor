@@ -150,6 +150,10 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		    .StreamNumberLType = 0,
 		    .PacketLength = 0,
 		    .PaddingLength = 0};
+		// Check for allocation failure
+		if (!asf_data_container.parsebuf)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Out of memory allocating initial parse buffer.");
+
 		// Initialize the Payload Extension System
 		for (int stream = 0; stream < STREAMNUM; stream++)
 		{
@@ -185,9 +189,13 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 		if (asf_data_container.HeaderObjectSize > asf_data_container.parsebufsize)
 		{
-			asf_data_container.parsebuf = (unsigned char *)realloc(asf_data_container.parsebuf, (size_t)asf_data_container.HeaderObjectSize);
-			if (!asf_data_container.parsebuf)
+			unsigned char *tmp = (unsigned char *)realloc(asf_data_container.parsebuf, (size_t)asf_data_container.HeaderObjectSize);
+			if (!tmp)
+			{
+				free(asf_data_container.parsebuf);
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Out of memory requesting buffer for data container.");
+			}
+			asf_data_container.parsebuf = tmp;
 			asf_data_container.parsebufsize = (long)asf_data_container.HeaderObjectSize;
 		}
 
@@ -751,9 +759,13 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				if ((long)replicated_length > asf_data_container.parsebufsize)
 				{
-					asf_data_container.parsebuf = (unsigned char *)realloc(asf_data_container.parsebuf, replicated_length);
-					if (!asf_data_container.parsebuf)
+					unsigned char *tmp = (unsigned char *)realloc(asf_data_container.parsebuf, replicated_length);
+					if (!tmp)
+					{
+						free(asf_data_container.parsebuf);
 						fatal(EXIT_NOT_ENOUGH_MEMORY, "In asf_getmoredata: Not enough memory for buffer, unable to continue.\n");
+					}
+					asf_data_container.parsebuf = tmp;
 					asf_data_container.parsebufsize = replicated_length;
 				}
 				result = buffered_read(ctx->demux_ctx, asf_data_container.parsebuf, (long)replicated_length);

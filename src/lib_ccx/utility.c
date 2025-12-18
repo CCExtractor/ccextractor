@@ -410,7 +410,7 @@ char *get_basename(char *filename)
 		return NULL;
 	}
 
-	strcpy(basefilename, filename);
+	memcpy(basefilename, filename, len + 1);
 
 	for (c = basefilename + len; c > basefilename && *c != '.'; c--)
 	{
@@ -490,18 +490,15 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	if ((elen + slen + blen) <= 0)
 		return NULL;
 
-	ptr = malloc(elen + slen + blen + 1);
+	size_t total_len = elen + slen + blen + 1;
+	ptr = malloc(total_len);
 	if (!ptr)
 		return NULL;
 
-	ptr[0] = '\0';
-
-	if (basename)
-		strcat(ptr, basename);
-	if (suffix)
-		strcat(ptr, suffix);
-	if (extension)
-		strcat(ptr, extension);
+	snprintf(ptr, total_len, "%s%s%s",
+		 basename ? basename : "",
+		 suffix ? suffix : "",
+		 extension ? extension : "");
 	return ptr;
 }
 
@@ -538,16 +535,18 @@ LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational
 
 char *str_reallocncat(char *dst, char *src)
 {
-	int nl = dst == NULL ? (strlen(src) + 1) : (strlen(dst) + strlen(src) + 1);
-	char *orig = dst;
-	dst = (char *)realloc(dst, nl);
-	if (!dst)
+	size_t src_len = strlen(src);
+	size_t dst_len = dst == NULL ? 0 : strlen(dst);
+	size_t nl = dst_len + src_len + 1;
+	char *tmp = (char *)realloc(dst, nl);
+	if (!tmp)
+	{
+		free(dst);
 		return NULL;
-	if (orig == NULL)
-		strcpy(dst, src);
-	else
-		strcat(dst, src);
-	return dst;
+	}
+	// Copy src after existing content (or at start if dst was NULL)
+	memcpy(tmp + dst_len, src, src_len + 1);
+	return tmp;
 }
 
 #ifdef _WIN32

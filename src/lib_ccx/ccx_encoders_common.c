@@ -30,7 +30,7 @@ ccx_encoders_transcript_format ccx_encoders_default_transcript_settings =
 	.useColors = 1,
 	.isFinal = 0};
 
-// TODO sami header doesn't carry about CRLF/LF option
+// TODO sami header doesn't care about CRLF/LF option
 static const char *sami_header = // TODO: Revise the <!-- comments
     "<SAMI>\n\
 <HEAD>\n\
@@ -193,7 +193,7 @@ static int write_bom(struct encoder_ctx *ctx, struct ccx_s_write *out)
 			ret = write(out->fh, UTF8_BOM, sizeof(UTF8_BOM));
 			if (ret < sizeof(UTF8_BOM))
 			{
-				mprint("WARNING: Unable tp write UTF BOM\n");
+				mprint("WARNING: Unable to write UTF BOM\n");
 				return -1;
 			}
 		}
@@ -872,8 +872,30 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 	int wrote_something = 0;
 	int ret = 0;
 
+	/* If there is no encoder context (e.g. -out=report), we must still free
+	   any allocated subtitle data to avoid memory leaks. */
 	if (!context)
+	{
+		if (sub)
+		{
+			/* DVB subtitles store bitmap planes inside cc_bitmap */
+			if (sub->datatype == CC_DATATYPE_DVB)
+			{
+				struct cc_bitmap *bitmap = (struct cc_bitmap *)sub->data;
+				if (bitmap)
+				{
+					freep(&bitmap->data0);
+					freep(&bitmap->data1);
+				}
+			}
+
+			/* Free generic subtitle payload buffer */
+			freep(&sub->data);
+			sub->nb_data = 0;
+		}
+
 		return CCX_OK;
+	}
 
 	context = change_filename(context);
 
@@ -907,6 +929,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				// After adding delay, if start/end time is lower than 0, then continue with the next subtitle
 				if (data->start_time < 0 || data->end_time <= 0)
 				{
+					// Free XDS string if skipping to avoid memory leak
+					if (data->format == SFORMAT_XDS && data->xds_str)
+					{
+						freep(&data->xds_str);
+					}
 					continue;
 				}
 

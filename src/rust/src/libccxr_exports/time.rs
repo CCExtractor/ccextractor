@@ -83,9 +83,10 @@ pub extern "C" fn ccxr_millis_to_date(
 /// `s` must contain valid utf-8 data and have a null terminator at the end of the string.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_stringztoms(s: *const c_char, bt: *mut ccx_boundary_time) -> c_int {
-    let s = CStr::from_ptr(s)
-        .to_str()
-        .expect("Failed to convert buffer `s` into a &str");
+    let s = match CStr::from_ptr(s).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1, // Invalid UTF-8
+    };
 
     let option_timestamp = stringztoms(s);
 
@@ -517,7 +518,7 @@ pub unsafe extern "C" fn ccxr_get_visible_end(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    fts.try_into().unwrap()
+    fts as c_long
 }
 
 /// Rust equivalent for `get_visible_start` function in C. Uses C-native types as input and output.
@@ -553,7 +554,7 @@ pub unsafe extern "C" fn ccxr_get_visible_start(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    fts.try_into().unwrap()
+    fts as c_long
 }
 
 /// Rust equivalent for `get_fts_max` function in C. Uses C-native types as input and output.

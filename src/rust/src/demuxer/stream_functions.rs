@@ -422,6 +422,7 @@ pub fn is_valid_mp4_box(
     0
 }
 #[cfg(test)]
+#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
     use crate::bindings::{ccx_demuxer, ccx_gxf, MXFContext};

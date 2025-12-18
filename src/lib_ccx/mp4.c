@@ -509,6 +509,10 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	if (dec_sub->data != NULL)
 		free(dec_sub->data);
 	dec_sub->data = malloc(atom_length + 1);
+	if (!dec_sub->data)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_tx3g_atom: Out of memory allocating subtitle data.");
+	}
 	dec_sub->datatype = CC_DATATYPE_GENERIC;
 	memcpy(dec_sub->data, data, atom_length);
 	*((char *)dec_sub->data + atom_length) = '\0';
