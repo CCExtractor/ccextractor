@@ -1516,10 +1516,12 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 // Called only when teletext is detected or forced and it's going to be used for extraction.
 void *telxcc_init(void)
 {
-	struct TeletextCtx *ctx = malloc(sizeof(struct TeletextCtx));
+	// Use calloc to zero-initialize all fields, preventing uninitialized memory errors
+	struct TeletextCtx *ctx = calloc(1, sizeof(struct TeletextCtx));
 
 	if (!ctx)
 		return NULL;
+	// These memsets are now redundant but kept for clarity
 	memset(ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
 	memset(ctx->cc_map, 0, 256);
 

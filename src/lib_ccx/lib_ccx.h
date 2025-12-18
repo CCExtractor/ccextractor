@@ -175,6 +175,11 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int raw_loop(struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
+
+// Rust FFI: McPoodle DVD raw format processing (see src/rust/src/demuxer/dvdraw.rs)
+unsigned int ccxr_process_dvdraw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len);
+int ccxr_is_dvdraw_header(const unsigned char *buffer, unsigned int len);
+
 int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex(struct lib_ccx_ctx *ctx, char *filename);
 int rcwt_loop(struct lib_ccx_ctx *ctx);

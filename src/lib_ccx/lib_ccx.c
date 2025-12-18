@@ -12,7 +12,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 {
 	struct ccx_decoders_common_settings_t *setting;
 
-	setting = malloc(sizeof(struct ccx_decoders_common_settings_t));
+	setting = calloc(1, sizeof(struct ccx_decoders_common_settings_t));
 	if (!setting)
 		return NULL;
 
@@ -33,6 +33,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
 	setting->ocr_quantmode = opt->ocr_quantmode;
+	// program_number, codec, and private_data are zero-initialized by calloc
 
 	return setting;
 }
@@ -357,7 +358,14 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 		if (!cinfo || ctx->multiprogram == CCX_FALSE)
+		{
+			/* Update private_data from cinfo if available.
+			   This is needed after PAT changes when dinit_cap() freed the old context
+			   and a new cap_info was created with a new codec_private_data. */
+			if (cinfo && cinfo->codec_private_data)
+				dec_ctx->private_data = cinfo->codec_private_data;
 			return dec_ctx;
+		}
 
 		if (dec_ctx->program_number == cinfo->program_number)
 			return dec_ctx;

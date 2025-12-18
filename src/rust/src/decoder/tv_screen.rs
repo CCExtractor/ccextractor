@@ -735,4 +735,77 @@ mod test {
         assert!(!screen.is_row_empty(0));
         assert!(screen.is_row_empty(1));
     }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_writer_output_with_valid_fd() {
+        // Test that writer_output works when fd is already set (stdout mode)
+        // This tests the fix for issue #1693
+        use std::fs::File;
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+
+        // Create a temp file and use its fd (simulates stdout being pre-set)
+        let temp_file = tempfile().expect("Failed to create temp file");
+        writer_ctx.fd = temp_file.into_raw_fd();
+        writer_ctx.filename = std::ptr::null_mut(); // filename is null in stdout mode
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+        );
+
+        // This should succeed without error (fd is valid, not -1)
+        let result = screen.writer_output(&mut writer);
+        assert!(
+            result.is_ok(),
+            "writer_output should succeed when fd is valid"
+        );
+
+        // Clean up: convert fd back to File so it gets closed on drop
+        let _file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_writer_output_missing_filename_and_fd() {
+        // Test that writer_output returns error when both filename and fd are invalid
+        // This is the expected behavior that was causing panic before the fix
+        let screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+
+        // Both filename is null and fd is -1 (invalid state)
+        writer_ctx.fd = -1;
+        writer_ctx.filename = std::ptr::null_mut();
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+        );
+
+        // This should return an error, not panic
+        let result = screen.writer_output(&mut writer);
+        assert!(
+            result.is_err(),
+            "writer_output should return error when filename and fd are invalid"
+        );
+        assert_eq!(result.unwrap_err(), "Filename missing");
+    }
 }

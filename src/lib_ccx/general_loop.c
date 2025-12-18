@@ -529,6 +529,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
 	int caps = 0;
+	int is_dvdraw = 0; // Flag to track if this is DVD raw format
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
@@ -545,17 +546,32 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		if (ret == CCX_EOF)
 			break;
 
-		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
+		// Check if this is DVD raw format using Rust detection
+		if (!is_dvdraw && ccxr_is_dvdraw_header(data->buffer, (unsigned int)data->len))
+		{
+			is_dvdraw = 1;
+			mprint("Detected McPoodle's DVD raw format\n");
+		}
+
+		if (is_dvdraw)
+		{
+			// Use Rust implementation - handles timing internally
+			ret = ccxr_process_dvdraw(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len);
+		}
+		else
+		{
+			ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
+			// For regular raw format, advance timing based on field 1 blocks
+			add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
+			set_fts(dec_ctx->timing);
+		}
+
 		if (dec_sub->got_output)
 		{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
-
-		// int ccblocks = cb_field1;
-		add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
-		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
 	} while (data->len);
 	free(data);
@@ -618,6 +634,11 @@ size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned 
 	return len;
 }
 
+/* NOTE: process_dvdraw() has been migrated to Rust.
+ * The implementation is now in src/rust/src/demuxer/dvdraw.rs
+ * and exported via ccxr_process_dvdraw() in src/rust/src/libccxr_exports/demuxer.rs
+ */
+
 void delete_datalist(struct demuxer_data *list)
 {
 	struct demuxer_data *slist = list;
@@ -679,24 +700,33 @@ int process_data(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, struct li
 	{
 		// telxcc_update_gt(dec_ctx->private_data, ctx->demux_ctx->global_timestamp);
 
-		/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
-		   This enables tlt_process_pes_packet() to detect subtitle pages by populating
-		   the seen_sub_page[] array inside the teletext decoder. */
-		int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
+		/* Check if teletext context is still valid (may have been freed by dinit_cap
+		   during PAT change while stream was being processed) */
+		if (!dec_ctx->private_data)
+		{
+			got = data_node->len; // Skip processing, context was freed
+		}
+		else
+		{
+			/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
+			   This enables tlt_process_pes_packet() to detect subtitle pages by populating
+			   the seen_sub_page[] array inside the teletext decoder. */
+			int sentence_cap = enc_ctx ? enc_ctx->sentence_cap : 0;
 
-		ret = tlt_process_pes_packet(
-		    dec_ctx,
-		    data_node->buffer,
-		    data_node->len,
-		    dec_sub,
-		    sentence_cap);
+			ret = tlt_process_pes_packet(
+			    dec_ctx,
+			    data_node->buffer,
+			    data_node->len,
+			    dec_sub,
+			    sentence_cap);
 
-		/* If Teletext decoding fails with invalid data, abort processing */
-		if (ret == CCX_EINVAL)
-			return ret;
+			/* If Teletext decoding fails with invalid data, abort processing */
+			if (ret == CCX_EINVAL)
+				return ret;
 
-		/* Mark processed byte count */
-		got = data_node->len;
+			/* Mark processed byte count */
+			got = data_node->len;
+		}
 	}
 	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
@@ -1018,7 +1048,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		if (*enc_ctx != NULL)
 		{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
+			{
 				*caps = 1;
+				/* Also update ret to indicate captions were found.
+				   This is needed for CEA-708 which writes directly via Rust
+				   and doesn't set got_output like CEA-608/DVB do. */
+				ret = 1;
+			}
 		}
 
 		// Process the last subtitle for DVB
@@ -1040,11 +1076,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 int general_loop(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
-	enum ccx_stream_mode_enum stream_mode;
+	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d);
-	int ret;
+	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int ret = 0;
 	int caps = 0;
 
 	uint64_t min_pts = UINT64_MAX;
@@ -1109,14 +1145,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (!ctx->multiprogram)
 		{
 			struct encoder_ctx *enc_ctx = NULL;
-			int ret = process_non_multiprogram_general_loop(ctx,
-									&datalist,
-									&data_node,
-									&dec_ctx,
-									&enc_ctx,
-									&min_pts,
-									ret,
-									&caps);
+			/* Note: Do NOT declare a new 'ret' variable here!
+			   We must update the outer 'ret' to track whether captions were found.
+			   Variable shadowing here would cause general_loop to always return 0
+			   (no captions found) regardless of actual caption content. */
+			ret = process_non_multiprogram_general_loop(ctx,
+								    &datalist,
+								    &data_node,
+								    &dec_ctx,
+								    &enc_ctx,
+								    &min_pts,
+								    ret,
+								    &caps);
 			if (ret == CCX_EINVAL)
 			{
 				break;
@@ -1125,7 +1165,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		else
 		{
 			struct cap_info *cinfo = NULL;
-			struct cap_info *program_iter;
+			struct cap_info *program_iter = NULL;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
 			struct encoder_ctx *enc_ctx = NULL;
 			list_for_each_entry(program_iter, &ptr->pg_stream, pg_stream, struct cap_info)
@@ -1265,7 +1305,21 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	{
 
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		{
+			void *saved_private_data = dec_ctx->private_data;
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+			// NULL out any cinfo entries that shared this private_data pointer
+			// to prevent double-free in dinit_cap
+			if (saved_private_data && ctx->demux_ctx)
+			{
+				struct cap_info *cinfo_iter;
+				list_for_each_entry(cinfo_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+				{
+					if (cinfo_iter->codec_private_data == saved_private_data)
+						cinfo_iter->codec_private_data = NULL;
+				}
+			}
+		}
 		// Flush remaining HD captions
 		if (dec_ctx->has_ccdata_buffered)
 			process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
@@ -1435,6 +1489,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	/* Free XDS context - similar to cleanup in general_loop */
+	free(dec_ctx->xds_ctx);
 	free(parsebuf);
 	return caps;
 }

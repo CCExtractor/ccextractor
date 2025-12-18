@@ -268,6 +268,34 @@ impl Default for CcxDemuxer<'_> {
         }
     }
 }
+
+/// Drop implementation to free Rust-owned allocations in pid_buffers and pids_programs.
+/// When CcxDemuxer is created via copy_demuxer_from_c_to_rust, these arrays contain
+/// Rust-owned Box pointers that must be freed. When created via Default, they contain
+/// null pointers which are safely ignored.
+impl Drop for CcxDemuxer<'_> {
+    fn drop(&mut self) {
+        // Free all non-null PSIBuffer pointers (Rust-owned from Box::into_raw)
+        for ptr in self.pid_buffers.drain(..) {
+            if !ptr.is_null() {
+                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
+                unsafe {
+                    drop(Box::from_raw(ptr));
+                }
+            }
+        }
+        // Free all non-null PMTEntry pointers (Rust-owned from Box::into_raw)
+        for ptr in self.pids_programs.drain(..) {
+            if !ptr.is_null() {
+                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
+                unsafe {
+                    drop(Box::from_raw(ptr));
+                }
+            }
+        }
+    }
+}
+
 impl Default for ProgramInfo {
     fn default() -> Self {
         ProgramInfo {

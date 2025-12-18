@@ -63,6 +63,7 @@ struct program_info
 	int16_t pcr_pid;
 	uint64_t got_important_streams_min_pts[COUNT];
 	int has_all_min_pts;
+	char virtual_channel[16];  // Stores ATSC virtual channel like "2.1"
 };
 
 struct cap_info

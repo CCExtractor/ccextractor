@@ -38,4 +38,5 @@
 pub mod common_types;
 pub mod demux;
 pub mod demuxer_data;
+pub mod dvdraw;
 pub mod stream_functions;

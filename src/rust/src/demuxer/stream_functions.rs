@@ -159,6 +159,21 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
         ctx.stream_mode = StreamMode::Wtv;
     }
 
+    // Check for McPoodle DVD raw format: 00 00 01 B2 43 43 ("CC") 01 F8
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound
+        && ctx.startbytes_avail >= 8
+        && ctx.startbytes[0] == 0x00
+        && ctx.startbytes[1] == 0x00
+        && ctx.startbytes[2] == 0x01
+        && ctx.startbytes[3] == 0xb2
+        && ctx.startbytes[4] == 0x43 // 'C'
+        && ctx.startbytes[5] == 0x43 // 'C'
+        && ctx.startbytes[6] == 0x01
+        && ctx.startbytes[7] == 0xf8
+    {
+        ctx.stream_mode = StreamMode::McpoodlesRaw;
+    }
+
     // Hex dump check
     #[cfg(feature = "wtv_debug")]
     {

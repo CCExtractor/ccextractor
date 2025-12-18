@@ -34,6 +34,31 @@ pub fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
     s.into_raw()
 }
 
+/// Free a C string that was allocated by Rust's `string_to_c_char` function.
+/// # Safety
+/// The pointer must have been allocated by `string_to_c_char` (i.e., `CString::into_raw`)
+/// or be null. Passing a pointer allocated by C's malloc will cause undefined behavior.
+pub unsafe fn free_rust_c_string(ptr: *mut ::std::os::raw::c_char) {
+    if !ptr.is_null() {
+        // Reclaim ownership and drop the CString, which frees the memory
+        let _ = ffi::CString::from_raw(ptr);
+    }
+}
+
+/// Replace a C string pointer with a new one, freeing the old string if it was
+/// allocated by Rust. Returns the new pointer.
+/// # Safety
+/// The old pointer must have been allocated by `string_to_c_char` or be null.
+pub unsafe fn replace_rust_c_string(
+    old: *mut ::std::os::raw::c_char,
+    new_str: &str,
+) -> *mut ::std::os::raw::c_char {
+    // Free the old string if it exists
+    free_rust_c_string(old);
+    // Allocate and return the new string
+    string_to_c_char(new_str)
+}
+
 /// # Safety
 /// The pointer returned has to be deallocated using from_raw() at some point
 pub fn null_pointer<T>() -> *mut T {
@@ -50,6 +75,26 @@ pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
     let ptr = c_strs.as_mut_ptr();
     std::mem::forget(c_strs);
     ptr
+}
+
+/// Free an array of C strings that was allocated by `string_to_c_chars`.
+/// # Safety
+/// The pointers must have been allocated by `string_to_c_chars` or be null.
+/// `count` must be the number of strings in the array.
+pub unsafe fn free_rust_c_string_array(arr: *mut *mut c_char, count: usize) {
+    if arr.is_null() {
+        return;
+    }
+    // Free each string in the array
+    for i in 0..count {
+        let str_ptr = *arr.add(i);
+        free_rust_c_string(str_ptr);
+    }
+    // Free the array itself by reconstructing the Vec and dropping it
+    // Note: We assume the Vec was created with exactly `count` elements
+    if count > 0 {
+        let _ = Vec::from_raw_parts(arr, count, count);
+    }
 }
 
 /// This function creates a new object of type `T` and fills it with zeros.

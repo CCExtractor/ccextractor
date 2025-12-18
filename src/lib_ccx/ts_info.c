@@ -266,6 +266,8 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 void dinit_cap(struct ccx_demuxer *ctx)
 {
 	struct cap_info *iter;
+	struct lib_ccx_ctx *lctx = (struct lib_ccx_ctx *)ctx->parent;
+
 	while (!list_empty(&ctx->cinfo_tree.all_stream))
 	{
 		iter = list_entry(ctx->cinfo_tree.all_stream.next, struct cap_info, all_stream);
@@ -275,12 +277,25 @@ void dinit_cap(struct ccx_demuxer *ctx)
 		// The pointer may have been NULLed by dinit_libraries if it was shared
 		if (iter->codec_private_data)
 		{
+			void *saved_private_data = iter->codec_private_data;
 			if (iter->codec == CCX_CODEC_DVB)
 				dvbsub_close_decoder(&iter->codec_private_data);
 			else if (iter->codec == CCX_CODEC_TELETEXT)
 				telxcc_close(&iter->codec_private_data, NULL);
 			else
 				free(iter->codec_private_data);
+
+			// Also NULL out any decoder contexts that shared this private_data pointer
+			// to prevent use-after-free when PAT changes during stream processing
+			if (lctx)
+			{
+				struct lib_cc_decode *dec_ctx;
+				list_for_each_entry(dec_ctx, &lctx->dec_ctx_head, list, struct lib_cc_decode)
+				{
+					if (dec_ctx->private_data == saved_private_data)
+						dec_ctx->private_data = NULL;
+				}
+			}
 		}
 		free(iter);
 	}
