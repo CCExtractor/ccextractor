@@ -529,6 +529,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
 	int caps = 0;
+	int is_dvdraw = 0; // Flag to track if this is DVD raw format
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
@@ -545,17 +546,32 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		if (ret == CCX_EOF)
 			break;
 
-		ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
+		// Check if this is DVD raw format using Rust detection
+		if (!is_dvdraw && ccxr_is_dvdraw_header(data->buffer, (unsigned int)data->len))
+		{
+			is_dvdraw = 1;
+			mprint("Detected McPoodle's DVD raw format\n");
+		}
+
+		if (is_dvdraw)
+		{
+			// Use Rust implementation - handles timing internally
+			ret = ccxr_process_dvdraw(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len);
+		}
+		else
+		{
+			ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
+			// For regular raw format, advance timing based on field 1 blocks
+			add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
+			set_fts(dec_ctx->timing);
+		}
+
 		if (dec_sub->got_output)
 		{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
 		}
-
-		// int ccblocks = cb_field1;
-		add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
-		set_fts(dec_ctx->timing); // Now set the FTS related variables including fts_max
 
 	} while (data->len);
 	free(data);
@@ -617,6 +633,11 @@ size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned 
 	}
 	return len;
 }
+
+/* NOTE: process_dvdraw() has been migrated to Rust.
+ * The implementation is now in src/rust/src/demuxer/dvdraw.rs
+ * and exported via ccxr_process_dvdraw() in src/rust/src/libccxr_exports/demuxer.rs
+ */
 
 void delete_datalist(struct demuxer_data *list)
 {

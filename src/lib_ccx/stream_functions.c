@@ -65,6 +65,19 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 		    ctx->startbytes[3] == 0x20)
 			ctx->stream_mode = CCX_SM_WTV;
 	}
+	// Check for McPoodle DVD raw format: 00 00 01 B2 43 43 ("CC") 01 F8
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 8)
+	{
+		if (ctx->startbytes[0] == 0x00 &&
+		    ctx->startbytes[1] == 0x00 &&
+		    ctx->startbytes[2] == 0x01 &&
+		    ctx->startbytes[3] == 0xb2 &&
+		    ctx->startbytes[4] == 0x43 && // 'C'
+		    ctx->startbytes[5] == 0x43 && // 'C'
+		    ctx->startbytes[6] == 0x01 &&
+		    ctx->startbytes[7] == 0xf8)
+			ctx->stream_mode = CCX_SM_MCPOODLESRAW;
+	}
 #ifdef WTV_DEBUG
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 6)
 	{

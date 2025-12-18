@@ -9,7 +9,7 @@ use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_long, c_longlong, c_uchar, c_uint, c_void};
 
 // External C function declarations
 extern "C" {
@@ -465,6 +465,88 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *mut ccx_demuxer) {
     }
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     demux_ctx.print_cfg()
+}
+
+// ============================================================================
+// DVD Raw Format Processing (McPoodle format)
+// ============================================================================
+
+use crate::bindings::{cc_subtitle, ccx_common_timing_ctx, lib_cc_decode};
+use crate::demuxer::dvdraw::{is_dvdraw_header, parse_dvdraw_with_callbacks, FRAME_DURATION_TICKS};
+
+// External C function declarations for caption processing
+extern "C" {
+    fn do_cb(ctx: *mut lib_cc_decode, cc_block: *mut c_uchar, sub: *mut cc_subtitle) -> c_int;
+    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: c_long);
+    fn ccxr_set_fts(ctx: *mut ccx_common_timing_ctx) -> c_int;
+}
+
+/// Check if a buffer contains McPoodle DVD raw format header.
+///
+/// # Safety
+///
+/// `buffer` must be a valid pointer to at least `len` bytes.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_is_dvdraw_header(buffer: *const c_uchar, len: c_uint) -> c_int {
+    if buffer.is_null() || len < 8 {
+        return 0;
+    }
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+    if is_dvdraw_header(slice) {
+        1
+    } else {
+        0
+    }
+}
+
+/// Process McPoodle's DVD raw format and extract caption blocks.
+///
+/// This function parses the DVD raw binary format, extracts caption data,
+/// advances timing appropriately, and calls do_cb() for each caption block.
+///
+/// # Safety
+///
+/// - `ctx` must be a valid pointer to a lib_cc_decode structure
+/// - `sub` must be a valid pointer to a cc_subtitle structure
+/// - `buffer` must be a valid pointer to at least `len` bytes
+///
+/// # Returns
+///
+/// The number of bytes consumed from the buffer.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_process_dvdraw(
+    ctx: *mut lib_cc_decode,
+    sub: *mut cc_subtitle,
+    buffer: *const c_uchar,
+    len: c_uint,
+) -> c_uint {
+    if ctx.is_null() || sub.is_null() || buffer.is_null() || len == 0 {
+        return 0;
+    }
+
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+
+    // Get the timing context from lib_cc_decode
+    let timing_ctx = (*ctx).timing;
+    if timing_ctx.is_null() {
+        return 0;
+    }
+
+    let bytes_consumed = parse_dvdraw_with_callbacks(
+        slice,
+        |cc_type, data1, data2| {
+            // Build caption block and call do_cb
+            let mut cc_block: [c_uchar; 3] = [cc_type, data1, data2];
+            do_cb(ctx, cc_block.as_mut_ptr(), sub);
+        },
+        || {
+            // Advance timing before each field 1 caption
+            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS as c_long);
+            ccxr_set_fts(timing_ctx);
+        },
+    );
+
+    bytes_consumed as c_uint
 }
 
 #[cfg(test)]
