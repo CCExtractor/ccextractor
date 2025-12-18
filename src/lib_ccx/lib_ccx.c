@@ -346,7 +346,14 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
 		if (!cinfo || ctx->multiprogram == CCX_FALSE)
+		{
+			/* Update private_data from cinfo if available.
+			   This is needed after PAT changes when dinit_cap() freed the old context
+			   and a new cap_info was created with a new codec_private_data. */
+			if (cinfo && cinfo->codec_private_data)
+				dec_ctx->private_data = cinfo->codec_private_data;
 			return dec_ctx;
+		}
 
 		if (dec_ctx->program_number == cinfo->program_number)
 			return dec_ctx;
