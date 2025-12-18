@@ -1017,7 +1017,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		if (*enc_ctx != NULL)
 		{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
+			{
 				*caps = 1;
+				/* Also update ret to indicate captions were found.
+				   This is needed for CEA-708 which writes directly via Rust
+				   and doesn't set got_output like CEA-608/DVB do. */
+				ret = 1;
+			}
 		}
 
 		// Process the last subtitle for DVB
@@ -1108,14 +1114,18 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (!ctx->multiprogram)
 		{
 			struct encoder_ctx *enc_ctx = NULL;
-			int ret = process_non_multiprogram_general_loop(ctx,
-									&datalist,
-									&data_node,
-									&dec_ctx,
-									&enc_ctx,
-									&min_pts,
-									ret,
-									&caps);
+			/* Note: Do NOT declare a new 'ret' variable here!
+			   We must update the outer 'ret' to track whether captions were found.
+			   Variable shadowing here would cause general_loop to always return 0
+			   (no captions found) regardless of actual caption content. */
+			ret = process_non_multiprogram_general_loop(ctx,
+								    &datalist,
+								    &data_node,
+								    &dec_ctx,
+								    &enc_ctx,
+								    &min_pts,
+								    ret,
+								    &caps);
 			if (ret == CCX_EINVAL)
 			{
 				break;
