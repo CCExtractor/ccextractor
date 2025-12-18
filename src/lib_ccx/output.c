@@ -119,51 +119,87 @@ void writeDVDraw(const unsigned char *data1, int length1,
 		 struct cc_subtitle *sub)
 {
 	/* these are only used by DVD raw mode: */
-	static int loopcount = 1; /* loop 1: 5 elements, loop 2: 8 elements,
-				     loop 3: 11 elements, rest: 15 elements */
-	static int datacount = 0; /* counts within loop */
+	static int loopcount = 1;	   /* loop 1: 5 elements, loop 2: 8 elements,
+					      loop 3: 11 elements, rest: 15 elements */
+	static int datacount = 0;	   /* counts within loop */
+	static int waiting_for_field2 = 0; /* track if we're waiting for field 2 data */
 
-	if (datacount == 0)
+	/* printdata() is called separately for field 1 and field 2 data.
+	 * Field 1: data1 set, data2 NULL
+	 * Field 2: data1 NULL, data2 set
+	 * We need to combine them into the DVD raw format: ff [d1] fe [d2]
+	 */
+
+	/* If we have data1 only (field 1), write ff + data1 and wait for field 2 */
+	if (data1 && length1 && (!data2 || !length2))
 	{
-		writeraw(DVD_HEADER, sizeof(DVD_HEADER), NULL, sub);
-		if (loopcount == 1)
-			writeraw(lc1, sizeof(lc1), NULL, sub);
-		if (loopcount == 2)
-			writeraw(lc2, sizeof(lc2), NULL, sub);
-		if (loopcount == 3)
+		if (datacount == 0)
 		{
-			writeraw(lc3, sizeof(lc3), NULL, sub);
-			if (data2 && length2)
-				writeraw(data2, length2, NULL, sub);
+			writeraw(DVD_HEADER, sizeof(DVD_HEADER), NULL, sub);
+			if (loopcount == 1)
+				writeraw(lc1, sizeof(lc1), NULL, sub);
+			else if (loopcount == 2)
+				writeraw(lc2, sizeof(lc2), NULL, sub);
+			else if (loopcount == 3)
+				writeraw(lc3, sizeof(lc3), NULL, sub);
+			else
+				writeraw(lc4, sizeof(lc4), NULL, sub);
 		}
-		if (loopcount > 3)
-		{
-			writeraw(lc4, sizeof(lc4), NULL, sub);
-			if (data2 && length2)
-				writeraw(data2, length2, NULL, sub);
-		}
-	}
-	datacount++;
-	writeraw(lc5, sizeof(lc5), NULL, sub);
-	if (data1 && length1)
+		writeraw(lc5, sizeof(lc5), NULL, sub); /* ff */
 		writeraw(data1, length1, NULL, sub);
-	if (((loopcount == 1) && (datacount < 5)) || ((loopcount == 2) && (datacount < 8)) || ((loopcount == 3) && (datacount < 11)) ||
-	    ((loopcount > 3) && (datacount < 15)))
-	{
-		writeraw(lc6, sizeof(lc6), NULL, sub);
-		if (data2 && length2)
-			writeraw(data2, length2, NULL, sub);
+		waiting_for_field2 = 1;
+		return;
 	}
-	else
+
+	/* If we have data2 only (field 2), write fe + data2 */
+	if ((!data1 || !length1) && data2 && length2)
 	{
-		if (loopcount == 1)
+		writeraw(lc6, sizeof(lc6), NULL, sub); /* fe */
+		writeraw(data2, length2, NULL, sub);
+		waiting_for_field2 = 0;
+		datacount++;
+
+		/* Check if we've completed a loop */
+		int max_count = (loopcount == 1) ? 5 : (loopcount == 2) ? 8
+						   : (loopcount == 3)	? 11
+									: 15;
+		if (datacount >= max_count)
 		{
-			writeraw(lc6, sizeof(lc6), NULL, sub);
-			if (data2 && length2)
-				writeraw(data2, length2, NULL, sub);
+			loopcount++;
+			datacount = 0;
 		}
-		loopcount++;
-		datacount = 0;
+		return;
+	}
+
+	/* If we have both data1 and data2 (legacy behavior, just in case) */
+	if (data1 && length1 && data2 && length2)
+	{
+		if (datacount == 0)
+		{
+			writeraw(DVD_HEADER, sizeof(DVD_HEADER), NULL, sub);
+			if (loopcount == 1)
+				writeraw(lc1, sizeof(lc1), NULL, sub);
+			else if (loopcount == 2)
+				writeraw(lc2, sizeof(lc2), NULL, sub);
+			else if (loopcount == 3)
+				writeraw(lc3, sizeof(lc3), NULL, sub);
+			else
+				writeraw(lc4, sizeof(lc4), NULL, sub);
+		}
+		writeraw(lc5, sizeof(lc5), NULL, sub); /* ff */
+		writeraw(data1, length1, NULL, sub);
+		writeraw(lc6, sizeof(lc6), NULL, sub); /* fe */
+		writeraw(data2, length2, NULL, sub);
+		datacount++;
+
+		int max_count = (loopcount == 1) ? 5 : (loopcount == 2) ? 8
+						   : (loopcount == 3)	? 11
+									: 15;
+		if (datacount >= max_count)
+		{
+			loopcount++;
+			datacount = 0;
+		}
 	}
 }
 
