@@ -523,7 +523,7 @@ pub unsafe fn slice_header(
         anchor_hdcc(dec_ctx, (*dec_ctx.avc_ctx).currref);
     }
 
-    let mut current_index = if ccx_options.usepicorder != 0 {
+    let current_index = if ccx_options.usepicorder != 0 {
         // Use pic_order_cnt_lsb
         // Wrap (add max index value) current_index if needed.
         if (*dec_ctx.avc_ctx).currref as i64 - pic_order_cnt_lsb > (maxrefcnt / 2) as i64 {
