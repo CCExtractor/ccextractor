@@ -326,7 +326,7 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 {
 	int i;
-	struct ccx_demuxer *ctx = malloc(sizeof(struct ccx_demuxer));
+	struct ccx_demuxer *ctx = calloc(1, sizeof(struct ccx_demuxer));
 	if (!ctx)
 		return NULL;
 

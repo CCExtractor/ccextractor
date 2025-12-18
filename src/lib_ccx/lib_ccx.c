@@ -12,7 +12,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 {
 	struct ccx_decoders_common_settings_t *setting;
 
-	setting = malloc(sizeof(struct ccx_decoders_common_settings_t));
+	setting = calloc(1, sizeof(struct ccx_decoders_common_settings_t));
 	if (!setting)
 		return NULL;
 
@@ -33,6 +33,7 @@ static struct ccx_decoders_common_settings_t *init_decoder_setting(
 	setting->hauppauge_mode = opt->hauppauge_mode;
 	setting->xds_write_to_file = opt->transcript_settings.xds;
 	setting->ocr_quantmode = opt->ocr_quantmode;
+	// program_number, codec, and private_data are zero-initialized by calloc
 
 	return setting;
 }

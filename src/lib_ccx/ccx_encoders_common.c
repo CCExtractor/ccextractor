@@ -924,6 +924,11 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 				// After adding delay, if start/end time is lower than 0, then continue with the next subtitle
 				if (data->start_time < 0 || data->end_time <= 0)
 				{
+					// Free XDS string if skipping to avoid memory leak
+					if (data->format == SFORMAT_XDS && data->xds_str)
+					{
+						freep(&data->xds_str);
+					}
 					continue;
 				}
 
