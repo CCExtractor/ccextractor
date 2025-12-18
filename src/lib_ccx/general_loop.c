@@ -1448,6 +1448,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	/* Free XDS context - similar to cleanup in general_loop */
+	free(dec_ctx->xds_ctx);
 	free(parsebuf);
 	return caps;
 }
