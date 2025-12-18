@@ -119,9 +119,9 @@ void writeDVDraw(const unsigned char *data1, int length1,
 		 struct cc_subtitle *sub)
 {
 	/* these are only used by DVD raw mode: */
-	static int loopcount = 1; /* loop 1: 5 elements, loop 2: 8 elements,
-				     loop 3: 11 elements, rest: 15 elements */
-	static int datacount = 0; /* counts within loop */
+	static int loopcount = 1;	   /* loop 1: 5 elements, loop 2: 8 elements,
+					      loop 3: 11 elements, rest: 15 elements */
+	static int datacount = 0;	   /* counts within loop */
 	static int waiting_for_field2 = 0; /* track if we're waiting for field 2 data */
 
 	/* printdata() is called separately for field 1 and field 2 data.
@@ -161,8 +161,8 @@ void writeDVDraw(const unsigned char *data1, int length1,
 
 		/* Check if we've completed a loop */
 		int max_count = (loopcount == 1) ? 5 : (loopcount == 2) ? 8
-								       : (loopcount == 3) ? 11
-											  : 15;
+						   : (loopcount == 3)	? 11
+									: 15;
 		if (datacount >= max_count)
 		{
 			loopcount++;
@@ -193,8 +193,8 @@ void writeDVDraw(const unsigned char *data1, int length1,
 		datacount++;
 
 		int max_count = (loopcount == 1) ? 5 : (loopcount == 2) ? 8
-								       : (loopcount == 3) ? 11
-											  : 15;
+						   : (loopcount == 3)	? 11
+									: 15;
 		if (datacount >= max_count)
 		{
 			loopcount++;

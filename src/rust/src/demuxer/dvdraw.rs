@@ -80,6 +80,7 @@ fn is_single_byte_loop_marker(byte: u8) -> bool {
 }
 
 /// Checks if bytes form a 2-byte loop marker
+#[cfg(test)]
 fn is_two_byte_loop_marker(byte1: u8, byte2: u8) -> bool {
     (byte1 == LOOP_MARKER_3_FIRST || byte1 == LOOP_MARKER_4_FIRST) && byte2 == LOOP_MARKER_SECOND
 }
