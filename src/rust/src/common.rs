@@ -176,10 +176,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     }
     if let Some(ref ocrlang) = options.ocrlang {
         // Cast const to mut for freeing - safe because we allocated this with string_to_c_char
-        (*ccx_s_options).ocrlang = replace_rust_c_string(
-            (*ccx_s_options).ocrlang as *mut _,
-            ocrlang.as_str(),
-        );
+        (*ccx_s_options).ocrlang =
+            replace_rust_c_string((*ccx_s_options).ocrlang as *mut _, ocrlang.as_str());
     }
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;

@@ -1,4 +1,4 @@
-use crate::bindings::{ccx_demuxer, ccx_datasource_CCX_DS_FILE, lib_ccx_ctx};
+use crate::bindings::{ccx_datasource_CCX_DS_FILE, ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::FromCType;
