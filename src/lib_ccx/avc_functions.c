@@ -1046,7 +1046,12 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	}
 
 	// if slices are buffered - flush
-	if (isref)
+	// For I/P-only streams (like HDHomeRun recordings), flushing on every
+	// reference frame defeats reordering since all frames are reference frames.
+	// Only flush and reset on IDR frames (nal_unit_type==5), not P-frames.
+	// This allows P-frames to accumulate in the buffer and be sorted by PTS.
+	int is_idr = (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE);
+	if (isref && is_idr)
 	{
 		dvprint("\nReference pic! [%s]\n", slice_types[slice_type]);
 		dbg_print(CCX_DMT_TIME, "\nReference pic! [%s] maxrefcnt: %3d\n",
@@ -1141,8 +1146,32 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 
 		if (abs(current_index) >= MAXBFRAMES)
 		{
-			// Probably a jump in the timeline. Warn and handle gracefully.
-			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", current_index);
+			// Large PTS gap detected. This can happen with certain encoders
+			// (like HDHomeRun) that produce streams where PTS jumps are common.
+			// Instead of just resetting current_index to 0 (which causes captions
+			// to pile up at the same buffer slot and become garbled), we need to:
+			// 1. Flush any buffered captions
+			// 2. Reset the reference PTS to the current PTS
+			// 3. Set current_index to 0 for a fresh start
+			// This ensures subsequent frames use the new reference point.
+			dbg_print(CCX_DMT_VERBOSE, "\nLarge PTS gap(%d) detected, flushing buffer and resetting reference.\n", current_index);
+
+			// Flush any buffered captions before resetting
+			if (dec_ctx->has_ccdata_buffered)
+			{
+				process_hdcc(enc_ctx, dec_ctx, sub);
+			}
+
+			// Reset the reference point to current PTS
+			dec_ctx->avc_ctx->currefpts = dec_ctx->timing->current_pts;
+
+			// Reset tracking variables for the new reference
+			dec_ctx->avc_ctx->lastmaxidx = -1;
+			dec_ctx->avc_ctx->maxidx = 0;
+			dec_ctx->avc_ctx->lastminidx = 10000;
+			dec_ctx->avc_ctx->minidx = 10000;
+
+			// Start with index 0 relative to the new reference
 			current_index = 0;
 		}
 
