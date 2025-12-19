@@ -283,7 +283,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	free(pars_vec);
 	free(pars_values);
-	free(tessdata_path);
+	// Note: tessdata_path points to static string or getenv() result, do NOT free
 	if (ret != 0)
 	{
 		free(ctx);
