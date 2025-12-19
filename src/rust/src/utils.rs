@@ -38,7 +38,8 @@ pub fn string_to_c_char(a: &str) -> *mut ::std::os::raw::c_char {
 /// # Safety
 /// The pointer must have been allocated by `string_to_c_char` (i.e., `CString::into_raw`)
 /// or be null. Passing a pointer allocated by C's malloc will cause undefined behavior.
-pub unsafe fn free_rust_c_string(ptr: *mut ::std::os::raw::c_char) {
+#[no_mangle]
+pub unsafe extern "C" fn free_rust_c_string(ptr: *mut ::std::os::raw::c_char) {
     if !ptr.is_null() {
         // Reclaim ownership and drop the CString, which frees the memory
         let _ = ffi::CString::from_raw(ptr);

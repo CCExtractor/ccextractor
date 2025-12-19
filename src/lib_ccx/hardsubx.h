@@ -116,6 +116,10 @@ int64_t convert_pts_to_s(int64_t pts, AVRational time_base);
 int is_valid_trailing_char(char c);
 char *prune_string(char *s);
 
+// Rust memory management - strings returned from Rust must be freed with this function
+// DO NOT use free() on strings returned from _process_frame_white_basic, _process_frame_color_basic, etc.
+void free_rust_c_string(char *ptr);
+
 #endif
 
 #endif

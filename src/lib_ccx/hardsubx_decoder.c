@@ -210,7 +210,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 						if (dist < (0.2 * MIN(strlen(subtitle_text), strlen(prev_subtitle_text))))
 						{
 							dist = -1;
-							free(subtitle_text);
+							free_rust_c_string(subtitle_text);
 							subtitle_text = NULL;
 							prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 						}
@@ -255,8 +255,8 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 				}
 				prev_packet_pts = ctx->packet.pts;
 
-				// Free subtitle_text from this iteration (was allocated by _process_frame_*_basic)
-				free(subtitle_text);
+				// Free subtitle_text from this iteration (was allocated by Rust in _process_frame_*_basic)
+				free_rust_c_string(subtitle_text);
 				subtitle_text = NULL;
 			}
 		}
@@ -497,6 +497,7 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 								if (dist < (0.2 * MIN(strlen(subtitle_text_hard), strlen(prev_subtitle_text_hard))))
 								{
 									dist = -1;
+									free_rust_c_string(subtitle_text_hard);
 									subtitle_text_hard = NULL;
 									prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
 								}
@@ -506,6 +507,7 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 								add_cc_sub_text(hard_ctx->dec_sub, prev_subtitle_text_hard, prev_begin_time_hard, prev_end_time_hard, "", "BURN", CCX_ENC_UTF_8);
 								encode_sub(enc_ctx, hard_ctx->dec_sub);
 								prev_begin_time_hard = prev_end_time_hard + 1;
+								free(prev_subtitle_text_hard);
 								prev_subtitle_text_hard = NULL;
 								prev_sub_encoded_hard = 1;
 								prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
@@ -526,6 +528,10 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 							prev_sub_encoded_hard = 0;
 						}
 						prev_packet_pts_hard = hard_ctx->packet.pts;
+
+						// Free subtitle_text_hard from this iteration (allocated by Rust)
+						free_rust_c_string(subtitle_text_hard);
+						subtitle_text_hard = NULL;
 					}
 				}
 			}
@@ -538,6 +544,9 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 		encode_sub(enc_ctx, hard_ctx->dec_sub);
 		prev_sub_encoded_hard = 1;
 	}
+
+	// Cleanup
+	free(prev_subtitle_text_hard);
 	activity_progress(100, cur_sec / 60, cur_sec % 60);
 }
 
