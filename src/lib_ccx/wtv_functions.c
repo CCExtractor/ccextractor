@@ -436,8 +436,15 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "TIME: %ld\n", time);
 			if (time != -1 && time != WTV_CC_TIMESTAMP_MAGIC)
 			{ // Ignore -1 timestamps
-				set_current_pts(dec_ctx->timing, time_to_pes_time(time));
-				dec_ctx->timing->pts_set = 1;
+				LLONG pes_time = time_to_pes_time(time);
+				set_current_pts(dec_ctx->timing, pes_time);
+				// Set min_pts on first valid timestamp to enable fts_now calculation
+				if (dec_ctx->timing->min_pts == 0x01FFFFFFFF || pes_time < dec_ctx->timing->min_pts)
+				{
+					dec_ctx->timing->min_pts = pes_time;
+				}
+				// pts_set = 2 (MinPtsSet) is required for proper fts_now calculation
+				dec_ctx->timing->pts_set = 2;
 				frames_since_ref_time = 0;
 				set_fts(dec_ctx->timing);
 			}

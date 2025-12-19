@@ -11,12 +11,16 @@ considers them regressions because the "ground truth" baseline is outdated. This
 2. Systematically analyze each failing test
 3. Determine whether to update ground truth or fix code
 
-## Failing Tests to Triage
+## Merged Fixes
 
-Will be populated after CI run completes.
+The following PRs have been merged and this run verifies their combined effect:
+
+- **PR #1847**: Hardsubx crash fix, memory leak fixes, rcwt exit code fix
+- **PR #1848**: XDS empty content entries fix
 
 ## Status
 
-- [ ] CI run triggered
+- [x] PR #1847 merged
+- [x] PR #1848 merged
+- [ ] Verification CI run triggered
 - [ ] Results analyzed
-- [ ] Triage decisions made
