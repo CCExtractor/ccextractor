@@ -1402,9 +1402,12 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	dec_sub = &dec_ctx->dec_sub;
 	telctx = dec_ctx->private_data;
 
-	/* Set minimum and current pts since rcwt has correct time */
+	/* Set minimum and current pts since rcwt has correct time.
+	 * Also set pts_set = 2 (MinPtsSet) so the Rust timing code knows
+	 * that min_pts is valid and can calculate fts_now properly. */
 	dec_ctx->timing->min_pts = 0;
 	dec_ctx->timing->current_pts = 0;
+	dec_ctx->timing->pts_set = 2; // 2 = min_pts set
 
 	// Loop until no more data is found
 	while (1)
@@ -1489,6 +1492,17 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+
+	/* Check if captions were found via other paths (CEA-608 writes directly
+	   to encoder without setting got_output). Similar to general_loop logic. */
+	if (!caps && enc_ctx != NULL)
+	{
+		if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
+		{
+			caps = 1;
+		}
+	}
+
 	/* Free XDS context - similar to cleanup in general_loop */
 	free(dec_ctx->xds_ctx);
 	free(parsebuf);
