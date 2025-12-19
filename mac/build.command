@@ -106,7 +106,7 @@ if [[ "$ENABLE_OCR" == "true" ]]; then
     BLD_INCLUDE="$BLD_INCLUDE `pkg-config --cflags --silence-errors tesseract`"
 fi
 
-SRC_CCX="$(find ../src/lib_ccx -name '*.c')"
+SRC_CCX="$(find ../src/lib_ccx -name '*.c' | grep -v ccx_encoders_smptett.c)"
 SRC_LIB_HASH="$(find ../src/thirdparty/lib_hash -name '*.c')"
 SRC_LIBPNG="$(find ../src/thirdparty/libpng -name '*.c')"
 SRC_UTF8="../src/thirdparty/utf8proc/utf8proc.c"
