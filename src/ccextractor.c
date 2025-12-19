@@ -3,7 +3,7 @@
 Credits: See AUTHORS.TXT
 License: GPL 2.0
 
-CI verification run: 2025-12-19 - Testing merged fixes from PRs #1847 and #1848
+CI verification run: 2025-12-19T08:30 - Testing merged fixes from PRs #1847 and #1848
 */
 #include "ccextractor.h"
 #include <stdio.h>
