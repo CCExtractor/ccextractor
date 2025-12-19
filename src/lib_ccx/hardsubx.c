@@ -337,7 +337,7 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	TessBaseAPIDelete(lctx->tess_handle);
 
 	// Free subtitle
-	freep(lctx->dec_sub);
+	freep(&lctx->dec_sub);
 	freep(ctx);
 }
 
