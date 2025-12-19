@@ -1479,6 +1479,17 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	} // end while(1)
 
 	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+
+	/* Check if captions were found via other paths (CEA-608 writes directly
+	   to encoder without setting got_output). Similar to general_loop logic. */
+	if (!caps && enc_ctx != NULL)
+	{
+		if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
+		{
+			caps = 1;
+		}
+	}
+
 	/* Free XDS context - similar to cleanup in general_loop */
 	free(dec_ctx->xds_ctx);
 	free(parsebuf);
