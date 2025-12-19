@@ -4,6 +4,7 @@ use crate::avc::sei::*;
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, realloc};
 use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::ccxr_set_fts;
+use crate::{process_hdcc, store_hdcc};
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
@@ -15,6 +16,36 @@ use std::slice;
 /// Portable round function
 pub fn round_portable(x: f64) -> f64 {
     (x + 0.5).floor()
+}
+
+// HEVC NAL unit types
+const HEVC_NAL_TRAIL_N: u8 = 0;
+const HEVC_NAL_TRAIL_R: u8 = 1;
+const HEVC_NAL_TSA_N: u8 = 2;
+const HEVC_NAL_TSA_R: u8 = 3;
+const HEVC_NAL_STSA_N: u8 = 4;
+const HEVC_NAL_STSA_R: u8 = 5;
+const HEVC_NAL_RADL_N: u8 = 6;
+const HEVC_NAL_RADL_R: u8 = 7;
+const HEVC_NAL_RASL_N: u8 = 8;
+const HEVC_NAL_RASL_R: u8 = 9;
+const HEVC_NAL_BLA_W_LP: u8 = 16;
+const HEVC_NAL_BLA_W_RADL: u8 = 17;
+const HEVC_NAL_BLA_N_LP: u8 = 18;
+const HEVC_NAL_IDR_W_RADL: u8 = 19;
+const HEVC_NAL_IDR_N_LP: u8 = 20;
+const HEVC_NAL_CRA_NUT: u8 = 21;
+const HEVC_NAL_VPS: u8 = 32;
+const HEVC_NAL_SPS: u8 = 33;
+const HEVC_NAL_PPS: u8 = 34;
+const HEVC_NAL_PREFIX_SEI: u8 = 39;
+const HEVC_NAL_SUFFIX_SEI: u8 = 40;
+
+/// Helper to check if HEVC NAL is a VCL (Video Coding Layer) type
+fn is_hevc_vcl_nal(nal_type: u8) -> bool {
+    // VCL NAL types are 0-31
+    // Most common are 0-21 (slice types)
+    nal_type <= 21
 }
 
 /// Process NAL unit data
@@ -31,8 +62,17 @@ pub unsafe fn do_nal(
         return Ok(());
     }
 
+    let is_hevc = (*dec_ctx.avc_ctx).is_hevc != 0;
+    let (nal_unit_type_raw, nal_header_size): (u8, usize) = if is_hevc {
+        // HEVC: NAL type is in bits [6:1] of byte 0, header is 2 bytes
+        ((nal_start[0] >> 1) & 0x3F, 2)
+    } else {
+        // H.264: NAL type is in bits [4:0] of byte 0, header is 1 byte
+        (nal_start[0] & 0x1F, 1)
+    };
+
     let nal_unit_type =
-        AvcNalType::from_ctype(nal_start[0] & 0x1F).unwrap_or(AvcNalType::Unspecified0);
+        AvcNalType::from_ctype(nal_unit_type_raw).unwrap_or(AvcNalType::Unspecified0);
 
     // Calculate NAL_stop pointer equivalent
     let original_length = nal_length as usize;
@@ -45,15 +85,18 @@ pub unsafe fn do_nal(
         return Ok(());
     }
 
-    // Get the working slice (skip first byte for remove_03emu)
-    let mut working_buffer = nal_start[1..original_length].to_vec();
+    // Get the working slice (skip header bytes for remove_03emu)
+    if original_length <= nal_header_size {
+        return Ok(());
+    }
+    let mut working_buffer = nal_start[nal_header_size..original_length].to_vec();
 
     let processed_length = match remove_03emu(&mut working_buffer) {
         Some(len) => len,
         None => {
             info!(
-                "Notice: NAL of type {:?} had to be skipped because remove_03emu failed.",
-                nal_unit_type
+                "Notice: NAL of type {} had to be skipped because remove_03emu failed. (HEVC: {})",
+                nal_unit_type_raw, is_hevc
             );
             return Ok(());
         }
@@ -63,100 +106,185 @@ pub unsafe fn do_nal(
     working_buffer.truncate(processed_length);
 
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM;
-        "BEGIN NAL unit type: {:?} length {} ref_idc: {} - Buffered captions before: {}",
-        nal_unit_type,
+        "BEGIN NAL unit type: {} length {} ref_idc: {} - Buffered captions before: {} (HEVC: {})",
+        nal_unit_type_raw,
         working_buffer.len(),
         (*dec_ctx.avc_ctx).nal_ref_idc,
-        if (*dec_ctx.avc_ctx).cc_buffer_saved != 0 { 0 } else { 1 }
+        if (*dec_ctx.avc_ctx).cc_buffer_saved != 0 { 0 } else { 1 },
+        is_hevc
     );
 
-    match nal_unit_type {
-        AvcNalType::AccessUnitDelimiter9 => {
-            // Found Access Unit Delimiter
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Found Access Unit Delimiter");
-        }
+    if is_hevc {
+        // HEVC NAL unit processing
+        match nal_unit_type_raw {
+            HEVC_NAL_VPS | HEVC_NAL_SPS | HEVC_NAL_PPS => {
+                // Found HEVC parameter set - mark as having sequence params
+                // We don't parse HEVC SPS fully, but we need to enable SEI processing
+                (*dec_ctx.avc_ctx).got_seq_para = 1;
+            }
+            HEVC_NAL_PREFIX_SEI | HEVC_NAL_SUFFIX_SEI if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Found HEVC SEI (used for subtitles)
+                // SEI payload format is similar to H.264
+                ccxr_set_fts(enc_ctx.timing);
 
-        AvcNalType::SequenceParameterSet7 => {
-            // Found sequence parameter set
-            // We need this to parse NAL type 1 (CodedSliceNonIdrPicture1)
-            (*dec_ctx.avc_ctx).num_nal_unit_type_7 += 1;
+                // Load current context to preserve SPS info needed by sei_rbsp
+                let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
 
-            let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
-            seq_parameter_set_rbsp(&mut ctx_rust, &working_buffer)?;
+                // Reset CC count for this SEI (don't accumulate across SEIs)
+                // IMPORTANT: Don't clear cc_data vector - copy_ccdata_to_buffer checks
+                // cc_data.len(), which becomes 0 if we clear(). Just reset cc_count.
+                ctx_rust.cc_count = 0;
 
-            (*dec_ctx.avc_ctx).seq_parameter_set_id = ctx_rust.seq_parameter_set_id;
-            (*dec_ctx.avc_ctx).log2_max_frame_num = ctx_rust.log2_max_frame_num;
-            (*dec_ctx.avc_ctx).pic_order_cnt_type = ctx_rust.pic_order_cnt_type;
-            (*dec_ctx.avc_ctx).log2_max_pic_order_cnt_lsb = ctx_rust.log2_max_pic_order_cnt_lsb;
-            (*dec_ctx.avc_ctx).frame_mbs_only_flag =
-                if ctx_rust.frame_mbs_only_flag { 1 } else { 0 };
-            (*dec_ctx.avc_ctx).num_nal_hrd = ctx_rust.num_nal_hrd as _;
-            (*dec_ctx.avc_ctx).num_vcl_hrd = ctx_rust.num_vcl_hrd as _;
+                sei_rbsp(&mut ctx_rust, &working_buffer);
 
-            (*dec_ctx.avc_ctx).got_seq_para = 1;
-        }
-
-        AvcNalType::CodedSliceNonIdrPicture1 | AvcNalType::CodedSliceIdrPicture
-            if (*dec_ctx.avc_ctx).got_seq_para != 0 =>
-        {
-            // Found coded slice of a non-IDR picture or IDR picture
-            // We only need the slice header data, no need to implement
-            // slice_layer_without_partitioning_rbsp( );
-            slice_header(enc_ctx, dec_ctx, &mut working_buffer, &nal_unit_type, sub)?;
-        }
-
-        AvcNalType::Sei if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
-            // Found SEI (used for subtitles)
-            ccxr_set_fts(enc_ctx.timing);
-
-            let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
-            let old_cc_count = ctx_rust.cc_count;
-
-            sei_rbsp(&mut ctx_rust, &working_buffer);
-
-            if ctx_rust.cc_count > old_cc_count {
-                let required_size = (ctx_rust.cc_count as usize * 3) + 1;
-                if required_size > (*dec_ctx.avc_ctx).cc_databufsize as usize {
-                    let new_size = required_size * 2; // Some headroom
-                    let new_ptr = realloc((*dec_ctx.avc_ctx).cc_data as *mut c_void, new_size as _)
-                        as *mut u8;
-                    if new_ptr.is_null() {
-                        return Err("Failed to realloc cc_data".into());
+                // If this SEI contained CC data, process it immediately
+                if ctx_rust.cc_count > 0 {
+                    let required_size = (ctx_rust.cc_count as usize * 3) + 1;
+                    if required_size > (*dec_ctx.avc_ctx).cc_databufsize as usize {
+                        let new_size = required_size * 2;
+                        let new_ptr =
+                            realloc((*dec_ctx.avc_ctx).cc_data as *mut c_void, new_size as _)
+                                as *mut u8;
+                        if new_ptr.is_null() {
+                            return Err("Failed to realloc cc_data".into());
+                        }
+                        (*dec_ctx.avc_ctx).cc_data = new_ptr;
+                        (*dec_ctx.avc_ctx).cc_databufsize = new_size as _;
                     }
-                    (*dec_ctx.avc_ctx).cc_data = new_ptr;
-                    (*dec_ctx.avc_ctx).cc_databufsize = new_size as _;
-                }
 
-                if !(*dec_ctx.avc_ctx).cc_data.is_null() {
-                    let c_data = slice::from_raw_parts_mut(
+                    if !(*dec_ctx.avc_ctx).cc_data.is_null() {
+                        let c_data = slice::from_raw_parts_mut(
+                            (*dec_ctx.avc_ctx).cc_data,
+                            (*dec_ctx.avc_ctx).cc_databufsize as usize,
+                        );
+                        let rust_data_len = ctx_rust.cc_data.len().min(c_data.len());
+                        c_data[..rust_data_len].copy_from_slice(&ctx_rust.cc_data[..rust_data_len]);
+                    }
+
+                    (*dec_ctx.avc_ctx).cc_count = ctx_rust.cc_count;
+                    (*dec_ctx.avc_ctx).ccblocks_in_avc_total += ctx_rust.ccblocks_in_avc_total;
+                    (*dec_ctx.avc_ctx).ccblocks_in_avc_lost += ctx_rust.ccblocks_in_avc_lost;
+
+                    // For HEVC, store and process CC data immediately (no B-frame reordering)
+                    store_hdcc(
+                        enc_ctx,
+                        dec_ctx,
                         (*dec_ctx.avc_ctx).cc_data,
-                        (*dec_ctx.avc_ctx).cc_databufsize as usize,
+                        ctx_rust.cc_count as i32,
+                        0, // Use 0 as sequence number - process in order received
+                        (*dec_ctx.timing).fts_now,
+                        sub,
                     );
-                    let rust_data_len = ctx_rust.cc_data.len().min(c_data.len());
-                    c_data[..rust_data_len].copy_from_slice(&ctx_rust.cc_data[..rust_data_len]);
+                    // Immediately flush after each SEI for HEVC
+                    if dec_ctx.has_ccdata_buffered != 0 {
+                        process_hdcc(enc_ctx, dec_ctx, sub);
+                    }
+                    (*dec_ctx.avc_ctx).cc_buffer_saved = 1;
                 }
-
-                // Update the essential fields
-                (*dec_ctx.avc_ctx).cc_count = ctx_rust.cc_count;
-                (*dec_ctx.avc_ctx).cc_buffer_saved = if ctx_rust.cc_buffer_saved { 1 } else { 0 };
-                (*dec_ctx.avc_ctx).ccblocks_in_avc_total = ctx_rust.ccblocks_in_avc_total;
-                (*dec_ctx.avc_ctx).ccblocks_in_avc_lost = ctx_rust.ccblocks_in_avc_lost;
+            }
+            // HEVC VCL NAL units (slice data) - flush buffered CC data
+            nal_type if is_hevc_vcl_nal(nal_type) && (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Found HEVC slice - flush buffered CC data
+                if dec_ctx.has_ccdata_buffered != 0 {
+                    process_hdcc(enc_ctx, dec_ctx, sub);
+                }
+            }
+            _ => {
+                // Other HEVC NAL types - ignore
             }
         }
+    } else {
+        // H.264 NAL unit processing (original code)
+        match nal_unit_type {
+            AvcNalType::AccessUnitDelimiter9 => {
+                // Found Access Unit Delimiter
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Found Access Unit Delimiter");
+            }
 
-        AvcNalType::PictureParameterSet if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
-            // Found Picture parameter set
-            debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Found Picture parameter set");
-        }
+            AvcNalType::SequenceParameterSet7 => {
+                // Found sequence parameter set
+                // We need this to parse NAL type 1 (CodedSliceNonIdrPicture1)
+                (*dec_ctx.avc_ctx).num_nal_unit_type_7 += 1;
 
-        _ => {
-            // Handle other NAL unit types or do nothing
+                let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
+                seq_parameter_set_rbsp(&mut ctx_rust, &working_buffer)?;
+
+                (*dec_ctx.avc_ctx).seq_parameter_set_id = ctx_rust.seq_parameter_set_id;
+                (*dec_ctx.avc_ctx).log2_max_frame_num = ctx_rust.log2_max_frame_num;
+                (*dec_ctx.avc_ctx).pic_order_cnt_type = ctx_rust.pic_order_cnt_type;
+                (*dec_ctx.avc_ctx).log2_max_pic_order_cnt_lsb = ctx_rust.log2_max_pic_order_cnt_lsb;
+                (*dec_ctx.avc_ctx).frame_mbs_only_flag =
+                    if ctx_rust.frame_mbs_only_flag { 1 } else { 0 };
+                (*dec_ctx.avc_ctx).num_nal_hrd = ctx_rust.num_nal_hrd as _;
+                (*dec_ctx.avc_ctx).num_vcl_hrd = ctx_rust.num_vcl_hrd as _;
+
+                (*dec_ctx.avc_ctx).got_seq_para = 1;
+            }
+
+            AvcNalType::CodedSliceNonIdrPicture1 | AvcNalType::CodedSliceIdrPicture
+                if (*dec_ctx.avc_ctx).got_seq_para != 0 =>
+            {
+                // Found coded slice of a non-IDR picture or IDR picture
+                // We only need the slice header data, no need to implement
+                // slice_layer_without_partitioning_rbsp( );
+                slice_header(enc_ctx, dec_ctx, &mut working_buffer, &nal_unit_type, sub)?;
+            }
+
+            AvcNalType::Sei if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Found SEI (used for subtitles)
+                ccxr_set_fts(enc_ctx.timing);
+
+                let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
+                let old_cc_count = ctx_rust.cc_count;
+
+                sei_rbsp(&mut ctx_rust, &working_buffer);
+
+                if ctx_rust.cc_count > old_cc_count {
+                    let required_size = (ctx_rust.cc_count as usize * 3) + 1;
+                    if required_size > (*dec_ctx.avc_ctx).cc_databufsize as usize {
+                        let new_size = required_size * 2; // Some headroom
+                        let new_ptr =
+                            realloc((*dec_ctx.avc_ctx).cc_data as *mut c_void, new_size as _)
+                                as *mut u8;
+                        if new_ptr.is_null() {
+                            return Err("Failed to realloc cc_data".into());
+                        }
+                        (*dec_ctx.avc_ctx).cc_data = new_ptr;
+                        (*dec_ctx.avc_ctx).cc_databufsize = new_size as _;
+                    }
+
+                    if !(*dec_ctx.avc_ctx).cc_data.is_null() {
+                        let c_data = slice::from_raw_parts_mut(
+                            (*dec_ctx.avc_ctx).cc_data,
+                            (*dec_ctx.avc_ctx).cc_databufsize as usize,
+                        );
+                        let rust_data_len = ctx_rust.cc_data.len().min(c_data.len());
+                        c_data[..rust_data_len].copy_from_slice(&ctx_rust.cc_data[..rust_data_len]);
+                    }
+
+                    // Update the essential fields
+                    (*dec_ctx.avc_ctx).cc_count = ctx_rust.cc_count;
+                    (*dec_ctx.avc_ctx).cc_buffer_saved =
+                        if ctx_rust.cc_buffer_saved { 1 } else { 0 };
+                    (*dec_ctx.avc_ctx).ccblocks_in_avc_total = ctx_rust.ccblocks_in_avc_total;
+                    (*dec_ctx.avc_ctx).ccblocks_in_avc_lost = ctx_rust.ccblocks_in_avc_lost;
+                }
+            }
+
+            AvcNalType::PictureParameterSet if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Found Picture parameter set
+                debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Found Picture parameter set");
+            }
+
+            _ => {
+                // Handle other NAL unit types or do nothing
+            }
         }
     }
 
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM;
-        "END   NAL unit type: {:?} length {} ref_idc: {} - Buffered captions after: {}",
-        nal_unit_type,
+        "END   NAL unit type: {} length {} ref_idc: {} - Buffered captions after: {}",
+        nal_unit_type_raw,
         working_buffer.len(),
         (*dec_ctx.avc_ctx).nal_ref_idc,
         if (*dec_ctx.avc_ctx).cc_buffer_saved != 0 { 0 } else { 1 }

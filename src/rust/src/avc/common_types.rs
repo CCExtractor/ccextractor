@@ -9,6 +9,7 @@ pub struct AvcContextRust {
     pub cc_databufsize: usize,
     pub cc_buffer_saved: bool,
 
+    pub is_hevc: bool,
     pub got_seq_para: bool,
     pub nal_ref_idc: u32,
     pub seq_parameter_set_id: i64,
@@ -55,6 +56,7 @@ impl Default for AvcContextRust {
             cc_databufsize: 1024,
             cc_buffer_saved: true,
 
+            is_hevc: false,
             got_seq_para: false,
             nal_ref_idc: 0,
             seq_parameter_set_id: 0,

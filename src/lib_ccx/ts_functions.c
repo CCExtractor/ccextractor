@@ -135,7 +135,7 @@ enum ccx_bufferdata_type get_buffer_type(struct cap_info *cinfo)
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
 	{
-		return CCX_H264; // HEVC uses same buffer type as H264
+		return CCX_HEVC;
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
@@ -661,7 +661,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	int newcapbuflen;
 
 	if (cinfo->ignore == CCX_TRUE &&
-	    (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+	    ((cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 &&
+	      cinfo->stream != CCX_STREAM_TYPE_VIDEO_H264 &&
+	      cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
+	     !ccx_options.analyze_video_stream))
 	{
 		return CCX_OK;
 	}
@@ -948,7 +951,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 		else if (cinfo->ignore == CCX_TRUE &&
-			 (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+			 ((cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 &&
+			   cinfo->stream != CCX_STREAM_TYPE_VIDEO_H264 &&
+			   cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
+			  !ccx_options.analyze_video_stream))
 		{
 			if (cinfo->codec_private_data)
 			{
