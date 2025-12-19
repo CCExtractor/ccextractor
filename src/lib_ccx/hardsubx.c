@@ -121,6 +121,8 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
+	if (ctx->sws_ctx)
+		sws_freeContext(ctx->sws_ctx);
 	if (ctx->frame)
 		av_frame_free(&ctx->frame);
 	if (ctx->rgb_frame)
@@ -335,6 +337,9 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	// Free OCR
 	TessBaseAPIEnd(lctx->tess_handle);
 	TessBaseAPIDelete(lctx->tess_handle);
+
+	// Free basefilename (allocated by get_basename in _init_hardsubx)
+	freep(&lctx->basefilename);
 
 	// Free subtitle
 	freep(&lctx->dec_sub);

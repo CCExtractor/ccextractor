@@ -210,6 +210,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 						if (dist < (0.2 * MIN(strlen(subtitle_text), strlen(prev_subtitle_text))))
 						{
 							dist = -1;
+							free(subtitle_text);
 							subtitle_text = NULL;
 							prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 						}
@@ -219,6 +220,7 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 						add_cc_sub_text(ctx->dec_sub, prev_subtitle_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
 						encode_sub(enc_ctx, ctx->dec_sub);
 						prev_begin_time = prev_end_time + 1;
+						free(prev_subtitle_text);
 						prev_subtitle_text = NULL;
 						prev_sub_encoded = 1;
 						prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
@@ -252,6 +254,10 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 					prev_sub_encoded = 0;
 				}
 				prev_packet_pts = ctx->packet.pts;
+
+				// Free subtitle_text from this iteration (was allocated by _process_frame_*_basic)
+				free(subtitle_text);
+				subtitle_text = NULL;
 			}
 		}
 		av_packet_unref(&ctx->packet);
@@ -263,6 +269,9 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 		encode_sub(enc_ctx, ctx->dec_sub);
 		prev_sub_encoded = 1;
 	}
+
+	// Cleanup
+	free(prev_subtitle_text);
 	activity_progress(100, cur_sec / 60, cur_sec % 60);
 }
 
