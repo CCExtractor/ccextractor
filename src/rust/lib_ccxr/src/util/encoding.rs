@@ -584,7 +584,7 @@ fn latin1_to_line21(c: Latin1Char) -> Line21Char {
         0xbf => 0x83, // Inverted (open) question mark
         0xa2 => 0x85, // Cents symbol
         0xa3 => 0x86, // Pounds sterling
-        0xb6 => 0x87, // Music note (pilcrow in Latin-1)
+        b'#' => 0x87, // Music note (# in Latin-1)
         0xe0 => 0x88, // lowercase a, grave accent
         0x20 => 0x89, // transparent space
         0xe8 => 0x8a, // lowercase e, grave accent
@@ -682,7 +682,7 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
             0x84 => UNAVAILABLE_CHAR, // Trademark symbol (TM) - Does not exist in Latin 1
             0x85 => 0xa2,             // Cents symbol
             0x86 => 0xa3,             // Pounds sterling
-            0x87 => 0xb6,             // Music note - Not in latin 1, so we use 'pilcrow'
+            0x87 => b'#',             // Music note - Not in latin 1, so we use '#'
             0x88 => 0xe0,             // lowercase a, grave accent
             0x89 => 0x20,             // transparent space, we make it regular
             0x8a => 0xe8,             // lowercase e, grave accent
