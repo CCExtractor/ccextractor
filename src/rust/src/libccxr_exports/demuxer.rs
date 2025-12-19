@@ -427,10 +427,15 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
     if ctx.is_null() {
         return -1;
     }
-    let c_str = CStr::from_ptr(file);
-    let file_str = match c_str.to_str() {
-        Ok(s) => s,
-        Err(_) => return -1,
+
+    // Handle NULL file pointer (e.g., when using --udp or --tcp network input)
+    let file_str = if !file.is_null() {
+        match CStr::from_ptr(file).to_str() {
+            Ok(s) => s,
+            Err(_) => return -1,
+        }
+    } else {
+        ""
     };
 
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
