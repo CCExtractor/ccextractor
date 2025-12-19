@@ -247,12 +247,37 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 ########################################################
 
 # Rust is REQUIRED for DTVCC and SMPTE-TT functionality
-find_program(RUSTC rustc REQUIRED)
-message(STATUS "Found rustc: ${RUSTC}")
+find_program(CARGO cargo PATHS $ENV{HOME}/.cargo/bin REQUIRED)
+message(STATUS "Found cargo: ${CARGO}")
 
 # Build Rust library
-add_subdirectory (rust)
-set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+
+# Build Rust library first
+execute_process(
+    COMMAND cargo build --release
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/rust
+    RESULT_VARIABLE RUST_BUILD_RESULT
+)
+
+if(NOT RUST_BUILD_RESULT EQUAL 0)
+    message(FATAL_ERROR "Rust build failed")
+endif()
+
+# Add Rust library path
+if(APPLE)
+    set(RUST_LIB ${CMAKE_SOURCE_DIR}/rust/target/release/libccx_rust.a)
+    set(RUST_EXTRA_LIBS pthread dl m "-framework Security" "-framework CoreFoundation")
+elseif(WIN32)
+    set(RUST_LIB ${CMAKE_SOURCE_DIR}/rust/target/release/ccx_rust.lib)
+    set(RUST_EXTRA_LIBS ws2_32 userenv bcrypt ntdll)
+else()
+    set(RUST_LIB ${CMAKE_SOURCE_DIR}/rust/target/release/libccx_rust.a)
+    set(RUST_EXTRA_LIBS pthread dl m)
+endif()
+
+message(STATUS "Linking Rust library: ${RUST_LIB}")
+add_subdirectory(rust)
+set(EXTRA_LIBS ${EXTRA_LIBS} ${RUST_LIB} ${RUST_EXTRA_LIBS})
 set(RUST_AVAILABLE TRUE)
 message(STATUS "Rust available, using Rust implementations")
 
