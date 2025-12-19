@@ -1392,9 +1392,12 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	dec_sub = &dec_ctx->dec_sub;
 	telctx = dec_ctx->private_data;
 
-	/* Set minimum and current pts since rcwt has correct time */
+	/* Set minimum and current pts since rcwt has correct time.
+	 * Also set pts_set = 2 (MinPtsSet) so the Rust timing code knows
+	 * that min_pts is valid and can calculate fts_now properly. */
 	dec_ctx->timing->min_pts = 0;
 	dec_ctx->timing->current_pts = 0;
+	dec_ctx->timing->pts_set = 2; // 2 = min_pts set
 
 	// Loop until no more data is found
 	while (1)
