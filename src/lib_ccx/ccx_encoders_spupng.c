@@ -993,6 +993,8 @@ int spupng_export_string2png(struct spupng_t *sp, char *str, FILE *output)
 	*/
 
 	// Save image
+	sp->img_w = canvas_width;
+	sp->img_h = canvas_height;
 	write_image(buffer, output, canvas_width, canvas_height);
 	free(tmp);
 	free(buffer);
@@ -1083,6 +1085,18 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 
 // string needs to be in UTF-8 encoding.
 // This function will take care of encoding.
+static void calculate_spupng_offsets(struct spupng_t *sp, struct encoder_ctx *ctx)
+{
+	int screen_w = 720;
+	int screen_h = ctx->is_pal ? 576 : 480;
+
+	sp->xOffset = (screen_w - sp->img_w) / 2;
+	sp->yOffset = (screen_h - sp->img_h) / 2;
+
+	// SPU / DVD requires even yOffset (interlacing)
+	if (sp->yOffset & 1)
+		sp->yOffset++;
+}
 int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLONG end_time,
 			struct encoder_ctx *context)
 {
@@ -1101,6 +1115,7 @@ int spupng_write_string(struct spupng_t *sp, char *string, LLONG start_time, LLO
 	}
 	// free(string_utf32);
 	fclose(sp->fppng);
+	calculate_spupng_offsets(sp, context);
 	write_sputag_open(sp, start_time, end_time);
 	write_spucomment(sp, string);
 	write_sputag_close(sp);

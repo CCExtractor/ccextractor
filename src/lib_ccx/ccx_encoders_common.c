@@ -767,6 +767,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		return NULL;
 	}
 	ctx->in_fileformat = opt->in_format;
+	ctx->is_pal = (opt->in_format == 2);
 
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;

@@ -169,6 +169,7 @@ struct encoder_ctx
 
 	// OCR in SPUPNG
 	int nospupngocr;
+	int is_pal;
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY 2048
