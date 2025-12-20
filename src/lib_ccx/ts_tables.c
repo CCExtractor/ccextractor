@@ -254,7 +254,9 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		ctx->PIDs_programs[elementary_PID]->printable_stream_type = get_printable_stream_type(stream_type);
 		dbg_print(CCX_DMT_VERBOSE, "%6u | %3X (%3u) | %s\n", elementary_PID, stream_type, stream_type,
 			  desc[ctx->PIDs_programs[elementary_PID]->printable_stream_type]);
-		process_ccx_mpeg_descriptor(buf + i + 5, ES_info_length);
+		// Validate ES_info_length against buffer bounds to prevent heap overflow
+		if (i + 5 + ES_info_length <= len)
+			process_ccx_mpeg_descriptor(buf + i + 5, ES_info_length);
 		i += ES_info_length;
 	}
 	dbg_print(CCX_DMT_VERBOSE, "---\n");
@@ -275,11 +277,27 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			continue;
 		}
 
-		unsigned char *es_info = buf + i + 5;
-		for (desc_len = 0; (buf + i + 5 + ES_info_length) > es_info; es_info += desc_len)
+		// Validate ES_info_length against buffer bounds to prevent heap overflow
+		if (i + 5 + ES_info_length > len)
 		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
+			break;
+		}
+
+		unsigned char *es_info = buf + i + 5;
+		unsigned char *es_info_end = buf + i + 5 + ES_info_length;
+		for (desc_len = 0; es_info_end > es_info; es_info += desc_len)
+		{
+			// Need at least 2 bytes for descriptor_tag and desc_len
+			if (es_info + 2 > es_info_end)
+				break;
+
 			enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 			desc_len = (*es_info++);
+
+			// Validate desc_len doesn't exceed remaining buffer
+			if (es_info + desc_len > es_info_end)
+				break;
 
 			if (descriptor_tag == CCX_MPEG_DSC_DVB_SUBTITLE)
 			{
@@ -324,12 +342,29 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		if (stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2 &&
 		    ES_info_length)
 		{
+			// Validate ES_info_length against buffer bounds to prevent heap overflow
+			if (i + 5 + ES_info_length > len)
+			{
+				dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
+				break;
+			}
+
 			unsigned char *es_info = buf + i + 5;
-			for (desc_len = 0; (buf + i + 5 + ES_info_length) > es_info; es_info += desc_len)
+			unsigned char *es_info_end = buf + i + 5 + ES_info_length;
+			for (desc_len = 0; es_info_end > es_info; es_info += desc_len)
 			{
 				void *ptr;
+				// Need at least 2 bytes for descriptor_tag and desc_len
+				if (es_info + 2 > es_info_end)
+					break;
+
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
+
+				// Validate desc_len doesn't exceed remaining buffer
+				if (es_info + desc_len > es_info_end)
+					break;
+
 				if (CCX_MPEG_DESC_DATA_COMP == descriptor_tag)
 				{
 					int16_t component_id = 0;

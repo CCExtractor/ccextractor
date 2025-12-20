@@ -954,6 +954,15 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	dvprint("first_mb_in_slice=     % 4lld (%#llX)\n", tmp, tmp);
 	slice_type = read_exp_golomb_unsigned(&q1);
 	dvprint("slice_type=            % 4llX\n", slice_type);
+
+	// Validate slice_type to prevent buffer overflow in slice_types[] array
+	// Valid H.264 slice_type values are 0-9 (H.264 spec Table 7-6)
+	if (slice_type >= 10)
+	{
+		mprint("Invalid slice_type %lld in slice header, skipping.\n", slice_type);
+		return;
+	}
+
 	tmp = read_exp_golomb_unsigned(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n", tmp, tmp);
 
