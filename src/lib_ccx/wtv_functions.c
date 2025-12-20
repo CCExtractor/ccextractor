@@ -36,6 +36,16 @@ int check_stream_id(int stream_id, int video_streams[], int num_streams)
 	return 0;
 }
 
+// Check if the passed stream_id is a teletext stream
+int check_teletext_stream_id(int stream_id, int teletext_streams[], int num_teletext_streams)
+{
+	int x;
+	for (x = 0; x < num_teletext_streams; x++)
+		if (teletext_streams[x] == stream_id)
+			return 1;
+	return 0;
+}
+
 // Init passes wtv_chunked_buffer struct
 void init_chunked_buffer(struct wtv_chunked_buffer *cb)
 {
@@ -335,9 +345,12 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct demuxer_data *data)
 {
 	static int video_streams[32];
+	static int teletext_streams[32];
 	static int alt_stream; // Stream to use for timestamps if the cc stream has broken timestamps
 	static int use_alt_stream = 0;
 	static int num_streams = 0;
+	static int num_teletext_streams = 0;
+	static int has_teletext = 0; // Flag to indicate we found teletext streams
 	int64_t result;
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 
@@ -403,12 +416,18 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		{
 			// The WTV_STREAM2 GUID appears near the start of the data dir
 			// It maps stream_ids to the type of stream
+			// Structure based on WTV file analysis:
+			// Offset 0x0C: mediatype GUID (16 bytes)
+			// Offset 0x4C: teletext format GUID (16 bytes) - for MSTVCAPTION streams
+			// We read enough data (96 bytes) to get all the info we need
 			dbg_print(CCX_DMT_PARSE, "WTV STREAM2\n");
-			get_sized_buffer(ctx->demux_ctx, cb, 0xc + 16);
+			// Read 96 bytes to get mediatype at 0x0C and format_subtype at 0x4C
+			uint32_t read_size = (len > 96) ? 96 : len;
+			get_sized_buffer(ctx->demux_ctx, cb, read_size);
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 			static unsigned char stream_type[16];
-			memcpy(&stream_type, cb->buffer + 0xc, 16); // Read the stream type GUID
+			memcpy(&stream_type, cb->buffer + 0xc, 16); // Read the mediatype GUID at offset 12
 			const void *stream_guid;
 			if (ccx_options.wtvmpeg2)
 				stream_guid = WTV_STREAM_VIDEO; // We want mpeg2 data if the user set -wtvmpeg2
@@ -419,11 +438,40 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 				video_streams[num_streams] = stream_id; // We keep a list of stream ids
 				num_streams++;				// Even though there should only be 1
 			}
+			// For MSTVCAPTION streams, check if it's teletext by examining the format GUID
+			// The teletext GUID appears at offset 0x4C from the start of the chunk data
+			if (!memcmp(stream_type, WTV_STREAM_MSTVCAPTION, 16) && read_size >= 0x4C + 16)
+			{
+				static unsigned char format_subtype[16];
+				memcpy(&format_subtype, cb->buffer + 0x4C, 16); // Read format GUID at offset 0x4C
+				dbg_print(CCX_DMT_PARSE, "MSTVCAPTION format_subtype=%02X%02X%02X%02X...\n",
+					format_subtype[0], format_subtype[1], format_subtype[2], format_subtype[3]);
+				// Check for teletext
+				if (!memcmp(format_subtype, WTV_STREAM_TELETEXT, 16))
+				{
+					dbg_print(CCX_DMT_PARSE, "Found DVB Teletext stream, stream_id: 0x%X\n", stream_id);
+					mprint("WTV: Found DVB Teletext stream (stream_id=0x%X)\n", stream_id);
+					mprint("     Note: WTV teletext uses Microsoft VBI format which may not decode correctly.\n");
+					teletext_streams[num_teletext_streams] = stream_id;
+					num_teletext_streams++;
+					has_teletext = 1;
+					// Initialize teletext decoder context
+					if (!dec_ctx->private_data)
+					{
+						dec_ctx->codec = CCX_CODEC_TELETEXT;
+						dec_ctx->private_data = telxcc_init();
+						if (!dec_ctx->private_data)
+						{
+							mprint("Error: Failed to initialize teletext decoder\n");
+						}
+					}
+				}
+			}
 			if (memcmp(stream_type, WTV_STREAM_AUDIO, 16))
 				alt_stream = stream_id;
-			len -= 28;
+			len -= read_size;
 		}
-		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && check_stream_id(stream_id, video_streams, num_streams)) || (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
+		if (!memcmp(guid, WTV_TIMING, 16) && ((use_alt_stream < WTV_CC_TIMESTAMP_MAGIC_THRESH && (check_stream_id(stream_id, video_streams, num_streams) || check_teletext_stream_id(stream_id, teletext_streams, num_teletext_streams))) || (use_alt_stream == WTV_CC_TIMESTAMP_MAGIC_THRESH && stream_id == alt_stream)))
 		{
 			int64_t time;
 			// The WTV_TIMING GUID contains a timestamp for the given stream_id
@@ -474,6 +522,54 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			set_fts(dec_ctx->timing);
 			if (pad > 0)
 			{ // Make sure we skip any padding too, since we are returning here
+				skip_sized_buffer(ctx->demux_ctx, cb, pad);
+			}
+			return bytesread;
+		}
+		// Handle DVB Teletext data
+		// Note: WTV teletext format is Microsoft-specific and differs from DVB teletext.
+		// The data is not in standard DVB teletext data unit format, so decoding support
+		// is currently limited. The stream is detected and passed to the decoder which
+		// will process what it can parse.
+		if (!memcmp(guid, WTV_DATA, 16) && check_teletext_stream_id(stream_id, teletext_streams, num_teletext_streams) && dec_ctx->timing->current_pts != 0)
+		{
+			get_sized_buffer(ctx->demux_ctx, cb, len);
+			if (cb->buffer == NULL)
+				return CCX_EOF;
+
+			// WTV teletext data is raw VBI data, not PES-encapsulated.
+			// Wrap it in a PES header for the teletext decoder.
+			uint16_t pes_len = len + 8; // payload + header fields after length
+			int64_t pts = dec_ctx->timing->current_pts;
+
+			// Add PES header (14 bytes)
+			data->buffer[data->len++] = 0x00; // start code
+			data->buffer[data->len++] = 0x00;
+			data->buffer[data->len++] = 0x01;
+			data->buffer[data->len++] = 0xBD; // Private Stream 1
+			data->buffer[data->len++] = (pes_len >> 8) & 0xFF;
+			data->buffer[data->len++] = pes_len & 0xFF;
+			data->buffer[data->len++] = 0x80; // PES flags
+			data->buffer[data->len++] = 0x80; // PTS present
+			data->buffer[data->len++] = 0x05; // header data length
+
+			// Encode PTS (33-bit value in 5 bytes)
+			data->buffer[data->len++] = (uint8_t)(0x21 | ((pts >> 29) & 0x0E));
+			data->buffer[data->len++] = (uint8_t)((pts >> 22) & 0xFF);
+			data->buffer[data->len++] = (uint8_t)(0x01 | ((pts >> 14) & 0xFE));
+			data->buffer[data->len++] = (uint8_t)((pts >> 7) & 0xFF);
+			data->buffer[data->len++] = (uint8_t)(0x01 | ((pts << 1) & 0xFE));
+
+			// Add teletext data
+			memcpy(data->buffer + data->len, cb->buffer, len);
+			data->len += len;
+			bytesread += (int)(14 + len);
+			data->codec = CCX_CODEC_TELETEXT;
+			data->bufferdatatype = CCX_TELETEXT;
+			frames_since_ref_time++;
+			set_fts(dec_ctx->timing);
+			if (pad > 0)
+			{
 				skip_sized_buffer(ctx->demux_ctx, cb, pad);
 			}
 			return bytesread;
