@@ -589,8 +589,11 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	}
 	if (vpesdatalen < 0)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
-		return CCX_EOF;
+		// Don't terminate file processing for a single broken PES packet.
+		// Just skip this packet and continue with the next one.
+		// This commonly occurs in UK Freeview DVB recordings.
+		dbg_print(CCX_DMT_VERBOSE, "Skipping broken PES packet (buffer too small or malformed header).\n");
+		return CCX_OK;
 	}
 
 	if (ccx_options.hauppauge_mode)
