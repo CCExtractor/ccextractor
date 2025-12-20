@@ -42,6 +42,19 @@ jobs:
       with:
         name: CCExtractor mac build
         path: ./mac/artifacts
+  build_shell_system_libs:
+    # Test building with system libraries via pkg-config (for Homebrew formula compatibility)
+    runs-on: macos-latest
+    steps:
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac freetype libpng protobuf-c utf8proc zlib
+    - uses: actions/checkout@v6
+    - name: build with system libs
+      run: ./build.command -system-libs
+      working-directory: ./mac
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: ./mac
   build_autoconf:
     runs-on: macos-latest
     steps:
