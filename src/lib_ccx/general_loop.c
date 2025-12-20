@@ -779,6 +779,13 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
 		dec_ctx->in_bufferdatatype = CCX_H264;
+		dec_ctx->avc_ctx->is_hevc = 0;
+		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	else if (data_node->bufferdatatype == CCX_HEVC) // HEVC data from TS file
+	{
+		dec_ctx->in_bufferdatatype = CCX_H264; // Use same internal type for NAL processing
+		dec_ctx->avc_ctx->is_hevc = 1;
 		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)

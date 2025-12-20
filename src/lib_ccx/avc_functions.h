@@ -9,6 +9,7 @@ struct avc_ctx
 	long cc_databufsize;
 	int cc_buffer_saved; // Was the CC buffer saved after it was last updated?
 
+	int is_hevc; // Flag to indicate HEVC (H.265) mode vs H.264
 	int got_seq_para;
 	unsigned nal_ref_idc;
 	LLONG seq_parameter_set_id;

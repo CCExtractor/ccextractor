@@ -811,6 +811,7 @@ impl FromCType<avc_ctx> for AvcContextRust {
             cc_databufsize: ctx.cc_databufsize as usize,
             cc_buffer_saved: ctx.cc_buffer_saved != 0,
 
+            is_hevc: ctx.is_hevc != 0,
             got_seq_para: ctx.got_seq_para != 0,
             nal_ref_idc: ctx.nal_ref_idc,
             seq_parameter_set_id: ctx.seq_parameter_set_id,
