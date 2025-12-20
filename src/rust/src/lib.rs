@@ -359,6 +359,35 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     }
 }
 
+/// Normalize legacy single-dash long options to double-dash format.
+///
+/// Old versions of ccextractor accepted `-quiet`, `-stdout`, etc. but clap
+/// requires `--quiet`, `--stdout`. This function converts single-dash long
+/// options to double-dash for backward compatibility.
+///
+/// # Rules
+/// - Single-dash options with multiple characters (e.g., `-quiet`) are converted to `--quiet`
+/// - Double-dash options (e.g., `--quiet`) are left unchanged
+/// - Single-letter short options (e.g., `-o`) are left unchanged
+/// - Non-option arguments (e.g., `file.ts`) are left unchanged
+/// - Numeric options (e.g., `-1`, `-12`) are left unchanged (these are valid short options)
+fn normalize_legacy_option(arg: String) -> String {
+    // Check if it's a single-dash option with multiple characters (e.g., -quiet)
+    // but not a short option with a value (e.g., -o filename)
+    // Single-letter options like -o, -s should be left unchanged
+    // Numeric options like -1, -12 should also be left unchanged
+    if arg.starts_with('-')
+        && !arg.starts_with("--")
+        && arg.len() > 2
+        && arg.chars().nth(1).is_some_and(|c| c.is_ascii_alphabetic())
+    {
+        // Convert -option to --option
+        format!("-{}", arg)
+    } else {
+        arg
+    }
+}
+
 /// # Safety
 /// Safe if argv is a valid pointer
 ///
@@ -380,6 +409,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     if args.len() <= 1 {
         return ExitCause::NoInputFiles.exit_code();
     }
+
+    // Backward compatibility: Convert single-dash long options to double-dash
+    // Old versions of ccextractor accepted -quiet, -stdout, etc. but clap requires --quiet, --stdout
+    // This allows scripts using the old syntax to continue working
+    let args: Vec<String> = args.into_iter().map(normalize_legacy_option).collect();
 
     let args: Args = match Args::try_parse_from(args) {
         Ok(args) => args,
@@ -512,5 +546,88 @@ mod test {
         assert_eq!(decoder_ctx.cc_stats[3], 1);
         assert_eq!(decoder_ctx.processed_enough, 0);
         assert_eq!(unsafe { cb_708 }, 11);
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_single_dash_long() {
+        // Single-dash long options should be converted to double-dash
+        assert_eq!(
+            normalize_legacy_option("-quiet".to_string()),
+            "--quiet".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-stdout".to_string()),
+            "--stdout".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-autoprogram".to_string()),
+            "--autoprogram".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-goptime".to_string()),
+            "--goptime".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_double_dash() {
+        // Double-dash options should remain unchanged
+        assert_eq!(
+            normalize_legacy_option("--quiet".to_string()),
+            "--quiet".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("--stdout".to_string()),
+            "--stdout".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("--autoprogram".to_string()),
+            "--autoprogram".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_short_options() {
+        // Single-letter short options should remain unchanged
+        assert_eq!(normalize_legacy_option("-o".to_string()), "-o".to_string());
+        assert_eq!(normalize_legacy_option("-s".to_string()), "-s".to_string());
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_numeric_options() {
+        // Numeric options should remain unchanged (these are valid ccextractor options)
+        assert_eq!(normalize_legacy_option("-1".to_string()), "-1".to_string());
+        assert_eq!(normalize_legacy_option("-2".to_string()), "-2".to_string());
+        assert_eq!(
+            normalize_legacy_option("-12".to_string()),
+            "-12".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_non_options() {
+        // Non-option arguments should remain unchanged
+        assert_eq!(
+            normalize_legacy_option("file.ts".to_string()),
+            "file.ts".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("/path/to/file.ts".to_string()),
+            "/path/to/file.ts".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("ccextractor".to_string()),
+            "ccextractor".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_edge_cases() {
+        // Empty string
+        assert_eq!(normalize_legacy_option("".to_string()), "".to_string());
+        // Just a dash
+        assert_eq!(normalize_legacy_option("-".to_string()), "-".to_string());
+        // Double dash alone (end of options marker)
+        assert_eq!(normalize_legacy_option("--".to_string()), "--".to_string());
     }
 }
