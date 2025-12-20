@@ -67,7 +67,9 @@ fi
 # Set up include paths based on whether we're using system libs or bundled
 if [[ "$USE_SYSTEM_LIBS" == "true" ]]; then
     # Use system libraries via pkg-config (for Homebrew compatibility)
-    BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty"
+    # Note: -I../src/thirdparty/lib_hash is needed so that "../lib_hash/sha2.h" resolves correctly
+    # (the .. goes up from lib_hash to thirdparty, then lib_hash/sha2.h finds the file)
+    BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/thirdparty/lib_hash -I../src/thirdparty"
     BLD_INCLUDE="$BLD_INCLUDE $(pkg-config --cflags --silence-errors freetype2)"
     BLD_INCLUDE="$BLD_INCLUDE $(pkg-config --cflags --silence-errors gpac)"
     BLD_INCLUDE="$BLD_INCLUDE $(pkg-config --cflags --silence-errors libpng)"
@@ -75,7 +77,7 @@ if [[ "$USE_SYSTEM_LIBS" == "true" ]]; then
     BLD_INCLUDE="$BLD_INCLUDE $(pkg-config --cflags --silence-errors libutf8proc)"
 else
     # Use bundled libraries (default for standalone builds)
-    BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include $(pkg-config --cflags --silence-errors gpac)"
+    BLD_INCLUDE="-I../src/ -I../src/lib_ccx -I../src/thirdparty/lib_hash -I../src/thirdparty/libpng -I../src/thirdparty -I../src/thirdparty/zlib -I../src/thirdparty/freetype/include $(pkg-config --cflags --silence-errors gpac)"
 fi
 
 # Add FFmpeg include path for Mac
