@@ -558,27 +558,15 @@ mod test {
     #[test]
     fn test_normalize_legacy_option_short_options() {
         // Single-letter short options should remain unchanged
-        assert_eq!(
-            normalize_legacy_option("-o".to_string()),
-            "-o".to_string()
-        );
-        assert_eq!(
-            normalize_legacy_option("-s".to_string()),
-            "-s".to_string()
-        );
+        assert_eq!(normalize_legacy_option("-o".to_string()), "-o".to_string());
+        assert_eq!(normalize_legacy_option("-s".to_string()), "-s".to_string());
     }
 
     #[test]
     fn test_normalize_legacy_option_numeric_options() {
         // Numeric options should remain unchanged (these are valid ccextractor options)
-        assert_eq!(
-            normalize_legacy_option("-1".to_string()),
-            "-1".to_string()
-        );
-        assert_eq!(
-            normalize_legacy_option("-2".to_string()),
-            "-2".to_string()
-        );
+        assert_eq!(normalize_legacy_option("-1".to_string()), "-1".to_string());
+        assert_eq!(normalize_legacy_option("-2".to_string()), "-2".to_string());
         assert_eq!(
             normalize_legacy_option("-12".to_string()),
             "-12".to_string()
@@ -605,19 +593,10 @@ mod test {
     #[test]
     fn test_normalize_legacy_option_edge_cases() {
         // Empty string
-        assert_eq!(
-            normalize_legacy_option("".to_string()),
-            "".to_string()
-        );
+        assert_eq!(normalize_legacy_option("".to_string()), "".to_string());
         // Just a dash
-        assert_eq!(
-            normalize_legacy_option("-".to_string()),
-            "-".to_string()
-        );
+        assert_eq!(normalize_legacy_option("-".to_string()), "-".to_string());
         // Double dash alone (end of options marker)
-        assert_eq!(
-            normalize_legacy_option("--".to_string()),
-            "--".to_string()
-        );
+        assert_eq!(normalize_legacy_option("--".to_string()), "--".to_string());
     }
 }
