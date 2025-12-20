@@ -1554,6 +1554,30 @@ impl OptionsExt for Options {
             );
         }
 
+        // Validation for --split-dvb-subs option
+        if self.split_dvb_subs {
+            if self.cc_to_stdout {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with stdout.\n"
+                );
+            }
+
+            if self.demux_cfg.nb_ts_cappid > 0 {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with manual PID selection (-pn).\n"
+                );
+            }
+
+            if self.multiprogram {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with -multiprogram.\n"
+                );
+            }
+        }
+
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
             self.enc_cfg.encoding = Encoding::UTF8;
             println!("Note: Output format is WebVTT, forcing UTF-8");
