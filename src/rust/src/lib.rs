@@ -27,6 +27,7 @@ pub mod hardsubx;
 pub mod hlist;
 pub mod libccxr_exports;
 pub mod parser;
+pub mod track_lister;
 pub mod utils;
 
 #[cfg(windows)]
@@ -420,6 +421,36 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
         &mut _capitalization_list,
         &mut _profane,
     );
+
+    // Handle --list-tracks mode: list tracks and exit early
+    if opt.list_tracks_only {
+        use std::path::Path;
+        use track_lister::list_tracks;
+
+        let files = match &opt.inputfile {
+            Some(f) if !f.is_empty() => f,
+            _ => {
+                eprintln!("Error: No input files specified for --list-tracks");
+                return ExitCause::NoInputFiles.exit_code();
+            }
+        };
+
+        let mut had_errors = false;
+        for file in files {
+            if let Err(e) = list_tracks(Path::new(file)) {
+                eprintln!("Error listing tracks for '{}': {}", file, e);
+                had_errors = true;
+            }
+        }
+
+        // Exit with appropriate code - we don't want to continue to C processing
+        return if had_errors {
+            ExitCause::Failure.exit_code()
+        } else {
+            ExitCause::WithHelp.exit_code() // Reuse this code to indicate successful early exit
+        };
+    }
+
     tlt_config = _tlt_config.to_ctype(&opt);
 
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code

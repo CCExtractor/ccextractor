@@ -424,6 +424,8 @@ pub struct Options {
     pub mp4vidtrack: bool,
     /// If true, extracts chapters (if present), from MP4 files.
     pub extract_chapters: bool,
+    /// If true, only list tracks in the input file without processing
+    pub list_tracks_only: bool,
     /* General settings */
     /// Force the use of pic_order_cnt_lsb in AVC/H.264 data streams
     pub usepicorder: bool,
@@ -562,6 +564,7 @@ impl Default for Options {
             auto_myth: None,
             mp4vidtrack: Default::default(),
             extract_chapters: Default::default(),
+            list_tracks_only: Default::default(),
             usepicorder: Default::default(),
             xmltv: Default::default(),
             xmltvliveinterval: Timestamp::from_millis(10000),

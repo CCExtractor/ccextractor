@@ -1,5 +1,6 @@
 0.95 (2025-09-15)
 -----------------
+- New: Added --list-tracks (-L) option to list all tracks in media files without processing
 - Fix: Garbled captions from HDHomeRun and I/P-only H.264 streams (#1109)
 - Fix: Enable stdout output for CEA-708 captions on Windows (#1693)
 - Fix: McPoodle DVD raw format read/write - properly handle loop markers (#1524)

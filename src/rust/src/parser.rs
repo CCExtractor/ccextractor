@@ -942,6 +942,10 @@ impl OptionsExt for Options {
             self.demux_cfg.ts_allprogram = true;
         }
 
+        if args.list_tracks {
+            self.list_tracks_only = true;
+        }
+
         if let Some(ref stream) = args.stream {
             self.live_stream = Some(Timestamp::from_millis(
                 1000 * get_atoi_hex::<i64>(stream.as_str()),
