@@ -66,7 +66,8 @@ pub fn detect_format(path: &Path) -> std::io::Result<FileFormat> {
     // Check for MP4/MOV (ftyp box or other common boxes)
     if bytes_read >= 8 {
         let box_type = &header[4..8];
-        if box_type == b"ftyp" || box_type == b"moov" || box_type == b"mdat" || box_type == b"free" {
+        if box_type == b"ftyp" || box_type == b"moov" || box_type == b"mdat" || box_type == b"free"
+        {
             return Ok(FileFormat::Mp4);
         }
     }
@@ -108,7 +109,10 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     // First, skip EBML header
     let ebml_id = read_element_id(&mut reader)?;
     if ebml_id != 0x1A45DFA3 {
-        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a valid EBML file"));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Not a valid EBML file",
+        ));
     }
     let ebml_size = read_vint(&mut reader)?;
     reader.seek(SeekFrom::Current(ebml_size as i64))?;
@@ -116,7 +120,10 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     // Now look for Segment header
     let segment_id = read_element_id(&mut reader)?;
     if segment_id != 0x18538067 {
-        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Segment not found"));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Segment not found",
+        ));
     }
 
     // Read segment size - may be "unknown" (all 1s)
@@ -181,12 +188,19 @@ fn read_vint<R: Read>(reader: &mut R) -> std::io::Result<u64> {
     let length = (leading_zeros + 1) as usize;
 
     if length > 8 {
-        return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid VINT length"));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid VINT length",
+        ));
     }
 
     // Mask to extract data bits from first byte
     // For 1-byte: mask = 0x7F (127), for 2-byte: 0x3F, ..., for 8-byte: 0x00
-    let mask = if length == 8 { 0 } else { (1u8 << (8 - length)) - 1 };
+    let mask = if length == 8 {
+        0
+    } else {
+        (1u8 << (8 - length)) - 1
+    };
     let mut value = (first_byte[0] & mask) as u64;
 
     for _ in 1..length {
@@ -252,10 +266,12 @@ fn parse_mkv_track_entry<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::
         let element_start = reader.stream_position()?;
 
         match element_id {
-            0xD7 => { // TrackNumber
+            0xD7 => {
+                // TrackNumber
                 track_number = read_uint(reader, element_size)? as u32;
             }
-            0x83 => { // TrackType
+            0x83 => {
+                // TrackType
                 let type_val = read_uint(reader, element_size)?;
                 track_type = match type_val {
                     1 => TrackType::Video,
@@ -264,10 +280,12 @@ fn parse_mkv_track_entry<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::
                     _ => TrackType::Other(format!("Type {}", type_val)),
                 };
             }
-            0x86 => { // CodecID
+            0x86 => {
+                // CodecID
                 codec = read_string(reader, element_size)?;
             }
-            0x22B59C => { // Language
+            0x22B59C => {
+                // Language
                 language = Some(read_string(reader, element_size)?);
             }
             _ => {}
@@ -403,7 +421,11 @@ fn parse_mp4_moov<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
     Ok(tracks)
 }
 
-fn parse_mp4_trak<R: Read + Seek>(reader: &mut R, size: u64, track_num: u32) -> std::io::Result<TrackInfo> {
+fn parse_mp4_trak<R: Read + Seek>(
+    reader: &mut R,
+    size: u64,
+    track_num: u32,
+) -> std::io::Result<TrackInfo> {
     let end_pos = reader.stream_position()? + size;
 
     let mut track_type = TrackType::Other("Unknown".to_string());
@@ -455,7 +477,10 @@ fn parse_mp4_trak<R: Read + Seek>(reader: &mut R, size: u64, track_num: u32) -> 
     })
 }
 
-fn parse_mp4_mdia<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<(TrackType, String, Option<String>)> {
+fn parse_mp4_mdia<R: Read + Seek>(
+    reader: &mut R,
+    size: u64,
+) -> std::io::Result<(TrackType, String, Option<String>)> {
     let end_pos = reader.stream_position()? + size;
 
     let mut track_type = TrackType::Other("Unknown".to_string());
@@ -520,7 +545,8 @@ fn parse_mp4_mdia<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
                 reader.read_exact(&mut lang_buf)?;
                 let lang_code = u16::from_be_bytes(lang_buf);
                 // ISO 639-2/T language code packed in 15 bits
-                if lang_code != 0x55C4 { // 'und' (undefined)
+                if lang_code != 0x55C4 {
+                    // 'und' (undefined)
                     let c1 = ((lang_code >> 10) & 0x1F) as u8 + 0x60;
                     let c2 = ((lang_code >> 5) & 0x1F) as u8 + 0x60;
                     let c3 = (lang_code & 0x1F) as u8 + 0x60;
@@ -660,7 +686,8 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     let mut packets_read = 0u32;
     let max_packets = 10000; // Limit scanning to avoid processing entire file
 
-    while reader.stream_position()? + packet_size as u64 <= file_size && packets_read < max_packets {
+    while reader.stream_position()? + packet_size as u64 <= file_size && packets_read < max_packets
+    {
         reader.read_exact(&mut packet)?;
         packets_read += 1;
 
@@ -695,8 +722,10 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
 
                     let end = std::cmp::min(payload_offset + section_length - 9, packet_size - 4);
                     while payload_offset + 4 <= end {
-                        let program_num = ((packet[payload_offset] as u16) << 8) | packet[payload_offset + 1] as u16;
-                        let pmt_pid = (((packet[payload_offset + 2] & 0x1F) as u16) << 8) | packet[payload_offset + 3] as u16;
+                        let program_num = ((packet[payload_offset] as u16) << 8)
+                            | packet[payload_offset + 1] as u16;
+                        let pmt_pid = (((packet[payload_offset + 2] & 0x1F) as u16) << 8)
+                            | packet[payload_offset + 3] as u16;
                         if program_num != 0 {
                             pmt_pids.push(pmt_pid);
                         }
@@ -725,18 +754,25 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
                 if payload_offset + 12 < packet_size {
                     let section_length = (((packet[payload_offset + 1] & 0x0F) as usize) << 8)
                         | packet[payload_offset + 2] as usize;
-                    let _pcr_pid = (((packet[payload_offset + 8] & 0x1F) as u16) << 8) | packet[payload_offset + 9] as u16;
-                    let program_info_length = (((packet[payload_offset + 10] & 0x0F) as usize) << 8)
+                    let _pcr_pid = (((packet[payload_offset + 8] & 0x1F) as u16) << 8)
+                        | packet[payload_offset + 9] as u16;
+                    let program_info_length = (((packet[payload_offset + 10] & 0x0F) as usize)
+                        << 8)
                         | packet[payload_offset + 11] as usize;
 
                     payload_offset += 12 + program_info_length;
-                    let end = std::cmp::min(payload_offset + section_length - 13 - program_info_length, packet_size - 4);
+                    let end = std::cmp::min(
+                        payload_offset + section_length - 13 - program_info_length,
+                        packet_size - 4,
+                    );
 
                     let mut track_num = 1u32;
                     while payload_offset + 5 <= end {
                         let stream_type = packet[payload_offset];
-                        let elementary_pid = (((packet[payload_offset + 1] & 0x1F) as u16) << 8) | packet[payload_offset + 2] as u16;
-                        let es_info_length = (((packet[payload_offset + 3] & 0x0F) as usize) << 8) | packet[payload_offset + 4] as usize;
+                        let elementary_pid = (((packet[payload_offset + 1] & 0x1F) as u16) << 8)
+                            | packet[payload_offset + 2] as u16;
+                        let es_info_length = (((packet[payload_offset + 3] & 0x0F) as usize) << 8)
+                            | packet[payload_offset + 4] as usize;
 
                         let (track_type, codec) = match stream_type {
                             0x01 | 0x02 => (TrackType::Video, "MPEG-1/2 Video".to_string()),
@@ -745,9 +781,18 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
                             0x03 | 0x04 => (TrackType::Audio, "MPEG Audio".to_string()),
                             0x0F => (TrackType::Audio, "AAC".to_string()),
                             0x81 => (TrackType::Audio, "AC-3".to_string()),
-                            0x06 => (TrackType::Subtitle, "Private Data (may contain subtitles)".to_string()),
-                            0x05 => (TrackType::Other("Private Section".to_string()), "Private Section".to_string()),
-                            _ => (TrackType::Other(format!("Type 0x{:02X}", stream_type)), format!("Stream type 0x{:02X}", stream_type)),
+                            0x06 => (
+                                TrackType::Subtitle,
+                                "Private Data (may contain subtitles)".to_string(),
+                            ),
+                            0x05 => (
+                                TrackType::Other("Private Section".to_string()),
+                                "Private Section".to_string(),
+                            ),
+                            _ => (
+                                TrackType::Other(format!("Type 0x{:02X}", stream_type)),
+                                format!("Stream type 0x{:02X}", stream_type),
+                            ),
                         };
 
                         tracks.push(TrackInfo {
