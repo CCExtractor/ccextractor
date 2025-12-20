@@ -4,7 +4,7 @@ use crate::avc::sei::*;
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, realloc};
 use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::ccxr_set_fts;
-use crate::{process_hdcc, store_hdcc};
+use crate::{anchor_hdcc, current_fps, process_hdcc, store_hdcc, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
@@ -157,37 +157,69 @@ pub unsafe fn do_nal(
                             (*dec_ctx.avc_ctx).cc_data,
                             (*dec_ctx.avc_ctx).cc_databufsize as usize,
                         );
-                        let rust_data_len = ctx_rust.cc_data.len().min(c_data.len());
-                        c_data[..rust_data_len].copy_from_slice(&ctx_rust.cc_data[..rust_data_len]);
+                        // Only copy the actual data (cc_count * 3 + 1 for 0xFF marker), not the full vector
+                        let copy_len = required_size.min(c_data.len()).min(ctx_rust.cc_data.len());
+                        c_data[..copy_len].copy_from_slice(&ctx_rust.cc_data[..copy_len]);
                     }
 
                     (*dec_ctx.avc_ctx).cc_count = ctx_rust.cc_count;
                     (*dec_ctx.avc_ctx).ccblocks_in_avc_total += ctx_rust.ccblocks_in_avc_total;
                     (*dec_ctx.avc_ctx).ccblocks_in_avc_lost += ctx_rust.ccblocks_in_avc_lost;
 
-                    // For HEVC, store and process CC data immediately (no B-frame reordering)
+                    // Calculate PTS-based sequence number for proper B-frame reordering
+                    // This is similar to H.264's PTS ordering mode
+
+                    // Initialize currefpts on first frame if it hasn't been set yet
+                    if (*dec_ctx.avc_ctx).currefpts == 0 && (*dec_ctx.timing).current_pts > 0 {
+                        (*dec_ctx.avc_ctx).currefpts = (*dec_ctx.timing).current_pts;
+                        anchor_hdcc(dec_ctx, 0);
+                    }
+
+                    // Calculate sequence index from PTS difference
+                    let pts_diff = (*dec_ctx.timing).current_pts - (*dec_ctx.avc_ctx).currefpts;
+                    let fps_factor = MPEG_CLOCK_FREQ as f64 / current_fps;
+                    let calculated_index = round_portable(2.0 * pts_diff as f64 / fps_factor) as i32;
+
+                    // If the calculated index is out of range, flush buffer and reset
+                    let current_index = if calculated_index.abs() >= MAXBFRAMES {
+                        // Flush any buffered captions before resetting
+                        if dec_ctx.has_ccdata_buffered != 0 {
+                            process_hdcc(enc_ctx, dec_ctx, sub);
+                        }
+                        // Reset the reference point to current PTS
+                        (*dec_ctx.avc_ctx).currefpts = (*dec_ctx.timing).current_pts;
+                        anchor_hdcc(dec_ctx, 0);
+                        0
+                    } else {
+                        calculated_index
+                    };
+
                     store_hdcc(
                         enc_ctx,
                         dec_ctx,
                         (*dec_ctx.avc_ctx).cc_data,
                         ctx_rust.cc_count as i32,
-                        0, // Use 0 as sequence number - process in order received
+                        current_index,
                         (*dec_ctx.timing).fts_now,
                         sub,
                     );
-                    // Immediately flush after each SEI for HEVC
-                    if dec_ctx.has_ccdata_buffered != 0 {
-                        process_hdcc(enc_ctx, dec_ctx, sub);
-                    }
                     (*dec_ctx.avc_ctx).cc_buffer_saved = 1;
                 }
             }
-            // HEVC VCL NAL units (slice data) - flush buffered CC data
-            nal_type if is_hevc_vcl_nal(nal_type) && (*dec_ctx.avc_ctx).got_seq_para != 0 => {
-                // Found HEVC slice - flush buffered CC data
+            // HEVC VCL NAL units (slice data)
+            // Only flush on IDR frames (NAL types 19, 20) to allow B-frame reordering
+            HEVC_NAL_IDR_W_RADL | HEVC_NAL_IDR_N_LP if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Found HEVC IDR frame - flush buffered CC data and reset anchor
                 if dec_ctx.has_ccdata_buffered != 0 {
                     process_hdcc(enc_ctx, dec_ctx, sub);
                 }
+                // Reset reference point for new GOP
+                (*dec_ctx.avc_ctx).currefpts = (*dec_ctx.timing).current_pts;
+                anchor_hdcc(dec_ctx, 0);
+            }
+            // Other VCL NAL types - don't flush, let reordering work
+            nal_type if is_hevc_vcl_nal(nal_type) && (*dec_ctx.avc_ctx).got_seq_para != 0 => {
+                // Non-IDR slice - don't flush to allow B-frame reordering
             }
             _ => {
                 // Other HEVC NAL types - ignore
