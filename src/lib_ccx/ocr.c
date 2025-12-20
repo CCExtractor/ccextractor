@@ -191,7 +191,9 @@ void *init_ocr(int lang_index)
 	}
 
 	ctx->api = TessBaseAPICreate();
-	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
+	// Tesseract 4+ uses different tessdata path convention and default OEM mode
+	// Use >= '4' check to handle future versions (5, 6, 7, etc.)
+	if (TessVersion()[0] >= '4')
 	{
 		char tess_path[1024];
 		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");

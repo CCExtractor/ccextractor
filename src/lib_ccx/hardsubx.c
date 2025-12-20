@@ -266,7 +266,9 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	int ret = -1;
 
-	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
+	// Tesseract 4+ uses different tessdata path convention and default OEM mode
+	// Use >= '4' check to handle future versions (5, 6, 7, etc.)
+	if (TessVersion()[0] >= '4')
 	{
 		char tess_path[1024];
 		if (ccx_options.ocr_oem < 0)
