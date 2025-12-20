@@ -16,6 +16,9 @@ extern void ccxr_timestamp_to_srttime(uint64_t timestamp, char *buffer);
 extern void ccxr_timestamp_to_vtttime(uint64_t timestamp, char *buffer);
 extern void ccxr_millis_to_date(uint64_t timestamp, char *buffer, enum ccx_output_date_format date_format, char millis_separator);
 extern int ccxr_stringztoms(const char *s, struct ccx_boundary_time *bt);
+#ifndef DISABLE_RUST
+extern int ccxr_hex_to_int(char high, char low);
+#endif
 
 static uint32_t crc32_table[] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
@@ -266,6 +269,9 @@ void sleep_secs(int secs)
 
 int hex_to_int(char high, char low)
 {
+#ifndef DISABLE_RUST
+	return ccxr_hex_to_int(high, low);
+#else
 	unsigned char h, l;
 	if (high >= '0' && high <= '9')
 		h = high - '0';
@@ -280,6 +286,7 @@ int hex_to_int(char high, char low)
 	else
 		return -1;
 	return h * 16 + l;
+#endif
 }
 int hex_string_to_int(char *string, int len)
 {
