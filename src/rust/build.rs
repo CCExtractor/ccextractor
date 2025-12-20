@@ -5,7 +5,8 @@ use std::path::PathBuf;
 fn main() {
     let mut allowlist_functions = Vec::new();
     allowlist_functions.extend_from_slice(&[
-        ".*(?i)_?dtvcc_.*",
+        // Match both lowercase (dtvcc_*) and uppercase (DTVCC_*) patterns
+        ".*_?[Dd][Tt][Vv][Cc][Cc]_.*",
         "get_visible_.*",
         "get_fts",
         "printdata",
@@ -44,7 +45,8 @@ fn main() {
 
     let mut allowlist_types = Vec::new();
     allowlist_types.extend_from_slice(&[
-        ".*(?i)_?dtvcc_.*",
+        // Match both lowercase (dtvcc_*) and uppercase (DTVCC_*) patterns
+        ".*_?[Dd][Tt][Vv][Cc][Cc]_.*",
         "encoder_ctx",
         "lib_cc_decode",
         "ccx_demuxer",
@@ -118,7 +120,7 @@ fn main() {
 
     // Tell cargo to invalidate the built crate whenever any of the
     // included header files changed.
-    builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks));
+    builder = builder.parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     for type_name in allowlist_types {
         builder = builder.allowlist_type(type_name);
