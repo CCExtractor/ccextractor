@@ -1,0 +1,37 @@
+# Build artifacts
+linux/ccextractor
+linux/rust/
+linux/*.o
+linux/*.a
+mac/ccextractor
+mac/rust/
+build/
+build_*/
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker/
+
+# Documentation (not needed for build)
+docs/
+*.md
+!README.md
+
+# Test files
+*.ts
+*.mp4
+*.mkv
+*.srt
+*.vtt
+
+# Plans
+plans/
