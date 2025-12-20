@@ -534,8 +534,14 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
 
-	set_current_pts(dec_ctx->timing, 90);
-	set_fts(dec_ctx->timing); // Now set the FTS related variables
+	// For raw mode, timing is derived from the caption block counter (cb_field1).
+	// We set min_pts=0 and pts_set=MinPtsSet so set_fts() will calculate fts_now.
+	// Initialize timing for raw mode - no video PTS, just caption block counting.
+	dec_ctx->timing->min_pts = 0;
+	dec_ctx->timing->sync_pts = 0;
+	dec_ctx->timing->pts_set = 2; // MinPtsSet
+	set_current_pts(dec_ctx->timing, 0);
+	set_fts(dec_ctx->timing);
 
 	do
 	{
@@ -561,8 +567,13 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		else
 		{
 			ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
-			// For regular raw format, advance timing based on field 1 blocks
-			add_current_pts(dec_ctx->timing, cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
+			// For raw mode, cb_field1 is incremented by do_cb() for each CC pair.
+			// After processing each chunk, add the accumulated time to current_pts
+			// and call set_fts() to update fts_now. set_fts() resets cb_field1 to 0,
+			// so each chunk's timing is added incrementally.
+			// Note: Cast cb_field1 to LLONG to prevent 32-bit integer overflow
+			// when calculating ticks for large raw files (issue #1565).
+			add_current_pts(dec_ctx->timing, (LLONG)cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing);
 		}
 
@@ -573,7 +584,12 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			dec_sub->got_output = 0;
 		}
 
-	} while (data->len);
+		// Reset buffer length after processing so we can read more data
+		// Without this, data->len stays at BUFSIZE and general_get_more_data
+		// returns CCX_EOF prematurely (it calculates want = BUFSIZE - len = 0)
+		data->len = 0;
+
+	} while (1); // Loop exits via break on CCX_EOF or terminate_asap
 	free(data);
 	return caps;
 }
