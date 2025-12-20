@@ -25,7 +25,7 @@ fi
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [sin], [], [AC_MSG_ERROR(Math library not installed. Install it before proceeding.)])
-AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([lept], [lept])], [HAS_LEPT=0])
+AC_CHECK_LIB([leptonica], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([lept], [lept])], [HAS_LEPT=0])
 AC_CHECK_LIB([tesseract], [TessVersion], [HAS_TESSERACT=1 && PKG_CHECK_MODULES([tesseract], [tesseract])], [HAS_TESSERACT=0])
 AC_CHECK_LIB([avcodec], [avcodec_version], [HAS_AVCODEC=1 && PKG_CHECK_MODULES([libavcodec], [libavcodec])], [HAS_AVCODEC=0])
 AC_CHECK_LIB([avformat], [avformat_version], [HAS_AVFORMAT=1 && PKG_CHECK_MODULES([libavformat], [libavformat])], [HAS_AVFORMAT=0])
