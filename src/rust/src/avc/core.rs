@@ -18,22 +18,36 @@ pub fn round_portable(x: f64) -> f64 {
     (x + 0.5).floor()
 }
 
-// HEVC NAL unit types
+// HEVC NAL unit types (defined for completeness, not all currently used)
+#[allow(dead_code)]
 const HEVC_NAL_TRAIL_N: u8 = 0;
+#[allow(dead_code)]
 const HEVC_NAL_TRAIL_R: u8 = 1;
+#[allow(dead_code)]
 const HEVC_NAL_TSA_N: u8 = 2;
+#[allow(dead_code)]
 const HEVC_NAL_TSA_R: u8 = 3;
+#[allow(dead_code)]
 const HEVC_NAL_STSA_N: u8 = 4;
+#[allow(dead_code)]
 const HEVC_NAL_STSA_R: u8 = 5;
+#[allow(dead_code)]
 const HEVC_NAL_RADL_N: u8 = 6;
+#[allow(dead_code)]
 const HEVC_NAL_RADL_R: u8 = 7;
+#[allow(dead_code)]
 const HEVC_NAL_RASL_N: u8 = 8;
+#[allow(dead_code)]
 const HEVC_NAL_RASL_R: u8 = 9;
+#[allow(dead_code)]
 const HEVC_NAL_BLA_W_LP: u8 = 16;
+#[allow(dead_code)]
 const HEVC_NAL_BLA_W_RADL: u8 = 17;
+#[allow(dead_code)]
 const HEVC_NAL_BLA_N_LP: u8 = 18;
 const HEVC_NAL_IDR_W_RADL: u8 = 19;
 const HEVC_NAL_IDR_N_LP: u8 = 20;
+#[allow(dead_code)]
 const HEVC_NAL_CRA_NUT: u8 = 21;
 const HEVC_NAL_VPS: u8 = 32;
 const HEVC_NAL_SPS: u8 = 33;
