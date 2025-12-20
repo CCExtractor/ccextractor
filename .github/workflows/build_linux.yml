@@ -67,7 +67,7 @@ jobs:
       run: sudo apt update && sudo apt-get install libgpac-dev
     - uses: actions/checkout@v6
     - name: cmake
-      run: mkdir build && cd build && cmake ../src
+      run: source $HOME/.cargo/env && mkdir build && cd build && cmake ../src
     - name: build
       run: make -j$(nproc)
       working-directory: build
@@ -81,6 +81,7 @@ jobs:
       run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
     - name: cmake
       run: |
+        source $HOME/.cargo/env
         mkdir build && cd build
         cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
