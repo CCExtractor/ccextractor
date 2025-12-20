@@ -132,7 +132,13 @@ jobs:
       run: ./autogen.sh
       working-directory: ./mac
     - name: configure with hardsubx
-      run: ./configure --enable-hardsubx --enable-ocr
+      run: |
+        # Set Homebrew paths for configure to find libraries
+        export HOMEBREW_PREFIX="$(brew --prefix)"
+        export LDFLAGS="-L${HOMEBREW_PREFIX}/lib"
+        export CPPFLAGS="-I${HOMEBREW_PREFIX}/include"
+        export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig"
+        ./configure --enable-hardsubx --enable-ocr
       working-directory: ./mac
     - name: make
       run: make
