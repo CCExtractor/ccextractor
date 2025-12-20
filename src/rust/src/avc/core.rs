@@ -178,7 +178,8 @@ pub unsafe fn do_nal(
                     // Calculate sequence index from PTS difference
                     let pts_diff = (*dec_ctx.timing).current_pts - (*dec_ctx.avc_ctx).currefpts;
                     let fps_factor = MPEG_CLOCK_FREQ as f64 / current_fps;
-                    let calculated_index = round_portable(2.0 * pts_diff as f64 / fps_factor) as i32;
+                    let calculated_index =
+                        round_portable(2.0 * pts_diff as f64 / fps_factor) as i32;
 
                     // If the calculated index is out of range, flush buffer and reset
                     let current_index = if calculated_index.abs() >= MAXBFRAMES {
