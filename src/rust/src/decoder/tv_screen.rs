@@ -10,6 +10,9 @@ use std::os::unix::prelude::IntoRawFd;
 use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
+#[cfg(windows)]
+use crate::bindings::_get_osfhandle;
+
 use super::output::{color_to_hex, write_char, Writer};
 use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
@@ -82,21 +85,38 @@ impl dtvcc_tv_screen {
         }
 
         #[cfg(windows)]
-        if writer.writer_ctx.filename.is_null() && writer.writer_ctx.fhandle.is_null() {
-            return Err("Filename missing".to_owned())?;
-        } else if writer.writer_ctx.fhandle.is_null() {
-            let filename = unsafe {
-                CStr::from_ptr(writer.writer_ctx.filename)
-                    .to_str()
-                    .map_err(|err| err.to_string())
-            }?;
-            debug!("dtvcc_writer_output: creating {}", filename);
-            let file = File::create(filename).map_err(|err| err.to_string())?;
-            writer.writer_ctx.fhandle = file.into_raw_handle();
+        if writer.writer_ctx.fhandle.is_null() {
+            // Check if fd is valid (file was already opened by C code)
+            // If so, convert fd to fhandle to avoid creating a new file (which would truncate)
+            if writer.writer_ctx.fd >= 0 {
+                let handle = unsafe { _get_osfhandle(writer.writer_ctx.fd) };
+                if handle != -1 {
+                    debug!(
+                        "dtvcc_writer_output: converting fd {} to fhandle",
+                        writer.writer_ctx.fd
+                    );
+                    writer.writer_ctx.fhandle = handle as *mut _;
+                }
+            }
 
-            if is_false(writer.no_bom) {
-                let BOM = [0xef, 0xbb, 0xbf];
-                writer.write_to_file(&BOM)?;
+            // If fhandle is still null, we need to create a new file
+            if writer.writer_ctx.fhandle.is_null() {
+                if writer.writer_ctx.filename.is_null() {
+                    return Err("Filename missing".to_owned())?;
+                }
+                let filename = unsafe {
+                    CStr::from_ptr(writer.writer_ctx.filename)
+                        .to_str()
+                        .map_err(|err| err.to_string())
+                }?;
+                debug!("dtvcc_writer_output: creating {}", filename);
+                let file = File::create(filename).map_err(|err| err.to_string())?;
+                writer.writer_ctx.fhandle = file.into_raw_handle();
+
+                if is_false(writer.no_bom) {
+                    let BOM = [0xef, 0xbb, 0xbf];
+                    writer.write_to_file(&BOM)?;
+                }
             }
         }
         self.write(writer);
