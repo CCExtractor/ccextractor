@@ -1567,7 +1567,7 @@ impl OptionsExt for Options {
                 );
             }
 
-            if self.demux_cfg.nb_ts_cappid > 0 {
+            if !self.demux_cfg.ts_cappids.is_empty() {
                 fatal!(
                     cause = ExitCause::IncompatibleParameters;
                     "Error: --split-dvb-subs cannot be used with manual PID selection (-pn).\n"

@@ -561,7 +561,8 @@ int process_dvb_multi_stream(struct lib_ccx_ctx *ctx, struct demuxer_data *data,
 		return -1;
 	}
 
-	return route_dvb_stream_to_decoder(ctx, target_stream, data->buffer, data->len, sub);
+	// Skip first 2 bytes (same as original dvbsub_decode path in general_loop.c)
+	return route_dvb_stream_to_decoder(ctx, target_stream, data->buffer + 2, data->len - 2, sub);
 }
 
 int route_dvb_stream_to_decoder(struct lib_ccx_ctx *ctx, struct ccx_stream_metadata *stream,

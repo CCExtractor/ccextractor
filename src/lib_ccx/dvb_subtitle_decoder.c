@@ -582,7 +582,7 @@ struct ccx_decoders_dvb_context *dvb_init_decoder(struct dvb_config *cfg, int in
 	}
 
 	dvb_ctx->private_data = ctx;
-	dvb_ctx->cfg = cfg;
+	dvb_ctx->cfg = NULL;  // Config values are copied into DVBSubContext, don't store pointer
 	dvb_ctx->initialized_ocr = initialized_ocr;
 
 	return dvb_ctx;
