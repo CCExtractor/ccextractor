@@ -353,6 +353,10 @@ pub struct Args {
     /// Uses multiple programs from the same input stream.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub multiprogram: bool,
+    /// List all tracks found in the input file and exit without
+    /// processing. Useful for exploring media files before extraction.
+    #[arg(long = "list-tracks", short = 'L', verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    pub list_tracks: bool,
     /// Don't try to find out the stream for caption/teletext
     /// data, just use this one instead.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
