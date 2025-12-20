@@ -409,8 +409,7 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 
 						mprint("PID %u detected as video stream (no PAT/PMT) - assuming %s.\n",
 						       payload->pid,
-						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" :
-						       (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC ? "HEVC" : "MPEG-2"));
+						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" : (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC ? "HEVC" : "MPEG-2"));
 
 						// Register this PID as a video stream that may contain captions
 						update_capinfo(ctx, payload->pid, stream_type, CCX_CODEC_ATSC_CC, 0, NULL);
