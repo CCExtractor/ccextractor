@@ -114,9 +114,12 @@ pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>, use_utf16: bool) {
 /// These are fixed-width 16-bit encodings where even ASCII needs 2 bytes.
 pub fn is_utf16_charset(charset: &str) -> bool {
     let upper = charset.to_uppercase();
-    upper.contains("UTF-16") || upper.contains("UTF16") ||
-    upper.contains("UCS-2") || upper.contains("UCS2") ||
-    upper.contains("UTF_16") || upper.contains("UCS_2")
+    upper.contains("UTF-16")
+        || upper.contains("UTF16")
+        || upper.contains("UCS-2")
+        || upper.contains("UCS2")
+        || upper.contains("UTF_16")
+        || upper.contains("UCS_2")
 }
 
 /// Convert from CEA-708 color representation to hex code
