@@ -1,0 +1,156 @@
+name: Build Linux AppImage
+
+on:
+  # Build on releases
+  release:
+    types: [published]
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type (all, minimal, ocr, hardsubx)'
+        required: false
+        default: 'all'
+  # Build on pushes to workflow file for testing
+  push:
+    paths:
+      - '.github/workflows/build_appimage.yml'
+      - 'linux/build_appimage.sh'
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [minimal, ocr, hardsubx]
+
+    steps:
+      - name: Check if should build this variant
+        id: should_build
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            INPUT_TYPE="${{ github.event.inputs.build_type }}"
+            if [ "$INPUT_TYPE" = "all" ] || [ "$INPUT_TYPE" = "${{ matrix.build_type }}" ]; then
+              echo "should_build=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install base dependencies
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            pkg-config \
+            wget \
+            file \
+            libfuse2 \
+            zlib1g-dev \
+            libpng-dev \
+            libjpeg-dev \
+            libfreetype-dev \
+            libxml2-dev \
+            libcurl4-gnutls-dev \
+            libssl-dev \
+            clang \
+            libclang-dev
+
+      - name: Install OCR dependencies
+        if: steps.should_build.outputs.should_build == 'true' && (matrix.build_type == 'ocr' || matrix.build_type == 'hardsubx')
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            tesseract-ocr \
+            libtesseract-dev \
+            libleptonica-dev \
+            tesseract-ocr-eng
+
+      - name: Install FFmpeg dependencies (HardSubX)
+        if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx'
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            libavcodec-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswscale-dev \
+            libswresample-dev \
+            libavfilter-dev
+
+      - name: Install Rust toolchain
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache GPAC build
+        if: steps.should_build.outputs.should_build == 'true'
+        id: cache-gpac
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/libgpac*
+          key: gpac-v2.4.0-ubuntu22
+
+      - name: Build and install GPAC
+        if: steps.should_build.outputs.should_build == 'true' && steps.cache-gpac.outputs.cache-hit != 'true'
+        run: |
+          git clone -b v2.4.0 --depth 1 https://github.com/gpac/gpac
+          cd gpac
+          ./configure
+          make -j$(nproc) lib
+          sudo make install-lib
+          sudo ldconfig
+
+      - name: Update library cache
+        if: steps.should_build.outputs.should_build == 'true'
+        run: sudo ldconfig
+
+      - name: Build AppImage
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          cd linux
+          chmod +x build_appimage.sh
+          BUILD_TYPE=${{ matrix.build_type }} ./build_appimage.sh
+
+      - name: Get AppImage name
+        if: steps.should_build.outputs.should_build == 'true'
+        id: appimage_name
+        run: |
+          case "${{ matrix.build_type }}" in
+            minimal)
+              echo "name=ccextractor-minimal-x86_64.AppImage" >> $GITHUB_OUTPUT
+              ;;
+            ocr)
+              echo "name=ccextractor-x86_64.AppImage" >> $GITHUB_OUTPUT
+              ;;
+            hardsubx)
+              echo "name=ccextractor-hardsubx-x86_64.AppImage" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Test AppImage
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          chmod +x linux/${{ steps.appimage_name.outputs.name }}
+          linux/${{ steps.appimage_name.outputs.name }} --version
+
+      - name: Upload AppImage artifact
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.appimage_name.outputs.name }}
+          path: linux/${{ steps.appimage_name.outputs.name }}
+
+      - name: Upload to Release
+        if: steps.should_build.outputs.should_build == 'true' && github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: linux/${{ steps.appimage_name.outputs.name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
