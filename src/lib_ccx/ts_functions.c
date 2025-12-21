@@ -135,7 +135,7 @@ enum ccx_bufferdata_type get_buffer_type(struct cap_info *cinfo)
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
 	{
-		return CCX_H264; // HEVC uses same buffer type as H264
+		return CCX_HEVC;
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
@@ -390,15 +390,26 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 						// Check for H.264/H.265 NAL start codes
 						if (es_data[0] == 0x00 && es_data[1] == 0x00 && es_data[2] == 0x00 && es_data[3] == 0x01)
 						{
-							// Could be H.264 or H.265 - check NAL type
-							unsigned char nal_type = es_data[4] & 0x1F;
-							if (nal_type == 7 || nal_type == 8) // SPS or PPS
+							// Check for H.264 NAL types first (1-byte header, type in bits 4:0)
+							unsigned char h264_nal_type = es_data[4] & 0x1F;
+							if (h264_nal_type == 7 || h264_nal_type == 8) // H.264 SPS or PPS
 								stream_type = CCX_STREAM_TYPE_VIDEO_H264;
+							else
+							{
+								// Check for HEVC NAL types (2-byte header, type in bits 6:1 of first byte)
+								unsigned char hevc_nal_type = (es_data[4] >> 1) & 0x3F;
+								// HEVC VPS=32, SPS=33, PPS=34, PREFIX_SEI=39, SUFFIX_SEI=40
+								// Also check for IDR (19, 20) and CRA (21) which are common first NALs
+								if (hevc_nal_type == 32 || hevc_nal_type == 33 || hevc_nal_type == 34 ||
+								    hevc_nal_type == 39 || hevc_nal_type == 40 ||
+								    hevc_nal_type == 19 || hevc_nal_type == 20 || hevc_nal_type == 21)
+									stream_type = CCX_STREAM_TYPE_VIDEO_HEVC;
+							}
 						}
 
 						mprint("PID %u detected as video stream (no PAT/PMT) - assuming %s.\n",
 						       payload->pid,
-						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" : "MPEG-2");
+						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" : (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC ? "HEVC" : "MPEG-2"));
 
 						// Register this PID as a video stream that may contain captions
 						update_capinfo(ctx, payload->pid, stream_type, CCX_CODEC_ATSC_CC, 0, NULL);
@@ -578,8 +589,11 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	}
 	if (vpesdatalen < 0)
 	{
-		dbg_print(CCX_DMT_VERBOSE, "Seems to be a broken PES. Terminating file handling.\n");
-		return CCX_EOF;
+		// Don't terminate file processing for a single broken PES packet.
+		// Just skip this packet and continue with the next one.
+		// This commonly occurs in UK Freeview DVB recordings.
+		dbg_print(CCX_DMT_VERBOSE, "Skipping broken PES packet (buffer too small or malformed header).\n");
+		return CCX_OK;
 	}
 
 	if (ccx_options.hauppauge_mode)
@@ -661,7 +675,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	int newcapbuflen;
 
 	if (cinfo->ignore == CCX_TRUE &&
-	    (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+	    ((cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 &&
+	      cinfo->stream != CCX_STREAM_TYPE_VIDEO_H264 &&
+	      cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
+	     !ccx_options.analyze_video_stream))
 	{
 		return CCX_OK;
 	}
@@ -948,7 +965,10 @@ long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			continue;
 		}
 		else if (cinfo->ignore == CCX_TRUE &&
-			 (cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 || !ccx_options.analyze_video_stream))
+			 ((cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 &&
+			   cinfo->stream != CCX_STREAM_TYPE_VIDEO_H264 &&
+			   cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
+			  !ccx_options.analyze_video_stream))
 		{
 			if (cinfo->codec_private_data)
 			{

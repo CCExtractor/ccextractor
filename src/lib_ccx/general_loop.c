@@ -8,6 +8,7 @@
 
 #include "dvb_subtitle_decoder.h"
 #include "ccx_encoders_common.h"
+#include "ccx_encoders_mcc.h"
 #include "activity.h"
 #include "utility.h"
 #include "ccx_demuxer.h"
@@ -520,6 +521,50 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 	fclose(fr);
 }
 #endif
+
+/* Process raw caption data (2-byte pairs) and encode directly to MCC format.
+ * This bypasses the 608 decoder and writes raw cc_data to MCC.
+ * Used when -out=mcc is specified with raw input files (issue #1542). */
+static size_t process_raw_for_mcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx,
+				  unsigned char *buffer, size_t len)
+{
+	unsigned char cc_data[3];
+	size_t i;
+	size_t pairs_processed = 0;
+
+	// Set frame rate to 29.97fps (code 4) for raw 608 captions
+	// This is needed for proper MCC timing
+	if (dec_ctx->current_frame_rate == 0)
+		dec_ctx->current_frame_rate = 4; // CCX_FR_29_97
+
+	cc_data[0] = 0x04; // Field 1, cc_valid=1, cc_type=0 (NTSC field 1)
+
+	for (i = 0; i < len; i += 2)
+	{
+		// Skip broadcast header (0xff 0xff)
+		if (!dec_ctx->saw_caption_block && buffer[i] == 0xff && buffer[i + 1] == 0xff)
+			continue;
+
+		dec_ctx->saw_caption_block = 1;
+		cc_data[1] = buffer[i];
+		cc_data[2] = buffer[i + 1];
+
+		// Update timing for this CC pair (each pair is one frame at 29.97fps)
+		// Timing: 1001/30 ms per pair = ~33.37ms
+		set_fts(enc_ctx->timing);
+
+		// Encode this CC pair to MCC format
+		mcc_encode_cc_data(enc_ctx, dec_ctx, cc_data, 1);
+
+		// Advance timing for next pair
+		add_current_pts(enc_ctx->timing, 1001 * (MPEG_CLOCK_FREQ / 1000) / 30);
+
+		pairs_processed++;
+	}
+
+	return pairs_processed;
+}
+
 // Raw file process
 int raw_loop(struct lib_ccx_ctx *ctx)
 {
@@ -529,10 +574,19 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct lib_cc_decode *dec_ctx = NULL;
 	int caps = 0;
-	int is_dvdraw = 0; // Flag to track if this is DVD raw format
+	int is_dvdraw = 0;     // Flag to track if this is DVD raw format
+	int is_mcc_output = 0; // Flag for MCC output format
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
+
+	// Check if MCC output is requested (issue #1542)
+	if (enc_ctx && dec_ctx->write_format == CCX_OF_MCC)
+	{
+		is_mcc_output = 1;
+		// Share timing context between decoder and encoder for MCC
+		enc_ctx->timing = dec_ctx->timing;
+	}
 
 	// For raw mode, timing is derived from the caption block counter (cb_field1).
 	// We set min_pts=0 and pts_set=MinPtsSet so set_fts() will calculate fts_now.
@@ -559,7 +613,15 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			mprint("Detected McPoodle's DVD raw format\n");
 		}
 
-		if (is_dvdraw)
+		if (is_mcc_output && !is_dvdraw)
+		{
+			// For MCC output, encode raw data directly without decoding
+			// This preserves the original CEA-608 byte pairs in CDP format
+			size_t pairs = process_raw_for_mcc(enc_ctx, dec_ctx, data->buffer, data->len);
+			if (pairs > 0)
+				caps = 1;
+		}
+		else if (is_dvdraw)
 		{
 			// Use Rust implementation - handles timing internally
 			ret = ccxr_process_dvdraw(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len);
@@ -577,7 +639,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			set_fts(dec_ctx->timing);
 		}
 
-		if (dec_sub->got_output)
+		if (!is_mcc_output && dec_sub->got_output)
 		{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
@@ -789,6 +851,13 @@ int process_data(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, struct li
 	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
 		dec_ctx->in_bufferdatatype = CCX_H264;
+		dec_ctx->avc_ctx->is_hevc = 0;
+		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	else if (data_node->bufferdatatype == CCX_HEVC) // HEVC data from TS file
+	{
+		dec_ctx->in_bufferdatatype = CCX_H264; // Use same internal type for NAL processing
+		dec_ctx->avc_ctx->is_hevc = 1;
 		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)

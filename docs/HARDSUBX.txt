@@ -54,6 +54,32 @@ To build the program with hardsubx support,
 
 NOTE: The build has been tested with FFMpeg version 3.1.0, and Tesseract 3.04.
 
+macOS
+-----
+
+Install the required dependencies using Homebrew:
+    brew install tesseract leptonica ffmpeg
+
+To build the program with hardsubx support, use one of these methods:
+
+== Using build.command (Recommended):
+    cd ccextractor/mac
+    ./build.command -hardsubx
+
+== Using autoconf:
+    cd ccextractor/mac
+    ./autogen.sh
+    ./configure --enable-hardsubx --enable-ocr
+    make
+
+== Using cmake:
+    cd ccextractor
+    mkdir build && cd build
+    cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src/
+    make
+
+NOTE: The -hardsubx parameter uses a single dash (not --hardsubx).
+
 Windows
 -------
 

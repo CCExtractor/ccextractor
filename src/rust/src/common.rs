@@ -1139,6 +1139,7 @@ impl CType<avc_ctx> for AvcContextRust {
             cc_databufsize: self.cc_databufsize as _,
             cc_buffer_saved: if self.cc_buffer_saved { 1 } else { 0 },
 
+            is_hevc: if self.is_hevc { 1 } else { 0 },
             got_seq_para: if self.got_seq_para { 1 } else { 0 },
             nal_ref_idc: self.nal_ref_idc,
             seq_parameter_set_id: self.seq_parameter_set_id,
