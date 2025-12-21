@@ -391,30 +391,54 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	// The original bitmap quality (e.g., 520x84) is sufficient for Tesseract
 
 	if (cpix_gs == NULL)
-		tess_ret = -1;
-	else
 	{
-		TessBaseAPISetImage2(ctx->api, cpix_gs);
-		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
-		debug_tesseract(ctx, "./temp/");
-		if (tess_ret)
-		{
-			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+		// Grayscale conversion failed (likely due to invalid/corrupt bitmap data)
+		// Skip this bitmap instead of crashing - this can happen with
+		// corrupted DVB subtitle packets or live stream discontinuities
+		mprint("\nIn ocr_bitmap: Failed to convert bitmap to grayscale. Skipped.\n");
 
-			boxDestroy(&crop_points);
-			pixDestroy(&pix);
-			pixDestroy(&cpix);
-			pixDestroy(&cpix_gs);
-			pixDestroy(&color_pix);
-			pixDestroy(&color_pix_out);
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
 
-			return NULL;
-		}
+		return NULL;
+	}
+
+	TessBaseAPISetImage2(ctx->api, cpix_gs);
+	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
+	debug_tesseract(ctx, "./temp/");
+	if (tess_ret)
+	{
+		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&cpix_gs);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+
+		return NULL;
 	}
 
 	char *text_out_from_tes = TessBaseAPIGetUTF8Text(ctx->api);
 	if (text_out_from_tes == NULL)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
+	{
+		// OCR succeeded but no text was recognized - this is not a fatal error,
+		// it just means the bitmap didn't contain recognizable text
+		mprint("\nIn ocr_bitmap: OCR returned no text. Skipped.\n");
+
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&cpix_gs);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+
+		return NULL;
+	}
 	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
 	// and using it directly causes new/free() warnings.
 	char *text_out = strdup(text_out_from_tes);
