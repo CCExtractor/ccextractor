@@ -83,7 +83,8 @@ jobs:
             libavutil-dev \
             libswscale-dev \
             libswresample-dev \
-            libavfilter-dev
+            libavfilter-dev \
+            libavdevice-dev
 
       - name: Install Rust toolchain
         if: steps.should_build.outputs.should_build == 'true'

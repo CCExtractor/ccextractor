@@ -203,9 +203,18 @@ esac
 # Build AppImage
 echo "Building AppImage..."
 export OUTPUT="$OUTPUT_NAME"
+
+# Determine which executable to pass to linuxdeploy
+# For OCR builds, we have a wrapper script, so pass the actual binary (.bin)
+if [ -f "AppDir/usr/bin/ccextractor.bin" ]; then
+    LINUXDEPLOY_EXEC="AppDir/usr/bin/ccextractor.bin"
+else
+    LINUXDEPLOY_EXEC="AppDir/usr/bin/ccextractor"
+fi
+
 ./linuxdeploy-x86_64.AppImage \
     --appdir=AppDir \
-    --executable=AppDir/usr/bin/ccextractor \
+    --executable="$LINUXDEPLOY_EXEC" \
     --desktop-file=AppDir/ccextractor.desktop \
     --icon-file=AppDir/ccextractor.png \
     --output=appimage
