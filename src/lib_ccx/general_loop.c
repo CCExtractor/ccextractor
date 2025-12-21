@@ -1018,8 +1018,15 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						pts = data_node_video->pts;
 					}
 
-					set_current_pts(dec_ctx_video->timing, pts);
-					set_fts(dec_ctx_video->timing);
+					// When using GOP timing (--goptime), timing is set from GOP headers
+					// in gop_header(), not from PES PTS. Skip PTS-based timing here
+					// to avoid conflicts between GOP time (absolute time-of-day) and
+					// PTS (relative stream time) that cause sync detection failures.
+					if (ccx_options.use_gop_as_pts != 1)
+					{
+						set_current_pts(dec_ctx_video->timing, pts);
+						set_fts(dec_ctx_video->timing);
+					}
 				}
 				size_t got = process_m2v(*enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
 				if (got > 0)
