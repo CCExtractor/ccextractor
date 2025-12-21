@@ -10,7 +10,10 @@ use std::os::unix::prelude::IntoRawFd;
 use std::os::windows::io::IntoRawHandle;
 use std::{ffi::CStr, fs::File};
 
-use super::output::{color_to_hex, write_char, Writer};
+#[cfg(windows)]
+use crate::bindings::_get_osfhandle;
+
+use super::output::{color_to_hex, is_utf16_charset, write_char, Writer};
 use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
@@ -82,21 +85,38 @@ impl dtvcc_tv_screen {
         }
 
         #[cfg(windows)]
-        if writer.writer_ctx.filename.is_null() && writer.writer_ctx.fhandle.is_null() {
-            return Err("Filename missing".to_owned())?;
-        } else if writer.writer_ctx.fhandle.is_null() {
-            let filename = unsafe {
-                CStr::from_ptr(writer.writer_ctx.filename)
-                    .to_str()
-                    .map_err(|err| err.to_string())
-            }?;
-            debug!("dtvcc_writer_output: creating {}", filename);
-            let file = File::create(filename).map_err(|err| err.to_string())?;
-            writer.writer_ctx.fhandle = file.into_raw_handle();
+        if writer.writer_ctx.fhandle.is_null() {
+            // Check if fd is valid (file was already opened by C code)
+            // If so, convert fd to fhandle to avoid creating a new file (which would truncate)
+            if writer.writer_ctx.fd >= 0 {
+                let handle = unsafe { _get_osfhandle(writer.writer_ctx.fd) };
+                if handle != -1 {
+                    debug!(
+                        "dtvcc_writer_output: converting fd {} to fhandle",
+                        writer.writer_ctx.fd
+                    );
+                    writer.writer_ctx.fhandle = handle as *mut _;
+                }
+            }
 
-            if is_false(writer.no_bom) {
-                let BOM = [0xef, 0xbb, 0xbf];
-                writer.write_to_file(&BOM)?;
+            // If fhandle is still null, we need to create a new file
+            if writer.writer_ctx.fhandle.is_null() {
+                if writer.writer_ctx.filename.is_null() {
+                    return Err("Filename missing".to_owned())?;
+                }
+                let filename = unsafe {
+                    CStr::from_ptr(writer.writer_ctx.filename)
+                        .to_str()
+                        .map_err(|err| err.to_string())
+                }?;
+                debug!("dtvcc_writer_output: creating {}", filename);
+                let file = File::create(filename).map_err(|err| err.to_string())?;
+                writer.writer_ctx.fhandle = file.into_raw_handle();
+
+                if is_false(writer.no_bom) {
+                    let BOM = [0xef, 0xbb, 0xbf];
+                    writer.write_to_file(&BOM)?;
+                }
             }
         }
         self.write(writer);
@@ -157,6 +177,23 @@ impl dtvcc_tv_screen {
         let (first, last) = self.get_write_interval(row_index);
         debug!("First: {first}, Last: {last}");
 
+        // Determine if we should use UTF-16 mode (2 bytes for all chars) or
+        // variable-width mode (1 byte for ASCII, 2 bytes for extended chars).
+        // UTF-16/UCS-2 encodings require 2 bytes even for ASCII.
+        // Variable-width encodings (EUC-KR, CP949, Shift-JIS, etc.) use 1 byte for ASCII.
+        let use_utf16 = if !writer.writer_ctx.charset.is_null() {
+            let charset = unsafe {
+                CStr::from_ptr(writer.writer_ctx.charset)
+                    .to_str()
+                    .unwrap_or("")
+            };
+            is_utf16_charset(charset)
+        } else {
+            // No charset specified - default to variable-width for backward compatibility
+            // with raw byte output (no encoding conversion)
+            false
+        };
+
         for i in 0..last + 1 {
             if use_colors {
                 self.change_pen_color(
@@ -199,7 +236,7 @@ impl dtvcc_tv_screen {
             if i < first {
                 buf.push(b' ');
             } else {
-                write_char(&self.chars[row_index][i], &mut buf)
+                write_char(&self.chars[row_index][i], &mut buf, use_utf16)
             }
         }
         // there can be unclosed tags or colors after the last symbol in a row

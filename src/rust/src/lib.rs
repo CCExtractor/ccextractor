@@ -51,7 +51,7 @@ use std::os::raw::{c_uchar, c_void};
 use std::{
     ffi::CStr,
     io::Write,
-    os::raw::{c_char, c_double, c_int, c_long, c_uint},
+    os::raw::{c_char, c_double, c_int, c_uint},
 };
 
 // Mock data for rust unit tests
@@ -67,7 +67,7 @@ cfg_if! {
 
         static mut frames_since_ref_time: c_int = 0;
         static mut total_frames_count: c_uint = 0;
-        static mut fts_at_gop_start: c_long = 0;
+        static mut fts_at_gop_start: i64 = 0;
         static mut gop_rollover: c_int = 0;
         static mut pts_big_change: c_uint = 0;
 
@@ -144,7 +144,7 @@ extern "C" {
     static mut total_frames_count: c_uint;
     static mut gop_time: gop_time_code;
     static mut first_gop_time: gop_time_code;
-    static mut fts_at_gop_start: c_long;
+    static mut fts_at_gop_start: i64;
     static mut gop_rollover: c_int;
     static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
     static mut capitalization_list: word_list;

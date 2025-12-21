@@ -9,7 +9,7 @@ use crate::{ccx_options, current_fps, total_frames_count, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::{AvcNalType, BitStreamRust, BitstreamError, FRAMERATES_VALUES, SLICE_TYPES};
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
-use std::os::raw::{c_char, c_long};
+use std::os::raw::c_char;
 
 /// Process sequence parameter set RBSP
 pub fn seq_parameter_set_rbsp(
@@ -630,7 +630,7 @@ pub unsafe fn slice_header(
         msg_type = DebugMessageFlag::TIME;
         "  sync_pts:{} ({:8})",
         std::ffi::CStr::from_ptr(ccxr_print_mstime_static(
-            ((*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64)) as c_long,
+            (*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64),
             buf.as_mut_ptr()
         ))
         .to_str()
