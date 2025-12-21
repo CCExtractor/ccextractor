@@ -13,7 +13,7 @@ use std::{ffi::CStr, fs::File};
 #[cfg(windows)]
 use crate::bindings::_get_osfhandle;
 
-use super::output::{color_to_hex, write_char, Writer};
+use super::output::{color_to_hex, is_utf16_charset, write_char, Writer};
 use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
@@ -177,6 +177,23 @@ impl dtvcc_tv_screen {
         let (first, last) = self.get_write_interval(row_index);
         debug!("First: {first}, Last: {last}");
 
+        // Determine if we should use UTF-16 mode (2 bytes for all chars) or
+        // variable-width mode (1 byte for ASCII, 2 bytes for extended chars).
+        // UTF-16/UCS-2 encodings require 2 bytes even for ASCII.
+        // Variable-width encodings (EUC-KR, CP949, Shift-JIS, etc.) use 1 byte for ASCII.
+        let use_utf16 = if !writer.writer_ctx.charset.is_null() {
+            let charset = unsafe {
+                CStr::from_ptr(writer.writer_ctx.charset)
+                    .to_str()
+                    .unwrap_or("")
+            };
+            is_utf16_charset(charset)
+        } else {
+            // No charset specified - default to variable-width for backward compatibility
+            // with raw byte output (no encoding conversion)
+            false
+        };
+
         for i in 0..last + 1 {
             if use_colors {
                 self.change_pen_color(
@@ -219,7 +236,7 @@ impl dtvcc_tv_screen {
             if i < first {
                 buf.push(b' ');
             } else {
-                write_char(&self.chars[row_index][i], &mut buf)
+                write_char(&self.chars[row_index][i], &mut buf, use_utf16)
             }
         }
         // there can be unclosed tags or colors after the last symbol in a row
