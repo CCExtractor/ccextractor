@@ -87,7 +87,7 @@ jobs:
 
       - name: Install Rust toolchain
         if: steps.should_build.outputs.should_build == 'true'
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache GPAC build
         if: steps.should_build.outputs.should_build == 'true'
