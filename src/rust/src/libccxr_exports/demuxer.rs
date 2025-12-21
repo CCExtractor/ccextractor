@@ -9,7 +9,7 @@ use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_long, c_longlong, c_uchar, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint, c_void};
 
 // External C function declarations
 extern "C" {
@@ -482,7 +482,7 @@ use crate::demuxer::dvdraw::{is_dvdraw_header, parse_dvdraw_with_callbacks, FRAM
 // External C function declarations for caption processing
 extern "C" {
     fn do_cb(ctx: *mut lib_cc_decode, cc_block: *mut c_uchar, sub: *mut cc_subtitle) -> c_int;
-    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: c_long);
+    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64);
     fn ccxr_set_fts(ctx: *mut ccx_common_timing_ctx) -> c_int;
 }
 
@@ -546,7 +546,7 @@ pub unsafe extern "C" fn ccxr_process_dvdraw(
         },
         || {
             // Advance timing before each field 1 caption
-            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS as c_long);
+            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS);
             ccxr_set_fts(timing_ctx);
         },
     );
