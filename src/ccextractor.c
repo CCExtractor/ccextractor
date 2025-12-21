@@ -186,6 +186,11 @@ int start_ccx()
 					ccx_options.use_gop_as_pts = 0;
 				if (ccx_options.ignore_pts_jumps)
 					ccx_common_timing_settings.disable_sync_check = 1;
+				// When using GOP timing (--goptime), disable sync check because
+				// GOP time (wall-clock) and PES PTS (stream-relative) are in
+				// different time bases and will always appear as huge jumps.
+				if (ccx_options.use_gop_as_pts == 1)
+					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);
 				if (!ret)
