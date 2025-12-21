@@ -251,6 +251,9 @@ void set_spupng_offset(void *ctx, int x, int y)
 	sp->xOffset = x;
 	sp->yOffset = y;
 }
+
+// Forward declaration for calculate_spupng_offsets
+static void calculate_spupng_offsets(struct spupng_t *sp, struct encoder_ctx *ctx);
 int save_spupng(const char *filename, uint8_t *bitmap, int w, int h,
 		png_color *palette, png_byte *alpha, int nb_color)
 {
@@ -384,7 +387,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	struct cc_bitmap *rect;
 	png_color *palette = NULL;
 	png_byte *alpha = NULL;
-	int wrote_opentag = 1;
+	int wrote_opentag = 0; // Track if we actually wrote the tag
 
 	x_pos = -1;
 	y_pos = -1;
@@ -395,13 +398,11 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		return 0;
 
 	inc_spupng_fileindex(sp);
-	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
 
 	if (sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
 	{
 		context->prev_start = -1;
-		if (wrote_opentag)
-			write_sputag_close(sp);
+		// No subtitle data, skip writing
 		return 0;
 	}
 	rect = sub->data;
@@ -440,7 +441,13 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		}
 	}
 	filename = get_spupng_filename(sp);
-	set_spupng_offset(sp, x_pos, y_pos);
+	
+	// Set image dimensions for offset calculation
+	sp->img_w = width;
+	sp->img_h = height;
+	
+	// Calculate centered offsets based on screen size (PAL/NTSC)
+	calculate_spupng_offsets(sp, context);
 	if (sub->flags & SUB_EOD_MARKER)
 		context->prev_start = sub->start_time;
 	pbuf = (uint8_t *)malloc(width * height);
@@ -475,6 +482,15 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
 	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data1, rect[0].nb_colors);
+	
+	// Save PNG file first
+	save_spupng(filename, pbuf, width, height, palette, alpha, rect[0].nb_colors);
+	freep(&pbuf);
+
+	// Write XML tag with calculated centered offsets
+	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
+	wrote_opentag = 1; // Mark that we wrote the tag
+	
 #ifdef ENABLE_OCR
 	if (!context->nospupngocr)
 	{
@@ -487,8 +503,6 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		}
 	}
 #endif
-	save_spupng(filename, pbuf, width, height, palette, alpha, rect[0].nb_colors);
-	freep(&pbuf);
 
 end:
 	if (wrote_opentag)
@@ -1088,7 +1102,16 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 static void calculate_spupng_offsets(struct spupng_t *sp, struct encoder_ctx *ctx)
 {
 	int screen_w = 720;
-	int screen_h = ctx->is_pal ? 576 : 480;
+	int screen_h;
+
+	/* Teletext is always PAL */
+	if (ctx->in_fileformat == 2) {
+		screen_h = 576;
+	} else if (ctx->is_pal) {
+		screen_h = 576;
+	} else {
+		screen_h = 480;
+	}
 
 	sp->xOffset = (screen_w - sp->img_w) / 2;
 	sp->yOffset = (screen_h - sp->img_h) / 2;
