@@ -754,7 +754,7 @@ uint64_t get_pts(uint8_t *buffer)
 // Threshold for enabling packet analysis mode when no PAT is found (in bytes)
 #define NO_PAT_THRESHOLD (188 * 1000) // After ~1000 packets
 
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
+int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 {
 	int gotpes = 0;
 	long pespcount = 0;	      // count packets in PES with captions
