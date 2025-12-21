@@ -445,7 +445,7 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 				static unsigned char format_subtype[16];
 				memcpy(&format_subtype, cb->buffer + 0x4C, 16); // Read format GUID at offset 0x4C
 				dbg_print(CCX_DMT_PARSE, "MSTVCAPTION format_subtype=%02X%02X%02X%02X...\n",
-					format_subtype[0], format_subtype[1], format_subtype[2], format_subtype[3]);
+					  format_subtype[0], format_subtype[1], format_subtype[2], format_subtype[3]);
 				// Check for teletext
 				if (!memcmp(format_subtype, WTV_STREAM_TELETEXT, 16))
 				{
