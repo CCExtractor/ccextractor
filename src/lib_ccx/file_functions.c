@@ -2,7 +2,7 @@
 #include "ccx_common_option.h"
 #include "activity.h"
 #include "file_buffer.h"
-long FILEBUFFERSIZE = 1024 * 1024 * 16; // 16 Mbytes no less. Minimize number of real read calls()
+int64_t FILEBUFFERSIZE = 1024 * 1024 * 16; // 16 Mbytes no less. Minimize number of real read calls()
 
 #ifdef _WIN32
 WSADATA wsaData = {0};

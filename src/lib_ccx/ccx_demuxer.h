@@ -57,9 +57,9 @@ struct cap_info
 	int program_number;
 	enum ccx_stream_type stream;
 	enum ccx_code_type codec;
-	long capbufsize;
+	int64_t capbufsize;
 	unsigned char *capbuf;
-	long capbuflen; // Bytes read in capbuf
+	int64_t capbuflen; // Bytes read in capbuf
 	int saw_pesstart;
 	int prev_counter;
 	void *codec_private_data;

@@ -48,7 +48,7 @@ typedef struct ccx_decoder_608_context
 	int my_field;			// Used for sanity checks
 	int my_channel;			// Used for sanity checks
 	int rollup_from_popon;		// Track transition from pop-on/paint-on to roll-up mode
-	long bytes_processed_608;	// To be written ONLY by process_608
+	int64_t bytes_processed_608;	// To be written ONLY by process_608
 	int have_cursor_position;
 
 	int *halt;	  // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
