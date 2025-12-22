@@ -441,11 +441,11 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 		}
 	}
 	filename = get_spupng_filename(sp);
-	
+
 	// Set image dimensions for offset calculation
 	sp->img_w = width;
 	sp->img_h = height;
-	
+
 	// Calculate centered offsets based on screen size (PAL/NTSC)
 	calculate_spupng_offsets(sp, context);
 	if (sub->flags & SUB_EOD_MARKER)
@@ -482,7 +482,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 
 	/* TODO do rectangle wise, one color table should not be used for all rectangles */
 	mapclut_paletee(palette, alpha, (uint32_t *)rect[0].data1, rect[0].nb_colors);
-	
+
 	// Save PNG file first
 	save_spupng(filename, pbuf, width, height, palette, alpha, rect[0].nb_colors);
 	freep(&pbuf);
@@ -490,7 +490,7 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	// Write XML tag with calculated centered offsets
 	write_sputag_open(sp, sub->start_time, sub->end_time - 1);
 	wrote_opentag = 1; // Mark that we wrote the tag
-	
+
 #ifdef ENABLE_OCR
 	if (!context->nospupngocr)
 	{
@@ -1105,11 +1105,16 @@ static void calculate_spupng_offsets(struct spupng_t *sp, struct encoder_ctx *ct
 	int screen_h;
 
 	/* Teletext is always PAL */
-	if (ctx->in_fileformat == 2) {
+	if (ctx->in_fileformat == 2)
+	{
 		screen_h = 576;
-	} else if (ctx->is_pal) {
+	}
+	else if (ctx->is_pal)
+	{
 		screen_h = 576;
-	} else {
+	}
+	else
+	{
 		screen_h = 480;
 	}
 
