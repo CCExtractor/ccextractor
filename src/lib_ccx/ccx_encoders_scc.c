@@ -660,7 +660,6 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	// 3. Clear the caption
 	clear_screen(context, data->end_time, data->channel, disassemble);
 
-
 	/* Track transmission end time */
 	context->last_scc_tx_end_ms = adjusted_start_time + tx_duration_ms;
 	return 1;
