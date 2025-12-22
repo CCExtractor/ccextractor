@@ -891,7 +891,9 @@ impl dtvcc_service_decoder {
                 encoder.no_bom,
             );
 
-            tv.writer_output(&mut writer);
+            if let Err(e) = tv.writer_output(&mut writer) {
+                warn!("dtvcc::screen_print: writer_output failed: {}", e);
+            }
             tv.clear();
         }
     }
