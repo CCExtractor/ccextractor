@@ -93,7 +93,7 @@ jobs:
       - name: Cache GPAC build
         if: steps.should_build.outputs.should_build == 'true'
         id: cache-gpac
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /usr/local/lib/libgpac*
           key: gpac-v2.4.0-ubuntu22
