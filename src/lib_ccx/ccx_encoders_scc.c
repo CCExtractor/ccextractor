@@ -550,8 +550,44 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	unsigned char current_row = UINT8_MAX;
 	unsigned char current_column = UINT8_MAX;
 
+	/* ---- SCC accurate timing: byte budgeting ---- */
+	int bytes_required = 0;
+
+	/* Control codes: RCL + ENM + EOC (each = 2 bytes) */
+	bytes_required += 6;
+
+	/* Count text bytes and control codes needed */
+	for (uint8_t row = 0; row < 15; ++row)
+	{
+		if (!data->row_used[row])
+			continue;
+
+		int first, last;
+		find_limit_characters(data->characters[row], &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
+
+		/* Preamble code (2 bytes) + potential tab offset (2 bytes) */
+		bytes_required += 4;
+
+		/* Text characters */
+		bytes_required += (last - first + 1);
+	}
+
+	/* Pad to even number of bytes */
+	if (bytes_required % 2 != 0)
+		bytes_required++;
+
+	/* ---- SCC accurate timing: scheduling ---- */
+	int frames_required = (bytes_required + 1) / 2;
+	int tx_duration_ms = (int)(frames_required * (1000.0 / 29.97));
+
+	LLONG adjusted_start_time = data->start_time - tx_duration_ms;
+
+	/* ---- SCC accurate timing: collision handling ---- */
+	if (context->last_scc_tx_end_ms >= 0 && adjusted_start_time < context->last_scc_tx_end_ms)
+		adjusted_start_time = context->last_scc_tx_end_ms;
+
 	// 1. Load the caption
-	add_timestamp(context, data->start_time, disassemble);
+	add_timestamp(context, adjusted_start_time, disassemble);
 	write_control_code(context->out->fh, data->channel, RCL, disassemble, &bytes_written);
 	for (uint8_t row = 0; row < 15; ++row)
 	{
@@ -624,6 +660,9 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	// 3. Clear the caption
 	clear_screen(context, data->end_time, data->channel, disassemble);
 
+
+	/* Track transmission end time */
+	context->last_scc_tx_end_ms = adjusted_start_time + tx_duration_ms;
 	return 1;
 }
 
