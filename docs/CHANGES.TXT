@@ -1,5 +1,6 @@
 0.96 (2025-12-21)
 -----------------
+- Fix: Prevent CEA-708 decoder panic when using --stdout on Windows by safely handling writer output errors
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
 - Fix: Garbled captions from HDHomeRun and I/P-only H.264 streams (#1109)
 - Fix: Enable stdout output for CEA-708 captions on Windows (#1693)
