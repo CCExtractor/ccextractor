@@ -860,19 +860,27 @@ impl dtvcc_service_decoder {
 
     /// Print the contents of tv screen to the output file
     pub fn screen_print(&mut self, encoder: &mut encoder_ctx, timing: &mut ccx_common_timing_ctx) {
-        debug!("dtvcc_screen_print rust");
+        debug!("dtvcc::screen_print rust");
+
         self.cc_count += 1;
+
         unsafe {
-            let tv = &mut (*self.tv);
+            let tv = &mut *self.tv;
             tv.cc_count += 1;
+
             let sn = tv.service_number;
             let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
+
             tv.update_time_hide(timing.get_visible_end(3));
-            let transcript_settings = if !encoder.transcript_settings.is_null() {
-                &*encoder.transcript_settings
-            } else {
-                &ccx_encoders_transcript_format::default()
+
+            let transcript_settings = match encoder.transcript_settings.as_ref() {
+                Some(ts) => ts,
+                None => {
+                    // No transcript settings => transcript output disabled
+                    return;
+                }
             };
+
             let mut writer = Writer::new(
                 &mut encoder.cea_708_counter,
                 encoder.subs_delay,
@@ -882,7 +890,8 @@ impl dtvcc_service_decoder {
                 transcript_settings,
                 encoder.no_bom,
             );
-            tv.writer_output(&mut writer).unwrap();
+
+            tv.writer_output(&mut writer);
             tv.clear();
         }
     }
@@ -1190,17 +1199,16 @@ impl dtvcc_service_decoder {
     }
     /// Flush the decoder of any remaining subtitles
     pub fn flush(&self, encoder: &mut encoder_ctx) {
-        let transcript_settings = unsafe {
-            if !encoder.transcript_settings.is_null() {
-                &*encoder.transcript_settings
-            } else {
-                &ccx_encoders_transcript_format::default()
-            }
-        };
         unsafe {
-            let tv = &mut (*self.tv);
+            let tv = &mut *self.tv;
             let sn = tv.service_number;
             let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
+
+            // If transcript output is disabled, do nothing
+            let transcript_settings = match encoder.transcript_settings.as_ref() {
+                Some(ts) => ts,
+                None => return,
+            };
 
             let mut writer = Writer::new(
                 &mut encoder.cea_708_counter,
@@ -1211,6 +1219,7 @@ impl dtvcc_service_decoder {
                 transcript_settings,
                 encoder.no_bom,
             );
+
             writer.write_done();
         }
     }
