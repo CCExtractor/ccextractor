@@ -678,9 +678,13 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 
 	ULLONG track = read_vint_length(file);
 
-	if (track != mkv_ctx->avc_track_number)
+	// Check if this is an AVC or HEVC track
+	int is_avc = (track == mkv_ctx->avc_track_number);
+	int is_hevc = (track == mkv_ctx->hevc_track_number);
+
+	if (!is_avc && !is_hevc)
 	{
-		// Skip everything except AVC track
+		// Skip everything except AVC/HEVC tracks
 		skip_bytes(file, len - 1); // 1 byte for track
 		return;
 	}
@@ -695,7 +699,10 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 	frame.data = read_byte_block(file, frame.len);
 	frame.FTS = frame_timestamp + timecode;
 
-	process_avc_frame_mkv(mkv_ctx, frame);
+	if (is_hevc)
+		process_hevc_frame_mkv(mkv_ctx, frame);
+	else
+		process_avc_frame_mkv(mkv_ctx, frame);
 
 	free(frame.data);
 }
@@ -734,6 +741,51 @@ int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fram
 		i += nal_length;
 	} // outer for
 	assert(i == frame.len);
+
+	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+
+	return status;
+}
+
+int process_hevc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
+{
+	int status = 0;
+	uint32_t i;
+	struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+
+	// Set timing
+	set_current_pts(dec_ctx->timing, frame.FTS * (MPEG_CLOCK_FREQ / 1000));
+	set_fts(dec_ctx->timing);
+
+	// Set HEVC mode for NAL parsing
+	dec_ctx->avc_ctx->is_hevc = 1;
+
+	// NAL unit length is assumed to be 4 (same as AVC in Matroska)
+	uint8_t nal_unit_size = 4;
+
+	for (i = 0; i < frame.len;)
+	{
+		uint32_t nal_length;
+
+		nal_length = bswap32(*(long *)&frame.data[i]);
+		i += nal_unit_size;
+
+		if (nal_length > 0)
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+		i += nal_length;
+	}
+
+	// Flush any accumulated CC data after processing this frame
+	// This is critical for HEVC because store_hdcc() is normally called from
+	// slice_header() which is AVC-only
+	if (dec_ctx->avc_ctx->cc_count > 0)
+	{
+		store_hdcc(enc_ctx, dec_ctx, dec_ctx->avc_ctx->cc_data, dec_ctx->avc_ctx->cc_count,
+			   dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, &mkv_ctx->dec_sub);
+		dec_ctx->avc_ctx->cc_buffer_saved = CCX_TRUE;
+		dec_ctx->avc_ctx->cc_count = 0;
+	}
 
 	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 
@@ -851,9 +903,11 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 				codec_id_string = read_vint_block_string(file);
 				codec_id = get_track_subtitle_codec_id(codec_id_string);
 				mprint("    Codec ID: %s\n", codec_id_string);
-				// We only support AVC by now for EIA-608
+				// Detect AVC and HEVC tracks for EIA-608/708 caption extraction
 				if (strcmp((const char *)codec_id_string, (const char *)avc_codec_id) == 0)
 					mkv_ctx->avc_track_number = track_number;
+				else if (strcmp((const char *)codec_id_string, (const char *)hevc_codec_id) == 0)
+					mkv_ctx->hevc_track_number = track_number;
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACK_CODEC_PRIVATE:
 				// We handle DVB's private data differently
@@ -1027,6 +1081,65 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 
 		data = read_byte_block(file, size);
 		do_NAL(enc_ctx, dec_ctx, data, size, &mkv_ctx->dec_sub);
+	}
+	else if ((strcmp((const char *)codec_id_string, (const char *)hevc_codec_id) == 0) && mkv_ctx->hevc_track_number == track_number)
+	{
+		// HEVC uses HEVCDecoderConfigurationRecord format
+		// We need to parse this to extract VPS/SPS/PPS NAL units
+		dec_ctx->avc_ctx->is_hevc = 1;
+
+		data = read_byte_block(file, len);
+
+		// HEVCDecoderConfigurationRecord structure:
+		// - configurationVersion (1 byte)
+		// - general_profile_space, general_tier_flag, general_profile_idc (1 byte)
+		// - general_profile_compatibility_flags (4 bytes)
+		// - general_constraint_indicator_flags (6 bytes)
+		// - general_level_idc (1 byte)
+		// - reserved + min_spatial_segmentation_idc (2 bytes)
+		// - reserved + parallelismType (1 byte)
+		// - reserved + chromaFormat (1 byte)
+		// - reserved + bitDepthLumaMinus8 (1 byte)
+		// - reserved + bitDepthChromaMinus8 (1 byte)
+		// - avgFrameRate (2 bytes)
+		// - constantFrameRate, numTemporalLayers, temporalIdNested, lengthSizeMinusOne (1 byte)
+		// - numOfArrays (1 byte)
+		// Total header: 23 bytes
+
+		if (len >= 23)
+		{
+			uint8_t num_arrays = data[22];
+			size_t offset = 23;
+
+			for (uint8_t arr = 0; arr < num_arrays && offset < len; arr++)
+			{
+				if (offset + 3 > len)
+					break;
+
+				// uint8_t array_completeness = (data[offset] >> 7) & 1;
+				// uint8_t nal_unit_type = data[offset] & 0x3F;
+				offset++;
+
+				uint16_t num_nalus = (data[offset] << 8) | data[offset + 1];
+				offset += 2;
+
+				for (uint16_t n = 0; n < num_nalus && offset < len; n++)
+				{
+					if (offset + 2 > len)
+						break;
+
+					uint16_t nal_unit_length = (data[offset] << 8) | data[offset + 1];
+					offset += 2;
+
+					if (offset + nal_unit_length > len)
+						break;
+
+					// Process this NAL unit (VPS, SPS, or PPS)
+					do_NAL(enc_ctx, dec_ctx, &data[offset], nal_unit_length, &mkv_ctx->dec_sub);
+					offset += nal_unit_length;
+				}
+			}
+		}
 	}
 	else if (strcmp((const char *)codec_id_string, (const char *)dvb_codec_id) == 0)
 	{
@@ -1530,9 +1643,10 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
 	if (mkv_ctx->sub_tracks == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In matroska_loop: Out of memory allocating sub_tracks.");
-	// EIA-608
+	// EIA-608/708
 	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
 	mkv_ctx->avc_track_number = -1;
+	mkv_ctx->hevc_track_number = -1;
 
 	matroska_parse(mkv_ctx);
 
@@ -1545,17 +1659,22 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	// Save values before freeing mkv_ctx
 	int sentence_count = mkv_ctx->sentence_count;
 	int avc_track_found = mkv_ctx->avc_track_number > -1;
+	int hevc_track_found = mkv_ctx->hevc_track_number > -1;
 	int got_output = mkv_ctx->dec_sub.got_output;
 
 	matroska_free_all(mkv_ctx);
 
 	mprint("\n\n");
 
-	// Support only one AVC track by now
-	if (avc_track_found)
+	// Report video tracks found
+	if (avc_track_found && hevc_track_found)
+		mprint("Found AVC and HEVC tracks. ");
+	else if (avc_track_found)
 		mprint("Found AVC track. ");
+	else if (hevc_track_found)
+		mprint("Found HEVC track. ");
 	else
-		mprint("Found no AVC track. ");
+		mprint("Found no AVC/HEVC track. ");
 
 	if (got_output)
 		return 1;
