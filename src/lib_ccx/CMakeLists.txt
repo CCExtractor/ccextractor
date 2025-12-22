@@ -59,6 +59,9 @@ endif (WITH_OCR)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
+# Rust is available, using Rust SMPTE-TT implementation
+list(REMOVE_ITEM SOURCEFILE "${PROJECT_SOURCE_DIR}/lib_ccx/ccx_encoders_smptett.c")
+
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
 target_link_libraries (ccx ${EXTRA_LIBS})
 target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
