@@ -1023,9 +1023,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if (!accept_this_page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
 
-		// Update tlt_config.page to track the current page being received
-		// This is needed so process_page knows which page to tag the output with
-		if (accept_this_page && page_number != tlt_config.page)
+		// Update tlt_config.page to track the current page being received (multi-page mode only)
+		// In single-page mode, tlt_config.page is set by auto-detect logic or user specification
+		// This prevents overwriting auto-detect selection with an arbitrary page number
+		if (is_multi_page_mode() && accept_this_page && page_number != tlt_config.page)
 		{
 			tlt_config.page = page_number;
 		}
