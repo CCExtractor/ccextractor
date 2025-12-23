@@ -84,6 +84,9 @@ struct cc_subtitle
 	/** Raw PTS value when this subtitle started (for DVB timing) */
 	LLONG start_pts;
 
+	/** Teletext page number (for multi-page extraction, issue #665) */
+	uint16_t teletext_page;
+
 	struct cc_subtitle *next;
 	struct cc_subtitle *prev;
 };

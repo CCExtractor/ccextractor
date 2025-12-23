@@ -554,6 +554,12 @@ unsafe fn c_char_to_string(c_str: *const ::std::os::raw::c_char) -> String {
 }
 impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
     unsafe fn to_ctype(&self, value: &Options) -> ccx_s_teletext_config {
+        // Initialize user_pages array (issue #665)
+        let mut user_pages_arr = [0u16; 8]; // MAX_TLT_PAGES_EXTRACT = 8
+        for (i, &page) in self.user_pages.iter().take(8).enumerate() {
+            user_pages_arr[i] = page;
+        }
+
         let mut config = ccx_s_teletext_config {
             _bitfield_1: Default::default(),
             _bitfield_2: Default::default(),
@@ -563,6 +569,9 @@ impl CType2<ccx_s_teletext_config, &Options> for TeletextConfig {
             tid: 0,
             offset: 0.0,
             user_page: self.user_page,
+            user_pages: user_pages_arr,
+            num_user_pages: self.user_pages.len().min(8) as i32,
+            extract_all_pages: self.extract_all_pages.into(),
             dolevdist: self.dolevdist.into(),
             levdistmincnt: self.levdistmincnt.into(),
             levdistmaxpct: self.levdistmaxpct.into(),

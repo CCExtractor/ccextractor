@@ -719,6 +719,9 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 		write_subtitle_file_footer(ctx, ctx->out + i);
 	}
 
+	// Clean up teletext multi-page output files (issue #665)
+	dinit_teletext_outputs(ctx);
+
 	free_encoder_context(ctx->prev);
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
@@ -837,6 +840,15 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->segment_pending = 0;
 	ctx->segment_last_key_frame = 0;
 	ctx->nospupngocr = opt->nospupngocr;
+
+	// Initialize teletext multi-page output arrays (issue #665)
+	ctx->tlt_out_count = 0;
+	for (int i = 0; i < MAX_TLT_PAGES_EXTRACT; i++)
+	{
+		ctx->tlt_out[i] = NULL;
+		ctx->tlt_out_pages[i] = 0;
+		ctx->tlt_srt_counter[i] = 0;
+	}
 
 	ctx->prev = NULL;
 	return ctx;
@@ -1297,4 +1309,169 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 	// Reset counters as we switch output file.
 	enc_ctx->cea_708_counter = 0;
 	enc_ctx->srt_counter = 0;
+}
+
+/**
+ * Get or create the output file for a specific teletext page (issue #665)
+ * Creates output files on-demand with suffix _pNNN (e.g., output_p891.srt)
+ * Returns NULL if we're in stdout mode or if too many pages are being extracted
+ */
+struct ccx_s_write *get_teletext_output(struct encoder_ctx *ctx, uint16_t teletext_page)
+{
+	// If teletext_page is 0, use the default output
+	if (teletext_page == 0 || ctx->out == NULL)
+		return ctx->out;
+
+	// Check if we're sending to stdout - can't do multi-page in that case
+	if (ctx->out[0].fh == STDOUT_FILENO)
+		return ctx->out;
+
+	// Check if we already have an output file for this page
+	for (int i = 0; i < ctx->tlt_out_count; i++)
+	{
+		if (ctx->tlt_out_pages[i] == teletext_page)
+			return ctx->tlt_out[i];
+	}
+
+	// If we only have one teletext page requested, use the default output
+	// (no suffix needed for backward compatibility)
+	extern struct ccx_s_teletext_config tlt_config;
+	if (tlt_config.num_user_pages <= 1 && !tlt_config.extract_all_pages)
+		return ctx->out;
+
+	// Need to create a new output file for this page
+	if (ctx->tlt_out_count >= MAX_TLT_PAGES_EXTRACT)
+	{
+		mprint("Warning: Too many teletext pages to extract (max %d), using default output for page %03d\n",
+		       MAX_TLT_PAGES_EXTRACT, teletext_page);
+		return ctx->out;
+	}
+
+	// Allocate the new write structure
+	struct ccx_s_write *new_out = (struct ccx_s_write *)malloc(sizeof(struct ccx_s_write));
+	if (!new_out)
+	{
+		mprint("Error: Memory allocation failed for teletext output\n");
+		return ctx->out;
+	}
+	memset(new_out, 0, sizeof(struct ccx_s_write));
+
+	// Create the filename with page suffix
+	const char *ext = get_file_extension(ctx->write_format);
+	char suffix[16];
+	snprintf(suffix, sizeof(suffix), "_p%03d", teletext_page);
+
+	char *basefilename = NULL;
+	if (ctx->out[0].filename != NULL)
+	{
+		basefilename = get_basename(ctx->out[0].filename);
+	}
+	else if (ctx->first_input_file != NULL)
+	{
+		basefilename = get_basename(ctx->first_input_file);
+	}
+	else
+	{
+		basefilename = strdup("untitled");
+	}
+
+	if (basefilename == NULL)
+	{
+		free(new_out);
+		return ctx->out;
+	}
+
+	char *filename = create_outfilename(basefilename, suffix, ext);
+	free(basefilename);
+
+	if (filename == NULL)
+	{
+		free(new_out);
+		return ctx->out;
+	}
+
+	// Open the file
+	new_out->filename = filename;
+	new_out->fh = open(filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	if (new_out->fh == -1)
+	{
+		mprint("Error: Failed to open output file %s: %s\n", filename, strerror(errno));
+		free(filename);
+		free(new_out);
+		return ctx->out;
+	}
+
+	mprint("Creating teletext output file: %s\n", filename);
+
+	// Store in our array
+	int idx = ctx->tlt_out_count;
+	ctx->tlt_out[idx] = new_out;
+	ctx->tlt_out_pages[idx] = teletext_page;
+	ctx->tlt_srt_counter[idx] = 0;
+	ctx->tlt_out_count++;
+
+	// Write the subtitle file header
+	write_subtitle_file_header(ctx, new_out);
+
+	return new_out;
+}
+
+/**
+ * Get the SRT counter for a specific teletext page (issue #665)
+ * Returns pointer to the counter, or NULL if page not found
+ */
+unsigned int *get_teletext_srt_counter(struct encoder_ctx *ctx, uint16_t teletext_page)
+{
+	// If teletext_page is 0, use the default counter
+	if (teletext_page == 0)
+		return &ctx->srt_counter;
+
+	// Check if we're using multi-page mode
+	extern struct ccx_s_teletext_config tlt_config;
+	if (tlt_config.num_user_pages <= 1 && !tlt_config.extract_all_pages)
+		return &ctx->srt_counter;
+
+	// Find the counter for this page
+	for (int i = 0; i < ctx->tlt_out_count; i++)
+	{
+		if (ctx->tlt_out_pages[i] == teletext_page)
+			return &ctx->tlt_srt_counter[i];
+	}
+
+	// Not found, use default counter
+	return &ctx->srt_counter;
+}
+
+/**
+ * Clean up all teletext output files (issue #665)
+ */
+void dinit_teletext_outputs(struct encoder_ctx *ctx)
+{
+	if (!ctx)
+		return;
+
+	for (int i = 0; i < ctx->tlt_out_count; i++)
+	{
+		if (ctx->tlt_out[i] != NULL)
+		{
+			// Write footer
+			write_subtitle_file_footer(ctx, ctx->tlt_out[i]);
+
+			// Close file
+			if (ctx->tlt_out[i]->fh != -1)
+			{
+				close(ctx->tlt_out[i]->fh);
+			}
+
+			// Free filename
+			if (ctx->tlt_out[i]->filename != NULL)
+			{
+				free(ctx->tlt_out[i]->filename);
+			}
+
+			free(ctx->tlt_out[i]);
+			ctx->tlt_out[i] = NULL;
+		}
+	}
+	ctx->tlt_out_count = 0;
 }
