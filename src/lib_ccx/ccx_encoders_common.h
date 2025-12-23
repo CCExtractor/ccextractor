@@ -175,6 +175,11 @@ struct encoder_ctx
 	// OCR in SPUPNG
 	int nospupngocr;
 	int is_pal;
+
+	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT]; // Output files per teletext page
+	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];       // Page numbers for each output slot
+	unsigned int tlt_srt_counter[MAX_TLT_PAGES_EXTRACT]; // SRT counter per page
+	int tlt_out_count;                                    // Number of teletext output files
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY 2048
