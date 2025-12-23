@@ -39,7 +39,7 @@ rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features =
 rsmpeg = { git = "https://github.com/CCExtractor/rsmpeg.git", default-features = false, features = ["ffmpeg7", "link_system_ffmpeg"], optional = true }
 
 [build-dependencies]
-bindgen = "0.64.0"
+bindgen = "0.72.1"
 pkg-config = "0.3.32"
 
 [dev-dependencies]

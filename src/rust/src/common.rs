@@ -32,7 +32,7 @@ use lib_ccxr::time::units::Timestamp;
 use lib_ccxr::time::units::TimestampFormat;
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageMask, OutputTarget};
-use std::os::raw::{c_int, c_long};
+use std::os::raw::c_int;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -998,9 +998,9 @@ impl CType<cap_info> for CapInfo {
             program_number: self.program_number,
             stream: self.stream.to_ctype() as ccx_stream_type, // CType<ccx_stream_type> for StreamType
             codec: self.codec.to_ctype(),                      // CType<ccx_code_type> for Codec
-            capbufsize: self.capbufsize as c_long,
+            capbufsize: self.capbufsize,
             capbuf: self.capbuf,
-            capbuflen: self.capbuflen as c_long,
+            capbuflen: self.capbuflen,
             saw_pesstart: self.saw_pesstart,
             prev_counter: self.prev_counter,
             codec_private_data: self.codec_private_data,

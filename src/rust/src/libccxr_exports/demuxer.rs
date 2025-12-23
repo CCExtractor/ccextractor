@@ -9,7 +9,7 @@ use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_long, c_longlong, c_uchar, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
 // External C function declarations
 extern "C" {
@@ -452,12 +452,12 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut ccx_demuxer) -> c_longlong {
+pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut ccx_demuxer) -> i64 {
     if ctx.is_null() {
         return -1;
     }
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    demux_ctx.get_filesize() as c_longlong
+    demux_ctx.get_filesize() as i64
 }
 
 // Extern function for ccx_demuxer_print_cfg
@@ -482,7 +482,7 @@ use crate::demuxer::dvdraw::{is_dvdraw_header, parse_dvdraw_with_callbacks, FRAM
 // External C function declarations for caption processing
 extern "C" {
     fn do_cb(ctx: *mut lib_cc_decode, cc_block: *mut c_uchar, sub: *mut cc_subtitle) -> c_int;
-    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: c_long);
+    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64);
     fn ccxr_set_fts(ctx: *mut ccx_common_timing_ctx) -> c_int;
 }
 
@@ -546,7 +546,7 @@ pub unsafe extern "C" fn ccxr_process_dvdraw(
         },
         || {
             // Advance timing before each field 1 caption
-            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS as c_long);
+            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS);
             ccxr_set_fts(timing_ctx);
         },
     );

@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.95"
+#define VERSION "0.96"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -240,7 +240,7 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload);
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int size, struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
@@ -297,7 +297,7 @@ extern int strangeheader;
 
 extern const char *desc[256];
 
-extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
+extern int64_t FILEBUFFERSIZE; // Uppercase because it used to be a define
 
 extern int firstcall;
 
