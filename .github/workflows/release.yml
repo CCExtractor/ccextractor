@@ -75,7 +75,7 @@ jobs:
       run: ls
       working-directory: ./windows
     - name: Unzip Flutter GUI
-      run: Expand-Archive -Path ./windows.zip -DestinationPath ./installer
+      run: Expand-Archive -Path ./windows.zip -DestinationPath ./installer -Force
       working-directory: ./windows
     - name: Display installer folder contents
       run: Get-ChildItem -Recurse ./installer
