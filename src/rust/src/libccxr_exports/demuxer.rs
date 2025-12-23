@@ -1,4 +1,4 @@
-use crate::bindings::{ccx_demuxer, lib_ccx_ctx};
+use crate::bindings::{ccx_datasource_CCX_DS_FILE, ccx_demuxer, lib_ccx_ctx};
 use crate::ccx_options;
 use crate::common::{copy_from_rust, copy_to_rust, CType};
 use crate::ctorust::FromCType;
@@ -9,7 +9,13 @@ use lib_ccxr::common::{Codec, Options, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_longlong, c_uchar, c_uint, c_void};
+use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
+
+// External C function declarations
+extern "C" {
+    fn activity_input_file_closed();
+    fn close(fd: c_int) -> c_int;
+}
 
 pub fn copy_c_array_to_rust_vec(
     c_bytes: &[u8; crate::demuxer::common_types::ARRAY_SIZE],
@@ -385,11 +391,15 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
     if ctx.is_null() {
         return;
     }
-    let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
-    demux_ctx.close(&mut CcxOptions);
-    copy_from_rust(&raw mut ccx_options, CcxOptions);
-    copy_demuxer_from_rust_to_c(ctx, &demux_ctx);
+    // Work directly on the C struct to avoid memory allocations from copy operations
+    let c = &mut *ctx;
+    c.past = 0;
+    if c.infd != -1 && ccx_options.input_source == ccx_datasource_CCX_DS_FILE {
+        // Close the file descriptor using the C library close function
+        close(c.infd);
+        c.infd = -1;
+        activity_input_file_closed();
+    }
 }
 
 // Extern function for ccx_demuxer_isopen
@@ -400,8 +410,9 @@ pub unsafe extern "C" fn ccxr_demuxer_isopen(ctx: *mut ccx_demuxer) -> c_int {
     if ctx.is_null() {
         return 0;
     }
-    let demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    if demux_ctx.is_open() {
+    // Directly check infd instead of copying the entire structure
+    // This avoids memory allocations that would leak
+    if (*ctx).infd != -1 {
         1
     } else {
         0
@@ -416,10 +427,15 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
     if ctx.is_null() {
         return -1;
     }
-    let c_str = CStr::from_ptr(file);
-    let file_str = match c_str.to_str() {
-        Ok(s) => s,
-        Err(_) => return -1,
+
+    // Handle NULL file pointer (e.g., when using --udp or --tcp network input)
+    let file_str = if !file.is_null() {
+        match CStr::from_ptr(file).to_str() {
+            Ok(s) => s,
+            Err(_) => return -1,
+        }
+    } else {
+        ""
     };
 
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
@@ -436,12 +452,12 @@ pub unsafe extern "C" fn ccxr_demuxer_open(ctx: *mut ccx_demuxer, file: *const c
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut ccx_demuxer) -> c_longlong {
+pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut ccx_demuxer) -> i64 {
     if ctx.is_null() {
         return -1;
     }
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    demux_ctx.get_filesize() as c_longlong
+    demux_ctx.get_filesize() as i64
 }
 
 // Extern function for ccx_demuxer_print_cfg
@@ -454,6 +470,88 @@ pub unsafe extern "C" fn ccxr_demuxer_print_cfg(ctx: *mut ccx_demuxer) {
     }
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     demux_ctx.print_cfg()
+}
+
+// ============================================================================
+// DVD Raw Format Processing (McPoodle format)
+// ============================================================================
+
+use crate::bindings::{cc_subtitle, ccx_common_timing_ctx, lib_cc_decode};
+use crate::demuxer::dvdraw::{is_dvdraw_header, parse_dvdraw_with_callbacks, FRAME_DURATION_TICKS};
+
+// External C function declarations for caption processing
+extern "C" {
+    fn do_cb(ctx: *mut lib_cc_decode, cc_block: *mut c_uchar, sub: *mut cc_subtitle) -> c_int;
+    fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64);
+    fn ccxr_set_fts(ctx: *mut ccx_common_timing_ctx) -> c_int;
+}
+
+/// Check if a buffer contains McPoodle DVD raw format header.
+///
+/// # Safety
+///
+/// `buffer` must be a valid pointer to at least `len` bytes.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_is_dvdraw_header(buffer: *const c_uchar, len: c_uint) -> c_int {
+    if buffer.is_null() || len < 8 {
+        return 0;
+    }
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+    if is_dvdraw_header(slice) {
+        1
+    } else {
+        0
+    }
+}
+
+/// Process McPoodle's DVD raw format and extract caption blocks.
+///
+/// This function parses the DVD raw binary format, extracts caption data,
+/// advances timing appropriately, and calls do_cb() for each caption block.
+///
+/// # Safety
+///
+/// - `ctx` must be a valid pointer to a lib_cc_decode structure
+/// - `sub` must be a valid pointer to a cc_subtitle structure
+/// - `buffer` must be a valid pointer to at least `len` bytes
+///
+/// # Returns
+///
+/// The number of bytes consumed from the buffer.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_process_dvdraw(
+    ctx: *mut lib_cc_decode,
+    sub: *mut cc_subtitle,
+    buffer: *const c_uchar,
+    len: c_uint,
+) -> c_uint {
+    if ctx.is_null() || sub.is_null() || buffer.is_null() || len == 0 {
+        return 0;
+    }
+
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+
+    // Get the timing context from lib_cc_decode
+    let timing_ctx = (*ctx).timing;
+    if timing_ctx.is_null() {
+        return 0;
+    }
+
+    let bytes_consumed = parse_dvdraw_with_callbacks(
+        slice,
+        |cc_type, data1, data2| {
+            // Build caption block and call do_cb
+            let mut cc_block: [c_uchar; 3] = [cc_type, data1, data2];
+            do_cb(ctx, cc_block.as_mut_ptr(), sub);
+        },
+        || {
+            // Advance timing before each field 1 caption
+            ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS);
+            ccxr_set_fts(timing_ctx);
+        },
+    );
+
+    bytes_consumed as c_uint
 }
 
 #[cfg(test)]

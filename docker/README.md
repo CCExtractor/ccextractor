@@ -1,61 +1,91 @@
-# CCExtractor Docker image
+# CCExtractor Docker Image
 
-This dockerfile prepares a minimalist Docker image with CCExtractor. It compiles CCExtractor from sources following instructions from the [Compilation Guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
+This Dockerfile builds CCExtractor with support for multiple build variants.
 
-You can install the latest build of this image by running `docker pull CCExtractor/ccextractor`
+## Build Variants
 
-## Build
+| Variant | Description | Features |
+|---------|-------------|----------|
+| `minimal` | Basic CCExtractor | No OCR support |
+| `ocr` | With OCR support (default) | Tesseract OCR for bitmap subtitles |
+| `hardsubx` | With burned-in subtitle extraction | OCR + FFmpeg for hardcoded subtitles |
 
-You can build the Docker image directly from the Dockerfile provided in [docker](https://github.com/CCExtractor/ccextractor/tree/master/docker) directory of CCExtractor source
+## Building
+
+### Standalone Build (from Dockerfile only)
+
+You can build CCExtractor using just the Dockerfile - it will clone the source from GitHub:
 
 ```bash
-$ git clone https://github.com/CCExtractor/ccextractor.git && cd ccextractor
-$ cd docker/
-$ docker build -t ccextractor .
+# Default build (OCR enabled)
+docker build -t ccextractor docker/
+
+# Minimal build (no OCR)
+docker build --build-arg BUILD_TYPE=minimal -t ccextractor docker/
+
+# HardSubX build (OCR + FFmpeg for burned-in subtitles)
+docker build --build-arg BUILD_TYPE=hardsubx -t ccextractor docker/
 ```
+
+### Build from Cloned Repository (faster)
+
+If you have already cloned the repository, you can use local source for faster builds:
+
+```bash
+git clone https://github.com/CCExtractor/ccextractor.git
+cd ccextractor
+
+# Default build (OCR enabled)
+docker build --build-arg USE_LOCAL_SOURCE=1 -f docker/Dockerfile -t ccextractor .
+
+# Minimal build
+docker build --build-arg USE_LOCAL_SOURCE=1 --build-arg BUILD_TYPE=minimal -f docker/Dockerfile -t ccextractor .
+
+# HardSubX build
+docker build --build-arg USE_LOCAL_SOURCE=1 --build-arg BUILD_TYPE=hardsubx -f docker/Dockerfile -t ccextractor .
+```
+
+## Build Arguments
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `BUILD_TYPE` | `ocr` | Build variant: `minimal`, `ocr`, or `hardsubx` |
+| `USE_LOCAL_SOURCE` | `0` | Set to `1` to use local source instead of cloning |
+| `DEBIAN_VERSION` | `bookworm-slim` | Debian version to use as base |
 
 ## Usage
 
-The CCExtractor Docker image can be used in several ways, depending on your needs.
+### Basic Usage
 
 ```bash
-# General usage
-$ docker run ccextractor:latest <features>
+# Show version
+docker run --rm ccextractor --version
+
+# Show help
+docker run --rm ccextractor --help
 ```
 
-1. Process a local file & use `-o` flag
+### Processing Local Files
 
-To process a local video file, mount a directory containing the input file inside the container:
+Mount your local directory to process files:
 
 ```bash
-# Use `-o` to specifying output file
-$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor:latest input.mp4 -o output.srt
+# Process a video file with output file
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor input.mp4 -o output.srt
 
-# Alternatively use `--stdout` feature
-$ docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor:latest input.mp4 --stdout > output.srt
+# Process using stdout
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) ccextractor input.mp4 --stdout > output.srt
 ```
 
-Run this command from where your input video file is present, and change `input.mp4` & `output.srt` with the actual name of files.
-
-2. Enter an interactive environment
-
-If you need to run CCExtractor with additional options or perform other tasks within the container, you can enter an interactive environment:
-bash
+### Interactive Mode
 
 ```bash
-$ docker run --rm -it --entrypoint='sh' ccextractor:latest
+docker run --rm -it --entrypoint=/bin/bash ccextractor
 ```
 
-This will start a Bash shell inside the container, allowing you to run CCExtractor commands manually or perform other operations.
+## Image Size
 
-### Example
-
-I run help command in image built from `dockerfile`
-
-```bash
-$ docker build -t ccextractor .
-$ docker run --rm ccextractor:latest --help
-```
-
-This will show the `--help` message of CCExtractor tool
-From there you can see all the features and flags which can be used.
+The multi-stage build produces runtime images:
+- `minimal`: ~130MB
+- `ocr`: ~215MB (includes Tesseract)
+- `hardsubx`: ~610MB (includes Tesseract + FFmpeg)

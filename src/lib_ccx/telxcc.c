@@ -538,6 +538,13 @@ void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
 			ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
 
+	// Set teletext page number for multi-page extraction (issue #665)
+	// Find the last subtitle node and set its teletext_page (in decimal format)
+	struct cc_subtitle *last_sub = sub;
+	while (last_sub->next)
+		last_sub = last_sub->next;
+	last_sub->teletext_page = bcd_page_to_int(tlt_config.page);
+
 	if (ctx->page_buffer_prev)
 		free(ctx->page_buffer_prev);
 	if (ctx->ucs2_buffer_prev)
@@ -875,6 +882,13 @@ page_is_empty:
 		default:
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
 					page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
+			// Set teletext page number for multi-page extraction (issue #665)
+			{
+				struct cc_subtitle *last_sub = sub;
+				while (last_sub->next)
+					last_sub = last_sub->next;
+				last_sub->teletext_page = bcd_page_to_int(tlt_config.page);
+			}
 	}
 
 	// Also update GUI...
@@ -884,6 +898,44 @@ page_is_empty:
 		ctx->page_buffer_cur[0] = 0;
 	if (tlt_config.gui_mode_reports)
 		fflush(stderr);
+}
+
+/**
+ * Helper function to check if a page should be accepted for extraction (issue #665)
+ * @param page_number The teletext page number in BCD format
+ * @param is_subtitle_page Whether this page is marked as a subtitle page
+ * @return 1 if the page should be accepted, 0 otherwise
+ */
+static int should_accept_page(uint16_t page_number, int is_subtitle_page)
+{
+	// If extract_all_pages is set, accept all subtitle pages
+	if (tlt_config.extract_all_pages && is_subtitle_page)
+		return 1;
+
+	// If multiple pages are specified, check against the list
+	if (tlt_config.num_user_pages > 0)
+	{
+		// Convert BCD page_number to decimal for comparison
+		int page_dec = bcd_page_to_int(page_number);
+		for (int i = 0; i < tlt_config.num_user_pages && i < MAX_TLT_PAGES_EXTRACT; i++)
+		{
+			if (tlt_config.user_pages[i] == page_dec)
+				return 1;
+		}
+		return 0;
+	}
+
+	// Legacy single-page mode: check against tlt_config.page
+	if (tlt_config.page == 0) // Auto-detect mode
+		return is_subtitle_page;
+
+	return (page_number == tlt_config.page);
+}
+
+// Check if we're in multi-page extraction mode
+static int is_multi_page_mode(void)
+{
+	return (tlt_config.extract_all_pages || tlt_config.num_user_pages > 1);
 }
 
 void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
@@ -923,7 +975,8 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				}
 			}
 		}
-		if ((tlt_config.page == 0) && (flag_subtitle == YES) && (i < 0xff))
+		// Auto-detect page if none specified (and not in extract_all mode)
+		if ((tlt_config.page == 0) && !tlt_config.extract_all_pages && (tlt_config.num_user_pages == 0) && (flag_subtitle == YES) && (i < 0xff))
 		{
 			tlt_config.page = (m << 8) | (unham_8_4(packet->data[1]) << 4) | unham_8_4(packet->data[0]);
 			mprint("- No teletext page specified, first received suitable page is %03x, not guaranteed\n", tlt_config.page);
@@ -949,17 +1002,34 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE) && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
 
+		// Check if this page should be accepted for extraction (issue #665)
+		int accept_this_page = should_accept_page(page_number, flag_subtitle);
+
+		// Handle page transition - if we were receiving a different page, stop
 		if ((ctx->receiving_data == YES) && (((ctx->transmission_mode == TRANSMISSION_MODE_SERIAL) && (PAGE(page_number) != PAGE(tlt_config.page))) ||
 						     ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
 			if (!(de_ctr && flag_subtitle))
-				return;
+			{
+				// In multi-page mode, check if this new page should be accepted
+				if (!accept_this_page)
+					return;
+			}
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
-		if (page_number != tlt_config.page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
+		// Modified for multi-page support (issue #665)
+		if (!accept_this_page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
+
+		// Update tlt_config.page to track the current page being received (multi-page mode only)
+		// In single-page mode, tlt_config.page is set by auto-detect logic or user specification
+		// This prevents overwriting auto-detect selection with an arbitrary page number
+		if (is_multi_page_mode() && accept_this_page && page_number != tlt_config.page)
+		{
+			tlt_config.page = page_number;
+		}
 
 		// Now we have the begining of page transmission; if there is page_buffer pending, process it
 		if (ctx->page_buffer.tainted == YES)
@@ -1516,10 +1586,12 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 // Called only when teletext is detected or forced and it's going to be used for extraction.
 void *telxcc_init(void)
 {
-	struct TeletextCtx *ctx = malloc(sizeof(struct TeletextCtx));
+	// Use calloc to zero-initialize all fields, preventing uninitialized memory errors
+	struct TeletextCtx *ctx = calloc(1, sizeof(struct TeletextCtx));
 
 	if (!ctx)
 		return NULL;
+	// These memsets are now redundant but kept for clarity
 	memset(ctx->seen_sub_page, 0, MAX_TLT_PAGES * sizeof(short int));
 	memset(ctx->cc_map, 0, 256);
 
@@ -1567,7 +1639,12 @@ void telxcc_update_gt(void *codec, uint32_t global_timestamp)
 // Close output
 void telxcc_close(void **ctx, struct cc_subtitle *sub)
 {
-	struct TeletextCtx *ttext = *ctx;
+	struct TeletextCtx *ttext;
+
+	if (!ctx || !*ctx)
+		return;
+
+	ttext = *ctx;
 
 	if (!ttext)
 		return;

@@ -6,9 +6,10 @@
 #include "ocr.h"
 #include "ccextractor.h"
 
-/* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
-   if there is any */
-int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+/* Helper function to write SRT to a specific output file (issue #665 - teletext multi-page)
+   Takes output file descriptor and counter pointer as parameters */
+static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end,
+					  int out_fh, unsigned int *srt_counter)
 {
 	int used;
 	unsigned h1, m1, s1, ms1;
@@ -20,17 +21,17 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
-	context->srt_counter++;
-	snprintf(timeline, sizeof(timeline), "%u%s", context->srt_counter, context->encoded_crlf);
+	(*srt_counter)++;
+	snprintf(timeline, sizeof(timeline), "%u%s", *srt_counter, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
-	write_wrapped(context->out->fh, context->buffer, used);
+	write_wrapped(out_fh, context->buffer, used);
 	snprintf(timeline, sizeof(timeline), "%02u:%02u:%02u,%03u --> %02u:%02u:%02u,%03u%s",
 		 h1, m1, s1, ms1, h2, m2, s2, ms2, context->encoded_crlf);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - SRT caption - - -\n");
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
-	write_wrapped(context->out->fh, context->buffer, used);
+	write_wrapped(out_fh, context->buffer, used);
 	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
 	if (!unescaped)
@@ -69,18 +70,26 @@ int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_sta
 			dbg_print(CCX_DMT_DECODER_608, "\r");
 			dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 		}
-		write_wrapped(context->out->fh, el, u);
-		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+		write_wrapped(out_fh, el, u);
+		write_wrapped(out_fh, context->encoded_crlf, context->encoded_crlf_length);
 		begin += strlen((const char *)begin) + 1;
 	}
 
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 
-	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+	write_wrapped(out_fh, context->encoded_crlf, context->encoded_crlf_length);
 	free(el);
 	free(unescaped);
 
 	return 0;
+}
+
+/* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
+   if there is any */
+int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+{
+	return write_stringz_as_srt_to_output(string, context, ms_start, ms_end,
+					      context->out->fh, &context->srt_counter);
 }
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -155,7 +164,18 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *contex
 	{
 		if (sub->type == CC_TEXT)
 		{
-			ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+			// For teletext multi-page extraction (issue #665), use page-specific output
+			struct ccx_s_write *out = get_teletext_output(context, sub->teletext_page);
+			unsigned int *counter = get_teletext_srt_counter(context, sub->teletext_page);
+			if (out && counter)
+			{
+				ret = write_stringz_as_srt_to_output(sub->data, context, sub->start_time, sub->end_time,
+								     out->fh, counter);
+			}
+			else
+			{
+				ret = write_stringz_as_srt(sub->data, context, sub->start_time, sub->end_time);
+			}
 			freep(&sub->data);
 			sub->nb_data = 0;
 			ret = 1;

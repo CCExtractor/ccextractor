@@ -54,6 +54,67 @@ void EPG_fprintxml(FILE *f, char *string)
 	fwrite(start, 1, p - start, f);
 }
 
+// ATSC ETT prototypes
+void EPG_ATSC_decode_ETT_text(uint8_t *offset, uint32_t length, struct EPG_event *event);
+
+void EPG_ATSC_decode_ETT_text(uint8_t *offset, uint32_t length, struct EPG_event *event)
+{
+	uint8_t number_strings;
+	int i, j;
+	uint8_t *offset_end = offset + length;
+	char ISO_639_language_code[4];
+
+	if (offset >= offset_end)
+		return;
+
+	number_strings = offset[0];
+	offset++;
+
+	for (i = 0; i < number_strings && offset < offset_end; i++)
+	{
+		uint8_t number_segments;
+
+		if (offset + 4 > offset_end)
+			return;
+
+		ISO_639_language_code[0] = offset[0];
+		ISO_639_language_code[1] = offset[1];
+		ISO_639_language_code[2] = offset[2];
+		ISO_639_language_code[3] = '\0';
+
+		number_segments = offset[3];
+		offset += 4;
+
+		for (j = 0; j < number_segments && offset < offset_end; j++)
+		{
+			uint8_t compression_type, mode, number_bytes;
+
+			if (offset + 3 > offset_end)
+				return;
+
+			compression_type = offset[0];
+			mode = offset[1];
+			number_bytes = offset[2];
+			offset += 3;
+
+			if (offset + number_bytes > offset_end)
+				return;
+
+			if (number_bytes > 0 && number_bytes < 500 && event->extended_text == NULL)
+			{
+				event->extended_text = malloc(number_bytes + 1);
+				if (event->extended_text)
+				{
+					memcpy(event->extended_text, offset, number_bytes);
+					event->extended_text[number_bytes] = '\0';
+					memcpy(event->extended_ISO_639_language_code, ISO_639_language_code, 4);
+				}
+			}
+			offset += number_bytes;
+		}
+	}
+}
+
 // Fills given string with given (event.*_time_string) ATSC time converted to XMLTV style time string
 void EPG_ATSC_calc_time(char *output, uint32_t time)
 {
@@ -247,43 +308,61 @@ char *EPG_DVB_content_type_to_string(uint8_t cat)
 }
 
 // Prints given event to already opened XMLTV file.
+// Prints given event to already opened XMLTV file.
 void EPG_print_event(struct EPG_event *event, uint32_t channel, FILE *f)
 {
 	int i;
-	fprintf(f, "  <program  ");
-	fprintf(f, "start=\"");
+	fprintf(f, "\t<programme");
+	fprintf(f, " start=\"");
 	fprintf(f, "%s", event->start_time_string);
-	fprintf(f, "\" ");
-	fprintf(f, "stop=\"");
+	fprintf(f, "\"");
+	fprintf(f, " stop=\"");
 	fprintf(f, "%s", event->end_time_string);
-	fprintf(f, "\" ");
-	fprintf(f, "channel=\"%i\">\n", channel);
+	fprintf(f, "\"");
+	fprintf(f, " channel=\"%i\">", channel);
+
 	if (event->has_simple)
 	{
-		fprintf(f, "    <title lang=\"%s\">", event->ISO_639_language_code);
+		fprintf(f, "\n\t\t<title lang=\"%s\">", event->ISO_639_language_code);
 		EPG_fprintxml(f, event->event_name);
-		fprintf(f, "</title>\n");
-		fprintf(f, "    <sub-title lang=\"%s\">", event->ISO_639_language_code);
-		EPG_fprintxml(f, event->text);
-		fprintf(f, "</sub-title>\n");
+		fprintf(f, "</title>");
+
+		// Only output sub-title if event->text is not empty
+		// (for actual episode titles, not descriptions)
+		if (event->text != NULL && strlen(event->text) > 0)
+		{
+			fprintf(f, "\n\t\t<sub-title lang=\"%s\">", event->ISO_639_language_code);
+			EPG_fprintxml(f, event->text);
+			fprintf(f, "</sub-title>");
+		}
 	}
-	if (event->extended_text != NULL)
+
+	// Put extended text (ETT data) in <desc> where it belongs
+	if (event->extended_text != NULL && strlen(event->extended_text) > 0)
 	{
-		fprintf(f, "    <desc lang=\"%s\">", event->extended_ISO_639_language_code);
+		fprintf(f, "\n\t\t<desc lang=\"%s\">", event->extended_ISO_639_language_code);
 		EPG_fprintxml(f, event->extended_text);
-		fprintf(f, "</desc>\n");
+		fprintf(f, "</desc>");
 	}
+
 	for (i = 0; i < event->num_ratings; i++)
+	{
 		if (event->ratings[i].age > 0 && event->ratings[i].age < 0x10)
-			fprintf(f, "    <rating system=\"dvb:%s\">%i</rating>\n", event->ratings[i].country_code, event->ratings[i].age + 3);
+		{
+			fprintf(f, "\n\t\t<rating system=\"dvb.si.rating,%s\">%i</rating>",
+				event->ratings[i].country_code, event->ratings[i].age + 3);
+		}
+	}
+
 	for (i = 0; i < event->num_categories; i++)
 	{
-		fprintf(f, "    <category lang=\"en\">");
+		fprintf(f, "\n\t\t<category lang=\"en\">");
 		EPG_fprintxml(f, EPG_DVB_content_type_to_string(event->categories[i]));
-		fprintf(f, "</category>\n");
+		fprintf(f, "</category>");
 	}
-	fprintf(f, "    <ts-meta-id>%i</ts-meta-id>\n", event->id);
-	fprintf(f, "  </program>\n");
+
+	fprintf(f, "\n\t\t<ts-meta-id>%i</ts-meta-id>", event->id);
+	fprintf(f, "\n\t</programme>\n");
 }
 
 void EPG_output_net(struct lib_ccx_ctx *ctx)
@@ -366,9 +445,33 @@ void EPG_output_live(struct lib_ccx_ctx *ctx)
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "    <display-name>%i</display-name>\n", ctx->demux_ctx->pinfo[i].program_number);
+
+		// Output virtual channel number if available (e.g., "2.1")
+		if (ctx->demux_ctx->pinfo[i].virtual_channel[0] != '\0')
+		{
+			fprintf(f, "    <display-name>%s</display-name>\n",
+				ctx->demux_ctx->pinfo[i].virtual_channel);
+		}
+
+		// Output call sign if available (e.g., "KTVU-HD")
+		if (ctx->demux_ctx->pinfo[i].name[0] != '\0')
+		{
+			fprintf(f, "    <display-name>");
+			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
+			fprintf(f, "</display-name>\n");
+		}
+
+		// Fallback to program number if nothing else available
+		if (ctx->demux_ctx->pinfo[i].name[0] == '\0' &&
+		    ctx->demux_ctx->pinfo[i].virtual_channel[0] == '\0')
+		{
+			fprintf(f, "    <display-name>%i</display-name>\n",
+				ctx->demux_ctx->pinfo[i].program_number);
+		}
+
 		fprintf(f, "  </channel>\n");
 	}
+
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		for (j = 0; j < ctx->eit_programs[i].array_len; j++)
@@ -420,14 +523,33 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		fprintf(f, "  <channel id=\"%i\">\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "    <display-name>");
+
+		// Output virtual channel number if available (e.g., "2.1")
+		if (ctx->demux_ctx->pinfo[i].virtual_channel[0] != '\0')
+		{
+			fprintf(f, "    <display-name>%s</display-name>\n",
+				ctx->demux_ctx->pinfo[i].virtual_channel);
+		}
+
+		// Output call sign if available (e.g., "KTVU-HD")
 		if (ctx->demux_ctx->pinfo[i].name[0] != '\0')
+		{
+			fprintf(f, "    <display-name>");
 			EPG_fprintxml(f, ctx->demux_ctx->pinfo[i].name);
-		else
-			fprintf(f, "%i\n", ctx->demux_ctx->pinfo[i].program_number);
-		fprintf(f, "</display-name>\n");
+			fprintf(f, "</display-name>\n");
+		}
+
+		// Fallback to program number if nothing else available
+		if (ctx->demux_ctx->pinfo[i].name[0] == '\0' &&
+		    ctx->demux_ctx->pinfo[i].virtual_channel[0] == '\0')
+		{
+			fprintf(f, "    <display-name>%i</display-name>\n",
+				ctx->demux_ctx->pinfo[i].program_number);
+		}
+
 		fprintf(f, "  </channel>\n");
 	}
+
 	if (ccx_options.xmltvonlycurrent == 0)
 	{ // print all events
 		for (i = 0; i < ctx->demux_ctx->nb_program; i++)
@@ -436,24 +558,28 @@ void EPG_output(struct lib_ccx_ctx *ctx)
 				EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
 		}
 
-		if (ctx->demux_ctx->nb_program == 0) // Stream has no PMT, fall back to unordered events
+		// This fixes ATSC streams where VCT creates programs but EIT events
+		// end up in fallback storage due to source_id mapping issues
+		if (ctx->eit_programs[TS_PMT_MAP_SIZE].array_len > 0)
+		{
 			for (j = 0; j < ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
 				EPG_print_event(&ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j], ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j].service_id, f);
-	}
-	else
-	{ // print current events only
-		for (i = 0; i < ctx->demux_ctx->nb_program; i++)
-		{
-			ce = ctx->eit_current_events[i];
-			for (j = 0; j < ctx->eit_programs[i].array_len; j++)
+		}
+		else
+		{ // print current events only
+			for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 			{
-				if (ce == ctx->eit_programs[i].epg_events[j].id)
-					EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
+				ce = ctx->eit_current_events[i];
+				for (j = 0; j < ctx->eit_programs[i].array_len; j++)
+				{
+					if (ce == ctx->eit_programs[i].epg_events[j].id)
+						EPG_print_event(&ctx->eit_programs[i].epg_events[j], ctx->demux_ctx->pinfo[i].program_number, f);
+				}
 			}
 		}
+		fprintf(f, "</tv>");
+		fclose(f);
 	}
-	fprintf(f, "</tv>");
-	fclose(f);
 }
 
 // Free all memory allocated for given event
@@ -855,24 +981,25 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 // decode an ATSC multiple_string
 // extremely basic implementation
 // only handles single segment, single language ANSI string!
+// decode an ATSC multiple_string - FIXED for proper title/subtitle separation
 void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EPG_event *event)
 {
 	uint8_t number_strings;
 	int i, j;
 	char ISO_639_language_code[4];
 	uint8_t *offset_end = offset + length;
-#define CHECK_OFFSET(val)              \
-	if (offset + val < offset_end) \
+
+#define CHECK_OFFSET(val)                \
+	if (offset + (val) > offset_end) \
 	return
 
 	CHECK_OFFSET(1);
 	number_strings = offset[0];
 	offset++;
 
-	for (i = 0; i < number_strings; i++)
+	for (i = 0; i < number_strings && offset < offset_end; i++)
 	{
 		uint8_t number_segments;
-
 		CHECK_OFFSET(4);
 		number_segments = offset[3];
 		ISO_639_language_code[0] = offset[0];
@@ -880,43 +1007,47 @@ void EPG_ATSC_decode_multiple_string(uint8_t *offset, uint32_t length, struct EP
 		ISO_639_language_code[2] = offset[2];
 		ISO_639_language_code[3] = 0x00;
 		offset += 4;
-		for (j = 0; j < number_segments; j++)
+
+		for (j = 0; j < number_segments && offset < offset_end; j++)
 		{
-			uint8_t compression_type;
-			uint8_t mode;
-			uint8_t number_bytes;
+			uint8_t compression_type, mode, number_bytes;
 			CHECK_OFFSET(3);
 			compression_type = offset[0];
 			mode = offset[1];
 			number_bytes = offset[2];
 			offset += 3;
-			if (mode == 0 && compression_type == 0 && j == 0)
+
+			CHECK_OFFSET(number_bytes);
+
+			// ONLY process if compression_type==0x00 AND mode==0x00
+			if (compression_type == 0x00 && mode == 0x00 && number_bytes > 0 && number_bytes < 200)
 			{
-				CHECK_OFFSET(number_bytes);
-				event->has_simple = true;
-				event->ISO_639_language_code[0] = ISO_639_language_code[0];
-				event->ISO_639_language_code[1] = ISO_639_language_code[1];
-				event->ISO_639_language_code[2] = ISO_639_language_code[2];
-				event->ISO_639_language_code[3] = 0x00;
-				event->event_name = malloc(number_bytes + 1);
-				if (!event->event_name)
+				if (j == 0) // First segment = title
 				{
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_ATSC_decode_multiple_string: Out of memory allocating event_name.");
+					event->has_simple = true;
+					memcpy(event->ISO_639_language_code, ISO_639_language_code, 4);
+
+					if (event->event_name)
+						free(event->event_name);
+					event->event_name = malloc(number_bytes + 1);
+					if (event->event_name)
+					{
+						memcpy(event->event_name, offset, number_bytes);
+						event->event_name[number_bytes] = 0x00;
+					}
 				}
-				memcpy(event->event_name, &offset[0], number_bytes);
-				event->event_name[number_bytes] = '\0';
-				event->text = malloc(number_bytes + 1);
-				if (!event->text)
+				else if (j == 1) // Second segment = description
 				{
-					free(event->event_name);
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_ATSC_decode_multiple_string: Out of memory allocating text.");
+					if (event->text)
+						free(event->text);
+					event->text = malloc(number_bytes + 1);
+					if (event->text)
+					{
+						memcpy(event->text, offset, number_bytes);
+						event->text[number_bytes] = 0x00;
+					}
+					memcpy(event->extended_ISO_639_language_code, ISO_639_language_code, 4);
 				}
-				memcpy(event->text, &offset[0], number_bytes);
-				event->text[number_bytes] = '\0';
-			}
-			else
-			{
-				dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Unsupported ATSC multiple_string encoding detected!.\n");
 			}
 			offset += number_bytes;
 		}
@@ -941,10 +1072,13 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 	source_id = ((payload_start[3]) << 8) | payload_start[4];
 
 	event.has_simple = false;
+	event.event_name = NULL;
+	event.text = NULL;
 	event.extended_text = NULL;
 	event.num_ratings = 0;
 	event.num_categories = 0;
 	event.live_output = false;
+
 	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
 	{
 		if (ctx->demux_ctx->pinfo[i].program_number == ctx->ATSC_source_pg_map[source_id])
@@ -957,13 +1091,17 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 	num_events_in_section = payload_start[9];
 
-#define CHECK_OFFSET(val)                          \
-	if (offset + val < (payload_start + size)) \
+#define CHECK_OFFSET(val)                            \
+	if (offset + (val) > (payload_start + size)) \
 	return
+
 	offset = &payload_start[10];
 
 	for (j = 0; j < num_events_in_section && offset < payload_start + size; j++)
 	{
+		memset(&event, 0, sizeof(struct EPG_event));
+		event.live_output = false;
+
 		uint16_t descriptors_loop_length;
 		uint8_t title_length;
 		uint32_t length_in_seconds, start_time, full_id;
@@ -971,10 +1109,11 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 		CHECK_OFFSET(10);
 
-		event_id = ((offset[0] & 0x3F) << 8) | offset[1];
-		full_id = (source_id << 16) | event_id;
+		event_id = (offset[0] & 0x3F) << 8 | offset[1];
+		full_id = (source_id << 16) | (event_id << 2) | 0x02;
 		event.id = full_id;
 		event.service_id = source_id;
+
 		start_time = (offset[2] << 24) | (offset[3] << 16) | (offset[4] << 8) | (offset[5] << 0);
 		EPG_ATSC_calc_time(event.start_time_string, start_time);
 		length_in_seconds = (((offset[6] & 0x0F) << 16) | (offset[7] << 8) | (offset[8] << 0));
@@ -988,12 +1127,148 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 
 		descriptors_loop_length = ((offset[10 + title_length] & 0x0f) << 8) | offset[10 + title_length + 1];
 
+		// PARSE DESCRIPTORS TO EXTRACT DESCRIPTION (if present in EIT)
+		uint8_t *desc_start = &offset[12 + title_length];
+		uint8_t *desc_end = desc_start + descriptors_loop_length;
+		uint8_t *desc_ptr = desc_start;
+
+		while (desc_ptr + 2 <= desc_end && desc_ptr < payload_start + size)
+		{
+			uint8_t descriptor_tag = desc_ptr[0];
+			uint8_t descriptor_length = desc_ptr[1];
+
+			if (desc_ptr + 2 + descriptor_length > desc_end)
+				break;
+
+			// Extended Text Descriptor (0xA0) contains additional text
+			if (descriptor_tag == 0xA0 && descriptor_length > 0)
+			{
+				struct EPG_event temp_event;
+				temp_event.event_name = NULL;
+				temp_event.text = NULL;
+				temp_event.extended_text = NULL;
+
+				EPG_ATSC_decode_multiple_string(&desc_ptr[2], descriptor_length, &temp_event);
+
+				// Move the extracted text to event->text (description field)
+				if (temp_event.event_name != NULL)
+				{
+					if (event.text != NULL)
+						free(event.text);
+					event.text = temp_event.event_name; // Take ownership
+					temp_event.event_name = NULL;
+				}
+
+				if (temp_event.text != NULL)
+					free(temp_event.text);
+				if (temp_event.extended_text != NULL)
+					free(temp_event.extended_text);
+			}
+
+			desc_ptr += 2 + descriptor_length;
+		}
+
 		hasnew |= EPG_add_event(ctx, pmt_map, &event);
 		offset += 12 + descriptors_loop_length + title_length;
 	}
+
 	if ((ccx_options.xmltv == 1 || ccx_options.xmltv == 3) && ccx_options.xmltvoutputinterval == 0 && hasnew)
 		EPG_output(ctx);
 #undef CHECK_OFFSET
+}
+
+// Decode ATSC ETT (Extended Text Table) - Event matching
+void EPG_ATSC_decode_ETT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_t size)
+{
+	uint32_t ETM_id;
+	uint16_t source_id;
+	int32_t pmt_map = -1;
+	int i, j;
+	uint32_t extended_text_offset;
+
+	if (size < 14)
+		return;
+
+	// Extract ETM_id from packet (already in proper format: source_id<<16 | event_id<<2 | 0x02)
+	ETM_id = (payload_start[9] << 24) | (payload_start[10] << 16) |
+		 (payload_start[11] << 8) | payload_start[12];
+
+	source_id = (ETM_id >> 16) & 0xFFFF;
+
+	// Find program mapping from VCT
+	for (i = 0; i < ctx->demux_ctx->nb_program; i++)
+	{
+		if (ctx->demux_ctx->pinfo[i].program_number == ctx->ATSC_source_pg_map[source_id])
+		{
+			pmt_map = i;
+			break;
+		}
+	}
+
+	if (pmt_map == -1)
+		pmt_map = TS_PMT_MAP_SIZE;
+
+	extended_text_offset = 13;
+	if (extended_text_offset > size)
+		return;
+
+	// Match by exact ETM_id (must match per ATSC A/65)
+	int found_match = 0;
+
+	// First try exact match in the mapped program
+	if (pmt_map < TS_PMT_MAP_SIZE)
+	{
+		for (j = 0; j < ctx->eit_programs[pmt_map].array_len; j++)
+		{
+			struct EPG_event *event = &ctx->eit_programs[pmt_map].epg_events[j];
+			if (event->id == ETM_id)
+			{
+				EPG_ATSC_decode_ETT_text(payload_start + extended_text_offset,
+							 size - extended_text_offset, event);
+				found_match = 1;
+				break;
+			}
+		}
+	}
+
+	// If not found, try fallback storage (TS_PMT_MAP_SIZE)
+	if (!found_match)
+	{
+		for (j = 0; j < ctx->eit_programs[TS_PMT_MAP_SIZE].array_len; j++)
+		{
+			struct EPG_event *event = &ctx->eit_programs[TS_PMT_MAP_SIZE].epg_events[j];
+			if (event->id == ETM_id)
+			{
+				EPG_ATSC_decode_ETT_text(payload_start + extended_text_offset,
+							 size - extended_text_offset, event);
+				break;
+			}
+		}
+	}
+}
+
+// Converts ATSC VCT short_name (7 UTF-16BE chars) to UTF-8
+// ATSC A/65: short_name is 14 bytes (7 UTF-16 characters), typically ASCII
+static void atsc_shortname_to_utf8(uint8_t *in, char *out, size_t out_size)
+{
+	size_t i, o = 0;
+
+	// Process 7 UTF-16BE characters (14 bytes)
+	for (i = 0; i < 14 && o + 1 < out_size; i += 2)
+	{
+		uint16_t ch = (in[i] << 8) | in[i + 1];
+
+		// Stop at NULL or padding (0xFFFF)
+		if (ch == 0x0000 || ch == 0xFFFF)
+			break;
+
+		// ATSC short_name is typically ASCII-only
+		if (ch < 0x80)
+			out[o++] = (char)ch;
+		// Skip non-ASCII (rare in practice)
+	}
+
+	out[o] = '\0';
 }
 
 // decode ATSC VCT table.
@@ -1001,31 +1276,79 @@ void EPG_ATSC_decode_VCT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 {
 	uint8_t num_channels_in_section;
 	uint8_t *offset;
-	int i;
+	int i, p;
 
-	if (size <= 10)
+	if (size < 10)
 		return;
 
 	num_channels_in_section = payload_start[9];
 	offset = &payload_start[10];
 
-	for (i = 0; i < num_channels_in_section; i++)
+	for (i = 0; i < num_channels_in_section && offset < payload_start + size; i++)
 	{
-		char short_name[7 * 2];
+		char shortname_raw[14];
+		char shortname_utf8[32] = {0};
 		uint16_t program_number;
 		uint16_t source_id;
 		uint16_t descriptors_loop_length;
+		uint16_t major_channel_num;
+		uint16_t minor_channel_num;
 
 		if (offset + 31 > payload_start + size)
 			break;
 
-		program_number = offset[24] << 8 | offset[25];
-		source_id = offset[28] << 8 | offset[29];
+		// Extract short_name (14 bytes, UTF-16BE)
+		memcpy(shortname_raw, &offset[0], 14);
+
+		// Extract major/minor channel numbers (ATSC A/65 Section 6.4)
+		major_channel_num = ((offset[14] & 0x0F) << 6) | ((offset[15] & 0xFC) >> 2);
+		minor_channel_num = ((offset[15] & 0x03) << 8) | offset[16];
+
+		program_number = (offset[24] << 8) | offset[25];
+		source_id = (offset[28] << 8) | offset[29];
 		descriptors_loop_length = ((offset[30] & 0x03) << 8) | offset[31];
 
-		memcpy(short_name, &offset[0], 7 * 2);
 		offset += 32 + descriptors_loop_length;
+
 		ctx->ATSC_source_pg_map[source_id] = program_number;
+
+		// Convert short_name and store in program info
+		atsc_shortname_to_utf8((uint8_t *)shortname_raw, shortname_utf8, sizeof(shortname_utf8));
+
+		// Trim trailing whitespace from VCT short_name
+		size_t len = strlen(shortname_utf8);
+		while (len > 0 && shortname_utf8[len - 1] == ' ')
+		{
+			shortname_utf8[--len] = '\0';
+		}
+
+		if (shortname_utf8[0] != '\0' || major_channel_num > 0)
+		{
+			// Find matching program and attach name + virtual channel
+			for (p = 0; p < ctx->demux_ctx->nb_program; p++)
+			{
+				if (ctx->demux_ctx->pinfo[p].program_number == program_number)
+				{
+					// Store call sign
+					if (shortname_utf8[0] != '\0')
+					{
+						strncpy(ctx->demux_ctx->pinfo[p].name,
+							shortname_utf8,
+							sizeof(ctx->demux_ctx->pinfo[p].name) - 1);
+						ctx->demux_ctx->pinfo[p].name[sizeof(ctx->demux_ctx->pinfo[p].name) - 1] = '\0';
+					}
+
+					// Store virtual channel (major.minor format)
+					if (major_channel_num > 0)
+					{
+						snprintf(ctx->demux_ctx->pinfo[p].virtual_channel,
+							 sizeof(ctx->demux_ctx->pinfo[p].virtual_channel),
+							 "%d.%d", major_channel_num, minor_channel_num);
+					}
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -1171,24 +1494,35 @@ void EPG_parse_table(struct lib_ccx_ctx *ctx, uint8_t *b, uint32_t size)
 	uint8_t *payload_start;
 	uint8_t table_id;
 
-	// XXX hack, should accumulate data
-	if (pointer_field + 2 > size)
-	{
-		return;
-	}
 	payload_start = &b[pointer_field + 1];
 	table_id = payload_start[0];
 	switch (table_id)
 	{
-		case 0x0cb:
+		// ATSC EIT tables
+		case 0xCB:
+		case 0xCD:
+		case 0xCE:
+		case 0xCF:
+		case 0xD0:
 			EPG_ATSC_decode_EIT(ctx, payload_start, size - (payload_start - b));
 			break;
-		case 0xc8:
+
+		// ATSC ETT (Extended Text Table)
+		case 0xCC:
+			EPG_ATSC_decode_ETT(ctx, payload_start, size - (payload_start - b));
+			break;
+
+		// ATSC VCT (Virtual Channel Table)
+		case 0xC8:
+		case 0xC9:
 			EPG_ATSC_decode_VCT(ctx, payload_start, size - (payload_start - b));
 			break;
 		default:
-			if (table_id >= 0x4e && table_id <= 0x6f)
+			// DVB EIT tables
+			if (table_id >= 0x4E && table_id <= 0x6F)
+			{
 				EPG_DVB_decode_EIT(ctx, payload_start, size - (payload_start - b));
+			}
 			break;
 	}
 	EPG_handle_output(ctx);
@@ -1207,6 +1541,7 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 	unsigned ccounter = tspacket[3] & 0xF;
 	unsigned adaptation_field_length = 0;
 	int buffer_map = 0xfff;
+
 	if (adaptation_field_control & 2)
 	{
 		adaptation_field_length = tspacket[4];
@@ -1225,6 +1560,7 @@ void parse_EPG_packet(struct lib_ccx_ctx *ctx)
 		if (ctx->epg_buffers[buffer_map].ccounter > 0)
 		{
 			ctx->epg_buffers[buffer_map].ccounter = 0;
+
 			EPG_parse_table(ctx, ctx->epg_buffers[buffer_map].buffer, ctx->epg_buffers[buffer_map].buffer_length);
 		}
 

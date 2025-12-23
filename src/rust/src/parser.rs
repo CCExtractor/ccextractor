@@ -942,6 +942,10 @@ impl OptionsExt for Options {
             self.demux_cfg.ts_allprogram = true;
         }
 
+        if args.list_tracks {
+            self.list_tracks_only = true;
+        }
+
         if let Some(ref stream) = args.stream {
             self.live_stream = Some(Timestamp::from_millis(
                 1000 * get_atoi_hex::<i64>(stream.as_str()),
@@ -1197,9 +1201,29 @@ impl OptionsExt for Options {
             }
         }
 
-        if let Some(ref tpage) = args.tpage {
-            tlt_config.user_page = get_atoi_hex::<u16>(tpage.as_str()) as _;
-            tlt_config.page = Cell::new(TeletextPageNumber::from(tlt_config.user_page));
+        if let Some(ref tpages) = args.tpage {
+            // Support multiple --tpage arguments (issue #665)
+            if tpages.len() == 1 {
+                // Single page - legacy mode
+                tlt_config.user_page = tpages[0];
+                tlt_config.page = Cell::new(TeletextPageNumber::from(tlt_config.user_page));
+            } else {
+                // Multiple pages - each gets a separate output file
+                for &page_num in tpages {
+                    if (100..=899).contains(&page_num) {
+                        tlt_config.user_pages.push(page_num);
+                    }
+                }
+                // Set first page as legacy value for backward compatibility
+                if !tlt_config.user_pages.is_empty() {
+                    tlt_config.user_page = tlt_config.user_pages[0];
+                    tlt_config.page = Cell::new(TeletextPageNumber::from(tlt_config.user_page));
+                }
+            }
+        }
+
+        if args.tpages_all {
+            tlt_config.extract_all_pages = true;
         }
 
         // Red Hen/ UCLA Specific stuff
@@ -1479,6 +1503,15 @@ impl OptionsExt for Options {
                 cause = ExitCause::NotClassified;
                "Teletext page number out of range (100-899)"
             );
+        }
+        // Validate multiple pages if specified (issue #665)
+        for page in &tlt_config.user_pages {
+            if *page < 100 || *page > 899 {
+                fatal!(
+                    cause = ExitCause::NotClassified;
+                   "Teletext page number {} out of range (100-899)", page
+                );
+            }
         }
 
         if self.is_inputfile_empty() && self.input_source == DataSource::File {

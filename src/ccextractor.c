@@ -2,6 +2,8 @@
 /* CCExtractor, originally by carlos at ccextractor.org, now a lot of people.
 Credits: See AUTHORS.TXT
 License: GPL 2.0
+
+CI verification run: 2025-12-19T08:30 - Testing merged fixes from PRs #1847 and #1848
 */
 #include "ccextractor.h"
 #include <stdio.h>
@@ -183,6 +185,11 @@ int start_ccx()
 				if (!ccx_options.use_gop_as_pts) // If !0 then the user selected something
 					ccx_options.use_gop_as_pts = 0;
 				if (ccx_options.ignore_pts_jumps)
+					ccx_common_timing_settings.disable_sync_check = 1;
+				// When using GOP timing (--goptime), disable sync check because
+				// GOP time (wall-clock) and PES PTS (stream-relative) are in
+				// different time bases and will always appear as huge jumps.
+				if (ccx_options.use_gop_as_pts == 1)
 					ccx_common_timing_settings.disable_sync_check = 1;
 				mprint("\rAnalyzing data in general mode\n");
 				tmp = general_loop(ctx);

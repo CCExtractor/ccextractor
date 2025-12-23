@@ -6,9 +6,10 @@ struct avc_ctx
 	unsigned char cc_count;
 	// buffer to hold cc data
 	unsigned char *cc_data;
-	long cc_databufsize;
+	int64_t cc_databufsize;
 	int cc_buffer_saved; // Was the CC buffer saved after it was last updated?
 
+	int is_hevc; // Flag to indicate HEVC (H.265) mode vs H.264
 	int got_seq_para;
 	unsigned nal_ref_idc;
 	LLONG seq_parameter_set_id;
@@ -18,11 +19,11 @@ struct avc_ctx
 	int frame_mbs_only_flag;
 
 	// Use and throw stats for debug, remove this ugliness soon
-	long num_nal_unit_type_7;
-	long num_vcl_hrd;
-	long num_nal_hrd;
-	long num_jump_in_frames;
-	long num_unexpected_sei_length;
+	int64_t num_nal_unit_type_7;
+	int64_t num_vcl_hrd;
+	int64_t num_nal_hrd;
+	int64_t num_jump_in_frames;
+	int64_t num_unexpected_sei_length;
 
 	int ccblocks_in_avc_total;
 	int ccblocks_in_avc_lost;

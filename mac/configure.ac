@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.71])
-AC_INIT([CCExtractor],[0.95],[carlos@ccextractor.org])
+AC_INIT([CCExtractor],[0.96],[carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -25,7 +25,7 @@ fi
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [sin], [], [AC_MSG_ERROR(Math library not installed. Install it before proceeding.)])
-AC_CHECK_LIB([lept], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([lept], [lept])], [HAS_LEPT=0])
+AC_CHECK_LIB([leptonica], [getLeptonicaVersion], [HAS_LEPT=1 && PKG_CHECK_MODULES([lept], [lept])], [HAS_LEPT=0])
 AC_CHECK_LIB([tesseract], [TessVersion], [HAS_TESSERACT=1 && PKG_CHECK_MODULES([tesseract], [tesseract])], [HAS_TESSERACT=0])
 AC_CHECK_LIB([avcodec], [avcodec_version], [HAS_AVCODEC=1 && PKG_CHECK_MODULES([libavcodec], [libavcodec])], [HAS_AVCODEC=0])
 AC_CHECK_LIB([avformat], [avformat_version], [HAS_AVFORMAT=1 && PKG_CHECK_MODULES([libavformat], [libavformat])], [HAS_AVFORMAT=0])
@@ -104,7 +104,7 @@ if test "x$with_rust" = "xyes" ; then
     AS_IF([test "$RUSTC" = "notfound"], [AC_MSG_ERROR([rustc is required])])
 
     rustc_version=$(rustc --version)
-    MSRV="1.54.0"
+    MSRV="1.87.0"
     AX_COMPARE_VERSION($rustc_version, [ge], [$MSRV],
       [AC_MSG_RESULT(rustc >= $MSRV)],
       [AC_MSG_ERROR([Minimum supported rust version(MSRV) is $MSRV, please upgrade rust])])
@@ -148,7 +148,7 @@ AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
 AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
-AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  $(pkg-config --libs-only-l --silence-errors tesseract) ])
+AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  "$(pkg-config --libs-only-l --silence-errors tesseract)" ])
 AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test $(ls -A /usr/include/tesseract | wc -l) -gt 0 ])
 AM_CONDITIONAL(SYS_IS_LINUX, [ test $(uname -s) = "Linux"])
 AM_CONDITIONAL(SYS_IS_MAC, [ test $(uname -s) = "Darwin"])

@@ -22,7 +22,8 @@ use log::warn;
 /// # Safety
 /// The function accepts and dereferences a raw pointer
 /// The function also makes calls to functions whose safety is not guaranteed
-/// The function returns a raw pointer which is a string made in C
+/// The function returns a raw pointer which is a string allocated by Rust
+/// The caller must free this with the appropriate method (or let Rust handle it)
 /// ctx should be not null
 #[no_mangle]
 pub unsafe extern "C" fn get_ocr_text_simple_threshold(
@@ -30,32 +31,40 @@ pub unsafe extern "C" fn get_ocr_text_simple_threshold(
     image: *mut Pix,
     threshold: std::os::raw::c_float,
 ) -> *mut ::std::os::raw::c_char {
-    let mut text_out: *mut ::std::os::raw::c_char;
-
     TessBaseAPISetImage2((*ctx).tess_handle, image);
 
     if TessBaseAPIRecognize((*ctx).tess_handle, null::<ETEXT_DESC>() as *mut ETEXT_DESC) != 0 {
         warn!("Error in Tesseract recognition, skipping frame\n");
-        null::<c_char>() as *mut c_char
-    } else {
-        text_out = TessBaseAPIGetUTF8Text((*ctx).tess_handle);
-
-        if text_out == null::<c_char>() as *mut c_char {
-            warn!("Error getting text, skipping frame\n");
-        }
-
-        if threshold > 0.0 {
-            // non-zero conf, only then we'll make the call to check for confidence
-            let conf = TessBaseAPIMeanTextConf((*ctx).tess_handle);
-
-            if (conf as std::os::raw::c_float) < threshold {
-                text_out = null::<c_char>() as *mut c_char;
-            } else {
-                (*ctx).cur_conf = conf as std::os::raw::c_float;
-            }
-        }
-        text_out
+        return null::<c_char>() as *mut c_char;
     }
+
+    let tess_text = TessBaseAPIGetUTF8Text((*ctx).tess_handle);
+
+    if tess_text == null::<c_char>() as *mut c_char {
+        warn!("Error getting text, skipping frame\n");
+        return null::<c_char>() as *mut c_char;
+    }
+
+    if threshold > 0.0 {
+        // non-zero conf, only then we'll make the call to check for confidence
+        let conf = TessBaseAPIMeanTextConf((*ctx).tess_handle);
+
+        if (conf as std::os::raw::c_float) < threshold {
+            TessDeleteText(tess_text);
+            return null::<c_char>() as *mut c_char;
+        } else {
+            (*ctx).cur_conf = conf as std::os::raw::c_float;
+        }
+    }
+
+    // Convert Tesseract string to Rust-owned string, then free Tesseract's allocation
+    let rust_string = ffi::CStr::from_ptr(tess_text)
+        .to_string_lossy()
+        .into_owned();
+    TessDeleteText(tess_text);
+
+    // Return a Rust-allocated C string that can be safely freed with standard free()
+    string_to_c_char(&rust_string)
 }
 
 /// basically the get_oct_text_simple function without threshold

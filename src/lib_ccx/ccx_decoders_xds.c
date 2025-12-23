@@ -175,6 +175,8 @@ void xdsprint(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, con
 		if (n > -1 && n < size)
 		{
 			write_xds_string(sub, ctx, p, n);
+			/* Note: Don't free(p) here - the pointer is stored in data->xds_str
+			   and will be freed by the encoder or decoder cleanup code */
 			return;
 		}
 		/* Else try again with more space. */
@@ -470,14 +472,17 @@ void xds_do_content_advisory(struct cc_subtitle *sub, struct ccx_decoders_xds_co
 	if (!a1 && a0) // US TV parental guidelines
 	{
 		xdsprint(sub, ctx, age);
-		xdsprint(sub, ctx, content);
+		if (content[0]) // Only output content if not empty
+			xdsprint(sub, ctx, content);
 		if (changed)
 		{
 			ccx_common_logging.log_ftn("\rXDS: %s\n  ", age);
-			ccx_common_logging.log_ftn("\rXDS: %s\n  ", content);
+			if (content[0])
+				ccx_common_logging.log_ftn("\rXDS: %s\n  ", content);
 		}
 		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", age);
-		ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", content);
+		if (content[0])
+			ccx_common_logging.debug_ftn(CCX_DMT_DECODER_XDS, "\rXDS: %s\n", content);
 	}
 	if (!a0 ||			  // MPA
 	    (a0 && a1 && !Da2 && !La3) || // Canadian English Language Rating

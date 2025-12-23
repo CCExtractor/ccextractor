@@ -121,6 +121,8 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
+	if (ctx->sws_ctx)
+		sws_freeContext(ctx->sws_ctx);
 	if (ctx->frame)
 		av_frame_free(&ctx->frame);
 	if (ctx->rgb_frame)
@@ -283,7 +285,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	free(pars_vec);
 	free(pars_values);
-	free(tessdata_path);
+	// Note: tessdata_path points to static string or getenv() result, do NOT free
 	if (ret != 0)
 	{
 		free(ctx);
@@ -336,8 +338,11 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	TessBaseAPIEnd(lctx->tess_handle);
 	TessBaseAPIDelete(lctx->tess_handle);
 
+	// Free basefilename (allocated by get_basename in _init_hardsubx)
+	freep(&lctx->basefilename);
+
 	// Free subtitle
-	freep(lctx->dec_sub);
+	freep(&lctx->dec_sub);
 	freep(ctx);
 }
 

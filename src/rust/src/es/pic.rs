@@ -277,12 +277,8 @@ pub unsafe fn read_pic_info(
     // set_fts() is not called for each picture when use_gop_as_pts == 1.
     if ccx_options.use_gop_as_pts == 1 {
         // Calculate current FTS based on GOP start time + frame offset
-        // Cast fts_at_gop_start to i64 for cross-platform compatibility (c_long is i32 on Windows)
         let frame_offset_ms = (dec_ctx.frames_since_last_gop as f64 * 1000.0 / current_fps) as i64;
-        #[allow(clippy::unnecessary_cast)]
-        {
-            (*dec_ctx.timing).fts_now = (fts_at_gop_start as i64) + frame_offset_ms;
-        }
+        (*dec_ctx.timing).fts_now = fts_at_gop_start + frame_offset_ms;
 
         // Update fts_max if needed
         if (*dec_ctx.timing).fts_now > (*dec_ctx.timing).fts_max {

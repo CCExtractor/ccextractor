@@ -48,6 +48,7 @@ struct avc_ctx *init_avc(void)
 	ctx->cc_databufsize = 1024;
 	ctx->cc_buffer_saved = CCX_TRUE; // Was the CC buffer saved after it was last updated?
 
+	ctx->is_hevc = 0;
 	ctx->got_seq_para = 0;
 	ctx->nal_ref_idc = 0;
 	ctx->seq_parameter_set_id = 0;
@@ -87,16 +88,43 @@ struct avc_ctx *init_avc(void)
 	return ctx;
 }
 
+// HEVC NAL unit types for SEI messages
+#define HEVC_NAL_PREFIX_SEI 39
+#define HEVC_NAL_SUFFIX_SEI 40
+#define HEVC_NAL_VPS 32
+#define HEVC_NAL_SPS 33
+#define HEVC_NAL_PPS 34
+
 void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *NAL_start, LLONG NAL_length, struct cc_subtitle *sub)
 {
 	unsigned char *NAL_stop;
-	enum ccx_avc_nal_types nal_unit_type = *NAL_start & 0x1F;
+	int nal_unit_type;
+	int nal_header_size;
+	unsigned char *payload_start;
+
+	// Determine if this is HEVC or H.264 based on NAL header
+	// H.264 NAL header: 1 byte, type in bits [4:0]
+	// HEVC NAL header: 2 bytes, type in bits [6:1] of first byte
+	if (dec_ctx->avc_ctx->is_hevc)
+	{
+		// HEVC: NAL type is in bits [6:1] of byte 0
+		nal_unit_type = (NAL_start[0] >> 1) & 0x3F;
+		nal_header_size = 2;
+	}
+	else
+	{
+		// H.264: NAL type is in bits [4:0] of byte 0
+		nal_unit_type = NAL_start[0] & 0x1F;
+		nal_header_size = 1;
+	}
 
 	NAL_stop = NAL_length + NAL_start;
-	NAL_stop = remove_03emu(NAL_start + 1, NAL_stop); // Add +1 to NAL_stop for TS, without it for MP4. Still don't know why
+	NAL_stop = remove_03emu(NAL_start + nal_header_size, NAL_stop);
+	payload_start = NAL_start + nal_header_size;
 
-	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d\n",
-		nal_unit_type, NAL_stop - NAL_start - 1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
+	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d (HEVC: %d)\n",
+		nal_unit_type, NAL_stop - NAL_start - nal_header_size, dec_ctx->avc_ctx->nal_ref_idc,
+		!dec_ctx->avc_ctx->cc_buffer_saved, dec_ctx->avc_ctx->is_hevc);
 
 	if (NAL_stop == NULL) // remove_03emu failed.
 	{
@@ -104,45 +132,64 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 		return;
 	}
 
-	if (nal_unit_type == CCX_NAL_TYPE_ACCESS_UNIT_DELIMITER_9)
+	if (dec_ctx->avc_ctx->is_hevc)
 	{
-		// Found Access Unit Delimiter
+		// HEVC NAL unit processing
+		if (nal_unit_type == HEVC_NAL_VPS || nal_unit_type == HEVC_NAL_SPS || nal_unit_type == HEVC_NAL_PPS)
+		{
+			// Found HEVC parameter set - mark as having sequence params
+			// We don't parse HEVC SPS fully, but we need to enable SEI processing
+			dec_ctx->avc_ctx->got_seq_para = 1;
+		}
+		else if (nal_unit_type == HEVC_NAL_PREFIX_SEI || nal_unit_type == HEVC_NAL_SUFFIX_SEI)
+		{
+			// Found HEVC SEI (used for subtitles)
+			// SEI payload format is similar to H.264
+			sei_rbsp(dec_ctx->avc_ctx, payload_start, NAL_stop);
+		}
 	}
-	else if (nal_unit_type == CCX_NAL_TYPE_SEQUENCE_PARAMETER_SET_7)
+	else
 	{
-		// Found sequence parameter set
-		// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
-		dec_ctx->avc_ctx->num_nal_unit_type_7++;
-		seq_parameter_set_rbsp(dec_ctx->avc_ctx, NAL_start + 1, NAL_stop);
-		dec_ctx->avc_ctx->got_seq_para = 1;
+		// H.264 NAL unit processing (original code)
+		if (nal_unit_type == CCX_NAL_TYPE_ACCESS_UNIT_DELIMITER_9)
+		{
+			// Found Access Unit Delimiter
+		}
+		else if (nal_unit_type == CCX_NAL_TYPE_SEQUENCE_PARAMETER_SET_7)
+		{
+			// Found sequence parameter set
+			// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
+			dec_ctx->avc_ctx->num_nal_unit_type_7++;
+			seq_parameter_set_rbsp(dec_ctx->avc_ctx, payload_start, NAL_stop);
+			dec_ctx->avc_ctx->got_seq_para = 1;
+		}
+		else if (dec_ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
+							    nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE))
+		{
+			// Found coded slice of a non-IDR picture
+			// We only need the slice header data
+			slice_header(enc_ctx, dec_ctx, payload_start, NAL_stop, nal_unit_type, sub);
+		}
+		else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI)
+		{
+			// Found SEI (used for subtitles)
+			sei_rbsp(dec_ctx->avc_ctx, payload_start, NAL_stop);
+		}
+		else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET)
+		{
+			// Found Picture parameter set
+		}
 	}
-	else if (dec_ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
-						    nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE)) // Only if nal_unit_type=1
-	{
-		// Found coded slice of a non-IDR picture
-		// We only need the slice header data, no need to implement
-		// slice_layer_without_partitioning_rbsp( );
-		slice_header(enc_ctx, dec_ctx, NAL_start + 1, NAL_stop, nal_unit_type, sub);
-	}
-	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_SEI)
-	{
-		// Found SEI (used for subtitles)
-		// set_fts(ctx->timing); // FIXME - check this!!!
-		sei_rbsp(dec_ctx->avc_ctx, NAL_start + 1, NAL_stop);
-	}
-	else if (dec_ctx->avc_ctx->got_seq_para && nal_unit_type == CCX_NAL_TYPE_PICTURE_PARAMETER_SET)
-	{
-		// Found Picture parameter set
-	}
+
 	if (temp_debug)
 	{
-		int len = NAL_stop - (NAL_start + 1);
+		int len = NAL_stop - payload_start;
 		dbg_print(CCX_DMT_VIDES, "\n After decoding, the actual thing was (length =%d)\n", len);
-		dump(CCX_DMT_VIDES, NAL_start + 1, len > 160 ? 160 : len, 0, 0);
+		dump(CCX_DMT_VIDES, payload_start, len > 160 ? 160 : len, 0, 0);
 	}
 
 	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
-		nal_unit_type, NAL_stop - NAL_start - 1, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
+		nal_unit_type, NAL_stop - NAL_start - nal_header_size, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
 }
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
@@ -907,6 +954,15 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	dvprint("first_mb_in_slice=     % 4lld (%#llX)\n", tmp, tmp);
 	slice_type = read_exp_golomb_unsigned(&q1);
 	dvprint("slice_type=            % 4llX\n", slice_type);
+
+	// Validate slice_type to prevent buffer overflow in slice_types[] array
+	// Valid H.264 slice_type values are 0-9 (H.264 spec Table 7-6)
+	if (slice_type >= 10)
+	{
+		mprint("Invalid slice_type %lld in slice header, skipping.\n", slice_type);
+		return;
+	}
+
 	tmp = read_exp_golomb_unsigned(&q1);
 	dvprint("pic_parameter_set_id=  % 4lld (%#llX)\n", tmp, tmp);
 
@@ -1046,7 +1102,12 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	}
 
 	// if slices are buffered - flush
-	if (isref)
+	// For I/P-only streams (like HDHomeRun recordings), flushing on every
+	// reference frame defeats reordering since all frames are reference frames.
+	// Only flush and reset on IDR frames (nal_unit_type==5), not P-frames.
+	// This allows P-frames to accumulate in the buffer and be sorted by PTS.
+	int is_idr = (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE);
+	if (isref && is_idr)
 	{
 		dvprint("\nReference pic! [%s]\n", slice_types[slice_type]);
 		dbg_print(CCX_DMT_TIME, "\nReference pic! [%s] maxrefcnt: %3d\n",
@@ -1141,8 +1202,32 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 
 		if (abs(current_index) >= MAXBFRAMES)
 		{
-			// Probably a jump in the timeline. Warn and handle gracefully.
-			mprint("\nFound large gap(%d) in PTS! Trying to recover ...\n", current_index);
+			// Large PTS gap detected. This can happen with certain encoders
+			// (like HDHomeRun) that produce streams where PTS jumps are common.
+			// Instead of just resetting current_index to 0 (which causes captions
+			// to pile up at the same buffer slot and become garbled), we need to:
+			// 1. Flush any buffered captions
+			// 2. Reset the reference PTS to the current PTS
+			// 3. Set current_index to 0 for a fresh start
+			// This ensures subsequent frames use the new reference point.
+			dbg_print(CCX_DMT_VERBOSE, "\nLarge PTS gap(%d) detected, flushing buffer and resetting reference.\n", current_index);
+
+			// Flush any buffered captions before resetting
+			if (dec_ctx->has_ccdata_buffered)
+			{
+				process_hdcc(enc_ctx, dec_ctx, sub);
+			}
+
+			// Reset the reference point to current PTS
+			dec_ctx->avc_ctx->currefpts = dec_ctx->timing->current_pts;
+
+			// Reset tracking variables for the new reference
+			dec_ctx->avc_ctx->lastmaxidx = -1;
+			dec_ctx->avc_ctx->maxidx = 0;
+			dec_ctx->avc_ctx->lastminidx = 10000;
+			dec_ctx->avc_ctx->minidx = 10000;
+
+			// Start with index 0 relative to the new reference
 			current_index = 0;
 		}
 

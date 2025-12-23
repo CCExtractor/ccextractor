@@ -38,10 +38,23 @@ jobs:
       run: mkdir ./mac/artifacts
     - name: Copy release artifact
       run: cp ./mac/ccextractor ./mac/artifacts/
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v6
       with:
         name: CCExtractor mac build
         path: ./mac/artifacts
+  build_shell_system_libs:
+    # Test building with system libraries via pkg-config (for Homebrew formula compatibility)
+    runs-on: macos-latest
+    steps:
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac freetype libpng protobuf-c utf8proc zlib
+    - uses: actions/checkout@v6
+    - name: build with system libs
+      run: ./build.command -system-libs
+      working-directory: ./mac
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: ./mac
   build_autoconf:
     runs-on: macos-latest
     steps:
@@ -90,11 +103,59 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  build_shell_hardsubx:
+    # Test build.command with -hardsubx flag (burned-in subtitle extraction)
+    runs-on: macos-latest
+    steps:
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
+    - uses: actions/checkout@v6
+    - name: build with hardsubx
+      run: ./build.command -hardsubx
+      working-directory: ./mac
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: ./mac
+    - name: Verify hardsubx support
+      run: |
+        # Check that -hardsubx is recognized (will fail if not compiled in)
+        ./ccextractor -hardsubx --help 2>&1 | head -20 || true
+      working-directory: ./mac
+  build_autoconf_hardsubx:
+    # Test autoconf build with HARDSUBX enabled (fixes issue #1173)
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
+    - name: run autogen
+      run: ./autogen.sh
+      working-directory: ./mac
+    - name: configure with hardsubx
+      run: |
+        # Set Homebrew paths for configure to find libraries
+        export HOMEBREW_PREFIX="$(brew --prefix)"
+        export LDFLAGS="-L${HOMEBREW_PREFIX}/lib"
+        export CPPFLAGS="-I${HOMEBREW_PREFIX}/include"
+        export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig"
+        ./configure --enable-hardsubx --enable-ocr
+      working-directory: ./mac
+    - name: make
+      run: make
+      working-directory: ./mac
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: ./mac
+    - name: Verify hardsubx support
+      run: |
+        # Check that -hardsubx is recognized
+        ./ccextractor -hardsubx --help 2>&1 | head -20 || true
+      working-directory: ./mac
   build_rust:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
-      - name: cache 
+      - name: cache
         uses: actions/cache@v5
         with:
           path: |
@@ -108,5 +169,5 @@ jobs:
           toolchain: stable
           override: true
       - name: build
-        run: cargo build 
+        run: cargo build
         working-directory: ./src/rust

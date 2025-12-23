@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.95"
+#define VERSION "0.96"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -43,17 +43,23 @@ struct file_report
 };
 
 // Stuff for telxcc.c
+#define MAX_TLT_PAGES_EXTRACT 8  // Maximum number of teletext pages to extract simultaneously
+
 struct ccx_s_teletext_config
 {
 	uint8_t verbose : 1;  // should telxcc be verbose?
-	uint16_t page;	      // teletext page containing cc we want to filter
+	uint16_t page;	      // teletext page containing cc we want to filter (legacy, first page)
 	uint16_t tid;	      // 13-bit packet ID for teletext stream
 	double offset;	      // time offset in seconds
 	uint8_t bom : 1;      // print UTF-8 BOM characters at the beginning of output
 	uint8_t nonempty : 1; // produce at least one (dummy) frame
 	// uint8_t se_mode : 1;                                    // search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue;                                  // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
-	uint16_t user_page;					   // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	uint16_t user_page;					   // Page selected by user (legacy, first page)
+	// Multi-page teletext extraction (issue #665)
+	uint16_t user_pages[MAX_TLT_PAGES_EXTRACT];  // Pages selected by user for extraction
+	int num_user_pages;                          // Number of pages to extract (0 = auto-detect single page)
+	int extract_all_pages;                       // If 1, extract all detected subtitle pages
 	int dolevdist;						   // 0=Don't attempt to correct errors
 	int levdistmincnt, levdistmaxpct;			   // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
@@ -172,6 +178,11 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata);
 int general_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int raw_loop(struct lib_ccx_ctx *ctx);
 size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned char *buffer, size_t len);
+
+// Rust FFI: McPoodle DVD raw format processing (see src/rust/src/demuxer/dvdraw.rs)
+unsigned int ccxr_process_dvdraw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len);
+int ccxr_is_dvdraw_header(const unsigned char *buffer, unsigned int len);
+
 int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex(struct lib_ccx_ctx *ctx, char *filename);
 int rcwt_loop(struct lib_ccx_ctx *ctx);
@@ -232,7 +243,7 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 // ts_functions.c
 void init_ts(struct ccx_demuxer *ctx);
 int ts_readpacket(struct ccx_demuxer *ctx, struct ts_payload *payload);
-long ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
+int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data);
 int ts_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **data);
 int write_section(struct ccx_demuxer *ctx, struct ts_payload *payload, unsigned char *buf, int size, struct program_info *pinfo);
 void ts_buffer_psi_packet(struct ccx_demuxer *ctx);
@@ -289,7 +300,7 @@ extern int strangeheader;
 
 extern const char *desc[256];
 
-extern long FILEBUFFERSIZE; // Uppercase because it used to be a define
+extern int64_t FILEBUFFERSIZE; // Uppercase because it used to be a define
 
 extern int firstcall;
 

@@ -53,7 +53,7 @@ typedef struct
 {
 	// Generic buffer to hold data
 	unsigned char *parsebuf;
-	long parsebufsize;
+	int64_t parsebufsize;
 	// Header Object variables
 	int64_t HeaderObjectSize;
 	int64_t FileSize;

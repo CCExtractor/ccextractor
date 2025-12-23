@@ -121,19 +121,25 @@ impl FromCType<ccx_decoder_dtvcc_settings> for DecoderDtvccSettings {
         {
             services_enabled[i] = flag != 0;
         }
+        // Handle timing - use default if pointer is null to avoid losing other settings
+        let timing = if settings.timing.is_null() {
+            CommonTimingCtx::default()
+        } else {
+            CommonTimingCtx::from_ctype(settings.timing).unwrap_or_default()
+        };
 
         Some(DecoderDtvccSettings {
             enabled: settings.enabled != 0,
             print_file_reports: settings.print_file_reports != 0,
             no_rollup: settings.no_rollup != 0,
             report: if !settings.report.is_null() {
-                Some(DecoderDtvccReport::from_ctype(settings.report)?)
+                DecoderDtvccReport::from_ctype(settings.report)
             } else {
                 None
             },
             active_services_count: settings.active_services_count,
             services_enabled,
-            timing: CommonTimingCtx::from_ctype(settings.timing)?,
+            timing,
         })
     }
 }
@@ -811,6 +817,7 @@ impl FromCType<avc_ctx> for AvcContextRust {
             cc_databufsize: ctx.cc_databufsize as usize,
             cc_buffer_saved: ctx.cc_buffer_saved != 0,
 
+            is_hevc: ctx.is_hevc != 0,
             got_seq_para: ctx.got_seq_para != 0,
             nal_ref_idc: ctx.nal_ref_idc,
             seq_parameter_set_id: ctx.seq_parameter_set_id,

@@ -22,8 +22,8 @@ extern const unsigned char UTF8_BOM[3];
 extern const unsigned char DVD_HEADER[8];
 extern const unsigned char lc1[1];
 extern const unsigned char lc2[1];
-extern const unsigned char lc3[2];
-extern const unsigned char lc4[2];
+extern const unsigned char lc3[1];
+extern const unsigned char lc4[1];
 extern const unsigned char lc5[1];
 extern const unsigned char lc6[1];
 
@@ -237,7 +237,8 @@ enum ccx_bufferdata_type
 	CCX_ISDB_SUBTITLE = 8,
 	/* BUffer where cc data contain 3 byte cc_valid ccdata 1 ccdata 2 */
 	CCX_RAW_TYPE = 9,
-	CCX_DVD_SUBTITLE = 10
+	CCX_DVD_SUBTITLE = 10,
+	CCX_HEVC = 11
 };
 
 enum ccx_frame_type

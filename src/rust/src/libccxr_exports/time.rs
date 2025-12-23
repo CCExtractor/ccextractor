@@ -1,7 +1,7 @@
 #![allow(clippy::useless_conversion)]
 
 use std::convert::TryInto;
-use std::ffi::{c_char, c_int, c_long, CStr};
+use std::ffi::{c_char, c_int, CStr};
 
 use crate::{
     bindings::*, cb_708, cb_field1, cb_field2, ccx_common_timing_settings as timing_settings,
@@ -330,7 +330,7 @@ unsafe fn write_back_from_timing_info() {
         .unwrap_or(0);
     gop_time = write_gop_time_code(timing_info.gop_time);
     first_gop_time = write_gop_time_code(timing_info.first_gop_time);
-    fts_at_gop_start = timing_info.fts_at_gop_start.millis() as c_long;
+    fts_at_gop_start = timing_info.fts_at_gop_start.millis();
     gop_rollover = if timing_info.gop_rollover { 1 } else { 0 };
     timing_settings.disable_sync_check = if timing_info.timing_settings.disable_sync_check {
         1
@@ -412,7 +412,7 @@ pub unsafe fn write_gop_time_code(g: Option<GopTimeCode>) -> gop_time_code {
 ///
 /// `ctx` must not be null.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: c_long) {
+pub unsafe extern "C" fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64) {
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
@@ -428,7 +428,7 @@ pub unsafe extern "C" fn ccxr_add_current_pts(ctx: *mut ccx_common_timing_ctx, p
 ///
 /// `ctx` must not be null.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_set_current_pts(ctx: *mut ccx_common_timing_ctx, pts: c_long) {
+pub unsafe extern "C" fn ccxr_set_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64) {
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
@@ -469,7 +469,7 @@ pub unsafe extern "C" fn ccxr_set_fts(ctx: *mut ccx_common_timing_ctx) -> c_int 
 pub unsafe extern "C" fn ccxr_get_fts(
     ctx: *mut ccx_common_timing_ctx,
     current_field: c_int,
-) -> c_long {
+) -> i64 {
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
@@ -485,7 +485,7 @@ pub unsafe extern "C" fn ccxr_get_fts(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis().try_into().unwrap_or(0)
+    ans.millis()
 }
 
 /// Rust equivalent for `get_visible_end` function in C. Uses C-native types as input and output.
@@ -503,7 +503,7 @@ pub unsafe extern "C" fn ccxr_get_fts(
 pub unsafe extern "C" fn ccxr_get_visible_end(
     ctx: *mut ccx_common_timing_ctx,
     _current_field: c_int,
-) -> c_long {
+) -> i64 {
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
@@ -518,7 +518,7 @@ pub unsafe extern "C" fn ccxr_get_visible_end(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    fts as c_long
+    fts
 }
 
 /// Rust equivalent for `get_visible_start` function in C. Uses C-native types as input and output.
@@ -537,7 +537,7 @@ pub unsafe extern "C" fn ccxr_get_visible_end(
 pub unsafe extern "C" fn ccxr_get_visible_start(
     ctx: *mut ccx_common_timing_ctx,
     _current_field: c_int,
-) -> c_long {
+) -> i64 {
     apply_timing_info();
     let context = generate_timing_context(ctx);
 
@@ -554,7 +554,7 @@ pub unsafe extern "C" fn ccxr_get_visible_start(
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    fts as c_long
+    fts
 }
 
 /// Rust equivalent for `get_fts_max` function in C. Uses C-native types as input and output.
@@ -563,7 +563,7 @@ pub unsafe extern "C" fn ccxr_get_visible_start(
 ///
 /// `ctx` must not be null.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_long {
+pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> i64 {
     apply_timing_info();
     let mut context = generate_timing_context(ctx);
 
@@ -572,7 +572,7 @@ pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_
     write_back_to_common_timing_ctx(ctx, &context);
     write_back_from_timing_info();
 
-    ans.millis().try_into().unwrap_or(0)
+    ans.millis()
 }
 
 /// Rust equivalent for `print_mstime_static` function in C. Uses C-native types as input and output.
@@ -581,8 +581,8 @@ pub unsafe extern "C" fn ccxr_get_fts_max(ctx: *mut ccx_common_timing_ctx) -> c_
 ///
 /// `buf` must not be null. It must have sufficient length to hold the time in string form.
 #[no_mangle]
-pub unsafe extern "C" fn ccxr_print_mstime_static(mstime: c_long, buf: *mut c_char) -> *mut c_char {
-    let time = Timestamp::from_millis(mstime.into());
+pub unsafe extern "C" fn ccxr_print_mstime_static(mstime: i64, buf: *mut c_char) -> *mut c_char {
+    let time = Timestamp::from_millis(mstime);
     let ans = c::print_mstime_static(time, ':');
     write_string_into_pointer(buf, &ans);
     buf

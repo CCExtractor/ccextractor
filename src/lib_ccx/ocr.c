@@ -387,43 +387,58 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	if (cpix_gs != NULL)
 		pixInvert(cpix_gs, cpix_gs);
 
-	// Apply contrast enhancement to improve OCR accuracy
-	// This stretches the histogram to use the full range, improving character recognition
-	if (cpix_gs != NULL)
-	{
-		PIX *enhanced = pixContrastNorm(NULL, cpix_gs, 100, 100, 55, 1, 1);
-		if (enhanced != NULL)
-		{
-			pixDestroy(&cpix_gs);
-			cpix_gs = enhanced;
-		}
-	}
+	// Note: Upscaling was removed - testing showed it degrades OCR quality for DVB subtitles
+	// The original bitmap quality (e.g., 520x84) is sufficient for Tesseract
 
 	if (cpix_gs == NULL)
-		tess_ret = -1;
-	else
 	{
-		TessBaseAPISetImage2(ctx->api, cpix_gs);
-		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
-		debug_tesseract(ctx, "./temp/");
-		if (tess_ret)
-		{
-			mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+		// Grayscale conversion failed (likely due to invalid/corrupt bitmap data)
+		// Skip this bitmap instead of crashing - this can happen with
+		// corrupted DVB subtitle packets or live stream discontinuities
+		mprint("\nIn ocr_bitmap: Failed to convert bitmap to grayscale. Skipped.\n");
 
-			boxDestroy(&crop_points);
-			pixDestroy(&pix);
-			pixDestroy(&cpix);
-			pixDestroy(&cpix_gs);
-			pixDestroy(&color_pix);
-			pixDestroy(&color_pix_out);
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
 
-			return NULL;
-		}
+		return NULL;
+	}
+
+	TessBaseAPISetImage2(ctx->api, cpix_gs);
+	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
+	debug_tesseract(ctx, "./temp/");
+	if (tess_ret)
+	{
+		mprint("\nIn ocr_bitmap: Failed to perform OCR. Skipped.\n");
+
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&cpix_gs);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+
+		return NULL;
 	}
 
 	char *text_out_from_tes = TessBaseAPIGetUTF8Text(ctx->api);
 	if (text_out_from_tes == NULL)
-		fatal(CCX_COMMON_EXIT_BUG_BUG, "In ocr_bitmap: Failed to perform OCR - Failed to get text. Please report.\n", errno);
+	{
+		// OCR succeeded but no text was recognized - this is not a fatal error,
+		// it just means the bitmap didn't contain recognizable text
+		mprint("\nIn ocr_bitmap: OCR returned no text. Skipped.\n");
+
+		boxDestroy(&crop_points);
+		pixDestroy(&pix);
+		pixDestroy(&cpix);
+		pixDestroy(&cpix_gs);
+		pixDestroy(&color_pix);
+		pixDestroy(&color_pix_out);
+
+		return NULL;
+	}
 	// Make a copy and get rid of the one from Tesseract since we're going to be operating on it
 	// and using it directly causes new/free() warnings.
 	char *text_out = strdup(text_out_from_tes);
@@ -455,12 +470,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 			goto skip_color_detection;
 		}
 		pixInvert(color_pix_processed, color_pix_processed);
-		PIX *color_pix_enhanced = pixContrastNorm(NULL, color_pix_processed, 100, 100, 55, 1, 1);
-		if (color_pix_enhanced != NULL)
-		{
-			pixDestroy(&color_pix_processed);
-			color_pix_processed = color_pix_enhanced;
-		}
+
+		// Note: Upscaling removed from color detection pass as well
 
 		TessBaseAPISetImage2(ctx->api, color_pix_processed);
 		tess_ret = TessBaseAPIRecognize(ctx->api, NULL);

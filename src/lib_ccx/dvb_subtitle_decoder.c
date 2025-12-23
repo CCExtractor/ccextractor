@@ -528,8 +528,13 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 }
 int dvbsub_close_decoder(void **dvb_ctx)
 {
-	DVBSubContext *ctx = (DVBSubContext *)*dvb_ctx;
+	DVBSubContext *ctx;
 	DVBSubRegionDisplay *display;
+
+	if (!dvb_ctx || !*dvb_ctx)
+		return 0;
+
+	ctx = (DVBSubContext *)*dvb_ctx;
 
 	delete_regions(ctx);
 

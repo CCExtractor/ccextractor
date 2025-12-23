@@ -721,15 +721,22 @@ pub struct TeletextPage {
     tainted: bool,                     // true = text variable contains any data
 }
 
+/// Maximum number of teletext pages to extract simultaneously (must match C MAX_TLT_PAGES_EXTRACT)
+pub const MAX_TLT_PAGES_EXTRACT: usize = 8;
+
 /// Settings required to contruct a [`TeletextContext`].
 #[derive(Debug)]
 pub struct TeletextConfig {
     /// should telxcc logging be verbose?
     pub verbose: bool,
-    /// teletext page containing cc we want to filter
+    /// teletext page containing cc we want to filter (legacy single page)
     pub page: Cell<TeletextPageNumber>,
-    /// Page selected by user, which MIGHT be different to `page` depending on autodetection stuff
+    /// Page selected by user (legacy single page)
     pub user_page: u16,
+    /// Pages selected by user for multi-page extraction (issue #665)
+    pub user_pages: Vec<u16>,
+    /// Extract all detected subtitle pages
+    pub extract_all_pages: bool,
     /// false = Don't attempt to correct errors
     pub dolevdist: bool,
     /// Means 2 fails or less is "the same"
@@ -757,6 +764,8 @@ impl Default for TeletextConfig {
             verbose: true,
             page: TeletextPageNumber(0).into(),
             user_page: 0,
+            user_pages: Vec::new(),
+            extract_all_pages: false,
             dolevdist: false,
             levdistmincnt: 0,
             levdistmaxpct: 0,

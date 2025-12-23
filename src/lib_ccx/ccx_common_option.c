@@ -73,7 +73,7 @@ void init_options(struct ccx_s_options *options)
 	options->ocrlang = NULL;	  // By default, autodetect .traineddata file
 	options->ocr_oem = -1;		  // By default, OEM mode depends on the tesseract version
 	options->psm = 3;		  // Default PSM mode (3 is the default tesseract as well)
-	options->ocr_quantmode = 1;	  // CCExtractor's internal
+	options->ocr_quantmode = 0;	  // No quantization (better OCR accuracy for DVB subtitles)
 	options->mkvlang = NULL;	  // By default, all the languages are extracted
 	options->ignore_pts_jumps = 1;
 	options->analyze_video_stream = 0;
@@ -147,6 +147,7 @@ void init_options(struct ccx_s_options *options)
 	options->settings_dtvcc.print_file_reports = 1;
 	options->settings_dtvcc.no_rollup = 0;
 	options->settings_dtvcc.report = NULL;
+	options->settings_dtvcc.timing = NULL;
 	memset(
 	    options->settings_dtvcc.services_enabled, 0,
 	    CCX_DTVCC_MAX_SERVICES * sizeof(options->settings_dtvcc.services_enabled[0]));

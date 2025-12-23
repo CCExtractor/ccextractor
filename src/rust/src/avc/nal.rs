@@ -9,7 +9,7 @@ use crate::{ccx_options, current_fps, total_frames_count, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::{AvcNalType, BitStreamRust, BitstreamError, FRAMERATES_VALUES, SLICE_TYPES};
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
-use std::os::raw::{c_char, c_long};
+use std::os::raw::c_char;
 
 /// Process sequence parameter set RBSP
 pub fn seq_parameter_set_rbsp(
@@ -474,7 +474,12 @@ pub unsafe fn slice_header(
     }
 
     // if slices are buffered - flush
-    if isref == 1 {
+    // For I/P-only streams (like HDHomeRun recordings), flushing on every
+    // reference frame defeats reordering since all frames are reference frames.
+    // Only flush and reset on IDR frames, not P-frames.
+    // This allows P-frames to accumulate in the buffer and be sorted by PTS.
+    let is_idr = *nal_unit_type == AvcNalType::CodedSliceIdrPicture;
+    if isref == 1 && is_idr {
         debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Reference pic! [{}]", SLICE_TYPES[slice_type as usize]);
         debug!(msg_type = DebugMessageFlag::TIME; "Reference pic! [{}] maxrefcnt: {:3}",
                SLICE_TYPES[slice_type as usize], maxrefcnt);
@@ -518,7 +523,7 @@ pub unsafe fn slice_header(
         anchor_hdcc(dec_ctx, (*dec_ctx.avc_ctx).currref);
     }
 
-    let mut current_index = if ccx_options.usepicorder != 0 {
+    let current_index = if ccx_options.usepicorder != 0 {
         // Use pic_order_cnt_lsb
         // Wrap (add max index value) current_index if needed.
         if (*dec_ctx.avc_ctx).currref as i64 - pic_order_cnt_lsb > (maxrefcnt / 2) as i64 {
@@ -529,21 +534,45 @@ pub unsafe fn slice_header(
     } else {
         // Use PTS ordering - calculate index position from PTS difference and
         // frame rate
+
+        // Initialize currefpts on first frame if it hasn't been set yet.
+        // This avoids huge indices at the start of the stream when currefpts is 0.
+        if (*dec_ctx.avc_ctx).currefpts == 0 && (*dec_ctx.timing).current_pts > 0 {
+            (*dec_ctx.avc_ctx).currefpts = (*dec_ctx.timing).current_pts;
+        }
+
         // The 2* accounts for a discrepancy between current and actual FPS
         // seen in some files (CCSample2.mpg)
         let pts_diff = (*dec_ctx.timing).current_pts - (*dec_ctx.avc_ctx).currefpts;
         let fps_factor = MPEG_CLOCK_FREQ as f64 / current_fps;
-        round_portable(2.0 * pts_diff as f64 / fps_factor) as i32
-    };
+        let calculated_index = round_portable(2.0 * pts_diff as f64 / fps_factor) as i32;
 
-    if !ccx_options.usepicorder != 0 && current_index.abs() >= MAXBFRAMES {
-        // Probably a jump in the timeline. Warn and handle gracefully.
-        info!(
-            "Found large gap({}) in PTS! Trying to recover ...",
-            current_index
-        );
-        current_index = 0;
-    }
+        // For some streams (like HDHomeRun recordings), the PTS-based index
+        // calculation produces unreliable results that cause caption garbling.
+        // If the calculated index is out of the valid range, this indicates
+        // the PTS ordering isn't working properly. In such cases, flush the
+        // buffer and reset the reference point.
+        if calculated_index.abs() >= MAXBFRAMES {
+            // Flush any buffered captions before resetting
+            if dec_ctx.has_ccdata_buffered != 0 {
+                process_hdcc(enc_ctx, dec_ctx, sub);
+            }
+
+            // Reset the reference point to current PTS for future frames
+            (*dec_ctx.avc_ctx).currefpts = (*dec_ctx.timing).current_pts;
+
+            // Reset tracking variables for the new reference
+            (*dec_ctx.avc_ctx).lastmaxidx = -1;
+            (*dec_ctx.avc_ctx).maxidx = 0;
+            (*dec_ctx.avc_ctx).lastminidx = 10000;
+            (*dec_ctx.avc_ctx).minidx = 10000;
+
+            // Use index 0 relative to the new reference
+            0
+        } else {
+            calculated_index
+        }
+    };
 
     // Track maximum index for this GOP
     if current_index > (*dec_ctx.avc_ctx).maxidx {
@@ -601,7 +630,7 @@ pub unsafe fn slice_header(
         msg_type = DebugMessageFlag::TIME;
         "  sync_pts:{} ({:8})",
         std::ffi::CStr::from_ptr(ccxr_print_mstime_static(
-            ((*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64)) as c_long,
+            (*dec_ctx.timing).sync_pts / ((MPEG_CLOCK_FREQ as i64) / 1000i64),
             buf.as_mut_ptr()
         ))
         .to_str()

@@ -27,6 +27,7 @@ pub mod hardsubx;
 pub mod hlist;
 pub mod libccxr_exports;
 pub mod parser;
+pub mod track_lister;
 pub mod utils;
 
 #[cfg(windows)]
@@ -50,7 +51,7 @@ use std::os::raw::{c_uchar, c_void};
 use std::{
     ffi::CStr,
     io::Write,
-    os::raw::{c_char, c_double, c_int, c_long, c_uint},
+    os::raw::{c_char, c_double, c_int, c_uint},
 };
 
 // Mock data for rust unit tests
@@ -66,7 +67,7 @@ cfg_if! {
 
         static mut frames_since_ref_time: c_int = 0;
         static mut total_frames_count: c_uint = 0;
-        static mut fts_at_gop_start: c_long = 0;
+        static mut fts_at_gop_start: i64 = 0;
         static mut gop_rollover: c_int = 0;
         static mut pts_big_change: c_uint = 0;
 
@@ -143,7 +144,7 @@ extern "C" {
     static mut total_frames_count: c_uint;
     static mut gop_time: gop_time_code;
     static mut first_gop_time: gop_time_code;
-    static mut fts_at_gop_start: c_long;
+    static mut fts_at_gop_start: i64;
     static mut gop_rollover: c_int;
     static mut ccx_common_timing_settings: ccx_common_timing_settings_t;
     static mut capitalization_list: word_list;
@@ -192,7 +193,8 @@ extern "C" {
     pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
 }
 
-/// Initialize env logger with custom format, using stdout as target
+/// Initialize env logger with custom format, using stderr as target
+/// This ensures debug output doesn't pollute stdout when using --stdout option
 ///
 /// # Safety
 ///
@@ -204,7 +206,7 @@ pub extern "C" fn ccxr_init_logger() {
     builder()
         .format(|buf, record| writeln!(buf, "[CEA-708] {}", record.args()))
         .filter_level(LevelFilter::Debug)
-        .target(Target::Stdout)
+        .target(Target::Stderr)
         .init();
 }
 
@@ -357,6 +359,35 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
     }
 }
 
+/// Normalize legacy single-dash long options to double-dash format.
+///
+/// Old versions of ccextractor accepted `-quiet`, `-stdout`, etc. but clap
+/// requires `--quiet`, `--stdout`. This function converts single-dash long
+/// options to double-dash for backward compatibility.
+///
+/// # Rules
+/// - Single-dash options with multiple characters (e.g., `-quiet`) are converted to `--quiet`
+/// - Double-dash options (e.g., `--quiet`) are left unchanged
+/// - Single-letter short options (e.g., `-o`) are left unchanged
+/// - Non-option arguments (e.g., `file.ts`) are left unchanged
+/// - Numeric options (e.g., `-1`, `-12`) are left unchanged (these are valid short options)
+fn normalize_legacy_option(arg: String) -> String {
+    // Check if it's a single-dash option with multiple characters (e.g., -quiet)
+    // but not a short option with a value (e.g., -o filename)
+    // Single-letter options like -o, -s should be left unchanged
+    // Numeric options like -1, -12 should also be left unchanged
+    if arg.starts_with('-')
+        && !arg.starts_with("--")
+        && arg.len() > 2
+        && arg.chars().nth(1).is_some_and(|c| c.is_ascii_alphabetic())
+    {
+        // Convert -option to --option
+        format!("-{}", arg)
+    } else {
+        arg
+    }
+}
+
 /// # Safety
 /// Safe if argv is a valid pointer
 ///
@@ -378,6 +409,11 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     if args.len() <= 1 {
         return ExitCause::NoInputFiles.exit_code();
     }
+
+    // Backward compatibility: Convert single-dash long options to double-dash
+    // Old versions of ccextractor accepted -quiet, -stdout, etc. but clap requires --quiet, --stdout
+    // This allows scripts using the old syntax to continue working
+    let args: Vec<String> = args.into_iter().map(normalize_legacy_option).collect();
 
     let args: Args = match Args::try_parse_from(args) {
         Ok(args) => args,
@@ -419,6 +455,36 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
         &mut _capitalization_list,
         &mut _profane,
     );
+
+    // Handle --list-tracks mode: list tracks and exit early
+    if opt.list_tracks_only {
+        use std::path::Path;
+        use track_lister::list_tracks;
+
+        let files = match &opt.inputfile {
+            Some(f) if !f.is_empty() => f,
+            _ => {
+                eprintln!("Error: No input files specified for --list-tracks");
+                return ExitCause::NoInputFiles.exit_code();
+            }
+        };
+
+        let mut had_errors = false;
+        for file in files {
+            if let Err(e) = list_tracks(Path::new(file)) {
+                eprintln!("Error listing tracks for '{}': {}", file, e);
+                had_errors = true;
+            }
+        }
+
+        // Exit with appropriate code - we don't want to continue to C processing
+        return if had_errors {
+            ExitCause::Failure.exit_code()
+        } else {
+            ExitCause::WithHelp.exit_code() // Reuse this code to indicate successful early exit
+        };
+    }
+
     tlt_config = _tlt_config.to_ctype(&opt);
 
     // Convert the rust struct (CcxOptions) to C struct (ccx_s_options), so that it can be used by the C code
@@ -480,5 +546,88 @@ mod test {
         assert_eq!(decoder_ctx.cc_stats[3], 1);
         assert_eq!(decoder_ctx.processed_enough, 0);
         assert_eq!(unsafe { cb_708 }, 11);
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_single_dash_long() {
+        // Single-dash long options should be converted to double-dash
+        assert_eq!(
+            normalize_legacy_option("-quiet".to_string()),
+            "--quiet".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-stdout".to_string()),
+            "--stdout".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-autoprogram".to_string()),
+            "--autoprogram".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-goptime".to_string()),
+            "--goptime".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_double_dash() {
+        // Double-dash options should remain unchanged
+        assert_eq!(
+            normalize_legacy_option("--quiet".to_string()),
+            "--quiet".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("--stdout".to_string()),
+            "--stdout".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("--autoprogram".to_string()),
+            "--autoprogram".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_short_options() {
+        // Single-letter short options should remain unchanged
+        assert_eq!(normalize_legacy_option("-o".to_string()), "-o".to_string());
+        assert_eq!(normalize_legacy_option("-s".to_string()), "-s".to_string());
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_numeric_options() {
+        // Numeric options should remain unchanged (these are valid ccextractor options)
+        assert_eq!(normalize_legacy_option("-1".to_string()), "-1".to_string());
+        assert_eq!(normalize_legacy_option("-2".to_string()), "-2".to_string());
+        assert_eq!(
+            normalize_legacy_option("-12".to_string()),
+            "-12".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_non_options() {
+        // Non-option arguments should remain unchanged
+        assert_eq!(
+            normalize_legacy_option("file.ts".to_string()),
+            "file.ts".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("/path/to/file.ts".to_string()),
+            "/path/to/file.ts".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("ccextractor".to_string()),
+            "ccextractor".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_edge_cases() {
+        // Empty string
+        assert_eq!(normalize_legacy_option("".to_string()), "".to_string());
+        // Just a dash
+        assert_eq!(normalize_legacy_option("-".to_string()), "-".to_string());
+        // Double dash alone (end of options marker)
+        assert_eq!(normalize_legacy_option("--".to_string()), "--".to_string());
     }
 }
