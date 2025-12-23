@@ -157,6 +157,8 @@ struct encoder_ctx
 	int sbs_enabled;
 
 	// for dvb subs
+
+	int last_scc_tx_end_ms;
 	struct encoder_ctx *prev;
 	int write_previous;
 	// for dvb in .mkv
