@@ -1,5 +1,6 @@
 0.96.2 (2025-12-26)
 -------------------
+- New: Added ASS/SSA \pos-based positioning for CEA-608 captions when layout is simple (1–2 rows) (#1726)
 - Rebundle Windows version to include required runtime files to process hardcoded subtitles
   (hardcodex mode).
 - New: Add optional -system-libs flag to Linux build script for package manager compatibility

@@ -5,6 +5,25 @@
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
 
+static void ass_position_from_row(
+    int row,
+    int play_res_x,
+    int play_res_y,
+    int *out_x,
+    int *out_y)
+{
+	// Center horizontally
+	*out_x = play_res_x / 2;
+
+	// Map CEA-608 row (0–14) to ASS Y coordinate
+	// SSA default PlayResY is 288
+	int top = play_res_y * 60 / 100; // start of lower third
+	int bottom = play_res_y * 95 / 100;
+
+	int y = top + (row * (bottom - top) / 14);
+	*out_y = y;
+}
+
 int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
@@ -168,11 +187,18 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	int wrote_something = 0;
+	int used_row_count = 0;
 
 	int prev_line_start = -1, prev_line_end = -1;	    // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
 	int empty_buf = 1;
-	for (int i = 0; i < 15; i++)
+
+	int first_row = -1;
+	int x, y;
+	char pos_tag[64];
+	int i;
+
+	for (i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
@@ -182,6 +208,12 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	}
 	if (empty_buf)
 		return 0;
+
+	for (i = 0; i < 15; i++)
+	{
+		if (data->row_used[i])
+			used_row_count++;
+	}
 
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
@@ -194,8 +226,59 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
 	write_wrapped(context->out->fh, context->buffer, used);
+
+	/*
+	 * ASS precise positioning note:
+	 * We emit {\an2\pos(x,y)} using ASS script resolution coordinates.
+	 * PlayResX/PlayResY are explicitly declared in the SSA header (384x288),
+	 * which is the SSA/libass default resolution and ensures consistent
+	 * positioning across players.
+	 *
+	 * Positioning is intentionally guarded to avoid regressions when
+	 * caption layout information is ambiguous.
+	 */
+
+	/* ---- ASS precise positioning ---- */
+
+	first_row = -1;
+
+	/*
+	 * Only apply ASS positioning when:
+	 * - At least one row is present
+	 * - AND there is a single logical caption region
+	 * Otherwise, fall back to legacy SSA behavior.
+	 */
+
+	if (used_row_count > 0 && used_row_count <= 2)
+	{
+		for (i = 0; i < 15; i++)
+		{
+			if (data->row_used[i])
+			{
+				first_row = i;
+				break;
+			}
+		}
+
+		if (first_row >= 0)
+		{
+			// SSA default resolution (used by libass / Aegisub)
+			ass_position_from_row(first_row, 384, 288, &x, &y);
+
+			snprintf(
+			    pos_tag,
+			    sizeof(pos_tag),
+			    "{\\an2\\pos(%d,%d)}",
+			    x, y);
+
+			write_wrapped(context->out->fh, pos_tag, strlen(pos_tag));
+		}
+	}
+
+	/* ---- end ASS positioning ---- */
+
 	int line_count = 0;
-	for (int i = 0; i < 15; i++)
+	for (i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
