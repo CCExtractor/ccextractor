@@ -16,6 +16,11 @@
 #include "ccx_encoders_structs.h"
 #include "ccx_common_option.h"
 
+// Maximum number of teletext pages to extract simultaneously (issue #665)
+#ifndef MAX_TLT_PAGES_EXTRACT
+#define MAX_TLT_PAGES_EXTRACT 8
+#endif
+
 #define REQUEST_BUFFER_CAPACITY(ctx, length)                                                                       \
 	if (length > ctx->capacity)                                                                                \
 	{                                                                                                          \
@@ -169,6 +174,12 @@ struct encoder_ctx
 
 	// OCR in SPUPNG
 	int nospupngocr;
+
+	// Teletext multi-page output (issue #665)
+	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT]; // Output files per teletext page
+	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];       // Page numbers for each output slot
+	unsigned int tlt_srt_counter[MAX_TLT_PAGES_EXTRACT]; // SRT counter per page
+	int tlt_out_count;                                    // Number of teletext output files
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY 2048
@@ -263,4 +274,9 @@ unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 
 struct lib_ccx_ctx;
 void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id);
+
+// Teletext multi-page output (issue #665)
+struct ccx_s_write *get_teletext_output(struct encoder_ctx *ctx, uint16_t teletext_page);
+unsigned int *get_teletext_srt_counter(struct encoder_ctx *ctx, uint16_t teletext_page);
+void dinit_teletext_outputs(struct encoder_ctx *ctx);
 #endif

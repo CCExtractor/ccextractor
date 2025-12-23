@@ -821,8 +821,17 @@ pub struct Args {
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
     /// page is always 888, may vary in other countries.
-    #[arg(long, verbatim_doc_comment, value_name="page", help_heading=TELETEXT_OPTIONS)]
-    pub tpage: Option<String>,
+    /// You can specify multiple pages by using --tpage
+    /// multiple times (e.g., --tpage 891 --tpage 892).
+    /// Each page will be output to a separate file with
+    /// suffix _pNNN (e.g., output_p891.srt, output_p892.srt).
+    #[arg(long, verbatim_doc_comment, value_name="page", action = clap::ArgAction::Append, help_heading=TELETEXT_OPTIONS)]
+    pub tpage: Option<Vec<u16>>,
+    /// Extract all teletext subtitle pages found in the stream.
+    /// Each page will be output to a separate file with
+    /// suffix _pNNN (e.g., output_p891.srt, output_p892.srt).
+    #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
+    pub tpages_all: bool,
     /// Enable verbose mode in the teletext decoder.
     #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
     pub tverbose: bool,
