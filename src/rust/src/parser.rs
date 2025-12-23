@@ -1210,7 +1210,7 @@ impl OptionsExt for Options {
             } else {
                 // Multiple pages - each gets a separate output file
                 for &page_num in tpages {
-                    if page_num >= 100 && page_num <= 899 {
+                    if (100..=899).contains(&page_num) {
                         tlt_config.user_pages.push(page_num);
                     }
                 }
