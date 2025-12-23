@@ -42,7 +42,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.should_build.outputs.should_build == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install base dependencies
         if: steps.should_build.outputs.should_build == 'true'
