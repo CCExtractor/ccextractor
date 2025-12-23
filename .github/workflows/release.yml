@@ -65,9 +65,9 @@ jobs:
       run: mkdir installer; cp ./x64/Release-Full/ccextractorwinfull.exe ./installer; cp ./x64/Release-Full/*.dll ./installer
       working-directory: ./windows
     - name: install WiX
-      run: dotnet tool install --global wix --version 4.0.0-preview.0 &&  wix extension -g add WixToolset.UI.wixext
+      run: dotnet tool uninstall --global wix; dotnet tool install --global wix --version 6.0.2 && wix extension add -g WixToolset.UI.wixext/6.0.2
     - name: Make sure WiX works
-      run: wix --version && wix extension -g list
+      run: wix --version && wix extension list -g
     - name: Download Flutter GUI
       run: ((Invoke-WebRequest -UseBasicParsing https://api.github.com/repos/CCExtractor/ccextractorfluttergui/releases/latest).Content | ConvertFrom-Json).assets | ForEach-Object {if ($_.name -eq "windows.zip") { Invoke-WebRequest -UseBasicParsing -Uri $_.browser_download_url -OutFile windows.zip}}
       working-directory: ./windows
