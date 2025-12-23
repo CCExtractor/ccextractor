@@ -900,8 +900,12 @@ page_is_empty:
 		fflush(stderr);
 }
 
-// Helper function to check if a page should be accepted for extraction (issue #665)
-// Returns 1 if the page should be accepted, 0 otherwise
+/**
+ * Helper function to check if a page should be accepted for extraction (issue #665)
+ * @param page_number The teletext page number in BCD format
+ * @param is_subtitle_page Whether this page is marked as a subtitle page
+ * @return 1 if the page should be accepted, 0 otherwise
+ */
 static int should_accept_page(uint16_t page_number, int is_subtitle_page)
 {
 	// If extract_all_pages is set, accept all subtitle pages
