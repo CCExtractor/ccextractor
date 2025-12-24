@@ -14,8 +14,6 @@
 		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
 		<!-- Use standard WixUI_InstallDir dialog set -->
 		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
-		<Property Id="ARPNOMODIFY" Value="1" />
 	</Package>
 	<Fragment>
 		<StandardDirectory Id="DesktopFolder">
