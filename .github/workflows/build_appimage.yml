@@ -42,7 +42,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.should_build.outputs.should_build == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install base dependencies
         if: steps.should_build.outputs.should_build == 'true'
@@ -93,7 +93,7 @@ jobs:
       - name: Cache GPAC build
         if: steps.should_build.outputs.should_build == 'true'
         id: cache-gpac
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /usr/local/lib/libgpac*
           key: gpac-v2.4.0-ubuntu22
@@ -143,14 +143,14 @@ jobs:
 
       - name: Upload AppImage artifact
         if: steps.should_build.outputs.should_build == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.appimage_name.outputs.name }}
           path: linux/${{ steps.appimage_name.outputs.name }}
 
       - name: Upload to Release
         if: steps.should_build.outputs.should_build == 'true' && github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: linux/${{ steps.appimage_name.outputs.name }}
         env:

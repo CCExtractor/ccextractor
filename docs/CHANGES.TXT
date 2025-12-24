@@ -1,106 +1,37 @@
-0.96 (2025-12-21)
+0.96 (2025-12-23)
 -----------------
-- New: Added --list-tracks (-L) option to list all tracks in media files without processing
-- Fix: Garbled captions from HDHomeRun and I/P-only H.264 streams (#1109)
-- Fix: Enable stdout output for CEA-708 captions on Windows (#1693)
-- Fix: McPoodle DVD raw format read/write - properly handle loop markers (#1524)
-- Fix: Variable shadowing in general_loop causing false "premature end of file" messages
-- Fix: Double-free crash in teletext cleanup when processing multiple files
-- Fix: Uninitialized memory and memory leaks found by Valgrind testing
-- Fix: Dangling pointers in Rust FFI copy_from_rust functions
-- New: Improve -out=report to show detected Teletext subtitle pages (#1034)
-- FIX: Include ATSC VCT virtual channel numbers and call signs in XMLTV output
-- FIX: Restore ATSC XMLTV generation with ETT parsing for extended descriptions, multi-segment handling, extended table ID's (EIT/VCT), corrected <programme> XMLTV formatting, buffer bounds fixes
-- Fix: DVB subtitle extraction improvements for Chinese broadcasts (#224):
-  - Fix crash in parse_PMT() due to missing bounds checks
-  - Fix negative timestamps in DVB subtitle output
-  - Fix crash in ignore_alpha_at_edge() OCR cropping
-  - Improve DVB subtitle OCR accuracy with image inversion
-  - Fix --ocrlang to accept Tesseract language names (chi_tra, chi_sim, etc.)
-  - Add case-insensitive matching for --dvblang parameter
-- FIX: Add HEVC/H.265 stream type recognition to prevent crashes on ATSC 3.0 streams
-- New: Add demuxer and file_functions module in lib_ccxr (#1662)
-- Fix: handle row_count decrease in CEA-708 C decoder
-- Fix: Bounds checks to prevent panic on malformed CEA-708 data
-- Fix: Multiprogram logic in is_decoder_processed_enough() causing false warnings
-- Fix: Write consistent 2-byte UTF-16BE encoding for CEA-708 captions (Japanese/Chinese)
-- New: Add --ttxtforcelatin option to force Latin G0 charset in Teletext
-- Fix: Add fallback for TS files without PAT/PMT tables
-- Fix: PTS jump handling to continue fts_now updates after jump
-- Fix: Null checks for unchecked memory allocations throughout codebase
-- Fix: Null checks and invalid UTF-8 handling in Rust FFI functions
-- Fix: Panics in timing code when processing multiple files
-- Fix: Caption start/end times to match FFmpeg timing in MP4/MPEG/TS
-- Fix: Correctly count and store multiple input files
-- Fix: Handle MP4 c608 tracks and improve garbage frame detection
-- Fix: Update fts_now for each frame in elementary streams
-- Fix: Preserve CR time during pop-on to roll-up transition
-- Fix: Defer min_pts until frame type is known
-- Fix: Skip leading non-I-frames when setting min_pts
-- Fix: Memory leaks in ts_tables_epg, ocr, and ccx_encoders_spupng
-- Fix: Buffer overruns in 708_output, mcc_encoder, utility, xds_decoder
-- Fix: Replace sprintf/strcpy with bounds-checked snprintf/strncpy in encoders
-- Fix: HHMMSSFFF format for ttxt output timestamps
-- Fix: Always emit position codes at start of SCC caption
-- Fix: Memory safety issues in ccx_decoders_common
-- Fix: Null checks after malloc calls in dvb_subtitle_decoder
-- Fix: Memory safety checks and memory leaks in Matroska parser
+- New: Multi-page teletext extraction support (#665)
+  - Extract multiple teletext pages simultaneously with separate output files
+  - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
+  - Output files are named with page suffix (e.g., output_p100.srt, output_p200.srt)
 
-0.95 (2025-09-15)
+- New: Added --list-tracks (-L) option to list all tracks in media files without processing
+  New: Chinese, Korean, Japanese support - proper encoding and OCR.
+  New: Correct McPoodle DVD raw format support
+  Fix: Timing is now frame perfect (using FFMpeg timing dump as reference) in all formats.
+  Fix: Solved garbling in all the pending issues we had on GitHub.
+  Fix: All causes of "premature end of file" messages due to bugs and not actual file cuts.
+  Fix: All memory leaks, double frees and usual C nastyness that valgrind could find.
+- Fix Include ATSC VCT virtual channel numbers and call signs in XMLTV output
+- Fix: Restore ATSC XMLTV generation with ETT parsing for extended descriptions, multi-segment handling, extended table ID's (EIT/VCT), corrected <programme> XMLTV formatting, buffer bounds fixes
+- Fix: Add HEVC/H.265 stream type recognition to prevent crashes on ATSC 3.0 streams.
+  Fix: Tolerance to damaged streams - recover where possible instead of terminating.
+  Issues closed: Over 40! Too many to list here, but each of them was either a bug squashed or a feature implemented.
+
+0.95 (2025-09-15 - never formally packaged)
 -----------------
-- Fix: ARM64/aarch64 build failure due to c_char type mismatch in nal.rs
-- Fix: HardSubX OCR on Rust
-- Removed the Share Module
-- Fix: Regression failures on DVD files
-- Fix: Segmentation faults on MP4 files with CEA-708 captions
-- Refactor: Remove API structures from ccextractor
-- New: Add Encoder Module to Rust
-- Fix: Elementary stream regressions
-- Fix: Segmentation faults on XDS files
-- Fix: Clippy Errors Based on Rust 1.88
-- IMPROVEMENT: Refactor and optimize Dockerfile
-- Fix: Improved handling of IETF language tags in Matroska files (#1665)
-- New: Create unit test for rust code (#1615)
-- Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - New: Create a Docker image to simplify the CCExtractor usage without any environmental hustle (#1611)
-- New: Add time units module in lib_ccxr (#1623)
-- New: Add bits and levenshtein module in lib_ccxr (#1627)
-- New: Add constants module in lib_ccxr (#1624) 
-- New: Add log module in lib_ccxr (#1622)
-- New: Create `lib_ccxr` and `libccxr_exports` (#1621)
-- Fix: Unexpected behavior of get_write_interval (#1609)
-- Update: Bump rsmpeg to latest version for ffmpeg bindings (#1600)
 - New: Add SCC support for CEA-708 decoder (#1595)
-- Fix: respect `-stdout` even if multiple CC tracks are present in a Matroska input file (#1453)
-- Fix: crash in Rust decoder on ATSC1.0 TS Files (#1407)
-- Removed the --with-gui flag for linux/configure and mac/configure (use the Flutter GUI instead)
+  Refactor: Lots of code ported to Rust.
+- Fix: Improved handling of IETF language tags in Matroska files (#1665)
+- Breaking: Major argument flags revamp for CCExtractor (#1564 & #1619)
 - Fix: segmentation fault in using hardsubx
-- New: Add function (and command) that extracts closed caption subtitles as well as burnt-in subtitles from a file in a single pass. (As proposed in issue 726)
-- Refactored: the `general_loop` function has some code moved to a new function
 - Fix: WebVTT X-TIMESTAMP-MAP placement (#1463)
-- Disable X-TIMESTAMP-MAP by default (changed option --no-timestamp-map to --timestamp-map)
-- Fix: missing `#` in color attribute of font tag
 - Fix: ffmpeg 5.0, tesseract 5.0 compatibility and remove deprecated methods
 - Fix: tesseract 5.x traineddata location in ocr
-- Fix: fix autoconf tesseract detection problem (#1503)
-- Fix: add missing compile_info_real.h source to Autotools build
-- Fix: add missing `-lavfilter` for hardsubx linking
-- Fix: make webvtt-full work correctly with multi-byte utf-8 characters
-- Fix: encoding of solid block in latin-1 and unicode
-- Fix: McPoodle Broadcast Raw format for field 1
-- Fix: Incorrect skipping of packets
-- Fix: Repeated values for enums
-- Cleanup: Remove the (unmaintained) Nuklear GUI code
-- Cleanup: Reduce the amount of Windows build options in the project file
-- Fix: infinite loop in MP4 file type detector.
-- Improvement: Use Corrosion to build Rust code
 - Improvement: Ignore MXF Caption Essence Container version byte to enhance SRT subtitle extraction compatibility
 - New: Add tesseract page segmentation modes control with `--psm` flag
-- Fix: Resolve compile-time error about implicit declarations (#1646)
-- Fix: fatal out of memory error extracting from a VOB PS
-- Fix: Unit Test Rust failing due to changes in Rust Version 1.86.0
 - Fix: Support for MINGW-w64 cross compiling
-- Fix: Build with ENABLE_FFMPEG to support ffmpeg 5
 
 0.94 (2021-12-14)
 -----------------
