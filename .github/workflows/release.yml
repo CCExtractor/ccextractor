@@ -34,10 +34,10 @@ jobs:
         LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
         CARGO_TARGET_DIR: "..\\..\\windows"
         BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
-      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=Win32
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
       working-directory: ./windows
     - name: Copy files to directory for installer
-      run: mkdir installer; cp ./Release-Full/ccextractorwinfull.exe ./installer; cp ./Release-Full/*.dll ./installer
+      run: mkdir installer; cp ./x64/Release-Full/ccextractorwinfull.exe ./installer; cp ./x64/Release-Full/*.dll ./installer
       working-directory: ./windows
     - name: install WiX
       run: dotnet tool install --global wix --version 4.0.0-preview.0 &&  wix extension -g add WixToolset.UI.wixext

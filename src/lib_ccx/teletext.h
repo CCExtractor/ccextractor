@@ -8,6 +8,7 @@
 // #include <inttypes.h>
 
 #define MAX_TLT_PAGES 1000
+#define MAX_TLT_PAGES_EXTRACT 8  // Maximum pages to extract simultaneously (must match lib_ccx.h)
 
 typedef struct
 {
@@ -17,6 +18,28 @@ typedef struct
 	uint8_t g2_char_present[25][40]; // 0- Supplementary G2 character set NOT used at this position 1-Supplementary G2 character set used at this position
 	uint8_t tainted;		 // 1 = text variable contains any data
 } teletext_page_t;
+
+// Per-page state for multi-page extraction (issue #665)
+typedef struct
+{
+	uint16_t page_number;		// BCD-encoded page number (0 = unused slot)
+	teletext_page_t page_buffer;	// Current page content being received
+	char *page_buffer_prev;		// Previous formatted output
+	char *page_buffer_cur;		// Current formatted output
+	unsigned page_buffer_cur_size;
+	unsigned page_buffer_cur_used;
+	unsigned page_buffer_prev_size;
+	unsigned page_buffer_prev_used;
+	uint64_t *ucs2_buffer_prev;	// Previous comparison string
+	uint64_t *ucs2_buffer_cur;	// Current comparison string
+	unsigned ucs2_buffer_cur_size;
+	unsigned ucs2_buffer_cur_used;
+	unsigned ucs2_buffer_prev_size;
+	unsigned ucs2_buffer_prev_used;
+	uint64_t prev_hide_timestamp;
+	uint64_t prev_show_timestamp;
+	uint8_t receiving_data;		// Currently receiving data for this page
+} teletext_page_state_t;
 
 // application states -- flags for notices that should be printed only once
 struct s_states
@@ -62,8 +85,14 @@ struct TeletextCtx
 	char millis_separator;
 	uint32_t global_timestamp;
 
-	// Current and previous page buffers. This is the output written to file when
-	// the time comes.
+	// Multi-page extraction state (issue #665)
+	teletext_page_state_t page_states[MAX_TLT_PAGES_EXTRACT];  // Per-page state
+	int num_active_pages;                                       // Number of pages being extracted
+	int current_page_idx;                                       // Index of page currently receiving data (-1 = none)
+	int multi_page_mode;                                        // 1 = multi-page mode active
+
+	// Current and previous page buffers (legacy single-page mode)
+	// These are still used when multi_page_mode == 0 for backward compatibility
 	teletext_page_t page_buffer;
 	char *page_buffer_prev;
 	char *page_buffer_cur;
