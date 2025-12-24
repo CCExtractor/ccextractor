@@ -569,8 +569,8 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
 	{
-		dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
 		// Bogus data, so we return something
+		// Removed dump() call to prevent infinite binary output when processing files with no subtitles
 		ptr->buffer[ptr->len++] = 0xFA;
 		ptr->buffer[ptr->len++] = 0x80;
 		ptr->buffer[ptr->len++] = 0x80;
