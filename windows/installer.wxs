@@ -14,6 +14,7 @@
 		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
 		<!-- Use standard WixUI_InstallDir dialog set -->
 		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
 		<Property Id="ARPNOMODIFY" Value="1" />
 	</Package>
 	<Fragment>
@@ -24,7 +25,7 @@
                 Description="Run CCExtractor"
                 Target="[INSTALLFOLDER]ccxgui.exe"
                 WorkingDirectory="INSTALLFOLDER"/>
-            <RemoveFolder Id="DesktopFolder" On="uninstall"/>
+            <RemoveFolder Id="RemoveDesktopShortcut" On="uninstall"/>
             <RegistryValue
                 Root="HKCU"
                 Key="Software\CCExtractor\ccextractor"
