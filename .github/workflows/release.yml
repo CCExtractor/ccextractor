@@ -22,7 +22,11 @@ jobs:
       uses: actions/checkout@v6
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
+      run: |
+        # Extract version from tag, strip 'v' prefix and everything after first dash
+        VERSION=${GITHUB_REF/refs\/tags\/v/}
+        VERSION=${VERSION%%-*}
+        echo ::set-output name=VERSION::$VERSION
       shell: bash
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2.0.0
