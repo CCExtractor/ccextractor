@@ -84,7 +84,7 @@ jobs:
       run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor_win_portable.zip
       working-directory: ./windows
     - name: Build installer
-      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs
+      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs CustomUI.wxs
       working-directory: ./windows
     - name: Upload as asset
       uses: AButler/upload-release-assets@v3.0

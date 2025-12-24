@@ -1,4 +1,4 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="200">
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
 		<MediaTemplate EmbedCab="yes"/>
@@ -12,15 +12,9 @@
 			<ComponentRef Id="ApplicationShortcutDesktop"/>
 		</Feature>
 		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
-		<!-- Use standard WixUI_InstallDir dialog set -->
-		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-		<!-- Override dialog sequence to skip license dialog (Order="999" ensures these fire last) -->
-		<UI>
-			<!-- WelcomeDlg Next -> InstallDirDlg (skip LicenseAgreementDlg) -->
-			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="999" Condition="NOT Installed" />
-			<!-- InstallDirDlg Back -> WelcomeDlg (skip LicenseAgreementDlg) -->
-			<Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="999" />
-		</UI>
+		<!-- Use custom UI without license dialog -->
+		<UIRef Id="CustomInstallDirUI" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 	</Package>
 	<Fragment>
 		<StandardDirectory Id="DesktopFolder">
