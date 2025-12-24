@@ -4,6 +4,18 @@
 #include "ccx_common_common.h"
 #include "utility.h"
 
+// declare rust implementation of process_xds_bytes (function)
+extern void ccxr_process_xds_bytes(
+	struct ccx_decoders_xds_context *ctx,
+	unsigned char hi,
+	int lo);
+
+// declare rust implementation of do_end_of_xds (function)
+extern void ccxr_do_end_of_xds(
+    struct cc_subtitle *sub,
+    struct ccx_decoders_xds_context *ctx,
+    unsigned char expected_checksum);
+
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
 static const char *XDSclasses[] =
@@ -238,6 +250,10 @@ void clear_xds_buffer(struct ccx_decoders_xds_context *ctx, int num)
 
 void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char hi, int lo)
 {
+#ifndef DISABLE_RUST
+	ccxr_process_xds_bytes(ctx, hi, lo); // use the rust implementation
+	return;
+#endif
 	int is_new;
 	if (!ctx)
 		return;
@@ -890,6 +906,10 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 
 void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum)
 {
+#ifndef DISABLE_RUST
+	ccxr_do_end_of_xds(sub, ctx, expected_checksum); // use the rust implementation
+	return;
+#endif
 	int cs = 0;
 	int i;
 
