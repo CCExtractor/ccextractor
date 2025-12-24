@@ -1,5 +1,5 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="200">
+	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="500" InstallScope="perMachine">
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
 		<MediaTemplate EmbedCab="yes"/>
 		<Feature Id="CCX" Title="CCExtractor Setup" Level="1">
