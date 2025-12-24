@@ -206,7 +206,7 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
 /// # Safety
 ///
 /// `ctx` should not be null.
-unsafe fn write_back_to_common_timing_ctx(
+pub unsafe fn write_back_to_common_timing_ctx(
     ctx: *mut ccx_common_timing_ctx,
     timing_ctx: &TimingContext,
 ) {
