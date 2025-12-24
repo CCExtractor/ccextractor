@@ -63,6 +63,7 @@ fn main() {
         "ccx_encoding_type",
         "ccx_decoder_608_settings",
         "ccx_decoder_608_report",
+        "ccx_decoders_xds_context",
         "ccx_gxf",
         "MXFContext",
         "demuxer_data",
