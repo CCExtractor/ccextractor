@@ -29,6 +29,7 @@ pub mod libccxr_exports;
 pub mod parser;
 pub mod track_lister;
 pub mod utils;
+pub mod xds;
 
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
