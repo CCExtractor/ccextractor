@@ -14,6 +14,13 @@
 		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
 		<!-- Use standard WixUI_InstallDir dialog set -->
 		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+		<!-- Override dialog sequence to skip license dialog -->
+		<UI>
+			<!-- WelcomeDlg Next -> InstallDirDlg (skip LicenseAgreementDlg) -->
+			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Condition="NOT Installed" />
+			<!-- InstallDirDlg Back -> WelcomeDlg (skip LicenseAgreementDlg) -->
+			<Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
+		</UI>
 	</Package>
 	<Fragment>
 		<StandardDirectory Id="DesktopFolder">
