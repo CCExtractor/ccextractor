@@ -33,18 +33,21 @@ pub mod bindings {
 }
 
 use std::ffi::CString;
-use std::os::raw::{c_int, c_ulong, c_void};
+use std::os::raw::{c_ulong, c_void};
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::Mutex;
 
-use crate::bindings::{cc_subtitle, ccx_decoders_xds_context, eia608_screen, realloc};
+use crate::bindings::{cc_subtitle, eia608_screen, realloc};
 
 use lib_ccxr::debug;
 use lib_ccxr::info;
 use lib_ccxr::time::c_functions::get_fts;
 use lib_ccxr::time::CaptionField;
 use lib_ccxr::util::log::{hex_dump, send_gui, DebugMessageFlag, GuiXdsMessage};
+
+use libc::free;
+use libc::malloc;
 
 use crate::xds::types::*;
 
@@ -73,7 +76,7 @@ pub unsafe fn write_xds_string(
 ) -> Result<(), XDSError> {
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
     let new_data =
-        unsafe { realloc(sub.data as *mut c_void, new_size as c_ulong) as *mut eia608_screen };
+        unsafe { realloc(sub.data as *mut c_void, new_size as u64) as *mut eia608_screen };
     if new_data.is_null() {
         freep(&mut sub.data);
         sub.nb_data = 0;
@@ -84,13 +87,22 @@ pub unsafe fn write_xds_string(
     sub.datatype = 0;
     let data_element = &mut *new_data.add(sub.nb_data as usize);
     let c_str = CString::new(p).map_err(|_| XDSError::Err)?;
-    let c_str_ptr = c_str.into_raw();
+
+    let len = c_str.as_bytes_with_nul().len();
+    let ptr = unsafe { malloc(len) as *mut i8 }; // fixing c/rust mem mismatch
+    if ptr.is_null() {
+        return Err(XDSError::Err);
+    }
+    unsafe {
+        std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, len); // fixing c/rust mem mismatch
+    }
+
     data_element.format = 2;
     data_element.start_time = ts_start_of_xds;
     if let Some(timing) = ctx.timing.as_mut() {
         data_element.end_time = get_fts(timing, CaptionField::Cea708).millis();
     }
-    data_element.xds_str = c_str_ptr;
+    data_element.xds_str = ptr;
     data_element.xds_len = len;
     data_element.cur_xds_packet_class = ctx.cur_xds_packet_class;
     sub.nb_data += 1;
@@ -135,7 +147,7 @@ pub unsafe fn xdsprint(
 pub fn freep<T>(ptr: &mut *mut T) {
     unsafe {
         if !ptr.is_null() {
-            let _ = Box::from_raw(*ptr);
+            free(*ptr as *mut libc::c_void);
             *ptr = null_mut();
         }
     }
@@ -155,7 +167,7 @@ impl CcxDecodersXdsContext<'_> {
 /// XDS byte processing and packet handling.
 impl CcxDecodersXdsContext<'_> {
     pub(crate) fn process_xds_bytes(&mut self, hi: u8, lo: u8) {
-        if (hi >= 0x01 && hi <= 0x0f) {
+        if hi >= 0x01 && hi <= 0x0f {
             let xds_class = ((hi - 1) / 2) as i32; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
             let is_new = (hi % 2) != 0; // Start codes are even
 
@@ -575,7 +587,9 @@ pub unsafe fn xds_do_content_advisory(
     // US TV parental guidelines
     if a1 == 0 && a0 != 0 {
         let _ = xdsprint(sub, ctx, state.age.clone());
-        let _ = xdsprint(sub, ctx, state.content.clone());
+        if !state.content.is_empty() {
+            let _ = xdsprint(sub, ctx, state.content.clone());
+        }
 
         if changed {
             info!("\rXDS: {}\n  ", state.age);
