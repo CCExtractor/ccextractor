@@ -26,7 +26,18 @@ jobs:
         # Extract version from tag, strip 'v' prefix and everything after first dash
         VERSION=${GITHUB_REF/refs\/tags\/v/}
         VERSION=${VERSION%%-*}
-        echo ::set-output name=VERSION::$VERSION
+        # Count dots to determine version format
+        DOTS="${VERSION//[^.]}"
+        PART_COUNT=$((${#DOTS} + 1))
+        # MSI requires 4-part version (major.minor.build.revision)
+        if [ "$PART_COUNT" -eq 2 ]; then
+          MSI_VERSION="${VERSION}.0.0"
+        elif [ "$PART_COUNT" -eq 3 ]; then
+          MSI_VERSION="${VERSION}.0"
+        else
+          MSI_VERSION="${VERSION}"
+        fi
+        echo ::set-output name=VERSION::$MSI_VERSION
       shell: bash
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2.0.0
@@ -88,7 +99,7 @@ jobs:
       run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor_win_portable.zip
       working-directory: ./windows
     - name: Build installer
-      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}.0.0" -o CCExtractor.msi installer.wxs CustomUI.wxs
+      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.msi installer.wxs CustomUI.wxs
       working-directory: ./windows
     - name: Upload as asset
       uses: AButler/upload-release-assets@v3.0
