@@ -6,9 +6,9 @@
 
 // declare rust implementation of process_xds_bytes (function)
 extern void ccxr_process_xds_bytes(
-	struct ccx_decoders_xds_context *ctx,
-	unsigned char hi,
-	int lo);
+    struct ccx_decoders_xds_context *ctx,
+    unsigned char hi,
+    int lo);
 
 // declare rust implementation of do_end_of_xds (function)
 extern void ccxr_do_end_of_xds(
