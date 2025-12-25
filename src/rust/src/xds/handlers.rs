@@ -124,7 +124,6 @@ pub unsafe fn xdsprint(
         return Ok(());
     }
 
-    let len = message.len();
     write_xds_string(sub, ctx, message, TS_START_OF_XDS.load(Ordering::SeqCst))
 }
 
