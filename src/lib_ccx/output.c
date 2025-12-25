@@ -14,7 +14,19 @@ void dinit_write(struct ccx_s_write *wb)
 		return;
 	}
 	if (wb->fh > 0)
+	{
+		// Check if the file is empty before closing
+		off_t file_size = lseek(wb->fh, 0, SEEK_END);
 		close(wb->fh);
+
+		// Delete empty output files to avoid generating useless 0-byte files
+		// This commonly happens with -12 option when one field has no captions
+		if (file_size == 0 && wb->filename != NULL)
+		{
+			unlink(wb->filename);
+			mprint("Deleted empty output file: %s\n", wb->filename);
+		}
+	}
 	freep(&wb->filename);
 	freep(&wb->original_filename);
 	if (wb->with_semaphore && wb->semaphore_filename)
