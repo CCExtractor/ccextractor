@@ -323,7 +323,19 @@ static int es_video_sequence(struct encoder_ctx *enc_ctx, struct lib_cc_decode *
 		}
 		else
 		{
-			mprint("\nUnexpected startcode: %02X\n", startcode);
+			// If we see User Data (B2) or Extension (B5) but we are not in a state to process them
+			// (e.g. haven't seen Sequence Header yet), we should NOT skip them, but return 0
+			// and wait for more data/context.
+			// However, if we see junk or other unhandled codes, we MUST skip them to prevent infinite loops.
+			if (startcode != 0xB2 && startcode != 0xB5)
+			{
+				mprint("\nUnexpected startcode: %02X\n", startcode);
+				skip_u32(esstream);
+			}
+			else
+			{
+				// Keep silent for B2/B5 to avoid log spam, just return 0 to buffer more
+			}
 		}
 		dec_ctx->no_bitstream_error = 0;
 		return 0;

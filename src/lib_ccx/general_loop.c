@@ -1029,6 +1029,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 					}
 				}
 				size_t got = process_m2v(*enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+				if (got == 0 && data_node_video->len >= 1048576)
+				{
+					// Prevent infinite loop if decoder consumes nothing from a very large buffer (1MB)
+					// This handles cases where process_m2v returns 0 (error or no progress) but buffer is full
+					// We use a large threshold to ensure we don't discard valid video data that is just waiting for more bytes.
+					got = data_node_video->len;
+				}
 				if (got > 0)
 				{
 					memmove(data_node_video->buffer, data_node_video->buffer + got, (size_t)(data_node_video->len - got));
