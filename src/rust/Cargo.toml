@@ -25,6 +25,7 @@ lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
 serial_test = "3.2.0"
 encoding_rs = "0.8.35"
+libc = "0.2.178"
 
 # Use CCExtractor's forked rsmpeg with FFmpeg 7
 # All platforms use ffmpeg7 feature with prebuilt bindings for API consistency
