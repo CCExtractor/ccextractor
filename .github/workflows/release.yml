@@ -26,6 +26,8 @@ jobs:
         # Extract version from tag, strip 'v' prefix and everything after first dash
         VERSION=${GITHUB_REF/refs\/tags\/v/}
         VERSION=${VERSION%%-*}
+        # Save display version for filenames (e.g., 0.96.1)
+        echo ::set-output name=DISPLAY_VERSION::$VERSION
         # Count dots to determine version format
         DOTS="${VERSION//[^.]}"
         PART_COUNT=$((${#DOTS} + 1))
@@ -96,15 +98,15 @@ jobs:
       run: Get-ChildItem -Recurse ./installer
       working-directory: ./windows
     - name: Create portable zip
-      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor_win_portable.zip
+      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}_win_portable.zip
       working-directory: ./windows
     - name: Build installer
-      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.msi installer.wxs CustomUI.wxs
+      run:  wix build -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.msi installer.wxs CustomUI.wxs
       working-directory: ./windows
     - name: Upload as asset
       uses: AButler/upload-release-assets@v3.0
       with:
-        files: './windows/CCExtractor.msi;./windows/CCExtractor_win_portable.zip'
+        files: './windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.msi;./windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}_win_portable.zip'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
   create_linux_package:
     runs-on: ubuntu-latest
@@ -112,10 +114,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           path: ./ccextractor
+      - name: Get the version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}
+          VERSION=${VERSION%%-*}
+          echo ::set-output name=DISPLAY_VERSION::$VERSION
       - name: Create .tar.gz without git and windows folders
-        run: tar -pczf ./ccextractor_minimal.tar.gz --exclude "ccextractor/windows" --exclude "ccextractor/.git" ccextractor
+        run: tar -pczf ./ccextractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.tar.gz --exclude "ccextractor/windows" --exclude "ccextractor/.git" ccextractor
       - name: Upload as asset
         uses: AButler/upload-release-assets@v3.0
         with:
-          files: './ccextractor_minimal.tar.gz'
+          files: './ccextractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.tar.gz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
