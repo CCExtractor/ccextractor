@@ -33,7 +33,7 @@ pub mod bindings {
 }
 
 use std::ffi::CString;
-use std::os::raw::{c_ulong, c_void};
+use std::os::raw::c_void;
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::Mutex;
@@ -71,7 +71,6 @@ pub unsafe fn write_xds_string(
     sub: &mut cc_subtitle,
     ctx: &mut CcxDecodersXdsContext,
     p: String,
-    len: usize,
     ts_start_of_xds: i64,
 ) -> Result<(), XDSError> {
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
@@ -126,13 +125,7 @@ pub unsafe fn xdsprint(
     }
 
     let len = message.len();
-    write_xds_string(
-        sub,
-        ctx,
-        message,
-        len,
-        TS_START_OF_XDS.load(Ordering::SeqCst),
-    )
+    write_xds_string(sub, ctx, message, TS_START_OF_XDS.load(Ordering::SeqCst))
 }
 
 /// Frees a pointer and sets it to null.
@@ -167,9 +160,9 @@ impl CcxDecodersXdsContext<'_> {
 /// XDS byte processing and packet handling.
 impl CcxDecodersXdsContext<'_> {
     pub(crate) fn process_xds_bytes(&mut self, hi: u8, lo: u8) {
-        if hi >= 0x01 && hi <= 0x0f {
+        if (0x01..=0x0f).contains(&hi) {
             let xds_class = ((hi - 1) / 2) as i32; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
-            let is_new = (hi % 2) != 0; // Start codes are even
+            let is_new = !hi.is_multiple_of(2); // Start codes are even
 
             log::debug!(
                 "XDS Start: {}.{}  Is new: {}  | Class: {} ({}), Used buffers: {}",
@@ -601,10 +594,7 @@ pub unsafe fn xds_do_content_advisory(
     }
 
     // MPA, Canadian English, or Canadian French
-    if a0 == 0
-        || (a0 != 0 && a1 != 0 && da2 == 0 && la3 == 0)
-        || (a0 != 0 && a1 != 0 && da2 != 0 && la3 == 0)
-    {
+    if a0 == 0 || (a1 != 0 && la3 == 0) {
         let _ = xdsprint(sub, ctx, state.rating.clone());
 
         if changed {
@@ -810,21 +800,26 @@ pub unsafe fn xds_do_current_and_future(
 
             if ctx.current_program_type_reported != 0 {
                 // Check if we should do it again
-                let mut should_report = false;
-                for i in 0..ctx.cur_xds_payload_length as usize {
-                    if i < 33 && payload[i] != ctx.current_xds_program_type[i] as u8 {
-                        should_report = true;
-                        break;
-                    }
-                }
+
+                let should_report = payload
+                    .iter()
+                    .zip(ctx.current_xds_program_type.iter())
+                    .take(33.min(ctx.cur_xds_payload_length as usize))
+                    .any(|(p, c)| *p != *c as u8);
+
                 if should_report {
                     ctx.current_program_type_reported = 0;
                 }
             }
 
             // Copy payload to current_xds_program_type
-            for i in 0..std::cmp::min(ctx.cur_xds_payload_length as usize, 32) {
-                ctx.current_xds_program_type[i] = payload[i] as i8;
+            for (dst, src) in ctx
+                .current_xds_program_type
+                .iter_mut()
+                .zip(payload.iter())
+                .take(std::cmp::min(ctx.cur_xds_payload_length as usize, 32))
+            {
+                *dst = *src as i8;
             }
             if (ctx.cur_xds_payload_length as usize) < 33 {
                 ctx.current_xds_program_type[ctx.cur_xds_payload_length as usize] = 0;
@@ -836,10 +831,12 @@ pub unsafe fn xds_do_current_and_future(
 
             let mut type_str = String::new();
 
-            for i in 2..(ctx.cur_xds_payload_length - 1) as usize {
-                let byte = payload[i];
+            for &byte in payload
+                .iter()
+                .take((ctx.cur_xds_payload_length - 1) as usize)
+                .skip(2)
+            {
                 if byte == 0 {
-                    // Padding
                     continue;
                 }
 
@@ -847,7 +844,7 @@ pub unsafe fn xds_do_current_and_future(
                     info!("[{:02X}-", byte);
                 }
 
-                if byte >= 0x20 && byte < 0x7F {
+                if (0x20..0x7F).contains(&byte) {
                     let type_idx = (byte - 0x20) as usize;
                     if type_idx < XDS_PROGRAM_TYPES.len() {
                         type_str.push_str(&format!("[{}] ", XDS_PROGRAM_TYPES[type_idx]));
@@ -855,7 +852,7 @@ pub unsafe fn xds_do_current_and_future(
                 }
 
                 if ctx.current_program_type_reported == 0 {
-                    if byte >= 0x20 && byte < 0x7F {
+                    if (0x20..0x7F).contains(&byte) {
                         let type_idx = (byte - 0x20) as usize;
                         if type_idx < XDS_PROGRAM_TYPES.len() {
                             info!("{}", XDS_PROGRAM_TYPES[type_idx]);
@@ -1195,7 +1192,7 @@ pub unsafe fn xds_do_private_data(
 /// - `ctx.cur_xds_payload` must point to valid memory with at least `ctx.cur_xds_payload_length` bytes
 /// - The pointer must remain valid for the duration of the call
 pub unsafe fn xds_do_misc(ctx: &mut CcxDecodersXdsContext) -> i32 {
-    let mut was_proc = 0;
+    let was_proc;
 
     // Safety check for payload
     if ctx.cur_xds_payload.is_null() || ctx.cur_xds_payload_length < 3 {
