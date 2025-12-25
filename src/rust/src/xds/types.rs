@@ -448,41 +448,6 @@ impl Default for CcxDecodersXdsContext<'_> {
     }
 }
 
-impl<'a> CcxDecodersXdsContext<'a> {
-    pub(crate) fn new(timing: &'a mut TimingContext, xds_write_to_file: i32) -> Box<Self> {
-        Box::new(Self {
-            current_xds_min: -1,
-            current_xds_hour: -1,
-            current_xds_date: -1,
-            current_xds_month: -1,
-            current_program_type_reported: 0, //No
-            xds_start_time_shown: 0,
-            xds_program_length_shown: 0,
-
-            xds_program_description: [[0; 33]; 8],
-
-            current_xds_network_name: [0; 33],
-            current_xds_program_name: [0; 33],
-            current_xds_call_letters: [0; 7],
-            current_xds_program_type: [0; 33],
-
-            xds_buffers: [XdsBuffer::default(); NUM_XDS_BUFFERS],
-
-            cur_xds_buffer_idx: -1,
-            cur_xds_packet_class: -1,
-            cur_xds_payload: std::ptr::null_mut(), // unsafe raw pointer
-            cur_xds_payload_length: 0,
-            cur_xds_packet_type: 0,
-            timing: Some(timing),
-
-            current_ar_start: u32::MAX, // not set here
-            current_ar_end: u32::MAX,   // not set here
-
-            xds_write_to_file: xds_write_to_file != 0,
-        })
-    }
-}
-
 impl FromCType<ccx_decoders_xds_context> for CcxDecodersXdsContext<'_> {
     unsafe fn from_ctype(c_value: ccx_decoders_xds_context) -> Option<Self> {
         let mut xds_buffers = [XdsBuffer::default(); NUM_XDS_BUFFERS];
@@ -521,6 +486,16 @@ impl FromCType<ccx_decoders_xds_context> for CcxDecodersXdsContext<'_> {
     }
 }
 
+/// # Safety
+///
+/// - `bitstream_ptr` must be non-null and point to uniquely writable memory for a
+///   `ccx_decoders_xds_context` for the duration of the call.
+/// - `rust_ctx` must be valid and C-layout compatible for all fields copied.
+/// - If `rust_ctx.cur_xds_payload` is non-null it must be valid for
+///   `rust_ctx.cur_xds_payload_length` bytes.
+/// - If `rust_ctx.timing` is `Some`, the C-side `timing` pointer in `bitstream_ptr`
+///   must be a valid destination for `write_back_to_common_timing_ctx`.
+/// - Violating these invariants is undefined behaviour; call only from `unsafe`.
 pub unsafe fn copy_xds_context_from_rust_to_c(
     bitstream_ptr: *mut ccx_decoders_xds_context,
     rust_ctx: &CcxDecodersXdsContext<'_>,
