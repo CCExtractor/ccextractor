@@ -103,10 +103,10 @@ int set_nonblocking(int fd);
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
 #ifndef DISABLE_RUST
-        ccxr_connect_to_srv(addr, port, cc_desc, pwd);
-	    return;
+    ccxr_connect_to_srv(addr, port, cc_desc, pwd);
+    return;
 #endif
-	if (NULL == addr)
+    if (NULL == addr)
 	{
 		mprint("Server address is not set\n");
 		fatal(EXIT_FAILURE, "Unable to connect, address passed is null\n");
