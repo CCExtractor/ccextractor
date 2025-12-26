@@ -183,6 +183,10 @@ size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned 
 unsigned int ccxr_process_dvdraw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len);
 int ccxr_is_dvdraw_header(const unsigned char *buffer, unsigned int len);
 
+// Rust FFI: SCC (Scenarist Closed Caption) format processing (see src/rust/src/demuxer/scc.rs)
+unsigned int ccxr_process_scc(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len, int framerate);
+int ccxr_is_scc_file(const unsigned char *buffer, unsigned int len);
+
 int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex(struct lib_ccx_ctx *ctx, char *filename);
 int rcwt_loop(struct lib_ccx_ctx *ctx);

@@ -275,6 +275,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).multiprogram = options.multiprogram as _;
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
+    (*ccx_s_options).scc_framerate = options.scc_framerate;
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
@@ -531,6 +532,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.multiprogram = (*ccx_s_options).multiprogram != 0;
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;
+    options.scc_framerate = (*ccx_s_options).scc_framerate;
 
     // Handle optional features with conditional compilation
     #[cfg(feature = "with_libcurl")]
@@ -873,6 +875,7 @@ impl CType<u32> for StreamMode {
             StreamMode::Gxf => ccx_stream_mode_enum_CCX_SM_GXF as _,
             StreamMode::Mkv => ccx_stream_mode_enum_CCX_SM_MKV as _,
             StreamMode::Mxf => ccx_stream_mode_enum_CCX_SM_MXF as _,
+            StreamMode::Scc => ccx_stream_mode_enum_CCX_SM_SCC as _,
             StreamMode::Autodetect => ccx_stream_mode_enum_CCX_SM_AUTODETECT as _,
             _ => ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND as _,
         }

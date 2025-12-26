@@ -195,6 +195,7 @@ struct ccx_s_options // Options from user parameters
 	int multiprogram;
 	int out_interval;
 	int segment_on_key_frames_only;
+	int scc_framerate; // SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif

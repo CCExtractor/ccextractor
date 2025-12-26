@@ -212,6 +212,7 @@ enum ccx_stream_mode_enum
 	CCX_SM_GXF = 11,
 	CCX_SM_MKV = 12,
 	CCX_SM_MXF = 13,
+	CCX_SM_SCC = 14, // Scenarist Closed Caption input
 
 	CCX_SM_AUTODETECT = 16
 };
