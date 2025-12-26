@@ -1704,7 +1704,7 @@ impl OptionsExt for Options {
                 _ => {
                     fatal!(
                         cause = ExitCause::IncompatibleParameters;
-                        "--split-dvb-subs requires SRT, SAMI, WebVTT, or NULL output format."
+                        "Unsupported OutputFormat: {:?}. --split-dvb-subs requires SRT, SAMI, WebVTT, or NULL output format.", self.write_format
                     );
                 }
             }
