@@ -103,8 +103,8 @@ int set_nonblocking(int fd);
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
 #ifndef DISABLE_RUST
-    ccxr_connect_to_srv(addr, port, cc_desc, pwd);
-    return;
+        ccxr_connect_to_srv(addr, port, cc_desc, pwd);
+        return;
 #endif
     if (NULL == addr)
 	{
