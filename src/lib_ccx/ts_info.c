@@ -48,7 +48,7 @@ void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 			// They need to remain in the datalist for secondary pass processing
 			if (ccx_options.split_dvb_subs && iter->codec == CCX_CODEC_DVB)
 			{
-				iter->ignore = 0;  // Keep DVB streams active
+				iter->ignore = 0; // Keep DVB streams active
 			}
 			else
 			{

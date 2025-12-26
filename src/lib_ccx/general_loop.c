@@ -1223,7 +1223,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 				dvb_ptr = dvb_ptr->next_stream;
 			}
 		}
-skip_dvb_secondary_pass:
+	skip_dvb_secondary_pass:
 
 		// Process the last subtitle for DVB
 		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))

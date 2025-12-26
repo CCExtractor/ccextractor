@@ -1748,80 +1748,77 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		else
 		{
 
-		// For DVB subtitles, a subtitle is displayed until the next one appears.
-		// For DVB subtitles, a subtitle is displayed until the next one appears.
-		// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
-		// This prevents any overlap between consecutive subtitles.
-		if (next_start_time > sub->prev->start_time)
-		{
-			sub->prev->end_time = next_start_time;
-		}
-		else
-		{
-			// PTS jump or timeline reset - next_start is at or before our start.
-			// Calculate duration from raw PTS, but cap to reasonable maximum (5 seconds)
-			// to avoid creating subtitles that overlap excessively with subsequent ones.
-			LLONG duration_ms = 0;
-			if (sub->prev->start_pts > 0 && current_pts > sub->prev->start_pts)
+			// For DVB subtitles, a subtitle is displayed until the next one appears.
+			// For DVB subtitles, a subtitle is displayed until the next one appears.
+			// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
+			// This prevents any overlap between consecutive subtitles.
+			if (next_start_time > sub->prev->start_time)
 			{
-				duration_ms = (current_pts - sub->prev->start_pts) / (MPEG_CLOCK_FREQ / 1000);
+				sub->prev->end_time = next_start_time;
 			}
-			// Cap duration to 4 seconds or timeout if smaller
-			LLONG max_duration = 4000; // 4 seconds
-			if (sub->prev->time_out > 0 && sub->prev->time_out < max_duration)
+			else
 			{
-				max_duration = sub->prev->time_out;
+				// PTS jump or timeline reset - next_start is at or before our start.
+				// Calculate duration from raw PTS, but cap to reasonable maximum (5 seconds)
+				// to avoid creating subtitles that overlap excessively with subsequent ones.
+				LLONG duration_ms = 0;
+				if (sub->prev->start_pts > 0 && current_pts > sub->prev->start_pts)
+				{
+					duration_ms = (current_pts - sub->prev->start_pts) / (MPEG_CLOCK_FREQ / 1000);
+				}
+				// Cap duration to 4 seconds or timeout if smaller
+				LLONG max_duration = 4000; // 4 seconds
+				if (sub->prev->time_out > 0 && sub->prev->time_out < max_duration)
+				{
+					max_duration = sub->prev->time_out;
+				}
+				if (duration_ms > max_duration)
+				{
+					duration_ms = max_duration;
+				}
+				sub->prev->end_time = sub->prev->start_time + duration_ms;
 			}
-			if (duration_ms > max_duration)
+			// Sanity check: if end_time still <= start_time, use minimal duration
+			if (sub->prev->end_time <= sub->prev->start_time)
 			{
-				duration_ms = max_duration;
+				dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
+				sub->prev->end_time = sub->prev->start_time + 1;
 			}
-			sub->prev->end_time = sub->prev->start_time + duration_ms;
-		}
-		// Sanity check: if end_time still <= start_time, use minimal duration
-		if (sub->prev->end_time <= sub->prev->start_time)
-		{
-			dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
-			sub->prev->end_time = sub->prev->start_time + 1;
-		}
-		// Apply timeout limit if specified
-		if (sub->prev->time_out > 0 && sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
-		{
-			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
-		}
-		int timeok = 1;
-		if (dec_ctx->extraction_start.set &&
-		    sub->prev->start_time < dec_ctx->extraction_start.time_in_ms)
-			timeok = 0;
-		if (dec_ctx->extraction_end.set &&
-		    sub->prev->end_time > dec_ctx->extraction_end.time_in_ms)
-		{
-			timeok = 0;
-			dec_ctx->processed_enough = 1;
-		}
-		if (timeok)
-		{
-			encode_sub(enc_ctx->prev, sub->prev); // we encode it
+			// Apply timeout limit if specified
+			if (sub->prev->time_out > 0 && sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
+			{
+				sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
+			}
+			int timeok = 1;
+			if (dec_ctx->extraction_start.set &&
+			    sub->prev->start_time < dec_ctx->extraction_start.time_in_ms)
+				timeok = 0;
+			if (dec_ctx->extraction_end.set &&
+			    sub->prev->end_time > dec_ctx->extraction_end.time_in_ms)
+			{
+				timeok = 0;
+				dec_ctx->processed_enough = 1;
+			}
+			if (timeok)
+			{
+				encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
+				enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
+				enc_ctx->prev->last_string = NULL;
 
-
-			enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
-			enc_ctx->prev->last_string = NULL;
-
-			enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
-			enc_ctx->prev_start = enc_ctx->prev->prev_start;
-			sub->prev->got_output = 0;
-			if (enc_ctx->write_format == CCX_OF_WEBVTT)
-			{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-				enc_ctx->wrote_webvtt_header = 1;
+				enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+				enc_ctx->prev_start = enc_ctx->prev->prev_start;
+				sub->prev->got_output = 0;
+				if (enc_ctx->write_format == CCX_OF_WEBVTT)
+				{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+					enc_ctx->wrote_webvtt_header = 1;
+				}
 			}
 		}
-	}
 	}
 	/* copy previous encoder context*/
 
 	free_encoder_context(enc_ctx->prev);
-
 
 	enc_ctx->prev = NULL;
 	enc_ctx->prev = copy_encoder_context(enc_ctx);
@@ -1850,9 +1847,6 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 
 	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
 	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
-
-
-
 
 #ifdef ENABLE_OCR
 	if (sub->prev)
@@ -1929,8 +1923,6 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
 
-
-
 			switch (segment_type)
 			{
 				case DVBSUB_PAGE_SEGMENT:
@@ -1965,7 +1957,6 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
-
 
 					got_segment |= 16;
 					break;

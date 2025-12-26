@@ -579,12 +579,12 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	if (strcmp(pipe->lang, "und") == 0 || pipe->lang[0] == '\0')
 	{
 		snprintf(pipe->filename, sizeof(pipe->filename), "%s_0x%04X%s",
-		         ctx->basefilename, pid, ext);
+			 ctx->basefilename, pid, ext);
 	}
 	else
 	{
 		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s%s",
-		         ctx->basefilename, pipe->lang, ext);
+			 ctx->basefilename, pipe->lang, ext);
 	}
 
 	// Initialize encoder for this pipeline
@@ -649,11 +649,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	}
 	pipe->dec_ctx->private_data = pipe->decoder;
 	pipe->dec_ctx->codec = CCX_CODEC_DVB;
-	pipe->dec_ctx->prev = NULL;  // Will be allocated by dvbsub_handle_display_segment
+	pipe->dec_ctx->prev = NULL; // Will be allocated by dvbsub_handle_display_segment
 
 	// Initialize persistent cc_subtitle for DVB prev tracking
 	memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
-	pipe->sub.prev = NULL;  // Will be allocated by dvbsub_handle_display_segment
+	pipe->sub.prev = NULL; // Will be allocated by dvbsub_handle_display_segment
 
 	// Register pipeline
 	ctx->pipelines[ctx->pipeline_count++] = pipe;
