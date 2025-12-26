@@ -323,23 +323,10 @@ static int es_video_sequence(struct encoder_ctx *enc_ctx, struct lib_cc_decode *
 		}
 		else
 		{
-			// Whitelist valid MPEG-2 System start codes (B0-BF), including:
-			// B2 (User Data), B5 (Extension), B8 (GOP), BD (Private), BE (Padding).
-			// If we see these out of context, we return 0 to wait (buffer preserved).
-			//
-			// We SKIP everything else, including:
-			// - Slices (01-AF) appearing without Picture Header (Garbage/OutOfOrder)
-			// - H.264 Start Codes (67, 68...) if misinterpreted as MPEG-2
-			// - Random Junk (e.g. 55)
-			if (startcode >= 0xB0 && startcode <= 0xBF)
-			{
-				// Keep silent, return 0 to buffer more
-			}
-			else
-			{
-				mprint("\nUnexpected startcode: %02X. Skipping.\n", startcode);
-				skip_u32(esstream);
-			}
+			// Unhandled start codes (including valid MPEG-2 codes that appear out of context,
+			// like User Data when not expected) should be skipped to avoid infinite loops.
+			mprint("\nUnexpected startcode: %02X. Skipping.\n", startcode);
+			skip_u32(esstream);
 		}
 		dec_ctx->no_bitstream_error = 0;
 		return 0;
