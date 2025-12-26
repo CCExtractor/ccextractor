@@ -143,7 +143,12 @@ if [ "$USE_SYSTEM_LIBS" = true ]; then
     $UTF8PROC_COMPAT $PKG_CFLAGS $LEPTONICA_CFLAGS $TESSERACT_CFLAGS $GPAC_CFLAGS"
 
     BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_HASH"
-    BLD_LINKER="$PKG_LIBS -ltesseract -lleptonica -lgpac -lpthread -ldl -lm"
+    # Preserve FFmpeg libraries if -hardsubx was specified
+    FFMPEG_LIBS=""
+    if [ "$HARDSUBX" = true ]; then
+        FFMPEG_LIBS="-lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter -lxcb-shm -lxcb -lX11 -llzma -lswresample"
+    fi
+    BLD_LINKER="$PKG_LIBS -ltesseract -lleptonica -lgpac -lpthread -ldl -lm $FFMPEG_LIBS"
 fi
 
 
