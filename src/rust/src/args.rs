@@ -579,6 +579,14 @@ pub struct Args {
     /// language stream will be processed (default).
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub dvblang: Option<String>,
+    /// Extract each DVB subtitle stream to a separate file.
+    /// Each file will be named with the base filename plus a
+    /// language suffix (e.g., output_deu.srt, output_fra.srt).
+    /// For streams without language tags, uses PID as suffix.
+    /// Incompatible with: stdout output, manual PID selection,
+    /// multiprogram mode. Only works with SRT, SAMI, WebVTT.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub split_dvb_subs: bool,
     /// Manually select the name of the Tesseract .traineddata
     /// file. Helpful if you want to OCR a caption stream of
     /// one language with the data of another language.

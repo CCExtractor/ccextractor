@@ -275,6 +275,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).multiprogram = options.multiprogram as _;
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
+    (*ccx_s_options).split_dvb_subs = options.split_dvb_subs as _;
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
@@ -531,6 +532,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.multiprogram = (*ccx_s_options).multiprogram != 0;
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;
+    options.split_dvb_subs = (*ccx_s_options).split_dvb_subs != 0;
 
     // Handle optional features with conditional compilation
     #[cfg(feature = "with_libcurl")]
