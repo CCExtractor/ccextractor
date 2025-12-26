@@ -2,6 +2,7 @@
 
 RUST_LIB="rust/release/libccx_rust.a"
 RUST_PROFILE="--release"
+USE_SYSTEM_LIBS=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     -debug)
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
       BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter -lxcb-shm -lxcb -lX11 -llzma -lswresample"
       shift
       ;;
+    -system-libs)
+      USE_SYSTEM_LIBS=true
+      shift
+      ;;
     -*)
       echo "Unknown option $1"
       exit 1
@@ -30,7 +35,49 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
+if [ "$USE_SYSTEM_LIBS" = true ]; then
+    command -v pkg-config >/dev/null || {
+        echo "Error: pkg-config is required for -system-libs mode"
+        exit 1
+    }
+    
+    MISSING=""
+    for lib in libpng zlib freetype2 libutf8proc; do
+        if ! pkg-config --exists "$lib" 2>/dev/null; then
+            MISSING="$MISSING $lib"
+        fi
+    done
+    
+    if [ -n "$MISSING" ]; then
+        echo "Error: Missing required system libraries:$MISSING"
+        echo ""
+        echo "On Debian/Ubuntu: sudo apt install libpng-dev zlib1g-dev libfreetype-dev libutf8proc-dev"
+        exit 1
+    fi
+    
+    for hdr in leptonica/allheaders.h tesseract/capi.h; do
+        if ! echo "#include <$hdr>" | gcc -E - >/dev/null 2>&1; then
+            echo "Error: Missing headers for <$hdr>"
+            echo "On Debian/Ubuntu: sudo apt install libleptonica-dev libtesseract-dev"
+            exit 1
+        fi
+    done
+    
+    PKG_CFLAGS="$(pkg-config --cflags libpng zlib freetype2 libutf8proc)"
+    PKG_LIBS="$(pkg-config --libs libpng zlib freetype2 libutf8proc)"
+    
+    UTF8PROC_COMPAT=""
+    if [ ! -d /usr/include/utf8proc ] && [ -f /usr/include/utf8proc.h ]; then
+        mkdir -p ./utf8proc_compat/utf8proc
+        ln -sf /usr/include/utf8proc.h ./utf8proc_compat/utf8proc/utf8proc.h
+        UTF8PROC_COMPAT="-I./utf8proc_compat"
+    fi
+fi
+
+BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
+if [ "$USE_SYSTEM_LIBS" != true ]; then
+    BLD_FLAGS="$BLD_FLAGS -DFT2_BUILD_LIBRARY"
+fi
 bit_os=$(getconf LONG_BIT)
 if [ "$bit_os" == "64" ]
 then
@@ -86,6 +133,19 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c
         ../src/thirdparty/freetype/winfonts/winfnt.c"
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_LIBPNG $SRC_HASH $SRC_UTF8PROC $SRC_FREETYPE"
 BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l leptonica -lpthread -ldl -lgpac"
+
+if [ "$USE_SYSTEM_LIBS" = true ]; then
+    LEPTONICA_CFLAGS="$(pkg-config --cflags --silence-errors lept)"
+    TESSERACT_CFLAGS="$(pkg-config --cflags --silence-errors tesseract)"
+    GPAC_CFLAGS="$(pkg-config --cflags --silence-errors gpac)"
+
+    BLD_INCLUDE="-I../src -I../src/lib_ccx -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash \
+    $UTF8PROC_COMPAT $PKG_CFLAGS $LEPTONICA_CFLAGS $TESSERACT_CFLAGS $GPAC_CFLAGS"
+
+    BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_HASH"
+    BLD_LINKER="$PKG_LIBS -ltesseract -lleptonica -lgpac -lpthread -ldl -lm"
+fi
+
 
 echo "Running pre-build script..."
 ./pre-build.sh
@@ -148,4 +208,8 @@ if [[ "$out" != "" ]] ; then
     echo "Compilation successful, compiler message shown in previous lines"
 else
     echo "Compilation successful, no compiler messages."
+fi
+
+if [ -d ./utf8proc_compat ]; then
+    rm -rf ./utf8proc_compat
 fi

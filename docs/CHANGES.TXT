@@ -1,6 +1,8 @@
 0.96.2 (2025-12-26)
+-------------------
 - Rebundle Windows version to include required runtime files to process hardcoded subtitles
   (hardcodex mode).
+- New: Add optional -system-libs flag to Linux build script for package manager compatibility
 
 0.96.1 (2025-12-25)
 -------------------
