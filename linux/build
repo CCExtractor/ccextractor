@@ -2,7 +2,7 @@
 
 RUST_LIB="rust/release/libccx_rust.a"
 RUST_PROFILE="--release"
-SYSTEM_LIBS=false
+USE_SYSTEM_LIBS=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     -debug)
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -system-libs)
-      SYSTEM_LIBS=true
+      USE_SYSTEM_LIBS=true
       shift
       ;;
     -*)
@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [ "$SYSTEM_LIBS" = true ]; then
+if [ "$USE_SYSTEM_LIBS" = true ]; then
     command -v pkg-config >/dev/null || {
         echo "Error: pkg-config is required for -system-libs mode"
         exit 1
@@ -75,7 +75,7 @@ if [ "$SYSTEM_LIBS" = true ]; then
 fi
 
 BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
-if [ "$SYSTEM_LIBS" != true ]; then
+if [ "$USE_SYSTEM_LIBS" != true ]; then
     BLD_FLAGS="$BLD_FLAGS -DFT2_BUILD_LIBRARY"
 fi
 bit_os=$(getconf LONG_BIT)
@@ -134,11 +134,18 @@ SRC_FREETYPE="../src/thirdparty/freetype/autofit/autofit.c
 BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_GPAC $SRC_ZLIB $SRC_LIBPNG $SRC_HASH $SRC_UTF8PROC $SRC_FREETYPE"
 BLD_LINKER="$BLD_LINKER -lm -zmuldefs -l tesseract -l leptonica -lpthread -ldl -lgpac"
 
-if [ "$SYSTEM_LIBS" = true ]; then
-    BLD_INCLUDE="-I../src -I../src/lib_ccx -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash -I/usr/include/leptonica -I/usr/include/tesseract -I/usr/include/gpac $UTF8PROC_COMPAT $PKG_CFLAGS"
+if [ "$USE_SYSTEM_LIBS" = true ]; then
+    LEPTONICA_CFLAGS="$(pkg-config --cflags --silence-errors lept)"
+    TESSERACT_CFLAGS="$(pkg-config --cflags --silence-errors tesseract)"
+    GPAC_CFLAGS="$(pkg-config --cflags --silence-errors gpac)"
+
+    BLD_INCLUDE="-I../src -I../src/lib_ccx -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash \
+    $UTF8PROC_COMPAT $PKG_CFLAGS $LEPTONICA_CFLAGS $TESSERACT_CFLAGS $GPAC_CFLAGS"
+
     BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_HASH"
     BLD_LINKER="$PKG_LIBS -ltesseract -lleptonica -lgpac -lpthread -ldl -lm"
 fi
+
 
 echo "Running pre-build script..."
 ./pre-build.sh
