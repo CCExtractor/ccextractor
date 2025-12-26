@@ -447,12 +447,12 @@ const CANADIAN_ENGLISH_RATING_TEXT: [&str; 8] = [
 
 /// Canadian French Language Rating
 const CANADIAN_FRENCH_RATING_TEXT: [&str; 8] = [
-    "Exemptées",
-    "Général",
-    "Général - Déconseillé aux jeunes enfants",
-    "Cette émission peut ne pas convenir aux enfants de moins de 13 ans",
-    "Cette émission ne convient pas aux moins de 16 ans",
-    "Cette émission est réservée aux adultes",
+    "Exempt?es",
+    "G?n?ral",
+    "G?n?ral - D?conseill? aux jeunes enfants",
+    "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
+    "Cette ?mission ne convient pas aux moins de 16 ans",
+    "Cette ?mission est r?serv?e aux adultes",
     "[invalid]",
     "[invalid]",
 ];
