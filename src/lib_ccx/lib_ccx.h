@@ -96,6 +96,8 @@ struct ccx_subtitle_pipeline
 	struct encoder_ctx *encoder;
 	struct ccx_common_timing_ctx *timing;
 	void *decoder; // Pointer to decoder context (e.g., ccx_decoders_dvb_context)
+	struct lib_cc_decode *dec_ctx; // Full decoder context for DVB state management
+	struct cc_subtitle sub;        // Persistent cc_subtitle for DVB prev tracking
 };
 
 struct lib_ccx_ctx

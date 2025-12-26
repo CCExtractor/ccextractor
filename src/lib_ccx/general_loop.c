@@ -1182,35 +1182,42 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 
 					// Get or create pipeline for this DVB stream
 					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
-					if (pipe && pipe->encoder && pipe->decoder)
+					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
 					{
-						// Save current decoder context and encoder context
-						void *saved_private = (*dec_ctx)->private_data;
-						struct encoder_ctx *saved_enc = *enc_ctx;
-
-						// Swap to pipeline's DVB decoder and encoder
-						(*dec_ctx)->private_data = pipe->decoder;
-						*enc_ctx = pipe->encoder;
-
-						// Sync timing from main context to pipeline encoder
-						// This ensures DVB decode has valid PTS/timing state
+						// Sync timing from main context to pipeline's decoder context
+						// The pipeline uses the main timing context for timestamp calculations
+						pipe->dec_ctx->timing = (*dec_ctx)->timing;
 						pipe->encoder->timing = (*dec_ctx)->timing;
 
-						// Decode DVB directly using pipeline's decoder and encoder
-						// Skip first 2 bytes (PES header) as done in process_data for DVB
-						struct cc_subtitle dvb_sub = {0};
-						dvbsub_decode(pipe->encoder, *dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &dvb_sub);
-
-						// Encode output if produced
-						if (dvb_sub.got_output)
+						// Set the PTS for this DVB packet before decoding
+						// Without this, the DVB decoder will use stale timing
+						if (dvb_ptr->pts != CCX_NOPTS)
 						{
-							encode_sub(pipe->encoder, &dvb_sub);
-							dvb_sub.got_output = 0;
+							struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
+							LLONG pts;
+							if (dvb_ptr->tb.num != 1 || dvb_ptr->tb.den != MPEG_CLOCK_FREQ)
+							{
+								pts = change_timebase(dvb_ptr->pts, dvb_ptr->tb, tb);
+							}
+							else
+							{
+								pts = dvb_ptr->pts;
+							}
+							set_current_pts(pipe->dec_ctx->timing, pts);
+							set_fts(pipe->dec_ctx->timing);
 						}
 
-						// Restore original decoder/encoder context
-						(*dec_ctx)->private_data = saved_private;
-						*enc_ctx = saved_enc;
+						// Decode DVB using the per-pipeline decoder context
+						// This ensures each stream has its own prev pointers
+						// Skip first 2 bytes (PES header) as done in process_data for DVB
+						dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->sub);
+
+						// Encode output if produced
+						if (pipe->sub.got_output)
+						{
+							encode_sub(pipe->encoder, &pipe->sub);
+							pipe->sub.got_output = 0;
+						}
 					}
 				}
 				dvb_ptr = dvb_ptr->next_stream;

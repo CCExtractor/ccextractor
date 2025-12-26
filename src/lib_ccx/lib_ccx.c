@@ -288,6 +288,23 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		if (p->timing)
 			dinit_timing_ctx(&p->timing);
 
+		// 4) Free per-pipeline decoder context
+		if (p->dec_ctx)
+		{
+			// Free prev if allocated by dvbsub_handle_display_segment
+			if (p->dec_ctx->prev)
+			{
+				freep(&p->dec_ctx->prev->private_data);
+				free(p->dec_ctx->prev);
+			}
+			// Note: private_data points to p->decoder which is already freed above
+			p->dec_ctx->private_data = NULL;
+			free(p->dec_ctx);
+		}
+
+		// 5) Free subtitle prev if allocated
+		free_subtitle(p->sub.prev);
+
 		free(p);
 		lctx->pipelines[i] = NULL;
 	}
@@ -618,6 +635,25 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		free(pipe);
 		return NULL;
 	}
+
+	// Initialize per-pipeline decoder context for DVB state management
+	// This is a minimal context - only the fields needed by dvbsub_decode
+	pipe->dec_ctx = calloc(1, sizeof(struct lib_cc_decode));
+	if (!pipe->dec_ctx)
+	{
+		mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
+		dvbsub_close_decoder(&pipe->decoder);
+		dinit_encoder(&pipe->encoder, 0);
+		free(pipe);
+		return NULL;
+	}
+	pipe->dec_ctx->private_data = pipe->decoder;
+	pipe->dec_ctx->codec = CCX_CODEC_DVB;
+	pipe->dec_ctx->prev = NULL;  // Will be allocated by dvbsub_handle_display_segment
+
+	// Initialize persistent cc_subtitle for DVB prev tracking
+	memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
+	pipe->sub.prev = NULL;  // Will be allocated by dvbsub_handle_display_segment
 
 	// Register pipeline
 	ctx->pipelines[ctx->pipeline_count++] = pipe;
