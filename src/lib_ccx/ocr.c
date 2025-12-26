@@ -8,6 +8,11 @@
 #include <dirent.h>
 #include "ccx_encoders_helpers.h"
 #include "ccx_encoders_spupng.h"
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 #include "ocr.h"
 
 struct ocrCtx
@@ -101,14 +106,78 @@ void delete_ocr(void **arg)
 }
 
 /**
+ * get_executable_directory
+ *
+ * Returns the directory containing the executable.
+ * Returns a pointer to a static buffer, or NULL on failure.
+ */
+static const char *get_executable_directory(void)
+{
+	static char exe_dir[1024] = {0};
+	static int initialized = 0;
+
+	if (initialized)
+		return exe_dir[0] ? exe_dir : NULL;
+
+	initialized = 1;
+
+#ifdef _WIN32
+	char exe_path[MAX_PATH];
+	DWORD len = GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+	if (len == 0 || len >= MAX_PATH)
+		return NULL;
+
+	// Find the last backslash and truncate there
+	char *last_sep = strrchr(exe_path, '\\');
+	if (last_sep)
+	{
+		*last_sep = '\0';
+		strncpy(exe_dir, exe_path, sizeof(exe_dir) - 1);
+		exe_dir[sizeof(exe_dir) - 1] = '\0';
+	}
+#elif defined(__linux__)
+	char exe_path[1024];
+	ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+	if (len <= 0)
+		return NULL;
+	exe_path[len] = '\0';
+
+	char *last_sep = strrchr(exe_path, '/');
+	if (last_sep)
+	{
+		*last_sep = '\0';
+		strncpy(exe_dir, exe_path, sizeof(exe_dir) - 1);
+		exe_dir[sizeof(exe_dir) - 1] = '\0';
+	}
+#elif defined(__APPLE__)
+	char exe_path[1024];
+	uint32_t size = sizeof(exe_path);
+	if (_NSGetExecutablePath(exe_path, &size) != 0)
+		return NULL;
+
+	char *last_sep = strrchr(exe_path, '/');
+	if (last_sep)
+	{
+		*last_sep = '\0';
+		strncpy(exe_dir, exe_path, sizeof(exe_dir) - 1);
+		exe_dir[sizeof(exe_dir) - 1] = '\0';
+	}
+#endif
+
+	return exe_dir[0] ? exe_dir : NULL;
+}
+
+/**
  * probe_tessdata_location
  *
  * This function probe tesseract data location
  *
  * Priority of Tesseract traineddata file search paths:-
  * 1. tessdata in TESSDATA_PREFIX, if it is specified. Overrides others
- * 2. tessdata in current working directory
- * 3. tessdata in /usr/share
+ * 2. tessdata in executable directory (for bundled tessdata)
+ * 3. tessdata in current working directory
+ * 4. tessdata in system locations (/usr/share, etc.)
+ * 5. tessdata in default Tesseract install location (Windows)
  */
 char *probe_tessdata_location(const char *lang)
 {
@@ -116,6 +185,7 @@ char *probe_tessdata_location(const char *lang)
 
 	const char *paths[] = {
 	    getenv("TESSDATA_PREFIX"),
+	    get_executable_directory(),
 	    "./",
 	    "/usr/share/",
 	    "/usr/local/share/",
