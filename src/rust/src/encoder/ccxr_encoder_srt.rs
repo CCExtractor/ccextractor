@@ -46,28 +46,18 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     unsafe {
         ccxr_millis_to_time(ms_end - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
     }
-
-    // Increment counter
     rust_context.srt_counter += 1;
-
-    // Get encoded CRLF string
     let crlf = rust_context.encoded_crlf.as_deref().unwrap_or("\r\n").to_string();
-
-    // Get file handle directly from Rust context - now safe!
     let fh = if let Some(ref out_vec) = rust_context.out {
         if out_vec.is_empty() {
             return 0;
         }
-        out_vec[0].fh // ✅ Safe access - no unsafe needed!
+        out_vec[0].fh;
     } else {
         return 0;
     };
-
-    // Timeline counter line - encode directly using Rust context
     let timeline = format!("{}{}", rust_context.srt_counter, crlf);
     let timeline_bytes = timeline.as_bytes();
-    
-    // Use the Rust encode_line function directly with Rust context
     let (_used, buffer_slice) = if let Some(ref mut buffer) = rust_context.buffer {
         let used = encode_line(rust_context.encoding, buffer, timeline_bytes);
         (used, &buffer[..used])
@@ -77,8 +67,6 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     if write_wrapped(fh, buffer_slice).is_err() {
         return 0;
     }
-
-    // Timeline timecode line
     let timeline = format!(
         "{:02}:{:02}:{:02},{:03} --> {:02}:{:02}:{:02},{:03}{}",
         h1, m1, s1, ms1,
@@ -95,8 +83,6 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
     if write_wrapped(fh, buffer_slice).is_err() {
         return 0;
     }
-
-    // --- Handle the text itself ---
     let mut unescaped = Vec::with_capacity(string_cstr.len() + 1);
 
     let mut chars = string_cstr.chars().peekable();
@@ -134,21 +120,14 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
             break;
         }
     }
-
-    // Final CRLF
     if write_wrapped(fh, crlf.as_bytes()).is_err() {
         return 0;
     }
-
-    // Copy the updated Rust context back to C context
     copy_encoder_ctx_rust_to_c(&mut rust_context, context);
 
-    1 // Success
+    1
 }
 
-/// Write text-based cc_subtitle structures as SRT
-/// This is a port of write_cc_subtitle_as_srt from C
-/// Simplified version that just calls ccxr_write_stringz_srt
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_write_cc_subtitle_as_srt(
     sub: *mut cc_subtitle,
@@ -159,50 +138,37 @@ pub unsafe extern "C" fn ccxr_write_cc_subtitle_as_srt(
     }
 
     let mut ret = 0;
-    let osub = sub; // Save original starting point
-    let mut lsub = sub; // Track last subtitle processed
+    let osub = sub;
+    let mut lsub = sub; 
     let mut current_sub = sub;
-    
-    // Phase 1: Process linked list of subtitles (forward pass)
     while !current_sub.is_null() {
         let sub_ref = &mut *current_sub;
-        
-        // Check if this is text type (CC_TEXT = 0 in enum)
         const CC_TEXT: u32 = 0;
         if sub_ref.type_ == CC_TEXT {
             if !sub_ref.data.is_null() {
-                // Call the existing ccxr_write_stringz_srt function directly
                 let write_result = ccxr_write_stringz_srt(
                     context,
                     sub_ref.data as *const c_char,
                     sub_ref.start_time,
                     sub_ref.end_time,
                 );
-                
-                // Free the data
+
                 extern "C" {
                     fn freep(ptr: *mut *mut std::ffi::c_void);
                 }
                 freep(&mut sub_ref.data);
                 sub_ref.nb_data = 0;
-                
-                // Update ret if write succeeded
                 if write_result > 0 {
                     ret = 1;
                 }
             }
         }
-        
-        lsub = current_sub; // Track the last subtitle
+        lsub = current_sub;
         current_sub = sub_ref.next;
     }
-    
-    // Phase 2: Free the subtitle chain structs themselves (backward pass)
-    // Walk backwards from lsub to osub, freeing each node
     extern "C" {
         fn freep(ptr: *mut *mut std::ffi::c_void);
-    }
-    
+    }   
     while lsub != osub {
         if lsub.is_null() {
             break;
@@ -211,11 +177,9 @@ pub unsafe extern "C" fn ccxr_write_cc_subtitle_as_srt(
         freep(&mut (lsub as *mut std::ffi::c_void));
         lsub = current_sub;
     }
-    
     ret
 }
 
-/// Write EIA-608 screen buffers as SRT
 /// This is a port of write_cc_buffer_as_srt from C
 /// Uses Rust ccxr_encoder_ctx for all operations
 #[no_mangle]
@@ -240,12 +204,9 @@ pub unsafe extern "C" fn ccxr_write_cc_buffer_as_srt(
             break;
         }
     }
-    
     if empty_buf {
-        return 0; // Don't write empty screens
-    }
-    
-    // Convert times using Rust context
+        return 0;
+    } 
     let mut h1 = 0u32;
     let mut m1 = 0u32;
     let mut s1 = 0u32;
@@ -257,14 +218,8 @@ pub unsafe extern "C" fn ccxr_write_cc_buffer_as_srt(
     let mut s2 = 0u32;
     let mut ms2 = 0u32;
     ccxr_millis_to_time(screen_data.end_time - 1, &mut h2, &mut m2, &mut s2, &mut ms2);
-    
-    // Increment counter in Rust context
     rust_ctx.srt_counter += 1;
-    
-    // Get CRLF from Rust context - clone to avoid borrow issues
     let crlf = rust_ctx.encoded_crlf.as_deref().unwrap_or("\r\n").to_string();
-    
-    // Get file handle from Rust context - now safe!
     let fh = if let Some(ref out_vec) = rust_ctx.out {
         if out_vec.is_empty() {
             return 0;
@@ -273,16 +228,12 @@ pub unsafe extern "C" fn ccxr_write_cc_buffer_as_srt(
     } else {
         return 0;
     };
-    
-    // Write counter line using Rust context and buffer
     let timeline = format!("{}{}", rust_ctx.srt_counter, crlf);
     if let Some(ref mut buffer) = rust_ctx.buffer {
-        let encoding = rust_ctx.encoding; // Extract encoding to avoid borrow issues
+        let encoding = rust_ctx.encoding;
         let used = encode_line(encoding, buffer, timeline.as_bytes());
         let _ = write_wrapped(fh, &buffer[..used]);
     }
-    
-    // Write timestamp line using Rust context
     let timeline = format!(
         "{:02}:{:02}:{:02},{:03} --> {:02}:{:02}:{:02},{:03}{}",
         h1, m1, s1, ms1, h2, m2, s2, ms2, crlf
@@ -311,7 +262,6 @@ pub unsafe extern "C" fn ccxr_write_cc_buffer_as_srt(
     
     for i in 0..15 {
         if screen_data.row_used[i] != 0 {
-            // Get encoded line from C function
             let length = get_decoder_line_encoded(
                 context,
                 (*context).subline,
@@ -327,14 +277,8 @@ pub unsafe extern "C" fn ccxr_write_cc_buffer_as_srt(
             }
         }
     }
-    
-    // Final CRLF
     let _ = write_wrapped(fh, crlf.as_bytes());
-    
-    // Get the updated context back to Rust
     let rust_ctx = copy_encoder_ctx_c_to_rust(context);
-    
-    // Copy final Rust context back to C (in case anything changed)
     copy_encoder_ctx_rust_to_c(&mut rust_ctx.clone(), context);
     
     if wrote_something { 1 } else { 0 }
