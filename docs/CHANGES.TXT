@@ -1,5 +1,6 @@
 0.96 (2025-12-23)
 -----------------
+- New: Add optional -system-libs flag to Linux build script for package manager 
 - New: Multi-page teletext extraction support (#665)
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
