@@ -1028,7 +1028,35 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						set_fts(dec_ctx_video->timing);
 					}
 				}
-				size_t got = process_m2v(*enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+
+				size_t got = 0;
+				// Only call process_m2v for MPEG-1 and MPEG-2 video streams.
+				// H.264 (AVC) and HEVC have different start codes and structures that process_m2v
+				// will misinterpret (potentially skipping valid data as "unexpected startcodes"),
+				// leading to stream corruption and timing issues.
+				if (cinfo_video->stream == CCX_STREAM_TYPE_VIDEO_MPEG1 ||
+				    cinfo_video->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
+				{
+					got = process_m2v(*enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+				}
+				else if (cinfo_video->stream == CCX_STREAM_TYPE_VIDEO_H264 || cinfo_video->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
+				{
+					// For H.264/HEVC, we cannot use process_m2v.
+					// We currently skip analysis for these formats in this loop to prevent infinite loops
+					// (if we returned 0, the loop would retry the same buffer forever).
+					// TODO: Implement proper H.264/HEVC analysis (e.g. process_avc) if needed.
+					got = data_node_video->len;
+				}
+				else
+				{
+					// Unknown or unhandled, process_m2v might be safe or default?
+					// But original behavior was unconditional process_m2v.
+					// Let's stick to process_m2v for "other" to minimize change,
+					// unless we want to be strict. Strict is better to avoid new bugs.
+					// But let's mirror the "MPEG-2" assumption of legacy code for non-H264.
+					got = process_m2v(*enc_ctx, dec_ctx_video, data_node_video->buffer, data_node_video->len, dec_sub_video);
+				}
+
 				if (got == 0 && data_node_video->len >= 1048576)
 				{
 					// Prevent infinite loop if decoder consumes nothing from a very large buffer (1MB)
