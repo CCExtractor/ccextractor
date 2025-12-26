@@ -4,6 +4,7 @@
 		<MediaTemplate EmbedCab="yes"/>
 		<Feature Id="CCX" Title="CCExtractor Setup" Level="1">
 			<ComponentGroupRef Id="CCX_Components_MainFolder"/>
+			<ComponentGroupRef Id="CCX_Components_tessdata"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_assets"/>
@@ -40,6 +41,7 @@
     </StandardDirectory>
 		<StandardDirectory Id="ProgramFiles6432Folder">
 			<Directory Id="INSTALLFOLDER" Name="CCExtractor">
+				<Directory Id="CCX_tessdata" Name="tessdata"/>
 				<Directory Id="CCX_data" Name="data">
 					<Directory Id="CCX_data_flutter_assets" Name="flutter_assets">
 						<Directory Id="CCX_data_flutter_assets_assets" Name="assets"/>
@@ -192,6 +194,15 @@
 			</Component>
 			<Component Id="cmpWmUnmaximize" Guid="{8F012345-6789-0123-8901-345678901234}">
 				<File Id="filWmUnmaximize" KeyPath="yes" Source="./installer/data/flutter_assets/packages/window_manager/images/ic_chrome_unmaximize.png"/>
+			</Component>
+		</ComponentGroup>
+		<!-- Tesseract OCR data files for HardSubx feature -->
+		<ComponentGroup Id="CCX_Components_tessdata" Directory="CCX_tessdata">
+			<Component Id="cmpTessdataEng" Guid="{A1234567-8901-2345-6789-0123456789AB}">
+				<File Id="filEngTraineddata" KeyPath="yes" Source="./installer/tessdata/eng.traineddata"/>
+			</Component>
+			<Component Id="cmpTessdataOsd" Guid="{B2345678-9012-3456-7890-123456789ABC}">
+				<File Id="filOsdTraineddata" KeyPath="yes" Source="./installer/tessdata/osd.traineddata"/>
 			</Component>
 		</ComponentGroup>
 	</Fragment>
