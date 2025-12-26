@@ -1733,6 +1733,22 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
 		// Get the current FTS, which will be the start_time of the new subtitle
 		LLONG next_start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+
+		if (!sub->prev)
+		{
+			// Previous subtitle is missing or invalid, skipping write_previous
+			enc_ctx->write_previous = 0;
+			if (enc_ctx->prev)
+			{
+				free_encoder_context(enc_ctx->prev);
+				enc_ctx->prev = NULL;
+				enc_ctx->prev = copy_encoder_context(enc_ctx);
+			}
+		}
+		else
+		{
+
+		// For DVB subtitles, a subtitle is displayed until the next one appears.
 		// For DVB subtitles, a subtitle is displayed until the next one appears.
 		// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
 		// This prevents any overlap between consecutive subtitles.
@@ -1787,6 +1803,8 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		{
 			encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
+
+
 			enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
 			enc_ctx->prev->last_string = NULL;
 
@@ -1799,8 +1817,12 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 			}
 		}
 	}
+	}
 	/* copy previous encoder context*/
+
 	free_encoder_context(enc_ctx->prev);
+
+
 	enc_ctx->prev = NULL;
 	enc_ctx->prev = copy_encoder_context(enc_ctx);
 
@@ -1828,6 +1850,10 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 
 	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
 	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+
+
+
+
 #ifdef ENABLE_OCR
 	if (sub->prev)
 	{
@@ -1903,6 +1929,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
 
+
+
 			switch (segment_type)
 			{
 				case DVBSUB_PAGE_SEGMENT:
@@ -1937,6 +1965,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
+
+
 					got_segment |= 16;
 					break;
 				default:

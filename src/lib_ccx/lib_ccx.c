@@ -202,6 +202,12 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->segment_counter = 0;
 	ctx->system_start_time = -1;
 
+	// Initialize pipeline infrastructure
+	ctx->pipeline_count = 0;
+	ctx->dec_dvb_default = NULL;
+	ctx->pipeline_lock = 0;
+	memset(ctx->pipelines, 0, sizeof(ctx->pipelines));
+
 end:
 	if (ret != EXIT_OK)
 	{
@@ -262,6 +268,30 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 			dinit_encoder(&enc_ctx, cfts);
 		}
 	}
+
+	// Cleanup subtitle pipelines (split DVB mode)
+	for (i = 0; i < lctx->pipeline_count; i++)
+	{
+		struct ccx_subtitle_pipeline *p = lctx->pipelines[i];
+		if (!p)
+			continue;
+
+		// 1) Close decoder first (no encoder dependency)
+		if (p->decoder)
+			dvbsub_close_decoder(&p->decoder);
+
+		// 2) Close encoder via canonical API (handles output cleanup internally)
+		if (p->encoder)
+			dinit_encoder(&p->encoder, 0);
+
+		// 3) Free timing context
+		if (p->timing)
+			dinit_timing_ctx(&p->timing);
+
+		free(p);
+		lctx->pipelines[i] = NULL;
+	}
+	lctx->pipeline_count = 0;
 
 	// free EPG memory
 	EPG_free(lctx);
@@ -486,4 +516,113 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
 {
 	return update_encoder_list_cinfo(ctx, NULL);
+}
+
+/**
+ * Get or create a subtitle pipeline for a specific PID/language.
+ * Used when --split-dvb-subs is enabled to route each DVB stream to its own output file.
+ */
+struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, int pid, int stream_type, const char *lang)
+{
+	int i;
+
+	// Search for existing pipeline
+	for (i = 0; i < ctx->pipeline_count; i++)
+	{
+		struct ccx_subtitle_pipeline *p = ctx->pipelines[i];
+		if (p && p->pid == pid && p->stream_type == stream_type &&
+		    strcmp(p->lang, lang) == 0)
+		{
+			return p;
+		}
+	}
+
+	// Check capacity
+	if (ctx->pipeline_count >= MAX_SUBTITLE_PIPELINES)
+	{
+		mprint("Warning: Maximum subtitle pipelines (%d) reached, cannot create new pipeline for PID 0x%X\n",
+		       MAX_SUBTITLE_PIPELINES, pid);
+		return NULL;
+	}
+
+	// Allocate new pipeline
+	struct ccx_subtitle_pipeline *pipe = calloc(1, sizeof(struct ccx_subtitle_pipeline));
+	if (!pipe)
+	{
+		mprint("Error: Failed to allocate memory for subtitle pipeline\n");
+		return NULL;
+	}
+
+	pipe->pid = pid;
+	pipe->stream_type = stream_type;
+	snprintf(pipe->lang, sizeof(pipe->lang), "%.3s", lang ? lang : "und");
+
+	// Generate output filename: {basefilename}_{lang}.ext or {basefilename}_0x{PID}.ext
+	const char *ext = ctx->extension ? ctx->extension : ".srt";
+	if (strcmp(pipe->lang, "und") == 0 || pipe->lang[0] == '\0')
+	{
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_0x%04X%s",
+		         ctx->basefilename, pid, ext);
+	}
+	else
+	{
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s%s",
+		         ctx->basefilename, pipe->lang, ext);
+	}
+
+	// Initialize encoder for this pipeline
+	struct encoder_cfg cfg = ccx_options.enc_cfg;
+	cfg.output_filename = pipe->filename;
+	pipe->encoder = init_encoder(&cfg);
+	if (!pipe->encoder)
+	{
+		mprint("Error: Failed to create encoder for pipeline PID 0x%X\n", pid);
+		free(pipe);
+		return NULL;
+	}
+	pipe->encoder->write_previous = 0; // DVB specific
+
+	// Timing context: Do NOT create a separate timing context for pipelines.
+	// Pipelines must share the main decoder's timing context (dec_ctx->timing).
+	// Creating a fresh timing context would have pts_set=No, causing decode failures.
+	// The encoder will receive timing from dec_ctx at decode time.
+	pipe->timing = NULL;
+
+	// Initialize DVB decoder
+	struct dvb_config dvb_cfg = {0};
+	dvb_cfg.n_language = 1;
+
+	// Lookup metadata to use correct Composition and Ancillary Page IDs
+	// This ensures we respect the configuration advertised in the PMT
+	if (ctx->demux_ctx)
+	{
+		for (i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
+		{
+			if (ctx->demux_ctx->potential_streams[i].pid == pid)
+			{
+				dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[i].composition_id;
+				dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[i].ancillary_id;
+				// Also update language if not provided/detected earlier?
+				// But we pass 'lang' argument to this function.
+				break;
+			}
+		}
+	}
+
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, 1);
+	if (!pipe->decoder)
+	{
+		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
+		dinit_encoder(&pipe->encoder, 0);
+		dinit_timing_ctx(&pipe->timing);
+		free(pipe);
+		return NULL;
+	}
+
+	// Register pipeline
+	ctx->pipelines[ctx->pipeline_count++] = pipe;
+
+	mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
+
+	return pipe;
 }

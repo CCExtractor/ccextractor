@@ -47,6 +47,8 @@ struct ccx_stream_metadata
 	int stream_type;  // Logical type (CCX_STREAM_TYPE_*)
 	int mpeg_type;    // Raw MPEG stream type from PMT (e.g., 0x06)
 	char lang[4];     // ISO 639-2/B three-letter language code
+	int composition_id;
+	int ancillary_id;
 };
 
 struct program_info

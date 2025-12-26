@@ -385,6 +385,41 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				if (CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
+					char detected_lang[4] = "und";
+
+					if (desc_len >= 3)
+					{
+						detected_lang[0] = (char)es_info[0];
+						detected_lang[1] = (char)es_info[1];
+						detected_lang[2] = (char)es_info[2];
+						detected_lang[3] = '\0';
+					}
+
+					// If split mode enabled, track for pipeline creation
+					if (ccx_options.split_dvb_subs && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+					{
+						int found = 0;
+						for (int k = 0; k < ctx->potential_stream_count; k++)
+						{
+							if (ctx->potential_streams[k].pid == (int)elementary_PID)
+							{
+								found = 1;
+								break;
+							}
+						}
+
+						if (!found)
+						{
+							ctx->potential_streams[ctx->potential_stream_count].pid = (int)elementary_PID;
+							ctx->potential_streams[ctx->potential_stream_count].stream_type = CCX_STREAM_TYPE_DVB_SUB;
+							ctx->potential_streams[ctx->potential_stream_count].mpeg_type = stream_type;
+							memcpy(ctx->potential_streams[ctx->potential_stream_count].lang, detected_lang, 4);
+							ctx->potential_stream_count++;
+
+							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s\n", elementary_PID, detected_lang);
+						}
+					}
+
 #ifndef ENABLE_OCR
 					if (ccx_options.write_format != CCX_OF_SPUPNG)
 					{
@@ -392,13 +427,28 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						continue;
 					}
 #endif
-					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB))
+					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB) &&
+					    !(ccx_options.split_dvb_subs && ctx->codec != CCX_CODEC_DVB))
 						continue;
 
 					memset((void *)&cnf, 0, sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf, es_info, desc_len);
 					if (ret < 0)
 						break;
+
+					// Update metadata with specific IDs
+					if (ccx_options.split_dvb_subs)
+					{
+						for (int k = 0; k < ctx->potential_stream_count; k++)
+						{
+							if (ctx->potential_streams[k].pid == (int)elementary_PID)
+							{
+								ctx->potential_streams[k].composition_id = cnf.composition_id[0];
+								ctx->potential_streams[k].ancillary_id = cnf.ancillary_id[0];
+								break;
+							}
+						}
+					}
 					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
 					if (!pinfo->initialized_ocr)
 						pinfo->initialized_ocr = 1;

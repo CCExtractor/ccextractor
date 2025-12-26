@@ -43,7 +43,18 @@ void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if (iter->pid != pid)
-			iter->ignore = 1;
+		{
+			// In split DVB mode, do NOT ignore DVB subtitle streams
+			// They need to remain in the datalist for secondary pass processing
+			if (ccx_options.split_dvb_subs && iter->codec == CCX_CODEC_DVB)
+			{
+				iter->ignore = 0;  // Keep DVB streams active
+			}
+			else
+			{
+				iter->ignore = 1;
+			}
+		}
 	}
 }
 

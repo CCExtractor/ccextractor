@@ -81,6 +81,23 @@ struct ccx_s_mp4Cfg
 	unsigned int mp4vidtrack : 1;
 };
 
+#define MAX_SUBTITLE_PIPELINES 64
+
+/**
+ * ccx_subtitle_pipeline - Encapsulates all components for a single subtitle output stream
+ */
+struct ccx_subtitle_pipeline
+{
+	int pid;
+	int stream_type;
+	char lang[4];
+	char filename[1024]; // Using fixed size instead of PATH_MAX to avoid header issues
+	struct ccx_s_write *writer;
+	struct encoder_ctx *encoder;
+	struct ccx_common_timing_ctx *timing;
+	void *decoder; // Pointer to decoder context (e.g., ccx_decoders_dvb_context)
+};
+
 struct lib_ccx_ctx
 {
 	// Stuff common to both loops
@@ -154,7 +171,15 @@ struct lib_ccx_ctx
 	int segment_on_key_frames_only;
 	int segment_counter;
 	LLONG system_start_time;
+
+	// Registration for multi-stream subtitle extraction
+	struct ccx_subtitle_pipeline *pipelines[MAX_SUBTITLE_PIPELINES];
+	int pipeline_count;
+	int pipeline_lock; // Simple lock flag (single-threaded access assumed)
+	void *dec_dvb_default; // Default decoder used in non-split mode
 };
+
+struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, int pid, int stream_type, const char *lang);
 
 struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries(struct lib_ccx_ctx **ctx);

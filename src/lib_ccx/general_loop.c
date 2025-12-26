@@ -982,10 +982,19 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	// struct encoder_ctx *enc_ctx = NULL;
 	//  Find most promising stream: teletex, DVB, ISDB
 	int pid = get_best_stream(ctx->demux_ctx);
+
+	// NOTE: For DVB split mode, we do NOT mutate pid here.
+	// Mutating pid to -1 causes demuxer PES buffer errors because it changes
+	// the stream selection semantics unexpectedly. Instead, we keep primary
+	// stream processing unchanged and handle DVB streams in a separate
+	// read-only secondary pass after the primary stream is processed.
+
 	if (pid < 0)
 	{
+		// Let get_best_data pick the primary stream (usually Teletext)
 		*data_node = get_best_data(*datalist);
 	}
+
 	else
 	{
 		ignore_other_stream(ctx->demux_ctx, pid);
@@ -1126,18 +1135,88 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		}
 		if ((*data_node)->bufferdatatype == CCX_TELETEXT && (*dec_ctx)->private_data) // if we have teletext subs, we set the min_pts here
 			set_tlt_delta(*dec_ctx, (*dec_ctx)->timing->current_pts);
+
+		// Primary stream processing (Teletext or whatever get_best_data selected)
 		ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+
 		if (*enc_ctx != NULL)
 		{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
 			{
 				*caps = 1;
-				/* Also update ret to indicate captions were found.
-				   This is needed for CEA-708 which writes directly via Rust
-				   and doesn't set got_output like CEA-608/DVB do. */
 				ret = 1;
 			}
 		}
+
+		// SECONDARY PASS: Process DVB streams in split mode
+		// DVB streams are parallel consumers, processed AFTER the primary stream
+		// This ensures Teletext controls timing/loop lifetime while DVB is extracted separately
+		if (ccx_options.split_dvb_subs)
+		{
+			// Guard: Only process DVB if timing has been initialized by Teletext
+			if ((*dec_ctx)->timing == NULL || (*dec_ctx)->timing->pts_set == 0)
+			{
+				goto skip_dvb_secondary_pass;
+			}
+
+			struct demuxer_data *dvb_ptr = *datalist;
+			while (dvb_ptr)
+			{
+				// Process DVB nodes that are NOT the primary data_node
+				if (dvb_ptr != *data_node &&
+				    dvb_ptr->codec == CCX_CODEC_DVB &&
+				    dvb_ptr->len > 0)
+				{
+					int stream_pid = dvb_ptr->stream_pid;
+					char lang[4] = "und";
+
+					// Lookup language from discovered streams
+					for (int i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
+					{
+						if (ctx->demux_ctx->potential_streams[i].pid == stream_pid)
+						{
+							memcpy(lang, ctx->demux_ctx->potential_streams[i].lang, 4);
+							break;
+						}
+					}
+
+					// Get or create pipeline for this DVB stream
+					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+					if (pipe && pipe->encoder && pipe->decoder)
+					{
+						// Save current decoder context and encoder context
+						void *saved_private = (*dec_ctx)->private_data;
+						struct encoder_ctx *saved_enc = *enc_ctx;
+
+						// Swap to pipeline's DVB decoder and encoder
+						(*dec_ctx)->private_data = pipe->decoder;
+						*enc_ctx = pipe->encoder;
+
+						// Sync timing from main context to pipeline encoder
+						// This ensures DVB decode has valid PTS/timing state
+						pipe->encoder->timing = (*dec_ctx)->timing;
+
+						// Decode DVB directly using pipeline's decoder and encoder
+						// Skip first 2 bytes (PES header) as done in process_data for DVB
+						struct cc_subtitle dvb_sub = {0};
+						dvbsub_decode(pipe->encoder, *dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &dvb_sub);
+
+						// Encode output if produced
+						if (dvb_sub.got_output)
+						{
+							encode_sub(pipe->encoder, &dvb_sub);
+							dvb_sub.got_output = 0;
+						}
+
+						// Restore original decoder/encoder context
+						(*dec_ctx)->private_data = saved_private;
+						*enc_ctx = saved_enc;
+					}
+				}
+				dvb_ptr = dvb_ptr->next_stream;
+			}
+		}
+skip_dvb_secondary_pass:
 
 		// Process the last subtitle for DVB
 		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
