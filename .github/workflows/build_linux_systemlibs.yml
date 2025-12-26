@@ -17,6 +17,9 @@ on:
       - '.github/workflows/build_linux_systemlibs.yml'
       - 'linux/build'
 
+permissions:
+  contents: write
+
 jobs:
   build-systemlibs:
     runs-on: ubuntu-22.04
