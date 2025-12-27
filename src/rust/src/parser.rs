@@ -1699,7 +1699,6 @@ impl OptionsExt for Options {
             }
 
             // Validate supported output formats
-            // Validate supported output formats
             match self.write_format {
                 OutputFormat::Srt
                 | OutputFormat::Sami
