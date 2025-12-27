@@ -287,6 +287,7 @@ impl FromCType<ccx_stream_mode_enum> for StreamMode {
             11 => StreamMode::Gxf,
             12 => StreamMode::Mkv,
             13 => StreamMode::Mxf,
+            14 => StreamMode::Scc,
             16 => StreamMode::Autodetect,
             _ => StreamMode::ElementaryOrNotFound,
         })
