@@ -1731,8 +1731,15 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
 		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
+		// Validate current_field before calling get_fts (valid: 1=field1, 2=field2, 3=CEA-708)
+		int caption_field = dec_ctx->current_field;
+		if (caption_field < 1 || caption_field > 3)
+		{
+			dbg_print(CCX_DMT_DVB, "DVB: invalid current_field %d, using default 1\\n", caption_field);
+			caption_field = 1;
+		}
 		// Get the current FTS, which will be the start_time of the new subtitle
-		LLONG next_start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+		LLONG next_start_time = get_fts(dec_ctx->timing, caption_field);
 
 		if (!sub->prev)
 		{
@@ -1841,7 +1848,11 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	sub->prev = NULL;
 	sub->prev = copy_subtitle(sub);
 	// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
-	sub->prev->start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+	// Validate current_field (valid: 1=field1, 2=field2, 3=CEA-708)
+	int sub_caption_field = dec_ctx->current_field;
+	if (sub_caption_field < 1 || sub_caption_field > 3)
+		sub_caption_field = 1;
+	sub->prev->start_time = get_fts(dec_ctx->timing, sub_caption_field);
 	// Store the raw PTS for accurate duration calculation (not affected by PTS jump handling)
 	sub->prev->start_pts = current_pts;
 
