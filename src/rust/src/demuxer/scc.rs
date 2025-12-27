@@ -8,8 +8,8 @@
 //! ```text
 //! Scenarist_SCC V1.0
 //!
-//! 00:00:00:00	9420 9420 94ad 94ad 9470 9470 4c6f 7265
-//! 00:00:02:15	942c 942c
+//! 00:00:00:00    9420 9420 94ad 94ad 9470 9470 4c6f 7265
+//! 00:00:02:15    942c 942c
 //! ```
 //!
 //! - **Header:** `Scenarist_SCC V1.0` (first line)
@@ -21,9 +21,10 @@
 pub const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
 
 /// Frame rate options for SMPTE timecode conversion
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SccFrameRate {
     /// NTSC drop-frame (default) - 29.97fps
+    #[default]
     Fps29_97,
     /// Film - 24fps
     Fps24,
@@ -31,12 +32,6 @@ pub enum SccFrameRate {
     Fps25,
     /// NTSC non-drop-frame - 30fps
     Fps30,
-}
-
-impl Default for SccFrameRate {
-    fn default() -> Self {
-        SccFrameRate::Fps29_97
-    }
 }
 
 impl SccFrameRate {
@@ -116,7 +111,7 @@ pub fn is_scc_file(buffer: &[u8]) -> bool {
 /// # Returns
 /// The time in milliseconds, or None if parsing fails
 pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
-    let parts: Vec<&str> = timecode.split(|c| c == ':' || c == ';').collect();
+    let parts: Vec<&str> = timecode.split([':', ';']).collect();
     if parts.len() != 4 {
         return None;
     }
@@ -157,7 +152,10 @@ pub fn parse_hex_pair(s: &str) -> Option<[u8; 2]> {
 /// # Returns
 /// Vector of byte pairs
 pub fn parse_hex_pairs(hex_str: &str) -> Vec<[u8; 2]> {
-    hex_str.split_whitespace().filter_map(parse_hex_pair).collect()
+    hex_str
+        .split_whitespace()
+        .filter_map(parse_hex_pair)
+        .collect()
 }
 
 /// Parse entire SCC file content
@@ -307,8 +305,14 @@ mod tests {
         );
 
         // Invalid timecodes
-        assert_eq!(parse_smpte_timecode("00:00:00", SccFrameRate::Fps29_97), None);
-        assert_eq!(parse_smpte_timecode("invalid", SccFrameRate::Fps29_97), None);
+        assert_eq!(
+            parse_smpte_timecode("00:00:00", SccFrameRate::Fps29_97),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("invalid", SccFrameRate::Fps29_97),
+            None
+        );
         assert_eq!(parse_smpte_timecode("", SccFrameRate::Fps29_97), None);
     }
 

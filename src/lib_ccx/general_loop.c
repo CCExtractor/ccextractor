@@ -575,7 +575,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	struct lib_cc_decode *dec_ctx = NULL;
 	int caps = 0;
 	int is_dvdraw = 0;     // Flag to track if this is DVD raw format
-	int is_scc = 0;        // Flag to track if this is SCC format
+	int is_scc = 0;	       // Flag to track if this is SCC format
 	int is_mcc_output = 0; // Flag for MCC output format
 
 	dec_ctx = update_decoder_list(ctx);
