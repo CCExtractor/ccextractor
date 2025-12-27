@@ -179,6 +179,7 @@ struct lib_ccx_ctx
 	int pipeline_count;
 	int pipeline_lock;     // Simple lock flag (single-threaded access assumed)
 	void *dec_dvb_default; // Default decoder used in non-split mode
+	void *shared_ocr_ctx;  // Shared OCR context to reduce memory usage
 };
 
 struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, int pid, int stream_type, const char *lang);

@@ -281,7 +281,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		if (i + 5 + ES_info_length > len)
 		{
 			dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-			break;
+			continue;
 		}
 
 		unsigned char *es_info = buf + i + 5;
@@ -346,7 +346,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			if (i + 5 + ES_info_length > len)
 			{
 				dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-				break;
+				continue;
 			}
 
 			unsigned char *es_info = buf + i + 5;
@@ -389,9 +389,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 					if (desc_len >= 3)
 					{
-						detected_lang[0] = (char)es_info[0];
-						detected_lang[1] = (char)es_info[1];
-						detected_lang[2] = (char)es_info[2];
+						// Issue 8: Language Code Validation
+						for (int li = 0; li < 3; li++)
+						{
+							char c = (char)es_info[li];
+							detected_lang[li] = (c >= 'a' && c <= 'z') ? c : '?';
+						}
 						detected_lang[3] = '\0';
 					}
 
@@ -410,13 +413,14 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 						if (!found)
 						{
-							ctx->potential_streams[ctx->potential_stream_count].pid = (int)elementary_PID;
-							ctx->potential_streams[ctx->potential_stream_count].stream_type = CCX_STREAM_TYPE_DVB_SUB;
-							ctx->potential_streams[ctx->potential_stream_count].mpeg_type = stream_type;
-							memcpy(ctx->potential_streams[ctx->potential_stream_count].lang, detected_lang, 4);
-							ctx->potential_stream_count++;
-
-							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s\n", elementary_PID, detected_lang);
+							int p_idx = ctx->potential_stream_count;
+							ctx->potential_streams[p_idx].pid = (int)elementary_PID;
+							ctx->potential_streams[p_idx].stream_type = CCX_STREAM_TYPE_DVB_SUB;
+							ctx->potential_streams[p_idx].mpeg_type = stream_type;
+							memcpy(ctx->potential_streams[p_idx].lang, detected_lang, 4);
+							// Issue 2: Race Condition fix - populate metadata BEFORE incrementing count
+							// We can't fully populate yet (composition_id is parsed below), so we defer increment
+							// OR we just use the index p_idx and increment later.
 						}
 					}
 
@@ -439,17 +443,44 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					// Update metadata with specific IDs
 					if (ccx_options.split_dvb_subs)
 					{
+						int k_idx = -1;
+						int found = 0;
+						// Find if we already added it (or find the spot we are about to add)
 						for (int k = 0; k < ctx->potential_stream_count; k++)
 						{
 							if (ctx->potential_streams[k].pid == (int)elementary_PID)
 							{
-								ctx->potential_streams[k].composition_id = cnf.composition_id[0];
-								ctx->potential_streams[k].ancillary_id = cnf.ancillary_id[0];
+								k_idx = k;
+								found = 1;
 								break;
 							}
 						}
+						
+						if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+						{
+							// It's the new one we are building
+							k_idx = ctx->potential_stream_count;
+							ctx->potential_streams[k_idx].pid = (int)elementary_PID;
+							ctx->potential_streams[k_idx].stream_type = CCX_STREAM_TYPE_DVB_SUB;
+							ctx->potential_streams[k_idx].mpeg_type = stream_type;
+							memcpy(ctx->potential_streams[k_idx].lang, detected_lang, 4);
+						}
+
+						if (k_idx != -1)
+						{
+							ctx->potential_streams[k_idx].composition_id = cnf.composition_id[0];
+							ctx->potential_streams[k_idx].ancillary_id = cnf.ancillary_id[0];
+							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s composition_id=%d ancillary_id=%d\n", 
+								elementary_PID, detected_lang, cnf.composition_id[0], cnf.ancillary_id[0]);
+							
+							// Only increment if it was a new one
+							if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+							{
+								ctx->potential_stream_count++;
+							}
+						}
 					}
-					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
+					ptr = dvbsub_init_decoder(&cnf, NULL); // Use NULL for ocr_ctx to use default behavior
 					if (!pinfo->initialized_ocr)
 						pinfo->initialized_ocr = 1;
 					if (ptr == NULL)

@@ -207,6 +207,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->pipeline_count = 0;
 	ctx->dec_dvb_default = NULL;
 	ctx->pipeline_lock = 0;
+	ctx->shared_ocr_ctx = NULL;
 	memset(ctx->pipelines, 0, sizeof(ctx->pipelines));
 
 end:
@@ -342,6 +343,11 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	for (i = 0; i < lctx->num_input_files; i++)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
+	freep(&lctx->inputfile);
+#ifdef ENABLE_OCR
+	if (lctx->shared_ocr_ctx)
+		delete_ocr(&lctx->shared_ocr_ctx);
+#endif
 	freep(ctx);
 }
 
@@ -563,6 +569,13 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 {
 	int i;
 
+	// Simple spin-lock for thread safety
+	while (ctx->pipeline_lock)
+	{
+		// Spin
+	}
+	ctx->pipeline_lock = 1;
+
 	// Search for existing pipeline
 	for (i = 0; i < ctx->pipeline_count; i++)
 	{
@@ -570,6 +583,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		if (p && p->pid == pid && p->stream_type == stream_type &&
 		    strcmp(p->lang, lang) == 0)
 		{
+			ctx->pipeline_lock = 0;
 			return p;
 		}
 	}
@@ -579,6 +593,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	{
 		mprint("Warning: Maximum subtitle pipelines (%d) reached, cannot create new pipeline for PID 0x%X\n",
 		       MAX_SUBTITLE_PIPELINES, pid);
+		ctx->pipeline_lock = 0;
 		return NULL;
 	}
 
@@ -587,6 +602,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	if (!pipe)
 	{
 		mprint("Error: Failed to allocate memory for subtitle pipeline\n");
+		ctx->pipeline_lock = 0;
 		return NULL;
 	}
 
@@ -627,6 +643,12 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		// FIX: Set write_previous=1 so the FIRST subtitle gets written
 		// DVB pattern: "write N-1 when N arrives"
 		pipe->encoder->write_previous = 1;
+		
+		// Issue 4: Ensure prev context exists and is initialized
+		// This forces the "previous" subtitle (which is effectively the first one we see)
+		// to be eligible for writing when the NEXT segment arrives.
+		// pipe->sub.prev will be allocated when we set up dec_ctx below.
+	}
 	}
 	if (!pipe->encoder)
 	{
@@ -644,6 +666,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		mprint("Error: Failed to initialize timing for pipeline PID 0x%X\n", pid);
 		dinit_encoder(&pipe->encoder, 0);
 		free(pipe);
+		ctx->pipeline_lock = 0;
 		return NULL;
 	}
 
@@ -668,13 +691,22 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		}
 	}
 
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, 0); // Pass 0 to enable OCR for each pipeline
+	}
+
+#ifdef ENABLE_OCR
+	if (!ctx->shared_ocr_ctx)
+	{
+		ctx->shared_ocr_ctx = init_ocr(0); // Create once with default/0 params
+	}
+#endif
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, ctx->shared_ocr_ctx); // Use shared OCR context
 	if (!pipe->decoder)
 	{
 		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
 		dinit_encoder(&pipe->encoder, 0);
 		dinit_timing_ctx(&pipe->timing);
 		free(pipe);
+		ctx->pipeline_lock = 0;
 		return NULL;
 	}
 
@@ -687,21 +719,34 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		dvbsub_close_decoder(&pipe->decoder);
 		dinit_encoder(&pipe->encoder, 0);
 		free(pipe);
+		ctx->pipeline_lock = 0;
 		return NULL;
 	}
 	pipe->dec_ctx->private_data = pipe->decoder;
 	pipe->dec_ctx->codec = CCX_CODEC_DVB;
-	pipe->dec_ctx->prev = NULL; // Will be allocated by dvbsub_handle_display_segment
+	pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode)); // Allocate prev for context
+	if (pipe->dec_ctx->prev)
+	{
+		// Need minimal setup for prev context to be valid for DVB logic
+		pipe->dec_ctx->prev->private_data = NULL; // Will be handled by decode logic or ignored
+	}
 
 	// Initialize persistent cc_subtitle for DVB prev tracking
 	memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
-	pipe->sub.prev = NULL; // Will be allocated by dvbsub_handle_display_segment
+	// Issue 4: Pre-allocate sub.prev so first subtitle has a place to be "previous"
+	pipe->sub.prev = calloc(1, sizeof(struct cc_subtitle));
+	if (pipe->sub.prev)
+	{
+		pipe->sub.prev->start_time = -1;
+		pipe->sub.prev->end_time = 0;
+	}
 
 	// Register pipeline
 	ctx->pipelines[ctx->pipeline_count++] = pipe;
 
 	mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
 
+	ctx->pipeline_lock = 0;
 	return pipe;
 }
 

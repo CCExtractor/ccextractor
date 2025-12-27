@@ -436,7 +436,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
+void *dvbsub_init_decoder(struct dvb_config *cfg, void *ocr_ctx)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext *)malloc(sizeof(DVBSubContext));
@@ -460,7 +460,11 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 	}
 
 #ifdef ENABLE_OCR
-	if (!initialized_ocr)
+	if (ocr_ctx)
+	{
+		ctx->ocr_ctx = ocr_ctx;
+	}
+	else
 	{
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 	}
@@ -1425,22 +1429,36 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	ctx->version = version;
 
 	//
+	// Issue 5: Spec-compliant Page Segment handling
 	if (page_state == 1 || page_state == 2)
 	{
+		// Mode change (1) or Acquisition point (2): Always clear display list
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
-	}
-
-	// KEY FIX: Only rebuild display_list if new regions are defined
-	int has_region_definitions = (buf + 6 <= buf_end); // Need at least 6 bytes for one region
-
-	if (has_region_definitions || page_state == 1 || page_state == 2)
-	{
-		// Clear and rebuild display_list
+		
 		tmp_display_list = ctx->display_list;
 		ctx->display_list = NULL;
+		
+		// If regions are provided, parsing loop below will rebuild ctx->display_list
+		// If no regions provided, ctx->display_list remains NULL (empty)
+	}
+	else if (has_region_definitions)
+	{
+		// Normal case (0) WITH new region definitions: clear and rebuild
+		tmp_display_list = ctx->display_list;
+		ctx->display_list = NULL;
+	}
+	else
+	{
+		// Normal case (0) WITHOUT region definitions: keep existing display_list (Arte fix)
+		// Do not clear ctx->display_list
+		tmp_display_list = NULL; // Nothing to free from old list
+	}
 
+	// Rebuild display list if we have regions to parse
+	if (has_region_definitions)
+	{
 		while (buf + 6 <= buf_end)
 		{
 			region_id = *buf++;
@@ -1477,18 +1495,14 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 			display->next = ctx->display_list;
 			ctx->display_list = display;
 		}
-
-		// Free any leftover regions that weren't reused
-		while (tmp_display_list)
-		{
-			display = tmp_display_list;
-			tmp_display_list = display->next;
-			free(display);
-		}
 	}
-	else
+
+	// Free any leftover regions that weren't reused
+	while (tmp_display_list)
 	{
-		//
+		display = tmp_display_list;
+		tmp_display_list = display->next;
+		free(display);
 	}
 
 	assert(buf <= buf_end);
@@ -1861,45 +1875,34 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		{
 
 			// For DVB subtitles, a subtitle is displayed until the next one appears.
-			// For DVB subtitles, a subtitle is displayed until the next one appears.
 			// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
 			// This prevents any overlap between consecutive subtitles.
-			if (next_start_time > sub->prev->start_time)
+			// Issue 7: Use FTS-based duration calculation always
+			LLONG fts_end_time = next_start_time;
+			
+			// If we have a timeout, respect it
+			if (sub->prev->time_out > 0)
 			{
-				sub->prev->end_time = next_start_time;
+				LLONG max_end = sub->prev->start_time + sub->prev->time_out;
+				if (fts_end_time > max_end || fts_end_time <= sub->prev->start_time)
+				{
+					fts_end_time = max_end;
+				}
 			}
 			else
 			{
-				// PTS jump or timeline reset - next_start is at or before our start.
-				// Calculate duration from raw PTS, but cap to reasonable maximum (5 seconds)
-				// to avoid creating subtitles that overlap excessively with subsequent ones.
-				LLONG duration_ms = 0;
-				if (sub->prev->start_pts > 0 && current_pts > sub->prev->start_pts)
-				{
-					duration_ms = (current_pts - sub->prev->start_pts) / (MPEG_CLOCK_FREQ / 1000);
-				}
-				// Cap duration to 4 seconds or timeout if smaller
-				LLONG max_duration = 4000; // 4 seconds
-				if (sub->prev->time_out > 0 && sub->prev->time_out < max_duration)
-				{
-					max_duration = sub->prev->time_out;
-				}
-				if (duration_ms > max_duration)
-				{
-					duration_ms = max_duration;
-				}
-				sub->prev->end_time = sub->prev->start_time + duration_ms;
+				// No timeout specified, clamp to reasonable max (e.g. 5s) if next sub is too far
+				if (fts_end_time - sub->prev->start_time > 5000)
+					fts_end_time = sub->prev->start_time + 5000;
 			}
-			// Sanity check: if end_time still <= start_time, use minimal duration
+
+			sub->prev->end_time = fts_end_time;
+
+			// Sanity check: if end_time still <= start_time (e.g. due to resets), force 1ms
 			if (sub->prev->end_time <= sub->prev->start_time)
 			{
 				dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
 				sub->prev->end_time = sub->prev->start_time + 1;
-			}
-			// Apply timeout limit if specified
-			if (sub->prev->time_out > 0 && sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
-			{
-				sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
 			}
 			int timeok = 1;
 			if (dec_ctx->extraction_start.set &&
@@ -1952,9 +1955,9 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	}
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
 
-	// Reset version in prev to force re-parsing next time we use this context
-	// This prevents the "skip parse because version match" bug on the echoed context
-	((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
+	// Issue 6: Removed workaround. Version management should be handled by logic, not forcing -1.
+	// Reference: ((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
+
 
 	/* copy previous subtitle */
 	free_subtitle(sub->prev);
