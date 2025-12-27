@@ -29,6 +29,8 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+- [Building on Windows using WSL](docs/build-wsl.md)
+
 Extracting subtitles is relatively simple. Just run the following command:
 
 `ccextractor <input>`
