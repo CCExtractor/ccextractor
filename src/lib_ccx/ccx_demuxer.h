@@ -84,6 +84,7 @@ struct cap_info
 	int prev_counter;
 	void *codec_private_data;
 	int ignore;
+	char lang[4]; // ISO 639-2 language code for DVB split mode
 
 	/**
 	  List joining all stream in TS
