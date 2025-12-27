@@ -1754,6 +1754,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 		int x_off = display->x_pos - x_pos;
 		int y_off = display->y_pos - y_pos;
+		static int oob_warning_printed = 0;
+		int oob_count = 0;
 		for (int y = 0; y < region->height; y++)
 		{
 			for (int x = 0; x < region->width; x++)
@@ -1761,11 +1763,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				int offset = ((y + y_off) * width) + x_off + x;
 				if (offset >= (width * height) || offset < 0)
 				{
-					mprint("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
-					       offset);
-					mprint("  Formula: offset=((y + y_off) * width) + x_off + x\n");
-					mprint("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d\n",
-					       y, y_off, width, x_off, x);
+					oob_count++;
+					if (!oob_warning_printed)
+					{
+						mprint("write_dvb_sub(): Out of bounds pixels detected (showing first occurrence only)\n");
+						mprint("  Formula: offset=((y + y_off) * width) + x_off + x\n");
+						mprint("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d, offset=%d\n",
+						       y, y_off, width, x_off, x, offset);
+						oob_warning_printed = 1;
+					}
 				}
 				else
 				{
