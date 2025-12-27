@@ -156,6 +156,8 @@ void init_options(struct ccx_s_options *options)
 	    options->settings_dtvcc.services_enabled, 0,
 	    CCX_DTVCC_MAX_SERVICES * sizeof(options->settings_dtvcc.services_enabled[0]));
 
+	options->scc_framerate = 0; // Default: 29.97fps
+
 #ifdef WITH_LIBCURL
 	options->curlposturl = NULL;
 #endif

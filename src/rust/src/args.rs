@@ -296,6 +296,11 @@ pub struct Args {
     /// DVD Recorder)
     #[arg(long="90090", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub mpeg90090: bool,
+    /// Set the frame rate for SCC (Scenarist Closed Caption) input files.
+    /// Valid values: 29.97 (default), 24, 25, 30
+    /// Example: --scc-framerate 25
+    #[arg(long="scc-framerate", verbatim_doc_comment, value_name="fps", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    pub scc_framerate: Option<String>,
     /// By default, ccextractor will process input files in
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you

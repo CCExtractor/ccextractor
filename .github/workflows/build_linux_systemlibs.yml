@@ -1,0 +1,154 @@
+name: Build Linux (System Libs)
+
+on:
+  # Build on releases
+  release:
+    types: [published]
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type (all, basic, hardsubx)'
+        required: false
+        default: 'all'
+  # Build on pushes to workflow file for testing
+  push:
+    paths:
+      - '.github/workflows/build_linux_systemlibs.yml'
+      - 'linux/build'
+
+permissions:
+  contents: write
+
+jobs:
+  build-systemlibs:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [basic, hardsubx]
+
+    steps:
+      - name: Check if should build this variant
+        id: should_build
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            INPUT_TYPE="${{ github.event.inputs.build_type }}"
+            if [ "$INPUT_TYPE" = "all" ] || [ "$INPUT_TYPE" = "${{ matrix.build_type }}" ]; then
+              echo "should_build=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/checkout@v6
+
+      - name: Install base dependencies
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            pkg-config \
+            zlib1g-dev \
+            libpng-dev \
+            libfreetype-dev \
+            libutf8proc-dev \
+            libgpac-dev \
+            libtesseract-dev \
+            libleptonica-dev \
+            tesseract-ocr-eng \
+            clang \
+            libclang-dev
+
+      - name: Install FFmpeg dependencies (HardSubX)
+        if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx'
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            libavcodec-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswscale-dev \
+            libswresample-dev \
+            libavfilter-dev \
+            libavdevice-dev \
+            libxcb1-dev \
+            libxcb-shm0-dev \
+            libx11-dev \
+            liblzma-dev
+
+      - name: Install Rust toolchain
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build with system libraries
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          cd linux
+          if [ "${{ matrix.build_type }}" = "hardsubx" ]; then
+            ./build -system-libs -hardsubx
+          else
+            ./build -system-libs
+          fi
+
+      - name: Verify build
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          ./linux/ccextractor --version
+          echo "=== Library dependencies ==="
+          ldd ./linux/ccextractor | grep -E 'freetype|png|utf8proc|tesseract|leptonica' || true
+
+      - name: Get output name
+        if: steps.should_build.outputs.should_build == 'true'
+        id: output_name
+        run: |
+          case "${{ matrix.build_type }}" in
+            basic)
+              echo "name=ccextractor-linux-systemlibs-x86_64" >> $GITHUB_OUTPUT
+              ;;
+            hardsubx)
+              echo "name=ccextractor-linux-systemlibs-hardsubx-x86_64" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Package binary
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          mkdir -p package
+          cp linux/ccextractor package/
+          # Create a simple README for the package
+          cat > package/README.txt << 'EOF'
+          CCExtractor - System Libraries Build
+          =====================================
+
+          This build uses system libraries (dynamic linking).
+
+          Required system packages (Debian/Ubuntu):
+            sudo apt install libgpac12 libtesseract5 libleptonica6 \
+                             libpng16-16 libfreetype6 libutf8proc3
+
+          For HardSubX builds, also install:
+            sudo apt install libavcodec60 libavformat60 libswscale7 libavfilter9
+
+          Run with: ./ccextractor --help
+          EOF
+          tar -czvf ${{ steps.output_name.outputs.name }}.tar.gz -C package .
+
+      - name: Upload artifact
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.output_name.outputs.name }}
+          path: ${{ steps.output_name.outputs.name }}.tar.gz
+
+      - name: Upload to Release
+        if: steps.should_build.outputs.should_build == 'true' && github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.output_name.outputs.name }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

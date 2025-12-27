@@ -1,26 +1,25 @@
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
-	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="200">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="CCExtractor" Language="1033" Version="$(AppVersion)" Manufacturer="CCExtractor development" UpgradeCode="e70dbe37-bb04-4c39-bedc-966a6b073bcf" InstallerVersion="500" Scope="perMachine">
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
 		<MediaTemplate EmbedCab="yes"/>
 		<Feature Id="CCX" Title="CCExtractor Setup" Level="1">
 			<ComponentGroupRef Id="CCX_Components_MainFolder"/>
+			<ComponentGroupRef Id="CCX_Components_tessdata"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_assets"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_fonts"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_shaders"/>
 			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_cupertino"/>
+			<ComponentGroupRef Id="CCX_Components_MainFolder_data_flutter_assets_window_manager"/>
 			<ComponentRef Id="ApplicationShortcutDesktop"/>
 		</Feature>
 		<Icon Id="ccxgui.exe" SourceFile="./installer/ccxgui.exe"/>
-		<!-- Use standard WixUI_InstallDir dialog set -->
-		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
-		<!-- Override dialog sequence to skip license dialog -->
-		<UI>
-			<!-- WelcomeDlg Next -> InstallDirDlg (skip LicenseAgreementDlg) -->
-			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Condition="NOT Installed" />
-			<!-- InstallDirDlg Back -> WelcomeDlg (skip LicenseAgreementDlg) -->
-			<Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" />
-		</UI>
+		<!-- Use custom UI without license dialog -->
+		<UIRef Id="CustomInstallDirUI" />
+		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+		<!-- Skip path validation (avoids "must be on local hard drive" errors) -->
+		<Property Id="WIXUI_DONTVALIDATEPATH" Value="1" />
 	</Package>
 	<Fragment>
 		<StandardDirectory Id="DesktopFolder">
@@ -42,13 +41,18 @@
     </StandardDirectory>
 		<StandardDirectory Id="ProgramFiles6432Folder">
 			<Directory Id="INSTALLFOLDER" Name="CCExtractor">
+				<Directory Id="CCX_tessdata" Name="tessdata"/>
 				<Directory Id="CCX_data" Name="data">
 					<Directory Id="CCX_data_flutter_assets" Name="flutter_assets">
 						<Directory Id="CCX_data_flutter_assets_assets" Name="assets"/>
 						<Directory Id="CCX_data_flutter_assets_fonts" Name="fonts"/>
+						<Directory Id="CCX_data_flutter_assets_shaders" Name="shaders"/>
 						<Directory Id="dirEE44DD2D485FE70BEAFB55755745AB6E" Name="packages">
 							<Directory Id="dir382F01892F72FB688A688BE6E01B93A3" Name="cupertino_icons">
 								<Directory Id="CCX_data_flutter_assets_cupertino" Name="assets"/>
+							</Directory>
+							<Directory Id="dirWindowManager" Name="window_manager">
+								<Directory Id="dirWindowManagerImages" Name="images"/>
 							</Directory>
 						</Directory>
 					</Directory>
@@ -117,7 +121,10 @@
 				<File Source="./installer/desktop_drop_plugin.dll" KeyPath="yes"/>
 			</Component>
 			<Component Guid="{BE7FE765-EBA8-4FAB-8864-8561C50D39CF}">
-				<File Source="./installer/window_size_plugin.dll" KeyPath="yes"/>
+				<File Source="./installer/screen_retriever_plugin.dll" KeyPath="yes"/>
+			</Component>
+			<Component Guid="{29012345-6789-0123-2345-789012345678}">
+				<File Source="./installer/window_manager_plugin.dll" KeyPath="yes"/>
 			</Component>
 			<!-- VC++ Runtime -->
 			<Component Guid="{32F0A64B-0C07-4807-A48C-714B2533A03C}">
@@ -139,6 +146,9 @@
 			</Component>
 		</ComponentGroup>
 		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets" Directory="CCX_data_flutter_assets">
+			<Component Id="cmpAssetManifestBin" Guid="{3A012345-6789-0123-3456-890123456789}">
+				<File Id="filAssetManifestBin" KeyPath="yes" Source="./installer/data/flutter_assets/AssetManifest.bin"/>
+			</Component>
 			<Component Id="cmp1C63471C238EEA92D0AE37BC7DF9E605" Guid="{DEAF277D-3D05-4B37-A732-9514B503B74A}">
 				<File Id="fil3F43BEEF0A85EE6619E4674CA43CB616" KeyPath="yes" Source="./installer/data/flutter_assets/AssetManifest.json"/>
 			</Component>
@@ -165,6 +175,34 @@
 		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_cupertino" Directory="CCX_data_flutter_assets_cupertino">
 			<Component Id="cmp18EDD5C842814546AE2A43759CD36C77" Guid="{30AFB9BB-1C7D-4CDB-ADCA-D0773F152B45}">
 				<File Id="fil341334402AF57DB92DF3F7C92E983317" KeyPath="yes" Source="./installer/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_shaders" Directory="CCX_data_flutter_assets_shaders">
+			<Component Id="cmpInkSparkleFrag" Guid="{4B012345-6789-0123-4567-901234567890}">
+				<File Id="filInkSparkleFrag" KeyPath="yes" Source="./installer/data/flutter_assets/shaders/ink_sparkle.frag"/>
+			</Component>
+		</ComponentGroup>
+		<ComponentGroup Id="CCX_Components_MainFolder_data_flutter_assets_window_manager" Directory="dirWindowManagerImages">
+			<Component Id="cmpWmClose" Guid="{5C012345-6789-0123-5678-012345678901}">
+				<File Id="filWmClose" KeyPath="yes" Source="./installer/data/flutter_assets/packages/window_manager/images/ic_chrome_close.png"/>
+			</Component>
+			<Component Id="cmpWmMaximize" Guid="{6D012345-6789-0123-6789-123456789012}">
+				<File Id="filWmMaximize" KeyPath="yes" Source="./installer/data/flutter_assets/packages/window_manager/images/ic_chrome_maximize.png"/>
+			</Component>
+			<Component Id="cmpWmMinimize" Guid="{7E012345-6789-0123-7890-234567890123}">
+				<File Id="filWmMinimize" KeyPath="yes" Source="./installer/data/flutter_assets/packages/window_manager/images/ic_chrome_minimize.png"/>
+			</Component>
+			<Component Id="cmpWmUnmaximize" Guid="{8F012345-6789-0123-8901-345678901234}">
+				<File Id="filWmUnmaximize" KeyPath="yes" Source="./installer/data/flutter_assets/packages/window_manager/images/ic_chrome_unmaximize.png"/>
+			</Component>
+		</ComponentGroup>
+		<!-- Tesseract OCR data files for HardSubx feature -->
+		<ComponentGroup Id="CCX_Components_tessdata" Directory="CCX_tessdata">
+			<Component Id="cmpTessdataEng" Guid="{A1234567-8901-2345-6789-0123456789AB}">
+				<File Id="filEngTraineddata" KeyPath="yes" Source="./installer/tessdata/eng.traineddata"/>
+			</Component>
+			<Component Id="cmpTessdataOsd" Guid="{B2345678-9012-3456-7890-123456789ABC}">
+				<File Id="filOsdTraineddata" KeyPath="yes" Source="./installer/tessdata/osd.traineddata"/>
 			</Component>
 		</ComponentGroup>
 	</Fragment>
