@@ -1030,6 +1030,10 @@ impl OptionsExt for Options {
                 DebugMessageMask::new(DebugMessageFlag::DVB, DebugMessageFlag::VERBOSE);
         }
 
+        if args.split_dvb_subs {
+            self.split_dvb_subs = true;
+        }
+
         if args.ignoreptsjumps {
             self.ignore_pts_jumps = true;
         }
@@ -1599,6 +1603,30 @@ impl OptionsExt for Options {
                 cause = ExitCause::IncompatibleParameters;
                 "You cannot use --out=spupng with -stdout.\n"
             );
+        }
+
+        // Validation for --split-dvb-subs option
+        if self.split_dvb_subs {
+            if self.cc_to_stdout {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with stdout.\n"
+                );
+            }
+
+            if !self.demux_cfg.ts_cappids.is_empty() {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with manual PID selection (-pn).\n"
+                );
+            }
+
+            if self.multiprogram {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "Error: --split-dvb-subs cannot be used with -multiprogram.\n"
+                );
+            }
         }
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {

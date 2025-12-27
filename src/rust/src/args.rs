@@ -155,6 +155,12 @@ pub struct Args {
     /// Write the DVB subtitle debug traces to console.
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub debugdvbsub: bool,
+    /// Extract each DVB subtitle stream to a separate file.
+    /// When multiple DVB subtitle streams are detected, this option
+    /// creates separate output files for each stream instead of
+    /// merging them into a single output file.
+    #[arg(long, verbatim_doc_comment, help_heading=FILE_NAME_RELATED_OPTIONS)]
+    pub split_dvb_subs: bool,
     /// Ignore PTS jumps (default).
     #[arg(long, help_heading=FILE_NAME_RELATED_OPTIONS)]
     pub ignoreptsjumps: bool,

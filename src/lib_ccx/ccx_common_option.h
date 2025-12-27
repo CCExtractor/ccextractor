@@ -98,6 +98,10 @@ struct ccx_s_options // Options from user parameters
 	int nohtmlescape;
 	int notypesetting;
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
+	
+	// [ADD THIS]
+	int split_dvb_subs; // If 1, extract each DVB stream to a separate file
+	
 	int print_file_reports;
 
 	ccx_decoder_608_settings settings_608;	   // Contains the settings for the 608 decoder.
