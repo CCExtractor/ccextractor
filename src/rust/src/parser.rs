@@ -1699,12 +1699,20 @@ impl OptionsExt for Options {
             }
 
             // Validate supported output formats
+            // Validate supported output formats
             match self.write_format {
-                OutputFormat::Srt | OutputFormat::Sami | OutputFormat::WebVtt | OutputFormat::Null => {}
+                OutputFormat::Srt
+                | OutputFormat::Sami
+                | OutputFormat::WebVtt
+                | OutputFormat::Null
+                | OutputFormat::Transcript
+                | OutputFormat::Ssa
+                | OutputFormat::SimpleXml
+                | OutputFormat::SmpteTt => {}
                 _ => {
                     fatal!(
                         cause = ExitCause::IncompatibleParameters;
-                        "Unsupported OutputFormat: {:?}. --split-dvb-subs requires SRT, SAMI, WebVTT, or NULL output format.", self.write_format
+                        "Unsupported OutputFormat: {:?}. --split-dvb-subs requires SRT, SAMI, WebVTT, Transcript, SSA, SimpleXML, SMPTE-TT or NULL output format.", self.write_format
                     );
                 }
             }
