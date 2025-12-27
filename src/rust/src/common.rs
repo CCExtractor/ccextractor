@@ -276,6 +276,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
     (*ccx_s_options).scc_framerate = options.scc_framerate;
+    // Also copy to enc_cfg so the encoder uses the same frame rate for SCC output
+    (*ccx_s_options).enc_cfg.scc_framerate = options.scc_framerate;
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
@@ -975,6 +977,7 @@ impl CType<encoder_cfg> for EncoderConfig {
                 null_pointer()
             },
             extract_only_708: self.extract_only_708 as _,
+            scc_framerate: 0, // Will be set from ccx_options.scc_framerate in copy_to_c
         }
     }
 }

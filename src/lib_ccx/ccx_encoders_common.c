@@ -840,6 +840,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->segment_pending = 0;
 	ctx->segment_last_key_frame = 0;
 	ctx->nospupngocr = opt->nospupngocr;
+	ctx->scc_framerate = opt->scc_framerate;
 
 	// Initialize teletext multi-page output arrays (issue #665)
 	ctx->tlt_out_count = 0;
