@@ -34,7 +34,14 @@
 static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int h, int linesize, int mode, int pid, int idx)
 {
 	// Intentionally empty - enable for debugging bitmap data if needed
-	(void)label; (void)data; (void)w; (void)h; (void)linesize; (void)mode; (void)pid; (void)idx;
+	(void)label;
+	(void)data;
+	(void)w;
+	(void)h;
+	(void)linesize;
+	(void)mode;
+	(void)pid;
+	(void)idx;
 }
 
 #define DVBSUB_PAGE_SEGMENT 0x10
@@ -50,20 +57,20 @@ static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int
 
 #define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
 	{                                                                                        \
-		cb = (cb1) - 128;                                                                \
-		cr = (cr1) - 128;                                                                \
+		cb = (cb1)-128;                                                                  \
+		cr = (cr1)-128;                                                                  \
 		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
 		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
 			ONE_HALF;                                                                \
 		b_add = FIX(1.77200 * 255.0 / 224.0) * cb + ONE_HALF;                            \
 	}
 
-#define YUV_TO_RGB2_CCIR(r, g, b, y1)                 \
-	{                                             \
-		y = ((y1) - 16) * FIX(255.0 / 219.0); \
-		r = cm[(y + r_add) >> SCALEBITS];     \
-		g = cm[(y + g_add) >> SCALEBITS];     \
-		b = cm[(y + b_add) >> SCALEBITS];     \
+#define YUV_TO_RGB2_CCIR(r, g, b, y1)               \
+	{                                           \
+		y = ((y1)-16) * FIX(255.0 / 219.0); \
+		r = cm[(y + r_add) >> SCALEBITS];   \
+		g = cm[(y + g_add) >> SCALEBITS];   \
+		b = cm[(y + b_add) >> SCALEBITS];   \
 	}
 
 #define times4(x) x, x, x, x
@@ -453,7 +460,8 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 	}
 
 #ifdef ENABLE_OCR
-	if (!initialized_ocr) {
+	if (!initialized_ocr)
+	{
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 	}
 #endif
@@ -1091,7 +1099,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		buf += 2;
 		bottom_field_len = RB16(buf);
 		buf += 2;
-if (buf + top_field_len + bottom_field_len > buf_end)
+		if (buf + top_field_len + bottom_field_len > buf_end)
 		{
 			mprint("dvbsub_parse_object_segment(): Field data size too large\n");
 			return -1;
@@ -1415,18 +1423,18 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	/* Convert time from second to ms */
 	ctx->time_out = timeout * 1000;
 	ctx->version = version;
-	
+
 	//
-if (page_state == 1 || page_state == 2)
+	if (page_state == 1 || page_state == 2)
 	{
-delete_regions(ctx);
+		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
 	}
 
 	// KEY FIX: Only rebuild display_list if new regions are defined
-	int has_region_definitions = (buf + 6 <= buf_end);  // Need at least 6 bytes for one region
-	
+	int has_region_definitions = (buf + 6 <= buf_end); // Need at least 6 bytes for one region
+
 	if (has_region_definitions || page_state == 1 || page_state == 2)
 	{
 		// Clear and rebuild display_list
@@ -1437,7 +1445,7 @@ delete_regions(ctx);
 		{
 			region_id = *buf++;
 			buf += 1;
-display = tmp_display_list;
+			display = tmp_display_list;
 			tmp_ptr = &tmp_display_list;
 
 			while (display && display->region_id != region_id)
@@ -1481,12 +1489,10 @@ display = tmp_display_list;
 	else
 	{
 		//
-}
+	}
 
 	assert(buf <= buf_end);
 }
-
-
 
 static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 						    const uint8_t *buf, int buf_size)
@@ -1557,7 +1563,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		{
 			// Heuristic Fix for Arte stream: Valid regions exist but Page Segment was empty.
 			// We auto-populate the display list assuming (0,0) coordinates.
-DVBSubRegion *r = ctx->region_list;
+			DVBSubRegion *r = ctx->region_list;
 			while (r)
 			{
 				// Only add regions with actual pixel data (non-empty pbuf)
@@ -1573,16 +1579,16 @@ DVBSubRegion *r = ctx->region_list;
 						}
 					}
 				}
-				
+
 				if (has_content)
 				{
 					DVBSubRegionDisplay *d = (DVBSubRegionDisplay *)malloc(sizeof(struct DVBSubRegionDisplay));
-					if (d) 
+					if (d)
 					{
 						memset(d, 0, sizeof(*d));
 						d->region_id = r->id;
-						d->x_pos = 0; 
-						d->y_pos = 0; 
+						d->x_pos = 0;
+						d->y_pos = 0;
 						d->next = ctx->display_list;
 						ctx->display_list = d;
 						// Force dirty so this region gets rendered
@@ -1591,7 +1597,7 @@ DVBSubRegion *r = ctx->region_list;
 				}
 				else
 				{
-}
+				}
 				r = r->next;
 			}
 		}
@@ -1614,9 +1620,9 @@ DVBSubRegion *r = ctx->region_list;
 	for (display = ctx->display_list; display; display = display->next)
 	{
 		region = get_region(ctx, display->region_id);
-if (region && region->dirty)
+		if (region && region->dirty)
 		{
-sub->nb_data++;
+			sub->nb_data++;
 		}
 	}
 	if (sub->nb_data <= 0)
@@ -1717,9 +1723,9 @@ sub->nb_data++;
 		memset(rect->data1, 0, 1024);
 		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
 		rect->nb_colors = (1 << region->depth); // CRITICAL FIX: OCR needs this to know palette size
-		
+
 		// User Quick Test
-assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
+		assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 	}
 
 	rect->x = x_pos + offset_x;
@@ -1764,7 +1770,8 @@ assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 				else
 				{
 					uint8_t c = (uint8_t)region->pbuf[y * region->width + x];
-					if (c != 0) {
+					if (c != 0)
+					{
 						// DEBUG: Found a non-zero pixel!
 						// mprint("DEBUG-PBUF: Found valid pixel %d at %d,%d\n", c, x, y);
 						// Only print once per frame to avoid spam, or rely on the final dump
@@ -1774,27 +1781,32 @@ assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 			}
 		}
 	}
-	
+
 	// DEBUG: Verify nonzero count manually
 	int nz_count = 0;
-	for(int k=0; k<width*height; k++) if(rect->data0[k]) nz_count++;
-sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
+	for (int k = 0; k < width * height; k++)
+		if (rect->data0[k])
+			nz_count++;
+	sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
 
 	// Perform OCR
 #ifdef ENABLE_OCR
 	char *ocr_str = NULL;
-if (ctx->ocr_ctx)
+	if (ctx->ocr_ctx)
 	{
 		// DEBUG: Dump before OCR
 		dump_rect_and_log("before_ocr", rect->data0, rect->w, rect->h, rect->linesize0, 1, 0x106, 0);
 
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
-if (ret >= 0 && ocr_str) {
-rect->ocr_text = ocr_str;
-		} else {
-rect->ocr_text = NULL;
+		if (ret >= 0 && ocr_str)
+		{
+			rect->ocr_text = ocr_str;
 		}
-		
+		else
+		{
+			rect->ocr_text = NULL;
+		}
+
 		// DEBUG: Dump after OCR (if modified)
 		dump_rect_and_log("after_ocr", rect->data0, rect->w, rect->h, rect->linesize0, ctx->display_definition ? 3 : 1, 0x106, 0);
 	}
@@ -1813,7 +1825,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 {
 	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
 	LLONG current_pts = dec_ctx->timing->current_pts;
-if (!enc_ctx)
+	if (!enc_ctx)
 		return;
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
@@ -1895,7 +1907,7 @@ if (!enc_ctx)
 			}
 			if (timeok)
 			{
-encode_sub(enc_ctx->prev, sub->prev); // we encode it
+				encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
 				enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
 				enc_ctx->prev->last_string = NULL;
@@ -1933,7 +1945,7 @@ encode_sub(enc_ctx->prev, sub->prev); // we encode it
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_handle_display_segment: Out of memory allocating private_data.");
 	}
 	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
-	
+
 	// Reset version in prev to force re-parsing next time we use this context
 	// This prevents the "skip parse because version match" bug on the echoed context
 	((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
@@ -2029,7 +2041,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
-switch (segment_type)
+			switch (segment_type)
 			{
 				case DVBSUB_PAGE_SEGMENT:
 					dbg_print(CCX_DMT_DVB, "(DVBSUB_PAGE_SEGMENT), SEGMENT LENGTH: %d", segment_length);
@@ -2049,7 +2061,7 @@ switch (segment_type)
 					got_segment |= 4;
 					break;
 				case DVBSUB_OBJECT_SEGMENT:
-dbg_print(CCX_DMT_DVB, "(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+					dbg_print(CCX_DMT_DVB, "(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					ret = dvbsub_parse_object_segment(ctx, p, segment_length);
 					if (ret < 0)
 						goto end;
@@ -2061,7 +2073,7 @@ dbg_print(CCX_DMT_DVB, "(DVBSUB_OBJECT_SEGMENT), SEGMENT LENGTH: %d", segment_le
 										segment_length);
 					break;
 				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
-// dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+							     // dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
 
 					got_segment |= 16;
@@ -2124,7 +2136,7 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 
 	if (cfg->n_language > 1)
 	{
-			mprint("DVB subtitles with multiple languages\n");
+		mprint("DVB subtitles with multiple languages\n");
 	}
 
 	if (cfg->n_language > MAX_LANGUAGE_PER_DESC)

@@ -289,7 +289,7 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 				{
 					current_fts = get_fts(p->dec_ctx->timing, p->dec_ctx->current_field);
 				}
-				
+
 				// Force end time if missing
 				if (p->dec_ctx->dec_sub.prev->end_time == 0)
 				{
@@ -298,7 +298,7 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 					else
 						p->dec_ctx->dec_sub.prev->end_time = p->dec_ctx->dec_sub.prev->start_time + 2000; // 2s fallback
 				}
-				
+
 				encode_sub(p->encoder->prev, p->dec_ctx->dec_sub.prev);
 			}
 		}
@@ -668,7 +668,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		}
 	}
 
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, 0);  // Pass 0 to enable OCR for each pipeline
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, 0); // Pass 0 to enable OCR for each pipeline
 	if (!pipe->decoder)
 	{
 		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
@@ -715,7 +715,7 @@ void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts)
 		return;
 
 	set_current_pts(pipe->timing, pts);
-	
+
 	// Initialize min_pts if not set
 	if (pipe->timing->min_pts == 0x01FFFFFFFFLL)
 	{
@@ -723,6 +723,6 @@ void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts)
 		pipe->timing->pts_set = 2; // MinPtsSet
 		pipe->timing->sync_pts = pts;
 	}
-	
+
 	set_fts(pipe->timing);
 }

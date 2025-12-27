@@ -95,9 +95,9 @@ struct ccx_subtitle_pipeline
 	struct ccx_s_write *writer;
 	struct encoder_ctx *encoder;
 	struct ccx_common_timing_ctx *timing;
-	void *decoder; // Pointer to decoder context (e.g., ccx_decoders_dvb_context)
+	void *decoder;		       // Pointer to decoder context (e.g., ccx_decoders_dvb_context)
 	struct lib_cc_decode *dec_ctx; // Full decoder context for DVB state management
-	struct cc_subtitle sub;        // Persistent cc_subtitle for DVB prev tracking
+	struct cc_subtitle sub;	       // Persistent cc_subtitle for DVB prev tracking
 };
 
 struct lib_ccx_ctx
@@ -177,7 +177,7 @@ struct lib_ccx_ctx
 	// Registration for multi-stream subtitle extraction
 	struct ccx_subtitle_pipeline *pipelines[MAX_SUBTITLE_PIPELINES];
 	int pipeline_count;
-	int pipeline_lock; // Simple lock flag (single-threaded access assumed)
+	int pipeline_lock;     // Simple lock flag (single-threaded access assumed)
 	void *dec_dvb_default; // Default decoder used in non-split mode
 };
 
