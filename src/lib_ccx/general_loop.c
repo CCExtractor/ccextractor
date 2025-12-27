@@ -1179,14 +1179,14 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			struct demuxer_data *dvb_ptr = *datalist;
 			while (dvb_ptr)
 			{
-				// Process DVB nodes (in split mode, even if they were the "best" stream, 
+				// Process DVB nodes (in split mode, even if they were the "best" stream,
 				// we route them here to ensure they get a proper named pipeline)
 				if (dvb_ptr->codec == CCX_CODEC_DVB &&
 				    dvb_ptr->len > 0)
 				{
 					int stream_pid = dvb_ptr->stream_pid;
 					char *lang = "unk";
-					
+
 					// Find language for this PID
 					struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
 					if (cinfo && cinfo->lang[0])
@@ -1194,7 +1194,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 
 					// Get or create pipeline for this DVB stream
 					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
-					
+
 					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
 					{
 						// Use pipeline's own independent timing context
@@ -1205,7 +1205,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						// Set the PTS for this DVB packet before decoding
 						// Without this, the DVB decoder will use stale timing
 						set_pipeline_pts(pipe, dvb_ptr->pts);
-						
+
 						// Create subtitle structure if needed
 						if (!pipe->dec_ctx->dec_sub.prev)
 						{
@@ -1255,7 +1255,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d) = NULL;
 	int ret = 0;
 	int caps = 0;
 

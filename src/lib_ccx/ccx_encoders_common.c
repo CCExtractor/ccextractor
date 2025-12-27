@@ -789,7 +789,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->write_format = opt->write_format;
 
 	ctx->last_string = NULL;
-	
+
 	// Deep copy transcript settings because opt is often stack-allocated and temporary
 	// Storing &opt->transcript_settings leads to Use-After-Free in copy_encoder_context
 	ctx->transcript_settings = malloc(sizeof(struct ccx_encoders_transcript_format));
