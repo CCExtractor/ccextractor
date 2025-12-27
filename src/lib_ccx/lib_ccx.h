@@ -182,6 +182,7 @@ struct lib_ccx_ctx
 };
 
 struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, int pid, int stream_type, const char *lang);
+void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts);
 
 struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries(struct lib_ccx_ctx **ctx);

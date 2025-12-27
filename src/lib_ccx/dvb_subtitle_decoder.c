@@ -27,8 +27,15 @@
 #include "ocr.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <time.h>
+
+// Debug stub for dump_rect_and_log - used in OCR debugging but not critical
+static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int h, int linesize, int mode, int pid, int idx)
+{
+	// Intentionally empty - enable for debugging bitmap data if needed
+	(void)label; (void)data; (void)w; (void)h; (void)linesize; (void)mode; (void)pid; (void)idx;
+}
 
 #define DVBSUB_PAGE_SEGMENT 0x10
 #define DVBSUB_REGION_SEGMENT 0x11

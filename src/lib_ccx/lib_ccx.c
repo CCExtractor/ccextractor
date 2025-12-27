@@ -704,3 +704,25 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 
 	return pipe;
 }
+
+/**
+ * Set PTS for a subtitle pipeline's timing context.
+ * This ensures the DVB decoder uses the correct timestamp for each packet.
+ */
+void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts)
+{
+	if (!pipe || !pipe->timing || pts == CCX_NOPTS)
+		return;
+
+	set_current_pts(pipe->timing, pts);
+	
+	// Initialize min_pts if not set
+	if (pipe->timing->min_pts == 0x01FFFFFFFFLL)
+	{
+		pipe->timing->min_pts = pts;
+		pipe->timing->pts_set = 2; // MinPtsSet
+		pipe->timing->sync_pts = pts;
+	}
+	
+	set_fts(pipe->timing);
+}
