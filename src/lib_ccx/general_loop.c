@@ -1136,8 +1136,14 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		if ((*data_node)->bufferdatatype == CCX_TELETEXT && (*dec_ctx)->private_data) // if we have teletext subs, we set the min_pts here
 			set_tlt_delta(*dec_ctx, (*dec_ctx)->timing->current_pts);
 
-		// Primary stream processing (Teletext or whatever get_best_data selected)
-		ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+		// Primary stream processing
+		// In split DVB mode, DVB streams are handled in the secondary pass below.
+		// We skip primary processing for DVB here to avoid double-processing (or processing as 'default' output).
+		// Teletext/other streams still go through here.
+		if (*data_node && !(ccx_options.split_dvb_subs && (*dec_ctx)->codec == CCX_CODEC_DVB))
+		{
+			ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+		}
 
 		if (*enc_ctx != NULL)
 		{
@@ -1154,57 +1160,46 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		if (ccx_options.split_dvb_subs)
 		{
 			// Guard: Only process DVB if timing has been initialized by Teletext
-			if ((*dec_ctx)->timing == NULL || (*dec_ctx)->timing->pts_set == 0)
-			{
-				goto skip_dvb_secondary_pass;
-			}
-
+			// if ((*dec_ctx)->timing == NULL || (*dec_ctx)->timing->pts_set == 0)
+			// {
+			// 	goto skip_dvb_secondary_pass;
 			struct demuxer_data *dvb_ptr = *datalist;
 			while (dvb_ptr)
 			{
-				// Process DVB nodes that are NOT the primary data_node
-				if (dvb_ptr != *data_node &&
-				    dvb_ptr->codec == CCX_CODEC_DVB &&
+				// Process DVB nodes (in split mode, even if they were the "best" stream, 
+				// we route them here to ensure they get a proper named pipeline)
+				if (dvb_ptr->codec == CCX_CODEC_DVB &&
 				    dvb_ptr->len > 0)
 				{
 					int stream_pid = dvb_ptr->stream_pid;
-					char lang[4] = "und";
-
-					// Lookup language from discovered streams
-					for (int i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
-					{
-						if (ctx->demux_ctx->potential_streams[i].pid == stream_pid)
-						{
-							memcpy(lang, ctx->demux_ctx->potential_streams[i].lang, 4);
-							break;
-						}
-					}
+					char *lang = "unk";
+					
+					// Find language for this PID
+					struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+					if (cinfo && cinfo->lang[0])
+						lang = cinfo->lang;
 
 					// Get or create pipeline for this DVB stream
 					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+					
 					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
 					{
-						// Sync timing from main context to pipeline's decoder context
-						// The pipeline uses the main timing context for timestamp calculations
-						pipe->dec_ctx->timing = (*dec_ctx)->timing;
-						pipe->encoder->timing = (*dec_ctx)->timing;
+						// Use pipeline's own independent timing context
+						// This avoids synchronization issues if primary stream (Teletext) has different timing characteristics
+						pipe->dec_ctx->timing = pipe->timing;
+						pipe->encoder->timing = pipe->timing;
 
 						// Set the PTS for this DVB packet before decoding
 						// Without this, the DVB decoder will use stale timing
-						if (dvb_ptr->pts != CCX_NOPTS)
+						set_pipeline_pts(pipe, dvb_ptr->pts);
+						
+						// Create subtitle structure if needed
+						if (!pipe->dec_ctx->dec_sub.prev)
 						{
-							struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
-							LLONG pts;
-							if (dvb_ptr->tb.num != 1 || dvb_ptr->tb.den != MPEG_CLOCK_FREQ)
-							{
-								pts = change_timebase(dvb_ptr->pts, dvb_ptr->tb, tb);
-							}
-							else
-							{
-								pts = dvb_ptr->pts;
-							}
-							set_current_pts(pipe->dec_ctx->timing, pts);
-							set_fts(pipe->dec_ctx->timing);
+							// This should be handled by get_or_create_pipeline but safety check
+							struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
+							memset(sub, 0, sizeof(struct cc_subtitle));
+							pipe->dec_ctx->dec_sub.prev = sub;
 						}
 
 						// Decode DVB using the per-pipeline decoder context

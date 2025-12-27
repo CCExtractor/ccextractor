@@ -494,11 +494,13 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 }
 struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
+	// mprint("DEBUG-TRACE: copy_encoder_context entered\n"); fflush(stdout);
 	struct encoder_ctx *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct encoder_ctx));
 	if (!ctx_copy)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating ctx_copy.");
 	memcpy(ctx_copy, ctx, sizeof(struct encoder_ctx));
+	// mprint("DEBUG-TRACE: copy_encoder_context struct copied\n"); fflush(stdout);
 
 	// Initialize copied pointers to NULL before re-allocating
 	ctx_copy->buffer = NULL;
@@ -536,6 +538,7 @@ struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 	}
 	if (ctx->timing)
 	{
+		// mprint("DEBUG-TRACE: copy_encoder_context copying timing\n"); fflush(stdout);
 		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
 		if (!ctx_copy->timing)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating timing.");
