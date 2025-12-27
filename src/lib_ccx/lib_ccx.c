@@ -5,6 +5,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "ccx_decoders_708.h"
 #include "ccx_decoders_isdb.h"
+#include "ccx_decoders_common.h"
 
 struct ccx_common_logging_t ccx_common_logging;
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
@@ -202,6 +203,13 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	ctx->segment_counter = 0;
 	ctx->system_start_time = -1;
 
+	// Initialize pipeline infrastructure
+	ctx->pipeline_count = 0;
+	ctx->dec_dvb_default = NULL;
+	ctx->pipeline_lock = 0;
+	ctx->shared_ocr_ctx = NULL;
+	memset(ctx->pipelines, 0, sizeof(ctx->pipelines));
+
 end:
 	if (ret != EXIT_OK)
 	{
@@ -263,6 +271,66 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		}
 	}
 
+	// Cleanup subtitle pipelines (split DVB mode)
+	for (i = 0; i < lctx->pipeline_count; i++)
+	{
+		struct ccx_subtitle_pipeline *p = lctx->pipelines[i];
+		if (!p)
+			continue;
+
+		// Correct closing order to ensure last subtitle is written
+		if (p->dec_ctx && p->encoder)
+		{
+			// Check if there's a pending subtitle in the prev buffer
+			if (p->dec_ctx->dec_sub.prev && p->dec_ctx->dec_sub.prev->data && p->encoder->prev)
+			{
+				// Calculate end time for the last subtitle
+				LLONG current_fts = 0;
+				if (p->dec_ctx->timing)
+				{
+					current_fts = get_fts(p->dec_ctx->timing, p->dec_ctx->current_field);
+				}
+
+				// Force end time if missing
+				if (p->dec_ctx->dec_sub.prev->end_time == 0)
+				{
+					if (current_fts > p->dec_ctx->dec_sub.prev->start_time)
+						p->dec_ctx->dec_sub.prev->end_time = current_fts;
+					else
+						p->dec_ctx->dec_sub.prev->end_time = p->dec_ctx->dec_sub.prev->start_time + 2000; // 2s fallback
+				}
+
+				encode_sub(p->encoder->prev, p->dec_ctx->dec_sub.prev);
+			}
+		}
+
+		if (p->decoder)
+			dvbsub_close_decoder(&p->decoder);
+
+		if (p->encoder)
+			dinit_encoder(&p->encoder, 0);
+
+		if (p->timing)
+			dinit_timing_ctx(&p->timing);
+
+		if (p->dec_ctx)
+		{
+			// private_data points to p->decoder which is freed above
+			if (p->dec_ctx->prev)
+			{
+				// prev->private_data is allocated by copy_decoder_context
+				freep(&p->dec_ctx->prev->private_data);
+				free(p->dec_ctx->prev);
+			}
+			p->dec_ctx->private_data = NULL;
+			free(p->dec_ctx);
+		}
+		free_subtitle(p->sub.prev);
+		free(p);
+		lctx->pipelines[i] = NULL;
+	}
+	lctx->pipeline_count = 0;
+
 	// free EPG memory
 	EPG_free(lctx);
 	freep(&lctx->freport.data_from_608);
@@ -275,6 +343,11 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	for (i = 0; i < lctx->num_input_files; i++)
 		freep(&lctx->inputfile[i]);
 	freep(&lctx->inputfile);
+	freep(&lctx->inputfile);
+#ifdef ENABLE_OCR
+	if (lctx->shared_ocr_ctx)
+		delete_ocr(&lctx->shared_ocr_ctx);
+#endif
 	freep(ctx);
 }
 
@@ -486,4 +559,215 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 struct encoder_ctx *update_encoder_list(struct lib_ccx_ctx *ctx)
 {
 	return update_encoder_list_cinfo(ctx, NULL);
+}
+
+/**
+ * Get or create a subtitle pipeline for a specific PID/language.
+ * Used when --split-dvb-subs is enabled to route each DVB stream to its own output file.
+ */
+struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, int pid, int stream_type, const char *lang)
+{
+	int i;
+
+	// Simple spin-lock for thread safety
+	while (ctx->pipeline_lock)
+	{
+		// Spin
+	}
+	ctx->pipeline_lock = 1;
+
+	// Search for existing pipeline
+	for (i = 0; i < ctx->pipeline_count; i++)
+	{
+		struct ccx_subtitle_pipeline *p = ctx->pipelines[i];
+		if (p && p->pid == pid && p->stream_type == stream_type &&
+		    strcmp(p->lang, lang) == 0)
+		{
+			ctx->pipeline_lock = 0;
+			return p;
+		}
+	}
+
+	// Check capacity
+	if (ctx->pipeline_count >= MAX_SUBTITLE_PIPELINES)
+	{
+		mprint("Warning: Maximum subtitle pipelines (%d) reached, cannot create new pipeline for PID 0x%X\n",
+		       MAX_SUBTITLE_PIPELINES, pid);
+		ctx->pipeline_lock = 0;
+		return NULL;
+	}
+
+	// Allocate new pipeline
+	struct ccx_subtitle_pipeline *pipe = calloc(1, sizeof(struct ccx_subtitle_pipeline));
+	if (!pipe)
+	{
+		mprint("Error: Failed to allocate memory for subtitle pipeline\n");
+		ctx->pipeline_lock = 0;
+		return NULL;
+	}
+
+	pipe->pid = pid;
+	pipe->stream_type = stream_type;
+	snprintf(pipe->lang, sizeof(pipe->lang), "%.3s", lang ? lang : "und");
+
+	// Generate output filename: {basefilename}_{lang}.ext or {basefilename}_0x{PID}.ext
+	const char *ext = ctx->extension ? ctx->extension : ".srt";
+	if (strcmp(pipe->lang, "und") == 0 || pipe->lang[0] == '\0')
+	{
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_0x%04X%s",
+			 ctx->basefilename, pid, ext);
+	}
+	else
+	{
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s%s",
+			 ctx->basefilename, pipe->lang, ext);
+	}
+
+	// Initialize encoder for this pipeline
+	struct encoder_cfg cfg = ccx_options.enc_cfg;
+	cfg.output_filename = pipe->filename;
+	pipe->encoder = init_encoder(&cfg);
+	// DVB subtitles require a 'prev' encoder context for buffering (write_previous logic).
+	// Without this, the first call to dvbsub_handle_display_segment may fail or result in no output.
+	if (pipe->encoder)
+	{
+		mprint("DEBUG-TRACE: Allocating prev context for PID 0x%X\n", pid);
+		pipe->encoder->prev = copy_encoder_context(pipe->encoder);
+		if (!pipe->encoder->prev)
+		{
+			mprint("Error: Failed to allocate prev context for PID 0x%X\n", pid);
+			dinit_encoder(&pipe->encoder, 0);
+			free(pipe);
+			return NULL;
+		}
+		// FIX: Set write_previous=1 so the FIRST subtitle gets written
+		// DVB pattern: "write N-1 when N arrives"
+		pipe->encoder->write_previous = 1;
+		
+		// Issue 4: Ensure prev context exists and is initialized
+		// This forces the "previous" subtitle (which is effectively the first one we see)
+		// to be eligible for writing when the NEXT segment arrives.
+		// pipe->sub.prev will be allocated when we set up dec_ctx below.
+	}
+	}
+	if (!pipe->encoder)
+	{
+		mprint("Error: Failed to create encoder for pipeline PID 0x%X\n", pid);
+		free(pipe);
+		return NULL;
+	}
+
+	// Timing context: Create independent timing context for pipeline
+	// This ensures DVB streams track their own PTS/FTS without race conditions
+	// with the primary Teletext stream.
+	pipe->timing = init_timing_ctx(&ccx_common_timing_settings);
+	if (!pipe->timing)
+	{
+		mprint("Error: Failed to initialize timing for pipeline PID 0x%X\n", pid);
+		dinit_encoder(&pipe->encoder, 0);
+		free(pipe);
+		ctx->pipeline_lock = 0;
+		return NULL;
+	}
+
+	// Initialize DVB decoder
+	struct dvb_config dvb_cfg = {0};
+	dvb_cfg.n_language = 1;
+
+	// Lookup metadata to use correct Composition and Ancillary Page IDs
+	// This ensures we respect the configuration advertised in the PMT
+	if (ctx->demux_ctx)
+	{
+		for (i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
+		{
+			if (ctx->demux_ctx->potential_streams[i].pid == pid)
+			{
+				dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[i].composition_id;
+				dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[i].ancillary_id;
+				// Also update language if not provided/detected earlier?
+				// But we pass 'lang' argument to this function.
+				break;
+			}
+		}
+	}
+
+	}
+
+#ifdef ENABLE_OCR
+	if (!ctx->shared_ocr_ctx)
+	{
+		ctx->shared_ocr_ctx = init_ocr(0); // Create once with default/0 params
+	}
+#endif
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, ctx->shared_ocr_ctx); // Use shared OCR context
+	if (!pipe->decoder)
+	{
+		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
+		dinit_encoder(&pipe->encoder, 0);
+		dinit_timing_ctx(&pipe->timing);
+		free(pipe);
+		ctx->pipeline_lock = 0;
+		return NULL;
+	}
+
+	// Initialize per-pipeline decoder context for DVB state management
+	// This is a minimal context - only the fields needed by dvbsub_decode
+	pipe->dec_ctx = calloc(1, sizeof(struct lib_cc_decode));
+	if (!pipe->dec_ctx)
+	{
+		mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
+		dvbsub_close_decoder(&pipe->decoder);
+		dinit_encoder(&pipe->encoder, 0);
+		free(pipe);
+		ctx->pipeline_lock = 0;
+		return NULL;
+	}
+	pipe->dec_ctx->private_data = pipe->decoder;
+	pipe->dec_ctx->codec = CCX_CODEC_DVB;
+	pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode)); // Allocate prev for context
+	if (pipe->dec_ctx->prev)
+	{
+		// Need minimal setup for prev context to be valid for DVB logic
+		pipe->dec_ctx->prev->private_data = NULL; // Will be handled by decode logic or ignored
+	}
+
+	// Initialize persistent cc_subtitle for DVB prev tracking
+	memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
+	// Issue 4: Pre-allocate sub.prev so first subtitle has a place to be "previous"
+	pipe->sub.prev = calloc(1, sizeof(struct cc_subtitle));
+	if (pipe->sub.prev)
+	{
+		pipe->sub.prev->start_time = -1;
+		pipe->sub.prev->end_time = 0;
+	}
+
+	// Register pipeline
+	ctx->pipelines[ctx->pipeline_count++] = pipe;
+
+	mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
+
+	ctx->pipeline_lock = 0;
+	return pipe;
+}
+
+/**
+ * Set PTS for a subtitle pipeline's timing context.
+ * This ensures the DVB decoder uses the correct timestamp for each packet.
+ */
+void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts)
+{
+	if (!pipe || !pipe->timing || pts == CCX_NOPTS)
+		return;
+
+	set_current_pts(pipe->timing, pts);
+
+	// Initialize min_pts if not set
+	if (pipe->timing->min_pts == 0x01FFFFFFFFLL)
+	{
+		pipe->timing->min_pts = pts;
+		pipe->timing->pts_set = 2; // MinPtsSet
+		pipe->timing->sync_pts = pts;
+	}
+
+	set_fts(pipe->timing);
 }
