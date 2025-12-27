@@ -202,6 +202,12 @@ int start_ccx()
 				if (!ret)
 					ret = tmp;
 				break;
+			case CCX_SM_SCC:
+				mprint("\rAnalyzing data in SCC (Scenarist Closed Caption) mode\n");
+				tmp = raw_loop(ctx);
+				if (!ret)
+					ret = tmp;
+				break;
 			case CCX_SM_RCWT:
 				mprint("\rAnalyzing data in CCExtractor's binary format\n");
 				tmp = rcwt_loop(ctx);
