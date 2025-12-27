@@ -202,6 +202,13 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	dec_ctx = update_decoder_list(ctx);
 	enc_ctx = update_encoder_list(ctx);
+
+	// Set buffer data type to CCX_PES for MP4/MOV MPEG-2 tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_PES;
+
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -248,6 +255,12 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_I
 	struct lib_cc_decode *dec_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
+
+	// Set buffer data type to CCX_H264 for MP4/MOV AVC tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_H264;
 
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
@@ -325,6 +338,12 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	// Enable HEVC mode
 	dec_ctx->avc_ctx->is_hevc = 1;
+
+	// Set buffer data type to CCX_H264 for MP4/MOV HEVC tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_H264;
 
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
