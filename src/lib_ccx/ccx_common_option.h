@@ -75,6 +75,9 @@ struct encoder_cfg
 	// MCC File
 	int force_dropframe; // 1 if dropframe frame count should be used. defaults to no drop frame.
 
+	// SCC output framerate
+	int scc_framerate; // SCC output framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+
 	// text -> png (text render)
 	char *render_font; // The font used to render text if needed (e.g. teletext->spupng)
 	char *render_font_italics;

@@ -484,12 +484,154 @@ void write_control_code(const int fd, const unsigned char channel, const enum co
  * @param row 0-14 (inclusive)
  * @param column 0-31 (inclusive)
  *
- * //TODO: Preamble code need to take into account font as well
- *
+ * Returns an indent-based preamble code (positions cursor at column with white color)
  */
 enum control_code get_preamble_code(const unsigned char row, const unsigned char column)
 {
 	return PREAMBLE_CC_START + 1 + (row * 8) + (column / 4);
+}
+
+/**
+ * Get byte2 value for a styled PAC (color/font at column 0)
+ * Returns 0x40-0x4F or 0x60-0x6F depending on the style
+ *
+ * @param color The color to use
+ * @param font The font style to use
+ * @param use_high_range If true, use 0x60-0x6F range instead of 0x40-0x4F
+ *
+ * PAC style encoding (byte2):
+ * 0x40/0x60: white, regular      0x41/0x61: white, underline
+ * 0x42/0x62: green, regular      0x43/0x63: green, underline
+ * 0x44/0x64: blue, regular       0x45/0x65: blue, underline
+ * 0x46/0x66: cyan, regular       0x47/0x67: cyan, underline
+ * 0x48/0x68: red, regular        0x49/0x69: red, underline
+ * 0x4a/0x6a: yellow, regular     0x4b/0x6b: yellow, underline
+ * 0x4c/0x6c: magenta, regular    0x4d/0x6d: magenta, underline
+ * 0x4e/0x6e: white, italics      0x4f/0x6f: white, italic underline
+ */
+static unsigned char get_styled_pac_byte2(enum ccx_decoder_608_color_code color, enum font_bits font, bool use_high_range)
+{
+	unsigned char base = use_high_range ? 0x60 : 0x40;
+	unsigned char style_offset;
+
+	// Handle italics specially - they're always white
+	if (font == FONT_ITALICS)
+		return base + 0x0e;
+	if (font == FONT_UNDERLINED_ITALICS)
+		return base + 0x0f;
+
+	// Map color to base offset (0, 2, 4, 6, 8, 10, 12)
+	switch (color)
+	{
+		case COL_WHITE:
+			style_offset = 0x00;
+			break;
+		case COL_GREEN:
+			style_offset = 0x02;
+			break;
+		case COL_BLUE:
+			style_offset = 0x04;
+			break;
+		case COL_CYAN:
+			style_offset = 0x06;
+			break;
+		case COL_RED:
+			style_offset = 0x08;
+			break;
+		case COL_YELLOW:
+			style_offset = 0x0a;
+			break;
+		case COL_MAGENTA:
+			style_offset = 0x0c;
+			break;
+		default:
+			// For unsupported colors (black, transparent, userdefined), fall back to white
+			style_offset = 0x00;
+			break;
+	}
+
+	// Add 1 for underlined
+	if (font == FONT_UNDERLINED)
+		style_offset += 1;
+
+	return base + style_offset;
+}
+
+/**
+ * Check if the row uses high range (0x60-0x6F) or low range (0x40-0x4F) for styled PACs
+ * Rows that have byte2 in 0x70-0x7F range for indents use 0x60-0x6F for styles
+ */
+static bool row_uses_high_range(unsigned char row)
+{
+	// Based on the preamble code table:
+	// Rows 2, 4, 6, 8, 10, 13, 15 use the "high" range (byte2 0x70-0x7F for indents)
+	// which corresponds to 0x60-0x6F for styled PACs
+	return (row == 1 || row == 3 || row == 5 || row == 7 || row == 9 || row == 12 || row == 14);
+}
+
+/**
+ * Write a styled PAC code (color/font at column 0) directly
+ * This is more efficient than using indent PAC + mid-row code when at column 0
+ *
+ * @param fd File descriptor
+ * @param channel Caption channel (1-4)
+ * @param row Row number (0-14)
+ * @param color Color to set
+ * @param font Font style to set
+ * @param disassemble If true, output assembly format
+ * @param bytes_written Pointer to byte counter
+ */
+static void write_styled_preamble(const int fd, const unsigned char channel, const unsigned char row,
+				  enum ccx_decoder_608_color_code color, enum font_bits font,
+				  const bool disassemble, unsigned int *bytes_written)
+{
+	// Get the preamble code for column 0 to obtain byte1
+	enum control_code base_preamble = get_preamble_code(row, 0);
+	unsigned char byte1 = odd_parity(get_first_byte(channel, base_preamble));
+
+	// Get styled byte2
+	bool use_high_range = row_uses_high_range(row);
+	unsigned char byte2 = odd_parity(get_styled_pac_byte2(color, font, use_high_range));
+
+	check_padding(fd, disassemble, bytes_written);
+
+	if (disassemble)
+	{
+		// Output assembly format like {0100Gr} for row 1, green
+		const char *color_names[] = {"Wh", "Gr", "Bl", "Cy", "R", "Y", "Ma", "Wh", "Bk", "Wh"};
+		const char *font_suffix = "";
+		if (font == FONT_UNDERLINED)
+			font_suffix = "U";
+		else if (font == FONT_ITALICS)
+			font_suffix = "I";
+		else if (font == FONT_UNDERLINED_ITALICS)
+			font_suffix = "IU";
+
+		fdprintf(fd, "{%02d00%s%s}", row + 1, color_names[color], font_suffix);
+	}
+	else
+	{
+		if (*bytes_written % 2 == 0)
+			write_wrapped(fd, " ", 1);
+		fdprintf(fd, "%02x%02x", byte1, byte2);
+	}
+	*bytes_written += 2;
+}
+
+/**
+ * Check if a styled PAC can be used (when color/font differs from white/regular and column is 0)
+ */
+static bool can_use_styled_pac(enum ccx_decoder_608_color_code color, enum font_bits font, unsigned char column)
+{
+	// Styled PACs can only be used at column 0
+	if (column != 0)
+		return false;
+
+	// If style is already white/regular, no need for styled PAC
+	if (color == COL_WHITE && font == FONT_REGULAR)
+		return false;
+
+	return true;
 }
 
 enum control_code get_tab_offset_code(const unsigned char column)
@@ -519,6 +661,23 @@ enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_
 	}
 }
 
+// Get frame rate value from scc_framerate setting
+// 0=29.97 (default), 1=24, 2=25, 3=30
+static float get_scc_fps(int scc_framerate)
+{
+	switch (scc_framerate)
+	{
+		case 1:
+			return 24.0f;
+		case 2:
+			return 25.0f;
+		case 3:
+			return 30.0f;
+		default:
+			return 29.97f;
+	}
+}
+
 void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool disassemble)
 {
 	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
@@ -528,8 +687,9 @@ void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool dis
 	unsigned hour, minute, second, milli;
 	millis_to_time(time, &hour, &minute, &second, &milli);
 
-	// SMPTE format
-	float frame = milli * 29.97 / 1000;
+	// SMPTE format - use configurable frame rate (issue #1191)
+	float fps = get_scc_fps(context->scc_framerate);
+	float frame = milli * fps / 1000;
 	fdprintf(context->out->fh, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
 }
 
@@ -578,6 +738,23 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			{
 				if (switch_font || switch_color)
 				{
+					// Optimization (issue #1191): Use styled PAC when at column 0 with non-default style
+					// This avoids needing a separate mid-row code
+					if (column == 0 && can_use_styled_pac(data->colors[row][column], data->fonts[row][column], 0))
+					{
+						write_styled_preamble(context->out->fh, data->channel, row,
+								      data->colors[row][column], data->fonts[row][column],
+								      disassemble, &bytes_written);
+						current_row = row;
+						current_column = 0;
+						current_font = data->fonts[row][column];
+						current_color = data->colors[row][column];
+						// Write the character and continue
+						write_character(context->out->fh, data->characters[row][column], disassemble, &bytes_written);
+						++current_column;
+						continue;
+					}
+
 					if (data->characters[row][column] == ' ')
 					{
 						// The MID-ROW code is going to move the cursor to the
