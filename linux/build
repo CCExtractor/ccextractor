@@ -65,13 +65,6 @@ if [ "$USE_SYSTEM_LIBS" = true ]; then
     
     PKG_CFLAGS="$(pkg-config --cflags libpng zlib freetype2 libutf8proc)"
     PKG_LIBS="$(pkg-config --libs libpng zlib freetype2 libutf8proc)"
-    
-    UTF8PROC_COMPAT=""
-    if [ ! -d /usr/include/utf8proc ] && [ -f /usr/include/utf8proc.h ]; then
-        mkdir -p ./utf8proc_compat/utf8proc
-        ln -sf /usr/include/utf8proc.h ./utf8proc_compat/utf8proc/utf8proc.h
-        UTF8PROC_COMPAT="-I./utf8proc_compat"
-    fi
 fi
 
 BLD_FLAGS="$BLD_FLAGS -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -DENABLE_OCR -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP"
@@ -140,7 +133,7 @@ if [ "$USE_SYSTEM_LIBS" = true ]; then
     GPAC_CFLAGS="$(pkg-config --cflags --silence-errors gpac)"
 
     BLD_INCLUDE="-I../src -I../src/lib_ccx -I../src/lib_ccx/zvbi -I../src/thirdparty/lib_hash \
-    $UTF8PROC_COMPAT $PKG_CFLAGS $LEPTONICA_CFLAGS $TESSERACT_CFLAGS $GPAC_CFLAGS"
+    $PKG_CFLAGS $LEPTONICA_CFLAGS $TESSERACT_CFLAGS $GPAC_CFLAGS"
 
     BLD_SOURCES="../src/ccextractor.c $SRC_CCX $SRC_HASH"
     # Preserve FFmpeg libraries if -hardsubx was specified
