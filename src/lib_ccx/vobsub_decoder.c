@@ -41,12 +41,12 @@ struct vobsub_ctrl_seq
 
 struct vobsub_ctx
 {
-	uint32_t palette[16];       /* RGBA palette from idx header */
-	int palette_parsed;         /* 1 if palette has been parsed */
+	uint32_t palette[16]; /* RGBA palette from idx header */
+	int palette_parsed;   /* 1 if palette has been parsed */
 	struct vobsub_ctrl_seq ctrl;
-	unsigned char *bitmap;      /* Decoded bitmap */
+	unsigned char *bitmap; /* Decoded bitmap */
 #ifdef ENABLE_OCR
-	void *ocr_ctx;              /* OCR context */
+	void *ocr_ctx; /* OCR context */
 #endif
 };
 
@@ -281,10 +281,10 @@ static void vobsub_generate_rgba_palette(struct vobsub_ctx *ctx, uint32_t *rgba_
 		{
 			/* Fallback: guess palette (grayscale levels) */
 			static const uint8_t level_map[4][4] = {
-				{0xff},
-				{0x00, 0xff},
-				{0x00, 0x80, 0xff},
-				{0x00, 0x55, 0xaa, 0xff},
+			    {0xff},
+			    {0x00, 0xff},
+			    {0x00, 0x80, 0xff},
+			    {0x00, 0x55, 0xaa, 0xff},
 			};
 
 			/* Count opaque colors */
