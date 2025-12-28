@@ -16,6 +16,9 @@ extern void ccxr_do_end_of_xds(
     struct ccx_decoders_xds_context *ctx,
     unsigned char expected_checksum);
 
+// declare setter function for TS_START_OF_XDS from C code
+extern void ccxr_set_ts_start_of_xds(long long value);
+
 LLONG ts_start_of_xds = -1; // Time at which we switched to XDS mode, =-1 hasn't happened yet
 
 static const char *XDSclasses[] =
@@ -907,6 +910,7 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum)
 {
 #ifndef DISABLE_RUST
+	ccxr_set_ts_start_of_xds(ts_start_of_xds);
 	ccxr_do_end_of_xds(sub, ctx, expected_checksum); // use the rust implementation
 	return;
 #endif
