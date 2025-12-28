@@ -1819,7 +1819,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	if (ctx->ocr_ctx)
 	{
 		// DEBUG: Dump before OCR
-		dump_rect_and_log("before_ocr", rect->data0, rect->w, rect->h, rect->linesize0, 1, 0x106, 0);
+		dump_rect_and_log("before_ocr", rect->data0, rect->w, rect->h, rect->linesize0, 1, 0, 0);
 
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0 && ocr_str)
@@ -1832,7 +1832,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		}
 
 		// DEBUG: Dump after OCR (if modified)
-		dump_rect_and_log("after_ocr", rect->data0, rect->w, rect->h, rect->linesize0, ctx->display_definition ? 3 : 1, 0x106, 0);
+		dump_rect_and_log("after_ocr", rect->data0, rect->w, rect->h, rect->linesize0, ctx->display_definition ? 3 : 1, 0, 0);
 	}
 	else
 	{
@@ -1858,7 +1858,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		int caption_field = dec_ctx->current_field;
 		if (caption_field < 1 || caption_field > 3)
 		{
-			dbg_print(CCX_DMT_DVB, "DVB: invalid current_field %d, using default 1\\n", caption_field);
+			dbg_print(CCX_DMT_DVB, "DVB: invalid current_field %d, using default 1\n", caption_field);
 			caption_field = 1;
 		}
 		// Get the current FTS, which will be the start_time of the new subtitle

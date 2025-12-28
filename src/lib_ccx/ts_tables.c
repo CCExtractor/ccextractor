@@ -393,7 +393,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						for (int li = 0; li < 3; li++)
 						{
 							char c = (char)es_info[li];
-							detected_lang[li] = (c >= 'a' && c <= 'z') ? c : '?';
+							detected_lang[li] = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) ? c : '?';
 						}
 						detected_lang[3] = '\0';
 					}
