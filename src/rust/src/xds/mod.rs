@@ -17,9 +17,10 @@ pub mod types;
 
 use crate::bindings::*;
 use crate::ctorust::FromCType;
-use crate::xds::handlers::do_end_of_xds;
+use crate::xds::handlers::{do_end_of_xds, TS_START_OF_XDS};
 use crate::xds::types::{copy_xds_context_from_rust_to_c, CcxDecodersXdsContext};
 use std::os::raw::c_int;
+use std::sync::atomic::Ordering;
 
 /// FFI wrapper for `do_end_of_xds`.
 ///
@@ -81,4 +82,10 @@ pub unsafe extern "C" fn ccxr_process_xds_bytes(
 
     // Write changes back to C
     copy_xds_context_from_rust_to_c(ctx, &rust_ctx);
+}
+
+/// setter function for TS_START_OF_XDS from C code
+#[no_mangle]
+pub extern "C" fn ccxr_set_ts_start_of_xds(value: i64) {
+    TS_START_OF_XDS.store(value, Ordering::SeqCst);
 }
