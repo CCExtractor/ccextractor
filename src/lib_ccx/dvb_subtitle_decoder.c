@@ -1414,6 +1414,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int page_state;
 	int timeout;
 	int version;
+	int has_region_definitions; // Declaration moved here for C89 compliance
 
 	if (buf_size < 2)
 		return;
@@ -1430,16 +1431,19 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 
 	//
 	// Issue 5: Spec-compliant Page Segment handling
+	// KEY FIX: Only rebuild display_list if new regions are defined
+	has_region_definitions = (buf + 6 <= buf_end); // Need at least 6 bytes for one region
+
 	if (page_state == 1 || page_state == 2)
 	{
 		// Mode change (1) or Acquisition point (2): Always clear display list
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
-		
+
 		tmp_display_list = ctx->display_list;
 		ctx->display_list = NULL;
-		
+
 		// If regions are provided, parsing loop below will rebuild ctx->display_list
 		// If no regions provided, ctx->display_list remains NULL (empty)
 	}
@@ -1849,7 +1853,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		return;
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
-		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
+		enc_ctx->prev->last_str = NULL; // Reset last recognized sub text
 		// Validate current_field before calling get_fts (valid: 1=field1, 2=field2, 3=CEA-708)
 		int caption_field = dec_ctx->current_field;
 		if (caption_field < 1 || caption_field > 3)
@@ -1879,7 +1883,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 			// This prevents any overlap between consecutive subtitles.
 			// Issue 7: Use FTS-based duration calculation always
 			LLONG fts_end_time = next_start_time;
-			
+
 			// If we have a timeout, respect it
 			if (sub->prev->time_out > 0)
 			{
@@ -1918,8 +1922,8 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 			{
 				encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
-				enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
-				enc_ctx->prev->last_string = NULL;
+				enc_ctx->last_str = enc_ctx->prev->last_str; // Update last recognized string (used in Matroska)
+				enc_ctx->prev->last_str = NULL;
 
 				enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
 				enc_ctx->prev_start = enc_ctx->prev->prev_start;
@@ -1957,7 +1961,6 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 
 	// Issue 6: Removed workaround. Version management should be handled by logic, not forcing -1.
 	// Reference: ((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
-
 
 	/* copy previous subtitle */
 	free_subtitle(sub->prev);

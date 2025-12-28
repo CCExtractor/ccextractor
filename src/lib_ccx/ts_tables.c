@@ -455,7 +455,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 								break;
 							}
 						}
-						
+
 						if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
 						{
 							// It's the new one we are building
@@ -470,9 +470,9 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						{
 							ctx->potential_streams[k_idx].composition_id = cnf.composition_id[0];
 							ctx->potential_streams[k_idx].ancillary_id = cnf.ancillary_id[0];
-							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s composition_id=%d ancillary_id=%d\n", 
-								elementary_PID, detected_lang, cnf.composition_id[0], cnf.ancillary_id[0]);
-							
+							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s composition_id=%d ancillary_id=%d\n",
+								  elementary_PID, detected_lang, cnf.composition_id[0], cnf.ancillary_id[0]);
+
 							// Only increment if it was a new one
 							if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
 							{

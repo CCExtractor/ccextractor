@@ -184,7 +184,7 @@ struct ccx_demuxer
 	int (*open)(struct ccx_demuxer *ctx, const char *file_name);
 	int (*is_open)(struct ccx_demuxer *ctx);
 	int (*get_stream_mode)(struct ccx_demuxer *ctx);
-	LLONG (*get_filesize)
+	LLONG(*get_filesize)
 	(struct ccx_demuxer *ctx);
 
 	// Stream discovery for multi-stream DVB subtitle extraction

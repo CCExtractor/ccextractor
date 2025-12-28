@@ -643,111 +643,110 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		// FIX: Set write_previous=1 so the FIRST subtitle gets written
 		// DVB pattern: "write N-1 when N arrives"
 		pipe->encoder->write_previous = 1;
-		
+
 		// Issue 4: Ensure prev context exists and is initialized
 		// This forces the "previous" subtitle (which is effectively the first one we see)
 		// to be eligible for writing when the NEXT segment arrives.
 		// pipe->sub.prev will be allocated when we set up dec_ctx below.
 	}
-	}
-	if (!pipe->encoder)
-	{
-		mprint("Error: Failed to create encoder for pipeline PID 0x%X\n", pid);
-		free(pipe);
-		return NULL;
-	}
+}
+if (!pipe->encoder)
+{
+	mprint("Error: Failed to create encoder for pipeline PID 0x%X\n", pid);
+	free(pipe);
+	return NULL;
+}
 
-	// Timing context: Create independent timing context for pipeline
-	// This ensures DVB streams track their own PTS/FTS without race conditions
-	// with the primary Teletext stream.
-	pipe->timing = init_timing_ctx(&ccx_common_timing_settings);
-	if (!pipe->timing)
-	{
-		mprint("Error: Failed to initialize timing for pipeline PID 0x%X\n", pid);
-		dinit_encoder(&pipe->encoder, 0);
-		free(pipe);
-		ctx->pipeline_lock = 0;
-		return NULL;
-	}
+// Timing context: Create independent timing context for pipeline
+// This ensures DVB streams track their own PTS/FTS without race conditions
+// with the primary Teletext stream.
+pipe->timing = init_timing_ctx(&ccx_common_timing_settings);
+if (!pipe->timing)
+{
+	mprint("Error: Failed to initialize timing for pipeline PID 0x%X\n", pid);
+	dinit_encoder(&pipe->encoder, 0);
+	free(pipe);
+	ctx->pipeline_lock = 0;
+	return NULL;
+}
 
-	// Initialize DVB decoder
-	struct dvb_config dvb_cfg = {0};
-	dvb_cfg.n_language = 1;
+// Initialize DVB decoder
+struct dvb_config dvb_cfg = {0};
+dvb_cfg.n_language = 1;
 
-	// Lookup metadata to use correct Composition and Ancillary Page IDs
-	// This ensures we respect the configuration advertised in the PMT
-	if (ctx->demux_ctx)
+// Lookup metadata to use correct Composition and Ancillary Page IDs
+// This ensures we respect the configuration advertised in the PMT
+if (ctx->demux_ctx)
+{
+	for (i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
 	{
-		for (i = 0; i < ctx->demux_ctx->potential_stream_count; i++)
+		if (ctx->demux_ctx->potential_streams[i].pid == pid)
 		{
-			if (ctx->demux_ctx->potential_streams[i].pid == pid)
-			{
-				dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[i].composition_id;
-				dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[i].ancillary_id;
-				// Also update language if not provided/detected earlier?
-				// But we pass 'lang' argument to this function.
-				break;
-			}
+			dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[i].composition_id;
+			dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[i].ancillary_id;
+			// Also update language if not provided/detected earlier?
+			// But we pass 'lang' argument to this function.
+			break;
 		}
 	}
-
-	}
+}
+}
 
 #ifdef ENABLE_OCR
-	if (!ctx->shared_ocr_ctx)
-	{
-		ctx->shared_ocr_ctx = init_ocr(0); // Create once with default/0 params
-	}
+if (!ctx->shared_ocr_ctx)
+{
+	ctx->shared_ocr_ctx = init_ocr(0); // Create once with default/0 params
+}
 #endif
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, ctx->shared_ocr_ctx); // Use shared OCR context
-	if (!pipe->decoder)
-	{
-		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
-		dinit_encoder(&pipe->encoder, 0);
-		dinit_timing_ctx(&pipe->timing);
-		free(pipe);
-		ctx->pipeline_lock = 0;
-		return NULL;
-	}
-
-	// Initialize per-pipeline decoder context for DVB state management
-	// This is a minimal context - only the fields needed by dvbsub_decode
-	pipe->dec_ctx = calloc(1, sizeof(struct lib_cc_decode));
-	if (!pipe->dec_ctx)
-	{
-		mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
-		dvbsub_close_decoder(&pipe->decoder);
-		dinit_encoder(&pipe->encoder, 0);
-		free(pipe);
-		ctx->pipeline_lock = 0;
-		return NULL;
-	}
-	pipe->dec_ctx->private_data = pipe->decoder;
-	pipe->dec_ctx->codec = CCX_CODEC_DVB;
-	pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode)); // Allocate prev for context
-	if (pipe->dec_ctx->prev)
-	{
-		// Need minimal setup for prev context to be valid for DVB logic
-		pipe->dec_ctx->prev->private_data = NULL; // Will be handled by decode logic or ignored
-	}
-
-	// Initialize persistent cc_subtitle for DVB prev tracking
-	memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
-	// Issue 4: Pre-allocate sub.prev so first subtitle has a place to be "previous"
-	pipe->sub.prev = calloc(1, sizeof(struct cc_subtitle));
-	if (pipe->sub.prev)
-	{
-		pipe->sub.prev->start_time = -1;
-		pipe->sub.prev->end_time = 0;
-	}
-
-	// Register pipeline
-	ctx->pipelines[ctx->pipeline_count++] = pipe;
-
-	mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
-
+pipe->decoder = dvbsub_init_decoder(&dvb_cfg, ctx->shared_ocr_ctx); // Use shared OCR context
+if (!pipe->decoder)
+{
+	mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
+	dinit_encoder(&pipe->encoder, 0);
+	dinit_timing_ctx(&pipe->timing);
+	free(pipe);
 	ctx->pipeline_lock = 0;
-	return pipe;
+	return NULL;
+}
+
+// Initialize per-pipeline decoder context for DVB state management
+// This is a minimal context - only the fields needed by dvbsub_decode
+pipe->dec_ctx = calloc(1, sizeof(struct lib_cc_decode));
+if (!pipe->dec_ctx)
+{
+	mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
+	dvbsub_close_decoder(&pipe->decoder);
+	dinit_encoder(&pipe->encoder, 0);
+	free(pipe);
+	ctx->pipeline_lock = 0;
+	return NULL;
+}
+pipe->dec_ctx->private_data = pipe->decoder;
+pipe->dec_ctx->codec = CCX_CODEC_DVB;
+pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode)); // Allocate prev for context
+if (pipe->dec_ctx->prev)
+{
+	// Need minimal setup for prev context to be valid for DVB logic
+	pipe->dec_ctx->prev->private_data = NULL; // Will be handled by decode logic or ignored
+}
+
+// Initialize persistent cc_subtitle for DVB prev tracking
+memset(&pipe->sub, 0, sizeof(struct cc_subtitle));
+// Issue 4: Pre-allocate sub.prev so first subtitle has a place to be "previous"
+pipe->sub.prev = calloc(1, sizeof(struct cc_subtitle));
+if (pipe->sub.prev)
+{
+	pipe->sub.prev->start_time = -1;
+	pipe->sub.prev->end_time = 0;
+}
+
+// Register pipeline
+ctx->pipelines[ctx->pipeline_count++] = pipe;
+
+mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
+
+ctx->pipeline_lock = 0;
+return pipe;
 }
 
 /**
