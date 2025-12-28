@@ -524,8 +524,10 @@ static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 trac
 							free(rect[j].data0);
 						if (rect[j].data1)
 							free(rect[j].data1);
+#ifdef ENABLE_OCR
 						if (rect[j].ocr_text)
 							free(rect[j].ocr_text);
+#endif
 					}
 					free(vob_sub.data);
 				}

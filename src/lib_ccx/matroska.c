@@ -1515,8 +1515,10 @@ static void process_vobsub_track_ocr(struct matroska_ctx *mkv_ctx, struct matros
 						free(rect[j].data0);
 					if (rect[j].data1)
 						free(rect[j].data1);
+#ifdef ENABLE_OCR
 					if (rect[j].ocr_text)
 						free(rect[j].ocr_text);
+#endif
 				}
 				free(sub.data);
 			}
