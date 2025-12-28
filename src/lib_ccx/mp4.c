@@ -12,6 +12,7 @@
 #include "ccx_mp4.h"
 #include "activity.h"
 #include "ccx_dtvcc.h"
+#include "vobsub_decoder.h"
 
 #define MEDIA_TYPE(type, subtype) (((u64)(type) << 32) + (subtype))
 
@@ -23,6 +24,11 @@
 #endif
 #ifndef GF_ISOM_SUBTYPE_HVC1
 #define GF_ISOM_SUBTYPE_HVC1 GF_4CC('h', 'v', 'c', '1')
+#endif
+
+// VOBSUB subtype (mp4s or MPEG)
+#ifndef GF_ISOM_SUBTYPE_MPEG4
+#define GF_ISOM_SUBTYPE_MPEG4 GF_4CC('M', 'P', 'E', 'G')
 #endif
 
 static short bswap16(short v)
@@ -410,6 +416,142 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 	return status;
 }
 
+static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
+{
+	u32 timescale, i, sample_count;
+	int status = 0;
+	struct lib_cc_decode *dec_ctx = NULL;
+	struct encoder_ctx *enc_ctx = NULL;
+	struct vobsub_ctx *vob_ctx = NULL;
+
+	dec_ctx = update_decoder_list(ctx);
+	enc_ctx = update_encoder_list(ctx);
+
+	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
+	{
+		return 0;
+	}
+
+	timescale = gf_isom_get_media_timescale(f, track);
+
+	/* Check if OCR is available */
+	if (!vobsub_ocr_available())
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR support.\n"
+		      "Please rebuild CCExtractor with -DWITH_OCR=ON");
+	}
+
+	/* Initialize VOBSUB decoder */
+	vob_ctx = init_vobsub_decoder();
+	if (!vob_ctx)
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB decoder initialization failed.\n"
+		      "Please ensure Tesseract is installed with language data.");
+	}
+
+	/* Try to get decoder config for palette info */
+	GF_GenericSampleDescription *gdesc = gf_isom_get_generic_sample_description(f, track, 1);
+	if (gdesc && gdesc->extension_buf && gdesc->extension_buf_size > 0)
+	{
+		/* The extension buffer may contain an idx-like header with palette */
+		char *header = malloc(gdesc->extension_buf_size + 1);
+		if (header)
+		{
+			memcpy(header, gdesc->extension_buf, gdesc->extension_buf_size);
+			header[gdesc->extension_buf_size] = '\0';
+			vobsub_parse_palette(vob_ctx, header);
+			free(header);
+		}
+	}
+	if (gdesc)
+		free(gdesc);
+
+	mprint("Processing VOBSUB track (%u samples)\n", sample_count);
+
+	for (i = 0; i < sample_count; i++)
+	{
+		u32 sdi;
+		GF_ISOSample *s = gf_isom_get_sample(f, track, i + 1, &sdi);
+
+		if (s != NULL)
+		{
+			s32 signed_cts = (s32)s->CTS_Offset;
+			LLONG start_time_ms = (LLONG)((s->DTS + signed_cts) * 1000) / timescale;
+
+			/* Calculate end time from next sample if available */
+			LLONG end_time_ms = 0;
+			if (i + 1 < sample_count)
+			{
+				u32 next_sdi;
+				GF_ISOSample *next_s = gf_isom_get_sample(f, track, i + 2, &next_sdi);
+				if (next_s)
+				{
+					s32 next_signed_cts = (s32)next_s->CTS_Offset;
+					end_time_ms = (LLONG)((next_s->DTS + next_signed_cts) * 1000) / timescale;
+					gf_isom_sample_del(&next_s);
+				}
+			}
+			if (end_time_ms == 0)
+				end_time_ms = start_time_ms + 5000; /* Default 5 second duration */
+
+			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+			set_fts(dec_ctx->timing);
+
+			/* Decode SPU and run OCR */
+			struct cc_subtitle vob_sub;
+			memset(&vob_sub, 0, sizeof(vob_sub));
+
+			int ret = vobsub_decode_spu(vob_ctx,
+						    (unsigned char *)s->data, s->dataLength,
+						    start_time_ms, end_time_ms,
+						    &vob_sub);
+
+			if (ret == 0 && vob_sub.got_output)
+			{
+				/* Encode the subtitle to output format */
+				encode_sub(enc_ctx, &vob_sub);
+				sub->got_output = 1;
+
+				/* Free subtitle data */
+				if (vob_sub.data)
+				{
+					struct cc_bitmap *rect = (struct cc_bitmap *)vob_sub.data;
+					for (int j = 0; j < vob_sub.nb_data; j++)
+					{
+						if (rect[j].data0)
+							free(rect[j].data0);
+						if (rect[j].data1)
+							free(rect[j].data1);
+						if (rect[j].ocr_text)
+							free(rect[j].ocr_text);
+					}
+					free(vob_sub.data);
+				}
+			}
+
+			gf_isom_sample_del(&s);
+		}
+
+		int progress = (int)((i * 100) / sample_count);
+		if (ctx->last_reported_progress != progress)
+		{
+			int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+			activity_progress(progress, cur_sec / 60, cur_sec % 60);
+			ctx->last_reported_progress = progress;
+		}
+	}
+
+	int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+	activity_progress(100, cur_sec / 60, cur_sec % 60);
+
+	delete_vobsub_decoder(&vob_ctx);
+	mprint("VOBSUB processing complete\n");
+
+	return status;
+}
+
 static char *format_duration(u64 dur, u32 timescale, char *szDur, size_t szDur_size)
 {
 	u32 h, m, s, ms;
@@ -764,6 +906,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	avc_track_count = 0;
 	hevc_track_count = 0;
 	cc_track_count = 0;
+	u32 vobsub_track_count = 0;
 
 	for (i = 0; i < track_count; i++)
 	{
@@ -779,9 +922,11 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 			avc_track_count++;
 		if (type == GF_ISOM_MEDIA_VISUAL && (subtype == GF_ISOM_SUBTYPE_HEV1 || subtype == GF_ISOM_SUBTYPE_HVC1))
 			hevc_track_count++;
+		if (type == GF_ISOM_MEDIA_SUBPIC && subtype == GF_ISOM_SUBTYPE_MPEG4)
+			vobsub_track_count++;
 	}
 
-	mprint("MP4: found %u tracks: %u avc, %u hevc and %u cc\n", track_count, avc_track_count, hevc_track_count, cc_track_count);
+	mprint("MP4: found %u tracks: %u avc, %u hevc, %u cc, %u vobsub\n", track_count, avc_track_count, hevc_track_count, cc_track_count, vobsub_track_count);
 
 	for (i = 0; i < track_count; i++)
 	{
@@ -896,6 +1041,24 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					mp4_ret = 1;
 					encode_sub(enc_ctx, &dec_sub);
 					dec_sub.got_output = 0;
+				}
+				break;
+
+			case MEDIA_TYPE(GF_ISOM_MEDIA_SUBPIC, GF_ISOM_SUBTYPE_MPEG4): // subp:MPEG (VOBSUB)
+				// If there are multiple VOBSUB tracks, change fd for different tracks
+				if (vobsub_track_count > 1)
+				{
+					switch_output_file(ctx, enc_ctx, i);
+				}
+				if (process_vobsub_track(ctx, f, i + 1, &dec_sub) != 0)
+				{
+					mprint("Error on process_vobsub_track()\n");
+					free(dec_ctx->xds_ctx);
+					return -3;
+				}
+				if (dec_sub.got_output)
+				{
+					mp4_ret = 1;
 				}
 				break;
 
@@ -1038,9 +1201,14 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		mprint("Found no HEVC track(s). ");
 
 	if (cc_track_count)
-		mprint("Found %d CC track(s).\n", cc_track_count);
+		mprint("Found %d CC track(s). ", cc_track_count);
 	else
-		mprint("Found no dedicated CC track(s).\n");
+		mprint("Found no dedicated CC track(s). ");
+
+	if (vobsub_track_count)
+		mprint("Found %d VOBSUB track(s).\n", vobsub_track_count);
+	else
+		mprint("\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
 
