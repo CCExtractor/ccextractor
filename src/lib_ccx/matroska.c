@@ -1427,6 +1427,7 @@ static void generate_vobsub_timestamp(char *buf, size_t bufsize, ULLONG millisec
 }
 
 /* VOBSUB support: Save VOBSUB track to .idx and .sub files */
+#define VOBSUB_BLOCK_SIZE 2048
 static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
 	if (track->sentence_count == 0)
@@ -1503,9 +1504,6 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 	char lang_line[128];
 	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", lang_to_use);
 	write_wrapped(idx_desc, lang_line, strlen(lang_line));
-
-	// Block size for alignment (2048 bytes = 0x800)
-	const int VOBSUB_BLOCK_SIZE = 2048;
 
 	// Buffer for PS/PES headers and padding
 	unsigned char header_buf[32];
