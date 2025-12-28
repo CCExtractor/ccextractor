@@ -1046,6 +1046,28 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 			freep(&sub->data);
 			break;
 		case CC_BITMAP:;
+			// Apply subs_delay to bitmap subtitles (DVB, DVD, etc.)
+			// This is the same as what's done for CC_608 above
+			sub->start_time += context->subs_delay;
+			sub->end_time += context->subs_delay;
+
+			// After adding delay, if start/end time is lower than 0, skip this subtitle
+			if (sub->start_time < 0 || sub->end_time <= 0)
+			{
+				// Free bitmap data to avoid memory leak
+				if (sub->datatype == CC_DATATYPE_DVB)
+				{
+					struct cc_bitmap *bitmap_tmp = (struct cc_bitmap *)sub->data;
+					if (bitmap_tmp)
+					{
+						freep(&bitmap_tmp->data0);
+						freep(&bitmap_tmp->data1);
+					}
+				}
+				freep(&sub->data);
+				sub->nb_data = 0;
+				break;
+			}
 
 #ifdef ENABLE_OCR
 			struct cc_bitmap *rect;
