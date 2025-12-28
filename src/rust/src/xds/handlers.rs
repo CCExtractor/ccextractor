@@ -51,10 +51,10 @@ use libc::malloc;
 
 use crate::xds::types::*;
 
-static TS_START_OF_XDS: AtomicI64 = AtomicI64::new(-1); // Time at which we switched to XDS mode, =-1 hasn't happened yet
-                                                        // Usage example:
-                                                        // TS_START_OF_XDS.store(new_value, Ordering::SeqCst);
-                                                        // let value = TS_START_OF_XDS.load(Ordering::SeqCst);
+pub static TS_START_OF_XDS: AtomicI64 = AtomicI64::new(-1); // Time at which we switched to XDS mode, =-1 hasn't happened yet
+                                                            // Usage example:
+                                                            // TS_START_OF_XDS.store(new_value, Ordering::SeqCst);
+                                                            // let value = TS_START_OF_XDS.load(Ordering::SeqCst);
 
 /// Represents failures during XDS string writing or processing.
 pub enum XDSError {
