@@ -418,7 +418,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
+void *dvbsub_init_decoder(struct dvb_config *cfg)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext *)malloc(sizeof(DVBSubContext));
@@ -442,8 +442,7 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 	}
 
 #ifdef ENABLE_OCR
-	if (!initialized_ocr)
-		ctx->ocr_ctx = init_ocr(ctx->lang_index);
+	ctx->ocr_ctx = init_ocr(ctx->lang_index);
 #endif
 	ctx->version = -1;
 

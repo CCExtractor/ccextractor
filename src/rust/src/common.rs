@@ -1070,7 +1070,6 @@ impl CType<program_info> for ProgramInfo {
         program_info {
             pid: self.pid,
             program_number: self.program_number,
-            initialized_ocr: self.initialized_ocr as c_int,
             _bitfield_align_1: [],
             _bitfield_1: bf1,
             version: self.version,
