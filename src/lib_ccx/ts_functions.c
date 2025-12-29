@@ -568,6 +568,13 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
+		if (cinfo->capbuflen > BUFSIZE - ptr->len)
+		{
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
+			      "Teletext packet (%ld) larger than remaining buffer (%lld).\n",
+			      cinfo->capbuflen, BUFSIZE - ptr->len);
+		}
+
 		memcpy(ptr->buffer + ptr->len, cinfo->capbuf, cinfo->capbuflen);
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
