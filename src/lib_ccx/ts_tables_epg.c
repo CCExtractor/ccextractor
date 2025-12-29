@@ -87,13 +87,11 @@ void EPG_ATSC_decode_ETT_text(uint8_t *offset, uint32_t length, struct EPG_event
 
 		for (j = 0; j < number_segments && offset < offset_end; j++)
 		{
-			uint8_t compression_type, mode, number_bytes;
+			uint8_t number_bytes;
 
 			if (offset + 3 > offset_end)
 				return;
 
-			compression_type = offset[0];
-			mode = offset[1];
 			number_bytes = offset[2];
 			offset += 3;
 
