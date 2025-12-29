@@ -1173,7 +1173,7 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 		memset((void *)&cnf, 0, sizeof(struct dvb_config));
 
 		parse_dvb_description(&cnf, codec_data, 8);
-		dec_ctx->private_data = dvbsub_init_decoder(&cnf, 0);
+		dec_ctx->private_data = dvbsub_init_decoder(&cnf);
 
 		free(codec_data);
 	}
