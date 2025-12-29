@@ -1,5 +1,6 @@
 0.96.2 (2025-12-26)
 -------------------
+- Fix: Resolve utf8proc header include path when building against system libraries on Linux.
 - Rebundle Windows version to include required runtime files to process hardcoded subtitles
   (hardcodex mode).
 - New: Add optional -system-libs flag to Linux build script for package manager compatibility
