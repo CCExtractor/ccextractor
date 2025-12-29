@@ -28,6 +28,24 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+### Windows Package Managers
+
+**WinGet:**
+```powershell
+winget install CCExtractor.CCExtractor
+```
+
+**Chocolatey:**
+```powershell
+choco install ccextractor
+```
+
+**Scoop:**
+```powershell
+scoop bucket add extras
+scoop install ccextractor
+```
+
 Extracting subtitles is relatively simple. Just run the following command:
 
 `ccextractor <input>`
