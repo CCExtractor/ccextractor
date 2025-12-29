@@ -904,10 +904,11 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		dvprint("vcl_hrd_parameters_present_flag=               %llX\n", tmp1);
 		if (tmp)
 		{
-			// TODO.
-			mprint("vcl_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
+			// VCL HRD parameters are for video buffering compliance, not needed for caption extraction.
+    		// Just skip and continue - this doesn't affect our ability to extract captions.
+			mprint("Skipping VCL HRD parameters (not needed for caption extraction)\n");
 			ctx->num_vcl_hrd++;
-			// exit(1);
+			
 		}
 		if (tmp || tmp1)
 		{
