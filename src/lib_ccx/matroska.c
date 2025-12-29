@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <assert.h>
 #include "dvb_subtitle_decoder.h"
+#include "vobsub_decoder.h"
 
 void skip_bytes(FILE *file, ULLONG n)
 {
@@ -1426,6 +1427,114 @@ static void generate_vobsub_timestamp(char *buf, size_t bufsize, ULLONG millisec
 		 hours, minutes, seconds, ms);
 }
 
+/* Check if output format is text-based (requires OCR for bitmap subtitles) */
+static int is_text_output_format(enum ccx_output_format format)
+{
+	return (format == CCX_OF_SRT || format == CCX_OF_SSA ||
+		format == CCX_OF_WEBVTT || format == CCX_OF_TRANSCRIPT ||
+		format == CCX_OF_SAMI || format == CCX_OF_SMPTETT);
+}
+
+/* VOBSUB support: Process VOBSUB track with OCR and output text format */
+static void process_vobsub_track_ocr(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
+{
+	if (track->sentence_count == 0)
+	{
+		mprint("\nNo VOBSUB subtitles to process");
+		return;
+	}
+
+	/* Check if OCR is available */
+	if (!vobsub_ocr_available())
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR support.\n"
+		      "Please rebuild CCExtractor with -DWITH_OCR=ON or use raw output (--out=idx)");
+	}
+
+	/* Initialize VOBSUB decoder */
+	struct vobsub_ctx *vob_ctx = init_vobsub_decoder();
+	if (!vob_ctx)
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR, but initialization failed.\n"
+		      "Please ensure Tesseract is installed with language data.");
+	}
+
+	/* Parse palette from track header (CodecPrivate) */
+	if (track->header)
+	{
+		vobsub_parse_palette(vob_ctx, track->header);
+	}
+
+	mprint("\nProcessing VOBSUB track with OCR (%d subtitles)", track->sentence_count);
+
+	/* Get encoder context for output */
+	struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+
+	/* Process each subtitle */
+	for (int i = 0; i < track->sentence_count; i++)
+	{
+		struct matroska_sub_sentence *sentence = track->sentences[i];
+		mkv_ctx->sentence_count++;
+
+		/* Calculate end time (use next subtitle start if not specified) */
+		ULLONG end_time = sentence->time_end;
+		if (end_time == 0 && i + 1 < track->sentence_count)
+		{
+			end_time = track->sentences[i + 1]->time_start - 1;
+		}
+		else if (end_time == 0)
+		{
+			end_time = sentence->time_start + 5000; /* Default 5 second duration */
+		}
+
+		/* Decode SPU and run OCR */
+		struct cc_subtitle sub;
+		memset(&sub, 0, sizeof(sub));
+
+		int ret = vobsub_decode_spu(vob_ctx,
+					    (unsigned char *)sentence->text,
+					    sentence->text_size,
+					    sentence->time_start,
+					    end_time,
+					    &sub);
+
+		if (ret == 0 && sub.got_output)
+		{
+			/* Encode the subtitle to output format */
+			encode_sub(enc_ctx, &sub);
+
+			/* Free subtitle data */
+			if (sub.data)
+			{
+				struct cc_bitmap *rect = (struct cc_bitmap *)sub.data;
+				for (int j = 0; j < sub.nb_data; j++)
+				{
+					if (rect[j].data0)
+						free(rect[j].data0);
+					if (rect[j].data1)
+						free(rect[j].data1);
+#ifdef ENABLE_OCR
+					if (rect[j].ocr_text)
+						free(rect[j].ocr_text);
+#endif
+				}
+				free(sub.data);
+			}
+		}
+
+		/* Progress indicator */
+		if ((i + 1) % 50 == 0 || i + 1 == track->sentence_count)
+		{
+			mprint("\rProcessing VOBSUB: %d/%d subtitles", i + 1, track->sentence_count);
+		}
+	}
+
+	delete_vobsub_decoder(&vob_ctx);
+	mprint("\nVOBSUB OCR processing complete");
+}
+
 /* VOBSUB support: Save VOBSUB track to .idx and .sub files */
 #define VOBSUB_BLOCK_SIZE 2048
 static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
@@ -1564,10 +1673,21 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 	char *filename;
 	int desc;
 
-	// VOBSUB tracks need special handling - separate .idx and .sub files
+	// VOBSUB tracks need special handling
 	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
 	{
-		save_vobsub_track(mkv_ctx, track);
+		// Check if user wants text output (SRT, SSA, WebVTT, etc.)
+		if (ccx_options.write_format_rewritten &&
+		    is_text_output_format(ccx_options.enc_cfg.write_format))
+		{
+			// Use OCR to convert VOBSUB to text
+			process_vobsub_track_ocr(mkv_ctx, track);
+		}
+		else
+		{
+			// Output raw idx/sub files
+			save_vobsub_track(mkv_ctx, track);
+		}
 		return;
 	}
 
@@ -1846,8 +1966,13 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 {
 	if (ccx_options.write_format_rewritten)
 	{
-		mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
-		mprint("--out=<format> will be ignored\n");
+		/* Note: For VOBSUB tracks, text output formats (SRT, SSA, etc.) are
+		 * supported via OCR. For other subtitle types, the native format is used. */
+		if (!is_text_output_format(ccx_options.enc_cfg.write_format))
+		{
+			mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extracts subtitles in their recorded format\n");
+			mprint("--out=<format> will be ignored for non-VOBSUB tracks\n");
+		}
 	}
 
 	// Don't need generated input file

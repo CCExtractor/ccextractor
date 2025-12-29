@@ -151,6 +151,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/list.h \
 				../src/lib_ccx/matroska.c \
 				../src/lib_ccx/matroska.h \
+				../src/lib_ccx/vobsub_decoder.c \
+				../src/lib_ccx/vobsub_decoder.h \
 				../src/lib_ccx/mp4.c \
 				../src/lib_ccx/myth.c \
 				../src/lib_ccx/networking.c \
