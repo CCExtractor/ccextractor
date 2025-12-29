@@ -273,7 +273,6 @@ extern "C" fn ccxr_process_cc_data(
 ///      If this fails, the entire pair is deemed corrupt, and the function returns false.
 ///    - Sanitization: Validates parity for the first data byte (cc_block[1]).
 ///      If this fails (but byte 2 was valid), cc_block[1] is overwritten with CC_SOLID_BLANK (0x7F).
-
 const CC_SOLID_BLANK: u8 = 0x7F;
 
 pub fn validate_cc_pair(cc_block: &mut [u8]) -> bool {
