@@ -52,7 +52,7 @@ pub unsafe extern "C" fn ccxr_write_stringz_srt(
         if out_vec.is_empty() {
             return 0;
         }
-        out_vec[0].fh;
+        out_vec[0].fh
     } else {
         return 0;
     };
