@@ -381,9 +381,9 @@ struct line_bounds
  * @return 0 on success, -1 on failure
  */
 static int detect_text_lines(png_byte *alpha, unsigned char *indata,
-                             int w, int h,
-                             struct line_bounds **lines, int *num_lines,
-                             int min_gap)
+			     int w, int h,
+			     struct line_bounds **lines, int *num_lines,
+			     int min_gap)
 {
 	if (!alpha || !indata || !lines || !num_lines || w <= 0 || h <= 0)
 		return -1;
@@ -675,7 +675,7 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 
 				// Extract line region from the grayscale image
 				BOX *line_box = boxCreate(0, lines[line_idx].start_y,
-				                          pixGetWidth(cpix_gs), line_h);
+							  pixGetWidth(cpix_gs), line_h);
 				PIX *line_pix_raw = pixClipRectangle(cpix_gs, line_box, NULL);
 				boxDestroy(&line_box);
 
@@ -696,8 +696,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 						// Trim trailing whitespace from line
 						size_t line_len = strlen(line_text);
 						while (line_len > 0 && (line_text[line_len - 1] == '\n' ||
-						                        line_text[line_len - 1] == '\r' ||
-						                        line_text[line_len - 1] == ' '))
+									line_text[line_len - 1] == '\r' ||
+									line_text[line_len - 1] == ' '))
 						{
 							line_text[--line_len] = '\0';
 						}

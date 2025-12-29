@@ -589,7 +589,7 @@ impl Default for Options {
             psm: 3,
             ocr_quantmode: 0, // No quantization - better OCR accuracy for DVB subtitles
             ocr_line_split: false, // Don't split images into lines by default
-            ocr_blacklist: true,   // Use character blacklist by default to prevent | vs I errors
+            ocr_blacklist: true, // Use character blacklist by default to prevent | vs I errors
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
             hardsubx_ocr_mode: Default::default(),
