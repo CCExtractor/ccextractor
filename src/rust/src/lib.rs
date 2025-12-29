@@ -251,28 +251,28 @@ extern "C" fn ccxr_process_cc_data(
     ret
 }
 
-// Validates a closed caption block pair for both CEA-608 and CEA-708 data.
-//
-// # Arguments
-// cc_block - A mutable slice containing exactly 3 bytes representing a CC block
-//
-// # Returns
-// true if the CC block is valid and should be processed
-// false if the CC block should be ignored
-//
-// # Behavior
-// 1. Header Validation:
-//    - Checks the cc_valid flag (bit 2 of cc_block[0]). If 0, returns false immediately.
-//    - extracts the cc_type (bits 0-1 of cc_block[0]).
-//
-// 2. CEA-708 (Type 2 or 3):
-//    - No further validation is required beyond the cc_valid flag. Returns true.
-//
-// 3. CEA-608 (Type 0 or 1):
-//    - Critical Parity Check: Validates parity for the second data byte (cc_block[2]).
-//      If this fails, the entire pair is deemed corrupt, and the function returns false.
-//    - Sanitization: Validates parity for the first data byte (cc_block[1]).
-//      If this fails (but byte 2 was valid), cc_block[1] is overwritten with CC_SOLID_BLANK (0x7F).
+/// Validates a closed caption block pair for both CEA-608 and CEA-708 data.
+///
+/// # Arguments
+/// cc_block - A mutable slice containing exactly 3 bytes representing a CC block
+///
+/// # Returns
+/// true if the CC block is valid and should be processed
+/// false if the CC block should be ignored
+///
+/// # Behavior
+/// 1. Header Validation:
+///    - Checks the cc_valid flag (bit 2 of cc_block[0]). If 0, returns false immediately.
+///    - extracts the cc_type (bits 0-1 of cc_block[0]).
+///
+/// 2. CEA-708 (Type 2 or 3):
+///    - No further validation is required beyond the cc_valid flag. Returns true.
+///
+/// 3. CEA-608 (Type 0 or 1):
+///    - Critical Parity Check: Validates parity for the second data byte (cc_block[2]).
+///      If this fails, the entire pair is deemed corrupt, and the function returns false.
+///    - Sanitization: Validates parity for the first data byte (cc_block[1]).
+///      If this fails (but byte 2 was valid), cc_block[1] is overwritten with CC_SOLID_BLANK (0x7F).
 
 const CC_SOLID_BLANK: u8 = 0x7F;
 
@@ -304,6 +304,13 @@ pub fn verify_parity(data: u8) -> bool {
     data.count_ones() & 1 == 1
 }
 
+/// Has different semantic meaning than just a solid blank.
+/// 0x7F can be used as a parity mask to check if the 7 data bits are zero. (0x7F => 0111 1111).
+/// Since the parity bit is forced to be 0 by the mask, it can no longer affect the result.
+/// Therefore, the only way the total result can be 0 is if all the data bits (0-6) were originally zero.
+/// This isn't related to the "solid blank" character - it's just that the mask happens to have the same value.
+const PARITY_BIT_MASK: u8 = 0x7F;
+
 /// Process CC data according to its type
 pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
@@ -313,8 +320,8 @@ pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) 
     if ctx.write_format != ccx_output_format::CCX_OF_DVDRAW
         && ctx.write_format != ccx_output_format::CCX_OF_RAW
         && (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
-        && (cc_block[1] & CC_SOLID_BLANK) == 0
-        && (cc_block[2] & CC_SOLID_BLANK) == 0
+        && (cc_block[1] & PARITY_BIT_MASK) == 0
+        && (cc_block[2] & PARITY_BIT_MASK) == 0
     {
         return true;
     }
