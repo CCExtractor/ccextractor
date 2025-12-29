@@ -281,6 +281,13 @@ void *init_ocr(int lang_index)
 	// set PSM mode
 	TessBaseAPISetPageSegMode(ctx->api, ccx_options.psm);
 
+	// Set character blacklist to prevent common OCR errors (e.g. | vs I)
+	// These characters are rarely used in subtitles but often misrecognized
+	if (ccx_options.ocr_blacklist)
+	{
+		TessBaseAPISetVariable(ctx->api, "tessedit_char_blacklist", "|\\`_~");
+	}
+
 	free(pars_vec);
 	free(pars_values);
 
@@ -351,6 +358,176 @@ BOX *ignore_alpha_at_edge(png_byte *alpha, unsigned char *indata, int w, int h, 
 	return cropWindow;
 }
 
+/**
+ * Structure to hold the vertical boundaries of a detected text line.
+ */
+struct line_bounds
+{
+	int start_y; // Top row of line (inclusive)
+	int end_y;   // Bottom row of line (inclusive)
+};
+
+/**
+ * Detects horizontal text line boundaries in a bitmap by finding rows of
+ * fully transparent pixels that separate lines of text.
+ *
+ * @param alpha     Palette alpha values (indexed by pixel value)
+ * @param indata    Bitmap pixel data (palette indices, w*h bytes)
+ * @param w         Image width
+ * @param h         Image height
+ * @param lines     Output: allocated array of line boundaries (caller must free)
+ * @param num_lines Output: number of lines found
+ * @param min_gap   Minimum consecutive transparent rows to count as line separator
+ * @return 0 on success, -1 on failure
+ */
+static int detect_text_lines(png_byte *alpha, unsigned char *indata,
+                             int w, int h,
+                             struct line_bounds **lines, int *num_lines,
+                             int min_gap)
+{
+	if (!alpha || !indata || !lines || !num_lines || w <= 0 || h <= 0)
+		return -1;
+
+	*lines = NULL;
+	*num_lines = 0;
+
+	// Allocate array to track which rows have visible content
+	int *row_has_content = (int *)malloc(h * sizeof(int));
+	if (!row_has_content)
+		return -1;
+
+	// Scan each row to determine if it has any visible (non-transparent) pixels
+	for (int i = 0; i < h; i++)
+	{
+		row_has_content[i] = 0;
+		for (int j = 0; j < w; j++)
+		{
+			int index = indata[i * w + j];
+			if (alpha[index] != 0)
+			{
+				row_has_content[i] = 1;
+				break; // Found visible pixel, no need to check rest of row
+			}
+		}
+	}
+
+	// Count lines by finding runs of content rows separated by gaps
+	int max_lines = (h / 2) + 1; // Conservative upper bound
+	struct line_bounds *temp_lines = (struct line_bounds *)malloc(max_lines * sizeof(struct line_bounds));
+	if (!temp_lines)
+	{
+		free(row_has_content);
+		return -1;
+	}
+
+	int line_count = 0;
+	int in_line = 0;
+	int line_start = 0;
+	int gap_count = 0;
+
+	for (int i = 0; i < h; i++)
+	{
+		if (row_has_content[i])
+		{
+			if (!in_line)
+			{
+				// Start of a new line
+				line_start = i;
+				in_line = 1;
+			}
+			gap_count = 0;
+		}
+		else
+		{
+			if (in_line)
+			{
+				gap_count++;
+				if (gap_count >= min_gap)
+				{
+					// End of line found (gap is large enough)
+					if (line_count < max_lines)
+					{
+						temp_lines[line_count].start_y = line_start;
+						temp_lines[line_count].end_y = i - gap_count;
+						line_count++;
+					}
+					in_line = 0;
+					gap_count = 0;
+				}
+			}
+		}
+	}
+
+	// Handle last line if we ended while still in a line
+	if (in_line && line_count < max_lines)
+	{
+		temp_lines[line_count].start_y = line_start;
+		// Find the last row with content
+		int last_content = h - 1;
+		while (last_content > line_start && !row_has_content[last_content])
+			last_content--;
+		temp_lines[line_count].end_y = last_content;
+		line_count++;
+	}
+
+	free(row_has_content);
+
+	if (line_count == 0)
+	{
+		free(temp_lines);
+		return -1;
+	}
+
+	// Shrink allocation to actual size
+	*lines = (struct line_bounds *)realloc(temp_lines, line_count * sizeof(struct line_bounds));
+	if (!*lines)
+	{
+		*lines = temp_lines; // Keep original if realloc fails
+	}
+	*num_lines = line_count;
+
+	return 0;
+}
+
+/**
+ * Performs OCR on a single text line image using PSM 7 (single line mode).
+ *
+ * @param ctx      OCR context (contains Tesseract API)
+ * @param line_pix Pre-processed PIX for single line (grayscale, inverted)
+ * @return Recognized text (caller must free with free()), or NULL on failure
+ */
+static char *ocr_single_line(struct ocrCtx *ctx, PIX *line_pix)
+{
+	if (!ctx || !ctx->api || !line_pix)
+		return NULL;
+
+	// Save current PSM
+	int saved_psm = TessBaseAPIGetPageSegMode(ctx->api);
+
+	// Set PSM 7 for single line recognition
+	TessBaseAPISetPageSegMode(ctx->api, 7); // PSM_SINGLE_LINE
+
+	// Perform OCR
+	TessBaseAPISetImage2(ctx->api, line_pix);
+	BOOL ret = TessBaseAPIRecognize(ctx->api, NULL);
+
+	char *text = NULL;
+	if (!ret)
+	{
+		char *tess_text = TessBaseAPIGetUTF8Text(ctx->api);
+		if (tess_text)
+		{
+			text = strdup(tess_text);
+			TessDeleteText(tess_text);
+		}
+	}
+
+	// Restore original PSM
+	TessBaseAPISetPageSegMode(ctx->api, saved_psm);
+
+	return text;
+}
+
 void debug_tesseract(struct ocrCtx *ctx, char *dump_path)
 {
 #ifdef OCR_DEBUG
@@ -397,6 +574,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	unsigned int *data, *ppixel;
 	BOOL tess_ret = FALSE;
 	struct ocrCtx *ctx = arg;
+	char *combined_text = NULL; // Used by line-split mode
+	size_t combined_len = 0;    // Used by line-split mode
 	pix = pixCreate(w, h, 32);
 	color_pix = pixCreate(w, h, 32);
 	if (pix == NULL || color_pix == NULL)
@@ -476,6 +655,98 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 		return NULL;
 	}
 
+	// Line splitting mode: detect lines and OCR each separately with PSM 7
+	if (ccx_options.ocr_line_split && h > 30)
+	{
+		struct line_bounds *lines = NULL;
+		int num_lines = 0;
+
+		// Use min_gap of 3 rows to detect line boundaries
+		if (detect_text_lines(alpha, indata, w, h, &lines, &num_lines, 3) == 0 && num_lines > 1)
+		{
+			// Multiple lines detected - process each separately with PSM 7
+			// (combined_text and combined_len are declared at function scope)
+
+			for (int line_idx = 0; line_idx < num_lines; line_idx++)
+			{
+				int line_h = lines[line_idx].end_y - lines[line_idx].start_y + 1;
+				if (line_h <= 0)
+					continue;
+
+				// Extract line region from the grayscale image
+				BOX *line_box = boxCreate(0, lines[line_idx].start_y,
+				                          pixGetWidth(cpix_gs), line_h);
+				PIX *line_pix_raw = pixClipRectangle(cpix_gs, line_box, NULL);
+				boxDestroy(&line_box);
+
+				if (line_pix_raw)
+				{
+					// Add white padding around the line (helps Tesseract with edge characters)
+					// The image is inverted (dark text on light bg), so add white (255) border
+					int padding = 10;
+					PIX *line_pix = pixAddBorderGeneral(line_pix_raw, padding, padding, padding, padding, 255);
+					pixDestroy(&line_pix_raw);
+					if (!line_pix)
+						continue;
+					char *line_text = ocr_single_line(ctx, line_pix);
+					pixDestroy(&line_pix);
+
+					if (line_text)
+					{
+						// Trim trailing whitespace from line
+						size_t line_len = strlen(line_text);
+						while (line_len > 0 && (line_text[line_len - 1] == '\n' ||
+						                        line_text[line_len - 1] == '\r' ||
+						                        line_text[line_len - 1] == ' '))
+						{
+							line_text[--line_len] = '\0';
+						}
+
+						if (line_len > 0)
+						{
+							// Append to combined result
+							size_t new_len = combined_len + line_len + 2; // +1 for newline, +1 for null
+							char *new_combined = (char *)realloc(combined_text, new_len);
+							if (new_combined)
+							{
+								combined_text = new_combined;
+								if (combined_len > 0)
+								{
+									combined_text[combined_len++] = '\n';
+								}
+								strcpy(combined_text + combined_len, line_text);
+								combined_len += line_len;
+							}
+						}
+						free(line_text);
+					}
+				}
+			}
+
+			free(lines);
+
+			if (combined_text && combined_len > 0)
+			{
+				// Successfully processed lines - skip whole-image OCR
+				// but continue to color detection below
+				goto line_split_color_detection;
+			}
+
+			// If we got here, line splitting didn't produce results
+			// Fall through to whole-image OCR
+			if (combined_text)
+				free(combined_text);
+			combined_text = NULL;
+		}
+		else
+		{
+			// Line detection failed or only 1 line - fall through to whole-image OCR
+			if (lines)
+				free(lines);
+		}
+	}
+
+	// Standard whole-image OCR path
 	TessBaseAPISetImage2(ctx->api, cpix_gs);
 	tess_ret = TessBaseAPIRecognize(ctx->api, NULL);
 	debug_tesseract(ctx, "./temp/");
@@ -516,6 +787,14 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 	if (!text_out)
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In ocr_bitmap: Out of memory allocating text_out.");
+	}
+
+	// Jump target for line-split mode: use combined_text and continue with color detection
+	if (0)
+	{
+	line_split_color_detection:
+		text_out = combined_text;
+		combined_text = NULL; // Transfer ownership
 	}
 
 	// Begin color detection

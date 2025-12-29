@@ -462,6 +462,10 @@ pub struct Options {
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
     pub ocr_quantmode: u8,
+    /// If true, split images into lines before OCR (uses PSM 7 for better accuracy)
+    pub ocr_line_split: bool,
+    /// If true, use character blacklist to prevent common OCR errors (e.g. | vs I)
+    pub ocr_blacklist: bool,
     /// The name of the language stream for MKV
     pub mkvlang: Option<Language>,
     /// If true, the video stream will be processed even if we're using a different one for subtitles.
@@ -584,6 +588,8 @@ impl Default for Options {
             ocr_oem: -1,
             psm: 3,
             ocr_quantmode: 0, // No quantization - better OCR accuracy for DVB subtitles
+            ocr_line_split: false, // Don't split images into lines by default
+            ocr_blacklist: true,   // Use character blacklist by default to prevent | vs I errors
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
             hardsubx_ocr_mode: Default::default(),

@@ -398,6 +398,13 @@ void print_usage(void)
 	mprint("                       12    Sparse text with OSD.\n");
 	mprint("                       13    Raw line. Treat the image as a single text line,\n");
 	mprint("                       bypassing hacks that are Tesseract-specific.\n");
+	mprint("       --ocr-line-split: Split subtitle images into lines before OCR.\n");
+	mprint("                       Uses PSM 7 (single text line mode) for each line,\n");
+	mprint("                       which can improve accuracy for multi-line bitmap subtitles\n");
+	mprint("                       (VOBSUB, DVD, DVB).\n");
+	mprint("     --no-ocr-blacklist: Disable the OCR character blacklist. By default,\n");
+	mprint("                       CCExtractor blacklists characters like |, \\, `, _, ~\n");
+	mprint("                       that are commonly misrecognized (e.g. 'I' as '|').\n");
 	mprint("             --mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");
