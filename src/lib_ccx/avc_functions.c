@@ -379,11 +379,10 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 	}
 	else
 	{
-		// TODO: This really really looks bad
-		mprint("WARNING: Unexpected SEI unit length...trying to continue.");
-		temp_debug = 1;
-		mprint("\n Failed block (at sei_rbsp) was:\n");
-		dump(CCX_DMT_GENERIC_NOTICES, (unsigned char *)seibuf, seiend - seibuf, 0, 0);
+		// Unexpected SEI length - common with malformed streams, don't spam output
+		dbg_print(CCX_DMT_VERBOSE, "WARNING: Unexpected SEI unit length (parsed to %p, expected %p)...trying to continue.\n",
+			  (void *)tbuf, (void *)(seiend - 1));
+		dump(CCX_DMT_VERBOSE, (unsigned char *)seibuf, seiend - seibuf, 0, 0);
 
 		ctx->num_unexpected_sei_length++;
 	}
