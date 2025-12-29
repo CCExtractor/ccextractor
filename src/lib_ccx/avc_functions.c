@@ -908,7 +908,6 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 			// Just skip and continue - this doesn't affect our ability to extract captions.
 			mprint("Skipping VCL HRD parameters (not needed for caption extraction)\n");
 			ctx->num_vcl_hrd++;
-
 		}
 		if (tmp || tmp1)
 		{
