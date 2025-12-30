@@ -116,7 +116,7 @@ void EPG_ATSC_decode_ETT_text(uint8_t *offset, uint32_t length, struct EPG_event
 }
 
 // Fills given string with given (event.*_time_string) ATSC time converted to XMLTV style time string
-void EPG_ATSC_calc_time(char *output, uint32_t time)
+void EPG_ATSC_calc_time(char *output, size_t output_size, uint32_t time)
 {
 	struct tm timeinfo;
 	timeinfo.tm_year = 1980 - 1900;
@@ -127,7 +127,7 @@ void EPG_ATSC_calc_time(char *output, uint32_t time)
 	timeinfo.tm_hour = 0;
 	timeinfo.tm_isdst = -1;
 	mktime(&timeinfo);
-	snprintf(output, 21, "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+	snprintf(output, output_size, "%02d%02d%02d%02d%02d%02d +0000", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 }
 
 // Fills event.start_time_string in XMLTV format with passed DVB time
@@ -1115,9 +1115,9 @@ void EPG_ATSC_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32
 		event.service_id = source_id;
 
 		start_time = (offset[2] << 24) | (offset[3] << 16) | (offset[4] << 8) | (offset[5] << 0);
-		EPG_ATSC_calc_time(event.start_time_string, start_time);
+		EPG_ATSC_calc_time(event.start_time_string, sizeof(event.start_time_string), start_time);
 		length_in_seconds = (((offset[6] & 0x0F) << 16) | (offset[7] << 8) | (offset[8] << 0));
-		EPG_ATSC_calc_time(event.end_time_string, start_time + length_in_seconds);
+		EPG_ATSC_calc_time(event.end_time_string, sizeof(event.end_time_string), start_time + length_in_seconds);
 
 		title_length = offset[9];
 		// XXX cant decode data more then size of payload
