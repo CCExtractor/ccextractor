@@ -26,6 +26,12 @@ struct ccx_rational
 extern int temp_debug;
 volatile extern sig_atomic_t change_filename_requested;
 
+//Forward declaration for the structs used in the Rust code
+struct encoder_ctx;
+struct cc_subtitle;
+struct eia608_screen;
+
+
 #ifndef DISABLE_RUST
 extern int ccxr_verify_crc32(uint8_t *buf, int len);
 extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
