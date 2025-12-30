@@ -648,11 +648,9 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	{
 		if (ptr->len + databuflen >= BUFSIZE)
 		{
-			fatal(CCX_COMMON_EXIT_BUG_BUG,
-			      "PES data packet (%ld) larger than remaining buffer (%lld).\n"
-			      "Please send bug report!",
-			      databuflen, BUFSIZE - ptr->len);
-			return CCX_EAGAIN;
+			mprint("Warning: PES data packet (%ld) larger than remaining buffer (%lld), skipping packet.\n",
+			       databuflen, BUFSIZE - ptr->len);
+			return CCX_OK;
 		}
 		memcpy(ptr->buffer + ptr->len, databuf, databuflen);
 		ptr->len += databuflen;

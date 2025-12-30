@@ -201,6 +201,8 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					}
 					// FIXME: Temporary bypass
 					data->bufferdatatype = CCX_DVD_SUBTITLE;
+					// Use substream ID as stream_pid for PS files to differentiate DVB subtitle streams
+					data->stream_pid = nextheader[7];
 
 					data->len = result;
 					enough = 1;
@@ -1179,7 +1181,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			struct demuxer_data *dvb_ptr = *datalist;
 			while (dvb_ptr)
 			{
-				// Process DVB nodes (in split mode, even if they were the "best" stream,
+			// Process DVB nodes (in split mode, even if they were the "best" stream,
 				// we route them here to ensure they get a proper named pipeline)
 				if (dvb_ptr->codec == CCX_CODEC_DVB &&
 				    dvb_ptr->len > 0)
@@ -1187,10 +1189,24 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 					int stream_pid = dvb_ptr->stream_pid;
 					char *lang = "unk";
 
-					// Find language for this PID
-					struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
-					if (cinfo && cinfo->lang[0])
-						lang = cinfo->lang;
+					// Find language for this PID - check potential_streams first (PMT discovery)
+					for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
+					{
+						if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
+						    ctx->demux_ctx->potential_streams[k].lang[0])
+						{
+							lang = ctx->demux_ctx->potential_streams[k].lang;
+							break;
+						}
+					}
+
+					// Fallback to cinfo if potential_streams didn't have it
+					if (strcmp(lang, "unk") == 0)
+					{
+						struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+						if (cinfo && cinfo->lang[0])
+							lang = cinfo->lang;
+					}
 
 					// Get or create pipeline for this DVB stream
 					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
@@ -1218,14 +1234,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						// Decode DVB using the per-pipeline decoder context
 						// This ensures each stream has its own prev pointers
 						// Skip first 2 bytes (PES header) as done in process_data for DVB
-						dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->sub);
-
-						// Encode output if produced
-						if (pipe->sub.got_output)
-						{
-							encode_sub(pipe->encoder, &pipe->sub);
-							pipe->sub.got_output = 0;
-						}
+						
+						// IMPORTANT: Link the pipeline's sub.prev to the decoder's prev buffer
+						// The DVB decoder expects sub->prev to be valid for writing the previous subtitle
+						
+						dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
 					}
 				}
 				dvb_ptr = dvb_ptr->next_stream;

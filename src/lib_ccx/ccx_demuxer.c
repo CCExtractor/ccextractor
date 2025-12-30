@@ -320,6 +320,11 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 	}
 
 	freep(&lctx->filebuffer);
+
+	// Reset potential stream discovery data
+	lctx->potential_stream_count = 0;
+	memset(lctx->potential_streams, 0, sizeof(lctx->potential_streams));
+
 	freep(ctx);
 }
 

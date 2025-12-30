@@ -71,6 +71,23 @@ extern "C"
 				  unsigned int len);
 
 	/*
+	 * @func dvbsub_get_context_size
+	 * Get the size of DVBSubContext for external allocation
+	 *
+	 * @return size in bytes of DVBSubContext structure
+	 */
+	size_t dvbsub_get_context_size(void);
+
+	/*
+	 * @func dvbsub_copy_context
+	 * Copy DVBSubContext from src to dst
+	 *
+	 * @param dst destination pointer (must be allocated with at least dvbsub_get_context_size() bytes)
+	 * @param src source DVBSubContext pointer
+	 */
+	void dvbsub_copy_context(void *dst, void *src);
+
+	/*
 	 * @func dvbsub_set_write the output structure in dvb
 	 * set ccx_s_write structure in dvb_ctx
 	 *

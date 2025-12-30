@@ -388,15 +388,30 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					char detected_lang[4] = "und";
 
 					if (desc_len >= 3)
+				{
+					// ISO 639-2 compliant: accept only [a-zA-Z]{3}, convert to lowercase
+					int is_valid_lang = 1;
+					for (int li = 0; li < 3; li++)
 					{
-						// Issue 8: Language Code Validation
-						for (int li = 0; li < 3; li++)
+						char c = (char)es_info[li];
+						if (c >= 'A' && c <= 'Z')
+							detected_lang[li] = c + 32;  // to lowercase
+						else if (c >= 'a' && c <= 'z')
+							detected_lang[li] = c;
+						else
 						{
-							char c = (char)es_info[li];
-							detected_lang[li] = ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) ? c : '?';
+							is_valid_lang = 0;
+							break;
 						}
-						detected_lang[3] = '\0';
 					}
+					detected_lang[3] = '\0';
+
+					if (!is_valid_lang)
+					{
+						strcpy(detected_lang, "und");
+						dbg_print(CCX_DMT_PMT, "Warning: Invalid language code, using 'und'\n");
+					}
+				}
 
 					// If split mode enabled, track for pipeline creation
 					if (ccx_options.split_dvb_subs && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
@@ -486,6 +501,13 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
+
+					// Populate cap_info.lang with discovered language for fallback lookup
+					struct cap_info *cinfo = get_cinfo(ctx, elementary_PID);
+					if (cinfo && detected_lang[0] && detected_lang[0] != 'u')  // Skip "und"
+					{
+						memset(cinfo->lang, 0, sizeof(cinfo->lang)); strncpy(cinfo->lang, detected_lang, sizeof(cinfo->lang) - 1);
+					}
 					max_dif = 30;
 				}
 			}

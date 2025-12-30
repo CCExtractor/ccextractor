@@ -25,6 +25,12 @@
 #include <curl/curl.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 // #include "ccx_decoders_708.h"
 
 /* Report information */
@@ -98,6 +104,9 @@ struct ccx_subtitle_pipeline
 	void *decoder;		       // Pointer to decoder context (e.g., ccx_decoders_dvb_context)
 	struct lib_cc_decode *dec_ctx; // Full decoder context for DVB state management
 	struct cc_subtitle sub;	       // Persistent cc_subtitle for DVB prev tracking
+#ifdef ENABLE_OCR
+	void *ocr_ctx;  // Per-pipeline OCR context for thread safety
+#endif
 };
 
 struct lib_ccx_ctx
@@ -177,7 +186,12 @@ struct lib_ccx_ctx
 	// Registration for multi-stream subtitle extraction
 	struct ccx_subtitle_pipeline *pipelines[MAX_SUBTITLE_PIPELINES];
 	int pipeline_count;
-	int pipeline_lock;     // Simple lock flag (single-threaded access assumed)
+#ifdef _WIN32
+	CRITICAL_SECTION pipeline_mutex;
+#else
+	pthread_mutex_t pipeline_mutex;
+#endif
+	int pipeline_mutex_initialized;
 	void *dec_dvb_default; // Default decoder used in non-split mode
 	void *shared_ocr_ctx;  // Shared OCR context to reduce memory usage
 };

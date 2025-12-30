@@ -209,7 +209,12 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt)
 	// Initialize pipeline infrastructure
 	ctx->pipeline_count = 0;
 	ctx->dec_dvb_default = NULL;
-	ctx->pipeline_lock = 0;
+#ifdef _WIN32
+	InitializeCriticalSection(&ctx->pipeline_mutex);
+#else
+	pthread_mutex_init(&ctx->pipeline_mutex, NULL);
+#endif
+	ctx->pipeline_mutex_initialized = 1;
 	ctx->shared_ocr_ctx = NULL;
 	memset(ctx->pipelines, 0, sizeof(ctx->pipelines));
 
@@ -310,6 +315,11 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		if (p->decoder)
 			dvbsub_close_decoder(&p->decoder);
 
+#ifdef ENABLE_OCR
+		if (p->ocr_ctx)
+			delete_ocr(&p->ocr_ctx);
+#endif
+
 		if (p->encoder)
 			dinit_encoder(&p->encoder, 0);
 
@@ -333,6 +343,17 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		lctx->pipelines[i] = NULL;
 	}
 	lctx->pipeline_count = 0;
+
+	// Cleanup mutex
+	if (lctx->pipeline_mutex_initialized)
+	{
+#ifdef _WIN32
+		DeleteCriticalSection(&lctx->pipeline_mutex);
+#else
+		pthread_mutex_destroy(&lctx->pipeline_mutex);
+#endif
+		lctx->pipeline_mutex_initialized = 0;
+	}
 
 	// free EPG memory
 	EPG_free(lctx);
@@ -572,12 +593,12 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 {
 	int i;
 
-	// Simple spin-lock for thread safety
-	while (ctx->pipeline_lock)
-	{
-		// Spin
-	}
-	ctx->pipeline_lock = 1;
+	// Lock mutex for thread safety
+#ifdef _WIN32
+	EnterCriticalSection(&ctx->pipeline_mutex);
+#else
+	pthread_mutex_lock(&ctx->pipeline_mutex);
+#endif
 
 	// Search for existing pipeline
 	for (i = 0; i < ctx->pipeline_count; i++)
@@ -586,7 +607,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		if (p && p->pid == pid && p->stream_type == stream_type &&
 		    strcmp(p->lang, lang) == 0)
 		{
-			ctx->pipeline_lock = 0;
+#ifdef _WIN32
+			LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+			pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 			return p;
 		}
 	}
@@ -596,7 +621,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	{
 		mprint("Warning: Maximum subtitle pipelines (%d) reached, cannot create new pipeline for PID 0x%X\n",
 		       MAX_SUBTITLE_PIPELINES, pid);
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 
@@ -605,7 +634,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	if (!pipe)
 	{
 		mprint("Error: Failed to allocate memory for subtitle pipeline\n");
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 
@@ -613,17 +646,18 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	pipe->stream_type = stream_type;
 	snprintf(pipe->lang, sizeof(pipe->lang), "%.3s", lang ? lang : "und");
 
-	// Generate output filename: {basefilename}_{lang}.ext or {basefilename}_0x{PID}.ext
+	// Generate output filename: {basefilename}_{lang}_{PID}.ext
+	// Always include PID to handle multiple streams with same language
 	const char *ext = ctx->extension ? ctx->extension : ".srt";
-	if (strcmp(pipe->lang, "und") == 0 || pipe->lang[0] == '\0')
+	if (strcmp(pipe->lang, "und") == 0 || strcmp(pipe->lang, "unk") == 0 || pipe->lang[0] == '\0')
 	{
 		snprintf(pipe->filename, sizeof(pipe->filename), "%s_0x%04X%s",
 			 ctx->basefilename, pid, ext);
 	}
 	else
 	{
-		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s%s",
-			 ctx->basefilename, pipe->lang, ext);
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s_0x%04X%s",
+			 ctx->basefilename, pipe->lang, pid, ext);
 	}
 
 	// Initialize encoder for this pipeline
@@ -634,7 +668,6 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	// Without this, the first call to dvbsub_handle_display_segment may fail or result in no output.
 	if (pipe->encoder)
 	{
-		mprint("DEBUG-TRACE: Allocating prev context for PID 0x%X\n", pid);
 		pipe->encoder->prev = copy_encoder_context(pipe->encoder);
 		if (!pipe->encoder->prev)
 		{
@@ -645,7 +678,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		}
 		// FIX: Set write_previous=1 so the FIRST subtitle gets written
 		// DVB pattern: "write N-1 when N arrives"
-		pipe->encoder->write_previous = 1;
+		pipe->encoder->write_previous = 0;
 
 		// Issue 4: Ensure prev context exists and is initialized
 		// This forces the "previous" subtitle (which is effectively the first one we see)
@@ -657,7 +690,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	{
 		mprint("Error: Failed to create encoder for pipeline PID 0x%X\n", pid);
 		free(pipe);
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 
@@ -670,7 +707,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		mprint("Error: Failed to initialize timing for pipeline PID 0x%X\n", pid);
 		dinit_encoder(&pipe->encoder, 0);
 		free(pipe);
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 
@@ -694,19 +735,30 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	}
 
 #ifdef ENABLE_OCR
-	if (!ctx->shared_ocr_ctx)
+	pipe->ocr_ctx = init_ocr(0);
+	if (!pipe->ocr_ctx)
 	{
-		ctx->shared_ocr_ctx = init_ocr(0);
+		mprint("Warning: Failed to initialize OCR for pipeline PID 0x%X, continuing without OCR\n", pid);
 	}
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, pipe->ocr_ctx);
+#else
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, NULL);
 #endif
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, ctx->shared_ocr_ctx);
 	if (!pipe->decoder)
 	{
 		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
+#ifdef ENABLE_OCR
+		if (pipe->ocr_ctx)
+			delete_ocr(&pipe->ocr_ctx);
+#endif
 		dinit_encoder(&pipe->encoder, 0);
 		dinit_timing_ctx(&pipe->timing);
 		free(pipe);
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 
@@ -716,9 +768,17 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	{
 		mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
 		dvbsub_close_decoder(&pipe->decoder);
+#ifdef ENABLE_OCR
+		if (pipe->ocr_ctx)
+			delete_ocr(&pipe->ocr_ctx);
+#endif
 		dinit_encoder(&pipe->encoder, 0);
 		free(pipe);
-		ctx->pipeline_lock = 0;
+#ifdef _WIN32
+		LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+		pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 		return NULL;
 	}
 	pipe->dec_ctx->private_data = pipe->decoder;
@@ -726,7 +786,12 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode));
 	if (pipe->dec_ctx->prev)
 	{
-		pipe->dec_ctx->prev->private_data = NULL;
+		pipe->dec_ctx->prev->private_data = malloc(dvbsub_get_context_size());
+		if (pipe->dec_ctx->prev->private_data)
+		{
+			dvbsub_copy_context(pipe->dec_ctx->prev->private_data, pipe->decoder);
+		}
+		pipe->dec_ctx->prev->codec = CCX_CODEC_DVB;
 	}
 
 	// Initialize persistent cc_subtitle for DVB prev tracking
@@ -743,7 +808,11 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 
 	mprint("Created subtitle pipeline for PID 0x%X lang=%s -> %s\n", pid, pipe->lang, pipe->filename);
 
-	ctx->pipeline_lock = 0;
+#ifdef _WIN32
+	LeaveCriticalSection(&ctx->pipeline_mutex);
+#else
+	pthread_mutex_unlock(&ctx->pipeline_mutex);
+#endif
 	return pipe;
 }
 
