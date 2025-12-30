@@ -517,6 +517,8 @@ pub struct Options {
     pub multiprogram: bool,
     pub out_interval: i32,
     pub segment_on_key_frames_only: bool,
+    /// SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+    pub scc_framerate: i32,
     pub debug_mask: DebugMessageMask,
 
     #[cfg(feature = "with_libcurl")]
@@ -618,6 +620,7 @@ impl Default for Options {
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),
+            scc_framerate: 0, // 0 = 29.97fps (default)
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,
                 DebugMessageFlag::VERBOSE,

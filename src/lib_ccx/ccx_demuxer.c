@@ -348,7 +348,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 		{
 			ctx->pinfo[i].got_important_streams_min_pts[j] = UINT64_MAX;
 		}
-		ctx->pinfo[i].initialized_ocr = 0;
 		ctx->pinfo[i].version = 0xFF; // Not real in a real stream since it's 5 bits. FF => Not initialized
 	}
 

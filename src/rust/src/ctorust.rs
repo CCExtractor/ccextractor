@@ -287,6 +287,7 @@ impl FromCType<ccx_stream_mode_enum> for StreamMode {
             11 => StreamMode::Gxf,
             12 => StreamMode::Mkv,
             13 => StreamMode::Mxf,
+            14 => StreamMode::Scc,
             16 => StreamMode::Autodetect,
             _ => StreamMode::ElementaryOrNotFound,
         })
@@ -539,7 +540,6 @@ impl FromCType<program_info> for ProgramInfo {
         Some(ProgramInfo {
             pid: info.pid,
             program_number: info.program_number,
-            initialized_ocr: info.initialized_ocr != 0,
             analysed_pmt_once: info._bitfield_1.get_bit(0) as u8,
             version: info.version,
             saved_section: info.saved_section,

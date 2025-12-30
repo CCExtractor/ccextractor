@@ -75,7 +75,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				if (!ctx->demux_ctx->strangeheader)
 				{
 					mprint("\nNot a recognized header. Searching for next header.\n");
-					dump(CCX_DMT_GENERIC_NOTICES, nextheader, 6, 0, 0);
+					dump(CCX_DMT_PARSE, nextheader, 6, 0, 0);
 					// Only print the message once per loop / unrecognized header
 					ctx->demux_ctx->strangeheader = 1;
 				}
@@ -575,6 +575,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	struct lib_cc_decode *dec_ctx = NULL;
 	int caps = 0;
 	int is_dvdraw = 0;     // Flag to track if this is DVD raw format
+	int is_scc = 0;	       // Flag to track if this is SCC format
 	int is_mcc_output = 0; // Flag for MCC output format
 
 	dec_ctx = update_decoder_list(ctx);
@@ -607,13 +608,20 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			break;
 
 		// Check if this is DVD raw format using Rust detection
-		if (!is_dvdraw && ccxr_is_dvdraw_header(data->buffer, (unsigned int)data->len))
+		if (!is_dvdraw && !is_scc && ccxr_is_dvdraw_header(data->buffer, (unsigned int)data->len))
 		{
 			is_dvdraw = 1;
 			mprint("Detected McPoodle's DVD raw format\n");
 		}
 
-		if (is_mcc_output && !is_dvdraw)
+		// Check if this is SCC format using Rust detection
+		if (!is_scc && !is_dvdraw && ccxr_is_scc_file(data->buffer, (unsigned int)data->len))
+		{
+			is_scc = 1;
+			mprint("Detected SCC (Scenarist Closed Caption) format\n");
+		}
+
+		if (is_mcc_output && !is_dvdraw && !is_scc)
 		{
 			// For MCC output, encode raw data directly without decoding
 			// This preserves the original CEA-608 byte pairs in CDP format
@@ -625,6 +633,11 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		{
 			// Use Rust implementation - handles timing internally
 			ret = ccxr_process_dvdraw(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len);
+		}
+		else if (is_scc)
+		{
+			// Use Rust SCC implementation - handles timing internally via SMPTE timecodes
+			ret = ccxr_process_scc(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len, ccx_options.scc_framerate);
 		}
 		else
 		{
@@ -795,10 +808,6 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			/* Mark processed byte count */
 			got = data_node->len;
 		}
-	}
-	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
-	{
-		got = data_node->len; // Do nothing. Still don't know how to process it
 	}
 	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 	{

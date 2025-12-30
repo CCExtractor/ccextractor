@@ -399,9 +399,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					ret = parse_dvb_description(&cnf, es_info, desc_len);
 					if (ret < 0)
 						break;
-					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
-					if (!pinfo->initialized_ocr)
-						pinfo->initialized_ocr = 1;
+					ptr = dvbsub_init_decoder(&cnf);
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);

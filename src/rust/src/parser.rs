@@ -865,6 +865,24 @@ impl OptionsExt for Options {
         if args.mpeg90090 {
             set_mpeg_clock_freq(90090);
         }
+
+        // Handle SCC framerate option
+        if let Some(ref fps_str) = args.scc_framerate {
+            self.scc_framerate = match fps_str.as_str() {
+                "29.97" | "29" => 0,
+                "24" => 1,
+                "25" => 2,
+                "30" => 3,
+                _ => {
+                    eprintln!(
+                        "Invalid SCC framerate '{}'. Using default 29.97fps",
+                        fps_str
+                    );
+                    0
+                }
+            };
+        }
+
         if args.no_scte20 {
             self.noscte20 = true;
         }

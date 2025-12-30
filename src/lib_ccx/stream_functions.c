@@ -78,6 +78,30 @@ void detect_stream_type(struct ccx_demuxer *ctx)
 		    ctx->startbytes[7] == 0xf8)
 			ctx->stream_mode = CCX_SM_MCPOODLESRAW;
 	}
+	// Check for SCC (Scenarist Closed Caption) text format
+	// SCC files start with "Scenarist_SCC V1.0" (18 bytes), optionally with UTF-8 BOM (3 bytes)
+	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND)
+	{
+		unsigned char *check_buf = ctx->startbytes;
+		int check_pos = 0;
+
+		// Skip UTF-8 BOM if present
+		if (ctx->startbytes_avail >= 3 &&
+		    ctx->startbytes[0] == 0xEF &&
+		    ctx->startbytes[1] == 0xBB &&
+		    ctx->startbytes[2] == 0xBF)
+		{
+			check_buf += 3;
+			check_pos = 3;
+		}
+
+		if (ctx->startbytes_avail >= check_pos + 18 &&
+		    memcmp(check_buf, "Scenarist_SCC V1.0", 18) == 0)
+		{
+			ctx->stream_mode = CCX_SM_SCC;
+			mprint("Detected SCC (Scenarist Closed Caption) format\n");
+		}
+	}
 #ifdef WTV_DEBUG
 	if (ctx->stream_mode == CCX_SM_ELEMENTARY_OR_NOT_FOUND && ctx->startbytes_avail >= 6)
 	{

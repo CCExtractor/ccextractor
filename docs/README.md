@@ -26,6 +26,14 @@ Running ccextractor without parameters shows the help screen. Usage is
 trivial - you just need to pass the input file and (optionally) some
 details about the input and output files.
 
+Example:
+
+ccextractor input_video.ts
+
+This command extracts subtitles from the input video file and generates a subtitle output file
+(such as .srt) in the same directory.
+
+
 
 ## Languages
 Usually English captions are transmitted in line 21 field 1 data,

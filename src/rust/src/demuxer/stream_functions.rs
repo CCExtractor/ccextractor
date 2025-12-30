@@ -174,6 +174,31 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
         ctx.stream_mode = StreamMode::McpoodlesRaw;
     }
 
+    // Check for SCC (Scenarist Closed Caption) text format
+    // SCC files start with "Scenarist_SCC V1.0" (18 bytes), optionally with UTF-8 BOM (3 bytes)
+    if ctx.stream_mode == StreamMode::ElementaryOrNotFound {
+        let mut check_buf = &ctx.startbytes[..];
+        let mut check_pos = 0;
+
+        // Skip UTF-8 BOM if present
+        if ctx.startbytes_avail >= 3
+            && ctx.startbytes[0] == 0xEF
+            && ctx.startbytes[1] == 0xBB
+            && ctx.startbytes[2] == 0xBF
+        {
+            check_buf = &ctx.startbytes[3..];
+            check_pos = 3;
+        }
+
+        if ctx.startbytes_avail >= check_pos + 18
+            && check_buf.len() >= 18
+            && &check_buf[..18] == b"Scenarist_SCC V1.0"
+        {
+            ctx.stream_mode = StreamMode::Scc;
+            info!("Detected SCC (Scenarist Closed Caption) format");
+        }
+    }
+
     // Hex dump check
     #[cfg(feature = "wtv_debug")]
     {

@@ -379,11 +379,10 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 	}
 	else
 	{
-		// TODO: This really really looks bad
-		mprint("WARNING: Unexpected SEI unit length...trying to continue.");
-		temp_debug = 1;
-		mprint("\n Failed block (at sei_rbsp) was:\n");
-		dump(CCX_DMT_GENERIC_NOTICES, (unsigned char *)seibuf, seiend - seibuf, 0, 0);
+		// Unexpected SEI length - common with malformed streams, don't spam output
+		dbg_print(CCX_DMT_VERBOSE, "WARNING: Unexpected SEI unit length (parsed to %p, expected %p)...trying to continue.\n",
+			  (void *)tbuf, (void *)(seiend - 1));
+		dump(CCX_DMT_VERBOSE, (unsigned char *)seibuf, seiend - seibuf, 0, 0);
 
 		ctx->num_unexpected_sei_length++;
 	}
@@ -904,10 +903,10 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		dvprint("vcl_hrd_parameters_present_flag=               %llX\n", tmp1);
 		if (tmp)
 		{
-			// TODO.
-			mprint("vcl_hrd. Not implemented for now. Hopefully not needed. Skipping rest of NAL\n");
+			// VCL HRD parameters are for video buffering compliance, not needed for caption extraction.
+			// Just skip and continue - this doesn't affect our ability to extract captions.
+			mprint("Skipping VCL HRD parameters (not needed for caption extraction)\n");
 			ctx->num_vcl_hrd++;
-			// exit(1);
 		}
 		if (tmp || tmp1)
 		{
