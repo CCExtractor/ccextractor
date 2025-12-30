@@ -46,6 +46,10 @@ You can also find the list of parameters and their brief description by running 
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
 
+### Building from Source
+
+- [Building on Windows using WSL](docs/build-wsl.md)
+
 ## Compiling CCExtractor
 
 To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
