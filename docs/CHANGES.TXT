@@ -1,3 +1,8 @@
+DEVELOPMENT VERSION
+-------------------
+RUST:
+- Documented EIA_708_BUFFER_LENGTH constant with CEA-708 specification reference
+- Removed debug logging from target.rs network module
 0.96 (2025-12-21)
 -----------------
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
