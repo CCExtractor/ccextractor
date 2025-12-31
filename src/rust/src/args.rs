@@ -486,7 +486,7 @@ pub struct Args {
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="sc", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub sentencecap: bool,
     /// Add the contents of 'file' to the list of words
     /// that must be capitalized. For example, if file
