@@ -878,4 +878,349 @@ mod test {
         // Double dash alone (end of options marker)
         assert_eq!(normalize_legacy_option("--".to_string()), "--".to_string());
     }
+
+    // =========================================================================
+    // FFI Integration Tests
+    // =========================================================================
+    //
+    // These tests verify the FFI boundary - the extern "C" functions that are
+    // called from C code. They test the actual C→Rust call path with realistic
+    // struct states.
+
+    mod ffi_integration_tests {
+        use super::*;
+        use crate::decoder::test::create_test_dtvcc_settings;
+        use crate::utils::get_zero_allocated_obj;
+
+        /// Helper to create a lib_cc_decode struct configured for Rust-enabled path
+        /// (dtvcc=NULL, dtvcc_rust=valid pointer)
+        fn create_rust_enabled_decode_ctx() -> (Box<lib_cc_decode>, *mut std::ffi::c_void) {
+            let mut ctx = get_zero_allocated_obj::<lib_cc_decode>();
+
+            // Create the DtvccRust context via the FFI function
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_rust = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // Set up the timing context (required for processing)
+            let timing = get_zero_allocated_obj::<ccx_common_timing_ctx>();
+            ctx.timing = Box::into_raw(timing);
+
+            // Simulate Rust-enabled mode: dtvcc is NULL, dtvcc_rust is set
+            ctx.dtvcc = std::ptr::null_mut();
+            ctx.dtvcc_rust = dtvcc_rust;
+
+            (ctx, dtvcc_rust)
+        }
+
+        // -----------------------------------------------------------------
+        // ccxr_dtvcc_init / ccxr_dtvcc_free lifecycle tests
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_dtvcc_init_creates_valid_context() {
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // Should return a valid (non-null) pointer
+            assert!(!dtvcc_ptr.is_null());
+
+            // Verify we can check if it's active
+            let is_active = unsafe { ccxr_dtvcc_is_active(dtvcc_ptr) };
+            assert_eq!(is_active, 1);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        #[test]
+        fn test_ffi_dtvcc_init_with_null_returns_null() {
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(std::ptr::null()) };
+            assert!(dtvcc_ptr.is_null());
+        }
+
+        #[test]
+        fn test_ffi_dtvcc_free_with_null_is_safe() {
+            // Should not crash when called with null
+            ccxr_dtvcc_free(std::ptr::null_mut());
+        }
+
+        #[test]
+        fn test_ffi_dtvcc_is_active_with_null_returns_zero() {
+            let result = unsafe { ccxr_dtvcc_is_active(std::ptr::null_mut()) };
+            assert_eq!(result, 0);
+        }
+
+        // -----------------------------------------------------------------
+        // ccxr_dtvcc_set_encoder tests
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_set_encoder_with_valid_context() {
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // Create an encoder
+            let encoder = Box::new(encoder_ctx::default());
+            let encoder_ptr = Box::into_raw(encoder);
+
+            // Set the encoder
+            unsafe { ccxr_dtvcc_set_encoder(dtvcc_ptr, encoder_ptr) };
+
+            // Verify by checking the internal state
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert_eq!(dtvcc.encoder, encoder_ptr);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+            unsafe { drop(Box::from_raw(encoder_ptr)) };
+        }
+
+        #[test]
+        fn test_ffi_set_encoder_with_null_context_is_safe() {
+            let encoder = Box::new(encoder_ctx::default());
+            let encoder_ptr = Box::into_raw(encoder);
+
+            // Should not crash
+            unsafe { ccxr_dtvcc_set_encoder(std::ptr::null_mut(), encoder_ptr) };
+
+            // Clean up
+            unsafe { drop(Box::from_raw(encoder_ptr)) };
+        }
+
+        // -----------------------------------------------------------------
+        // ccxr_dtvcc_process_data tests
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_process_data_packet_start() {
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // Process a packet start (cc_type = 3)
+            unsafe { ccxr_dtvcc_process_data(dtvcc_ptr, 1, 3, 0xC2, 0x00) };
+
+            // Verify state changed
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert!(dtvcc.is_header_parsed);
+            assert_eq!(dtvcc.packet_length, 2);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        #[test]
+        fn test_ffi_process_data_with_null_is_safe() {
+            // Should not crash
+            unsafe { ccxr_dtvcc_process_data(std::ptr::null_mut(), 1, 3, 0xC2, 0x00) };
+        }
+
+        #[test]
+        fn test_ffi_process_data_state_persists_across_calls() {
+            // This is THE key test - verifying the fix for issue #1499
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // First call: start a packet (packet length = 8 bytes)
+            unsafe { ccxr_dtvcc_process_data(dtvcc_ptr, 1, 3, 0xC4, 0x00) };
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert!(dtvcc.is_header_parsed);
+            assert_eq!(dtvcc.packet_length, 2);
+
+            // Second call: add more data (cc_type = 2)
+            unsafe { ccxr_dtvcc_process_data(dtvcc_ptr, 1, 2, 0x21, 0x00) };
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert_eq!(dtvcc.packet_length, 4);
+
+            // Third call: add more data
+            unsafe { ccxr_dtvcc_process_data(dtvcc_ptr, 1, 2, 0x00, 0x00) };
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert_eq!(dtvcc.packet_length, 6);
+
+            // State persisted across all calls!
+            assert!(dtvcc.is_header_parsed);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        // -----------------------------------------------------------------
+        // ccxr_process_cc_data tests (the main FFI entry point from C)
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_with_null_ctx_returns_error() {
+            let data: [u8; 3] = [0x97, 0x1F, 0x3C];
+            let result = unsafe { ccxr_process_cc_data(std::ptr::null_mut(), data.as_ptr(), 1) };
+            assert_eq!(result, -1);
+        }
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_with_null_data_returns_error() {
+            let (ctx, dtvcc_ptr) = create_rust_enabled_decode_ctx();
+            let result =
+                unsafe { ccxr_process_cc_data(Box::into_raw(ctx), std::ptr::null(), 1) };
+            assert_eq!(result, -1);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_with_zero_count_returns_error() {
+            let (ctx, dtvcc_ptr) = create_rust_enabled_decode_ctx();
+            let data: [u8; 3] = [0x97, 0x1F, 0x3C];
+            let result =
+                unsafe { ccxr_process_cc_data(Box::into_raw(ctx), data.as_ptr(), 0) };
+            assert_eq!(result, -1);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_with_null_dtvcc_rust_returns_error() {
+            let mut ctx = get_zero_allocated_obj::<lib_cc_decode>();
+
+            // Set up timing but leave dtvcc_rust as null
+            let timing = get_zero_allocated_obj::<ccx_common_timing_ctx>();
+            ctx.timing = Box::into_raw(timing);
+            ctx.dtvcc_rust = std::ptr::null_mut();
+
+            let data: [u8; 3] = [0x97, 0x1F, 0x3C];
+            let result =
+                unsafe { ccxr_process_cc_data(Box::into_raw(ctx), data.as_ptr(), 1) };
+            assert_eq!(result, -1);
+        }
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_processes_708_data() {
+            let (ctx, dtvcc_ptr) = create_rust_enabled_decode_ctx();
+
+            // Set an encoder so processing can complete
+            let encoder = get_zero_allocated_obj::<encoder_ctx>();
+            ccxr_dtvcc_set_encoder(dtvcc_ptr, Box::into_raw(encoder));
+
+            // CEA-708 packet start (cc_type=3, cc_valid=1)
+            // Header byte breakdown: cc_valid is bit 2, cc_type is bits 0-1
+            // For cc_type=3 (bits 0-1 = 11) and cc_valid=1 (bit 2 = 1):
+            // 0xFF = 11111111 -> cc_valid=1, cc_type=3
+            let data: [u8; 3] = [0xFF, 0xC2, 0x00];
+            let ctx_ptr = Box::into_raw(ctx);
+            let result = ccxr_process_cc_data(ctx_ptr, data.as_ptr(), 1);
+
+            // Should return 0 (success) for valid 708 data
+            assert_eq!(result, 0);
+
+            // Verify the context was updated
+            let ctx = unsafe { &*ctx_ptr };
+            assert_eq!(ctx.cc_stats[3], 1); // cc_type 3 was processed
+            assert_eq!(ctx.current_field, 3); // Field set to 3 for 708 data
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        #[test]
+        fn test_ffi_ccxr_process_cc_data_skips_invalid_pairs() {
+            let (ctx, dtvcc_ptr) = create_rust_enabled_decode_ctx();
+
+            // Invalid pair (cc_valid = 0)
+            // Header byte: 0xF9 = 11111001 -> cc_valid=0, cc_type=1
+            let data: [u8; 3] = [0xF9, 0x00, 0x00];
+            let ctx_ptr = Box::into_raw(ctx);
+            let result = unsafe { ccxr_process_cc_data(ctx_ptr, data.as_ptr(), 1) };
+
+            // Should return -1 (no valid data processed)
+            assert_eq!(result, -1);
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        // -----------------------------------------------------------------
+        // ccxr_flush_active_decoders tests
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_flush_with_null_is_safe() {
+            // Should not crash
+            unsafe { ccxr_flush_active_decoders(std::ptr::null_mut()) };
+        }
+
+        #[test]
+        fn test_ffi_flush_with_valid_context() {
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+
+            // Set an encoder (required for flushing)
+            let encoder = Box::new(encoder_ctx::default());
+            unsafe { ccxr_dtvcc_set_encoder(dtvcc_ptr, Box::into_raw(encoder)) };
+
+            // Should not crash
+            unsafe { ccxr_flush_active_decoders(dtvcc_ptr) };
+
+            // Clean up
+            ccxr_dtvcc_free(dtvcc_ptr);
+        }
+
+        // -----------------------------------------------------------------
+        // Full lifecycle integration test
+        // -----------------------------------------------------------------
+
+        #[test]
+        fn test_ffi_complete_lifecycle() {
+            // This test simulates the complete lifecycle as it would be used from C code:
+            // 1. Initialize context
+            // 2. Set encoder
+            // 3. Process multiple CC data packets
+            // 4. Flush
+            // 5. Free
+
+            // 1. Initialize
+            let settings = create_test_dtvcc_settings();
+            let dtvcc_ptr = unsafe { ccxr_dtvcc_init(settings.as_ref()) };
+            assert!(!dtvcc_ptr.is_null());
+
+            // Verify initial state
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert!(dtvcc.is_active, "DtvccRust should be active after init");
+            assert_eq!(dtvcc.packet_length, 0);
+            assert!(!dtvcc.is_header_parsed);
+
+            // 2. Set encoder
+            let encoder = get_zero_allocated_obj::<encoder_ctx>();
+            let encoder_ptr = Box::into_raw(encoder);
+            ccxr_dtvcc_set_encoder(dtvcc_ptr, encoder_ptr);
+
+            // 3. Process a packet start (cc_type=3) - this should set is_header_parsed
+            // Use 0xC4 for packet header: 0xC4 & 0x3F = 4, so max_len = 4*2 = 8 bytes
+            // This way the packet won't be completed until we've added enough data
+            ccxr_dtvcc_process_data(dtvcc_ptr, 1, 3, 0xC4, 0x00);
+
+            // Verify packet start was processed
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert!(
+                dtvcc.is_header_parsed,
+                "is_header_parsed should be true after packet start"
+            );
+            assert_eq!(dtvcc.packet_length, 2, "packet_length should be 2");
+
+            // Process packet data (cc_type=2) - packet is not complete yet (need 8 bytes)
+            ccxr_dtvcc_process_data(dtvcc_ptr, 1, 2, 0x21, 0x00);
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert_eq!(dtvcc.packet_length, 4, "packet_length should be 4");
+
+            // Add more data
+            ccxr_dtvcc_process_data(dtvcc_ptr, 1, 2, 0x00, 0x00);
+            let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+            assert_eq!(dtvcc.packet_length, 6, "packet_length should be 6");
+
+            // 4. Flush
+            ccxr_flush_active_decoders(dtvcc_ptr);
+
+            // 5. Free
+            ccxr_dtvcc_free(dtvcc_ptr);
+            unsafe { drop(Box::from_raw(encoder_ptr)) };
+        }
+    }
 }
