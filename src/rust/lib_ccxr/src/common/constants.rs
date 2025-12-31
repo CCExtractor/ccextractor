@@ -282,6 +282,7 @@ pub enum StreamMode {
     Gxf = 11,
     Mkv = 12,
     Mxf = 13,
+    Scc = 14, // Scenarist Closed Caption input
     Autodetect = 16,
 }
 #[derive(Debug, Eq, Clone, Copy)]

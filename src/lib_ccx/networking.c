@@ -103,7 +103,8 @@ int set_nonblocking(int fd);
 void connect_to_srv(const char *addr, const char *port, const char *cc_desc, const char *pwd)
 {
 #ifndef DISABLE_RUST
-	return ccxr_connect_to_srv(addr, port, cc_desc, pwd);
+	(void)ccxr_connect_to_srv(addr, port, cc_desc, pwd);
+	return;
 #endif
 	if (NULL == addr)
 	{
@@ -137,7 +138,8 @@ void connect_to_srv(const char *addr, const char *port, const char *cc_desc, con
 void net_send_header(const unsigned char *data, size_t len)
 {
 #ifndef DISABLE_RUST
-	return ccxr_net_send_header(data, len);
+	(void)ccxr_net_send_header(data, len);
+	return;
 #endif
 	assert(srv_sd > 0);
 
@@ -188,7 +190,8 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 void net_check_conn()
 {
 #ifndef DISABLE_RUST
-	return ccxr_net_check_conn();
+	ccxr_net_check_conn();
+	return;
 #endif
 	time_t now;
 	static time_t last_ping = 0;
@@ -252,7 +255,8 @@ void net_send_epg(
     const char *category)
 {
 #ifndef DISABLE_RUST
-	return ccxr_net_send_epg(start, stop, title, desc, lang, category);
+	(void)ccxr_net_send_epg(start, stop, title, desc, lang, category);
+	return;
 #endif
 	size_t st;
 	size_t sp;

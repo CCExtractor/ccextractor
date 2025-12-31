@@ -13,8 +13,11 @@
 #include "../lib_hash/sha2.h"
 #include <string.h>
 #include <stdio.h>
+#if __has_include(<utf8proc.h>)
+#include <utf8proc.h>
+#else
 #include <utf8proc/utf8proc.h>
-
+#endif
 #ifdef ENABLE_OCR
 #include <tesseract/capi.h>
 #include <leptonica/allheaders.h>
@@ -398,6 +401,13 @@ void print_usage(void)
 	mprint("                       12    Sparse text with OSD.\n");
 	mprint("                       13    Raw line. Treat the image as a single text line,\n");
 	mprint("                       bypassing hacks that are Tesseract-specific.\n");
+	mprint("       --ocr-line-split: Split subtitle images into lines before OCR.\n");
+	mprint("                       Uses PSM 7 (single text line mode) for each line,\n");
+	mprint("                       which can improve accuracy for multi-line bitmap subtitles\n");
+	mprint("                       (VOBSUB, DVD, DVB).\n");
+	mprint("     --no-ocr-blacklist: Disable the OCR character blacklist. By default,\n");
+	mprint("                       CCExtractor blacklists characters like |, \\, `, _, ~\n");
+	mprint("                       that are commonly misrecognized (e.g. 'I' as '|').\n");
 	mprint("             --mkvlang: For MKV subtitles, select which language's caption\n");
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       Language codes can be either the 3 letters bibliographic\n");

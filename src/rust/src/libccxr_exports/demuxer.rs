@@ -11,6 +11,13 @@ use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
+/// Poison pattern used to detect uninitialized pointers (0xCD repeated).
+/// This pattern is commonly used by debug memory allocators.
+#[cfg(target_pointer_width = "64")]
+const POISON_PTR_PATTERN: usize = 0xcdcdcdcdcdcdcdcd;
+#[cfg(target_pointer_width = "32")]
+const POISON_PTR_PATTERN: usize = 0xcdcdcdcd;
+
 // External C function declarations
 extern "C" {
     fn activity_input_file_closed();
@@ -266,7 +273,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
         .PIDs_programs
         .iter()
         .filter_map(|&buffer_ptr| {
-            if buffer_ptr.is_null() || buffer_ptr as usize == 0xcdcdcdcdcdcdcdcd {
+            if buffer_ptr.is_null() || buffer_ptr as usize == POISON_PTR_PATTERN {
                 None
             } else {
                 Some(Box::into_raw(Box::new(PMTEntry::from_ctype(*buffer_ptr)?)))
@@ -547,6 +554,110 @@ pub unsafe extern "C" fn ccxr_process_dvdraw(
         || {
             // Advance timing before each field 1 caption
             ccxr_add_current_pts(timing_ctx, FRAME_DURATION_TICKS);
+            ccxr_set_fts(timing_ctx);
+        },
+    );
+
+    bytes_consumed as c_uint
+}
+
+// ============================================================================
+// SCC (Scenarist Closed Caption) Format Processing
+// ============================================================================
+
+use crate::demuxer::scc::{is_scc_file, parse_scc_with_callbacks, SccFrameRate};
+
+// External C function declarations for timing
+extern "C" {
+    fn ccxr_set_current_pts(ctx: *mut ccx_common_timing_ctx, pts: i64);
+}
+
+/// Check if a buffer contains SCC file header.
+///
+/// # Safety
+///
+/// `buffer` must be a valid pointer to at least `len` bytes.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_is_scc_file(buffer: *const c_uchar, len: c_uint) -> c_int {
+    if buffer.is_null() || len < 18 {
+        return 0;
+    }
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+    if is_scc_file(slice) {
+        1
+    } else {
+        0
+    }
+}
+
+/// Process SCC file and extract captions.
+///
+/// This function parses the SCC text format, extracts caption data,
+/// sets timing appropriately, and calls do_cb() for each caption block.
+///
+/// # Safety
+///
+/// - `ctx` must be a valid pointer to a lib_cc_decode structure
+/// - `sub` must be a valid pointer to a cc_subtitle structure
+/// - `buffer` must be a valid pointer to at least `len` bytes
+///
+/// # Arguments
+///
+/// - `framerate`: 0=29.97 (default), 1=24, 2=25, 3=30
+///
+/// # Returns
+///
+/// The number of bytes consumed from the buffer.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_process_scc(
+    ctx: *mut lib_cc_decode,
+    sub: *mut cc_subtitle,
+    buffer: *const c_uchar,
+    len: c_uint,
+    framerate: c_int,
+) -> c_uint {
+    if ctx.is_null() || sub.is_null() || buffer.is_null() || len == 0 {
+        return 0;
+    }
+
+    let slice = std::slice::from_raw_parts(buffer, len as usize);
+
+    // Convert to string (SCC is text-based)
+    // Skip UTF-8 BOM if present
+    let text_slice = if slice.len() >= 3 && slice[0] == 0xEF && slice[1] == 0xBB && slice[2] == 0xBF
+    {
+        &slice[3..]
+    } else {
+        slice
+    };
+
+    let content = match std::str::from_utf8(text_slice) {
+        Ok(s) => s,
+        Err(_) => return 0,
+    };
+
+    let fps = SccFrameRate::from_int(framerate);
+
+    // Get the timing context from lib_cc_decode
+    let timing_ctx = (*ctx).timing;
+    if timing_ctx.is_null() {
+        return 0;
+    }
+
+    let bytes_consumed = parse_scc_with_callbacks(
+        content,
+        fps,
+        |cc_type, data1, data2| {
+            // Build caption block and call do_cb
+            // SCC is always field 1 (CC1)
+            let mut cc_block: [c_uchar; 3] = [cc_type, data1, data2];
+            do_cb(ctx, cc_block.as_mut_ptr(), sub);
+        },
+        |time_ms| {
+            // Set timing for this caption line
+            // Convert ms to 90kHz clock (PTS)
+            let pts = time_ms * 90;
+            ccxr_set_current_pts(timing_ctx, pts);
             ccxr_set_fts(timing_ctx);
         },
     );

@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.96"
+#define VERSION "0.96.3"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -43,17 +43,23 @@ struct file_report
 };
 
 // Stuff for telxcc.c
+#define MAX_TLT_PAGES_EXTRACT 8 // Maximum number of teletext pages to extract simultaneously
+
 struct ccx_s_teletext_config
 {
 	uint8_t verbose : 1;  // should telxcc be verbose?
-	uint16_t page;	      // teletext page containing cc we want to filter
+	uint16_t page;	      // teletext page containing cc we want to filter (legacy, first page)
 	uint16_t tid;	      // 13-bit packet ID for teletext stream
 	double offset;	      // time offset in seconds
 	uint8_t bom : 1;      // print UTF-8 BOM characters at the beginning of output
 	uint8_t nonempty : 1; // produce at least one (dummy) frame
 	// uint8_t se_mode : 1;                                    // search engine compatible mode => Uses CCExtractor's write_format
 	// uint64_t utc_refvalue;                                  // UTC referential value => Moved to ccx_decoders_common, so can be used for other decoders (608/xds) too
-	uint16_t user_page;					   // Page selected by user, which MIGHT be different to 'page' depending on autodetection stuff
+	uint16_t user_page; // Page selected by user (legacy, first page)
+	// Multi-page teletext extraction (issue #665)
+	uint16_t user_pages[MAX_TLT_PAGES_EXTRACT];		   // Pages selected by user for extraction
+	int num_user_pages;					   // Number of pages to extract (0 = auto-detect single page)
+	int extract_all_pages;					   // If 1, extract all detected subtitle pages
 	int dolevdist;						   // 0=Don't attempt to correct errors
 	int levdistmincnt, levdistmaxpct;			   // Means 2 fails or less is "the same", 10% or less is also "the same"
 	struct ccx_boundary_time extraction_start, extraction_end; // Segment we actually process
@@ -176,6 +182,10 @@ size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned 
 // Rust FFI: McPoodle DVD raw format processing (see src/rust/src/demuxer/dvdraw.rs)
 unsigned int ccxr_process_dvdraw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len);
 int ccxr_is_dvdraw_header(const unsigned char *buffer, unsigned int len);
+
+// Rust FFI: SCC (Scenarist Closed Caption) format processing (see src/rust/src/demuxer/scc.rs)
+unsigned int ccxr_process_scc(struct lib_cc_decode *ctx, struct cc_subtitle *sub, const unsigned char *buffer, unsigned int len, int framerate);
+int ccxr_is_scc_file(const unsigned char *buffer, unsigned int len);
 
 int general_loop(struct lib_ccx_ctx *ctx);
 void process_hex(struct lib_ccx_ctx *ctx, char *filename);

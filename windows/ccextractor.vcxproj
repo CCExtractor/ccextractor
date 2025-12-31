@@ -38,6 +38,7 @@
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
+    <ClInclude Include="..\src\lib_ccx\vobsub_decoder.h" />
     <ClInclude Include="..\src\thirdparty\lib_hash\sha2.h" />
     <ClInclude Include="..\src\thirdparty\utf8proc\utf8proc.h" />
     <ClInclude Include="..\src\thirdparty\win_iconv\iconv.h" />
@@ -130,6 +131,7 @@
     <ClCompile Include=" ..\src\lib_ccx\ts_tables.c" />
     <ClCompile Include=" ..\src\lib_ccx\ts_tables_epg.c" />
     <ClCompile Include=" ..\src\lib_ccx\utility.c" />
+    <ClCompile Include=" ..\src\lib_ccx\vobsub_decoder.c" />
     <ClCompile Include=" ..\src\lib_ccx\wtv_functions.c" />
     <ClCompile Include=" ..\src\thirdparty\lib_hash\sha2.c" />
     <ClCompile Include=" ..\src\thirdparty\utf8proc\utf8proc.c" />
@@ -180,7 +182,7 @@
     <ProjectGuid>{0F0063C4-BCBC-4379-A6D5-84A5669C940A}</ProjectGuid>
     <RootNamespace>ccextractor</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>

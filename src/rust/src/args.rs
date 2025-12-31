@@ -227,7 +227,7 @@ pub struct Args {
     /// "all[EUC-KR]") and it will encode specified charset to
     /// UTF-8 using iconv. See iconv documentation to check if
     /// required encoding/charset is supported.
-    #[arg(long="service", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long="service", alias="svc", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cea708services: Option<String>,
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the
@@ -290,6 +290,11 @@ pub struct Args {
     /// DVD Recorder)
     #[arg(long="90090", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub mpeg90090: bool,
+    /// Set the frame rate for SCC (Scenarist Closed Caption) input files.
+    /// Valid values: 29.97 (default), 24, 25, 30
+    /// Example: --scc-framerate 25
+    #[arg(long="scc-framerate", verbatim_doc_comment, value_name="fps", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    pub scc_framerate: Option<String>,
     /// By default, ccextractor will process input files in
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you
@@ -481,7 +486,7 @@ pub struct Args {
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="sc", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub sentencecap: bool,
     /// Add the contents of 'file' to the list of words
     /// that must be capitalized. For example, if file
@@ -625,6 +630,18 @@ pub struct Args {
     /// bypassing hacks that are Tesseract-specific.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub psm: Option<u8>,
+    /// Split subtitle images into lines before OCR.
+    /// Uses PSM 7 (single text line mode) for each line,
+    /// which can improve accuracy for multi-line bitmap subtitles
+    /// (VOBSUB, DVD, DVB).
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub ocr_line_split: bool,
+    /// Disable the OCR character blacklist.
+    /// By default, CCExtractor blacklists characters like |, \, `, _
+    /// that are commonly misrecognized (e.g. 'I' as '|').
+    /// Use this flag to disable the blacklist.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub no_ocr_blacklist: bool,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic
@@ -821,8 +838,17 @@ pub struct Args {
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
     /// page is always 888, may vary in other countries.
-    #[arg(long, verbatim_doc_comment, value_name="page", help_heading=TELETEXT_OPTIONS)]
-    pub tpage: Option<String>,
+    /// You can specify multiple pages by using --tpage
+    /// multiple times (e.g., --tpage 891 --tpage 892).
+    /// Each page will be output to a separate file with
+    /// suffix _pNNN (e.g., output_p891.srt, output_p892.srt).
+    #[arg(long, verbatim_doc_comment, value_name="page", action = clap::ArgAction::Append, help_heading=TELETEXT_OPTIONS)]
+    pub tpage: Option<Vec<u16>>,
+    /// Extract all teletext subtitle pages found in the stream.
+    /// Each page will be output to a separate file with
+    /// suffix _pNNN (e.g., output_p891.srt, output_p892.srt).
+    #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
+    pub tpages_all: bool,
     /// Enable verbose mode in the teletext decoder.
     #[arg(long, verbatim_doc_comment, help_heading=TELETEXT_OPTIONS)]
     pub tverbose: bool,

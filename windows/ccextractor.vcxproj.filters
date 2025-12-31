@@ -153,6 +153,9 @@
     <ClInclude Include="..\src\lib_ccx\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\lib_ccx\vobsub_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\lib_ccx\compile_info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -453,6 +456,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\utility.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include=" ..\src\lib_ccx\vobsub_decoder.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include=" ..\src\lib_ccx\wtv_functions.c">
