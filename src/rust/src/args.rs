@@ -630,6 +630,18 @@ pub struct Args {
     /// bypassing hacks that are Tesseract-specific.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub psm: Option<u8>,
+    /// Split subtitle images into lines before OCR.
+    /// Uses PSM 7 (single text line mode) for each line,
+    /// which can improve accuracy for multi-line bitmap subtitles
+    /// (VOBSUB, DVD, DVB).
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub ocr_line_split: bool,
+    /// Disable the OCR character blacklist.
+    /// By default, CCExtractor blacklists characters like |, \, `, _
+    /// that are commonly misrecognized (e.g. 'I' as '|').
+    /// Use this flag to disable the blacklist.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub no_ocr_blacklist: bool,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic
