@@ -1185,7 +1185,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			struct demuxer_data *dvb_ptr = *datalist;
 			while (dvb_ptr)
 			{
-			// Process DVB nodes (in split mode, even if they were the "best" stream,
+				// Process DVB nodes (in split mode, even if they were the "best" stream,
 				// we route them here to ensure they get a proper named pipeline)
 				if (dvb_ptr->codec == CCX_CODEC_DVB &&
 				    dvb_ptr->len > 0)
@@ -1214,6 +1214,33 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 
 					// Get or create pipeline for this DVB stream
 					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+
+					// Reinitialize decoder if it was NULLed out by PAT change
+					if (pipe && pipe->dec_ctx && !pipe->decoder)
+					{
+						struct dvb_config dvb_cfg = {0};
+						dvb_cfg.n_language = 1;
+						// Lookup composition/ancillary IDs from potential_streams
+						if (ctx->demux_ctx)
+						{
+							for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
+							{
+								if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+								{
+									dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
+									dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
+									break;
+								}
+							}
+						}
+#ifdef ENABLE_OCR
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg, pipe->ocr_ctx);
+#else
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg, NULL);
+#endif
+						if (pipe->decoder)
+							pipe->dec_ctx->private_data = pipe->decoder;
+					}
 
 					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
 					{
@@ -1275,7 +1302,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d) = NULL;
 	int ret = 0;
 	int caps = 0;
 
