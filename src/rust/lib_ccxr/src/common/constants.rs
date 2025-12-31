@@ -147,7 +147,11 @@ pub const CCX_DECODER_608_SCREEN_WIDTH: usize = 32;
 pub const ONEPASS: usize = 120; // Bytes we can always look ahead without going out of limits
 pub const BUFSIZE: usize = 2048 * 1024 + ONEPASS; // 2 Mb plus the safety pass
 pub const MAX_CLOSED_CAPTION_DATA_PER_PICTURE: usize = 32;
-pub const EIA_708_BUFFER_LENGTH: usize = 2048; // TODO: Find out what the real limit is
+/// CEA-708 Service Input Buffer size.
+/// Specification minimum is 128 bytes per service, but we use 2048 bytes
+/// (16x the minimum) to provide a safety margin for buffer management.
+/// Reference: CEA-708-E Section 8.4.3 - Service Input Buffers
+pub const EIA_708_BUFFER_LENGTH: usize = 2048;
 pub const TS_PACKET_PAYLOAD_LENGTH: usize = 184; // From specs
 pub const SUBLINESIZE: usize = 2048; // Max. length of a .srt line - TODO: Get rid of this
 pub const STARTBYTESLENGTH: usize = 1024 * 1024;
