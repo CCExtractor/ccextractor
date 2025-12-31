@@ -13,8 +13,11 @@
 #include "../lib_hash/sha2.h"
 #include <string.h>
 #include <stdio.h>
+#if __has_include(<utf8proc.h>)
+#include <utf8proc.h>
+#else
 #include <utf8proc/utf8proc.h>
-
+#endif
 #ifdef ENABLE_OCR
 #include <tesseract/capi.h>
 #include <leptonica/allheaders.h>

@@ -42,7 +42,7 @@ extern "C"
 	 * @return DVB context kept as void* for abstraction
 	 *
 	 */
-	void *dvbsub_init_decoder(struct dvb_config *cfg, void *ocr_ctx);
+	void *dvbsub_init_decoder(struct dvb_config *cfg);
 
 	int dvbsub_close_decoder(void **dvb_ctx);
 

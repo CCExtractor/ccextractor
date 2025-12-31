@@ -39,7 +39,7 @@
                 KeyPath="yes"/>
         </Component>
     </StandardDirectory>
-		<StandardDirectory Id="ProgramFiles6432Folder">
+		<StandardDirectory Id="ProgramFiles64Folder">
 			<Directory Id="INSTALLFOLDER" Name="CCExtractor">
 				<Directory Id="CCX_tessdata" Name="tessdata"/>
 				<Directory Id="CCX_data" Name="data">

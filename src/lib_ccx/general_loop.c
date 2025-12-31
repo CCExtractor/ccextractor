@@ -75,7 +75,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 				if (!ctx->demux_ctx->strangeheader)
 				{
 					mprint("\nNot a recognized header. Searching for next header.\n");
-					dump(CCX_DMT_GENERIC_NOTICES, nextheader, 6, 0, 0);
+					dump(CCX_DMT_PARSE, nextheader, 6, 0, 0);
 					// Only print the message once per loop / unrecognized header
 					ctx->demux_ctx->strangeheader = 1;
 				}
@@ -815,10 +815,6 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			got = data_node->len;
 		}
 	}
-	else if (data_node->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
-	{
-		got = data_node->len; // Do nothing. Still don't know how to process it
-	}
 	else if (data_node->bufferdatatype == CCX_RAW) // Raw two byte 608 data from DVR-MS/ASF
 	{
 		// The asf_get_more_data() loop sets current_pts when possible
@@ -1233,11 +1229,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 								}
 							}
 						}
-#ifdef ENABLE_OCR
-						pipe->decoder = dvbsub_init_decoder(&dvb_cfg, pipe->ocr_ctx);
-#else
-						pipe->decoder = dvbsub_init_decoder(&dvb_cfg, NULL);
-#endif
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
 						if (pipe->decoder)
 							pipe->dec_ctx->private_data = pipe->decoder;
 					}

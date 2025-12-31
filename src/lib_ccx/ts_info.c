@@ -184,7 +184,7 @@ static void *init_private_data(enum ccx_code_type codec)
 		case CCX_CODEC_TELETEXT:
 			return telxcc_init();
 		case CCX_CODEC_DVB:
-			return dvbsub_init_decoder(NULL, 0);
+			return dvbsub_init_decoder(NULL);
 		default:
 			return NULL;
 	}

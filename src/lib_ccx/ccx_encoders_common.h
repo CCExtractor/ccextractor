@@ -153,6 +153,9 @@ struct encoder_ctx
 	unsigned int cdp_hdr_seq;
 	int force_dropframe;
 
+	// SCC output framerate
+	int scc_framerate; // SCC output framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+
 	int new_sentence; // Capitalize next letter?
 
 	int program_number;

@@ -12,6 +12,7 @@
 #include "ccx_mp4.h"
 #include "activity.h"
 #include "ccx_dtvcc.h"
+#include "vobsub_decoder.h"
 
 #define MEDIA_TYPE(type, subtype) (((u64)(type) << 32) + (subtype))
 
@@ -25,15 +26,22 @@
 #define GF_ISOM_SUBTYPE_HVC1 GF_4CC('h', 'v', 'c', '1')
 #endif
 
-static short bswap16(short v)
+// VOBSUB subtype (mp4s or MPEG)
+#ifndef GF_ISOM_SUBTYPE_MPEG4
+#define GF_ISOM_SUBTYPE_MPEG4 GF_4CC('M', 'P', 'E', 'G')
+#endif
+
+static int16_t bswap16(int16_t v)
 {
 	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
 }
 
-static long bswap32(long v)
+static int32_t bswap32(int32_t v)
 {
 	// For 0x12345678 returns 78563412
-	long swapped = ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24);
+	// Use int32_t instead of long for consistent behavior across platforms
+	// (long is 4 bytes on Windows x64 but 8 bytes on Linux x64)
+	int32_t swapped = ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24);
 	return swapped;
 }
 static struct
@@ -76,10 +84,10 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 				nal_length = s->data[i];
 				break;
 			case 2:
-				nal_length = bswap16(*(short *)&s->data[i]);
+				nal_length = bswap16(*(int16_t *)&s->data[i]);
 				break;
 			case 4:
-				nal_length = bswap32(*(long *)&s->data[i]);
+				nal_length = bswap32(*(int32_t *)&s->data[i]);
 				break;
 		}
 		const u32 previous_index = i;
@@ -145,10 +153,10 @@ static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCCo
 				nal_length = s->data[i];
 				break;
 			case 2:
-				nal_length = bswap16(*(short *)&s->data[i]);
+				nal_length = bswap16(*(int16_t *)&s->data[i]);
 				break;
 			case 4:
-				nal_length = bswap32(*(long *)&s->data[i]);
+				nal_length = bswap32(*(int32_t *)&s->data[i]);
 				break;
 			default:
 				mprint("Unexpected nal_unit_size %u in HEVC config\n", c->nal_unit_size);
@@ -202,6 +210,13 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	dec_ctx = update_decoder_list(ctx);
 	enc_ctx = update_encoder_list(ctx);
+
+	// Set buffer data type to CCX_PES for MP4/MOV MPEG-2 tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_PES;
+
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -248,6 +263,12 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_I
 	struct lib_cc_decode *dec_ctx = NULL;
 
 	dec_ctx = update_decoder_list(ctx);
+
+	// Set buffer data type to CCX_H264 for MP4/MOV AVC tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_H264;
 
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
@@ -326,6 +347,12 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 	// Enable HEVC mode
 	dec_ctx->avc_ctx->is_hevc = 1;
 
+	// Set buffer data type to CCX_H264 for MP4/MOV HEVC tracks.
+	// This ensures cb_field counters are not incremented in do_cb(),
+	// which is correct because container formats associate captions
+	// with the frame's PTS directly.
+	dec_ctx->in_bufferdatatype = CCX_H264;
+
 	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
 	{
 		return 0;
@@ -387,6 +414,144 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 		gf_odf_hevc_cfg_del(c);
 		c = NULL;
 	}
+
+	return status;
+}
+
+static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
+{
+	u32 timescale, i, sample_count;
+	int status = 0;
+	struct lib_cc_decode *dec_ctx = NULL;
+	struct encoder_ctx *enc_ctx = NULL;
+	struct vobsub_ctx *vob_ctx = NULL;
+
+	dec_ctx = update_decoder_list(ctx);
+	enc_ctx = update_encoder_list(ctx);
+
+	if ((sample_count = gf_isom_get_sample_count(f, track)) < 1)
+	{
+		return 0;
+	}
+
+	timescale = gf_isom_get_media_timescale(f, track);
+
+	/* Check if OCR is available */
+	if (!vobsub_ocr_available())
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR support.\n"
+		      "Please rebuild CCExtractor with -DWITH_OCR=ON");
+	}
+
+	/* Initialize VOBSUB decoder */
+	vob_ctx = init_vobsub_decoder();
+	if (!vob_ctx)
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB decoder initialization failed.\n"
+		      "Please ensure Tesseract is installed with language data.");
+	}
+
+	/* Try to get decoder config for palette info */
+	GF_GenericSampleDescription *gdesc = gf_isom_get_generic_sample_description(f, track, 1);
+	if (gdesc && gdesc->extension_buf && gdesc->extension_buf_size > 0)
+	{
+		/* The extension buffer may contain an idx-like header with palette */
+		char *header = malloc(gdesc->extension_buf_size + 1);
+		if (header)
+		{
+			memcpy(header, gdesc->extension_buf, gdesc->extension_buf_size);
+			header[gdesc->extension_buf_size] = '\0';
+			vobsub_parse_palette(vob_ctx, header);
+			free(header);
+		}
+	}
+	if (gdesc)
+		free(gdesc);
+
+	mprint("Processing VOBSUB track (%u samples)\n", sample_count);
+
+	for (i = 0; i < sample_count; i++)
+	{
+		u32 sdi;
+		GF_ISOSample *s = gf_isom_get_sample(f, track, i + 1, &sdi);
+
+		if (s != NULL)
+		{
+			s32 signed_cts = (s32)s->CTS_Offset;
+			LLONG start_time_ms = (LLONG)((s->DTS + signed_cts) * 1000) / timescale;
+
+			/* Calculate end time from next sample if available */
+			LLONG end_time_ms = 0;
+			if (i + 1 < sample_count)
+			{
+				u32 next_sdi;
+				GF_ISOSample *next_s = gf_isom_get_sample(f, track, i + 2, &next_sdi);
+				if (next_s)
+				{
+					s32 next_signed_cts = (s32)next_s->CTS_Offset;
+					end_time_ms = (LLONG)((next_s->DTS + next_signed_cts) * 1000) / timescale;
+					gf_isom_sample_del(&next_s);
+				}
+			}
+			if (end_time_ms == 0)
+				end_time_ms = start_time_ms + 5000; /* Default 5 second duration */
+
+			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+			set_fts(dec_ctx->timing);
+
+			/* Decode SPU and run OCR */
+			struct cc_subtitle vob_sub;
+			memset(&vob_sub, 0, sizeof(vob_sub));
+
+			int ret = vobsub_decode_spu(vob_ctx,
+						    (unsigned char *)s->data, s->dataLength,
+						    start_time_ms, end_time_ms,
+						    &vob_sub);
+
+			if (ret == 0 && vob_sub.got_output)
+			{
+				/* Encode the subtitle to output format */
+				encode_sub(enc_ctx, &vob_sub);
+				sub->got_output = 1;
+
+				/* Free subtitle data */
+				if (vob_sub.data)
+				{
+					struct cc_bitmap *rect = (struct cc_bitmap *)vob_sub.data;
+					for (int j = 0; j < vob_sub.nb_data; j++)
+					{
+						if (rect[j].data0)
+							free(rect[j].data0);
+						if (rect[j].data1)
+							free(rect[j].data1);
+#ifdef ENABLE_OCR
+						if (rect[j].ocr_text)
+							free(rect[j].ocr_text);
+#endif
+					}
+					free(vob_sub.data);
+				}
+			}
+
+			gf_isom_sample_del(&s);
+		}
+
+		int progress = (int)((i * 100) / sample_count);
+		if (ctx->last_reported_progress != progress)
+		{
+			int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+			activity_progress(progress, cur_sec / 60, cur_sec % 60);
+			ctx->last_reported_progress = progress;
+		}
+	}
+
+	int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+	activity_progress(100, cur_sec / 60, cur_sec % 60);
+
+	delete_vobsub_decoder(&vob_ctx);
+	mprint("VOBSUB processing complete\n");
 
 	return status;
 }
@@ -745,6 +910,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	avc_track_count = 0;
 	hevc_track_count = 0;
 	cc_track_count = 0;
+	u32 vobsub_track_count = 0;
 
 	for (i = 0; i < track_count; i++)
 	{
@@ -760,9 +926,11 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 			avc_track_count++;
 		if (type == GF_ISOM_MEDIA_VISUAL && (subtype == GF_ISOM_SUBTYPE_HEV1 || subtype == GF_ISOM_SUBTYPE_HVC1))
 			hevc_track_count++;
+		if (type == GF_ISOM_MEDIA_SUBPIC && subtype == GF_ISOM_SUBTYPE_MPEG4)
+			vobsub_track_count++;
 	}
 
-	mprint("MP4: found %u tracks: %u avc, %u hevc and %u cc\n", track_count, avc_track_count, hevc_track_count, cc_track_count);
+	mprint("MP4: found %u tracks: %u avc, %u hevc, %u cc, %u vobsub\n", track_count, avc_track_count, hevc_track_count, cc_track_count, vobsub_track_count);
 
 	for (i = 0; i < track_count; i++)
 	{
@@ -877,6 +1045,24 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					mp4_ret = 1;
 					encode_sub(enc_ctx, &dec_sub);
 					dec_sub.got_output = 0;
+				}
+				break;
+
+			case MEDIA_TYPE(GF_ISOM_MEDIA_SUBPIC, GF_ISOM_SUBTYPE_MPEG4): // subp:MPEG (VOBSUB)
+				// If there are multiple VOBSUB tracks, change fd for different tracks
+				if (vobsub_track_count > 1)
+				{
+					switch_output_file(ctx, enc_ctx, i);
+				}
+				if (process_vobsub_track(ctx, f, i + 1, &dec_sub) != 0)
+				{
+					mprint("Error on process_vobsub_track()\n");
+					free(dec_ctx->xds_ctx);
+					return -3;
+				}
+				if (dec_sub.got_output)
+				{
+					mp4_ret = 1;
 				}
 				break;
 
@@ -1019,9 +1205,14 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		mprint("Found no HEVC track(s). ");
 
 	if (cc_track_count)
-		mprint("Found %d CC track(s).\n", cc_track_count);
+		mprint("Found %d CC track(s). ", cc_track_count);
 	else
-		mprint("Found no dedicated CC track(s).\n");
+		mprint("Found no dedicated CC track(s). ");
+
+	if (vobsub_track_count)
+		mprint("Found %d VOBSUB track(s).\n", vobsub_track_count);
+	else
+		mprint("\n");
 
 	ctx->freport.mp4_cc_track_cnt = cc_track_count;
 

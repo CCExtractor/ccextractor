@@ -734,23 +734,10 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 		}
 	}
 
-#ifdef ENABLE_OCR
-	pipe->ocr_ctx = init_ocr(0);
-	if (!pipe->ocr_ctx)
-	{
-		mprint("Warning: Failed to initialize OCR for pipeline PID 0x%X, continuing without OCR\n", pid);
-	}
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, pipe->ocr_ctx);
-#else
-	pipe->decoder = dvbsub_init_decoder(&dvb_cfg, NULL);
-#endif
+	pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
 	if (!pipe->decoder)
 	{
 		mprint("Error: Failed to create DVB decoder for pipeline PID 0x%X\n", pid);
-#ifdef ENABLE_OCR
-		if (pipe->ocr_ctx)
-			delete_ocr(&pipe->ocr_ctx);
-#endif
 		dinit_encoder(&pipe->encoder, 0);
 		dinit_timing_ctx(&pipe->timing);
 		free(pipe);
@@ -768,10 +755,6 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	{
 		mprint("Error: Failed to create decoder context for pipeline PID 0x%X\n", pid);
 		dvbsub_close_decoder(&pipe->decoder);
-#ifdef ENABLE_OCR
-		if (pipe->ocr_ctx)
-			delete_ocr(&pipe->ocr_ctx);
-#endif
 		dinit_encoder(&pipe->encoder, 0);
 		free(pipe);
 #ifdef _WIN32

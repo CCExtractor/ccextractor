@@ -153,12 +153,11 @@ enum ccx_bufferdata_type get_buffer_type(struct cap_info *cinfo)
 	{
 		return CCX_TELETEXT;
 	}
-	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
+	else if ((cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 ||
+		  cinfo->stream == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2) &&
+		 cinfo->codec == CCX_CODEC_ATSC_CC)
 	{
-		return CCX_PRIVATE_MPEG2_CC;
-	}
-	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_USER_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
-	{
+		// ATSC CC can be in either private stream type - process both as PES
 		return CCX_PES;
 	}
 	else
@@ -567,15 +566,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	if (!cinfo->capbuf || !cinfo->capbuflen)
 		return -1;
 
-	if (ptr->bufferdatatype == CCX_PRIVATE_MPEG2_CC)
-	{
-		dump(CCX_DMT_GENERIC_NOTICES, cinfo->capbuf, cinfo->capbuflen, 0, 1);
-		// Bogus data, so we return something
-		ptr->buffer[ptr->len++] = 0xFA;
-		ptr->buffer[ptr->len++] = 0x80;
-		ptr->buffer[ptr->len++] = 0x80;
-		return CCX_OK;
-	}
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
 		memcpy(ptr->buffer + ptr->len, cinfo->capbuf, cinfo->capbuflen);

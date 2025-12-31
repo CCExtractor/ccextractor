@@ -227,7 +227,7 @@ pub struct Args {
     /// "all[EUC-KR]") and it will encode specified charset to
     /// UTF-8 using iconv. See iconv documentation to check if
     /// required encoding/charset is supported.
-    #[arg(long="service", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long="service", alias="svc", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cea708services: Option<String>,
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the

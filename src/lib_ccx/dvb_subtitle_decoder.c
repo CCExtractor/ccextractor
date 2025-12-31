@@ -57,20 +57,20 @@ static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int
 
 #define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
 	{                                                                                        \
-		cb = (cb1) - 128;                                                                \
-		cr = (cr1) - 128;                                                                \
+		cb = (cb1)-128;                                                                  \
+		cr = (cr1)-128;                                                                  \
 		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
 		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
 			ONE_HALF;                                                                \
 		b_add = FIX(1.77200 * 255.0 / 224.0) * cb + ONE_HALF;                            \
 	}
 
-#define YUV_TO_RGB2_CCIR(r, g, b, y1)                 \
-	{                                             \
-		y = ((y1) - 16) * FIX(255.0 / 219.0); \
-		r = cm[(y + r_add) >> SCALEBITS];     \
-		g = cm[(y + g_add) >> SCALEBITS];     \
-		b = cm[(y + b_add) >> SCALEBITS];     \
+#define YUV_TO_RGB2_CCIR(r, g, b, y1)               \
+	{                                           \
+		y = ((y1)-16) * FIX(255.0 / 219.0); \
+		r = cm[(y + r_add) >> SCALEBITS];   \
+		g = cm[(y + g_add) >> SCALEBITS];   \
+		b = cm[(y + b_add) >> SCALEBITS];   \
 	}
 
 #define times4(x) x, x, x, x
@@ -471,7 +471,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void *dvbsub_init_decoder(struct dvb_config *cfg, void *ocr_ctx)
+void *dvbsub_init_decoder(struct dvb_config *cfg)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext *)malloc(sizeof(DVBSubContext));
@@ -495,14 +495,7 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, void *ocr_ctx)
 	}
 
 #ifdef ENABLE_OCR
-	if (ocr_ctx)
-	{
-		ctx->ocr_ctx = ocr_ctx;
-	}
-	else
-	{
-		ctx->ocr_ctx = init_ocr(ctx->lang_index);
-	}
+	ctx->ocr_ctx = init_ocr(ctx->lang_index);
 #endif
 	ctx->version = -1;
 
@@ -2015,7 +2008,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	// Use current dec_ctx (not prev) because we need valid region/object data for rendering
 	// dec_ctx->prev has NULL pointers to avoid memory corruption from aliased linked lists
 	write_dvb_sub(dec_ctx, sub->prev); // we write the current dvb sub to update decoder context
-	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+	enc_ctx->write_previous = 1;	   // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 
 #ifdef ENABLE_OCR
 	if (sub->prev)

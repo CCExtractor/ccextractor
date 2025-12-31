@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <assert.h>
 #include "dvb_subtitle_decoder.h"
+#include "vobsub_decoder.h"
 
 void skip_bytes(FILE *file, ULLONG n)
 {
@@ -1172,7 +1173,7 @@ void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_strin
 		memset((void *)&cnf, 0, sizeof(struct dvb_config));
 
 		parse_dvb_description(&cnf, codec_data, 8);
-		dec_ctx->private_data = dvbsub_init_decoder(&cnf, 0);
+		dec_ctx->private_data = dvbsub_init_decoder(&cnf);
 
 		free(codec_data);
 	}
@@ -1334,10 +1335,361 @@ char *ass_ssa_sentence_erase_read_order(char *text)
 	return buf;
 }
 
+/* VOBSUB support: Generate PS Pack header
+ * The PS Pack header is 14 bytes:
+ * - 4 bytes: start code (00 00 01 ba)
+ * - 6 bytes: SCR (System Clock Reference) in MPEG-2 format
+ * - 3 bytes: mux rate
+ * - 1 byte: stuffing length (0)
+ */
+static void generate_ps_pack_header(unsigned char *buf, ULLONG pts_90khz)
+{
+	// PS Pack start code
+	buf[0] = 0x00;
+	buf[1] = 0x00;
+	buf[2] = 0x01;
+	buf[3] = 0xBA;
+
+	// SCR (System Clock Reference) - use PTS as SCR base, SCR extension = 0
+	// MPEG-2 format: 01 SCR[32:30] 1 SCR[29:15] 1 SCR[14:0] 1 SCR_ext[8:0] 1
+	ULLONG scr = pts_90khz;
+	ULLONG scr_base = scr;
+	int scr_ext = 0;
+
+	buf[4] = 0x44 | ((scr_base >> 27) & 0x38) | ((scr_base >> 28) & 0x03);
+	buf[5] = (scr_base >> 20) & 0xFF;
+	buf[6] = 0x04 | ((scr_base >> 12) & 0xF8) | ((scr_base >> 13) & 0x03);
+	buf[7] = (scr_base >> 5) & 0xFF;
+	buf[8] = 0x04 | ((scr_base << 3) & 0xF8) | ((scr_ext >> 7) & 0x03);
+	buf[9] = ((scr_ext << 1) & 0xFE) | 0x01;
+
+	// Mux rate (10080 = standard DVD rate)
+	int mux_rate = 10080;
+	buf[10] = (mux_rate >> 14) & 0xFF;
+	buf[11] = (mux_rate >> 6) & 0xFF;
+	buf[12] = ((mux_rate << 2) & 0xFC) | 0x03;
+
+	// Stuffing length = 0, with marker bits
+	buf[13] = 0xF8;
+}
+
+/* VOBSUB support: Generate PES header for private stream 1
+ * Returns the total header size (variable based on PTS)
+ */
+static int generate_pes_header(unsigned char *buf, ULLONG pts_90khz, int payload_size, int stream_id)
+{
+	// PES start code for private stream 1
+	buf[0] = 0x00;
+	buf[1] = 0x00;
+	buf[2] = 0x01;
+	buf[3] = 0xBD; // Private stream 1
+
+	// PES packet length = header data (3 + 5 for PTS) + 1 (substream ID) + payload
+	int pes_header_data_len = 5; // PTS only
+	int pes_packet_len = 3 + pes_header_data_len + 1 + payload_size;
+	buf[4] = (pes_packet_len >> 8) & 0xFF;
+	buf[5] = pes_packet_len & 0xFF;
+
+	// PES flags: MPEG-2, original
+	buf[6] = 0x81;
+	// PTS_DTS_flags = 10 (PTS only)
+	buf[7] = 0x80;
+	// PES header data length
+	buf[8] = pes_header_data_len;
+
+	// PTS (5 bytes): '0010' | PTS[32:30] | '1' | PTS[29:15] | '1' | PTS[14:0] | '1'
+	buf[9] = 0x21 | ((pts_90khz >> 29) & 0x0E);
+	buf[10] = (pts_90khz >> 22) & 0xFF;
+	buf[11] = 0x01 | ((pts_90khz >> 14) & 0xFE);
+	buf[12] = (pts_90khz >> 7) & 0xFF;
+	buf[13] = 0x01 | ((pts_90khz << 1) & 0xFE);
+
+	// Substream ID (0x20 = first VOBSUB stream)
+	buf[14] = 0x20 + stream_id;
+
+	return 15; // Total PES header size
+}
+
+/* VOBSUB support: Generate timestamp string for .idx file
+ * Format: HH:MM:SS:mmm (where mmm is milliseconds)
+ */
+static void generate_vobsub_timestamp(char *buf, size_t bufsize, ULLONG milliseconds)
+{
+	ULLONG ms = milliseconds % 1000;
+	milliseconds /= 1000;
+	ULLONG seconds = milliseconds % 60;
+	milliseconds /= 60;
+	ULLONG minutes = milliseconds % 60;
+	milliseconds /= 60;
+	ULLONG hours = milliseconds;
+
+	snprintf(buf, bufsize, "%02" LLU_M ":%02" LLU_M ":%02" LLU_M ":%03" LLU_M,
+		 hours, minutes, seconds, ms);
+}
+
+/* Check if output format is text-based (requires OCR for bitmap subtitles) */
+static int is_text_output_format(enum ccx_output_format format)
+{
+	return (format == CCX_OF_SRT || format == CCX_OF_SSA ||
+		format == CCX_OF_WEBVTT || format == CCX_OF_TRANSCRIPT ||
+		format == CCX_OF_SAMI || format == CCX_OF_SMPTETT);
+}
+
+/* VOBSUB support: Process VOBSUB track with OCR and output text format */
+static void process_vobsub_track_ocr(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
+{
+	if (track->sentence_count == 0)
+	{
+		mprint("\nNo VOBSUB subtitles to process");
+		return;
+	}
+
+	/* Check if OCR is available */
+	if (!vobsub_ocr_available())
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR support.\n"
+		      "Please rebuild CCExtractor with -DWITH_OCR=ON or use raw output (--out=idx)");
+	}
+
+	/* Initialize VOBSUB decoder */
+	struct vobsub_ctx *vob_ctx = init_vobsub_decoder();
+	if (!vob_ctx)
+	{
+		fatal(EXIT_NOT_CLASSIFIED,
+		      "VOBSUB to text conversion requires OCR, but initialization failed.\n"
+		      "Please ensure Tesseract is installed with language data.");
+	}
+
+	/* Parse palette from track header (CodecPrivate) */
+	if (track->header)
+	{
+		vobsub_parse_palette(vob_ctx, track->header);
+	}
+
+	mprint("\nProcessing VOBSUB track with OCR (%d subtitles)", track->sentence_count);
+
+	/* Get encoder context for output */
+	struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+
+	/* Process each subtitle */
+	for (int i = 0; i < track->sentence_count; i++)
+	{
+		struct matroska_sub_sentence *sentence = track->sentences[i];
+		mkv_ctx->sentence_count++;
+
+		/* Calculate end time (use next subtitle start if not specified) */
+		ULLONG end_time = sentence->time_end;
+		if (end_time == 0 && i + 1 < track->sentence_count)
+		{
+			end_time = track->sentences[i + 1]->time_start - 1;
+		}
+		else if (end_time == 0)
+		{
+			end_time = sentence->time_start + 5000; /* Default 5 second duration */
+		}
+
+		/* Decode SPU and run OCR */
+		struct cc_subtitle sub;
+		memset(&sub, 0, sizeof(sub));
+
+		int ret = vobsub_decode_spu(vob_ctx,
+					    (unsigned char *)sentence->text,
+					    sentence->text_size,
+					    sentence->time_start,
+					    end_time,
+					    &sub);
+
+		if (ret == 0 && sub.got_output)
+		{
+			/* Encode the subtitle to output format */
+			encode_sub(enc_ctx, &sub);
+
+			/* Free subtitle data */
+			if (sub.data)
+			{
+				struct cc_bitmap *rect = (struct cc_bitmap *)sub.data;
+				for (int j = 0; j < sub.nb_data; j++)
+				{
+					if (rect[j].data0)
+						free(rect[j].data0);
+					if (rect[j].data1)
+						free(rect[j].data1);
+#ifdef ENABLE_OCR
+					if (rect[j].ocr_text)
+						free(rect[j].ocr_text);
+#endif
+				}
+				free(sub.data);
+			}
+		}
+
+		/* Progress indicator */
+		if ((i + 1) % 50 == 0 || i + 1 == track->sentence_count)
+		{
+			mprint("\rProcessing VOBSUB: %d/%d subtitles", i + 1, track->sentence_count);
+		}
+	}
+
+	delete_vobsub_decoder(&vob_ctx);
+	mprint("\nVOBSUB OCR processing complete");
+}
+
+/* VOBSUB support: Save VOBSUB track to .idx and .sub files */
+#define VOBSUB_BLOCK_SIZE 2048
+static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
+{
+	if (track->sentence_count == 0)
+	{
+		mprint("\nNo VOBSUB subtitles to write");
+		return;
+	}
+
+	// Generate base filename (without extension)
+	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
+	const char *basename = get_basename(mkv_ctx->filename);
+	size_t needed = strlen(basename) + strlen(lang_to_use) + 32;
+	char *base_filename = malloc(needed);
+	if (base_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+
+	if (track->lang_index == 0)
+		snprintf(base_filename, needed, "%s_%s", basename, lang_to_use);
+	else
+		snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_to_use, track->lang_index);
+
+	// Create .sub filename
+	char *sub_filename = malloc(needed + 5);
+	if (sub_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+	snprintf(sub_filename, needed + 5, "%s.sub", base_filename);
+
+	// Create .idx filename
+	char *idx_filename = malloc(needed + 5);
+	if (idx_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+	snprintf(idx_filename, needed + 5, "%s.idx", base_filename);
+
+	mprint("\nOutput files: %s, %s", idx_filename, sub_filename);
+
+	// Open .sub file
+	int sub_desc;
+#ifdef WIN32
+	sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+#else
+	sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
+#endif
+	if (sub_desc < 0)
+	{
+		mprint("\nError: Cannot create .sub file");
+		free(base_filename);
+		free(sub_filename);
+		free(idx_filename);
+		return;
+	}
+
+	// Open .idx file
+	int idx_desc;
+#ifdef WIN32
+	idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
+#else
+	idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
+#endif
+	if (idx_desc < 0)
+	{
+		mprint("\nError: Cannot create .idx file");
+		close(sub_desc);
+		free(base_filename);
+		free(sub_filename);
+		free(idx_filename);
+		return;
+	}
+
+	// Write .idx header (from CodecPrivate)
+	if (track->header != NULL)
+		write_wrapped(idx_desc, track->header, strlen(track->header));
+
+	// Add language identifier line
+	char lang_line[128];
+	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", lang_to_use);
+	write_wrapped(idx_desc, lang_line, strlen(lang_line));
+
+	// Buffer for PS/PES headers and padding
+	unsigned char header_buf[32];
+	unsigned char zero_buf[VOBSUB_BLOCK_SIZE];
+	memset(zero_buf, 0, VOBSUB_BLOCK_SIZE);
+
+	ULLONG file_pos = 0;
+
+	// Write each subtitle
+	for (int i = 0; i < track->sentence_count; i++)
+	{
+		struct matroska_sub_sentence *sentence = track->sentences[i];
+		mkv_ctx->sentence_count++;
+
+		// Convert timestamp to 90kHz PTS
+		ULLONG pts_90khz = sentence->time_start * 90;
+
+		// Write timestamp entry to .idx
+		char timestamp[32];
+		generate_vobsub_timestamp(timestamp, sizeof(timestamp), sentence->time_start);
+		char idx_entry[128];
+		snprintf(idx_entry, sizeof(idx_entry), "timestamp: %s, filepos: %09" LLX_M "\n",
+			 timestamp, file_pos);
+		write_wrapped(idx_desc, idx_entry, strlen(idx_entry));
+
+		// Generate PS Pack header (14 bytes)
+		generate_ps_pack_header(header_buf, pts_90khz);
+		write_wrapped(sub_desc, (char *)header_buf, 14);
+
+		// Generate PES header (15 bytes)
+		int pes_header_len = generate_pes_header(header_buf, pts_90khz, sentence->text_size, 0);
+		write_wrapped(sub_desc, (char *)header_buf, pes_header_len);
+
+		// Write SPU data
+		write_wrapped(sub_desc, sentence->text, sentence->text_size);
+
+		// Calculate bytes written and pad to block boundary
+		ULLONG bytes_written = 14 + pes_header_len + sentence->text_size;
+		ULLONG padding_needed = VOBSUB_BLOCK_SIZE - (bytes_written % VOBSUB_BLOCK_SIZE);
+		if (padding_needed < VOBSUB_BLOCK_SIZE)
+		{
+			write_wrapped(sub_desc, (char *)zero_buf, padding_needed);
+			bytes_written += padding_needed;
+		}
+
+		file_pos += bytes_written;
+	}
+
+	close(sub_desc);
+	close(idx_desc);
+	free(base_filename);
+	free(sub_filename);
+	free(idx_filename);
+}
+
 void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
 	char *filename;
 	int desc;
+
+	// VOBSUB tracks need special handling
+	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
+	{
+		// Check if user wants text output (SRT, SSA, WebVTT, etc.)
+		if (ccx_options.write_format_rewritten &&
+		    is_text_output_format(ccx_options.enc_cfg.write_format))
+		{
+			// Use OCR to convert VOBSUB to text
+			process_vobsub_track_ocr(mkv_ctx, track);
+		}
+		else
+		{
+			// Output raw idx/sub files
+			save_vobsub_track(mkv_ctx, track);
+		}
+		return;
+	}
 
 	if (mkv_ctx->ctx->cc_to_stdout == CCX_TRUE)
 	{
@@ -1357,11 +1709,6 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
-
-	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
-	{
-		mprint("\nError: VOBSUB not supported");
-	}
 
 	for (int i = 0; i < track->sentence_count; i++)
 	{
@@ -1497,10 +1844,6 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_start);
 			free(timestamp_end);
 		}
-		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
-		{
-			// TODO: Add support for VOBSUB
-		}
 	}
 }
 
@@ -1623,8 +1966,13 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 {
 	if (ccx_options.write_format_rewritten)
 	{
-		mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extract subtitles in a recorded format\n");
-		mprint("--out=<format> will be ignored\n");
+		/* Note: For VOBSUB tracks, text output formats (SRT, SSA, etc.) are
+		 * supported via OCR. For other subtitle types, the native format is used. */
+		if (!is_text_output_format(ccx_options.enc_cfg.write_format))
+		{
+			mprint(MATROSKA_WARNING "You are using --out=<format>, but Matroska parser extracts subtitles in their recorded format\n");
+			mprint("--out=<format> will be ignored for non-VOBSUB tracks\n");
+		}
 	}
 
 	// Don't need generated input file

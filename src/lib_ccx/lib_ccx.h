@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.96"
+#define VERSION "0.96.3"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
