@@ -105,7 +105,7 @@ struct ccx_subtitle_pipeline
 	struct lib_cc_decode *dec_ctx; // Full decoder context for DVB state management
 	struct cc_subtitle sub;	       // Persistent cc_subtitle for DVB prev tracking
 #ifdef ENABLE_OCR
-	void *ocr_ctx;  // Per-pipeline OCR context for thread safety
+	void *ocr_ctx; // Per-pipeline OCR context for thread safety
 #endif
 };
 
