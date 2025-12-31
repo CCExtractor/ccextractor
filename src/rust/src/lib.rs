@@ -392,8 +392,9 @@ extern "C" fn ccxr_process_cc_data(
 
     let dec_ctx = unsafe { &mut *dec_ctx };
 
-    // Check dtvcc pointer before dereferencing
-    if dec_ctx.dtvcc.is_null() {
+    // Check dtvcc_rust pointer before dereferencing (not dtvcc!)
+    // When Rust is enabled, dtvcc is NULL and dtvcc_rust holds the actual context
+    if dec_ctx.dtvcc_rust.is_null() {
         return -1;
     }
 
