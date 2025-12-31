@@ -1,5 +1,9 @@
 0.96.3 (2025-12-29)
 -------------------
+- New: DVB multi-stream subtitle extraction with --split-dvb-subs option (#447)
+  - Extract multiple DVB subtitle streams to separate output files simultaneously
+  - Output files named with language and PID (e.g., output_dan_0x091F.srt)
+  - Handles PAT changes in transport streams without crashing
 - New: VOBSUB subtitle extraction with OCR support for MP4 files
 - New: VOBSUB subtitle extraction support for MKV/Matroska files
 - New: Native SCC (Scenarist Closed Caption) input file support - CCExtractor can now read SCC files
