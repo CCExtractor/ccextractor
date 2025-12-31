@@ -835,5 +835,13 @@ void set_pipeline_pts(struct ccx_subtitle_pipeline *pipe, LLONG pts)
 		pipe->timing->sync_pts = pts;
 	}
 
-	set_fts(pipe->timing);
+	// For DVB subtitle pipelines, directly calculate fts_now
+	// The standard set_fts() relies on video frame type detection which doesn't
+	// work for DVB-only streams. Simple calculation: (current_pts - min_pts) in ms
+	// MPEG_CLOCK_FREQ = 90000, so divide by 90 to get milliseconds
+	pipe->timing->fts_now = (pts - pipe->timing->min_pts) / 90;
+
+	// Also update fts_max if this is the highest timestamp seen
+	if (pipe->timing->fts_now > pipe->timing->fts_max)
+		pipe->timing->fts_max = pipe->timing->fts_now;
 }

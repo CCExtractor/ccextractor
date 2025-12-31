@@ -308,6 +308,20 @@ void dinit_cap(struct ccx_demuxer *ctx)
 					if (dec_ctx->private_data == saved_private_data)
 						dec_ctx->private_data = NULL;
 				}
+
+				// Also check subtitle pipelines for shared decoder references
+				// Pipelines have their own decoder and dec_ctx->private_data
+				for (int i = 0; i < lctx->pipeline_count; i++)
+				{
+					struct ccx_subtitle_pipeline *p = lctx->pipelines[i];
+					if (p)
+					{
+						if (p->decoder == saved_private_data)
+							p->decoder = NULL;
+						if (p->dec_ctx && p->dec_ctx->private_data == saved_private_data)
+							p->dec_ctx->private_data = NULL;
+					}
+				}
 			}
 		}
 		free(iter);

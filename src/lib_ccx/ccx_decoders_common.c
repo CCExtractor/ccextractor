@@ -654,13 +654,53 @@ struct cc_subtitle *copy_subtitle(struct cc_subtitle *sub)
 	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
 	sub_copy->datatype = sub->datatype;
 	sub_copy->data = NULL;
+	sub_copy->prev = NULL; // Don't copy prev chain to avoid double-free
 
 	if (sub->data)
 	{
-		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
-		if (!sub_copy->data)
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating data.");
-		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
+		if (sub->datatype == CC_DATATYPE_DVB)
+		{
+			// Deep copy for DVB bitmap - must copy pixel data to avoid aliasing
+			struct cc_bitmap *src_bmp = (struct cc_bitmap *)sub->data;
+			struct cc_bitmap *dst_bmp = malloc(sizeof(struct cc_bitmap));
+			if (!dst_bmp)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating bitmap.");
+			memcpy(dst_bmp, src_bmp, sizeof(struct cc_bitmap));
+
+			// Deep copy pixel data buffers (these are the actual bitmap pixels)
+			dst_bmp->data0 = NULL;
+			dst_bmp->data1 = NULL;
+			if (src_bmp->data0 && src_bmp->h > 0 && src_bmp->linesize0 > 0)
+			{
+				size_t size0 = (size_t)src_bmp->h * (size_t)src_bmp->linesize0;
+				dst_bmp->data0 = malloc(size0);
+				if (dst_bmp->data0)
+					memcpy(dst_bmp->data0, src_bmp->data0, size0);
+			}
+			if (src_bmp->data1 && src_bmp->h > 0 && src_bmp->linesize1 > 0)
+			{
+				size_t size1 = (size_t)src_bmp->h * (size_t)src_bmp->linesize1;
+				dst_bmp->data1 = malloc(size1);
+				if (dst_bmp->data1)
+					memcpy(dst_bmp->data1, src_bmp->data1, size1);
+			}
+#ifdef ENABLE_OCR
+			// Deep copy OCR text if present
+			if (src_bmp->ocr_text)
+				dst_bmp->ocr_text = strdup(src_bmp->ocr_text);
+			else
+				dst_bmp->ocr_text = NULL;
+#endif
+			sub_copy->data = dst_bmp;
+		}
+		else
+		{
+			// Original behavior for eia608_screen (608 captions)
+			sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
+			if (!sub_copy->data)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating data.");
+			memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
+		}
 	}
 	return sub_copy;
 }

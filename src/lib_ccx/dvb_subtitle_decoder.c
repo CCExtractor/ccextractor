@@ -217,7 +217,31 @@ size_t dvbsub_get_context_size(void)
 void dvbsub_copy_context(void *dst, void *src)
 {
 	if (dst && src)
-		memcpy(dst, src, sizeof(DVBSubContext));
+	{
+		DVBSubContext *d = (DVBSubContext *)dst;
+		DVBSubContext *s = (DVBSubContext *)src;
+
+		// Copy scalar values only - DO NOT copy pointers to avoid aliasing
+		// The linked lists (region_list, clut_list, object_list, display_list)
+		// are owned by the source context and must not be shared
+		d->composition_id = s->composition_id;
+		d->ancillary_id = s->ancillary_id;
+		d->lang_index = s->lang_index;
+		d->version = s->version;
+		d->time_out = s->time_out;
+
+		// Initialize pointers to NULL to avoid use-after-free
+		d->region_list = NULL;
+		d->clut_list = NULL;
+		d->object_list = NULL;
+		d->display_list = NULL;
+		d->display_definition = NULL;
+
+#ifdef ENABLE_OCR
+		// OCR context is shared, just copy the pointer (it's managed externally)
+		d->ocr_ctx = s->ocr_ctx;
+#endif
+	}
 }
 
 static __inline unsigned int bytestream_get_byte(const uint8_t **b)
@@ -1585,6 +1609,10 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	ctx = (DVBSubContext *)dec_ctx->private_data;
 
+	// Safety check: Context may be NULL after PAT change
+	if (!ctx)
+		return -1;
+
 	// Validate we have something to display
 	if (!ctx->display_list)
 	{
@@ -1964,11 +1992,8 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_handle_display_segment: Out of memory allocating private_data.");
 	}
-	if (!dec_ctx->prev->private_data)
-	{
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_handle_display_segment: Out of memory allocating private_data.");
-	}
-	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+	// Use safe copy that doesn't alias linked list pointers
+	dvbsub_copy_context(dec_ctx->prev->private_data, dec_ctx->private_data);
 
 	// Issue 6: Removed workaround. Version management should be handled by logic, not forcing -1.
 	// Reference: ((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
@@ -1987,7 +2012,9 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	// Store the raw PTS for accurate duration calculation (not affected by PTS jump handling)
 	sub->prev->start_pts = current_pts;
 
-	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
+	// Use current dec_ctx (not prev) because we need valid region/object data for rendering
+	// dec_ctx->prev has NULL pointers to avoid memory corruption from aliased linked lists
+	write_dvb_sub(dec_ctx, sub->prev); // we write the current dvb sub to update decoder context
 	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
 
 #ifdef ENABLE_OCR
@@ -2024,6 +2051,10 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	int segment_length;
 	int ret = 0;
 	int got_segment = 0;
+
+	// Safety check: Context may be NULL after PAT change
+	if (!ctx)
+		return -1;
 
 	if (buf_size <= 6 || *buf != 0x0f)
 	{

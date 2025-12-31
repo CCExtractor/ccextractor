@@ -758,10 +758,14 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-		if (ret < 0)
-			mprint("Return from dvbsub_decode: %d\n", ret);
-		set_fts(dec_ctx->timing);
+		// Safety check: Skip if decoder was freed due to PAT change
+		if (dec_ctx->private_data)
+		{
+			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+			if (ret < 0)
+				mprint("Return from dvbsub_decode: %d\n", ret);
+			set_fts(dec_ctx->timing);
+		}
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PES)
@@ -1234,11 +1238,13 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						// Decode DVB using the per-pipeline decoder context
 						// This ensures each stream has its own prev pointers
 						// Skip first 2 bytes (PES header) as done in process_data for DVB
-						
-						// IMPORTANT: Link the pipeline's sub.prev to the decoder's prev buffer
-						// The DVB decoder expects sub->prev to be valid for writing the previous subtitle
-						
-						dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+
+						// Safety check: Skip if decoder was freed due to PAT change
+						// When PAT changes, dinit_cap NULLs out the decoder references
+						if (pipe->decoder && pipe->dec_ctx->private_data)
+						{
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+						}
 					}
 				}
 				dvb_ptr = dvb_ptr->next_stream;
@@ -1249,7 +1255,8 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		// Process the last subtitle for DVB
 		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
 		{
-			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE && (*dec_ctx)->dec_sub.prev->end_time == 0)
+			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE &&
+			    (*dec_ctx)->dec_sub.prev && (*dec_ctx)->dec_sub.prev->end_time == 0)
 			{
 				// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
 				(*dec_ctx)->dec_sub.prev->end_time = get_fts((*dec_ctx)->timing, (*dec_ctx)->current_field);
