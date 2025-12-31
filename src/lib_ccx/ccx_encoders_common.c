@@ -826,31 +826,8 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		return NULL;
 	}
 
-	// Deep copy start_credits_text to avoid double-free when free_encoder_context is called
-	if (opt->start_credits_text)
-	{
-		size_t len = strlen(opt->start_credits_text) + 1;
-		ctx->start_credits_text = malloc(len);
-		if (ctx->start_credits_text)
-			memcpy(ctx->start_credits_text, opt->start_credits_text, len);
-	}
-	else
-	{
-		ctx->start_credits_text = NULL;
-	}
-
-	// Deep copy end_credits_text to avoid double-free when free_encoder_context is called
-	if (opt->end_credits_text)
-	{
-		size_t len = strlen(opt->end_credits_text) + 1;
-		ctx->end_credits_text = malloc(len);
-		if (ctx->end_credits_text)
-			memcpy(ctx->end_credits_text, opt->end_credits_text, len);
-	}
-	else
-	{
-		ctx->end_credits_text = NULL;
-	}
+	ctx->start_credits_text = opt->start_credits_text;
+	ctx->end_credits_text = opt->end_credits_text;
 	ctx->startcreditsnotbefore = opt->startcreditsnotbefore;
 	ctx->startcreditsnotafter = opt->startcreditsnotafter;
 	ctx->startcreditsforatleast = opt->startcreditsforatleast;
