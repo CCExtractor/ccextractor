@@ -1,3 +1,9 @@
+DEVELOPMENT VERSION
+-------------------
+RUST:
+- Documented EIA_708_BUFFER_LENGTH constant with CEA-708 specification reference
+- Removed debug logging from target.rs network module
+
 0.96.3 (2025-12-29)
 -------------------
 - New: VOBSUB subtitle extraction with OCR support for MP4 files
