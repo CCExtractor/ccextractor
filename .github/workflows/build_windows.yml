@@ -3,7 +3,6 @@ name: Build CCExtractor on Windows
 env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
-  VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
   VCPKG_COMMIT: ab2977be50c702126336e5088f4836060733c899
 
 on:
@@ -25,40 +24,82 @@ on:
       - "src/rust/**"
 
 jobs:
-  build_release:
+  build:
     runs-on: windows-2022
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2.0.0
         with:
           msbuild-architecture: x64
-      - name: Install gpac
-        run: choco install gpac --version 2.4.0
-      - name: Setup vcpkg
-        run: mkdir C:\vcpkg\.cache
-      - name: Cache vcpkg
-        id: cache
+
+      # Cache Chocolatey packages
+      - name: Cache Chocolatey packages
+        id: choco-cache
         uses: actions/cache@v5
         with:
           path: |
-            C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
-      - name: Build vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg
-          ./vcpkg/bootstrap-vcpkg.bat
-      - name: Install dependencies
+            C:\ProgramData\chocolatey\lib\gpac
+          key: choco-gpac-2.4.0
+
+      - name: Install gpac
+        if: steps.choco-cache.outputs.cache-hit != 'true'
+        run: choco install gpac --version 2.4.0 --no-progress
+
+      # Use lukka/run-vcpkg for better caching
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        id: runvcpkg
+        with:
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT }}
+          vcpkgDirectory: ${{ github.workspace }}/vcpkg
+          vcpkgJsonGlob: 'windows/vcpkg.json'
+
+      # Cache vcpkg installed packages separately for faster restores
+      - name: Cache vcpkg installed packages
+        id: vcpkg-installed-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/vcpkg/installed
+          key: vcpkg-installed-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('windows/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-installed-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-
+
+      - name: Install vcpkg dependencies
+        if: steps.vcpkg-installed-cache.outputs.cache-hit != 'true'
         run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
         working-directory: windows
-      - uses: actions-rs/toolchain@v1
+
+      # Cache Rust/Cargo artifacts
+      - name: Cache Cargo registry
+        uses: actions/cache@v5
         with:
-          toolchain: stable
-          override: true
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache Cargo build artifacts
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/windows/target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('src/rust/**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-build-
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
-      - name: build Release-Full
+
+      # Build Release-Full
+      - name: Build Release-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
@@ -67,49 +108,21 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
         working-directory: ./windows
-      - name: Display version information
+
+      - name: Display Release version information
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Release-Full
-      - uses: actions/upload-artifact@v6
+
+      - name: Upload Release artifact
+        uses: actions/upload-artifact@v6
         with:
           name: CCExtractor Windows Release build
           path: |
             ./windows/x64/Release-Full/ccextractorwinfull.exe
             ./windows/x64/Release-Full/*.dll
-  build_debug:
-    runs-on: windows-2022
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-      - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v2.0.0
-        with:
-          msbuild-architecture: x64
-      - name: Install gpac
-        run: choco install gpac --version 2.4.0
-      - name: Setup vcpkg
-        run: mkdir C:\vcpkg\.cache
-      - name: Cache vcpkg
-        id: cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            C:\vcpkg\.cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
-      - name: Build vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg
-          ./vcpkg/bootstrap-vcpkg.bat
-      - name: Install dependencies
-        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
-        working-directory: windows
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Install Win 10 SDK
-        uses: ilammy/msvc-dev-cmd@v1
-      - name: build Debug-Full
+
+      # Build Debug-Full (reuses cached Cargo artifacts)
+      - name: Build Debug-Full
         env:
           LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
@@ -118,11 +131,14 @@ jobs:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
         working-directory: ./windows
-      - name: Display version information
+
+      - name: Display Debug version information
         continue-on-error: true
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/x64/Debug-Full
-      - uses: actions/upload-artifact@v6
+
+      - name: Upload Debug artifact
+        uses: actions/upload-artifact@v6
         with:
           name: CCExtractor Windows Debug build
           path: |
