@@ -6,6 +6,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
+#include <inttypes.h>
 
 #ifdef DEBUG_SAVE_TS_PACKETS
 #include <sys/types.h>
@@ -568,6 +569,13 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
+		if (cinfo->capbuflen > BUFSIZE - ptr->len)
+		{
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
+			      "Teletext packet (%" PRId64 ") larger than remaining buffer (%" PRId64 ").\n",
+			      cinfo->capbuflen, (int64_t)(BUFSIZE - ptr->len));
+		}
+
 		memcpy(ptr->buffer + ptr->len, cinfo->capbuf, cinfo->capbuflen);
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;

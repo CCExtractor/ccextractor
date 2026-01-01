@@ -8,6 +8,7 @@
 - Fix: Prevent heap buffer overflow in Teletext processing (security fix)
 - Fix: Lazy OCR initialization - only initialize when first DVB subtitle is encountered
 - Build: Optimized Windows CI workflow for faster builds
+- Fix: Updated GUI with version 0.7.1. A blind attempt to fix a hang on start on some Windows.
 
 0.96.3 (2025-12-29)
 -------------------
