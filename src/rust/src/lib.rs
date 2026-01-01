@@ -618,12 +618,20 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// - Double-dash options (e.g., `--quiet`) are left unchanged
 /// - Single-letter short options (e.g., `-o`) are left unchanged
 /// - Non-option arguments (e.g., `file.ts`) are left unchanged
-/// - Numeric options (e.g., `-1`, `-12`) are left unchanged (these are valid short options)
+/// - Numeric options `-1`, `-2`, `-12` are converted to `--output-field=N` for CEA-608 field selection
 fn normalize_legacy_option(arg: String) -> String {
+    // Handle legacy numeric options for CEA-608 field extraction
+    // These map to --output-field which is the modern equivalent
+    match arg.as_str() {
+        "-1" => return "--output-field=1".to_string(),
+        "-2" => return "--output-field=2".to_string(),
+        "-12" => return "--output-field=12".to_string(),
+        _ => {}
+    }
+
     // Check if it's a single-dash option with multiple characters (e.g., -quiet)
     // but not a short option with a value (e.g., -o filename)
     // Single-letter options like -o, -s should be left unchanged
-    // Numeric options like -1, -12 should also be left unchanged
     if arg.starts_with('-')
         && !arg.starts_with("--")
         && arg.len() > 2
@@ -843,12 +851,18 @@ mod test {
 
     #[test]
     fn test_normalize_legacy_option_numeric_options() {
-        // Numeric options should remain unchanged (these are valid ccextractor options)
-        assert_eq!(normalize_legacy_option("-1".to_string()), "-1".to_string());
-        assert_eq!(normalize_legacy_option("-2".to_string()), "-2".to_string());
+        // Legacy numeric options for CEA-608 field selection are converted to --output-field
+        assert_eq!(
+            normalize_legacy_option("-1".to_string()),
+            "--output-field=1".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-2".to_string()),
+            "--output-field=2".to_string()
+        );
         assert_eq!(
             normalize_legacy_option("-12".to_string()),
-            "-12".to_string()
+            "--output-field=12".to_string()
         );
     }
 
