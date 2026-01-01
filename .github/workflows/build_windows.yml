@@ -35,17 +35,8 @@ jobs:
         with:
           msbuild-architecture: x64
 
-      # Cache Chocolatey packages
-      - name: Cache Chocolatey packages
-        id: choco-cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            C:\ProgramData\chocolatey\lib\gpac
-          key: choco-gpac-2.4.0
-
+      # Install GPAC (fast, ~30s, not worth caching complexity)
       - name: Install gpac
-        if: steps.choco-cache.outputs.cache-hit != 'true'
         run: choco install gpac --version 2.4.0 --no-progress
 
       # Use lukka/run-vcpkg for better caching
