@@ -6,6 +6,7 @@
 - Fix: 32-bit build failures on i686 and armv7l architectures
 - Fix: Legacy command-line argument compatibility (-1, -2, -12, --sc, --svc)
 - Fix: Prevent heap buffer overflow in Teletext processing (security fix)
+- Fix: Prevent integer overflow leading to heap buffer overflow in Transport Stream handling (security fix)
 - Fix: Lazy OCR initialization - only initialize when first DVB subtitle is encountered
 - Build: Optimized Windows CI workflow for faster builds
 - Fix: Updated GUI with version 0.7.1. A blind attempt to fix a hang on start on some Windows.
