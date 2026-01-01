@@ -1,5 +1,5 @@
 Name: ccextractor
-Version: 0.96.3
+Version: 0.96.4
 Release: 1
 Summary: A closed captions and teletext subtitles extractor for video streams.
 Group: Applications/Internet
