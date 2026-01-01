@@ -707,10 +707,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		if (!new_capbuf)
 			return -1;
 		cinfo->capbuf = new_capbuf;
-		cinfo->capbufsize = (int)newcapbuflen; // Note: capbufsize is int in struct cap_info
+		cinfo->capbufsize = newcapbuflen; // Note: capbufsize is int in struct cap_info
 	}
 	memcpy(cinfo->capbuf + cinfo->capbuflen, payload->start, payload->length);
-	cinfo->capbuflen = (int)newcapbuflen; // Note: capbuflen is int in struct cap_info
+	cinfo->capbuflen = newcapbuflen; // Note: capbuflen is int in struct cap_info
 
 	return CCX_OK;
 }
