@@ -582,8 +582,22 @@ void dtvcc_window_copy_to_screen(dtvcc_service_decoder *decoder, dtvcc_window *w
 	top = top < 0 ? 0 : top;
 	left = left < 0 ? 0 : left;
 
+	// Invariant check: window should never be defined with values exceeding MAX constants
+	if (window->row_count > CCX_DTVCC_MAX_ROWS || window->col_count > CCX_DTVCC_MAX_COLUMNS)
+	{
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_window_copy_to_screen: W-%d HAS INVALID DIMENSIONS %dx%d\n",
+					     window->number, window->row_count, window->col_count);
+		return;
+	}
+
 	int copyrows = top + window->row_count >= CCX_DTVCC_SCREENGRID_ROWS ? CCX_DTVCC_SCREENGRID_ROWS - top : window->row_count;
 	int copycols = left + window->col_count >= CCX_DTVCC_SCREENGRID_COLUMNS ? CCX_DTVCC_SCREENGRID_COLUMNS - left : window->col_count;
+
+	// Use window dimensions as secondary safety guard
+	if (copyrows > window->row_count)
+		copyrows = window->row_count;
+	if (copycols > window->col_count)
+		copycols = window->col_count;
 
 	ccx_common_logging.debug_ftn(
 	    CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
@@ -795,6 +809,14 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 	if (cw == -1 || !window->is_defined) // Writing to a non existing window, skipping
 		return;
 
+	if (window->pen_row < 0 || window->pen_row >= CCX_DTVCC_MAX_ROWS ||
+	    window->pen_column < 0 || window->pen_column >= CCX_DTVCC_MAX_COLUMNS)
+	{
+		ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_character: pen out of bounds (%d:%d)\n",
+					     window->pen_row, window->pen_column);
+		return;
+	}
+
 	window->is_empty = 0;
 	window->rows[window->pen_row][window->pen_column] = symbol;
 	window->pen_attribs[window->pen_row][window->pen_column] = window->pen_attribs_pattern; // "Painting" char by pen - attribs
@@ -998,6 +1020,14 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	int row_count = (data[4] & 0xf) + 1; // according to CEA-708-D
 	int anchor_point = data[4] >> 4;
 	int col_count = (data[5] & 0x3f) + 1; // according to CEA-708-D
+
+	if (row_count > CCX_DTVCC_MAX_ROWS || col_count > CCX_DTVCC_MAX_COLUMNS)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] Invalid window size %dx%d (max %dx%d), rejecting window definition\n",
+					   row_count, col_count, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_MAX_COLUMNS);
+		return;
+	}
+
 	int pen_style = data[6] & 0x7;
 	int win_style = (data[6] >> 3) & 0x7;
 
@@ -1341,6 +1371,14 @@ void dtvcc_handle_SPL_SetPenLocation(dtvcc_service_decoder *decoder, unsigned ch
 	}
 
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	if (row >= window->row_count || col >= window->col_count)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPL_SetPenLocation: "
+					   "Invalid pen location %d:%d for window size %dx%d, rejecting command\n",
+					   row, col, window->row_count, window->col_count);
+		return;
+	}
+
 	window->pen_row = row;
 	window->pen_column = col;
 }
