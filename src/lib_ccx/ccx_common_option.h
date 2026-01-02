@@ -152,6 +152,8 @@ struct ccx_s_options // Options from user parameters
 	int ocr_oem;		  // The Tesseract OEM mode, could be 0 (default), 1 or 2
 	int psm;		  // The Tesseract PSM mode, could be between 0 and 13. 3 is tesseract default
 	int ocr_quantmode;	  // How to quantize the bitmap before passing to to tesseract (0=no quantization at all, 1=CCExtractor's internal)
+	int ocr_line_split;	  // If 1, split images into lines before OCR (uses PSM 7 for better accuracy)
+	int ocr_blacklist;	  // If 1, use character blacklist to prevent common OCR errors (default: enabled)
 	char *mkvlang;		  // The name of the language stream for MKV
 	int analyze_video_stream; // If 1, the video stream will be processed even if we're using a different one for subtitles.
 

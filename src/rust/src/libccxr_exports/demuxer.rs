@@ -11,6 +11,13 @@ use std::alloc::{alloc_zeroed, Layout};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_uchar, c_uint, c_void};
 
+/// Poison pattern used to detect uninitialized pointers (0xCD repeated).
+/// This pattern is commonly used by debug memory allocators.
+#[cfg(target_pointer_width = "64")]
+const POISON_PTR_PATTERN: usize = 0xcdcdcdcdcdcdcdcd;
+#[cfg(target_pointer_width = "32")]
+const POISON_PTR_PATTERN: usize = 0xcdcdcdcd;
+
 // External C function declarations
 extern "C" {
     fn activity_input_file_closed();
@@ -266,7 +273,7 @@ pub unsafe fn copy_demuxer_from_c_to_rust(ccx: *const ccx_demuxer) -> CcxDemuxer
         .PIDs_programs
         .iter()
         .filter_map(|&buffer_ptr| {
-            if buffer_ptr.is_null() || buffer_ptr as usize == 0xcdcdcdcdcdcdcdcd {
+            if buffer_ptr.is_null() || buffer_ptr as usize == POISON_PTR_PATTERN {
                 None
             } else {
                 Some(Box::into_raw(Box::new(PMTEntry::from_ctype(*buffer_ptr)?)))

@@ -38,7 +38,7 @@ use bindings::*;
 use cfg_if::cfg_if;
 use clap::{error::ErrorKind, Parser};
 use common::{copy_from_rust, CType, CType2};
-use decoder::Dtvcc;
+use decoder::{Dtvcc, DtvccRust};
 use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
 use parser::OptionsExt;
 use utils::is_true;
@@ -210,11 +210,175 @@ pub extern "C" fn ccxr_init_logger() {
         .init();
 }
 
+// =============================================================================
+// FFI functions for persistent DtvccRust context
+// =============================================================================
+//
+// These functions provide a C-compatible interface for managing the persistent
+// Rust CEA-708 decoder context. They are designed to be called from C code
+// and will be used in Phase 2-3 of the implementation.
+// See: https://github.com/CCExtractor/ccextractor/issues/1499
+
+/// Create a new persistent DtvccRust context.
+///
+/// This function allocates and initializes a new `DtvccRust` struct on the heap
+/// and returns an opaque pointer to it. The context persists until freed with
+/// `ccxr_dtvcc_free()`.
+///
+/// # Safety
+/// - `opts_ptr` must be a valid pointer to `ccx_decoder_dtvcc_settings`
+/// - `opts.report` and `opts.timing` must not be null
+/// - The returned pointer must be freed with `ccxr_dtvcc_free()` when done
+///
+/// # Returns
+/// An opaque pointer to the DtvccRust context, or null if opts_ptr is null.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_dtvcc_init(
+    opts_ptr: *const ccx_decoder_dtvcc_settings,
+) -> *mut std::ffi::c_void {
+    if opts_ptr.is_null() {
+        return std::ptr::null_mut();
+    }
+    let opts = &*opts_ptr;
+    let dtvcc = Box::new(DtvccRust::new(opts));
+    Box::into_raw(dtvcc) as *mut std::ffi::c_void
+}
+
+/// Free a DtvccRust context.
+///
+/// This function properly frees all memory associated with the DtvccRust context,
+/// including owned decoders and their tv_screens.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - `dtvcc_ptr` must not be used after this call
+/// - It is safe to call with a null pointer (no-op)
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_free(dtvcc_ptr: *mut std::ffi::c_void) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+
+    let dtvcc = unsafe { Box::from_raw(dtvcc_ptr as *mut DtvccRust) };
+
+    // Free owned decoders and their tv_screens
+    for (i, decoder_opt) in dtvcc.decoders.iter().enumerate() {
+        if i >= dtvcc.services_active.len() || !is_true(dtvcc.services_active[i]) {
+            continue;
+        }
+
+        if let Some(decoder) = decoder_opt {
+            // Free windows rows if memory was reserved
+            for window in decoder.windows.iter() {
+                if is_true(window.memory_reserved) {
+                    for row_ptr in window.rows.iter() {
+                        if !row_ptr.is_null() {
+                            unsafe {
+                                drop(Box::from_raw(*row_ptr));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Free the tv_screen
+            if !decoder.tv.is_null() {
+                unsafe {
+                    drop(Box::from_raw(decoder.tv));
+                }
+            }
+        }
+    }
+
+    // The Box containing dtvcc will be dropped here, freeing the DtvccRust struct
+    drop(dtvcc);
+}
+
+/// Set the encoder for a DtvccRust context.
+///
+/// The encoder is typically not available at initialization time, so it must
+/// be set separately before processing begins.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - `encoder` can be null (processing will skip service blocks if so)
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_set_encoder(
+    dtvcc_ptr: *mut std::ffi::c_void,
+    encoder: *mut encoder_ctx,
+) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.set_encoder(encoder);
+}
+
+/// Process CEA-708 CC data using the persistent DtvccRust context.
+///
+/// This function processes a single CC data unit (cc_valid, cc_type, data1, data2)
+/// using the persistent context, maintaining state across calls.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_process_data(
+    dtvcc_ptr: *mut std::ffi::c_void,
+    cc_valid: u8,
+    cc_type: u8,
+    data1: u8,
+    data2: u8,
+) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.process_cc_data(cc_valid, cc_type, data1, data2);
+}
+
+/// Flush all active service decoders in the DtvccRust context.
+///
+/// This writes out any pending caption data from all active services.
+/// Should be called when processing is complete or when switching contexts.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+/// - It is safe to call with a null pointer (no-op)
+#[no_mangle]
+pub extern "C" fn ccxr_flush_active_decoders(dtvcc_ptr: *mut std::ffi::c_void) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.flush_active_decoders();
+}
+
+/// Check if the DtvccRust context is active.
+///
+/// # Safety
+/// - `dtvcc_ptr` must be a valid pointer returned by `ccxr_dtvcc_init()`
+///
+/// # Returns
+/// 1 if active, 0 if not active or if pointer is null.
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_is_active(dtvcc_ptr: *mut std::ffi::c_void) -> i32 {
+    if dtvcc_ptr.is_null() {
+        return 0;
+    }
+    let dtvcc = unsafe { &*(dtvcc_ptr as *mut DtvccRust) };
+    if dtvcc.is_active {
+        1
+    } else {
+        0
+    }
+}
+
 /// Process cc_data
 ///
 /// # Safety
 /// dec_ctx should not be a null pointer
 /// data should point to cc_data of length cc_count
+/// dec_ctx.dtvcc_rust must point to a valid DtvccRust instance
 #[no_mangle]
 extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
@@ -228,8 +392,9 @@ extern "C" fn ccxr_process_cc_data(
 
     let dec_ctx = unsafe { &mut *dec_ctx };
 
-    // Check dtvcc pointer before dereferencing
-    if dec_ctx.dtvcc.is_null() {
+    // Check dtvcc_rust pointer before dereferencing (not dtvcc!)
+    // When Rust is enabled, dtvcc is NULL and dtvcc_rust holds the actual context
+    if dec_ctx.dtvcc_rust.is_null() {
         return -1;
     }
 
@@ -237,13 +402,19 @@ extern "C" fn ccxr_process_cc_data(
     let mut cc_data: Vec<u8> = (0..cc_count * 3)
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
-    let dtvcc_ctx = unsafe { &mut *dec_ctx.dtvcc };
-    let mut dtvcc = Dtvcc::new(dtvcc_ctx);
+    // Use the persistent DtvccRust context from dtvcc_rust
+    let dtvcc_rust = dec_ctx.dtvcc_rust as *mut DtvccRust;
+    if dtvcc_rust.is_null() {
+        warn!("ccxr_process_cc_data: dtvcc_rust is null");
+        return ret;
+    }
+    let dtvcc = unsafe { &mut *dtvcc_rust };
+
     for cc_block in cc_data.chunks_exact_mut(3) {
         if !validate_cc_pair(cc_block) {
             continue;
         }
-        let success = do_cb_dtvcc(dec_ctx, &mut dtvcc, cc_block);
+        let success = do_cb_dtvcc_rust(dec_ctx, dtvcc, cc_block);
         if success {
             ret = 0;
         }
@@ -310,7 +481,7 @@ pub fn verify_parity(data: u8) -> bool {
 /// This isn't related to the "solid blank" character - it's just that the mask happens to have the same value.
 const PARITY_BIT_MASK: u8 = 0x7F;
 
-/// Process CC data according to its type
+/// Process CC data according to its type (using Dtvcc)
 pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) -> bool {
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
@@ -361,6 +532,59 @@ pub fn do_cb_dtvcc(ctx: &mut lib_cc_decode, dtvcc: &mut Dtvcc, cc_block: &[u8]) 
     true
 }
 
+/// Process CC data according to its type (using DtvccRust - persistent context)
+pub fn do_cb_dtvcc_rust(ctx: &mut lib_cc_decode, dtvcc: &mut DtvccRust, cc_block: &[u8]) -> bool {
+    let cc_valid = (cc_block[0] & 4) >> 2;
+    let cc_type = cc_block[0] & 3;
+    let mut timeok = true;
+
+    if ctx.write_format != ccx_output_format::CCX_OF_DVDRAW
+        && ctx.write_format != ccx_output_format::CCX_OF_RAW
+        && (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD)
+        && (cc_block[1] & PARITY_BIT_MASK) == 0
+        && (cc_block[2] & PARITY_BIT_MASK) == 0
+    {
+        return true;
+    }
+
+    if cc_valid == 1 || cc_type == 3 {
+        ctx.cc_stats[cc_type as usize] += 1;
+        match cc_type {
+            // Type 0 and 1 are for CEA-608 data. Handled by C code, do nothing
+            0 | 1 => {}
+            // Type 2 and 3 are for CEA-708 data.
+            2 | 3 => {
+                let current_time = if ctx.timing.is_null() {
+                    0
+                } else {
+                    unsafe { (*ctx.timing).get_fts(ctx.current_field as u8) }
+                };
+                ctx.current_field = 3;
+
+                // Check whether current time is within start and end bounds
+                if is_true(ctx.extraction_start.set)
+                    && current_time < ctx.extraction_start.time_in_ms
+                {
+                    timeok = false;
+                }
+                if is_true(ctx.extraction_end.set) && current_time > ctx.extraction_end.time_in_ms {
+                    timeok = false;
+                    ctx.processed_enough = 1;
+                }
+
+                if timeok && ctx.write_format != ccx_output_format::CCX_OF_RAW {
+                    dtvcc.process_cc_data(cc_valid, cc_type, cc_block[1], cc_block[2]);
+                }
+                // Note: cb_708 is incremented by the C code in do_cb(), not here.
+                // Previously incrementing here caused a double-increment bug that
+                // resulted in incorrect start timestamps.
+            }
+            _ => warn!("Invalid cc_type"),
+        }
+    }
+    true
+}
+
 /// Close a Windows handle by wrapping it in a File and dropping it.
 ///
 /// # Safety
@@ -394,12 +618,20 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// - Double-dash options (e.g., `--quiet`) are left unchanged
 /// - Single-letter short options (e.g., `-o`) are left unchanged
 /// - Non-option arguments (e.g., `file.ts`) are left unchanged
-/// - Numeric options (e.g., `-1`, `-12`) are left unchanged (these are valid short options)
+/// - Numeric options `-1`, `-2`, `-12` are converted to `--output-field=N` for CEA-608 field selection
 fn normalize_legacy_option(arg: String) -> String {
+    // Handle legacy numeric options for CEA-608 field extraction
+    // These map to --output-field which is the modern equivalent
+    match arg.as_str() {
+        "-1" => return "--output-field=1".to_string(),
+        "-2" => return "--output-field=2".to_string(),
+        "-12" => return "--output-field=12".to_string(),
+        _ => {}
+    }
+
     // Check if it's a single-dash option with multiple characters (e.g., -quiet)
     // but not a short option with a value (e.g., -o filename)
     // Single-letter options like -o, -s should be left unchanged
-    // Numeric options like -1, -12 should also be left unchanged
     if arg.starts_with('-')
         && !arg.starts_with("--")
         && arg.len() > 2
@@ -619,12 +851,18 @@ mod test {
 
     #[test]
     fn test_normalize_legacy_option_numeric_options() {
-        // Numeric options should remain unchanged (these are valid ccextractor options)
-        assert_eq!(normalize_legacy_option("-1".to_string()), "-1".to_string());
-        assert_eq!(normalize_legacy_option("-2".to_string()), "-2".to_string());
+        // Legacy numeric options for CEA-608 field selection are converted to --output-field
+        assert_eq!(
+            normalize_legacy_option("-1".to_string()),
+            "--output-field=1".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-2".to_string()),
+            "--output-field=2".to_string()
+        );
         assert_eq!(
             normalize_legacy_option("-12".to_string()),
-            "-12".to_string()
+            "--output-field=12".to_string()
         );
     }
 

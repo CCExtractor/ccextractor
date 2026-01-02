@@ -74,6 +74,8 @@ void init_options(struct ccx_s_options *options)
 	options->ocr_oem = -1;		  // By default, OEM mode depends on the tesseract version
 	options->psm = 3;		  // Default PSM mode (3 is the default tesseract as well)
 	options->ocr_quantmode = 0;	  // No quantization (better OCR accuracy for DVB subtitles)
+	options->ocr_line_split = 0;	  // By default, don't split images into lines (pending testing)
+	options->ocr_blacklist = 1;	  // By default, use character blacklist to prevent common OCR errors (| vs I, etc.)
 	options->mkvlang = NULL;	  // By default, all the languages are extracted
 	options->ignore_pts_jumps = 1;
 	options->analyze_video_stream = 0;

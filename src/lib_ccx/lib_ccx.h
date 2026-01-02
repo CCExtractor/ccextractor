@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.96.3"
+#define VERSION "0.96.4"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -383,5 +383,10 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 					  int *caps);
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
 int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buffer, size_t len, struct cc_subtitle *sub);
+
+#ifndef DISABLE_RUST
+// Rust FFI function to set encoder on persistent CEA-708 decoder
+void ccxr_dtvcc_set_encoder(void *dtvcc_rust, struct encoder_ctx *encoder);
+#endif
 
 #endif

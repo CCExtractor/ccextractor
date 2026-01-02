@@ -795,6 +795,14 @@ impl OptionsExt for Options {
             self.psm = *psm as _;
         }
 
+        if args.ocr_line_split {
+            self.ocr_line_split = true;
+        }
+
+        if args.no_ocr_blacklist {
+            self.ocr_blacklist = false;
+        }
+
         if let Some(ref lang) = args.mkvlang {
             self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
             let str = lang.as_str();

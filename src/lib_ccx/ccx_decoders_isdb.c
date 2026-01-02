@@ -772,16 +772,17 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	// Copy buf in arg
 	for (i = 0; *buf != 0x20; i++)
 	{
-		if (i >= (sizeof(arg)) + 1)
+		if (i >= sizeof(arg) - 1)
 		{
-			isdb_log("UnExpected CSI %d >= %d", sizeof(arg) + 1, i);
+			isdb_log("UnExpected CSI: too long");
 			break;
 		}
 		arg[i] = *buf;
 		buf++;
 	}
 	/* ignore terminating 0x20 character */
-	arg[i] = *buf++;
+	if (i < sizeof(arg))
+		arg[i] = *buf++;
 
 	switch (*buf)
 	{

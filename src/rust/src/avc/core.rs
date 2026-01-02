@@ -8,7 +8,9 @@ use crate::{anchor_hdcc, current_fps, process_hdcc, store_hdcc, MPEG_CLOCK_FREQ}
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 use std::os::raw::c_void;
 use std::slice;
@@ -453,7 +455,7 @@ pub fn hex_dump(data: &[u8]) {
 
         // Print hex bytes
         for byte in chunk {
-            print!("{:02X} ", byte);
+            print!("{byte:02X} ");
         }
 
         // Pad if less than 16 bytes
