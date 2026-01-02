@@ -14,10 +14,10 @@ crate-type = ["staticlib"]
 log = "0.4.26"
 env_logger = "0.8.4"
 palette = "0.7"
-tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
-leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
+tesseract-sys = { version = "0.6", optional = true, default-features = false }
+leptonica-sys = { version = "0.4", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
-strum_macros = "0.25.3"
+strum_macros = "0.27"
 time = "0.3.39"
 cfg-if = "1.0.0"
 num-integer = "0.1.46"
@@ -43,7 +43,7 @@ bindgen = "0.72.1"
 pkg-config = "0.3.32"
 
 [dev-dependencies]
-tempfile = "3.20.0"
+tempfile = "3.24"
 
 
 [features]
