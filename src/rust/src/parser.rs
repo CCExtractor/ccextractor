@@ -311,6 +311,7 @@ impl OptionsExt for Options {
             InFormat::Mp4 => self.demux_cfg.auto_stream = StreamMode::Mp4,
             InFormat::Mkv => self.demux_cfg.auto_stream = StreamMode::Mkv,
             InFormat::Mxf => self.demux_cfg.auto_stream = StreamMode::Mxf,
+            InFormat::Scc => self.demux_cfg.auto_stream = StreamMode::Scc,
         }
     }
 
