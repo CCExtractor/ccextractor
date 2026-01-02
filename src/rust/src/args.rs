@@ -990,6 +990,8 @@ pub enum InFormat {
     Mkv,
     /// Material Exchange Format (MXF).
     Mxf,
+    /// Scenarist Closed Caption (SCC).
+    Scc,
     #[cfg(feature = "wtv_debug")]
     // For WTV Debug mode only
     Hex,
