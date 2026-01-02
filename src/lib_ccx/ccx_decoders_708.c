@@ -1792,6 +1792,12 @@ void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len)
 
 		if (service_number == 7) // There is an extended header
 		{
+			if (pos + 1 >= dtvcc->current_packet + len)
+			{
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
+									  "Truncated extended header, stopping.\n");
+				break;
+			}
 			pos++;
 			service_number = (pos[0] & 0x3F); // 6 more significant bits
 			// printf ("Extended header: Service number: [%d]\n",service_number);
