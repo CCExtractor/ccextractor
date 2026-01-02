@@ -574,6 +574,15 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	else if (ccounter == ctx->PID_buffers[pid]->prev_ccounter + 1 || (ctx->PID_buffers[pid]->prev_ccounter == 0x0f && ccounter == 0))
 	{
 		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
+		// Check for integer overflow and reasonable size limit (1MB)
+		if (ctx->PID_buffers[pid]->buffer_length > 1024 * 1024 ||
+		    payload_length > 1024 * 1024 ||
+		    ctx->PID_buffers[pid]->buffer_length + payload_length > 1024 * 1024)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: PSI buffer for PID %u exceeded reasonable limit (1MB), discarding.\n", pid);
+			return;
+		}
+
 		void *tmp = realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
 		if (tmp == NULL)
 		{
