@@ -12,7 +12,7 @@ crate-type = ["staticlib"]
 
 [dependencies]
 log = "0.4.26"
-env_logger = "0.8.4"
+env_logger = "0.11"
 palette = "0.7"
 tesseract-sys = { version = "0.6", optional = true, default-features = false }
 leptonica-sys = { version = "0.4", optional = true, default-features = false }
