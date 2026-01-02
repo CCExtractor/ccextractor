@@ -12,7 +12,7 @@ unsigned char odd_parity(const unsigned char byte)
 
 /**
  * SCC Accurate Timing Implementation (Issue #1120)
- * 
+ *
  * EIA-608 bandwidth constraints:
  * - 2 bytes per frame at 29.97 FPS (or configured frame rate)
  * - Captions must be pre-loaded before display time
@@ -39,11 +39,11 @@ static float get_scc_fps_internal(int scc_framerate)
 
 /**
  * Calculate total bytes needed to transmit a caption
- * 
+ *
  * Byte costs:
  * - Control code (RCL, EOC, ENM, EDM): 2 bytes x 2 (sent twice) = 4 bytes
  * - Preamble code: 2 bytes x 2 = 4 bytes
- * - Tab offset: 2 bytes x 2 = 4 bytes  
+ * - Tab offset: 2 bytes x 2 = 4 bytes
  * - Mid-row code (color/style): 2 bytes x 2 = 4 bytes
  * - Text character: 1 byte each
  * - Padding: 1 byte if odd number of text bytes
@@ -51,30 +51,30 @@ static float get_scc_fps_internal(int scc_framerate)
 static unsigned int calculate_caption_bytes(const struct eia608_screen *data)
 {
 	unsigned int total_bytes = 0;
-	
+
 	// RCL (Resume Caption Loading): 4 bytes
 	total_bytes += 4;
-	
+
 	for (unsigned char row = 0; row < 15; ++row)
 	{
 		if (!data->row_used[row])
 			continue;
-		
+
 		int first, last;
 		find_limit_characters(data->characters[row], &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
-		
+
 		if (first > last)
 			continue;
-		
+
 		// Assume we need at least one preamble per row: 4 bytes
 		total_bytes += 4;
-		
+
 		// Count characters on this row
 		unsigned int char_count = 0;
 		enum font_bits prev_font = FONT_REGULAR;
 		enum ccx_decoder_608_color_code prev_color = COL_WHITE;
 		int prev_col = -1;
-		
+
 		for (int col = first; col <= last; ++col)
 		{
 			// Check if we need position codes
@@ -85,7 +85,7 @@ static unsigned int calculate_caption_bytes(const struct eia608_screen *data)
 				if (col % 4 != 0)
 					total_bytes += 4; // Tab offset
 			}
-			
+
 			// Check if we need mid-row style codes
 			if (data->fonts[row][col] != prev_font || data->colors[row][col] != prev_color)
 			{
@@ -93,30 +93,30 @@ static unsigned int calculate_caption_bytes(const struct eia608_screen *data)
 				prev_font = data->fonts[row][col];
 				prev_color = data->colors[row][col];
 			}
-			
+
 			// Text character
 			char_count++;
 			prev_col = col;
 		}
-		
+
 		// Add text bytes (1 per character, rounded up to even)
 		total_bytes += char_count;
 		if (char_count % 2 == 1)
 			total_bytes++; // Padding
 	}
-	
+
 	// EOC (End of Caption): 4 bytes
 	total_bytes += 4;
-	
+
 	// ENM (Erase Non-displayed Memory): 4 bytes
 	total_bytes += 4;
-	
+
 	return total_bytes;
 }
 
 /**
  * Calculate the pre-roll start time for a caption
- * 
+ *
  * @param display_time When the caption should appear on screen (ms)
  * @param total_bytes Total bytes to transmit
  * @param fps Frame rate
@@ -129,48 +129,48 @@ static LLONG calculate_preroll_time(LLONG display_time, unsigned int total_bytes
 	float ms_per_frame = 1000.0f / fps;
 	unsigned int frames_needed = (total_bytes + 1) / 2;
 	LLONG transmission_time_ms = (LLONG)(frames_needed * ms_per_frame);
-	
+
 	// Add 1 frame for EOC to be sent before display
 	LLONG one_frame_ms = (LLONG)ms_per_frame;
-	
+
 	LLONG preroll_start = display_time - transmission_time_ms - one_frame_ms;
-	
+
 	// Don't go negative
 	if (preroll_start < 0)
 		preroll_start = 0;
-	
+
 	return preroll_start;
 }
 
 /**
  * Check for collision with previous caption transmission and resolve it
- * 
+ *
  * @param context Encoder context with timing state
  * @param preroll_start Proposed pre-roll start time (will be modified if collision)
  * @param display_time Caption display time (may be adjusted)
  * @param fps Frame rate
  * @return true if timing was adjusted due to collision
  */
-static bool resolve_collision(struct encoder_ctx *context, LLONG *preroll_start, 
-                              LLONG *display_time, float fps)
+static bool resolve_collision(struct encoder_ctx *context, LLONG *preroll_start,
+			      LLONG *display_time, float fps)
 {
 	// Check if our preroll would start before previous transmission ends
-	if (context->scc_last_transmission_end > 0 && 
+	if (context->scc_last_transmission_end > 0 &&
 	    *preroll_start < context->scc_last_transmission_end)
 	{
 		// Collision detected - shift our caption forward
 		LLONG shift = context->scc_last_transmission_end - *preroll_start;
-		
+
 		// Add a small buffer (one frame)
 		LLONG one_frame_ms = (LLONG)(1000.0f / fps);
 		shift += one_frame_ms;
-		
+
 		*preroll_start += shift;
 		*display_time += shift;
-		
+
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -878,16 +878,16 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	LLONG actual_start_time = data->start_time;
 	LLONG actual_end_time = data->end_time;
 	float fps = get_scc_fps_internal(context->scc_framerate);
-	
+
 	// If accurate timing is enabled, calculate pre-roll and handle collisions
 	if (context->scc_accurate_timing)
 	{
 		// Calculate total bytes needed for this caption
 		unsigned int total_bytes = calculate_caption_bytes(data);
-		
+
 		// Calculate when we need to start loading
 		LLONG preroll_start = calculate_preroll_time(actual_start_time, total_bytes, fps);
-		
+
 		// Check for collisions with previous caption and resolve
 		if (resolve_collision(context, &preroll_start, &actual_start_time, fps))
 		{
@@ -896,7 +896,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			LLONG shift = actual_start_time - data->start_time;
 			actual_end_time = data->end_time + shift;
 		}
-		
+
 		// Update timing state for next caption
 		// transmission_end = preroll_start + transmission_time
 		float ms_per_frame = 1000.0f / fps;
@@ -904,7 +904,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 		LLONG transmission_time_ms = (LLONG)(frames_needed * ms_per_frame);
 		context->scc_last_transmission_end = preroll_start + transmission_time_ms;
 		context->scc_last_display_end = actual_end_time;
-		
+
 		// Use pre-roll time for loading the caption
 		// 1. Load the caption at pre-roll time
 		add_timestamp(context, preroll_start, disassemble);
@@ -915,7 +915,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 		// 1. Load the caption
 		add_timestamp(context, data->start_time, disassemble);
 	}
-	
+
 	write_control_code(context->out->fh, data->channel, RCL, disassemble, &bytes_written);
 	for (uint8_t row = 0; row < 15; ++row)
 	{
