@@ -628,7 +628,7 @@ impl Default for Options {
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),
-            scc_framerate: 0, // 0 = 29.97fps (default)
+            scc_framerate: 0,           // 0 = 29.97fps (default)
             scc_accurate_timing: false, // Off by default for backwards compatibility (issue #1120)
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,
