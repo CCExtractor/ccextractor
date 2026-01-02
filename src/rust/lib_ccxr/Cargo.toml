@@ -7,14 +7,14 @@ edition = "2021"
 
 [dependencies]
 bitflags = "2.9.0"
-thiserror = "1.0.69"
+thiserror = "2.0"
 time = { version = "0.3.39", features = ["macros", "formatting"] }
-derive_more = "0.99.19"
+derive_more = { version = "2.0", features = ["add", "not"] }
 url = "2.5.4"
 num_enum = "0.7.3"
-socket2 = "0.5.7"
-strum = "0.26.3"
-strum_macros = "0.26.4"
+socket2 = "0.6"
+strum = "0.27"
+strum_macros = "0.27"
 crc32fast = "1.4.2"
 
 [features]
