@@ -143,6 +143,7 @@ void init_options(struct ccx_s_options *options)
 	options->enc_cfg.with_semaphore = 0;
 	options->enc_cfg.force_dropframe = 0; // Assume No Drop Frame for MCC Encode.
 	options->enc_cfg.scc_framerate = 0;   // Default: 29.97fps for SCC output
+	options->enc_cfg.scc_accurate_timing = 0; // Default: off for backwards compatibility (issue #1120)
 	options->enc_cfg.extract_only_708 = 0;
 
 	options->settings_dtvcc.enabled = 0;
