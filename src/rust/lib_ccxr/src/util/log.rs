@@ -269,6 +269,11 @@ impl<'a> CCExtractorLogger {
         self.target
     }
 
+    /// Sets the target for logging messages.
+    pub fn set_target(&mut self, target: OutputTarget) {
+        self.target = target;
+    }
+
     /// Check if the messages are intercepted by GUI.
     pub fn is_gui_mode(&self) -> bool {
         self.gui_mode

@@ -435,6 +435,9 @@ int main(int argc, char *argv[])
 
 	int compile_ret = ccxr_parse_parameters(argc, argv);
 
+	// Update the Rust logger target after parsing so --quiet is respected
+	ccxr_update_logger_target();
+
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
 		print_usage();
