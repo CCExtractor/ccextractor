@@ -582,12 +582,8 @@ void dtvcc_window_copy_to_screen(dtvcc_service_decoder *decoder, dtvcc_window *w
 	top = top < 0 ? 0 : top;
 	left = left < 0 ? 0 : left;
 
-
-
 	int copyrows = top + window->row_count >= CCX_DTVCC_SCREENGRID_ROWS ? CCX_DTVCC_SCREENGRID_ROWS - top : window->row_count;
 	int copycols = left + window->col_count >= CCX_DTVCC_SCREENGRID_COLUMNS ? CCX_DTVCC_SCREENGRID_COLUMNS - left : window->col_count;
-
-
 
 	ccx_common_logging.debug_ftn(
 	    CCX_DMT_708, "[CEA-708] %d*%d will be copied to the TV.\n", copyrows, copycols);
@@ -798,8 +794,6 @@ void dtvcc_process_character(dtvcc_service_decoder *decoder, dtvcc_symbol symbol
 
 	if (cw == -1 || !window->is_defined) // Writing to a non existing window, skipping
 		return;
-
-
 
 	window->is_empty = 0;
 	window->rows[window->pen_row][window->pen_column] = symbol;
