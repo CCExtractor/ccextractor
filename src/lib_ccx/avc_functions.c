@@ -369,6 +369,8 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 	while (tbuf < seiend - 1) // Use -1 because of trailing marker
 	{
 		tbuf = sei_message(ctx, tbuf, seiend - 1);
+		if (!tbuf)
+			break;
 	}
 	if (tbuf == seiend - 1)
 	{
@@ -392,20 +394,24 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 unsigned char *sei_message(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
 	int payload_type = 0;
-	while (*seibuf == 0xff)
+	while (seibuf < seiend && *seibuf == 0xff)
 	{
 		payload_type += 255;
 		seibuf++;
 	}
+	if (seibuf >= seiend)
+		return NULL;
 	payload_type += *seibuf;
 	seibuf++;
 
 	int payload_size = 0;
-	while (*seibuf == 0xff)
+	while (seibuf < seiend && *seibuf == 0xff)
 	{
 		payload_size += 255;
 		seibuf++;
 	}
+	if (seibuf >= seiend)
+		return NULL;
 	payload_size += *seibuf;
 	seibuf++;
 
