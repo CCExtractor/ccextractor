@@ -316,10 +316,20 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty && context->output_format != CCX_OF_NULL)
 	{
-		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		size_t new_size;
+
+		if (sub->nb_data + 1 > SIZE_MAX / sizeof(struct eia608_screen))
+		{
+			ccx_common_logging.log_ftn("Too many screens, cannot allocate more memory.\n");
+			return 0;
+		}
+
+		new_size = (sub->nb_data + 1) * sizeof(struct eia608_screen);
+
+		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, new_size);
 		if (!new_data)
 		{
-			ccx_common_logging.log_ftn("No Memory left");
+			ccx_common_logging.log_ftn("Out of memory while reallocating screen buffer\n");
 			return 0;
 		}
 		sub->data = new_data;
@@ -386,10 +396,20 @@ int write_cc_line(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	if (!data->empty)
 	{
-		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, (sub->nb_data + 1) * sizeof(*data));
+		size_t new_size;
+
+		if (sub->nb_data + 1 > SIZE_MAX / sizeof(struct eia608_screen))
+		{
+			ccx_common_logging.log_ftn("Too many screens, cannot allocate more memory.\n");
+			return 0;
+		}
+
+		new_size = (sub->nb_data + 1) * sizeof(struct eia608_screen);
+
+		struct eia608_screen *new_data = (struct eia608_screen *)realloc(sub->data, new_size);
 		if (!new_data)
 		{
-			ccx_common_logging.log_ftn("No Memory left");
+			ccx_common_logging.log_ftn("Out of memory while reallocating screen buffer\n");
 			return 0;
 		}
 		sub->data = new_data;
