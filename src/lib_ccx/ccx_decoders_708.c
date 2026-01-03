@@ -998,6 +998,14 @@ void dtvcc_handle_DFx_DefineWindow(dtvcc_service_decoder *decoder, int window_id
 	int row_count = (data[4] & 0xf) + 1; // according to CEA-708-D
 	int anchor_point = data[4] >> 4;
 	int col_count = (data[5] & 0x3f) + 1; // according to CEA-708-D
+
+	if (row_count > CCX_DTVCC_MAX_ROWS || col_count > CCX_DTVCC_MAX_COLUMNS)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] Invalid window size %dx%d (max %dx%d), rejecting window definition\n",
+					   row_count, col_count, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_MAX_COLUMNS);
+		return;
+	}
+
 	int pen_style = data[6] & 0x7;
 	int win_style = (data[6] >> 3) & 0x7;
 
@@ -1341,6 +1349,14 @@ void dtvcc_handle_SPL_SetPenLocation(dtvcc_service_decoder *decoder, unsigned ch
 	}
 
 	dtvcc_window *window = &decoder->windows[decoder->current_window];
+	if (row >= window->row_count || col >= window->col_count)
+	{
+		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_SPL_SetPenLocation: "
+					   "Invalid pen location %d:%d for window size %dx%d, rejecting command\n",
+					   row, col, window->row_count, window->col_count);
+		return;
+	}
+
 	window->pen_row = row;
 	window->pen_column = col;
 }
@@ -1754,6 +1770,12 @@ void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len)
 
 		if (service_number == 7) // There is an extended header
 		{
+			if (pos + 1 >= dtvcc->current_packet + len)
+			{
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_current_packet: "
+									  "Truncated extended header, stopping.\n");
+				break;
+			}
 			pos++;
 			service_number = (pos[0] & 0x3F); // 6 more significant bits
 			// printf ("Extended header: Service number: [%d]\n",service_number);
