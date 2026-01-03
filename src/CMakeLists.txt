@@ -246,11 +246,25 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 # Build with Rust library
 ########################################################
 
-if (PKG_CONFIG_FOUND)
-  add_subdirectory (rust)
-  set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
-endif (PKG_CONFIG_FOUND)
+# Rust is REQUIRED for DTVCC and SMPTE-TT functionality
+find_program(CARGO cargo PATHS $ENV{HOME}/.cargo/bin REQUIRED)
+message(STATUS "Found cargo: ${CARGO}")
 
+# Build Rust library using Corrosion (in rust/CMakeLists.txt)
+add_subdirectory(rust)
+
+# Platform-specific system libraries needed for Rust
+if(APPLE)
+    set(RUST_EXTRA_LIBS pthread dl m "-framework Security" "-framework CoreFoundation")
+elseif(WIN32)
+    set(RUST_EXTRA_LIBS ws2_32 userenv bcrypt ntdll)
+else()
+    set(RUST_EXTRA_LIBS pthread dl m)
+endif()
+
+set(EXTRA_LIBS ${EXTRA_LIBS} ccx_rust ${RUST_EXTRA_LIBS})
+set(RUST_AVAILABLE TRUE)
+message(STATUS "Rust available, using Rust implementations")
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
