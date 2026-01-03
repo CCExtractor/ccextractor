@@ -295,6 +295,13 @@ pub struct Args {
     /// Example: --scc-framerate 25
     #[arg(long="scc-framerate", verbatim_doc_comment, value_name="fps", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub scc_framerate: Option<String>,
+    /// Enable bandwidth-aware timing for SCC output (issue #1120).
+    /// When enabled, captions are pre-loaded ahead of their display time
+    /// based on the EIA-608 transmission bandwidth (2 bytes/frame).
+    /// This ensures YouTube and broadcast compliance by preventing
+    /// caption collisions. Use this for professional SCC output.
+    #[arg(long="scc-accurate-timing", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    pub scc_accurate_timing: bool,
     /// By default, ccextractor will process input files in
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you

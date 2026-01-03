@@ -156,6 +156,11 @@ struct encoder_ctx
 	// SCC output framerate
 	int scc_framerate; // SCC output framerate: 0=29.97 (default), 1=24, 2=25, 3=30
 
+	// SCC accurate timing (issue #1120)
+	int scc_accurate_timing;	 // If 1, use bandwidth-aware timing for broadcast compliance
+	LLONG scc_last_transmission_end; // When last caption transmission ends (ms)
+	LLONG scc_last_display_end;	 // When last caption display ends (ms)
+
 	int new_sentence; // Capitalize next letter?
 
 	int program_number;
@@ -179,10 +184,10 @@ struct encoder_ctx
 	int nospupngocr;
 
 	// Teletext multi-page output (issue #665)
-	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT]; // Output files per teletext page
-	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];       // Page numbers for each output slot
+	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT];  // Output files per teletext page
+	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];	     // Page numbers for each output slot
 	unsigned int tlt_srt_counter[MAX_TLT_PAGES_EXTRACT]; // SRT counter per page
-	int tlt_out_count;                                    // Number of teletext output files
+	int tlt_out_count;				     // Number of teletext output files
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY 2048

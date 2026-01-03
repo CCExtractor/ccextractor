@@ -892,6 +892,11 @@ impl OptionsExt for Options {
             };
         }
 
+        // Handle SCC accurate timing option (issue #1120)
+        if args.scc_accurate_timing {
+            self.scc_accurate_timing = true;
+        }
+
         if args.no_scte20 {
             self.noscte20 = true;
         }

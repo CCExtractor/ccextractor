@@ -523,6 +523,8 @@ pub struct Options {
     pub segment_on_key_frames_only: bool,
     /// SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
     pub scc_framerate: i32,
+    /// SCC accurate timing (issue #1120): if true, use bandwidth-aware timing for broadcast compliance
+    pub scc_accurate_timing: bool,
     pub debug_mask: DebugMessageMask,
 
     #[cfg(feature = "with_libcurl")]
@@ -626,7 +628,8 @@ impl Default for Options {
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),
-            scc_framerate: 0, // 0 = 29.97fps (default)
+            scc_framerate: 0,           // 0 = 29.97fps (default)
+            scc_accurate_timing: false, // Off by default for backwards compatibility (issue #1120)
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,
                 DebugMessageFlag::VERBOSE,
