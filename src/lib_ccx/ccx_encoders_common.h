@@ -168,8 +168,8 @@ struct encoder_ctx
 	struct encoder_ctx *prev;
 	int write_previous;
 	// for dvb in .mkv
-	int is_mkv;	   // are we working with .mkv file
-	char *last_string; // last recognized DVB sub
+	int is_mkv;	// are we working with .mkv file
+	char *last_str; // last recognized DVB sub
 
 	// Segmenting
 	int segment_pending;
@@ -179,10 +179,10 @@ struct encoder_ctx
 	int nospupngocr;
 
 	// Teletext multi-page output (issue #665)
-	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT]; // Output files per teletext page
-	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];       // Page numbers for each output slot
+	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT];  // Output files per teletext page
+	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];	     // Page numbers for each output slot
 	unsigned int tlt_srt_counter[MAX_TLT_PAGES_EXTRACT]; // SRT counter per page
-	int tlt_out_count;                                    // Number of teletext output files
+	int tlt_out_count;				     // Number of teletext output files
 };
 
 #define INITIAL_ENC_BUFFER_CAPACITY 2048
@@ -240,11 +240,11 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 int write_cc_subtitle_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *context);
 
-int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
-int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
-int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
-int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
-void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_stringz_as_srt(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_stringz_as_ssa(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_stringz_as_webvtt(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+int write_stringz_as_sami(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+void write_stringz_as_smptett(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context);

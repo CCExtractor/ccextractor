@@ -31,6 +31,26 @@ struct ccx_demux_report
 	unsigned mp4_cc_track_cnt;
 };
 
+#define MAX_POTENTIAL_STREAMS 64
+
+/** Stream type identifiers for internal classification */
+#define CCX_STREAM_TYPE_UNKNOWN 0
+#define CCX_STREAM_TYPE_DVB_SUB 1
+#define CCX_STREAM_TYPE_TELETEXT 2
+
+/**
+ * ccx_stream_metadata - Metadata for a discovered subtitle stream
+ */
+struct ccx_stream_metadata
+{
+	int pid;	 // Transport Stream Packet ID (0-8191)
+	int stream_type; // Logical type (CCX_STREAM_TYPE_*)
+	int mpeg_type;	 // Raw MPEG stream type from PMT (e.g., 0x06)
+	char lang[4];	 // ISO 639-2/B three-letter language code
+	int composition_id;
+	int ancillary_id;
+};
+
 struct program_info
 {
 	int pid;
@@ -47,7 +67,7 @@ struct program_info
 	int16_t pcr_pid;
 	uint64_t got_important_streams_min_pts[COUNT];
 	int has_all_min_pts;
-	char virtual_channel[16];  // Stores ATSC virtual channel like "2.1"
+	char virtual_channel[16]; // Stores ATSC virtual channel like "2.1"
 };
 
 struct cap_info
@@ -63,6 +83,7 @@ struct cap_info
 	int prev_counter;
 	void *codec_private_data;
 	int ignore;
+	char lang[4]; // ISO 639-2 language code for DVB split mode
 
 	/**
 	  List joining all stream in TS
@@ -162,7 +183,12 @@ struct ccx_demuxer
 	int (*open)(struct ccx_demuxer *ctx, const char *file_name);
 	int (*is_open)(struct ccx_demuxer *ctx);
 	int (*get_stream_mode)(struct ccx_demuxer *ctx);
-	LLONG (*get_filesize)(struct ccx_demuxer *ctx);
+	LLONG(*get_filesize)
+	(struct ccx_demuxer *ctx);
+
+	// Stream discovery for multi-stream DVB subtitle extraction
+	struct ccx_stream_metadata potential_streams[MAX_POTENTIAL_STREAMS];
+	int potential_stream_count;
 };
 
 struct demuxer_data
