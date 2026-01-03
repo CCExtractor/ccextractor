@@ -201,6 +201,9 @@ void delete_to_end_of_row(ccx_decoder_608_context *context)
 {
 	if (context->mode != MODE_TEXT)
 	{
+		if (context->cursor_row >= CCX_DECODER_608_SCREEN_ROWS)
+			return;
+
 		struct eia608_screen *use_buffer = get_writing_buffer(context);
 		for (int i = context->cursor_column; i <= CCX_DECODER_608_SCREEN_WIDTH - 1; i++)
 		{
@@ -221,6 +224,10 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 		/* printf ("\rWriting char [%c] at %s:%d:%d\n",c,
 		use_buffer == &wb->data608->buffer1?"B1":"B2",
 		wb->data608->cursor_row,wb->data608->cursor_column); */
+
+		if (context->cursor_row >= CCX_DECODER_608_SCREEN_ROWS || context->cursor_column >= CCX_DECODER_608_SCREEN_WIDTH)
+			return;
+
 		use_buffer->characters[context->cursor_row][context->cursor_column] = c;
 		use_buffer->colors[context->cursor_row][context->cursor_column] = context->current_color;
 		use_buffer->fonts[context->cursor_row][context->cursor_column] = context->font;

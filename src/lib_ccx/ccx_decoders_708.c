@@ -1495,7 +1495,12 @@ int dtvcc_handle_C0(dtvcc_ctx *dtvcc,
 	else if (c0 >= 0x18 && c0 <= 0x1F)
 	{
 		if (c0 == DTVCC_C0_P16) // PE16
-			dtvcc_handle_C0_P16(decoder, data + 1);
+		{
+			if (data_length >= 3)
+				dtvcc_handle_C0_P16(decoder, data + 1);
+			else
+				ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_handle_C0: Not enough data for P16\n");
+		}
 		len = 3;
 	}
 	if (len == -1)
@@ -1649,6 +1654,9 @@ int dtvcc_handle_extended_char(dtvcc_service_decoder *decoder, unsigned char *da
 	ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] In dtvcc_handle_extended_char, "
 						  "first data code: [%c], length: [%u]\n",
 				     data[0], data_length);
+	if (data_length < 1)
+		return 0;
+
 	unsigned char c = 0x20; // Default to space
 	unsigned char code = data[0];
 	if (/* data[i]>=0x00 && */ code <= 0x1F) // Comment to silence warning
@@ -1717,8 +1725,17 @@ void dtvcc_process_service_block(dtvcc_ctx *dtvcc,
 		}
 		else // Use extended set
 		{
-			used = dtvcc_handle_extended_char(decoder, data + i + 1, data_length - 1);
-			used++; // Since we had DTVCC_C0_EXT1
+			if (i + 1 >= data_length)
+			{
+				used = 1; // skip EXT1
+			}
+			else
+			{
+				used = dtvcc_handle_extended_char(decoder,
+								  data + i + 1,
+								  data_length - i - 1) +
+				       1;
+			}
 		}
 		i += used;
 	}
