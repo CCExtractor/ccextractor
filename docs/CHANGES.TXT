@@ -40,6 +40,7 @@
 
 0.96 (2025-12-23)
 -----------------
+- Fix: Prevent CEA-708 decoder panic when using --stdout on Windows by safely handling writer output errors
 - New: Multi-page teletext extraction support (#665)
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
