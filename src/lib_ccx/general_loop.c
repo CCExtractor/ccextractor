@@ -18,6 +18,7 @@
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
 #include "ccx_demuxer_mxf.h"
+#include "ccx_dtvcc.h"
 
 int end_of_file = 0; // End of file?
 
@@ -861,7 +862,34 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
 	{
-		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
+		// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
+		// Used by MXF and GXF demuxers
+
+		// Initialize timing if not set (use caption PTS as reference)
+		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+		{
+			dec_ctx->timing->min_pts = data_node->pts;
+			dec_ctx->timing->pts_set = 2; // MinPtsSet
+			dec_ctx->timing->sync_pts = data_node->pts;
+			set_fts(dec_ctx->timing);
+		}
+
+#ifndef DISABLE_RUST
+		// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
+		if (dec_ctx->dtvcc_rust)
+		{
+			int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+			if (!is_active)
+			{
+				ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+			}
+		}
+#endif
+
+		// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
+		int cc_count = data_node->len / 3;
+		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
+		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{

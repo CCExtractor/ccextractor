@@ -373,6 +373,20 @@ pub extern "C" fn ccxr_dtvcc_is_active(dtvcc_ptr: *mut std::ffi::c_void) -> i32 
     }
 }
 
+/// Enable or disable the DTVCC decoder
+/// This allows enabling the decoder after initialization
+///
+/// # Safety
+/// dtvcc_ptr must be a valid pointer to a DtvccRust struct or null
+#[no_mangle]
+pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active: i32) {
+    if dtvcc_ptr.is_null() {
+        return;
+    }
+    let dtvcc = unsafe { &mut *(dtvcc_ptr as *mut DtvccRust) };
+    dtvcc.is_active = active != 0;
+}
+
 /// Process cc_data
 ///
 /// # Safety
@@ -402,6 +416,7 @@ extern "C" fn ccxr_process_cc_data(
     let mut cc_data: Vec<u8> = (0..cc_count * 3)
         .map(|x| unsafe { *data.add(x as usize) })
         .collect();
+
     // Use the persistent DtvccRust context from dtvcc_rust
     let dtvcc_rust = dec_ctx.dtvcc_rust as *mut DtvccRust;
     if dtvcc_rust.is_null() {
