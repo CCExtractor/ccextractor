@@ -434,10 +434,21 @@ void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
 	{
+		if (c >= 56)
+		{
+			fprintf(stderr, "- G0 Latin National Subset ID 0x%1x.%1x is out of bounds\n", (c >> 3), (c & 0x7));
+			return;
+		}
 		uint8_t m = G0_LATIN_NATIONAL_SUBSETS_MAP[c];
 		if (m == 0xff)
 		{
 			fprintf(stderr, "- G0 Latin National Subset ID 0x%1x.%1x is not implemented\n", (c >> 3), (c & 0x7));
+			return;
+		}
+		else if (m >= 14)
+		{
+			fprintf(stderr, "- G0 Latin National Subset index %d is out of bounds\n", m);
+			return;
 		}
 		else
 		{
