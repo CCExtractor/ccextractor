@@ -28,6 +28,7 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+
 ### Windows Package Managers
 
 **WinGet:**
@@ -60,6 +61,10 @@ More usage information can be found on our website:
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
+
+### Building from Source
+
+- [Building on Windows using WSL](docs/build-wsl.md)
 
 ## Compiling CCExtractor
 
