@@ -882,8 +882,8 @@ struct ccx_s_write *get_output_ctx(struct encoder_ctx *ctx, int lan)
 
 int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 {
-    int wrote_something = 0;
-    int ret = 0;
+	int wrote_something = 0;
+	int ret = 0;
 
 	/* If there is no encoder context (e.g. -out=report), we must still free
 	   any allocated subtitle data to avoid memory leaks. */
