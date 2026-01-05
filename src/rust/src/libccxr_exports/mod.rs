@@ -151,7 +151,10 @@ mod tests {
 
             // Test NULL pointer safety for Levenshtein
             assert_eq!(ccxr_levenshtein_dist(ptr::null(), ptr::null(), 0, 0), 0);
-            assert_eq!(ccxr_levenshtein_dist_char(ptr::null(), ptr::null(), 0, 0), 0);
+            assert_eq!(
+                ccxr_levenshtein_dist_char(ptr::null(), ptr::null(), 0, 0),
+                0
+            );
         }
     }
 }

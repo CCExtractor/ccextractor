@@ -848,7 +848,10 @@ mod bitstream_copying_tests {
             assert!(super::ccxr_next_bytes(std::ptr::null_mut(), 1).is_null());
             assert!(super::ccxr_read_bytes(std::ptr::null_mut(), 1).is_null());
             assert_eq!(super::ccxr_bitstream_get_num(std::ptr::null_mut(), 1, 0), 0);
-            assert_eq!(super::ccxr_read_exp_golomb_unsigned(std::ptr::null_mut()), 0);
+            assert_eq!(
+                super::ccxr_read_exp_golomb_unsigned(std::ptr::null_mut()),
+                0
+            );
             assert_eq!(super::ccxr_read_exp_golomb(std::ptr::null_mut()), 0);
             assert_eq!(super::ccxr_read_int(std::ptr::null_mut(), 8), 0);
         }
