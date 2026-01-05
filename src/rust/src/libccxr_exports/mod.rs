@@ -77,6 +77,9 @@ pub unsafe extern "C" fn ccxr_update_logger_target() {
 /// or less than `len`.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_verify_crc32(buf: *const u8, len: c_int) -> c_int {
+    if buf.is_null() || len < 0 {
+        return 0;
+    }
     let buf = std::slice::from_raw_parts(buf, len as usize);
     if verify_crc32(buf) {
         1
@@ -97,6 +100,9 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist(
     s1len: c_uint,
     s2len: c_uint,
 ) -> c_int {
+    if s1.is_null() || s2.is_null() {
+        return 0;
+    }
     let s1 = std::slice::from_raw_parts(s1, s1len as usize);
     let s2 = std::slice::from_raw_parts(s2, s2len as usize);
 
@@ -118,10 +124,34 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
     s1len: c_uint,
     s2len: c_uint,
 ) -> c_int {
+    if s1.is_null() || s2.is_null() {
+        return 0;
+    }
     let s1 = std::slice::from_raw_parts(s1, s1len as usize);
     let s2 = std::slice::from_raw_parts(s2, s2len as usize);
 
     let ans = levenshtein_dist_char(s1, s2);
 
     ans.min(c_int::MAX as usize) as c_int
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ptr;
+
+    #[test]
+    fn test_ffi_safety() {
+        unsafe {
+            // Test NULL pointer and negative length safety for CRC32
+            assert_eq!(ccxr_verify_crc32(ptr::null(), 10), 0);
+            assert_eq!(ccxr_verify_crc32(ptr::null(), -1), 0);
+            let buf = [1, 2, 3];
+            assert_eq!(ccxr_verify_crc32(buf.as_ptr(), -1), 0);
+
+            // Test NULL pointer safety for Levenshtein
+            assert_eq!(ccxr_levenshtein_dist(ptr::null(), ptr::null(), 0, 0), 0);
+            assert_eq!(ccxr_levenshtein_dist_char(ptr::null(), ptr::null(), 0, 0), 0);
+        }
+    }
 }

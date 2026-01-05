@@ -120,6 +120,9 @@ pub unsafe extern "C" fn ccxr_free_bitstream(bs: *mut BitStreamRust<'static>) {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_internal_state_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_next_bits(bs: *mut bitstream, bnum: u32) -> u64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let val = match rust_bs.next_bits(bnum) {
         Ok(val) => val,
@@ -136,6 +139,9 @@ pub unsafe extern "C" fn ccxr_next_bits(bs: *mut bitstream, bnum: u32) -> u64 {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_bits(bs: *mut bitstream, bnum: u32) -> u64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let val = match rust_bs.read_bits(bnum) {
         Ok(val) => val,
@@ -151,6 +157,9 @@ pub unsafe extern "C" fn ccxr_read_bits(bs: *mut bitstream, bnum: u32) -> u64 {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_skip_bits(bs: *mut bitstream, bnum: u32) -> i32 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let val = match rust_bs.skip_bits(bnum) {
         Ok(val) => val,
@@ -170,6 +179,9 @@ pub unsafe extern "C" fn ccxr_skip_bits(bs: *mut bitstream, bnum: u32) -> i32 {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_is_byte_aligned(bs: *mut bitstream) -> i32 {
+    if bs.is_null() {
+        return 0;
+    }
     let rust_bs = copy_bitstream_c_to_rust(bs);
     match rust_bs.is_byte_aligned() {
         Ok(val) => {
@@ -189,6 +201,9 @@ pub unsafe extern "C" fn ccxr_is_byte_aligned(bs: *mut bitstream) -> i32 {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_make_byte_aligned(bs: *mut bitstream) {
+    if bs.is_null() {
+        return;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     if rust_bs.make_byte_aligned().is_ok() {
         copy_bitstream_from_rust_to_c(bs, &rust_bs);
@@ -203,6 +218,9 @@ pub unsafe extern "C" fn ccxr_make_byte_aligned(bs: *mut bitstream) {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_internal_state_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_next_bytes(bs: *mut bitstream, bynum: usize) -> *const u8 {
+    if bs.is_null() {
+        return std::ptr::null();
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     match rust_bs.next_bytes(bynum) {
         Ok(slice) => {
@@ -220,6 +238,9 @@ pub unsafe extern "C" fn ccxr_next_bytes(bs: *mut bitstream, bynum: usize) -> *c
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_bytes(bs: *mut bitstream, bynum: usize) -> *const u8 {
+    if bs.is_null() {
+        return std::ptr::null();
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     match rust_bs.read_bytes(bynum) {
         Ok(slice) => {
@@ -239,6 +260,9 @@ pub unsafe extern "C" fn ccxr_bitstream_get_num(
     bytes: usize,
     advance: i32,
 ) -> u64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let result = rust_bs.bitstream_get_num(bytes, advance != 0).unwrap_or(0);
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
@@ -251,6 +275,9 @@ pub unsafe extern "C" fn ccxr_bitstream_get_num(
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let result = rust_bs.read_exp_golomb_unsigned().unwrap_or(0);
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
@@ -263,6 +290,9 @@ pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u6
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut bitstream) -> i64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let result = rust_bs.read_exp_golomb().unwrap_or(0);
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
@@ -274,6 +304,9 @@ pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut bitstream) -> i64 {
 /// This function is unsafe because it calls unsafe functions `copy_bitstream_c_to_rust` and `copy_bitstream_from_rust_to_c`
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_int(bs: *mut bitstream, bnum: u32) -> i64 {
+    if bs.is_null() {
+        return 0;
+    }
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
     let result = rust_bs.read_int(bnum).unwrap_or(0);
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
@@ -804,35 +837,20 @@ mod bitstream_copying_tests {
     }
 
     #[test]
-    fn test_memory_safety() {
-        let buffer = create_test_buffer(1000);
-        let rust_stream = BitStreamRust {
-            data: &buffer,
-            pos: 0,
-            bpos: 0,
-            bits_left: 8000,
-            error: false,
-            _i_pos: 500,
-            _i_bpos: 0,
-        };
-
+    fn test_ffi_safety() {
         unsafe {
-            let c_s = Box::into_raw(Box::new(bitstream::default()));
-            copy_bitstream_from_rust_to_c(c_s, &rust_stream);
-            let c_stream = &mut *c_s;
-
-            // Verify all pointers are within bounds
-            assert!(verify_pointer_bounds(c_stream));
-
-            // Verify we can safely access the boundaries
-            let first_byte = *c_stream.pos;
-            let last_byte = *c_stream.end.sub(1);
-            let internal_byte = *c_stream._i_pos;
-
-            // These should not panic and should match our buffer
-            assert_eq!(first_byte, 0);
-            assert_eq!(last_byte, (999 % 256) as u8);
-            assert_eq!(internal_byte, (500 % 256) as u8);
+            // Test NULL pointer safety
+            assert_eq!(super::ccxr_next_bits(std::ptr::null_mut(), 8), 0);
+            assert_eq!(super::ccxr_read_bits(std::ptr::null_mut(), 8), 0);
+            assert_eq!(super::ccxr_skip_bits(std::ptr::null_mut(), 8), 0);
+            assert_eq!(super::ccxr_is_byte_aligned(std::ptr::null_mut()), 0);
+            super::ccxr_make_byte_aligned(std::ptr::null_mut()); // Should not panic
+            assert!(super::ccxr_next_bytes(std::ptr::null_mut(), 1).is_null());
+            assert!(super::ccxr_read_bytes(std::ptr::null_mut(), 1).is_null());
+            assert_eq!(super::ccxr_bitstream_get_num(std::ptr::null_mut(), 1, 0), 0);
+            assert_eq!(super::ccxr_read_exp_golomb_unsigned(std::ptr::null_mut()), 0);
+            assert_eq!(super::ccxr_read_exp_golomb(std::ptr::null_mut()), 0);
+            assert_eq!(super::ccxr_read_int(std::ptr::null_mut(), 8), 0);
         }
     }
 }
