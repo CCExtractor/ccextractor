@@ -103,14 +103,11 @@ fn main() {
             if std::path::Path::new(cellar_ffmpeg).exists() {
                 // Find the FFmpeg version directory
                 if let Ok(entries) = std::fs::read_dir(cellar_ffmpeg) {
-                    for entry in entries {
-                        if let Ok(entry) = entry {
-                            let include_path = entry.path().join("include");
-                            if include_path.exists() {
-                                builder =
-                                    builder.clang_arg(format!("-I{}", include_path.display()));
-                                break;
-                            }
+                    for entry in entries.flatten() {
+                        let include_path = entry.path().join("include");
+                        if include_path.exists() {
+                            builder = builder.clang_arg(format!("-I{}", include_path.display()));
+                            break;
                         }
                     }
                 }
