@@ -142,7 +142,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 	{
 		if ((ud_header[1] & 0x7F) == 0x01)
 		{
-			unsigned char cc_data[3 * 31 + 1]; // Maximum cc_count is 31
+			unsigned char cc_data[3 * 32]; // Increased for safety margin, 31 is max count
 
 			dec_ctx->stat_scte20ccheaders++;
 			read_bytes(ustream, 2); // "03 01"
@@ -370,6 +370,7 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				dbg_print(CCX_DMT_PARSE, "%s", debug_608_to_ASC(dishdata, 0));
 				dbg_print(CCX_DMT_PARSE, "%s:\n", debug_608_to_ASC(dishdata + 3, 0));
 
+				dishdata[cc_count * 3] = 0xFF; // Ensure termination for store_hdcc
 				store_hdcc(enc_ctx, dec_ctx, dishdata, cc_count, dec_ctx->timing->current_tref, dec_ctx->timing->fts_now, sub);
 
 				// Ignore 4 (0x020A, followed by two unknown) bytes.
@@ -484,7 +485,10 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 			mprint("MPEG:VBI: only support Luma line\n");
 
 		if (udatalen < 720)
-			mprint("MPEG:VBI: Minimum 720 bytes in luma line required\n");
+		{
+			mprint("MPEG:VBI: Minimum 720 bytes in luma line required, skipping truncated packet.\n");
+			return 1;
+		}
 
 		decode_vbi(dec_ctx, field, ustream->pos, 720, sub);
 		dbg_print(CCX_DMT_VERBOSE, "GXF (vbi line %d) user data:\n", line_nb);

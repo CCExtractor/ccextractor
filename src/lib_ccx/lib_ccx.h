@@ -1,7 +1,7 @@
 #ifndef CCX_CCEXTRACTOR_H
 #define CCX_CCEXTRACTOR_H
 
-#define VERSION "0.96.4"
+#define VERSION "0.96.5"
 
 // Load common includes and constants for library usage
 #include "ccx_common_platform.h"
@@ -203,6 +203,7 @@ struct lib_ccx_ctx *init_libraries(struct ccx_s_options *opt);
 void dinit_libraries(struct lib_ccx_ctx **ctx);
 
 extern void ccxr_init_basic_logger();
+extern void ccxr_update_logger_target();
 
 // ccextractor.c
 void print_end_msg(void);

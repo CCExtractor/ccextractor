@@ -156,6 +156,11 @@ struct encoder_ctx
 	// SCC output framerate
 	int scc_framerate; // SCC output framerate: 0=29.97 (default), 1=24, 2=25, 3=30
 
+	// SCC accurate timing (issue #1120)
+	int scc_accurate_timing;	 // If 1, use bandwidth-aware timing for broadcast compliance
+	LLONG scc_last_transmission_end; // When last caption transmission ends (ms)
+	LLONG scc_last_display_end;	 // When last caption display ends (ms)
+
 	int new_sentence; // Capitalize next letter?
 
 	int program_number;

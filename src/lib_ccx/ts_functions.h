@@ -50,8 +50,8 @@ struct EPG_rating
 struct EPG_event
 {
 	uint32_t id;
-	char start_time_string[21]; //"YYYYMMDDHHMMSS +0000" = 20 chars
-	char end_time_string[21];
+	char start_time_string[74]; // "YYYYMMDDHHMMSS +0000" = 20 chars, 74 to silence compiler warning
+	char end_time_string[74];
 	uint8_t running_status;
 	uint8_t free_ca_mode;
 	char ISO_639_language_code[4];

@@ -285,6 +285,9 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 		case CCX_SM_MXF:
 			mprint("MXF");
 			break;
+		case CCX_SM_SCC:
+			mprint("SCC");
+			break;
 #ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			mprint("Hex");

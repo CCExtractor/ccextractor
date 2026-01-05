@@ -327,6 +327,9 @@ impl CcxDemuxer<'_> {
             StreamMode::Mxf => {
                 info!("MXF");
             }
+            StreamMode::Scc => {
+                info!("SCC");
+            }
             #[cfg(feature = "wtv_debug")]
             StreamMode::HexDump => {
                 info!("Hex");

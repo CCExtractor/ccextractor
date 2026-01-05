@@ -33,10 +33,11 @@ pub unsafe extern "C" fn ccxr_init_basic_logger() {
         .unwrap_or(DebugMessageFlag::VERBOSE);
     let mask = DebugMessageMask::new(debug_mask, debug_mask_on_debug);
     let gui_mode_reports = ccx_options.gui_mode_reports != 0;
+    // CCX_MESSAGES_QUIET=0, CCX_MESSAGES_STDOUT=1, CCX_MESSAGES_STDERR=2
     let messages_target = match ccx_options.messages_target {
-        0 => OutputTarget::Stdout,
-        1 => OutputTarget::Stderr,
-        2 => OutputTarget::Quiet,
+        0 => OutputTarget::Quiet,
+        1 => OutputTarget::Stdout,
+        2 => OutputTarget::Stderr,
         _ => OutputTarget::Stderr, // Default to stderr for invalid values
     };
     let _ = set_logger(CCExtractorLogger::new(
@@ -44,6 +45,28 @@ pub unsafe extern "C" fn ccxr_init_basic_logger() {
         mask,
         gui_mode_reports,
     ));
+}
+
+/// Updates the logger target after command-line arguments have been parsed.
+/// This is needed because the logger is initialized before argument parsing,
+/// and options like --quiet need to be applied afterwards.
+///
+/// # Safety
+///
+/// `ccx_options` in C must be properly initialized and the logger must have
+/// been initialized via `ccxr_init_basic_logger` before calling this function.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_update_logger_target() {
+    // CCX_MESSAGES_QUIET=0, CCX_MESSAGES_STDOUT=1, CCX_MESSAGES_STDERR=2
+    let messages_target = match ccx_options.messages_target {
+        0 => OutputTarget::Quiet,
+        1 => OutputTarget::Stdout,
+        2 => OutputTarget::Stderr,
+        _ => OutputTarget::Stderr,
+    };
+    if let Some(mut logger) = logger_mut() {
+        logger.set_target(messages_target);
+    }
 }
 
 /// Rust equivalent for `verify_crc32` function in C. Uses C-native types as input and output.

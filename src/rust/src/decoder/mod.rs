@@ -515,8 +515,10 @@ impl DtvccRust {
             }
 
             if let Some(decoder) = &mut self.decoders[i] {
-                if decoder.cc_count > 0 {
-                    // Flush this decoder
+                // Check if there's content to flush: either cc_count > 0 (already printed)
+                // or any window has visible content (needs to be printed during flush)
+                let has_visible_windows = decoder.windows.iter().any(|w| is_true(w.visible));
+                if decoder.cc_count > 0 || has_visible_windows {
                     self.flush_decoder(i);
                 }
             }
