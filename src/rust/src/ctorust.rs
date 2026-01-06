@@ -867,12 +867,13 @@ mod cto_rust_vulnerability_tests {
             stream_type: 0x02,
             printable_stream_type: 0,
         };
-        
-        let ptr_opt = unsafe { <*mut PMTEntry as FromCType<*mut PMT_entry>>::from_ctype(&mut c_entry) };
+
+        let ptr_opt =
+            unsafe { <*mut PMTEntry as FromCType<*mut PMT_entry>>::from_ctype(&mut c_entry) };
         assert!(ptr_opt.is_some());
         let ptr = ptr_opt.unwrap();
         assert!(!ptr.is_null());
-        
+
         unsafe {
             let entry = &*ptr;
             assert_eq!(entry.program_number, 1);
