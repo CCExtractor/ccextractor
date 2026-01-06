@@ -649,14 +649,14 @@ impl FromCType<*mut PMT_entry> for *mut PMTEntry {
             0
         };
 
-        let mut pmt_entry = PMTEntry {
+        let pmt_entry = PMTEntry {
             program_number,
             elementary_pid,
             stream_type,
             printable_stream_type,
         };
 
-        Some(&mut pmt_entry as *mut PMTEntry)
+        Some(Box::into_raw(Box::new(pmt_entry)))
     }
 }
 impl FromCType<ccx_bufferdata_type> for BufferdataType {
@@ -851,5 +851,34 @@ impl FromCType<avc_ctx> for AvcContextRust {
             last_pic_order_cnt_lsb: ctx.last_pic_order_cnt_lsb,
             last_slice_pts: ctx.last_slice_pts,
         })
+    }
+}
+
+#[cfg(test)]
+mod cto_rust_vulnerability_tests {
+    use super::*;
+    use crate::bindings::PMT_entry;
+
+    #[test]
+    fn test_pmt_entry_pointer_safety() {
+        let mut c_entry = PMT_entry {
+            program_number: 1,
+            elementary_PID: 100,
+            stream_type: 0x02,
+            printable_stream_type: 0,
+        };
+        
+        let ptr_opt = unsafe { <*mut PMTEntry as FromCType<*mut PMT_entry>>::from_ctype(&mut c_entry) };
+        assert!(ptr_opt.is_some());
+        let ptr = ptr_opt.unwrap();
+        assert!(!ptr.is_null());
+        
+        unsafe {
+            let entry = &*ptr;
+            assert_eq!(entry.program_number, 1);
+            assert_eq!(entry.elementary_pid, 100);
+            // Clean up the boxed pointer
+            let _ = Box::from_raw(ptr);
+        }
     }
 }
