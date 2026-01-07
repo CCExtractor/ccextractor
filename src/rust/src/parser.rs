@@ -107,7 +107,16 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
 
     for line in reader.lines() {
         num += 1;
-        let line = line.unwrap();
+        let line = match line {
+            Ok(l) => l,
+            Err(e) => {
+                eprintln!(
+                    "Error reading line {} in word file {}: {}",
+                    num, filename, e
+                );
+                continue;
+            }
+        };
         if line.starts_with('#') {
             continue;
         }
