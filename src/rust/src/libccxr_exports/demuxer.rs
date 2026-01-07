@@ -407,6 +407,19 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
         c.infd = -1;
         activity_input_file_closed();
     }
+
+    // We allocate this buffer in Rust (init_file_buffer) but then 'forget' it so C can use it.
+    // If we don't bring it back and drop it here, we leak 16MB every time a demuxer closes.
+    if !c.filebuffer.is_null() {
+        use crate::file_functions::file::FILEBUFFERSIZE;
+        // Reclaim the pointer as a boxed slice so Rust can finally free the memory.
+        let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+            c.filebuffer,
+            FILEBUFFERSIZE,
+        ));
+        // Null it out to prevent any double-free accidents if C tries to cleanup too.
+        c.filebuffer = std::ptr::null_mut();
+    }
 }
 
 // Extern function for ccx_demuxer_isopen
