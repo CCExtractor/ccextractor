@@ -1672,6 +1672,10 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		offset_y = display_def->y;
 	}
 
+	// Initialize nb_data before counting dirty regions to avoid stale values
+	// from copy_subtitle() carrying over between calls
+	sub->nb_data = 0;
+
 	for (display = ctx->display_list; display; display = display->next)
 	{
 		region = get_region(ctx, display->region_id);
