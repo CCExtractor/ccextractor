@@ -1117,7 +1117,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	}
 	else if (coding_method == 1)
 	{
-		mprint("FIXME support for sring coding standard\n");
+		mprint("FIXME support for string coding standard\n");
 	}
 	else
 	{
