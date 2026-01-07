@@ -1,0 +1,98 @@
+name: ccextractor
+base: core22
+version: git
+summary: Closed Caption Extractor
+description: |
+  CCExtractor is a tool for extracting closed captions from video files.
+
+confinement: classic
+
+apps:
+  ccextractor:
+    command: usr/local/bin/ccextractor
+    command-chain:
+      - local/run-ccextractor.sh
+    plugs:
+      - home
+
+parts:
+  ccextractor:
+    plugin: cmake
+    source: .
+    source-subdir: src
+
+    build-snaps:
+      - cmake/latest/stable
+      - rustup/latest/stable
+
+    build-packages:
+      - build-essential
+      - pkg-config
+      - clang
+      - llvm-dev
+      - libclang-dev
+      - libzvbi-dev
+      - libgpac-dev
+      - libtesseract-dev
+      - libavcodec-dev
+      - libavformat-dev
+      - libavdevice-dev
+      - libavfilter-dev
+      - libswscale-dev
+      - libx11-dev
+      - libxcb1-dev
+      - libxcb-shm0-dev
+      - libpng-dev
+      - zlib1g-dev
+        # NEW — math libs required by FFmpeg / gpac
+      - libblas3
+      - liblapack3
+
+
+    stage-packages:
+      # Core deps
+      - libgpac11
+      - libzvbi0
+      - libfreetype6
+      - libpng16-16
+      - libprotobuf-c1
+      - libutf8proc2
+
+      # OpenGL / X11
+      - libgl1
+      - libglu1-mesa
+
+      # FFmpeg stack
+      - libavcodec58
+      - libavformat58
+      - libavutil56
+      - libavdevice58
+      - libavfilter7
+      - libswscale5
+
+      # Audio / video codecs
+      - libjpeg-turbo8
+      - libvorbis0a
+      - libtheora0
+      - libxvidcore4
+      - libfaad2
+      - libmad0
+      - liba52-0.7.4
+
+      # PulseAudio (already proven needed)
+      - libpulse0
+      - pulseaudio-utils
+
+    override-build: |
+      set -eux
+
+      rustup toolchain install stable
+      rustup default stable
+      export PATH="$HOME/.cargo/bin:$PATH"
+
+      snapcraftctl build
+
+      # Install runtime wrapper for command-chain
+      install -D -m 0755 \
+        $SNAPCRAFT_PROJECT_DIR/snap/local/run-ccextractor.sh \
+        $SNAPCRAFT_PART_INSTALL/local/run-ccextractor.sh

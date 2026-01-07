@@ -2,6 +2,9 @@ name: Build CCExtractor Snap
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - wip/snap-cmake-refactor
   release:
     types: [published]
 
@@ -14,10 +17,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Install Snapcraft
+      - name: Install snapd
         run: |
           sudo apt update
           sudo apt install -y snapd
+
+      - name: Start snapd
+        run: |
+          sudo systemctl start snapd.socket
+          sudo systemctl start snapd
+
+      - name: Install Snapcraft
+        run: |
           sudo snap install core22
           sudo snap install snapcraft --classic
 
@@ -25,8 +36,7 @@ jobs:
         run: snapcraft --version
 
       - name: Build snap
-        run: |
-          snapcraft --destructive-mode
+        run: sudo snapcraft --destructive-mode
 
       - name: List generated snap
         run: ls -lh *.snap
