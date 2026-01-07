@@ -166,3 +166,8 @@ plans/
 tess.log
 **/tess.log
 ut=srt*
+
+# User custom ignores
+.env
+test_split_dvb/output/
+test_split_dvb/logs/
