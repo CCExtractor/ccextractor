@@ -1103,11 +1103,7 @@ static void calculate_spupng_offsets(struct spupng_t *sp, struct encoder_ctx *ct
 	int screen_h;
 
 	/* Teletext is always PAL */
-	if (ctx->in_fileformat == 2)
-	{
-		screen_h = 576;
-	}
-	else if (ctx->is_pal)
+	if (ctx->in_fileformat == 2 || ctx->is_pal)
 	{
 		screen_h = 576;
 	}
