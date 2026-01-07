@@ -311,6 +311,7 @@ impl OptionsExt for Options {
             InFormat::Mp4 => self.demux_cfg.auto_stream = StreamMode::Mp4,
             InFormat::Mkv => self.demux_cfg.auto_stream = StreamMode::Mkv,
             InFormat::Mxf => self.demux_cfg.auto_stream = StreamMode::Mxf,
+            InFormat::Scc => self.demux_cfg.auto_stream = StreamMode::Scc,
         }
     }
 
@@ -790,6 +791,14 @@ impl OptionsExt for Options {
             self.psm = *psm as _;
         }
 
+        if args.ocr_line_split {
+            self.ocr_line_split = true;
+        }
+
+        if args.no_ocr_blacklist {
+            self.ocr_blacklist = false;
+        }
+
         if let Some(ref lang) = args.mkvlang {
             self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
             let str = lang.as_str();
@@ -865,6 +874,29 @@ impl OptionsExt for Options {
         if args.mpeg90090 {
             set_mpeg_clock_freq(90090);
         }
+
+        // Handle SCC framerate option
+        if let Some(ref fps_str) = args.scc_framerate {
+            self.scc_framerate = match fps_str.as_str() {
+                "29.97" | "29" => 0,
+                "24" => 1,
+                "25" => 2,
+                "30" => 3,
+                _ => {
+                    eprintln!(
+                        "Invalid SCC framerate '{}'. Using default 29.97fps",
+                        fps_str
+                    );
+                    0
+                }
+            };
+        }
+
+        // Handle SCC accurate timing option (issue #1120)
+        if args.scc_accurate_timing {
+            self.scc_accurate_timing = true;
+        }
+
         if args.no_scte20 {
             self.noscte20 = true;
         }

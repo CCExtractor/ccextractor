@@ -181,6 +181,8 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
+    (*ccx_s_options).ocr_line_split = options.ocr_line_split as _;
+    (*ccx_s_options).ocr_blacklist = options.ocr_blacklist as _;
     if let Some(mkvlang) = options.mkvlang {
         (*ccx_s_options).mkvlang =
             replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.to_ctype().as_str());
@@ -275,6 +277,10 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).multiprogram = options.multiprogram as _;
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
+    (*ccx_s_options).scc_framerate = options.scc_framerate;
+    // Also copy to enc_cfg so the encoder uses the same frame rate for SCC output
+    (*ccx_s_options).enc_cfg.scc_framerate = options.scc_framerate;
+    (*ccx_s_options).enc_cfg.scc_accurate_timing = options.scc_accurate_timing.into();
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
@@ -416,6 +422,8 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.ocr_oem = (*ccx_s_options).ocr_oem as i8;
     options.psm = (*ccx_s_options).psm;
     options.ocr_quantmode = (*ccx_s_options).ocr_quantmode as u8;
+    options.ocr_line_split = (*ccx_s_options).ocr_line_split != 0;
+    options.ocr_blacklist = (*ccx_s_options).ocr_blacklist != 0;
 
     // Handle mkvlang (C string to Option<Language>)
     if !(*ccx_s_options).mkvlang.is_null() {
@@ -531,6 +539,8 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.multiprogram = (*ccx_s_options).multiprogram != 0;
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;
+    options.scc_framerate = (*ccx_s_options).scc_framerate;
+    options.scc_accurate_timing = (*ccx_s_options).enc_cfg.scc_accurate_timing != 0;
 
     // Handle optional features with conditional compilation
     #[cfg(feature = "with_libcurl")]
@@ -873,6 +883,7 @@ impl CType<u32> for StreamMode {
             StreamMode::Gxf => ccx_stream_mode_enum_CCX_SM_GXF as _,
             StreamMode::Mkv => ccx_stream_mode_enum_CCX_SM_MKV as _,
             StreamMode::Mxf => ccx_stream_mode_enum_CCX_SM_MXF as _,
+            StreamMode::Scc => ccx_stream_mode_enum_CCX_SM_SCC as _,
             StreamMode::Autodetect => ccx_stream_mode_enum_CCX_SM_AUTODETECT as _,
             _ => ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND as _,
         }
@@ -972,6 +983,8 @@ impl CType<encoder_cfg> for EncoderConfig {
                 null_pointer()
             },
             extract_only_708: self.extract_only_708 as _,
+            scc_framerate: 0, // Will be set from ccx_options.scc_framerate in copy_to_c
+            scc_accurate_timing: 0, // Will be set from ccx_options.scc_accurate_timing in copy_to_c
         }
     }
 }
@@ -1064,7 +1077,6 @@ impl CType<program_info> for ProgramInfo {
         program_info {
             pid: self.pid,
             program_number: self.program_number,
-            initialized_ocr: self.initialized_ocr as c_int,
             _bitfield_align_1: [],
             _bitfield_1: bf1,
             version: self.version,

@@ -17,6 +17,7 @@ CVS
 mac/ccextractor
 linux/ccextractor
 linux/depend
+linux/build_scan/
 windows/x86_64-pc-windows-msvc/**
 windows/Debug/**
 windows/Debug-OCR/**
@@ -28,6 +29,7 @@ windows/Debug-Full/**
 windows/x64/**
 windows/ccextractor.VC.db
 build/
+build_*/
 
 ####
 # Python
@@ -142,6 +144,9 @@ bazel*
 
 #Intellij IDEs
 .idea/
+
+# Plans (local only)
+plans/
 
 # Rust build and MakeFiles (and CMake files)
 src/rust/CMakeFiles/

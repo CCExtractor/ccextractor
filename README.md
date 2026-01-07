@@ -2,7 +2,6 @@
 
 # CCExtractor
 
-<a href="https://travis-ci.org/CCExtractor/ccextractor"><img src="https://raw.githubusercontent.com/CCExtractor/ccextractor-org-media/master/static/macOS-build-badge-logo.png" width="20"></a> [![Build Status](https://travis-ci.org/CCExtractor/ccextractor.svg?branch=master)](https://travis-ci.org/CCExtractor/ccextractor)
 [![Sample-Platform Build Status Windows](https://sampleplatform.ccextractor.org/static/img/status/build-windows.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/windows)
 [![Sample-Platform Build Status Linux](https://sampleplatform.ccextractor.org/static/img/status/build-linux.svg?maxAge=1800)](https://sampleplatform.ccextractor.org/test/master/linux)
 [![SourceForge](https://img.shields.io/badge/SourceForge%20downloads-213k%2Ftotal-brightgreen.svg)](https://sourceforge.net/projects/ccextractor/)
@@ -29,6 +28,25 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+
+### Windows Package Managers
+
+**WinGet:**
+```powershell
+winget install CCExtractor.CCExtractor
+```
+
+**Chocolatey:**
+```powershell
+choco install ccextractor
+```
+
+**Scoop:**
+```powershell
+scoop bucket add extras
+scoop install ccextractor
+```
+
 Extracting subtitles is relatively simple. Just run the following command:
 
 `ccextractor <input>`
@@ -43,6 +61,10 @@ More usage information can be found on our website:
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
+
+### Building from Source
+
+- [Building on Windows using WSL](docs/build-wsl.md)
 
 ## Compiling CCExtractor
 

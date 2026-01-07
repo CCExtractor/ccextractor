@@ -182,6 +182,7 @@ typedef struct DVBSubContext
 	LLONG time_out;
 #ifdef ENABLE_OCR
 	void *ocr_ctx;
+	int ocr_initialized; // Flag to track if OCR has been lazily initialized
 #endif
 	DVBSubRegion *region_list;
 	DVBSubCLUT *clut_list;
@@ -418,7 +419,7 @@ static void delete_regions(DVBSubContext *ctx)
  * @return DVB context kept as void* for abstraction
  *
  */
-void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
+void *dvbsub_init_decoder(struct dvb_config *cfg)
 {
 	int i, r, g, b, a = 0;
 	DVBSubContext *ctx = (DVBSubContext *)malloc(sizeof(DVBSubContext));
@@ -442,8 +443,11 @@ void *dvbsub_init_decoder(struct dvb_config *cfg, int initialized_ocr)
 	}
 
 #ifdef ENABLE_OCR
-	if (!initialized_ocr)
-		ctx->ocr_ctx = init_ocr(ctx->lang_index);
+	// Lazy OCR initialization: don't init here, wait until a bitmap actually needs OCR
+	// This avoids ~10 second Tesseract startup overhead for files that have DVB streams
+	// but don't actually produce any bitmap subtitles (e.g., files with CEA-608 captions)
+	ctx->ocr_ctx = NULL;
+	ctx->ocr_initialized = 0;
 #endif
 	ctx->version = -1;
 
@@ -1702,6 +1706,12 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	// Perform OCR
 #ifdef ENABLE_OCR
 	char *ocr_str = NULL;
+	// Lazy OCR initialization: only init when we actually have a bitmap to process
+	if (!ctx->ocr_initialized)
+	{
+		ctx->ocr_ctx = init_ocr(ctx->lang_index);
+		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
+	}
 	if (ctx->ocr_ctx)
 	{
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);

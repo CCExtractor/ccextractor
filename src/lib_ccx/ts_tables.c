@@ -399,9 +399,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					ret = parse_dvb_description(&cnf, es_info, desc_len);
 					if (ret < 0)
 						break;
-					ptr = dvbsub_init_decoder(&cnf, pinfo->initialized_ocr);
-					if (!pinfo->initialized_ocr)
-						pinfo->initialized_ocr = 1;
+					ptr = dvbsub_init_decoder(&cnf);
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
@@ -576,6 +574,15 @@ void ts_buffer_psi_packet(struct ccx_demuxer *ctx)
 	else if (ccounter == ctx->PID_buffers[pid]->prev_ccounter + 1 || (ctx->PID_buffers[pid]->prev_ccounter == 0x0f && ccounter == 0))
 	{
 		ctx->PID_buffers[pid]->prev_ccounter = ccounter;
+		// Check for integer overflow and reasonable size limit (1MB)
+		if (ctx->PID_buffers[pid]->buffer_length > 1024 * 1024 ||
+		    payload_length > 1024 * 1024 ||
+		    ctx->PID_buffers[pid]->buffer_length + payload_length > 1024 * 1024)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: PSI buffer for PID %u exceeded reasonable limit (1MB), discarding.\n", pid);
+			return;
+		}
+
 		void *tmp = realloc(ctx->PID_buffers[pid]->buffer, ctx->PID_buffers[pid]->buffer_length + payload_length);
 		if (tmp == NULL)
 		{

@@ -25,7 +25,7 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Data\n");
 			if (cc_valid && dtvcc->is_current_packet_header_parsed)
 			{
-				if (dtvcc->current_packet_length > 253)
+				if (dtvcc->current_packet_length + 2 > CCX_DTVCC_MAX_PACKET_LENGTH)
 				{
 					ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 										  "Warning: Legal packet size exceeded (1), data not added.\n");
@@ -51,7 +51,7 @@ void dtvcc_process_data(struct dtvcc_ctx *dtvcc,
 			ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: DTVCC Channel Packet Start\n");
 			if (cc_valid)
 			{
-				if (dtvcc->current_packet_length > CCX_DTVCC_MAX_PACKET_LENGTH - 1)
+				if (dtvcc->current_packet_length + 2 > CCX_DTVCC_MAX_PACKET_LENGTH)
 				{
 					ccx_common_logging.debug_ftn(CCX_DMT_708, "[CEA-708] dtvcc_process_data: "
 										  "Warning: Legal packet size exceeded (2), data not added.\n");

@@ -75,12 +75,15 @@ enum MXFLocalTag
 void update_tid_lut(struct MXFContext *ctx, uint32_t track_id, uint8_t *track_number, struct ccx_rational edit_rate)
 {
 	int i;
+	debug("update_tid_lut: track_id=%u (0x%x), track_number=%02X%02X%02X%02X, cap_track_id=%u\n",
+	      track_id, track_id, track_number[0], track_number[1], track_number[2], track_number[3], ctx->cap_track_id);
 	// Update essence element key if we have track Id of caption
 	if (ctx->cap_track_id == track_id)
 	{
 		memcpy(ctx->cap_essence_key, mxf_essence_element_key, 12);
 		memcpy(ctx->cap_essence_key + 12, track_number, 4);
 		ctx->edit_rate = edit_rate;
+		debug("MXF: Found caption track, track_id=%u\n", track_id);
 	}
 
 	for (i = 0; i < ctx->nb_tracks; i++)
@@ -248,6 +251,7 @@ static int mxf_read_vanc_vbi_desc(struct ccx_demuxer *demux, uint64_t size)
 		{
 			case MXF_TAG_LTRACK_ID:
 				ctx->cap_track_id = buffered_get_be32(demux);
+				debug("MXF: VANC/VBI descriptor found, Linked Track ID = %u\n", ctx->cap_track_id);
 				update_cap_essence_key(ctx, ctx->cap_track_id);
 				break;
 			default:
@@ -304,6 +308,17 @@ static int mxf_read_cdp_data(struct ccx_demuxer *demux, int size, struct demuxer
 		log("Incomplete CDP packet\n");
 
 	ret = buffered_read(demux, data->buffer + data->len, cc_count * 3);
+	// Log first few bytes of cc_data for debugging
+	if (cc_count > 0)
+	{
+		unsigned char *cc_ptr = data->buffer + data->len;
+		debug("cc_data (first 6 triplets): ");
+		for (int j = 0; j < (cc_count < 6 ? cc_count : 6); j++)
+		{
+			debug("%02X%02X%02X ", cc_ptr[j * 3], cc_ptr[j * 3 + 1], cc_ptr[j * 3 + 2]);
+		}
+		debug("\n");
+	}
 	data->len += cc_count * 3;
 	demux->past += cc_count * 3;
 	len += ret;
@@ -361,7 +376,10 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 	// uint8_t count; /* Currently unused */
 
 	if (size < 19)
+	{
+		debug("VANC data too small: %" PRIu64 " < 19\n", size);
 		goto error;
+	}
 
 	ret = buffered_read(demux, vanc_header, 16);
 
@@ -370,31 +388,39 @@ static int mxf_read_vanc_data(struct ccx_demuxer *demux, uint64_t size, struct d
 		return CCX_EOF;
 	len += ret;
 
+	debug("VANC header: num_packets=%d, line=0x%02x%02x, wrap_type=0x%02x, sample_config=0x%02x\n",
+	      vanc_header[1], vanc_header[2], vanc_header[3], vanc_header[4], vanc_header[5]);
+
 	for (int i = 0; i < vanc_header[1]; i++)
 	{
 		DID = buffered_get_byte(demux);
 		len++;
+		debug("VANC packet %d: DID=0x%02x\n", i, DID);
 		if (!(DID == 0x61 || DID == 0x80))
 		{
+			debug("DID 0x%02x not recognized as caption DID\n", DID);
 			goto error;
 		}
 
 		SDID = buffered_get_byte(demux);
 		len++;
+		debug("VANC packet %d: SDID=0x%02x\n", i, SDID);
 		if (SDID == 0x01)
 			debug("Caption Type 708\n");
 		else if (SDID == 0x02)
 			debug("Caption Type 608\n");
 
 		cdp_size = buffered_get_byte(demux);
+		debug("VANC packet %d: cdp_size=%d\n", i, cdp_size);
 		if (cdp_size + 19 > size)
 		{
-			debug("Incomplete cdp(%d) in anc data(%d)\n", cdp_size, size);
+			log("Incomplete cdp(%d) in anc data(%" PRIu64 ")\n", cdp_size, size);
 			goto error;
 		}
 		len++;
 
 		ret = mxf_read_cdp_data(demux, cdp_size, data);
+		debug("mxf_read_cdp_data returned %d, data->len=%d\n", ret, data->len);
 		len += ret;
 		// len += (3 + count + 4);
 	}
@@ -411,15 +437,33 @@ static int mxf_read_essence_element(struct ccx_demuxer *demux, uint64_t size, st
 	int ret;
 	struct MXFContext *ctx = demux->private_data;
 
+	debug("mxf_read_essence_element: ctx->type=%d (ANC=%d, VBI=%d), size=%" PRIu64 "\n",
+	      ctx->type, MXF_CT_ANC, MXF_CT_VBI, size);
+
 	if (ctx->type == MXF_CT_ANC)
 	{
 		data->bufferdatatype = CCX_RAW_TYPE;
 		ret = mxf_read_vanc_data(demux, size, data);
-		data->pts = ctx->cap_count;
+		debug("mxf_read_vanc_data returned %d, data->len=%d\n", ret, data->len);
+		// Calculate PTS in 90kHz units from frame count and edit rate
+		// edit_rate is frames per second (e.g., 25/1 for 25fps)
+		// PTS = frame_count * 90000 / fps = frame_count * 90000 * edit_rate.den / edit_rate.num
+		if (ctx->edit_rate.num > 0 && ctx->edit_rate.den > 0)
+		{
+			data->pts = (int64_t)ctx->cap_count * 90000 * ctx->edit_rate.den / ctx->edit_rate.num;
+		}
+		else
+		{
+			// Fallback to 25fps if edit_rate not set
+			data->pts = (int64_t)ctx->cap_count * 90000 / 25;
+		}
+		debug("Frame %d, PTS=%" PRId64 " (edit_rate=%d/%d)\n",
+		      ctx->cap_count, data->pts, ctx->edit_rate.num, ctx->edit_rate.den);
 		ctx->cap_count++;
 	}
 	else
 	{
+		debug("Skipping essence element (not ANC type)\n");
 		ret = buffered_skip(demux, size);
 		demux->past += ret;
 	}
@@ -514,6 +558,7 @@ static int read_packet(struct ccx_demuxer *demux, struct demuxer_data *data)
 	KLVPacket klv;
 	const MXFReadTableEntry *reader;
 	struct MXFContext *ctx = demux->private_data;
+	static int first_essence_logged = 0;
 	while ((ret = klv_read_packet(&klv, demux)) == 0)
 	{
 		debug("Key %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X size %" PRIu64 "\n",
@@ -523,8 +568,25 @@ static int read_packet(struct ccx_demuxer *demux, struct demuxer_data *data)
 		      klv.key[12], klv.key[13], klv.key[14], klv.key[15],
 		      klv.length);
 
+		// Check if this is an essence element key (first 12 bytes match)
+		if (IS_KLV_KEY(klv.key, mxf_essence_element_key) && !first_essence_logged)
+		{
+			debug("MXF: First essence element key: %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X\n",
+			      klv.key[0], klv.key[1], klv.key[2], klv.key[3],
+			      klv.key[4], klv.key[5], klv.key[6], klv.key[7],
+			      klv.key[8], klv.key[9], klv.key[10], klv.key[11],
+			      klv.key[12], klv.key[13], klv.key[14], klv.key[15]);
+			debug("MXF: cap_essence_key: %02X%02X%02X%02X%02X%02X%02X%02X.%02X%02X%02X%02X%02X%02X%02X%02X\n",
+			      ctx->cap_essence_key[0], ctx->cap_essence_key[1], ctx->cap_essence_key[2], ctx->cap_essence_key[3],
+			      ctx->cap_essence_key[4], ctx->cap_essence_key[5], ctx->cap_essence_key[6], ctx->cap_essence_key[7],
+			      ctx->cap_essence_key[8], ctx->cap_essence_key[9], ctx->cap_essence_key[10], ctx->cap_essence_key[11],
+			      ctx->cap_essence_key[12], ctx->cap_essence_key[13], ctx->cap_essence_key[14], ctx->cap_essence_key[15]);
+			first_essence_logged = 1;
+		}
+
 		if (IS_KLV_KEY(klv.key, ctx->cap_essence_key))
 		{
+			debug("MXF: Found ANC essence element, size=%" PRIu64 "\n", klv.length);
 			mxf_read_essence_element(demux, klv.length, data);
 			if (data->len > 0)
 				break;
@@ -566,8 +628,15 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 		data->program_number = 1;
 		data->stream_pid = 1;
 		data->codec = CCX_CODEC_ATSC_CC;
-		data->tb.num = 1001;
-		data->tb.den = 30000;
+		// PTS is already calculated in 90kHz units by mxf_read_essence_element
+		data->tb.num = 1;
+		data->tb.den = 90000;
+
+		// Enable CEA-708 (DTVCC) decoder for MXF files with VANC captions
+		if (ctx->dec_global_setting && ctx->dec_global_setting->settings_dtvcc)
+		{
+			ctx->dec_global_setting->settings_dtvcc->enabled = 1;
+		}
 	}
 	else
 	{
@@ -575,6 +644,11 @@ int ccx_mxf_getmoredata(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	}
 
 	ret = read_packet(ctx->demux_ctx, data);
+
+	// Ensure timebase is 90kHz since PTS is calculated in 90kHz units
+	// CDP parsing may have set a frame-based timebase which would cause incorrect conversion
+	data->tb.num = 1;
+	data->tb.den = 90000;
 
 	return ret;
 }

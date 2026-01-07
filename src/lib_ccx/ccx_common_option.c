@@ -74,6 +74,8 @@ void init_options(struct ccx_s_options *options)
 	options->ocr_oem = -1;		  // By default, OEM mode depends on the tesseract version
 	options->psm = 3;		  // Default PSM mode (3 is the default tesseract as well)
 	options->ocr_quantmode = 0;	  // No quantization (better OCR accuracy for DVB subtitles)
+	options->ocr_line_split = 0;	  // By default, don't split images into lines (pending testing)
+	options->ocr_blacklist = 1;	  // By default, use character blacklist to prevent common OCR errors (| vs I, etc.)
 	options->mkvlang = NULL;	  // By default, all the languages are extracted
 	options->ignore_pts_jumps = 1;
 	options->analyze_video_stream = 0;
@@ -139,7 +141,9 @@ void init_options(struct ccx_s_options *options)
 	options->enc_cfg.services_charsets = NULL;
 	options->enc_cfg.all_services_charset = NULL;
 	options->enc_cfg.with_semaphore = 0;
-	options->enc_cfg.force_dropframe = 0; // Assume No Drop Frame for MCC Encode.
+	options->enc_cfg.force_dropframe = 0;	  // Assume No Drop Frame for MCC Encode.
+	options->enc_cfg.scc_framerate = 0;	  // Default: 29.97fps for SCC output
+	options->enc_cfg.scc_accurate_timing = 0; // Default: off for backwards compatibility (issue #1120)
 	options->enc_cfg.extract_only_708 = 0;
 
 	options->settings_dtvcc.enabled = 0;
@@ -151,6 +155,8 @@ void init_options(struct ccx_s_options *options)
 	memset(
 	    options->settings_dtvcc.services_enabled, 0,
 	    CCX_DTVCC_MAX_SERVICES * sizeof(options->settings_dtvcc.services_enabled[0]));
+
+	options->scc_framerate = 0; // Default: 29.97fps
 
 #ifdef WITH_LIBCURL
 	options->curlposturl = NULL;

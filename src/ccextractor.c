@@ -202,6 +202,12 @@ int start_ccx()
 				if (!ret)
 					ret = tmp;
 				break;
+			case CCX_SM_SCC:
+				mprint("\rAnalyzing data in SCC (Scenarist Closed Caption) mode\n");
+				tmp = raw_loop(ctx);
+				if (!ret)
+					ret = tmp;
+				break;
 			case CCX_SM_RCWT:
 				mprint("\rAnalyzing data in CCExtractor's binary format\n");
 				tmp = rcwt_loop(ctx);
@@ -428,6 +434,9 @@ int main(int argc, char *argv[])
 	ccxr_init_basic_logger();
 
 	int compile_ret = ccxr_parse_parameters(argc, argv);
+
+	// Update the Rust logger target after parsing so --quiet is respected
+	ccxr_update_logger_target();
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{

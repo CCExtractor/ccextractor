@@ -462,6 +462,10 @@ pub struct Options {
     /// (0 = no quantization at all, 1 = CCExtractor's internal,
     ///  2 = reduce distinct color count in image for faster results.)
     pub ocr_quantmode: u8,
+    /// If true, split images into lines before OCR (uses PSM 7 for better accuracy)
+    pub ocr_line_split: bool,
+    /// If true, use character blacklist to prevent common OCR errors (e.g. | vs I)
+    pub ocr_blacklist: bool,
     /// The name of the language stream for MKV
     pub mkvlang: Option<Language>,
     /// If true, the video stream will be processed even if we're using a different one for subtitles.
@@ -517,6 +521,10 @@ pub struct Options {
     pub multiprogram: bool,
     pub out_interval: i32,
     pub segment_on_key_frames_only: bool,
+    /// SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+    pub scc_framerate: i32,
+    /// SCC accurate timing (issue #1120): if true, use bandwidth-aware timing for broadcast compliance
+    pub scc_accurate_timing: bool,
     pub debug_mask: DebugMessageMask,
 
     #[cfg(feature = "with_libcurl")]
@@ -582,6 +590,8 @@ impl Default for Options {
             ocr_oem: -1,
             psm: 3,
             ocr_quantmode: 0, // No quantization - better OCR accuracy for DVB subtitles
+            ocr_line_split: false, // Don't split images into lines by default
+            ocr_blacklist: true, // Use character blacklist by default to prevent | vs I errors
             mkvlang: Default::default(),
             analyze_video_stream: Default::default(),
             hardsubx_ocr_mode: Default::default(),
@@ -618,6 +628,8 @@ impl Default for Options {
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),
+            scc_framerate: 0,           // 0 = 29.97fps (default)
+            scc_accurate_timing: false, // Off by default for backwards compatibility (issue #1120)
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,
                 DebugMessageFlag::VERBOSE,

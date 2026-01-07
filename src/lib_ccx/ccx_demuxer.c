@@ -285,6 +285,9 @@ static void ccx_demuxer_print_cfg(struct ccx_demuxer *ctx)
 		case CCX_SM_MXF:
 			mprint("MXF");
 			break;
+		case CCX_SM_SCC:
+			mprint("SCC");
+			break;
 #ifdef WTV_DEBUG
 		case CCX_SM_HEX_DUMP:
 			mprint("Hex");
@@ -348,7 +351,6 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 		{
 			ctx->pinfo[i].got_important_streams_min_pts[j] = UINT64_MAX;
 		}
-		ctx->pinfo[i].initialized_ocr = 0;
 		ctx->pinfo[i].version = 0xFF; // Not real in a real stream since it's 5 bits. FF => Not initialized
 	}
 

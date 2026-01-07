@@ -1,7 +1,7 @@
 #!/bin/bash
 TYPE="debian"   # can be one of 'slackware', 'debian', 'rpm'
 PROGRAM_NAME="ccextractor"
-VERSION="0.96"
+VERSION="0.96.5"
 RELEASE="1"
 LICENSE="GPL-2.0"
 MAINTAINER="carlos@ccextractor.org"

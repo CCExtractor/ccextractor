@@ -50,7 +50,6 @@ pub struct FileReport {
 pub struct ProgramInfo {
     pub pid: i32,
     pub program_number: i32,
-    pub initialized_ocr: bool, // Avoid initializing the OCR more than once
     pub analysed_pmt_once: u8, // 1-bit field
     pub version: u8,
     pub saved_section: [u8; SAVED_SECTIONS_PROGRAMINFO],
@@ -301,7 +300,6 @@ impl Default for ProgramInfo {
         ProgramInfo {
             pid: -1,
             program_number: 0,
-            initialized_ocr: false,
             analysed_pmt_once: 0,
             version: 0,
             saved_section: [0; SAVED_SECTIONS_PROGRAMINFO],

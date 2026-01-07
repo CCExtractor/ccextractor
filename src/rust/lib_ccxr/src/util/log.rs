@@ -269,6 +269,11 @@ impl<'a> CCExtractorLogger {
         self.target
     }
 
+    /// Sets the target for logging messages.
+    pub fn set_target(&mut self, target: OutputTarget) {
+        self.target = target;
+    }
+
     /// Check if the messages are intercepted by GUI.
     pub fn is_gui_mode(&self) -> bool {
         self.gui_mode
@@ -276,8 +281,16 @@ impl<'a> CCExtractorLogger {
 
     fn print(&self, args: &Arguments<'a>) {
         match &self.target {
-            OutputTarget::Stdout => print!("{args}"),
-            OutputTarget::Stderr => eprint!("{args}"),
+            OutputTarget::Stdout => {
+                print!("{args}");
+                // Flush stdout to ensure output appears immediately, especially when
+                // mixing with C code that also writes to stdout
+                let _ = std::io::Write::flush(&mut std::io::stdout());
+            }
+            OutputTarget::Stderr => {
+                eprint!("{args}");
+                let _ = std::io::Write::flush(&mut std::io::stderr());
+            }
             OutputTarget::Quiet => {}
         }
     }

@@ -5,26 +5,31 @@
 #if (defined(WIN32) || defined(_WIN32_WCE)) && (defined(__MINGW32__) || !defined(__GNUC__))
 #define LLD_M "I64d"
 #define LLU_M "I64u"
+#define LLX_M "I64x"
 #define LLD "%I64d"
 #define LLU "%I64u"
 #elif defined(__SYMBIAN32__)
 #define LLD_M "d"
 #define LLU_M "u"
+#define LLX_M "x"
 #define LLD "%d"
 #define LLU "%u"
 #elif defined(__DARWIN__) || defined(__APPLE__)
 #define LLD_M "lld"
 #define LLU_M "llu"
+#define LLX_M "llx"
 #define LLD "%lld"
 #define LLU "%llu"
 #elif defined(_LP64) /* Unix 64 bits */
 #define LLD_M "ld"
 #define LLU_M "lu"
+#define LLX_M "lx"
 #define LLD "%ld"
 #define LLU "%lu"
 #else /* Unix 32 bits */
 #define LLD_M "lld"
 #define LLU_M "llu"
+#define LLX_M "llx"
 #define LLD "%lld"
 #define LLU "%llu"
 #endif

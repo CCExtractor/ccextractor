@@ -12,7 +12,7 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 
     let hsv_rep = Hsv::from_color(rgb);
 
-    *H = hsv_rep.hue.to_positive_degrees();
+    *H = hsv_rep.hue.into_positive_degrees();
     *S = hsv_rep.saturation;
     *V = hsv_rep.value;
 }
