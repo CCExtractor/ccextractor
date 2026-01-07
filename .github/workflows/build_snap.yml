@@ -1,0 +1,44 @@
+name: Build CCExtractor Snap
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build_snap:
+    name: Build Snap package
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Snapcraft
+        run: |
+          sudo apt update
+          sudo apt install -y snapd
+          sudo snap install core22
+          sudo snap install snapcraft --classic
+
+      - name: Show Snapcraft version
+        run: snapcraft --version
+
+      - name: Build snap
+        run: |
+          snapcraft --destructive-mode
+
+      - name: List generated snap
+        run: ls -lh *.snap
+
+      - name: Upload snap as workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: CCExtractor Snap
+          path: "*.snap"
+
+      - name: Upload snap to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.snap"
