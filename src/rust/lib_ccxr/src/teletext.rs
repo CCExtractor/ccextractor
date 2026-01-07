@@ -1251,6 +1251,7 @@ impl<'a> TeletextContext<'a> {
         subtitles: &mut Vec<Subtitle>,
         capitalization_list: &[String],
     ) {
+        // variable names conform to ETS 300 706, chapter 7.1.2
         let Some(addr1) = decode_hamming_8_4(packet.address[1]) else {
             return;
         };
@@ -1270,6 +1271,7 @@ impl<'a> TeletextContext<'a> {
         };
 
         if y == 0 {
+            // CC map
             let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0);
             let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0);
             let i = (h1 << 4) | h0;
@@ -1285,6 +1287,7 @@ impl<'a> TeletextContext<'a> {
                 let mut thisp = ((m as u32) << 8) | (h1 << 4) | h0;
 
                 let t1 = format!("{thisp:x}");
+                // Fallback to original value if parsing fails to avoid panics on malformed BCD
                 thisp = t1.parse().unwrap_or(thisp);
                 if !self.seen_sub_page[thisp as usize] {
                     self.seen_sub_page[thisp as usize] = true;
@@ -1304,12 +1307,18 @@ impl<'a> TeletextContext<'a> {
                 info!("- No teletext page specified, first received suitable page is {}, not guaranteed\n", self.config.page.get());
             }
 
+            // Page number and control bits
             let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u16;
             let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u16;
             let page_number: TeletextPageNumber = (((m as u16) << 8) | (h1 << 4) | h0).into();
 
             let c7 = decode_hamming_8_4(packet.data[7]).unwrap_or(0);
             let charset = (c7 & 0x08 | c7 & 0x04 | c7 & 0x02) >> 1;
+            // ETS 300 706, chapter 9.3.1.3:
+            // When set to '1' the service is designated to be in Serial mode and the transmission of a page is terminated
+            // by the next page header with a different page number.
+            // When set to '0' the service is designated to be in Parallel mode and the transmission of a page is terminated
+            // by the next page header with a different page number but the same magazine number.
             self.transmission_mode = if c7 & 0x01 == 0 {
                 TransmissionMode::Parallel
             } else {
