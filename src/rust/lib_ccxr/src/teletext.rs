@@ -1154,10 +1154,9 @@ impl<'a> TeletextContext<'a> {
                     }
 
                     if v >= 0x20 {
-                        let u = char::from_u32(v as u32).unwrap();
+                        let u = char::from_u32(v as u32).unwrap_or(char::REPLACEMENT_CHARACTER);
                         self.page_buffer_cur.get_or_insert("".into()).push(u);
                         if logger().expect("could not access logger").is_gui_mode() {
-                            // For now we just handle the easy stuff
                             eprint!("{u}");
                         }
                     }
@@ -1225,13 +1224,15 @@ impl<'a> TeletextContext<'a> {
                 }
             }
             _ => {
-                ans = Some(Subtitle::new_text(
-                    self.page_buffer_cur.take().unwrap().into(),
-                    self.page_buffer.show_timestamp,
-                    self.page_buffer.hide_timestamp + Timestamp::from_millis(1),
-                    None,
-                    "TLT".into(),
-                ));
+                if let Some(cur) = self.page_buffer_cur.take() {
+                    ans = Some(Subtitle::new_text(
+                        cur.into(),
+                        self.page_buffer.show_timestamp,
+                        self.page_buffer.hide_timestamp + Timestamp::from_millis(1),
+                        None,
+                        "TLT".into(),
+                    ));
+                }
             }
         }
 
@@ -1250,35 +1251,41 @@ impl<'a> TeletextContext<'a> {
         subtitles: &mut Vec<Subtitle>,
         capitalization_list: &[String],
     ) {
-        // variable names conform to ETS 300 706, chapter 7.1.2
-        let address = (decode_hamming_8_4(packet.address[1]).unwrap() << 4)
-            | decode_hamming_8_4(packet.address[0]).unwrap();
+        let Some(addr1) = decode_hamming_8_4(packet.address[1]) else {
+            return;
+        };
+        let Some(addr0) = decode_hamming_8_4(packet.address[0]) else {
+            return;
+        };
+        let address = (addr1 << 4) | addr0;
         let mut m = address & 0x7;
         if m == 0 {
             m = 8;
         }
         let y = (address >> 3) & 0x1f;
         let designation_code = if y > 25 {
-            decode_hamming_8_4(packet.data[0]).unwrap()
+            decode_hamming_8_4(packet.data[0]).unwrap_or(0x00)
         } else {
             0x00
         };
 
         if y == 0 {
-            // CC map
-            let i = (decode_hamming_8_4(packet.data[1]).unwrap() << 4)
-                | decode_hamming_8_4(packet.data[0]).unwrap();
-            let flag_subtitle = (decode_hamming_8_4(packet.data[5]).unwrap() & 0x08) >> 3;
+            let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0);
+            let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0);
+            let i = (h1 << 4) | h0;
+
+            let flag_subtitle = (decode_hamming_8_4(packet.data[5]).unwrap_or(0) & 0x08) >> 3;
             self.cc_map[i as usize] |= flag_subtitle << (m - 1);
 
             let flag_subtitle = flag_subtitle != 0;
 
             if flag_subtitle && (i < 0xff) {
-                let mut thisp = ((m as u32) << 8)
-                    | ((decode_hamming_8_4(packet.data[1]).unwrap() as u32) << 4)
-                    | (decode_hamming_8_4(packet.data[0]).unwrap() as u32);
-                let t1 = format!("{thisp:x}"); // Example: 1928 -> 788
-                thisp = t1.parse().unwrap();
+                let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u32;
+                let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u32;
+                let mut thisp = ((m as u32) << 8) | (h1 << 4) | h0;
+
+                let t1 = format!("{thisp:x}");
+                thisp = t1.parse().unwrap_or(thisp);
                 if !self.seen_sub_page[thisp as usize] {
                     self.seen_sub_page[thisp as usize] = true;
                     info!(
@@ -1288,36 +1295,22 @@ impl<'a> TeletextContext<'a> {
                 }
             }
             if (self.config.page.get() == 0.into()) && flag_subtitle && (i < 0xff) {
-                self.config.page.replace(
-                    (((m as u16) << 8)
-                        | ((decode_hamming_8_4(packet.data[1]).unwrap() as u16) << 4)
-                        | (decode_hamming_8_4(packet.data[0]).unwrap() as u16))
-                        .into(),
-                );
+                let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u16;
+                let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u16;
+
+                self.config
+                    .page
+                    .replace((((m as u16) << 8) | (h1 << 4) | h0).into());
                 info!("- No teletext page specified, first received suitable page is {}, not guaranteed\n", self.config.page.get());
             }
 
-            // Page number and control bits
-            let page_number: TeletextPageNumber = (((m as u16) << 8)
-                | ((decode_hamming_8_4(packet.data[1]).unwrap() as u16) << 4)
-                | (decode_hamming_8_4(packet.data[0]).unwrap() as u16))
-                .into();
-            let charset = ((decode_hamming_8_4(packet.data[7]).unwrap() & 0x08)
-                | (decode_hamming_8_4(packet.data[7]).unwrap() & 0x04)
-                | (decode_hamming_8_4(packet.data[7]).unwrap() & 0x02))
-                >> 1;
-            // let flag_suppress_header = decode_hamming_8_4(packet.data[6]).unwrap() & 0x01;
-            // let flag_inhibit_display = (decode_hamming_8_4(packet.data[6]).unwrap() & 0x08) >> 3;
+            let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u16;
+            let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u16;
+            let page_number: TeletextPageNumber = (((m as u16) << 8) | (h1 << 4) | h0).into();
 
-            // ETS 300 706, chapter 9.3.1.3:
-            // When set to '1' the service is designated to be in Serial mode and the transmission of a page is terminated
-            // by the next page header with a different page number.
-            // When set to '0' the service is designated to be in Parallel mode and the transmission of a page is terminated
-            // by the next page header with a different page number but the same magazine number.
-            // The same setting shall be used for all page headers in the service.
-            // ETS 300 706, chapter 7.2.1: Page is terminated by and excludes the next page header packet
-            // having the same magazine address in parallel transmission mode, or any magazine address in serial transmission mode.
-            self.transmission_mode = if decode_hamming_8_4(packet.data[7]).unwrap() & 0x01 == 0 {
+            let c7 = decode_hamming_8_4(packet.data[7]).unwrap_or(0);
+            let charset = (c7 & 0x08 | c7 & 0x04 | c7 & 0x02) >> 1;
+            self.transmission_mode = if c7 & 0x01 == 0 {
                 TransmissionMode::Parallel
             } else {
                 TransmissionMode::Serial
@@ -1353,19 +1346,17 @@ impl<'a> TeletextContext<'a> {
 
             // Now we have the begining of page transmission; if there is page_buffer pending, process it
             if self.page_buffer.tainted {
-                // Convert telx to UCS-2 before processing
                 for yt in 1..=23 {
                     for it in 0..40 {
                         if self.page_buffer.text[yt][it] != 0x00
                             && !self.page_buffer.g2_char_present[yt][it]
                         {
-                            self.page_buffer.text[yt][it] = self
-                                .g0_charset
-                                .ucs2_char(self.page_buffer.text[yt][it].try_into().unwrap());
+                            if let Ok(c) = self.page_buffer.text[yt][it].try_into() {
+                                self.page_buffer.text[yt][it] = self.g0_charset.ucs2_char(c);
+                            }
                         }
                     }
                 }
-                // it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
                 self.page_buffer.hide_timestamp = timestamp - Timestamp::from_millis(40);
                 if self.page_buffer.hide_timestamp > timestamp {
                     self.page_buffer.hide_timestamp = Timestamp::from_millis(0);
@@ -1544,12 +1535,14 @@ impl<'a> TeletextContext<'a> {
                     info!("- Programme Identification Data = ");
                     for i in 20..40 {
                         let c = self.g0_charset.ucs2_char(packet.data[i]);
-                        // strip any control codes from PID, eg. TVP station
                         if c < 0x20 {
                             continue;
                         }
 
-                        info!("{}", char::from_u32(c as u32).unwrap());
+                        info!(
+                            "{}",
+                            char::from_u32(c as u32).unwrap_or(char::REPLACEMENT_CHARACTER)
+                        );
                     }
                     info!("\n");
 
@@ -1580,7 +1573,7 @@ impl<'a> TeletextContext<'a> {
 
                     info!(
                         "- Universal Time Co-ordinated = {}\n",
-                        t0.to_ctime().unwrap()
+                        t0.to_ctime().as_deref().unwrap_or("unknown")
                     );
 
                     debug!(msg_type = DebugMessageFlag::TELETEXT; "- Transmission mode = {:?}\n", self.transmission_mode);
@@ -1589,8 +1582,13 @@ impl<'a> TeletextContext<'a> {
                         && matches!(self.config.date_format, TimestampFormat::Date { .. })
                         && !self.config.noautotimeref
                     {
-                        info!("- Broadcast Service Data Packet received, resetting UTC referential value to {}\n", t0.to_ctime().unwrap());
-                        *UTC_REFVALUE.write().unwrap() = t as u64;
+                        info!(
+                            "- Broadcast Service Data Packet received, resetting UTC referential value to {}\n",
+                            t0.to_ctime().as_deref().unwrap_or("unknown")
+                        );
+                        if let Ok(mut lock) = UTC_REFVALUE.write() {
+                            *lock = t as u64;
+                        }
                         self.states.pts_initialized = false;
                     }
 
@@ -1610,15 +1608,14 @@ impl<'a> TeletextContext<'a> {
             if let Some(subtitles) = subtitles {
                 // output any pending close caption
                 if self.page_buffer.tainted {
-                    // Convert telx to UCS-2 before processing
                     for yt in 1..=23 {
                         for it in 0..40 {
                             if self.page_buffer.text[yt][it] != 0x00
                                 && !self.page_buffer.g2_char_present[yt][it]
                             {
-                                self.page_buffer.text[yt][it] = self
-                                    .g0_charset
-                                    .ucs2_char(self.page_buffer.text[yt][it].try_into().unwrap());
+                                if let Ok(c) = self.page_buffer.text[yt][it].try_into() {
+                                    self.page_buffer.text[yt][it] = self.g0_charset.ucs2_char(c);
+                                }
                             }
                         }
                     }
