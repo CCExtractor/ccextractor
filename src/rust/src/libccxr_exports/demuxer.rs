@@ -98,59 +98,73 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
     c.global_timestamp_inited = rust_demuxer.global_timestamp_inited.millis() as c_int;
 
     // PID buffers - extra defensive version
+    // We iterate through all possible PIDs (up to 8191 for PSI) to ensure state synchronization.
+    // CRITICAL: We must free existing pointers in the C structure before overwriting them
+    // to prevent massive memory leaks during the demuxing process, as this function
+    // is called repeatedly to sync state between Rust and C.
     let pid_buffers_len = rust_demuxer.pid_buffers.len().min(8191);
-    for i in 0..pid_buffers_len {
-        let pid_buffer = rust_demuxer.pid_buffers[i];
-        if !pid_buffer.is_null() {
-            // Try to safely access the pointer
-            match std::panic::catch_unwind(|| unsafe { &*pid_buffer }) {
-                Ok(rust_psi) => {
-                    let c_psi = unsafe { rust_psi.to_ctype() };
-                    let c_ptr = Box::into_raw(Box::new(c_psi));
-                    c.PID_buffers[i] = c_ptr;
-                }
-                Err(_) => {
-                    // Pointer was invalid, set to null
-                    eprintln!("Warning: Invalid PID buffer pointer at index {i}");
-                    c.PID_buffers[i] = std::ptr::null_mut();
+    for i in 0..8191 {
+        // Free existing pointer if any to avoid leaking the Box allocation.
+        // SAFETY: We assume PID_buffers entries are always Rust-allocated via Box::into_raw.
+        // We also check for POISON_PTR_PATTERN for safety in debug builds.
+        if !c.PID_buffers[i].is_null() && c.PID_buffers[i] as usize != POISON_PTR_PATTERN {
+            unsafe {
+                drop(Box::from_raw(c.PID_buffers[i]));
+                c.PID_buffers[i] = std::ptr::null_mut();
+            }
+        }
+
+        if i < pid_buffers_len {
+            let pid_buffer = rust_demuxer.pid_buffers[i];
+            if !pid_buffer.is_null() {
+                // Try to safely access the pointer using catch_unwind to prevent
+                // a panic in Rust from crashing the entire C application.
+                // This is a defensive measure for FFI robustness.
+                match std::panic::catch_unwind(|| unsafe { &*pid_buffer }) {
+                    Ok(rust_psi) => {
+                        let c_psi = unsafe { rust_psi.to_ctype() };
+                        let c_ptr = Box::into_raw(Box::new(c_psi));
+                        c.PID_buffers[i] = c_ptr;
+                    }
+                    Err(_) => {
+                        // Pointer was invalid, log and skip
+                        eprintln!("Warning: Invalid PID buffer pointer at index {i}");
+                    }
                 }
             }
-        } else {
-            c.PID_buffers[i] = std::ptr::null_mut();
         }
-    }
-
-    // Clear remaining slots if rust array is smaller than C array
-    for i in pid_buffers_len..8191 {
-        c.PID_buffers[i] = std::ptr::null_mut();
     }
 
     // PIDs programs - extra defensive version
+    // Similar to PID_buffers, we manage ownership of PMT entries.
+    // We check for POISON_PTR_PATTERN to avoid freeing uninitialized memory in debug builds.
     let pids_programs_len = rust_demuxer.pids_programs.len().min(65536);
-    for i in 0..pids_programs_len {
-        let pmt_entry = rust_demuxer.pids_programs[i];
-        if !pmt_entry.is_null() {
-            // Try to safely access the pointer
-            match std::panic::catch_unwind(|| unsafe { &*pmt_entry }) {
-                Ok(rust_pmt) => {
-                    let c_pmt = unsafe { rust_pmt.to_ctype() };
-                    let c_ptr = Box::into_raw(Box::new(c_pmt));
-                    c.PIDs_programs[i] = c_ptr;
-                }
-                Err(_) => {
-                    // Pointer was invalid, set to null
-                    eprintln!("Warning: Invalid PMT entry pointer at index {i}");
-                    c.PIDs_programs[i] = std::ptr::null_mut();
+    for i in 0..65536 {
+        // Free existing pointer if any and it's not a poison pattern.
+        // SAFETY: PMT entry pointers are assumed to be Rust-allocated via Box::into_raw.
+        if !c.PIDs_programs[i].is_null() && c.PIDs_programs[i] as usize != POISON_PTR_PATTERN {
+            unsafe {
+                drop(Box::from_raw(c.PIDs_programs[i]));
+                c.PIDs_programs[i] = std::ptr::null_mut();
+            }
+        }
+
+        if i < pids_programs_len {
+            let pmt_entry = rust_demuxer.pids_programs[i];
+            if !pmt_entry.is_null() {
+                // Safely convert and move ownership to C
+                match std::panic::catch_unwind(|| unsafe { &*pmt_entry }) {
+                    Ok(rust_pmt) => {
+                        let c_pmt = unsafe { rust_pmt.to_ctype() };
+                        let c_ptr = Box::into_raw(Box::new(c_pmt));
+                        c.PIDs_programs[i] = c_ptr;
+                    }
+                    Err(_) => {
+                        eprintln!("Warning: Invalid PMT entry pointer at index {i}");
+                    }
                 }
             }
-        } else {
-            c.PIDs_programs[i] = std::ptr::null_mut();
         }
-    }
-
-    // Clear remaining slots if rust array is smaller than C array
-    for i in pids_programs_len..65536 {
-        c.PIDs_programs[i] = std::ptr::null_mut();
     }
 
     // PIDs seen array

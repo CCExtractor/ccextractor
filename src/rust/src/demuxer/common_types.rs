@@ -109,7 +109,9 @@ impl Default for PSIBuffer {
     fn default() -> Self {
         PSIBuffer {
             prev_ccounter: 0,
-            buffer: Box::into_raw(Box::new(0u8)),
+            // Initialize with null to avoid unnecessary heap allocations and
+            // signal that the buffer is currently empty.
+            buffer: std::ptr::null_mut(),
             buffer_length: 0,
             ccounter: 0,
         }
