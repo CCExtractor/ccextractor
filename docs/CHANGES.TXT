@@ -1,6 +1,6 @@
 0.96.5 (2026-01-05)
 -------------------
-- New: Added Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow.
+- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow.
 - New: Add support for raw CDP (Caption Distribution Packet) files (#1406)
 - New: Add --scc-accurate-timing option for bandwidth-aware SCC output (#1120)
 - Fix: MXF files containing CEA-708 captions not being detected/extracted (#1647)
