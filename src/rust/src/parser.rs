@@ -41,7 +41,9 @@ cfg_if! {
 
 fn set_usercolor_rgb(color: &str) {
     let mut rgb: [i32; 8] = [0; 8];
-    for (i, item) in color.chars().enumerate() {
+    // We only have room for 7 characters before the null terminator.
+    // Malformed input shouldn't cause a buffer overflow here.
+    for (i, item) in color.chars().take(7).enumerate() {
         rgb[i] = item as i32;
     }
     rgb[7] = 0;
@@ -57,13 +59,22 @@ fn set_mpeg_clock_freq(freq: i32) {
 }
 
 fn atol(bufsize: &str) -> i32 {
-    let mut val = bufsize[0..bufsize.len() - 1].parse::<i32>().unwrap();
-    let size = bufsize
-        .to_string()
-        .to_uppercase()
-        .chars()
-        .nth(bufsize.len() - 1)
-        .unwrap();
+    if bufsize.is_empty() {
+        fatal!(
+            cause = ExitCause::MalformedParameter;
+            "Malformed parameter: empty buffer size.\n"
+        );
+    }
+    // We expect at least one digit and a suffix (K, M, etc.)
+    let val_str = &bufsize[0..bufsize.len().saturating_sub(1)];
+    let mut val = val_str.parse::<i32>().unwrap_or_else(|_| {
+        fatal!(
+            cause = ExitCause::MalformedParameter;
+            "Malformed parameter: Invalid buffer size number '{}'.\n",
+            val_str
+        );
+    });
+    let size = bufsize.to_uppercase().chars().last().unwrap_or(' ');
     if size == 'M' {
         val *= 1024 * 1024;
     } else if size == 'K' {
@@ -400,7 +411,13 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().unwrap();
+            let svc = service.parse::<usize>().unwrap_or_else(|_| {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "[CEA-708] Malformed parameter: Invalid service number '{}'.\n",
+                    service
+                );
+            });
             if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
@@ -823,22 +840,46 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore =
-                stringztoms(startcreditsnotbefore.clone().as_str()).unwrap();
+            self.enc_cfg.startcreditsnotbefore = stringztoms(startcreditsnotbefore.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --startcreditsnotbefore '{}' is invalid.\n",
+                        startcreditsnotbefore
+                    );
+                });
         }
 
         if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-            self.enc_cfg.startcreditsnotafter =
-                stringztoms(startcreditsnotafter.clone().as_str()).unwrap();
+            self.enc_cfg.startcreditsnotafter = stringztoms(startcreditsnotafter.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --startcreditsnotafter '{}' is invalid.\n",
+                        startcreditsnotafter
+                    );
+                });
         }
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast =
-                stringztoms(startcreditsforatleast.clone().as_str()).unwrap();
+            self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --startcreditsforatleast '{}' is invalid.\n",
+                        startcreditsforatleast
+                    );
+                });
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost =
-                stringztoms(startcreditsforatmost.clone().as_str()).unwrap();
+            self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --startcreditsforatmost '{}' is invalid.\n",
+                        startcreditsforatmost
+                    );
+                });
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
@@ -846,13 +887,25 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-            self.enc_cfg.endcreditsforatleast =
-                stringztoms(endcreditsforatleast.clone().as_str()).unwrap();
+            self.enc_cfg.endcreditsforatleast = stringztoms(endcreditsforatleast.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --endcreditsforatleast '{}' is invalid.\n",
+                        endcreditsforatleast
+                    );
+                });
         }
 
         if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-            self.enc_cfg.endcreditsforatmost =
-                stringztoms(endcreditsforatmost.clone().as_str()).unwrap();
+            self.enc_cfg.endcreditsforatmost = stringztoms(endcreditsforatmost.as_str())
+                .unwrap_or_else(|| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Malformed parameter: --endcreditsforatmost '{}' is invalid.\n",
+                        endcreditsforatmost
+                    );
+                });
         }
 
         /* More stuff */
@@ -1004,10 +1057,22 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.clone().as_str()).unwrap());
+            self.extraction_start = Some(stringztoms(startat.as_str()).unwrap_or_else(|| {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Malformed parameter: --startat '{}' is invalid.\n",
+                    startat
+                );
+            }));
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.clone().as_str()).unwrap());
+            self.extraction_end = Some(stringztoms(endat.as_str()).unwrap_or_else(|| {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Malformed parameter: --endat '{}' is invalid.\n",
+                    endat
+                );
+            }));
         }
 
         if args.cc2 {
