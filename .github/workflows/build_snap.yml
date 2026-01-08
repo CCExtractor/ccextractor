@@ -2,9 +2,6 @@ name: Build CCExtractor Snap
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - wip/snap-cmake-refactor
   release:
     types: [published]
 
