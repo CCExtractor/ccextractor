@@ -52,6 +52,7 @@
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
   - Output files are named with page suffix (e.g., output_p100.srt, output_p200.srt)
+- Fix: SPUPNG subtitle offset calculation to center based on actual image dimensions
 
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
   New: Chinese, Korean, Japanese support - proper encoding and OCR.
