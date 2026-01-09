@@ -1,8 +1,82 @@
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#endif
+#include <stdlib.h>
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "teletext.h"
-
+#include <string.h>
+#include <stdbool.h>
 #include "ccx_decoders_708.h"
+
+void print_file_report_json(struct lib_ccx_ctx *ctx);
+
+static void json_escape(const char *s)
+{
+	if (!s)
+	{
+		printf("null");
+		return;
+	}
+
+	putchar('"');
+	for (; *s; s++)
+	{
+		switch (*s)
+		{
+			case '"':
+				printf("\\\"");
+				break;
+			case '\\':
+				printf("\\\\");
+				break;
+			case '\b':
+				printf("\\b");
+				break;
+			case '\f':
+				printf("\\f");
+				break;
+			case '\n':
+				printf("\\n");
+				break;
+			case '\r':
+				printf("\\r");
+				break;
+			case '\t':
+				printf("\\t");
+				break;
+			default:
+				if ((unsigned char)*s < 0x20)
+					printf("\\u%04x", (unsigned char)*s);
+				else
+					putchar(*s);
+		}
+	}
+	putchar('"');
+}
+
+static const char *stream_mode_to_string(enum ccx_stream_mode_enum mode)
+{
+	switch (mode)
+	{
+		case CCX_SM_TRANSPORT:
+			return "Transport Stream";
+		case CCX_SM_PROGRAM:
+			return "Program Stream";
+		case CCX_SM_ASF:
+			return "ASF";
+		case CCX_SM_WTV:
+			return "WTV";
+		case CCX_SM_MP4:
+			return "MP4";
+		case CCX_SM_MCPOODLESRAW:
+			return "McPoodle Raw";
+		case CCX_SM_RCWT:
+			return "BIN";
+		default:
+			return "Unknown";
+	}
+}
 
 void params_dump(struct lib_ccx_ctx *ctx)
 {
@@ -256,10 +330,246 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info *info)
 	}
 }
 
+void print_file_report_json(struct lib_ccx_ctx *ctx)
+{
+	struct ccx_demuxer *demux = ctx->demux_ctx;
+	struct cap_info *program;
+
+	int real_pg_count = 0;
+	list_for_each_entry(program, &demux->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+	{
+		real_pg_count++;
+	}
+
+	struct cap_info **pg_array = malloc(sizeof(*pg_array) * real_pg_count);
+	if (!pg_array)
+	{
+		fprintf(stderr, "Out of memory while building report JSON\n");
+		return;
+	}
+
+	int idx = 0;
+	list_for_each_entry(program, &demux->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+	{
+		pg_array[idx++] = program;
+	}
+
+	/* sort by program number */
+	for (int i = 0; i < real_pg_count - 1; i++)
+	{
+		for (int j = i + 1; j < real_pg_count; j++)
+		{
+			if (pg_array[i]->program_number > pg_array[j]->program_number)
+			{
+				struct cap_info *tmp = pg_array[i];
+				pg_array[i] = pg_array[j];
+				pg_array[j] = tmp;
+			}
+		}
+	}
+
+	printf("{\n");
+	/* schema */
+	printf("  \"schema\": {\n");
+	printf("    \"name\": \"ccextractor-report\",\n");
+	printf("    \"version\": \"1.0\"\n");
+	printf("  },\n");
+
+	/* input */
+	printf("  \"input\": {\n");
+	printf("    \"source\": ");
+	switch (ccx_options.input_source)
+	{
+		case CCX_DS_FILE:
+			printf("\"file\",\n");
+			printf("    \"path\": ");
+			json_escape(ctx->inputfile[ctx->current_file]);
+			printf("\n");
+			break;
+		case CCX_DS_STDIN:
+			printf("\"stdin\"\n");
+			break;
+		default:
+			printf("\"network\"\n");
+			break;
+	}
+	printf("  },\n");
+
+	/* stream */
+	printf("  \"stream\": {\n");
+	printf("    \"mode\": ");
+	json_escape(stream_mode_to_string(demux->stream_mode));
+	printf(",\n");
+
+	printf("    \"program_count\": %d,\n", real_pg_count);
+
+	printf("    \"program_numbers\": [");
+	for (int i = 0; i < real_pg_count; i++)
+	{
+		if (i)
+			printf(", ");
+		printf("%u", pg_array[i]->program_number);
+	}
+	printf("],\n");
+
+	/* PIDs */
+	printf("    \"pids\": [\n");
+	int first = 1;
+	for (int pid = 0; pid < 65536; pid++)
+	{
+		if (!demux->PIDs_programs[pid])
+			continue;
+
+		if (!first)
+			printf(",\n");
+		first = 0;
+
+		printf("      { \"pid\": %d, \"program_number\": %u, \"codec\": ",
+		       pid,
+		       demux->PIDs_programs[pid]->program_number);
+		json_escape(desc[demux->PIDs_programs[pid]->printable_stream_type]);
+		printf(" }");
+	}
+	printf("\n    ]\n");
+	printf("  },\n");
+
+	/* container-level metadata */
+	if (ctx->freport.mp4_cc_track_cnt > 0)
+	{
+		printf("  \"container\": {\n");
+		printf("    \"mp4\": {\n");
+		printf("      \"timed_text_tracks\": %d\n", ctx->freport.mp4_cc_track_cnt);
+		printf("    }\n");
+		printf("  },\n");
+	}
+
+	/* programs */
+	printf("  \"programs\": [\n");
+	first = 1;
+
+	for (int pi = 0; pi < real_pg_count; pi++)
+	{
+		program = pg_array[pi];
+		struct lib_cc_decode *dec_ctx;
+		struct cap_info *info;
+
+		if (!first)
+			printf(",\n");
+		first = 0;
+
+		dec_ctx = update_decoder_list_cinfo(ctx, program);
+
+		bool has_608 = (dec_ctx->cc_stats[0] || dec_ctx->cc_stats[1]);
+		bool has_708 = (dec_ctx->cc_stats[2] || dec_ctx->cc_stats[3]);
+		bool has_any_captions = has_608 || has_708;
+
+		printf("    {\n");
+		printf("      \"program_number\": %u,\n", program->program_number);
+		printf("      \"summary\": {\n");
+		printf("        \"has_any_captions\": %s,\n", has_any_captions ? "true" : "false");
+		printf("        \"has_608\": %s,\n", has_608 ? "true" : "false");
+		printf("        \"has_708\": %s\n", has_708 ? "true" : "false");
+		printf("      },\n");
+
+		printf("      \"services\": {\n");
+		printf("        \"dvb_subtitles\": %s,\n",
+		       get_sib_stream_by_type(program, CCX_CODEC_DVB) ? "true" : "false");
+		printf("        \"teletext\": %s,\n",
+		       get_sib_stream_by_type(program, CCX_CODEC_TELETEXT) ? "true" : "false");
+		printf("        \"atsc_closed_caption\": %s\n",
+		       get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC) ? "true" : "false");
+		printf("      },\n");
+
+		printf("      \"captions\": {\n");
+		printf("        \"present\": %s,\n", has_any_captions ? "true" : "false");
+
+		printf("        \"eia_608\": {\n");
+		printf("          \"present\": %s,\n", has_608 ? "true" : "false");
+
+		// NOTE: EIA-608 / CEA-708 data is currently stream-global and therefore
+		// identical across programs in multi-program streams.
+		printf("          \"xds\": %s,\n",
+		       ctx->freport.data_from_608->xds ? "true" : "false");
+		printf("          \"channels\": {\n");
+		printf("            \"cc1\": %s,\n", ctx->freport.data_from_608->cc_channels[0] ? "true" : "false");
+		printf("            \"cc2\": %s,\n", ctx->freport.data_from_608->cc_channels[1] ? "true" : "false");
+		printf("            \"cc3\": %s,\n", ctx->freport.data_from_608->cc_channels[2] ? "true" : "false");
+		printf("            \"cc4\": %s\n", ctx->freport.data_from_608->cc_channels[3] ? "true" : "false");
+		printf("          }\n");
+		printf("        },\n");
+
+		printf("        \"cea_708\": {\n");
+		printf("          \"present\": %s,\n", has_708 ? "true" : "false");
+		printf("          \"services\": [");
+		int sf = 1;
+		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+		{
+			if (!ctx->freport.data_from_708->services[i])
+				continue;
+			if (!sf)
+				printf(", ");
+			sf = 0;
+			printf("%d", i);
+		}
+		printf("]\n");
+		printf("        }\n"); // end cea_708
+		printf("      }");     // end captions
+
+		// Decide upfront if video will actually be printed
+		bool print_video = false;
+		info = get_best_sib_stream(program);
+
+		if (info)
+		{
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			if (dec_ctx->in_bufferdatatype == CCX_PES &&
+			    (demux->stream_mode == CCX_SM_TRANSPORT ||
+			     demux->stream_mode == CCX_SM_PROGRAM ||
+			     demux->stream_mode == CCX_SM_ASF ||
+			     demux->stream_mode == CCX_SM_WTV))
+			{
+				print_video = true;
+			}
+		}
+
+		if (print_video)
+		{
+			printf(",\n"); // comma ONLY because video follows
+			printf("      \"video\": {\n");
+			printf("        \"width\": %u,\n", dec_ctx->current_hor_size);
+			printf("        \"height\": %u,\n", dec_ctx->current_vert_size);
+			printf("        \"aspect_ratio\": ");
+			json_escape(aspect_ratio_types[dec_ctx->current_aspect_ratio]);
+			printf(",\n");
+			printf("        \"frame_rate\": ");
+			json_escape(framerates_types[dec_ctx->current_frame_rate]);
+			printf("\n");
+			printf("      }\n");
+		}
+		else
+		{
+			printf("\n"); // no video, just newline
+		}
+
+		printf("    }"); // end program object
+	}
+
+	printf("\n  ]\n");
+	printf("}\n");
+
+	free(pg_array);
+}
+
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
+	const char *report_fmt = ccx_options.report_format;
+	if (report_fmt && strcasecmp(report_fmt, "json") == 0)
+	{
+		print_file_report_json(ctx);
+		goto cleanup;
+	}
 
 	printf("File: ");
 	switch (ccx_options.input_source)
@@ -422,6 +732,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 		printf("MPEG-4 Timed Text tracks count: %d\n", ctx->freport.mp4_cc_track_cnt);
 	}
 
+cleanup:
 	freep(&ctx->freport.data_from_608);
 	memset(&ctx->freport, 0, sizeof(struct file_report));
 #undef Y_N

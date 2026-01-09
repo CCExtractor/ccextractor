@@ -250,10 +250,16 @@ pub struct Args {
     pub mkv: bool,
     #[arg(long, hide = true)]
     pub dvr_ms: bool,
-    #[arg(long, value_name="format", help_heading=OUTPUT_FORMATS)]
-    pub out: Option<OutFormat>,
-    #[arg(long, hide = true)]
-    pub srt: bool,
+#[arg(long, value_name="format", help_heading=OUTPUT_FORMATS)]
+pub out: Option<OutFormat>,
+
+/// Format for -out=report output (e.g. json)
+#[arg(long = "report-format", value_name = "FORMAT", help_heading=OUTPUT_FORMATS)]
+pub report_format: Option<String>,
+
+#[arg(long, hide = true)]
+pub srt: bool,
+
     #[arg(long, hide = true)]
     pub webvtt: bool,
     #[arg(long, hide = true)]
