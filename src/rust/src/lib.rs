@@ -462,6 +462,10 @@ extern "C" fn ccxr_process_cc_data(
 const CC_SOLID_BLANK: u8 = 0x7F;
 
 pub fn validate_cc_pair(cc_block: &mut [u8]) -> bool {
+    if cc_block.len() != 3{
+        return false;
+    }
+
     let cc_valid = (cc_block[0] & 4) >> 2;
     let cc_type = cc_block[0] & 3;
     if cc_valid == 0 {
@@ -804,6 +808,16 @@ mod test {
         let mut cc_block = [0x15, 0x2F, 0x5E];
         assert!(!validate_cc_pair(&mut cc_block));
     }
+
+    #[test]
+    fn test_validate_cc_pair_invalid_length(){
+        let mut short = [0x97, 0x1F];
+        assert!(!validate_cc_pair(&mut short));
+
+        let mut long = [0x97, 0x1F, 0x3C, 0x00];
+        assert!(!validate_cc_pair(&mut long));
+    }
+
 
     #[test]
     fn test_do_cb() {
