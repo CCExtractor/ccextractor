@@ -1,7 +1,12 @@
 use crate::bindings::{lib_ccx_ctx, list_head};
 use lib_ccxr::common::{Codec, Decoder608Report, DecoderDtvccReport, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
+use std::os::raw::c_void;
 use std::ptr::null_mut;
+
+extern "C" {
+    fn free(ptr: *mut c_void);
+}
 
 // Size of the Startbytes Array in CcxDemuxer - const 1MB
 pub(crate) const ARRAY_SIZE: usize = 1024 * 1024;
@@ -276,21 +281,21 @@ impl Default for CcxDemuxer<'_> {
 /// null pointers which are safely ignored.
 impl Drop for CcxDemuxer<'_> {
     fn drop(&mut self) {
-        // Free all non-null PSIBuffer pointers (Rust-owned from Box::into_raw)
+        // Free all non-null PSIBuffer pointers.
+        // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pid_buffers.drain(..) {
             if !ptr.is_null() {
-                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
                 unsafe {
-                    drop(Box::from_raw(ptr));
+                    free(ptr as *mut c_void);
                 }
             }
         }
-        // Free all non-null PMTEntry pointers (Rust-owned from Box::into_raw)
+        // Free all non-null PMTEntry pointers.
+        // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pids_programs.drain(..) {
             if !ptr.is_null() {
-                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
                 unsafe {
-                    drop(Box::from_raw(ptr));
+                    free(ptr as *mut c_void);
                 }
             }
         }
