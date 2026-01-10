@@ -60,20 +60,11 @@ fn set_mpeg_clock_freq(freq: i32) {
 
 fn atol(bufsize: &str) -> i32 {
     if bufsize.is_empty() {
-        fatal!(
-            cause = ExitCause::MalformedParameter;
-            "Malformed parameter: empty buffer size.\n"
-        );
+        panic!("empty buffer size (validated by clap)");
     }
     // We expect at least one digit and a suffix (K, M, etc.)
     let val_str = &bufsize[0..bufsize.len().saturating_sub(1)];
-    let mut val = val_str.parse::<i32>().unwrap_or_else(|_| {
-        fatal!(
-            cause = ExitCause::MalformedParameter;
-            "Malformed parameter: Invalid buffer size number '{}'.\n",
-            val_str
-        );
-    });
+    let mut val = val_str.parse::<i32>().expect("invalid buffer size number (should be validated by clap)");
     let size = bufsize.to_uppercase().chars().last().unwrap_or(' ');
     if size == 'M' {
         val *= 1024 * 1024;
@@ -102,12 +93,7 @@ where
 {
     match atoi_hex(s) {
         Ok(val) => val,
-        Err(_) => {
-            fatal!(
-                cause = ExitCause::MalformedParameter;
-                "Malformed parameter: {}",s
-            );
-        }
+        Err(_) => panic!("malformed parameter: {} (should be validated by clap)", s),
     }
 }
 
@@ -411,17 +397,11 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().unwrap_or_else(|_| {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "[CEA-708] Malformed parameter: Invalid service number '{}'.\n",
-                    service
-                );
-            });
+            let svc = service.parse::<usize>().expect("[CEA-708] Malformed parameter: Invalid service number (validated by clap)");
             if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, DTVCC_MAX_SERVICES
+                panic!(
+                    "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}. (validated by clap)",
+                    svc, DTVCC_MAX_SERVICES
                 );
             }
             self.settings_dtvcc.services_enabled[svc - 1] = true;
@@ -438,10 +418,7 @@ impl OptionsExt for Options {
         }
 
         if self.settings_dtvcc.active_services_count == 0 {
-            fatal!(
-                cause = ExitCause::MalformedParameter;
-               "[CEA-708] Malformed parameter: no services\n"
-            );
+            panic!("[CEA-708] Malformed parameter: no services (validated by clap)");
         }
     }
 
@@ -776,10 +753,7 @@ impl OptionsExt for Options {
 
         if let Some(ref quant) = args.quant {
             if !(0..=2).contains(quant) {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "Invalid quant value"
-                );
+                panic!("Invalid quant value (validated by clap)");
             }
             self.ocr_quantmode = *quant;
         }
@@ -790,20 +764,14 @@ impl OptionsExt for Options {
 
         if let Some(ref oem) = args.oem {
             if !(0..=2).contains(oem) {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "oem value should be between 0 and 2"
-                );
+                panic!("oem value should be between 0 and 2 (validated by clap)");
             }
             self.ocr_oem = *oem as _;
         }
 
         if let Some(ref psm) = args.psm {
             if !(0..=13).contains(psm) {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "--psm must be between 0 and 13"
-                );
+                panic!("--psm must be between 0 and 13 (validated by clap)");
             }
             self.psm = *psm as _;
         }
@@ -841,45 +809,21 @@ impl OptionsExt for Options {
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
             self.enc_cfg.startcreditsnotbefore = stringztoms(startcreditsnotbefore.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --startcreditsnotbefore '{}' is invalid.\n",
-                        startcreditsnotbefore
-                    );
-                });
+                .expect("Malformed parameter: --startcreditsnotbefore invalid (validated by clap)");
         }
 
         if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
             self.enc_cfg.startcreditsnotafter = stringztoms(startcreditsnotafter.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --startcreditsnotafter '{}' is invalid.\n",
-                        startcreditsnotafter
-                    );
-                });
+                .expect("Malformed parameter: --startcreditsnotafter invalid (validated by clap)");
         }
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
             self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --startcreditsforatleast '{}' is invalid.\n",
-                        startcreditsforatleast
-                    );
-                });
+                .expect("Malformed parameter: --startcreditsforatleast invalid (validated by clap)");
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
             self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --startcreditsforatmost '{}' is invalid.\n",
-                        startcreditsforatmost
-                    );
-                });
+                .expect("Malformed parameter: --startcreditsforatmost invalid (validated by clap)");
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
@@ -888,24 +832,12 @@ impl OptionsExt for Options {
 
         if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
             self.enc_cfg.endcreditsforatleast = stringztoms(endcreditsforatleast.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --endcreditsforatleast '{}' is invalid.\n",
-                        endcreditsforatleast
-                    );
-                });
+                .expect("Malformed parameter: --endcreditsforatleast invalid (validated by clap)");
         }
 
         if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
             self.enc_cfg.endcreditsforatmost = stringztoms(endcreditsforatmost.as_str())
-                .unwrap_or_else(|| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Malformed parameter: --endcreditsforatmost '{}' is invalid.\n",
-                        endcreditsforatmost
-                    );
-                });
+                .expect("Malformed parameter: --endcreditsforatmost invalid (validated by clap)");
         }
 
         /* More stuff */
@@ -1039,10 +971,7 @@ impl OptionsExt for Options {
 
         if let Some(ref defaultcolor) = args.defaultcolor {
             if defaultcolor.len() != 7 || !defaultcolor.starts_with('#') {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "Invalid default color"
-                );
+                panic!("Invalid default color (validated by clap)");
             }
             set_usercolor_rgb(defaultcolor);
             self.settings_608.default_color = Decoder608ColorCode::Userdefined;
@@ -1057,22 +986,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.as_str()).unwrap_or_else(|| {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "Malformed parameter: --startat '{}' is invalid.\n",
-                    startat
-                );
-            }));
+            self.extraction_start = Some(stringztoms(startat.as_str()).expect("Malformed parameter: --startat invalid (validated by clap)"));
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.as_str()).unwrap_or_else(|| {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "Malformed parameter: --endat '{}' is invalid.\n",
-                    endat
-                );
-            }));
+            self.extraction_end = Some(stringztoms(endat.as_str()).expect("Malformed parameter: --endat invalid (validated by clap)"));
         }
 
         if args.cc2 {
@@ -1085,10 +1002,7 @@ impl OptionsExt for Options {
             } else if *extract == "both" {
                 self.extract = 12;
             } else {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "Invalid output field"
-                );
+                panic!("Invalid output field (validated by clap)");
             }
             self.is_608_enabled = true;
         }
