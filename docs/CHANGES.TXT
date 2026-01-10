@@ -1,5 +1,6 @@
 0.96.5 (2026-01-05)
 -------------------
+- New: CCExtractor is available again via Homebrew on macOS and Linux.
 - New: Add support for raw CDP (Caption Distribution Packet) files (#1406)
 - New: Add --scc-accurate-timing option for bandwidth-aware SCC output (#1120)
 - Fix: MXF files containing CEA-708 captions not being detected/extracted (#1647)
