@@ -17,5 +17,5 @@ $SNAP/usr/lib/$LIB_TRIPLET/blas:\
 $SNAP/usr/lib/$LIB_TRIPLET/lapack:\
 $SNAP/usr/lib/$LIB_TRIPLET/pulseaudio:\
 ${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-
+shift
 exec "$SNAP/usr/local/bin/ccextractor" "$@"
