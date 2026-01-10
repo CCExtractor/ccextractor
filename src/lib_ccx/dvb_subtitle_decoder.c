@@ -1712,7 +1712,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
 	}
-	if (ctx->ocr_ctx)
+	if (ctx->ocr_ctx && region)
 	{
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0)
