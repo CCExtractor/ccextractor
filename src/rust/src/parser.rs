@@ -64,7 +64,9 @@ fn atol(bufsize: &str) -> i32 {
     }
     // We expect at least one digit and a suffix (K, M, etc.)
     let val_str = &bufsize[0..bufsize.len().saturating_sub(1)];
-    let mut val = val_str.parse::<i32>().expect("invalid buffer size number (should be validated by clap)");
+    let mut val = val_str
+        .parse::<i32>()
+        .expect("invalid buffer size number (should be validated by clap)");
     let size = bufsize.to_uppercase().chars().last().unwrap_or(' ');
     if size == 'M' {
         val *= 1024 * 1024;
@@ -397,7 +399,9 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().expect("[CEA-708] Malformed parameter: Invalid service number (validated by clap)");
+            let svc = service.parse::<usize>().expect(
+                "[CEA-708] Malformed parameter: Invalid service number (validated by clap)",
+            );
             if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
                 panic!(
                     "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}. (validated by clap)",
@@ -819,7 +823,9 @@ impl OptionsExt for Options {
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
             self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str())
-                .expect("Malformed parameter: --startcreditsforatleast invalid (validated by clap)");
+                .expect(
+                    "Malformed parameter: --startcreditsforatleast invalid (validated by clap)",
+                );
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
             self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str())
@@ -986,10 +992,16 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.as_str()).expect("Malformed parameter: --startat invalid (validated by clap)"));
+            self.extraction_start = Some(
+                stringztoms(startat.as_str())
+                    .expect("Malformed parameter: --startat invalid (validated by clap)"),
+            );
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.as_str()).expect("Malformed parameter: --endat invalid (validated by clap)"));
+            self.extraction_end = Some(
+                stringztoms(endat.as_str())
+                    .expect("Malformed parameter: --endat invalid (validated by clap)"),
+            );
         }
 
         if args.cc2 {
