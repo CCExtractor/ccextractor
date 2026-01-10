@@ -124,6 +124,14 @@ void parse_ebml(FILE *file)
 		code += mkv_read_byte(file);
 		code_len++;
 
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
+
 		switch (code)
 		{
 			/* EBML ids */
@@ -187,6 +195,14 @@ void parse_segment_info(FILE *file)
 		code <<= 8;
 		code += mkv_read_byte(file);
 		code_len++;
+
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
 
 		switch (code)
 		{
@@ -486,6 +502,14 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 		code += mkv_read_byte(file);
 		code_len++;
 
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
+
 		switch (code)
 		{
 			/* Segment cluster block group ids */
@@ -613,6 +637,14 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 		code <<= 8;
 		code += mkv_read_byte(file);
 		code_len++;
+
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
 
 		switch (code)
 		{
@@ -846,6 +878,14 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 		code <<= 8;
 		code += mkv_read_byte(file);
 		code_len++;
+
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
 
 		switch (code)
 		{
@@ -1199,6 +1239,14 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 		code += mkv_read_byte(file);
 		code_len++;
 
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
+
 		switch (code)
 		{
 			/* Tracks ids*/
@@ -1235,13 +1283,22 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 	FILE *file = mkv_ctx->file;
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
-
+		
 	int code = 0, code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
 		code_len++;
+
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+    	{
+	        mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF encountered at position " LLD ". Aborting segment parsing to prevent infinite loop.\n", 
+            	   get_current_byte(file) - 4);
+        	break;
+    	}
+
 		switch (code)
 		{
 			/* Segment ids */
@@ -1916,6 +1973,14 @@ void matroska_parse(struct matroska_ctx *mkv_ctx)
 		code <<= 8;
 		code += mkv_read_byte(file);
 		code_len++;
+
+		// Safety check to prevent infinite loop on invalid EBML ID
+		if (code == 0xFFFFFFFF)
+        {
+            mprint(MATROSKA_WARNING "Invalid EBML ID 0xFFFFFFFF at top-level position " LLD ". Terminating Matroska parse.\n", 
+                   get_current_byte(file) - 4);
+            break;
+        }
 
 		switch (code)
 		{
