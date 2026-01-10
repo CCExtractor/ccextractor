@@ -1,5 +1,6 @@
 0.96.5 (2026-01-05)
 -------------------
+- New: CCExtractor is available again via Homebrew on macOS and Linux.
 - New: Add support for raw CDP (Caption Distribution Packet) files (#1406)
 - New: Add --scc-accurate-timing option for bandwidth-aware SCC output (#1120)
 - Fix: MXF files containing CEA-708 captions not being detected/extracted (#1647)
@@ -52,6 +53,7 @@
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
   - Output files are named with page suffix (e.g., output_p100.srt, output_p200.srt)
+- Fix: SPUPNG subtitle offset calculation to center based on actual image dimensions
 
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
   New: Chinese, Korean, Japanese support - proper encoding and OCR.

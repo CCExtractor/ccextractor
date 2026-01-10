@@ -122,6 +122,8 @@ void parse_ebml(FILE *file)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -186,6 +188,8 @@ void parse_segment_info(FILE *file)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -484,6 +488,8 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -612,6 +618,8 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -845,6 +853,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -1197,6 +1207,8 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -1241,6 +1253,8 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 		switch (code)
 		{
@@ -1915,6 +1929,9 @@ void matroska_parse(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		// Check for EOF after reading - feof() is only set after a failed read
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)

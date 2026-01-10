@@ -331,8 +331,9 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
             }
 
             // Now check for PS (Needs PACK header)
+            // We use saturating_sub to avoid underflow if the buffer is tiny.
             let limit = if ctx.startbytes_avail < 50000 {
-                ctx.startbytes_avail - 3
+                ctx.startbytes_avail.saturating_sub(3)
             } else {
                 49997
             } as usize;
@@ -427,8 +428,10 @@ pub fn is_valid_mp4_box(
                 )
             );
 
-            // If the box type is "moov", check if it contains a valid movie header (mvhd)
+            // If the box type is "moov", we need to check if it contains "mvhd".
+            // We must check the buffer length first to avoid an out-of-bounds panic.
             if idx == 2
+                && position + 15 < buffer.len()
                 && !(buffer[position + 12] == b'm'
                     && buffer[position + 13] == b'v'
                     && buffer[position + 14] == b'h'
