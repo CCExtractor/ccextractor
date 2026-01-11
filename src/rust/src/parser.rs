@@ -746,7 +746,8 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore = stringztoms(startcreditsnotbefore.as_str()).unwrap();
+            self.enc_cfg.startcreditsnotbefore =
+                stringztoms(startcreditsnotbefore.as_str()).unwrap();
         }
 
         if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
@@ -754,10 +755,12 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str()).unwrap();
+            self.enc_cfg.startcreditsforatleast =
+                stringztoms(startcreditsforatleast.as_str()).unwrap();
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str()).unwrap();
+            self.enc_cfg.startcreditsforatmost =
+                stringztoms(startcreditsforatmost.as_str()).unwrap();
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {

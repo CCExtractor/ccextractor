@@ -1240,7 +1240,3 @@ pub enum OutFormat {
     /// any file output.
     Curl,
 }
-
-
-
-
