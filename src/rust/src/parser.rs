@@ -8,7 +8,7 @@ use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputT
 use lib_ccxr::util::time::stringztoms;
 use num_integer::Integer;
 use std::cell::Cell;
-use std::convert::TryInto;
+
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
@@ -59,21 +59,21 @@ fn set_mpeg_clock_freq(freq: i32) {
 }
 
 fn atol(bufsize: &str) -> i32 {
-    if bufsize.is_empty() {
-        panic!("empty buffer size (validated by clap)");
-    }
-    // We expect at least one digit and a suffix (K, M, etc.)
-    let val_str = &bufsize[0..bufsize.len().saturating_sub(1)];
-    let mut val = val_str
-        .parse::<i32>()
-        .expect("invalid buffer size number (should be validated by clap)");
     let size = bufsize.to_uppercase().chars().last().unwrap_or(' ');
-    if size == 'M' {
-        val *= 1024 * 1024;
-    } else if size == 'K' {
-        val *= 1024;
-    }
-    val
+    let multiplier = match size {
+        'M' => 1024 * 1024,
+        'K' => 1024,
+        'G' => 1024 * 1024 * 1024,
+        _ => 1,
+    };
+    let val_str = if size.is_ascii_digit() {
+        bufsize
+    } else {
+        &bufsize[..bufsize.len().saturating_sub(1)]
+    };
+
+    let val = val_str.parse::<i32>().unwrap();
+    val * multiplier
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -93,10 +93,7 @@ fn get_atoi_hex<T>(s: &str) -> T
 where
     T: Integer + std::str::FromStr<Err = std::num::ParseIntError>,
 {
-    match atoi_hex(s) {
-        Ok(val) => val,
-        Err(_) => panic!("malformed parameter: {} (should be validated by clap)", s),
-    }
+    atoi_hex(s).unwrap()
 }
 
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
@@ -106,7 +103,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
 
     for line in reader.lines() {
         num += 1;
-        let line = line.unwrap();
+        let line = line?;
         if line.starts_with('#') {
             continue;
         }
@@ -336,7 +333,7 @@ impl OptionsExt for Options {
         } else {
             fatal!(
                 cause = ExitCause::MalformedParameter;
-               "Unknown input file format: {}\n", args.input.unwrap()
+               "Unknown input file format: {:?}\n", args.input
             );
         }
     }
@@ -348,12 +345,9 @@ impl OptionsExt for Options {
             self.enc_cfg.dtvcc_extract = true;
 
             if charset.is_empty() {
-                self.enc_cfg.services_charsets = DtvccServiceCharset::Unique(
-                    vec![String::new(); DTVCC_MAX_SERVICES]
-                        .into_boxed_slice()
-                        .try_into()
-                        .unwrap(),
-                );
+                const ARRAY_REPEAT_VALUE: String = String::new();
+                self.enc_cfg.services_charsets =
+                    DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
             } else {
                 self.enc_cfg.services_charsets = DtvccServiceCharset::Same(charset.to_string());
             }
@@ -370,7 +364,7 @@ impl OptionsExt for Options {
         let mut charsets = Vec::new();
         for c in s.split(',') {
             let mut service = String::new();
-            let mut charset = None;
+            let mut charset: Option<String> = None;
             let mut inside_charset = false;
 
             for e in c.chars() {
@@ -381,10 +375,13 @@ impl OptionsExt for Options {
                 } else if e == ']' {
                     inside_charset = false;
                 } else if inside_charset {
-                    if charset.is_none() {
-                        charset = Some(String::new());
+                    if let Some(cs) = charset.as_mut() {
+                        cs.push(e);
+                    } else {
+                        let mut cs = String::new();
+                        cs.push(e);
+                        charset = Some(cs);
                     }
-                    charset.as_mut().unwrap().push(e);
                 }
             }
             if service.is_empty() {
@@ -399,30 +396,18 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().expect(
-                "[CEA-708] Malformed parameter: Invalid service number (validated by clap)",
-            );
-            if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
-                panic!(
-                    "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}. (validated by clap)",
-                    svc, DTVCC_MAX_SERVICES
-                );
-            }
+            let svc = service.parse::<usize>().unwrap();
             self.settings_dtvcc.services_enabled[svc - 1] = true;
             self.enc_cfg.services_enabled[svc - 1] = true;
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
             self.settings_dtvcc.active_services_count += 1;
 
-            if charsets.len() > i && charsets[i].is_some() {
+            if let Some(cs) = charsets.get(i).and_then(|c| c.as_ref()) {
                 if let DtvccServiceCharset::Unique(unique) = &mut self.enc_cfg.services_charsets {
-                    unique[svc - 1].clone_from(charsets[i].as_ref().unwrap());
+                    unique[svc - 1].clone_from(cs);
                 }
             }
-        }
-
-        if self.settings_dtvcc.active_services_count == 0 {
-            panic!("[CEA-708] Malformed parameter: no services (validated by clap)");
         }
     }
 
@@ -544,21 +529,12 @@ impl OptionsExt for Options {
                 }
 
                 if let Some(ref ocr_mode) = args.ocr_mode {
-                    let ocr_mode = match ocr_mode.as_str() {
-                        "simple" | "frame" => Some(OcrMode::Frame),
-                        "word" => Some(OcrMode::Word),
-                        "letter" | "symbol" => Some(OcrMode::Letter),
-                        _ => None,
+                    self.hardsubx_ocr_mode = match ocr_mode.as_str() {
+                        "simple" | "frame" => OcrMode::Frame,
+                        "word" => OcrMode::Word,
+                        "letter" | "symbol" => OcrMode::Letter,
+                        _ => unreachable!(),
                     };
-
-                    if ocr_mode.is_none() {
-                        fatal!(
-                            cause = ExitCause::MalformedParameter;
-                           "Invalid OCR mode"
-                        );
-                    }
-
-                    self.hardsubx_ocr_mode = ocr_mode.unwrap_or_default();
                 }
 
                 if let Some(ref subcolor) = args.subcolor {
@@ -585,34 +561,13 @@ impl OptionsExt for Options {
                             self.hardsubx_hue = ColorHue::Red;
                         }
                         _ => {
-                            let result = subcolor.parse::<f64>();
-                            if result.is_err() {
-                                fatal!(
-                                    cause = ExitCause::MalformedParameter;
-                                   "Invalid Hue value"
-                                );
-                            }
-
-                            let hue: f64 = result.unwrap();
-
-                            if hue <= 0.0 || hue > 360.0 {
-                                fatal!(
-                                    cause = ExitCause::MalformedParameter;
-                                   "Invalid Hue value"
-                                );
-                            }
+                            let hue: f64 = subcolor.parse::<f64>().unwrap();
                             self.hardsubx_hue = ColorHue::Custom(hue);
                         }
                     }
                 }
 
                 if let Some(ref value) = args.min_sub_duration {
-                    if *value == 0.0 {
-                        fatal!(
-                            cause = ExitCause::MalformedParameter;
-                           "Invalid minimum subtitle duration"
-                        );
-                    }
                     self.hardsubx_min_sub_duration = Timestamp::from_millis((1000.0 * *value) as _);
                 }
 
@@ -621,22 +576,10 @@ impl OptionsExt for Options {
                 }
 
                 if let Some(ref value) = args.conf_thresh {
-                    if !(0.0..=100.0).contains(value) {
-                        fatal!(
-                            cause = ExitCause::MalformedParameter;
-                           "Invalid confidence threshold, valid values are between 0 & 100"
-                        );
-                    }
                     self.hardsubx_conf_thresh = *value as _;
                 }
 
                 if let Some(ref value) = args.whiteness_thresh {
-                    if !(0.0..=100.0).contains(value) {
-                        fatal!(
-                            cause = ExitCause::MalformedParameter;
-                           "Invalid whiteness threshold, valid values are between 0 & 100"
-                        );
-                    }
                     self.hardsubx_lum_thresh = *value as _;
                 }
             }
@@ -756,9 +699,6 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref quant) = args.quant {
-            if !(0..=2).contains(quant) {
-                panic!("Invalid quant value (validated by clap)");
-            }
             self.ocr_quantmode = *quant;
         }
 
@@ -767,16 +707,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref oem) = args.oem {
-            if !(0..=2).contains(oem) {
-                panic!("oem value should be between 0 and 2 (validated by clap)");
-            }
             self.ocr_oem = *oem as _;
         }
 
         if let Some(ref psm) = args.psm {
-            if !(0..=13).contains(psm) {
-                panic!("--psm must be between 0 and 13 (validated by clap)");
-            }
             self.psm = *psm as _;
         }
 
@@ -812,24 +746,18 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore = stringztoms(startcreditsnotbefore.as_str())
-                .expect("Malformed parameter: --startcreditsnotbefore invalid (validated by clap)");
+            self.enc_cfg.startcreditsnotbefore = stringztoms(startcreditsnotbefore.as_str()).unwrap();
         }
 
         if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-            self.enc_cfg.startcreditsnotafter = stringztoms(startcreditsnotafter.as_str())
-                .expect("Malformed parameter: --startcreditsnotafter invalid (validated by clap)");
+            self.enc_cfg.startcreditsnotafter = stringztoms(startcreditsnotafter.as_str()).unwrap();
         }
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str())
-                .expect(
-                    "Malformed parameter: --startcreditsforatleast invalid (validated by clap)",
-                );
+            self.enc_cfg.startcreditsforatleast = stringztoms(startcreditsforatleast.as_str()).unwrap();
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str())
-                .expect("Malformed parameter: --startcreditsforatmost invalid (validated by clap)");
+            self.enc_cfg.startcreditsforatmost = stringztoms(startcreditsforatmost.as_str()).unwrap();
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
@@ -837,13 +765,11 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-            self.enc_cfg.endcreditsforatleast = stringztoms(endcreditsforatleast.as_str())
-                .expect("Malformed parameter: --endcreditsforatleast invalid (validated by clap)");
+            self.enc_cfg.endcreditsforatleast = stringztoms(endcreditsforatleast.as_str()).unwrap();
         }
 
         if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-            self.enc_cfg.endcreditsforatmost = stringztoms(endcreditsforatmost.as_str())
-                .expect("Malformed parameter: --endcreditsforatmost invalid (validated by clap)");
+            self.enc_cfg.endcreditsforatmost = stringztoms(endcreditsforatmost.as_str()).unwrap();
         }
 
         /* More stuff */
@@ -939,7 +865,7 @@ impl OptionsExt for Options {
 
         if let Some(ref capfile) = args.capfile {
             self.enc_cfg.sentence_cap = true;
-            self.sentence_cap_file = PathBuf::from_str(capfile.as_str()).unwrap_or_default();
+            self.sentence_cap_file = PathBuf::from_str(capfile.as_str()).unwrap();
         }
 
         if args.kf {
@@ -948,8 +874,7 @@ impl OptionsExt for Options {
 
         if let Some(ref profanity_file) = args.profanity_file {
             self.enc_cfg.filter_profanity = true;
-            self.filter_profanity_file =
-                PathBuf::from_str(profanity_file.as_str()).unwrap_or_default();
+            self.filter_profanity_file = PathBuf::from_str(profanity_file.as_str()).unwrap();
         }
 
         if let Some(ref program_number) = args.program_number {
@@ -976,9 +901,6 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref defaultcolor) = args.defaultcolor {
-            if defaultcolor.len() != 7 || !defaultcolor.starts_with('#') {
-                panic!("Invalid default color (validated by clap)");
-            }
             set_usercolor_rgb(defaultcolor);
             self.settings_608.default_color = Decoder608ColorCode::Userdefined;
         }
@@ -992,16 +914,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(
-                stringztoms(startat.as_str())
-                    .expect("Malformed parameter: --startat invalid (validated by clap)"),
-            );
+            self.extraction_start = Some(stringztoms(startat.as_str()).unwrap());
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(
-                stringztoms(endat.as_str())
-                    .expect("Malformed parameter: --endat invalid (validated by clap)"),
-            );
+            self.extraction_end = Some(stringztoms(endat.as_str()).unwrap());
         }
 
         if args.cc2 {
@@ -1009,12 +925,11 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref extract) = args.output_field {
-            if *extract == "1" || *extract == "2" || *extract == "12" {
-                self.extract = get_atoi_hex(extract);
-            } else if *extract == "both" {
-                self.extract = 12;
-            } else {
-                panic!("Invalid output field (validated by clap)");
+            match extract.as_str() {
+                "1" => self.extract = 1,
+                "2" => self.extract = 2,
+                "12" | "both" => self.extract = 12,
+                _ => unreachable!(),
             }
             self.is_608_enabled = true;
         }
@@ -1339,27 +1254,16 @@ impl OptionsExt for Options {
             self.demux_cfg.nocodec = SelectCodec::Some(Codec::Teletext);
         }
 
-        if let Some(ref customtxt) = args.customtxt {
-            if customtxt.to_string().len() == 7 {
-                if self.date_format == TimestampFormat::None {
-                    self.date_format = TimestampFormat::HHMMSSFFF;
-                }
-
-                if !self.transcript_settings.is_final {
-                    let chars = format!("{customtxt}").chars().collect::<Vec<char>>();
-                    self.transcript_settings.show_start_time = chars[0] == '1';
-                    self.transcript_settings.show_end_time = chars[1] == '1';
-                    self.transcript_settings.show_mode = chars[2] == '1';
-                    self.transcript_settings.show_cc = chars[3] == '1';
-                    self.transcript_settings.relative_timestamp = chars[4] == '1';
-                    self.transcript_settings.xds = chars[5] == '1';
-                    self.transcript_settings.use_colors = chars[6] == '1';
-                }
-            } else {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                   "Invalid customtxt value. It must be 7 digits long"
-                );
+        if let Some(customtxt) = args.customtxt {
+            if !self.transcript_settings.is_final {
+                let chars = format!("{customtxt:07}").chars().collect::<Vec<char>>();
+                self.transcript_settings.show_start_time = chars[0] == '1';
+                self.transcript_settings.show_end_time = chars[1] == '1';
+                self.transcript_settings.show_mode = chars[2] == '1';
+                self.transcript_settings.show_cc = chars[3] == '1';
+                self.transcript_settings.relative_timestamp = chars[4] == '1';
+                self.transcript_settings.xds = chars[5] == '1';
+                self.transcript_settings.use_colors = chars[6] == '1';
             }
         }
 
@@ -1446,18 +1350,18 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref font) = args.font {
-            self.enc_cfg.render_font = PathBuf::from_str(font).unwrap_or_default();
+            self.enc_cfg.render_font = PathBuf::from_str(font).unwrap();
         }
 
         if let Some(ref italics) = args.italics {
-            self.enc_cfg.render_font_italics = PathBuf::from_str(italics).unwrap_or_default();
+            self.enc_cfg.render_font_italics = PathBuf::from_str(italics).unwrap();
         }
 
         #[cfg(feature = "with_libcurl")]
         {
             use url::Url;
             if let Some(ref curlposturl) = args.curlposturl {
-                self.curlposturl = Url::from_str(curlposturl).ok();
+                self.curlposturl = Some(Url::from_str(curlposturl).unwrap());
             }
         }
 
@@ -1630,10 +1534,9 @@ impl OptionsExt for Options {
 
         // Initialize some Encoder Configuration
         self.enc_cfg.extract = self.extract;
-        if !self.is_inputfile_empty() {
-            self.enc_cfg.multiple_files = true;
-            self.enc_cfg.first_input_file = self.inputfile.as_ref().unwrap()[0].to_string();
-        }
+        let inputfile = self.inputfile.as_ref().unwrap();
+        self.enc_cfg.multiple_files = true;
+        self.enc_cfg.first_input_file.clone_from(&inputfile[0]);
         self.enc_cfg.cc_to_stdout = self.cc_to_stdout;
         self.enc_cfg.write_format = self.write_format;
         self.enc_cfg.send_to_srv = self.send_to_srv;
@@ -1669,7 +1572,9 @@ impl OptionsExt for Options {
         }
 
         if self.output_filename.is_some() && !self.multiprogram {
-            self.enc_cfg.output_filename = self.output_filename.clone().unwrap();
+            if let Some(ref output_filename) = self.output_filename {
+                self.enc_cfg.output_filename.clone_from(output_filename);
+            }
         }
 
         if !self.is_608_enabled && !self.is_708_enabled {

@@ -1,5 +1,192 @@
 use clap::{Parser, ValueEnum};
+use lib_ccxr::util::time::stringztoms;
 use strum_macros::Display;
+
+// Validation functions for clap
+
+/// Color validation (#RRGGBB format)
+fn parse_color(s: &str) -> Result<String, String> {
+    if s.len() == 7 && s.starts_with('#') && s[1..].chars().all(|c| c.is_ascii_hexdigit()) {
+        Ok(s.to_string())
+    } else {
+        Err(format!(
+            "invalid color '{}': expected #RRGGBB format (e.g., #FF0000)",
+            s
+        ))
+    }
+}
+
+/// Time validation (seconds, MM:SS, or HH:MM:SS)
+fn parse_time(s: &str) -> Result<String, String> {
+    if stringztoms(s).is_some() {
+        Ok(s.to_string())
+    } else {
+        Err(format!(
+            "invalid time '{}': expected seconds, MM:SS, or HH:MM:SS",
+            s
+        ))
+    }
+}
+
+/// Buffer size validation (e.g., "16M", "512K")
+fn parse_buffersize(s: &str) -> Result<String, String> {
+    if s.is_empty() {
+        return Err("buffer size cannot be empty".to_string());
+    }
+    let suffix = s
+        .chars()
+        .last()
+        .ok_or_else(|| "buffer size cannot be empty".to_string())?
+        .to_ascii_uppercase();
+    if !['K', 'M', 'G'].contains(&suffix) && !suffix.is_ascii_digit() {
+        return Err(format!(
+            "invalid buffer size '{}': expected number with K/M/G suffix (e.g., 16M)",
+            s
+        ));
+    }
+    let num_part = if suffix.is_ascii_digit() {
+        s
+    } else {
+        &s[..s.len().saturating_sub(1)]
+    };
+    if num_part.parse::<i32>().is_err() {
+        return Err(format!("invalid buffer size '{}': not a valid number", s));
+    }
+    Ok(s.to_string())
+}
+
+/// CEA-708 service validation
+fn parse_services(s: &str) -> Result<String, String> {
+    if s == "all" || s.starts_with("all[") {
+        return Ok(s.to_string());
+    }
+    for service_part in s.split(',') {
+        let mut service_num = String::new();
+        let mut inside_charset = false;
+        for c in service_part.chars() {
+            if c == '[' {
+                inside_charset = true;
+            } else if c == ']' {
+                inside_charset = false;
+            } else if !inside_charset && c.is_ascii_digit() {
+                service_num.push(c);
+            }
+        }
+        if service_num.is_empty() {
+            return Err(format!(
+                "invalid service '{}': expected list of numbers or 'all'",
+                service_part
+            ));
+        }
+        if let Ok(num) = service_num.parse::<u32>() {
+            if num == 0 || num > 63 {
+                return Err(format!("service number {} out of range (1-63)", num));
+            }
+        } else {
+            return Err(format!("invalid service number '{}'", service_num));
+        }
+    }
+    Ok(s.to_string())
+}
+
+/// Hardsubx OCR mode validation
+fn parse_ocr_mode(s: &str) -> Result<String, String> {
+    match s {
+        "simple" | "frame" | "word" | "letter" | "symbol" => Ok(s.to_string()),
+        _ => Err(format!(
+            "invalid OCR mode '{}': expected simple, frame, word, letter, or symbol",
+            s
+        )),
+    }
+}
+
+/// Hardsubx subcolor validation
+fn parse_subcolor(s: &str) -> Result<String, String> {
+    match s {
+        "white" | "yellow" | "green" | "cyan" | "blue" | "magenta" | "red" => Ok(s.to_string()),
+        _ => {
+            if let Ok(hue) = s.parse::<f64>() {
+                if hue > 0.0 && hue <= 360.0 {
+                    Ok(s.to_string())
+                } else {
+                    Err(format!(
+                        "invalid hue value '{}': must be between 1 and 360",
+                        s
+                    ))
+                }
+            } else {
+                Err(format!(
+                    "invalid subcolor '{}': expected color name or hue value (1-360)",
+                    s
+                ))
+            }
+        }
+    }
+}
+
+/// customtxt validation (7 digits)
+fn parse_customtxt(s: &str) -> Result<u32, String> {
+    if s.len() == 7 && s.chars().all(|c| c.is_ascii_digit()) {
+        s.parse::<u32>().map_err(|_| "invalid number".to_string())
+    } else {
+        Err(format!(
+            "invalid customtxt '{}': expected 7 digits (e.g., 1100101)",
+            s
+        ))
+    }
+}
+
+/// URL validation
+#[cfg(feature = "with_libcurl")]
+fn parse_url(s: &str) -> Result<String, String> {
+    use std::str::FromStr;
+    if url::Url::from_str(s).is_ok() {
+        Ok(s.to_string())
+    } else {
+        Err(format!("invalid URL '{}'", s))
+    }
+}
+
+/// Output field selection validation
+fn parse_output_field(s: &str) -> Result<String, String> {
+    match s {
+        "1" | "2" | "12" | "both" => Ok(s.to_string()),
+        _ => Err(format!(
+            "invalid output field '{}': expected 1, 2, 12, or both",
+            s
+        )),
+    }
+}
+
+/// Float validation in range 0.0 to 100.0
+fn parse_float_range_100(s: &str) -> Result<f32, String> {
+    match s.parse::<f32>() {
+        Ok(v) if (0.0..=100.0).contains(&v) => Ok(v),
+        Ok(v) => Err(format!("value {} out of range (0.0-100.0)", v)),
+        Err(_) => Err(format!("invalid number '{}'", s)),
+    }
+}
+
+/// Generic number validation (decimal or hex)
+fn parse_number(s: &str) -> Result<String, String> {
+    if s.is_empty() {
+        return Err("number cannot be empty".to_string());
+    }
+    let is_hex = s.len() > 2 && s.to_lowercase().starts_with("0x");
+    let result = if is_hex {
+        i64::from_str_radix(&s[2..], 16)
+    } else {
+        s.parse::<i64>()
+    };
+
+    match result {
+        Ok(_) => Ok(s.to_string()),
+        Err(_) => Err(format!(
+            "invalid number '{}': expected decimal or hex (e.g., 10 or 0xA)",
+            s
+        )),
+    }
+}
 
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
 const OUTPUT_FILE_SEGMENTATION: &str = "Output File Segmentation";
@@ -206,7 +393,7 @@ pub struct Args {
     ///         2 = Output Field 2
     ///         both = Both Output Field 1 and 2
     /// Defaults to 1
-    #[arg(long, value_name="field", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long, value_name="field", value_parser = parse_output_field, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub output_field: Option<String>,
     /// Use --append to prevent overwriting of existing files. The output will be
     /// appended instead.
@@ -227,7 +414,7 @@ pub struct Args {
     /// "all[EUC-KR]") and it will encode specified charset to
     /// UTF-8 using iconv. See iconv documentation to check if
     /// required encoding/charset is supported.
-    #[arg(long="service", alias="svc", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long="service", alias="svc", value_name="services", value_parser = parse_services, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cea708services: Option<String>,
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the
@@ -321,7 +508,7 @@ pub struct Args {
     /// but not kill ccextractor externally.
     /// Note: If --s is used then only one input file is
     /// allowed.
-    #[arg(short, long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(short, long, value_parser = parse_number, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub stream: Option<String>,
     /// Use the pic_order_cnt_lsb in AVC/H.264 data streams
     /// to order the CC information.  The default way is to
@@ -356,7 +543,7 @@ pub struct Args {
     /// program in the input, it will list the programs found
     /// and terminate without doing anything, unless
     /// --autoprogram (see below) is used.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub program_number: Option<String>,
     /// If there's more than one program in the stream, just use
     /// the first one we find that contains a suitable stream.
@@ -371,19 +558,19 @@ pub struct Args {
     pub list_tracks: bool,
     /// Don't try to find out the stream for caption/teletext
     /// data, just use this one instead.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub datapid: Option<String>,
     /// Instead of selecting the stream by its PID, select it
     /// by its type (pick the stream that has this type in
     /// the PMT)
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub datastreamtype: Option<String>,
     /// Assume the data is of this type, don't autodetect. This
     /// parameter may be needed if --datapid or --datastreamtype
     /// is used and CCExtractor cannot determine how to process
     /// the stream. The value will usually be 2 (MPEG video) or
     /// 6 (MPEG private data).
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub streamtype: Option<String>,
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
@@ -432,7 +619,7 @@ pub struct Args {
     /// of the length of the strings.Default 2.
     /// This means that if the calculated distance
     /// is 0,1 or 2, we consider the strings to be equivalent.
-    #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
+    #[arg(long, value_name="value", value_parser = parse_number, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     pub levdistmincnt: Option<String>,
     /// Maximum distance we allow, as a percentage of
     /// the shortest string length. Default 10%.0
@@ -445,7 +632,7 @@ pub struct Args {
     /// the shortest string is 30 characters and  the default
     /// percentage is 10%, we would allow a distance of up
     /// to 3 between the first 30 characters.
-    #[arg(long, value_name="value", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
+    #[arg(long, value_name="value", value_parser = parse_number, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     pub levdistmaxpct: Option<String>,
     /// (Experimental) Produces a chapter file from MP4 files.
     /// Note that this must only be used with MP4 files,
@@ -489,7 +676,7 @@ pub struct Args {
     /// files to have a font tag, which makes the files
     /// larger. Add the color you want in RGB, such as
     /// --defaultcolor #FF0000 for red.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, value_parser = parse_color, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
@@ -527,7 +714,7 @@ pub struct Args {
     /// system time.
     /// ccextractor will automatically switch to transport
     /// stream UTC timestamps when available.
-    #[arg(long, verbatim_doc_comment, value_name="REF", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, value_name="REF", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub unixts: Option<String>,
     /// In transcripts, write time as YYYYMMDDHHMMss,ms.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -570,13 +757,13 @@ pub struct Args {
     /// produce an XMLTV file containing the EPG data from
     /// the source TS file. Mode: 1 = full output
     /// 2 = live output. 3 = both
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, verbatim_doc_comment, value_name="mode", value_parser = parse_number, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub xmltv: Option<String>,
     /// interval of x seconds between writing live mode xmltv output.
-    #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, verbatim_doc_comment, value_name="x", value_parser = parse_number, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub xmltvliveinterval: Option<String>,
     /// interval of x seconds between writing full file xmltv output.
-    #[arg(long, verbatim_doc_comment, value_name="x", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, verbatim_doc_comment, value_name="x", value_parser = parse_number, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub xmltvoutputinterval: Option<String>,
     /// Only print current events for xmltv output.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -606,7 +793,7 @@ pub struct Args {
     /// 0: Don't quantize at all.
     /// 1: Use CCExtractor's internal function (default).
     /// 2: Reduce distinct color count in image for faster results.
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, value_parser = clap::value_parser!(u8).range(0..=2), verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub quant: Option<u8>,
     /// Select the OEM mode for Tesseract.
     /// Available modes :
@@ -616,7 +803,7 @@ pub struct Args {
     /// Default value depends on the tesseract version linked :
     /// Tesseract v3 : default mode is 0,
     /// Tesseract v4 : default mode is 1.
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, value_parser = clap::value_parser!(u8).range(0..=2), verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub oem: Option<u8>,
     /// Select the PSM mode for Tesseract.
     /// Available Page segmentation modes:
@@ -635,7 +822,7 @@ pub struct Args {
     /// 12    Sparse text with OSD.
     /// 13    Raw line. Treat the image as a single text line,
     /// bypassing hacks that are Tesseract-specific.
-    #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, value_parser = clap::value_parser!(u8).range(0..=13), verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub psm: Option<u8>,
     /// Split subtitle images into lines before OCR.
     /// Uses PSM 7 (single text line mode) for each line,
@@ -683,7 +870,7 @@ pub struct Args {
     pub no_bufferinput: bool,
     /// Specify a size for reading, in bytes (suffix with K or
     /// or M for kilobytes and megabytes). Default is 16M.
-    #[arg(long, verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, value_parser = parse_buffersize, verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub buffersize: Option<String>,
     /// keep-output-close. If used then CCExtractor will close
     /// the output file after writing each subtitle frame and
@@ -730,17 +917,17 @@ pub struct Args {
     /// Time can be seconds, MM:SS or HH:MM:SS.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub startat: Option<String>,
     /// Stop processing after the given time (same format as
     /// --startat).
     /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub endat: Option<String>,
     /// Write 'num' screenfuls and terminate processing.
-    #[arg(long, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
+    #[arg(long, value_parser = parse_number, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub screenfuls: Option<String>,
     /// --codec dvbsub
     ///     select the dvb subtitle from all elementary stream,
@@ -763,19 +950,19 @@ pub struct Args {
     pub startcreditstext: Option<String>,
     /// Don't display the start credits before this
     /// time (S, or MM:SS). Default: 0
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub startcreditsnotbefore: Option<String>,
     /// Don't display the start credits after this
     /// time (S, or MM:SS). Default: 5:00
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub startcreditsnotafter: Option<String>,
     /// Start credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub startcreditsforatleast: Option<String>,
     /// Start credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub startcreditsforatmost: Option<String>,
     /// Write this text as end credits. If there are
     /// several lines, separate them with the
@@ -784,11 +971,11 @@ pub struct Args {
     pub endcreditstext: Option<String>,
     /// End credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub endcreditsforatleast: Option<String>,
     /// End credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
+    #[arg(long, value_parser = parse_time, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
     pub endcreditsforatmost: Option<String>,
     /// Show lots of debugging output.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
@@ -889,7 +1076,7 @@ pub struct Args {
     /// Make sure you use this parameter after others that might
     /// affect these settings (--out, --ucla, --xds, --txt,
     /// --ttxt ...)
-    #[arg(long, verbatim_doc_comment, value_name="format", help_heading=TRANSCRIPT_OPTIONS)]
+    #[arg(long, verbatim_doc_comment, value_name="format", value_parser = parse_customtxt, help_heading=TRANSCRIPT_OPTIONS)]
     pub customtxt: Option<u32>,
     /// Report progress and interesting events to stderr
     /// in a easy to parse format. This is intended to be
@@ -917,7 +1104,7 @@ pub struct Args {
     /// or letter wise.
     /// e.g. --ocr-mode frame (default), --ocr-mode word,
     /// --ocr-mode letter
-    #[arg(long = "ocr-mode", verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "ocr-mode", value_parser = parse_ocr_mode, verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub ocr_mode: Option<String>,
     /// Specify the color of the subtitles
     /// Possible values are in the set
@@ -926,7 +1113,7 @@ pub struct Args {
     /// may also be specified.
     /// e.g. --subcolor white or --subcolor 270 (for violet).
     /// Refer to an HSV color chart for values.
-    #[arg(long, verbatim_doc_comment, value_name="color", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long, value_parser = parse_subcolor, verbatim_doc_comment, value_name="color", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub subcolor: Option<String>,
     /// Specify the minimum duration that a subtitle line
     /// must exist on the screen.
@@ -948,7 +1135,7 @@ pub struct Args {
     /// Try and use a threshold which works for you if you get
     /// a lot of garbage text.
     /// e.g. --conf-thresh 50
-    #[arg(long = "conf-thresh", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "conf-thresh", value_parser = parse_float_range_100, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub conf_thresh: Option<f32>,
     /// For white subtitles only, specify the luminance
     /// threshold between 1 and 100
@@ -956,14 +1143,14 @@ pub struct Args {
     /// values may give you better results
     /// Recommended values are in the range 80 to 100.
     /// The default value is 95
-    #[arg(long = "whiteness-thresh", verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "whiteness-thresh", value_parser = parse_float_range_100, verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub whiteness_thresh: Option<f32>,
     /// This option will be used if the file should have both
     /// closed captions and burned in subtitles
     #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub hcc: bool,
     #[cfg(feature = "with_libcurl")]
-    #[arg(long, hide = true)]
+    #[arg(long, hide = true, value_parser = parse_url)]
     pub curlposturl: Option<String>,
 }
 
@@ -1053,3 +1240,7 @@ pub enum OutFormat {
     /// any file output.
     Curl,
 }
+
+
+
+
