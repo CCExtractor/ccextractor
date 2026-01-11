@@ -66,6 +66,30 @@ You can find sample files on [our website](https://ccextractor.org/public/genera
 
 - [Building on Windows using WSL](docs/build-wsl.md)
 
+#### Linux (Autotools) build notes
+
+CCExtractor also supports an autotools-based build system under the `linux/`
+directory.
+
+Important notes:
+- The autotools workflow lives inside `linux/`. The `configure` script is
+  generated there and should be run from that directory.
+- Typical build steps are:
+```
+cd linux
+./autogen.sh
+./configure
+make
+```
+- Rust support is enabled automatically if `cargo` and `rustc` are available
+  on the system. In that case, Rust components are built and linked during
+  `make`.
+- If you encounter unexpected build or linking issues, a clean rebuild
+  (`make clean` or a fresh clone) is recommended, especially when Rust is
+  involved.
+
+This build flow has been tested on Linux and WSL.
+
 ## Compiling CCExtractor
 
 To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).

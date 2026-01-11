@@ -225,9 +225,6 @@ impl Timestamp {
         let m = millis / 60000 - 60 * h;
         let s = millis / 1000 - 3600 * h - 60 * m;
         let u = millis - 3600000 * h - 60000 * m - 1000 * s;
-        if h > 24 {
-            println!("{h}")
-        }
         Ok((h.try_into()?, m as u8, s as u8, u as u16))
     }
 
