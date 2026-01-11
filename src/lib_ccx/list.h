@@ -18,7 +18,7 @@
  */
 
 #ifndef ccx_offsetof
-#define ccx_offsetof(TYPE, MEMBER) ((size_t)&((TYPE *)0)->MEMBER)
+#define ccx_offsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
 #endif
 
 /**
@@ -53,7 +53,10 @@ struct list_head
 	struct list_head *next, *prev;
 };
 
-#define LIST_HEAD_INIT(name) {&(name), &(name)}
+#define LIST_HEAD_INIT(name)     \
+	{                        \
+		&(name), &(name) \
+	}
 
 #define LIST_HEAD(name) \
 	struct list_head name = LIST_HEAD_INIT(name)
@@ -371,7 +374,10 @@ struct hlist_node
 	struct hlist_node *next, **pprev;
 };
 
-#define HLIST_HEAD_INIT {.first = NULL}
+#define HLIST_HEAD_INIT       \
+	{                     \
+		.first = NULL \
+	}
 #define HLIST_HEAD(name) struct hlist_head name = {.first = NULL}
 #define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
 #define INIT_HLIST_NODE(ptr) ((ptr)->next = NULL, (ptr)->pprev = NULL)

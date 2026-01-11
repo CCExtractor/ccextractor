@@ -6,7 +6,7 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 
-int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+int write_stringz_as_sami(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
 	int len = 0;
@@ -26,7 +26,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	if (ret != used)
 		return ret;
 
-	len = strlen(string);
+	len = strlen(str_arg);
 	unescaped = (unsigned char *)malloc(len + 1);
 	if (unescaped == NULL)
 	{
@@ -47,14 +47,14 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
+		if (str_arg[pos_r] == '\\' && str_arg[pos_r + 1] == 'n')
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
 		}
 		else
 		{
-			unescaped[pos_w] = string[pos_r];
+			unescaped[pos_w] = str_arg[pos_r];
 			pos_r++;
 		}
 		pos_w++;
