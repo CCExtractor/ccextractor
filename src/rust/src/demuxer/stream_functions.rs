@@ -331,11 +331,15 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
             }
 
             // Now check for PS (Needs PACK header)
-            // We use saturating_sub to avoid underflow if the buffer is tiny.
+            // The loop below checks 4 consecutive bytes (i, i+1, i+2, i+3), so we need
+            // to stop 3 bytes before the end to avoid out-of-bounds access.
+            // - If buffer < 50000: limit = buffer_size - 3 (scan entire buffer)
+            // - If buffer >= 50000: limit = 49997 (= 50000 - 3, cap the scan range)
+            // We use saturating_sub to safely handle tiny buffers (< 3 bytes).
             let limit = if ctx.startbytes_avail < 50000 {
                 ctx.startbytes_avail.saturating_sub(3)
             } else {
-                49997
+                50000 - 3 // Don't scan huge buffers entirely; 50KB is enough
             } as usize;
             for i in 0..limit {
                 if ctx.startbytes[i] == 0x00
