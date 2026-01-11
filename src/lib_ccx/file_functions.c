@@ -66,6 +66,7 @@ void prepare_for_new_file(struct lib_ccx_ctx *ctx)
 {
 	// Init per file variables
 	ctx->last_reported_progress = -1;
+	ctx->min_global_timestamp_offset = -1; // -1 means not yet initialized
 	ctx->stat_numuserheaders = 0;
 	ctx->stat_dvdccheaders = 0;
 	ctx->stat_scte20ccheaders = 0;
