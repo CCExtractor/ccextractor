@@ -186,11 +186,10 @@ void mprint(const char *fmt, ...)
 	{
 #ifndef _WIN32 
         fprintf(target, "\r\033[K"); // Clear the line first
-        fmt++; // Skip the '\r' so only the clean text gets printed next
+        fmt++;                       // Skip the '\r' so only the clean text gets printed next
 #endif
-		// Windows (legacy console) does not support ANSI sequences; fallback to standard \r
-        // and vfprintf below handles it the old-fashioned way.
-    }
+	}
+	// Windows (legacy console) does not support ANSI sequences; fallback to standard \r; and vfprintf below handles it the old-fashioned way.
 	
 	vfprintf(target, fmt, args);
 	fflush(target);
