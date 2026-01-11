@@ -179,17 +179,23 @@ void mprint(const char *fmt, ...)
 	if (!ccx_options.messages_target)
 		return;
 	va_start(args, fmt);
-	if (ccx_options.messages_target == CCX_MESSAGES_STDOUT)
+	
+	FILE *target = (ccx_options.messages_target == CCX_MESSAGES_STDOUT) ? stdout : stderr;
+	
+	if (fmt[0] == '\r')
 	{
-		vfprintf(stdout, fmt, args);
-		fflush(stdout);
-	}
-	else
-	{
-		vfprintf(stderr, fmt, args);
-		fflush(stderr);
-	}
-	va_end(args);
+#ifndef _WIN32 
+        fprintf(target, "\r\033[K"); // Clear the line first
+        fmt++; // Skip the '\r' so only the clean text gets printed next
+#endif
+		// Windows (legacy console) does not support ANSI sequences; fallback to standard \r
+        // and vfprintf below handles it the old-fashioned way.
+    }
+	
+	vfprintf(target, fmt, args);
+	fflush(target);
+
+	va_end(args);	
 }
 
 /* Shorten some debug output code. */
