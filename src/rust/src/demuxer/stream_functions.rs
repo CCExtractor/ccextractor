@@ -432,17 +432,21 @@ pub fn is_valid_mp4_box(
                 )
             );
 
-            // If the box type is "moov", we need to check if it contains "mvhd".
-            // We must check the buffer length first to avoid an out-of-bounds panic.
-            if idx == 2
-                && position + 15 < buffer.len()
-                && !(buffer[position + 12] == b'm'
+            // If the box type is "moov", it must contain "mvhd" to be valid.
+            // We need 16 bytes from position to check bytes 12-15 for "mvhd".
+            if idx == 2 {
+                if position + 16 > buffer.len() {
+                    // Not enough bytes to verify mvhd - skip this box
+                    continue;
+                }
+                if !(buffer[position + 12] == b'm'
                     && buffer[position + 13] == b'v'
                     && buffer[position + 14] == b'h'
                     && buffer[position + 15] == b'd')
-            {
-                // If "moov" doesn't have "mvhd", skip it.
-                continue;
+                {
+                    // moov without mvhd is not valid - skip it
+                    continue;
+                }
             }
 
             // Box name matches. Do a crude validation of possible box size,
