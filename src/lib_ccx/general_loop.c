@@ -1607,7 +1607,12 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					}
 				}
 
-				ret = process_data(enc_ctx, dec_ctx, data_node);
+				// In split DVB mode, skip primary processing for DVB streams
+				// They will be handled in the secondary DVB pass below (Bug 3 fix)
+				if (!(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
+				{
+					ret = process_data(enc_ctx, dec_ctx, data_node);
+				}
 				if (enc_ctx != NULL)
 				{
 					if (
@@ -1621,7 +1626,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0)
 					{
 						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
-						if (enc_ctx != NULL)
+						// In split DVB mode, skip flushing to main encoder (Bug 3 fix)
+						// Pipeline encoders get flushed via lib_ccx.c:285-313
+						if (enc_ctx != NULL && !(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
 							encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
 						dec_ctx->dec_sub.prev->got_output = 0;
 					}
@@ -1630,6 +1637,86 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (!data_node)
 				continue;
 		}
+
+		// MULTIPROGRAM DVB SECONDARY PASS: Route DVB streams to per-language pipelines
+		// This mirrors the single-program DVB secondary pass at lines 1321-1417 (Bug 3 fix)
+		if (ccx_options.split_dvb_subs)
+		{
+			struct demuxer_data *dvb_ptr = datalist;
+			while (dvb_ptr)
+			{
+				if (dvb_ptr->codec == CCX_CODEC_DVB && dvb_ptr->len > 0)
+				{
+					int stream_pid = dvb_ptr->stream_pid;
+					char *lang = "unk";
+
+					// Find language for this PID from potential_streams (PMT discovery)
+					for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
+					{
+						if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
+						    ctx->demux_ctx->potential_streams[k].lang[0])
+						{
+							lang = ctx->demux_ctx->potential_streams[k].lang;
+							break;
+						}
+					}
+
+					// Fallback to cinfo
+					if (strcmp(lang, "unk") == 0)
+					{
+						struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+						if (cinfo && cinfo->lang[0])
+							lang = cinfo->lang;
+					}
+
+					// Get or create pipeline for this DVB stream
+					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+
+					// Reinitialize decoder if NULL (e.g., after PAT change)
+					if (pipe && pipe->dec_ctx && !pipe->decoder)
+					{
+						struct dvb_config dvb_cfg = {0};
+						dvb_cfg.n_language = 1;
+						for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
+						{
+							if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+							{
+								dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
+								dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
+								break;
+							}
+						}
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
+						if (pipe->decoder)
+							pipe->dec_ctx->private_data = pipe->decoder;
+					}
+
+					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
+					{
+						// Use pipeline's independent timing context
+						pipe->dec_ctx->timing = pipe->timing;
+						pipe->encoder->timing = pipe->timing;
+						set_pipeline_pts(pipe, dvb_ptr->pts);
+
+						// Create subtitle structure if needed
+						if (!pipe->dec_ctx->dec_sub.prev)
+						{
+							struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
+							memset(sub, 0, sizeof(struct cc_subtitle));
+							pipe->dec_ctx->dec_sub.prev = sub;
+						}
+
+						// Decode DVB (skip first 2 bytes - PES header)
+						if (pipe->decoder && pipe->dec_ctx->private_data)
+						{
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+						}
+					}
+				}
+				dvb_ptr = dvb_ptr->next_stream;
+			}
+		}
+
 		if (ctx->live_stream)
 		{
 			int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);

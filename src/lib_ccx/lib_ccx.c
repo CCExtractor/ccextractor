@@ -676,9 +676,10 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 			free(pipe);
 			return NULL;
 		}
-		// FIX: Set write_previous=1 so the FIRST subtitle gets written
-		// DVB pattern: "write N-1 when N arrives"
-		pipe->encoder->write_previous = 0;
+		// FIX Bug 3: Set write_previous=1 so the FIRST subtitle gets written
+		// With write_previous=0, first subtitle is only buffered and never encoded
+		// unless a second subtitle arrives. Setting to 1 enables immediate encoding.
+		pipe->encoder->write_previous = 1;
 
 		// Issue 4: Ensure prev context exists and is initialized
 		// This forces the "previous" subtitle (which is effectively the first one we see)

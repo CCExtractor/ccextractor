@@ -1886,6 +1886,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		rect->ocr_text = NULL;
 	}
 #endif
+
 	return 0;
 }
 
@@ -1968,6 +1969,13 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 			if (timeok)
 			{
 				encode_sub(enc_ctx->prev, sub->prev); // we encode it
+
+				// FIX Bug 1: Clear any residual OCR text from previous encoder context
+				// to prevent text leakage causing subtitle repetition
+				if (enc_ctx->prev && enc_ctx->prev->last_str)
+				{
+					freep(&enc_ctx->prev->last_str);
+				}
 
 				enc_ctx->last_str = enc_ctx->prev->last_str; // Update last recognized string (used in Matroska)
 				enc_ctx->prev->last_str = NULL;
