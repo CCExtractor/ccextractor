@@ -901,7 +901,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// PTS calculation
-		if (payload.pesstart) // if there is PES Header data in the payload and we didn't get the first pts of that stream
+		if (payload.pesstart && payload.length >= 6) // if there is PES Header data in the payload and we didn't get the first pts of that stream
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
@@ -1026,7 +1026,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// Video PES start
-		if (payload.pesstart)
+		if (payload.pesstart && payload.length >= 6)
 		{
 			cinfo->saw_pesstart = 1;
 			cinfo->prev_counter = payload.counter - 1;
