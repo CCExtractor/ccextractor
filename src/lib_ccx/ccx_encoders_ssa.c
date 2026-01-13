@@ -194,11 +194,11 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	int empty_buf = 1;
 
 	int first_row = -1;
+	int last_row = -1;
 	int x, y;
 	char pos_tag[64];
-	int i;
 
-	for (i = 0; i < 15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
@@ -209,7 +209,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	if (empty_buf)
 		return 0;
 
-	for (i = 0; i < 15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 			used_row_count++;
@@ -240,18 +240,16 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	/* ---- ASS precise positioning ---- */
 
-	first_row = -1;
-
 	/*
 	 * Only apply ASS positioning when:
 	 * - At least one row is present
-	 * - AND there is a single logical caption region
-	 * Otherwise, fall back to legacy SSA behavior.
+	 * - And captions occupy a single logical region (1–2 adjacent rows)
+	 * Otherwise, fall back to legacy SSA positioning.
 	 */
 
 	if (used_row_count > 0 && used_row_count <= 2)
 	{
-		for (i = 0; i < 15; i++)
+		for (int i = 0; i < 15; i++)
 		{
 			if (data->row_used[i])
 			{
@@ -260,10 +258,18 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 			}
 		}
 
-		if (first_row >= 0)
+		for (int i = 14; i >= 0; i--)
 		{
-			// SSA default resolution (used by libass / Aegisub)
-			ass_position_from_row(first_row, 384, 288, &x, &y);
+			if (data->row_used[i])
+			{
+				last_row = i;
+				break;
+			}
+		}
+
+		if (first_row >= 0 && last_row >= 0 && (last_row - first_row) <= 1)
+		{
+			ass_position_from_row(last_row, 384, 288, &x, &y);
 
 			snprintf(
 			    pos_tag,
@@ -275,10 +281,8 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 		}
 	}
 
-	/* ---- end ASS positioning ---- */
-
 	int line_count = 0;
-	for (i = 0; i < 15; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
