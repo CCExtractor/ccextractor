@@ -198,6 +198,7 @@ typedef struct DVBSubContext
 	int version;
 	/* Store time in ms */
 	LLONG time_out;
+	uint32_t prev_bitmap_hash;
 #ifdef ENABLE_OCR
 	void *ocr_ctx;
 	int ocr_initialized; // Flag to track if OCR has been lazily initialized
@@ -503,6 +504,7 @@ void *dvbsub_init_decoder(struct dvb_config *cfg)
 	ctx->ocr_initialized = 0;
 #endif
 	ctx->version = -1;
+	ctx->prev_bitmap_hash = 0;
 
 	default_clut.id = -1;
 	default_clut.next = NULL;
@@ -1588,6 +1590,17 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 	}
 }
 
+static uint32_t fnv1a_32(const uint8_t *data, size_t len)
+{
+	uint32_t hash = 2166136261u;
+	for (size_t i = 0; i < len; i++)
+	{
+		hash ^= data[i];
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
 /**
  * Write Subtitle in cc_subtitle structure in CC_BITMAP format
  * when OCR subsystem is present then it also write recognised text in
@@ -1696,14 +1709,6 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	}
 	rect->data0 = NULL;
 	rect->data1 = NULL;
-
-	sub->flags |= SUB_EOD_MARKER;
-	sub->got_output = 1;
-	sub->data = rect;
-	sub->datatype = CC_DATATYPE_DVB;
-
-	// TODO: if different regions have different cluts, only the last one will be saved.
-	// Don't know if it will affect anything.
 
 	// The first loop, to determine the size of the whole subtitle (made up of different display/regions)
 
@@ -1847,6 +1852,38 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		}
 	}
                 if (ccx_options.split_dvb_subs) region->dirty = 0;
+
+	if (rect->data0 && rect->data1)
+	{
+		uint32_t current_hash = 2166136261u;
+
+		// Hash the pixels
+		current_hash ^= fnv1a_32(rect->data0, width * height);
+		current_hash *= 16777619u;
+
+		// Hash the palette (color table)
+		// We use the last region's depth/nb_colors as that's what determined the palette size
+		current_hash ^= fnv1a_32(rect->data1, (1 << region->depth) * sizeof(uint32_t));
+		current_hash *= 16777619u;
+
+		if (ctx->prev_bitmap_hash == current_hash)
+		{
+			dbg_print(CCX_DMT_DVB, "Duplicate DVB subtitle frame detected (Hash: %08X). Skipping.\n", current_hash);
+			// Free the rect we just allocated since we aren't using it
+			free(rect->data0);
+			free(rect->data1);
+			free(rect);
+			sub->nb_data = 0; // Ensure nb_data is 0 so the encoder doesn't try to access null data
+			return 0; // Return 0 to indicate no new subtitle produced
+		}
+
+		ctx->prev_bitmap_hash = current_hash;
+	}
+
+	sub->flags |= SUB_EOD_MARKER;
+	sub->got_output = 1;
+	sub->data = rect;
+	sub->datatype = CC_DATATYPE_DVB;
 
 	// DEBUG: Verify nonzero count manually
 	int nz_count = 0;
