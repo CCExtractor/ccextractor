@@ -1647,7 +1647,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 						d->next = ctx->display_list;
 						ctx->display_list = d;
 						// Force dirty so this region gets rendered
-						r->dirty = 1;
+						// r->dirty = 1;
 					}
 				}
 				else
@@ -1846,8 +1846,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 			}
 		}
 	}
-
                 if (ccx_options.split_dvb_subs) region->dirty = 0;
+
 	// DEBUG: Verify nonzero count manually
 	int nz_count = 0;
 	for (int k = 0; k < width * height; k++)
