@@ -439,10 +439,13 @@ int main(int argc, char *argv[])
 	ccxr_update_logger_target();
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
-	{
-		print_usage();
-		fatal(EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+	{	
+    	fprintf(stderr, "Error: No input file provided.\n");
+    	fprintf(stderr, "Usage: ccextractor <input_file>\n\n");
+    	print_usage();
+    	exit(EXIT_NO_INPUT_FILES);
 	}
+
 	else if (compile_ret == EXIT_WITH_HELP)
 	{
 		return EXIT_OK;
