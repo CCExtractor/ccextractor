@@ -9,9 +9,10 @@
 
 CCExtractor is a tool used to produce subtitles for TV recordings from almost anywhere in the world. We intend to keep up with all sources and formats.
 
-Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
+Subtitles are important for many people. If you're learning a new language, subtitles are  great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
+The official repository is [CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor), with `master` being the most stable branch.
+
 
 ### **Features**
 
@@ -27,6 +28,13 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 ## Installation and Usage
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
+
+## Quick Start
+
+After installing CCExtractor, you can extract subtitles using the following command:
+
+```bash
+ccextractor <input_video_file>
 
 
 ### Windows Package Managers
