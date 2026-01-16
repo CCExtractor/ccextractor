@@ -45,21 +45,22 @@ else
 fi
 echo ""
 
-# DVB-005: Test single stream
-echo "DVB-005: Testing single stream..."
-if [ -f "$MP_SPAIN_C49" ]; then
-    $CCEXTRACTOR "$MP_SPAIN_C49" --split-dvb-subs -o "$OUTPUT_DIR/c49" 2>&1 | tail -5
+# DVB-005: Test single program DVB extraction (using -pn to select one program)
+echo "DVB-005: Testing single program DVB extraction..."
+if [ -f "$MULTIPROGRAM_SPAIN" ]; then
+    # Use program number 530 which has DVB subtitles on PID 0xD3
+    $CCEXTRACTOR --split-dvb-subs --program-number 530 -o "$OUTPUT_DIR/single_prog" "$MULTIPROGRAM_SPAIN" 2>&1 | grep -i "dvb\|Created\|split" | head -5
     
-    FILE_COUNT=$(ls -1 "$OUTPUT_DIR"/c49*.srt 2>/dev/null | wc -l)
+    FILE_COUNT=$(ls -1 "$OUTPUT_DIR"/single_prog*.srt 2>/dev/null | wc -l)
     echo "  Created $FILE_COUNT output files"
     
     if [ $FILE_COUNT -ge 1 ]; then
         echo "  ✓ DVB-005: PASS"
     else
-        echo "  ✗ DVB-005: FAIL"
+        echo "  ✗ DVB-005: FAIL (Note: mp_spain_20170112_C49.ts has Teletext, not DVB subs)"
     fi
 else
-    echo "  ⚠ SKIP: Test file not found: $MP_SPAIN_C49"
+    echo "  ⚠ SKIP: Test file not found: $MULTIPROGRAM_SPAIN"
 fi
 echo ""
 
@@ -75,12 +76,14 @@ echo ""
 
 # DVB-007: Test repetition bug fix (check for excessive duplicates)
 echo "DVB-007: Testing deduplication effectiveness..."
-if [ -f "$MULTIPROGRAM_SPAIN" ] && [ -f "$OUTPUT_DIR"/mp_spain*.srt ]; then
+SRT_FILES=$(ls "$OUTPUT_DIR"/mp_spain_*.srt 2>/dev/null)
+if [ -f "$MULTIPROGRAM_SPAIN" ] && [ -n "$SRT_FILES" ]; then
     for file in "$OUTPUT_DIR"/mp_spain_*.srt; do
         if [ -f "$file" ] && [ -s "$file" ]; then
             # Count consecutive duplicate subtitle blocks
             DUPES=$(awk '/^[0-9]+$/{n=$0} /^$/{if(prev==n)dup++; prev=n} END{print dup+0}' "$file")
             TOTAL=$(grep -c "^[0-9]*$" "$file" || echo "0")
+            TOTAL=$(echo "$TOTAL" | tr -d '\n')
             
             if [ "$TOTAL" -gt 0 ]; then
                 RATIO=$(awk "BEGIN {printf \"%.1f\", ($DUPES/$TOTAL)*100}")
