@@ -1926,7 +1926,7 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
 	}
-	if (ctx->ocr_ctx)
+	if (ctx->ocr_ctx && region)
 	{
 		// DEBUG: Dump before OCR
 		// dump_rect_and_log("before_ocr", rect->data0, rect->w, rect->h, rect->linesize0, 1, 0, 0);

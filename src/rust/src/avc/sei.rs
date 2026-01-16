@@ -226,12 +226,10 @@ pub fn user_data_registered_itu_t_t35(ctx: &mut AvcContextRust, userbuf: &[u8]) 
                         }
 
                         // Save the data and process once we know the sequence number
-                        if ((ctx.cc_count as usize + local_cc_count) * 3) + 1 > ctx.cc_databufsize {
+                        let required_size = ((ctx.cc_count as usize + local_cc_count) * 3) + 1;
+                        if required_size > ctx.cc_data.len() {
                             let new_size = ((ctx.cc_count as usize + local_cc_count) * 6) + 1;
-                            unsafe {
-                                ctx.cc_data.set_len(new_size);
-                            }
-                            ctx.cc_data.reserve(new_size);
+                            ctx.cc_data.resize(new_size, 0);
                             ctx.cc_databufsize = new_size;
                         }
 

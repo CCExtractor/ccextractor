@@ -1727,7 +1727,24 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 		if (ctx->live_stream)
 		{
-			int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
+			if (!t && ctx->demux_ctx->global_timestamp_inited)
+				t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+			// Handle multi-program TS timing
+			if (ctx->demux_ctx->global_timestamp_inited)
+			{
+				LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+				if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
+					ctx->min_global_timestamp_offset = offset;
+				// Only use timestamps from the program with the lowest base
+				if (offset - ctx->min_global_timestamp_offset < 60000)
+					t = offset - ctx->min_global_timestamp_offset;
+				else
+					t = ctx->min_global_timestamp_offset > 0 ? 0 : t;
+				if (t < 0)
+					t = 0;
+			}
+			int cur_sec = (int)(t / 1000);
 			int th = cur_sec / 10;
 			if (ctx->last_reported_progress != th)
 			{
@@ -1745,6 +1762,28 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 					if (!t && ctx->demux_ctx->global_timestamp_inited)
 						t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+					// For multi-program TS files, different programs can have different
+					// PCR bases (e.g., one at 25h, another at 23h). This causes the
+					// global_timestamp to jump between different bases, resulting in
+					// wildly different offset values. Track the minimum offset seen
+					// and only display times from the program with the lowest base.
+					if (ctx->demux_ctx->global_timestamp_inited)
+					{
+						LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+						// Track minimum offset (this is the PCR base of the program
+						// with the lowest timestamp, which represents true file time)
+						if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
+							ctx->min_global_timestamp_offset = offset;
+						// Only use timestamps from the program with the lowest base.
+						// If current offset is significantly larger than minimum (by > 60s),
+						// it's from a program with a higher PCR base - use minimum instead.
+						if (offset - ctx->min_global_timestamp_offset < 60000)
+							t = offset - ctx->min_global_timestamp_offset;
+						else
+							t = ctx->min_global_timestamp_offset > 0 ? 0 : t; // fallback to minimum-based time
+						if (t < 0)
+							t = 0;
+					}
 					int cur_sec = (int)(t / 1000);
 					activity_progress(progress, cur_sec / 60, cur_sec % 60);
 					ctx->last_reported_progress = progress;
