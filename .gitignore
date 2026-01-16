@@ -171,3 +171,61 @@ ut=srt*
 .env
 test_split_dvb/output/
 test_split_dvb/logs/
+
+# Debug/Logs
+debug_*.log
+debug_output/
+diagnosis_output/
+diag_*.log
+logs/
+
+# Test artifacts
+test_output/
+test_out/
+test_split_verification/
+test_verification_output/
+linux/alltests_*
+linux/multiprogram_spain_*
+linux/test_*
+test_04e4*
+test_basename*
+*_test
+manual_test_*
+multiprogram_spain_*
+test_output_*
+
+# Tool state (agent/debugging)
+.agent/
+.claude/
+.gemini/
+.ralph/
+.ralph_session
+.ralph-tui/
+.call_count
+.circuit_breaker_*
+.exit_signals
+.last_reset
+.mcp.json
+
+# Root-level scripts and temp files
+build_script.sh
+rebuild.sh
+safe_build.sh
+run_mass_test.sh
+verify_dvb_split.py
+write_prompt.py
+update_prompt_final.py
+test_basename.c
+help
+
+# Working docs and temp notes
+DVB_SPLIT_*.md
+test_summary.md
+progress.json
+progress.txt
+prd.json
+status.json
+specs/
+
+# Project-specific working notes
+CLAUDE.md

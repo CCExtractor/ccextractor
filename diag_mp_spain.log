@@ -1,79 +1,0 @@
-CCExtractor 0.96.5, Carlos Fernandez Sanz, Volker Quetschke.
-Teletext portions taken from Petr Kutalek's telxcc
---------------------------------------------------------------------------
-Input: /home/rahul/Desktop/all_tests/multiprogram_spain.ts
-[Extract: 1] [Stream mode: Autodetect]
-[Program : Auto ] [Hauppage mode: No] [Use MythTV code: Auto]
-[CEA-708: 63 decoders active]
-[CEA-708: using charset "none" for all services]
-[Timing mode: Auto] [Debug: No] [Buffer input: No]
-[Use pic_order_cnt_lsb for H.264: No] [Print CC decoder traces: No]
-[Target format: .srt] [Encoding: UTF-8] [Delay: 0] [Trim lines: No]
-[Add font color data: Yes] [Add font typesetting: Yes]
-[Convert case: No][Filter profanity: No] [Video-edit join: No]
-[Extraction start time: not set (from start)]
-[Extraction end time: not set (to end)]
-[Live stream: No] [Clock frequency: 90000]
-[Teletext page: Autodetect]
-[Start credits text: None]
-[Quantisation-mode: None]
-[Tesseract PSM: 3]
-
------------------------------------------------------------------
-Opening file: /home/rahul/Desktop/all_tests/multiprogram_spain.ts
-File seems to be a transport streamAnalyzing data in general mode
-
-
-Note: This TS could be a recording from a Hauppage card. If no captions are detected, try --hauppauge
-
-
-No PAT/PMT found after 188188 bytes. Enabling packet analysis mode to detect video streams.
-PID 201 detected as video stream (no PAT/PMT) - assuming MPEG-2.
-PID 301 detected as video stream (no PAT/PMT) - assuming MPEG-2.
-PID 1501 detected as video stream (no PAT/PMT) - assuming MPEG-2.
-  0%  |  00:00
-This TS file has more than one program. These are the program numbers found: 
-530
-531
-532
-533
-534
-535
-536
-VBI/teletext stream ID 1502 (0x5de) for SID 533 (0x215)
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-PID 101 detected as video stream (no PAT/PMT) - assuming MPEG-2.
-VBI/teletext stream ID 1002 (0x3ea) for SID 532 (0x214)
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-
-Teletext decoder: 0 packets processed 
-VBI/teletext stream ID 102 (0x66) for SID 530 (0x212)
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-
-Teletext decoder: 0 packets processed 
-VBI/teletext stream ID 202 (0xca) for SID 531 (0x213)
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-DVB subtitles detected, OCR subsystem not present. Use --out=spupng for graphic output
-
-Teletext decoder: 0 packets processed 
-  1%  |  158:39- Programme Identification Data = Clan                
-- Universal Time Co-ordinated = Wed Jan 11 06:20:39 2017
-- No teletext page specified, first received suitable page is 888, not guaranteed
-- Using G0 Latin National Subset ID 0x0.5 (Portuguese, Spanish)
-  2%  |  158:40  3%  |  158:40  4%  |  158:41  5%  |  158:41  6%  |  158:42  7%  |  00:03  8%  |  00:04  9%  |  00:05 10%  |  00:05 11%  |  00:06 12%  |  00:06 13%  |  00:07 14%  |  00:08 15%  |  00:08 16%  |  00:09 17%  |  00:09 18%  |  00:10 19%  |  00:11 20%  |  00:11 21%  |  00:12 22%  |  00:12 23%  |  00:13 24%  |  00:14 25%  |  00:14 26%  |  00:15 27%  |  00:15 28%  |  00:16 29%  |  00:17 30%  |  00:17 31%  |  00:18 32%  |  00:18 33%  |  00:19 34%  |  00:20 35%  |  00:20 36%  |  00:21 37%  |  00:21 38%  |  00:22 39%  |  00:23 40%  |  00:23 41%  |  00:24 42%  |  00:24 43%  |  00:25 44%  |  00:26 45%  |  00:26 46%  |  00:27 47%  |  00:27 48%  |  00:28 49%  |  00:29 50%  |  00:29 51%  |  00:30 52%  |  00:30 53%  |  00:31 54%  |  00:32 55%  |  00:32 56%  |  00:33 57%  |  00:33 58%  |  00:34 59%  |  00:35 60%  |  00:35 61%  |  00:36 62%  |  00:36 63%  |  00:37 64%  |  00:38 65%  |  00:38 66%  |  00:39 67%  |  00:39 68%  |  00:40 69%  |  00:41 70%  |  00:41 71%  |  00:42 72%  |  00:42 73%  |  00:43 74%  |  00:44 75%  |  00:44 76%  |  00:45 77%  |  00:45 78%  |  00:46 79%  |  00:47 80%  |  00:47 81%  |  00:48 82%  |  00:48 83%  |  00:49 84%  |  00:50 85%  |  00:50 86%  |  00:51 87%  |  00:51 88%  |  00:52 89%  |  00:53 90%  |  00:53 91%  |  00:54 92%  |  00:54 93%  |  00:55 94%  |  00:56 95%  |  00:56 96%  |  00:57 97%  |  00:57 98%  |  00:58 99%  |  00:59Premature end of file - Transport Stream packet is incomplete (expected 188 bytes, got 24).
-100%  |  00:59
-Number of NAL_type_7: 0
-Number of VCL_HRD: 0
-Number of NAL HRD: 0
-Number of jump-in-frames: 0
-Number of num_unexpected_sei_length: 0
-
-Total frames time:	  00:00:00:000  (0 frames at 29.97fps)
-
-Min PTS:				17:33:26:561
-Max PTS:				17:34:26:161
-Length:				 00:00:59:600
-Done, processing time = 1 seconds
-Issues? Open a ticket here
-https://github.com/CCExtractor/ccextractor/issues

@@ -1,48 +1,0 @@
-CCExtractor 0.96.5, Carlos Fernandez Sanz, Volker Quetschke.
-Teletext portions taken from Petr Kutalek's telxcc
---------------------------------------------------------------------------
-Input: /home/rahul/Desktop/all_tests/BBC1.mp4
-[Extract: 1] [Stream mode: Autodetect]
-[Program : Auto ] [Hauppage mode: No] [Use MythTV code: Auto]
-[CEA-708: 63 decoders active]
-[CEA-708: using charset "none" for all services]
-[Timing mode: Auto] [Debug: No] [Buffer input: No]
-[Use pic_order_cnt_lsb for H.264: No] [Print CC decoder traces: No]
-[Target format: .srt] [Encoding: UTF-8] [Delay: 0] [Trim lines: No]
-[Add font color data: Yes] [Add font typesetting: Yes]
-[Convert case: No][Filter profanity: No] [Video-edit join: No]
-[Extraction start time: not set (from start)]
-[Extraction end time: not set (to end)]
-[Live stream: No] [Clock frequency: 90000]
-[Teletext page: Autodetect]
-[Start credits text: None]
-[Quantisation-mode: None]
-[Tesseract PSM: 3]
-
------------------------------------------------------------------
-Opening file: /home/rahul/Desktop/all_tests/BBC1.mp4
-Detected MP4 box with name: ftyp
-Detected MP4 box with name: free
-Detected MP4 box with name: mdat
-File seems to be a MP4Analyzing data with GPAC (MP4 library)
-Opening '/home/rahul/Desktop/all_tests/BBC1.mp4': ok
-Track 1, type=vide subtype=avc1
-Track 2, type=soun subtype=MPEG
-MP4: found 2 tracks: 1 avc, 0 hevc, 0 cc, 0 vobsub
-Processing track 1, type=vide subtype=avc1
-  0%  |  00:00  1%  |  00:09  2%  |  00:18  3%  |  00:27  4%  |  00:37  5%  |  00:46  6%  |  00:55  7%  |  01:04  8%  |  01:14  9%  |  01:23 10%  |  01:32 11%  |  01:42 12%  |  01:51 13%  |  02:00 14%  |  02:10 15%  |  02:19 16%  |  02:28 17%  |  02:37 18%  |  02:47 19%  |  02:56 20%  |  03:05 21%  |  03:14 22%  |  03:24 23%  |  03:33 24%  |  03:42 25%  |  03:52 26%  |  04:01 27%  |  04:10 28%  |  04:19 29%  |  04:29 30%  |  04:38 31%  |  04:47 32%  |  04:56 33%  |  05:06 34%  |  05:15 35%  |  05:24 36%  |  05:34 37%  |  05:43 38%  |  05:52 39%  |  06:01 40%  |  06:11 41%  |  06:20 42%  |  06:29 43%  |  06:38 44%  |  06:48 45%  |  06:57 46%  |  07:06 47%  |  07:16 48%  |  07:25 49%  |  07:34 50%  |  07:43 51%  |  07:53 52%  |  08:02 53%  |  08:11 54%  |  08:21 55%  |  08:30 56%  |  08:39 57%  |  08:48 58%  |  08:58 59%  |  09:07 60%  |  09:16 61%  |  09:26 62%  |  09:35 63%  |  09:44 64%  |  09:53 65%  |  10:03 66%  |  10:12 67%  |  10:21 68%  |  10:30 69%  |  10:40 70%  |  10:49 71%  |  10:58 72%  |  11:08 73%  |  11:17 74%  |  11:26 75%  |  11:35 76%  |  11:45 77%  |  11:54 78%  |  12:03 79%  |  12:13 80%  |  12:22 81%  |  12:31 82%  |  12:41 83%  |  12:50 84%  |  12:59 85%  |  13:08 86%  |  13:17 87%  |  13:27 88%  |  13:36 89%  |  13:45 90%  |  13:55 91%  |  14:04 92%  |  14:13 93%  |  14:22 94%  |  14:32 95%  |  14:41 96%  |  14:50 97%  |  15:00 98%  |  15:09 99%  |  15:18100%  |  15:27Processing track 2, type=soun subtype=MPEG
-
-Closing media: ok
-Found 1 AVC track(s). Found no HEVC track(s). Found no dedicated CC track(s). 
-
-
-Total frames time:	  00:12:54:006  (23197 frames at 29.97fps)
-
-Min PTS:				00:00:00:080
-Max PTS:				00:15:27:953
-Length:				 00:15:27:873
-Done, processing time = 0 seconds
-
-No captions were found in input.
-Issues? Open a ticket here
-https://github.com/CCExtractor/ccextractor/issues
