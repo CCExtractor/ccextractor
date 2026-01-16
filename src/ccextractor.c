@@ -214,36 +214,36 @@ int start_ccx()
 				if (!ret)
 					ret = tmp;
 				break;
-			case CCX_SM_MYTH:
-					mprint("\rAnalyzing data in MythTV mode\n");
-					show_myth_banner = 1;
-					tmp = myth_loop(ctx);
-					if (!ret)
-						ret = tmp;
-					break;
-			#ifdef GPAC_AVAILABLE
-				case CCX_SM_MP4:
-					mprint("\rAnalyzing data with GPAC (MP4 library)\n");
-					close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
-					if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
-					{
-						fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
-					}
-					if (ccx_options.extract_chapters)
-					{
-						tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
-					}
-					else
-					{
-						tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
-					}
-					if (ccx_options.print_file_reports)
-						print_file_report(ctx);
-					if (!ret)
-						ret = tmp;
-					break;
-			#endif
-						case CCX_SM_MKV:
+		case CCX_SM_MYTH:
+			mprint("\rAnalyzing data in MythTV mode\n");
+			show_myth_banner = 1;
+			tmp = myth_loop(ctx);
+			if (!ret)
+				ret = tmp;
+			break;
+#ifdef GPAC_AVAILABLE
+		case CCX_SM_MP4:
+			mprint("\rAnalyzing data with GPAC (MP4 library)\n");
+			close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
+			if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
+			{
+				fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
+			}
+			if (ccx_options.extract_chapters)
+			{
+				tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+			}
+			else
+			{
+				tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+			}
+			if (ccx_options.print_file_reports)
+				print_file_report(ctx);
+			if (!ret)
+				ret = tmp;
+			break;
+#endif
+		case CCX_SM_MKV:
 				mprint("\rAnalyzing data in Matroska mode\n");
 				tmp = matroska_loop(ctx);
 				if (!ret)
