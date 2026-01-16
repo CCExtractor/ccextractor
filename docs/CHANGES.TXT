@@ -1,5 +1,6 @@
 0.96.6 (unreleased)
 -------------------
+- Fix: Prevent segmentation fault when running in report-only mode (-out=report) on AVC/H.264 streams.
 - Fix: Prevent infinite loop on truncated MKV files
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
