@@ -1405,11 +1405,33 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 						// Skip first 2 bytes (PES header) as done in process_data for DVB
 
 						// Safety check: Skip if decoder was freed due to PAT change
-						// When PAT changes, dinit_cap NULLs out the decoder references
 						if (pipe->decoder && pipe->dec_ctx->private_data)
 						{
-							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+							// Unconditional Debug
+							mprint("DVB-DEBUG-TRACE: len=%lld ", dvb_ptr->len);
+							for (int d = 0; d < 8 && d < dvb_ptr->len; d++)
+								mprint("%02X ", dvb_ptr->buffer[d]);
+							mprint("\n");
+
+							int offset = 2;
+							// Auto-detect offset based on sync byte 0x0F
+							if (dvb_ptr->len > 2 && dvb_ptr->buffer[2] == 0x0f)
+								offset = 2;
+							else if (dvb_ptr->len > 0 && dvb_ptr->buffer[0] == 0x0f)
+								offset = 0;
+							else
+							{
+								// Debug: Dump first 16 bytes to see what we have
+								mprint("DVB-DEBUG-FAIL: len=%lld ", dvb_ptr->len);
+								for (int d = 0; d < 16 && d < dvb_ptr->len; d++)
+									mprint("%02X ", dvb_ptr->buffer[d]);
+								mprint("\n");
+							}
+							
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + offset, dvb_ptr->len - offset, &pipe->dec_ctx->dec_sub);
 						}
+						// CRITICAL: Reset length so buffer can be reused/filled again
+						dvb_ptr->len = 0;
 					}
 				}
 				dvb_ptr = dvb_ptr->next_stream;

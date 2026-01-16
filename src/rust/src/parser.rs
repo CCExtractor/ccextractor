@@ -762,6 +762,11 @@ impl OptionsExt for Options {
             self.split_dvb_subs = true;
         }
 
+        // Handle --no-dvb-dedup flag
+        if args.no_dvb_dedup {
+            self.no_dvb_dedup = true;
+        }
+
         if let Some(ref quant) = args.quant {
             if !(0..=2).contains(quant) {
                 fatal!(

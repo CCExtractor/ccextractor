@@ -278,6 +278,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).out_interval = options.out_interval;
     (*ccx_s_options).segment_on_key_frames_only = options.segment_on_key_frames_only as _;
     (*ccx_s_options).split_dvb_subs = options.split_dvb_subs as _;
+    (*ccx_s_options).no_dvb_dedup = options.no_dvb_dedup as _;
     (*ccx_s_options).scc_framerate = options.scc_framerate;
     // Also copy to enc_cfg so the encoder uses the same frame rate for SCC output
     (*ccx_s_options).enc_cfg.scc_framerate = options.scc_framerate;
@@ -541,6 +542,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;
     options.split_dvb_subs = (*ccx_s_options).split_dvb_subs != 0;
+    options.no_dvb_dedup = (*ccx_s_options).no_dvb_dedup != 0;
     options.scc_framerate = (*ccx_s_options).scc_framerate;
     options.scc_accurate_timing = (*ccx_s_options).enc_cfg.scc_accurate_timing != 0;
 

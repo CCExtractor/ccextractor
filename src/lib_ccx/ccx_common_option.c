@@ -183,4 +183,5 @@ void init_options(struct ccx_s_options *options)
 	stringztoms(DEF_VAL_ENDCREDITSFORATMOST, &options->enc_cfg.endcreditsforatmost);
 
 	options->split_dvb_subs = 0; // Default: legacy single-stream behavior
+	options->no_dvb_dedup = 0;   // Default: deduplication enabled
 }

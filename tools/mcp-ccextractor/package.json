@@ -1,0 +1,24 @@
+{
+  "name": "mcp-ccextractor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server that exposes CCExtractor as tools",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "lint": "echo 'no lint configured'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

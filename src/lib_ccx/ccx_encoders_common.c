@@ -723,6 +723,7 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 	dinit_teletext_outputs(ctx);
 
 	free_encoder_context(ctx->prev);
+	freep(&ctx->last_str);
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);

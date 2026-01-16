@@ -53,6 +53,33 @@ static int init_ctx_outbase(struct ccx_s_options *opt, struct lib_ccx_ctx *ctx)
 	if (opt->output_filename)
 	{
 		ctx->basefilename = get_basename(opt->output_filename);
+		if (ctx->basefilename)
+		{
+			size_t len = strlen(ctx->basefilename);
+			if (len > 0 && (ctx->basefilename[len - 1] == '/' || ctx->basefilename[len - 1] == '\\'))
+			{
+				char *input_base = NULL;
+				if (opt->input_source == CCX_DS_FILE && ctx->inputfile && ctx->inputfile[0])
+					input_base = get_basename(ctx->inputfile[0]);
+				else if (opt->input_source == CCX_DS_STDIN)
+					input_base = get_basename("stdin");
+				else if (opt->input_source == CCX_DS_NETWORK || opt->input_source == CCX_DS_TCP)
+					input_base = get_basename("network");
+
+				if (input_base)
+				{
+					size_t new_len = len + strlen(input_base) + 1;
+					char *new_base = malloc(new_len);
+					if (new_base)
+					{
+						snprintf(new_base, new_len, "%s%s", ctx->basefilename, input_base);
+						free(ctx->basefilename);
+						ctx->basefilename = new_base;
+					}
+					free(input_base);
+				}
+			}
+		}
 	}
 	else
 	{

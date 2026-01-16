@@ -1,0 +1,47 @@
+## Codebase Patterns
+- CCExtractor uses manual memory management in C - always check cleanup functions
+- DVB decoder context is in `struct DVBSubContext` in dvb_subtitle_decoder.c
+- Build directory is `/home/rahul/Desktop/ccextractor/build_cmake`
+- Test samples are at `/home/rahul/Desktop/all_tests/`
+- CMakeLists.txt at `src/lib_ccx/CMakeLists.txt` needs updates for new .c files
+
+---
+
+## 2026-01-16 14:04 - DVB-001
+Thread: N/A (Ralph loop iteration 1)
+- Implemented per-stream deduplication ring buffer for DVB subtitles
+- Created dvb_dedup.h and dvb_dedup.c with 8-slot ring buffer
+- Integrated dedup_ring into DVBSubContext structure
+- Added deduplication check at beginning of dvbsub_handle_display_segment
+- Uses PTS (ms) + PID + composition_id + ancillary_id as unique subtitle identifier
+- CMakeLists.txt automatically picks up new dvb_dedup.c via aux_source_directory
+
+Files changed:
+- src/lib_ccx/dvb_dedup.h (new)
+- src/lib_ccx/dvb_dedup.c (new)
+- src/lib_ccx/dvb_subtitle_decoder.c (added include, dedup_ring to DVBSubContext, dedup check in display handler)
+
+**Learnings for future iterations:**
+- CMake's aux_source_directory requires re-running cmake (not just make) to pick up new .c files
+- DVBSubContext is defined in dvb_subtitle_decoder.c starting at line 194
+- dvbsub_init_decoder is where DVBSubContext is initialized (line 479)
+- dvbsub_handle_display_segment is where display segments are processed (line 1955)
+- Memory leak warnings from AddressSanitizer are pre-existing (telxcc, encoder init) - not related to our changes
+- DVB subtitle output requires OCR to be enabled for bitmap-to-text conversion
+---
+
+## 2026-01-16 14:06 - DVB-002
+Thread: N/A (Ralph loop iteration 2)
+- Verified emission guard implementation in dvbsub_handle_display_segment
+- The early return on duplicate detection (line 1977) acts as the emission guard
+- Prevents encode_sub from being called for duplicate subtitles
+- No additional code needed - DVB-001 already included the emission guard
+
+Files changed:
+- None (verification only)
+
+**Learnings for future iterations:**
+- The emission guard is the `return` statement after dvb_dedup_is_duplicate check
+- This prevents the subtitle from reaching encode_sub (called at line 2056)
+- DVB-002 was implicitly completed as part of DVB-001 implementation
+---

@@ -763,10 +763,17 @@ int parse_PAT(struct ccx_demuxer *ctx)
 	{
 		mprint("Notice: PAT changed, clearing all variables.\n");
 		dinit_cap(ctx);
-		clear_PMT_array(ctx);
-		memset(ctx->PIDs_seen, 0, sizeof(int) * 65536); // Forget all we saw
-		if (!tlt_config.user_page)			// If the user didn't select a page...
-			tlt_config.page = 0;			// ..forget whatever we detected.
+						clear_PMT_array(ctx);
+						memset(ctx->PIDs_seen, 0, sizeof(int) * 65536); // Forget all we saw
+						ctx->num_of_PIDs = 0;
+						memset(ctx->have_PIDs, -1, (MAX_PSI_PID + 1) * sizeof(int));
+						for (int i = 0; i < (MAX_PSI_PID + 1); i++)
+						{
+							ctx->min_pts[i] = UINT64_MAX;
+						}
+						memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
+				
+						if (!tlt_config.user_page)                      // If the user didn't select a page...			tlt_config.page = 0;			// ..forget whatever we detected.
 
 		gotpes = 1;
 	}

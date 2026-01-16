@@ -1,0 +1,9 @@
+Unknown Argument
+error: unexpected argument '--tessdata-dir' found
+
+  tip: a similar argument exists: '--ts'
+
+Usage: ccextractor --debug --split-dvb-subs [inputfile]...
+
+For more information, try '--help'.
+

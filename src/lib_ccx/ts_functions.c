@@ -581,6 +581,14 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
+	if (vpesdatalen < 0 && ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB)
+	{
+		// Fallback: Treat as raw payload if PES header is missing/invalid in split mode
+		vpesdatalen = cinfo->capbuflen;
+		pesheaderlen = 0;
+		dbg_print(CCX_DMT_VERBOSE, "Fallback: Treating broken PES packet as raw DVB payload.\n");
+	}
+
 	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) // for teletext we have its own header dump
 	{
 		pes_header_dump(cinfo->capbuf, pesheaderlen);
@@ -689,11 +697,18 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 		    payload->start[2] != 0x01)
 		{
-			mprint("Notice: Missing PES header\n");
-			dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
-			cinfo->saw_pesstart = 0;
-			errno = EINVAL;
-			return -1;
+			if (ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB)
+			{
+				dbg_print(CCX_DMT_VERBOSE, "Notice: Missing PES header in DVB packet (allowing due to split mode)\n");
+			}
+			else
+			{
+				mprint("Notice: Missing PES header\n");
+				dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
+				cinfo->saw_pesstart = 0;
+				errno = EINVAL;
+				return -1;
+			}
 		}
 	}
 
@@ -872,8 +887,9 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			case 0: // First time we see this PID
 				if (ctx->PIDs_programs[payload.pid])
 				{
+					unsigned int st = ctx->PIDs_programs[payload.pid]->printable_stream_type;
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
-						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
+						  (st < 256) ? desc[st] : "Unknown",
 						  ctx->PIDs_programs[payload.pid]->program_number);
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
@@ -888,9 +904,10 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
 				if (ctx->PIDs_programs[payload.pid])
 				{
+					unsigned int st = ctx->PIDs_programs[payload.pid]->printable_stream_type;
 					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
 						  ctx->PIDs_programs[payload.pid]->program_number,
-						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]);
+						  (st < 256) ? desc[st] : "Unknown");
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				break;
@@ -901,7 +918,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// PTS calculation
-		if (payload.pesstart && payload.length >= 6) // if there is PES Header data in the payload and we didn't get the first pts of that stream
+		if (payload.pesstart && payload.length >= 14) // if there is PES Header data in the payload and we didn't get the first pts of that stream
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
@@ -915,13 +932,16 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				pts = get_pts(payload.start);
 				// keep in mind we already checked if we have this stream id
 				// we find the index of the packet PID in the have_PIDs array
-				int pid_index;
+				int pid_index = -1;
 				for (int i = 0; i < ctx->num_of_PIDs; i++)
 					if (payload.pid == ctx->have_PIDs[i])
 						pid_index = i;
-				ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
-				if (pts < ctx->min_pts[pid_index])
-					ctx->min_pts[pid_index] = pts; // and add its packet pts
+				if (pid_index != -1)
+				{
+					ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
+					if (pts < ctx->min_pts[pid_index])
+						ctx->min_pts[pid_index] = pts; // and add its packet pts
+				}
 			}
 		}
 

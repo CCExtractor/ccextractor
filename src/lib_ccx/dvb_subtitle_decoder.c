@@ -26,6 +26,7 @@
 #include "ccx_decoders_common.h"
 #include "ocr.h"
 #include "dvb_dedup.h"
+#include "ccx_common_option.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -1965,22 +1966,26 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	// Deduplication check: Skip if this subtitle is a duplicate
 	// We use composition_id + ancillary_id + PTS to uniquely identify a subtitle
 	// PTS is converted from microseconds to milliseconds for consistency
-	uint64_t pts_ms = (uint64_t)(current_pts / 1000);
-	uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
-	
-	if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid, 
-	                          (uint16_t)ctx->composition_id, 
-	                          (uint16_t)ctx->ancillary_id))
+	// Skip dedup if --no-dvb-dedup flag is set
+	if (!ccx_options.no_dvb_dedup)
 	{
-		dbg_print(CCX_DMT_DVB, "DVB: Skipping duplicate subtitle (PTS=%lld, comp_id=%d, anc_id=%d)\n",
-		         current_pts, ctx->composition_id, ctx->ancillary_id);
-		return;
+		uint64_t pts_ms = (uint64_t)(current_pts / 1000);
+		uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
+		
+		if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid, 
+		                          (uint16_t)ctx->composition_id, 
+		                          (uint16_t)ctx->ancillary_id))
+		{
+			dbg_print(CCX_DMT_DVB, "DVB: Skipping duplicate subtitle (PTS=%lld, comp_id=%d, anc_id=%d)\n",
+			         current_pts, ctx->composition_id, ctx->ancillary_id);
+			return;
+		}
+		
+		// Add to dedup ring buffer
+		dvb_dedup_add(&ctx->dedup_ring, pts_ms, pid,
+		             (uint16_t)ctx->composition_id, 
+		             (uint16_t)ctx->ancillary_id);
 	}
-	
-	// Add to dedup ring buffer
-	dvb_dedup_add(&ctx->dedup_ring, pts_ms, pid,
-	             (uint16_t)ctx->composition_id, 
-	             (uint16_t)ctx->ancillary_id);
 	
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{

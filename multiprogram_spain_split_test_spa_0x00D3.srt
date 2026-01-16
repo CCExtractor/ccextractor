@@ -1,0 +1,60 @@
+1
+00:00:00,480 --> 00:01:05,479
+<font color="#f8f76d">qué cuadros quiero que aparezcan:</font>
+
+2
+00:00:02,480 --> 00:01:07,479
+<font color="#f8f76d">Y él afiade sus acotaciones:</font>
+
+3
+00:00:05,200 --> 00:01:10,199
+<font color="#f8f76d">Enel videoclip de “Ashes to Ashes</font>
+<font color="#f8f76d">la. combinacion fue muy fructifera.</font>
+
+4
+00:00:11,080 --> 00:01:16,079
+<font color="#f7f7f7">La gente alrededor dela hoguera</font>
+<font color="#f7f7f7">enla/playaien"Ashes to Ashes"</font>
+
+5
+00:00:14,800 --> 00:01:19,799
+<font color="#f7f7f7">perteneciaial Blitz,</font>
+
+6
+00:00:16,520 --> 00:01:21,519
+<font color="#f7f7f7">un club londinense precursor</font>
+<font color="#f7f7f7">del movimiento neorromantico.</font>
+
+7
+00:00:20,400 --> 00:01:25,399
+<font color="#f7f7f7">David supo apropiarse</font>
+<font color="#f7f7f7">de ese movimiento</font>
+
+8
+00:00:22,760 --> 00:01:27,759
+<font color="#f7f7f7">mucho antes que ningun otro.</font>
+
+9
+00:00:28,560 --> 00:01:33,559
+<font color="#f7f7f7">-Aparecia representando</font>
+<font color="#f7f7f7">un nuevo movimiento cultural</font>
+
+10
+00:00:32,400 --> 00:01:37,399
+<font color="#f7f7f7">de unajuventud de la que él mismo</font>
+<font color="#f7f7f7">habia'sido una figura clave.</font>
+
+11
+00:00:37,520 --> 00:01:42,519
+<font color="#f7f7f7">Algunos decian que imitaba</font>
+<font color="#f7f7f7">a sus imitadores;</font>
+
+12
+00:00:39,960 --> 00:01:44,959
+<font color="#f7f7f7">mientras otros consideraban</font>
+<font color="#f7f7f7">que estaba seduciendo a.esos jovenes</font>
+
+13
+00:00:43,200 --> 00:01:48,199
+<font color="#f7f7f7">para integrarlos ensu universo.</font>
+
