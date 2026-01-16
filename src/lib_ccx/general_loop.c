@@ -1411,8 +1411,8 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 							// Auto-detect offset based on sync byte 0x0F
 							if (dvb_ptr->len > 2 && dvb_ptr->buffer[2] == 0x0f)
 								offset = 2;
-						else if (dvb_ptr->len > 0 && dvb_ptr->buffer[0] == 0x0f)
-							offset = 0;
+							else if (dvb_ptr->len > 0 && dvb_ptr->buffer[0] == 0x0f)
+								offset = 0;
 
 							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + offset, dvb_ptr->len - offset, &pipe->dec_ctx->dec_sub);
 						}

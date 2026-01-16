@@ -773,8 +773,8 @@ int parse_PAT(struct ccx_demuxer *ctx)
 		}
 		memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
 
-		if (!tlt_config.user_page) // If the user didn't select a page...
-			tlt_config.page = 0;   // ..forget whatever we detected.
+		if (!tlt_config.user_page)   // If the user didn't select a page...
+			tlt_config.page = 0; // ..forget whatever we detected.
 
 		gotpes = 1;
 	}
