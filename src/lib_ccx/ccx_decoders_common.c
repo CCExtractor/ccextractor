@@ -736,6 +736,9 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->subline);
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
+	// NOTE: Do NOT recurse into ctx->prev here. Ownership of prev is managed by
+	// dinit_encoder() which explicitly calls free_encoder_context(ctx->prev).
+	// Recursing here causes double-free when dinit_encoder cleans up.
 	freep(&ctx->prev);
 	freep(&ctx->last_str);
 	freep(&ctx);

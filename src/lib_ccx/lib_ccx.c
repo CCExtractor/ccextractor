@@ -362,6 +362,13 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 				freep(&p->dec_ctx->prev->private_data);
 				free(p->dec_ctx->prev);
 			}
+			// Free dec_sub.prev which was allocated in init_cc_decode or general_loop
+			// Note: free_subtitle already frees the struct via freep(&sub), so we don't call free() again
+			if (p->dec_ctx->dec_sub.prev)
+			{
+				free_subtitle(p->dec_ctx->dec_sub.prev);
+				p->dec_ctx->dec_sub.prev = NULL;
+			}
 			p->dec_ctx->private_data = NULL;
 			free(p->dec_ctx);
 		}
