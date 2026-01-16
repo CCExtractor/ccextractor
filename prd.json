@@ -1,7 +1,7 @@
 [
   {"id": "DVB-001", "title": "Add per-stream dedup ring buffer", "priority": 1, "passes": true},
   {"id": "DVB-002", "title": "Implement emission guard", "priority": 2, "passes": true},
-  {"id": "DVB-003", "title": "Add --no-dvb-dedup CLI flag", "priority": 3, "passes": false},
+  {"id": "DVB-003", "title": "Add --no-dvb-dedup CLI flag", "priority": 3, "passes": true},
   {"id": "DVB-004", "title": "Test multilang split (5 files)", "priority": 4, "passes": false},
   {"id": "DVB-005", "title": "Test single stream", "priority": 5, "passes": false},
   {"id": "DVB-006", "title": "Test non-DVB file", "priority": 6, "passes": false},

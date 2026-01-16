@@ -45,3 +45,31 @@ Files changed:
 - This prevents the subtitle from reaching encode_sub (called at line 2056)
 - DVB-002 was implicitly completed as part of DVB-001 implementation
 ---
+
+## 2026-01-16 14:12 - DVB-003
+Thread: N/A (Ralph loop iteration 3)
+- Implemented --no-dvb-dedup CLI flag to allow users to disable deduplication
+- Added no_dvb_dedup field to ccx_s_options (C) and Options (Rust)
+- Initialized to 0/false by default (dedup enabled)
+- Added flag parsing in Rust args.rs with help text
+- Wired through Rust-to-C FFI in common.rs (both directions)
+- Modified dvbsub_handle_display_segment to check flag before dedup
+- Flag appears in --help output correctly
+
+Files changed:
+- src/lib_ccx/ccx_common_option.h (added no_dvb_dedup field)
+- src/lib_ccx/ccx_common_option.c (initialized to 0)
+- src/lib_ccx/params.c (added help text)
+- src/lib_ccx/dvb_subtitle_decoder.c (added include, wrapped dedup in flag check)
+- src/rust/src/args.rs (added flag definition)
+- src/rust/lib_ccxr/src/common/options.rs (added field to Options struct)
+- src/rust/src/parser.rs (added flag parsing)
+- src/rust/src/common.rs (added FFI transfer both ways)
+
+**Learnings for future iterations:**
+- CLI flags in CCExtractor are parsed in Rust (args.rs) then transferred to C
+- ccx_options is a global extern available in C code
+- Need to update BOTH directions in common.rs (rust_to_c and c_to_rust)
+- Default::default() for bool in Rust is false (which maps to 0 in C)
+- Help text formatting should align with existing patterns (2-3 lines max)
+---
