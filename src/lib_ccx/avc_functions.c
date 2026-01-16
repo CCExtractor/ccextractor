@@ -200,6 +200,12 @@ size_t ccxr_process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_c
 size_t process_avc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *avcbuf, size_t avcbuflen, struct cc_subtitle *sub)
 {
 #ifndef DISABLE_RUST
+	// Report-only mode does not initialize AVC decoding state, so skip Rust AVC processing when required context is missing.
+	if (!enc_ctx || !enc_ctx->timing ||
+	    !dec_ctx || !dec_ctx->avc_ctx)
+	{
+		return avcbuflen;
+	}
 	return ccxr_process_avc(enc_ctx, dec_ctx, avcbuf, avcbuflen, sub);
 #else
 	unsigned char *buffer_position = avcbuf;
