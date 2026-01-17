@@ -53,6 +53,11 @@ static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int
 #define DVBSUB_DISPLAYDEFINITION_SEGMENT 0x14
 #define DVBSUB_DISPLAY_SEGMENT 0x80
 
+// Maximum reasonable subtitle duration in milliseconds.
+// DVB page timeouts can be very long (e.g., 65 seconds), but actual subtitles
+// rarely exceed 10 seconds. This cap prevents corrupt timestamps from page timeouts.
+#define DVB_MAX_SUBTITLE_DURATION_MS 10000
+
 #define SCALEBITS 10
 #define ONE_HALF (1 << (SCALEBITS - 1))
 #define FIX(x) ((int)((x) * (1 << SCALEBITS) + 0.5))
@@ -2022,20 +2027,13 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 			// to accurately end the previous sub at the end of the previous timeline.
 			LLONG fts_end_time = (pre_fts_max > 0) ? pre_fts_max : next_start_time;
 
-			// If we have a timeout, respect it
-			if (sub->prev->time_out > 0)
+			LLONG duration = fts_end_time - sub->prev->start_time;
+			LLONG capped_timeout = (sub->prev->time_out > 0 && sub->prev->time_out < DVB_MAX_SUBTITLE_DURATION_MS)
+				? sub->prev->time_out : DVB_MAX_SUBTITLE_DURATION_MS;
+
+			if (duration <= 0 || duration > capped_timeout)
 			{
-				LLONG max_end = sub->prev->start_time + sub->prev->time_out;
-				if (fts_end_time > max_end || fts_end_time <= sub->prev->start_time)
-				{
-					fts_end_time = max_end;
-				}
-			}
-			else
-			{
-				// No timeout specified, clamp to reasonable max (e.g. 5s) if next sub is too far
-				if (fts_end_time - sub->prev->start_time > 5000)
-					fts_end_time = sub->prev->start_time + 5000;
+				fts_end_time = sub->prev->start_time + capped_timeout;
 			}
 
 			sub->prev->end_time = fts_end_time;
