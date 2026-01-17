@@ -335,9 +335,25 @@ pub unsafe fn user_data(
         debug!(msg_type = DebugMessageFlag::PARSE; "DN  ID: {:02X}  Count: {:5}  Unknown: {:04X}  Pattern: {:X}",
                   id, dishcount, something, pattern_type);
 
-        // The following block needs 4 to 6 bytes starting from the
+        // The following block needs 4 to 12 bytes starting from the
         // current position
         let dcd_pos = ustream.pos; // dish caption data position
+
+        // Validate we have enough data for the largest possible read
+        let available = ustream.data.len() - dcd_pos;
+        let required = match pattern_type {
+            0x02 => 4,  // Pattern 0x02 needs 4 bytes minimum
+            0x04 => 5,  // Pattern 0x04 needs 5 bytes
+            0x05 => 12, // Pattern 0x05 needs 12 bytes (accesses indices 0-11)
+            _ => 0,
+        };
+
+        if required > 0 && available < required {
+            info!("MPEG:Dish Network: Insufficient data for pattern 0x{:02X} (need {} bytes, have {})", 
+                  pattern_type, required, available);
+            return Ok(1); // Skip this malformed packet
+        }
+
         match pattern_type {
             0x02 => {
                 // Two byte caption - always on B-frame
@@ -430,7 +446,7 @@ pub unsafe fn user_data(
                 // 1  : prev dcd[2]
                 // 2-3: prev dcd[3-4]
                 // 4-5: prev dcd[5-6]
-                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 10]; // Need more bytes for this case
+                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 12]; // Need 12 bytes (accesses indices 0-11)
                 debug!(msg_type = DebugMessageFlag::PARSE; " - {:02X}  pch: {:02X} {:5} {:02X}:{:02X}",
                           dcd_data[0], dcd_data[1],
                           (dcd_data[2] as u32) * 256 + (dcd_data[3] as u32),
