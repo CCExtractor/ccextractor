@@ -532,6 +532,7 @@ pub unsafe fn user_data(
 
         if udatalen < 720 {
             info!("MPEG:VBI: Minimum 720 bytes in luma line required");
+            return Ok(1); // Early return - not enough data
         }
 
         let vbi_data = &ustream.data[ustream.pos..ustream.pos + 720];
