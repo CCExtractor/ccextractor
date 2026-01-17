@@ -2029,7 +2029,8 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 
 			LLONG duration = fts_end_time - sub->prev->start_time;
 			LLONG capped_timeout = (sub->prev->time_out > 0 && sub->prev->time_out < DVB_MAX_SUBTITLE_DURATION_MS)
-				? sub->prev->time_out : DVB_MAX_SUBTITLE_DURATION_MS;
+						   ? sub->prev->time_out
+						   : DVB_MAX_SUBTITLE_DURATION_MS;
 
 			if (duration <= 0 || duration > capped_timeout)
 			{
