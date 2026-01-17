@@ -21,6 +21,19 @@ pub unsafe extern "C" fn ccxr_process_avc(
         return 0;
     }
 
+    // In report-only mode (-out=report), enc_ctx is NULL because no encoder is created.
+    // Skip AVC processing in this case since we can't output captions without an encoder.
+    // Return the full buffer length to indicate we've "consumed" the data.
+    if enc_ctx.is_null() {
+        return avcbuflen;
+    }
+
+    // dec_ctx and sub should never be NULL in normal operation, but check defensively
+    if dec_ctx.is_null() || sub.is_null() {
+        info!("Warning: dec_ctx or sub is NULL in ccxr_process_avc");
+        return avcbuflen;
+    }
+
     // Create a safe slice from the raw pointer
     let avc_slice = std::slice::from_raw_parts_mut(avcbuf, avcbuflen);
 
