@@ -440,7 +440,8 @@ int main(int argc, char *argv[])
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
-		fatal(EXIT_NO_INPUT_FILES, "Input file required.\nSyntax: ccextractor [options] inputfile1 [inputfile2...] [-o outputfilename]\nRun 'ccextractor -h' for help.");
+		print_usage();
+		fatal(EXIT_NO_INPUT_FILES, "No input file(s) provided. Please specify at least one media file to process.");
 	}
 	else if (compile_ret == EXIT_WITH_HELP)
 	{
