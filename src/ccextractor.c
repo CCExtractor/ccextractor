@@ -440,8 +440,7 @@ int main(int argc, char *argv[])
 
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
-		print_usage();
-		fatal(EXIT_NO_INPUT_FILES, "(This help screen was shown because there were no input files)\n");
+		fatal(EXIT_NO_INPUT_FILES, "Input file required. Run 'ccextractor -h' for help.\n");
 	}
 	else if (compile_ret == EXIT_WITH_HELP)
 	{
