@@ -69,7 +69,7 @@ fn atol(bufsize: &str) -> i32 {
 
     let val_str = &s[..s.len() - 1];
     let mut val = val_str.parse::<i32>().unwrap_or(0);
-    
+
     match last_char.to_ascii_uppercase() {
         'M' => val *= 1024 * 1024,
         'K' => val *= 1024,
@@ -2482,4 +2482,3 @@ pub mod tests {
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 }
-
