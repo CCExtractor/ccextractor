@@ -448,11 +448,12 @@ int main(int argc, char *argv[])
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
     fprintf(stderr,
-            "Error: No input file provided.\n\n"
-            "Usage:\n"
-            "  ccextractor <input_file> [options]\n\n"
-            "Try:\n"
-            "  ccextractor --help\n");
+	"Error: No input file provided.\n\n"
+	"Usage:\n"
+	"  ccextractor <input_file> [options]\n\n"
+	"Try:\n"
+	"  ccextractor --help\n");
+
 
     exit(EXIT_NO_INPUT_FILES);
 	}
