@@ -90,6 +90,7 @@ struct lib_ccx_ctx
 	LLONG total_past; // Only in binary concat mode
 
 	int last_reported_progress;
+	LLONG min_global_timestamp_offset; // Track minimum (global - min) for multi-program TS
 
 	/* Stats */
 	int stat_numuserheaders;

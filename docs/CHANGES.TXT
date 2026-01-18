@@ -1,3 +1,10 @@
+0.96.6 (unreleased)
+-------------------
+- Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
+- Fix: Prevent infinite loop on truncated MKV files
+- Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
+- Fix: Delete empty output files instead of leaving 0-byte files (#1282)
+
 0.96.5 (2026-01-05)
 -------------------
 - New: CCExtractor is available again via Homebrew on macOS and Linux.
