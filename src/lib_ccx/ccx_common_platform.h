@@ -31,7 +31,7 @@ typedef int ssize_t;
 #endif
 typedef uint32_t in_addr_t;
 #ifndef IN_CLASSD
-#define IN_CLASSD(i) (((INT32)(i) & 0xf0000000) == 0xe0000000)
+#define IN_CLASSD(i) (((INT32)(i)&0xf0000000) == 0xe0000000)
 #define IN_MULTICAST(i) IN_CLASSD(i)
 #endif
 #include <direct.h>
@@ -40,7 +40,7 @@ typedef uint32_t in_addr_t;
 // Added ifndef because VS2013 warns for macro redefinition.
 #define snprintf(buf, len, fmt, ...) _snprintf(buf, len, fmt, __VA_ARGS__)
 #endif
-#define sleep(sec) Sleep((sec) * 1000)
+#define sleep(sec) Sleep((sec)*1000)
 
 #include <fcntl.h>
 #else // _WIN32

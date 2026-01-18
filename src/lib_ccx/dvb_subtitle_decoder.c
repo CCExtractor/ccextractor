@@ -25,6 +25,26 @@
 #include "utility.h"
 #include "ccx_decoders_common.h"
 #include "ocr.h"
+#include "dvb_dedup.h"
+#include "ccx_common_option.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
+
+// Debug stub for dump_rect_and_log - used in OCR debugging but not critical
+static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int h, int linesize, int mode, int pid, int idx)
+{
+	// Intentionally empty - enable for debugging bitmap data if needed
+	(void)label;
+	(void)data;
+	(void)w;
+	(void)h;
+	(void)linesize;
+	(void)mode;
+	(void)pid;
+	(void)idx;
+}
 
 #define DVBSUB_PAGE_SEGMENT 0x10
 #define DVBSUB_REGION_SEGMENT 0x11
@@ -32,6 +52,11 @@
 #define DVBSUB_OBJECT_SEGMENT 0x13
 #define DVBSUB_DISPLAYDEFINITION_SEGMENT 0x14
 #define DVBSUB_DISPLAY_SEGMENT 0x80
+
+// Maximum reasonable subtitle duration in milliseconds.
+// DVB page timeouts can be very long (e.g., 65 seconds), but actual subtitles
+// rarely exceed 10 seconds. This cap prevents corrupt timestamps from page timeouts.
+#define DVB_MAX_SUBTITLE_DURATION_MS 10000
 
 #define SCALEBITS 10
 #define ONE_HALF (1 << (SCALEBITS - 1))
@@ -180,6 +205,7 @@ typedef struct DVBSubContext
 	int version;
 	/* Store time in ms */
 	LLONG time_out;
+	uint32_t prev_bitmap_hash;
 #ifdef ENABLE_OCR
 	void *ocr_ctx;
 	int ocr_initialized; // Flag to track if OCR has been lazily initialized
@@ -190,7 +216,44 @@ typedef struct DVBSubContext
 
 	DVBSubRegionDisplay *display_list;
 	DVBSubDisplayDefinition *display_definition;
+
+	struct dvb_dedup_ring dedup_ring; // Deduplication ring buffer
 } DVBSubContext;
+
+size_t dvbsub_get_context_size(void)
+{
+	return sizeof(DVBSubContext);
+}
+
+void dvbsub_copy_context(void *dst, void *src)
+{
+	if (dst && src)
+	{
+		DVBSubContext *d = (DVBSubContext *)dst;
+		DVBSubContext *s = (DVBSubContext *)src;
+
+		// Copy scalar values only - DO NOT copy pointers to avoid aliasing
+		// The linked lists (region_list, clut_list, object_list, display_list)
+		// are owned by the source context and must not be shared
+		d->composition_id = s->composition_id;
+		d->ancillary_id = s->ancillary_id;
+		d->lang_index = s->lang_index;
+		d->version = s->version;
+		d->time_out = s->time_out;
+
+		// Initialize pointers to NULL to avoid use-after-free
+		d->region_list = NULL;
+		d->clut_list = NULL;
+		d->object_list = NULL;
+		d->display_list = NULL;
+		d->display_definition = NULL;
+
+#ifdef ENABLE_OCR
+		// OCR context is shared, just copy the pointer (it's managed externally)
+		d->ocr_ctx = s->ocr_ctx;
+#endif
+	}
+}
 
 static __inline unsigned int bytestream_get_byte(const uint8_t **b)
 {
@@ -429,6 +492,9 @@ void *dvbsub_init_decoder(struct dvb_config *cfg)
 	}
 	memset(ctx, 0, sizeof(DVBSubContext));
 
+	// Initialize deduplication ring buffer
+	dvb_dedup_init(&ctx->dedup_ring);
+
 	if (cfg)
 	{
 		ctx->composition_id = cfg->composition_id[0];
@@ -450,6 +516,7 @@ void *dvbsub_init_decoder(struct dvb_config *cfg)
 	ctx->ocr_initialized = 0;
 #endif
 	ctx->version = -1;
+	ctx->prev_bitmap_hash = 0;
 
 	default_clut.id = -1;
 	default_clut.next = NULL;
@@ -1072,10 +1139,16 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	object = get_object(ctx, object_id);
 
 	if (!object)
-		return 0; // Unsure if we should return error
+		return 0;
 
+	int version = ((*buf) >> 4) & 15;
 	coding_method = ((*buf) >> 2) & 3;
 	non_modifying_color = ((*buf++) >> 1) & 1;
+
+	if (object->version == version)
+		return 0;
+
+	object->version = version;
 
 	if (coding_method == 0)
 	{
@@ -1083,7 +1156,6 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 		buf += 2;
 		bottom_field_len = RB16(buf);
 		buf += 2;
-
 		if (buf + top_field_len + bottom_field_len > buf_end)
 		{
 			mprint("dvbsub_parse_object_segment(): Field data size too large\n");
@@ -1113,7 +1185,6 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 			if (dvbsub_parse_pixel_data_block(dvb_ctx, display, block, bfl, 1,
 							  non_modifying_color))
 			{
-				// Problems. Hope for the best.
 				mprint("dvbsub_parse_object_segment(): Something went wrong. Giving up on block (2).\n");
 				return -1;
 			}
@@ -1343,6 +1414,7 @@ static void dvbsub_parse_region_segment(void *dvb_ctx, const uint8_t *buf,
 				fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_region_segment: Out of memory allocating object.");
 			}
 			memset(object, 0, sizeof(struct DVBSubObject));
+			object->version = -1;
 
 			object->id = object_id;
 			object->next = ctx->object_list;
@@ -1396,6 +1468,7 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	int page_state;
 	int timeout;
 	int version;
+	int has_region_definitions; // Declaration moved here for C89 compliance
 
 	if (buf_size < 2)
 		return;
@@ -1404,74 +1477,92 @@ static void dvbsub_parse_page_segment(void *dvb_ctx, const uint8_t *buf,
 	version = ((*buf) >> 4) & 15;
 	page_state = ((*buf++) >> 2) & 3;
 
-	// if version same mean we are already updated
-	if (ctx->version == version)
-	{
-		return;
-	}
+	// Version check removed to always allow page state check (Fix for Arte stream)
+
 	/* Convert time from second to ms */
 	ctx->time_out = timeout * 1000;
 	ctx->version = version;
 
+	//
+	// Issue 5: Spec-compliant Page Segment handling
+	// KEY FIX: Only rebuild display_list if new regions are defined
+	has_region_definitions = (buf + 6 <= buf_end); // Need at least 6 bytes for one region
+
 	if (page_state == 1 || page_state == 2)
 	{
-		dbg_print(CCX_DMT_DVB, ", PAGE STATE %d", page_state);
+		// Mode change (1) or Acquisition point (2): Always clear display list
 		delete_regions(ctx);
 		delete_objects(ctx);
 		delete_cluts(ctx);
+
+		tmp_display_list = ctx->display_list;
+		ctx->display_list = NULL;
+
+		// If regions are provided, parsing loop below will rebuild ctx->display_list
+		// If no regions provided, ctx->display_list remains NULL (empty)
+	}
+	else if (has_region_definitions)
+	{
+		// Normal case (0) WITH new region definitions: clear and rebuild
+		tmp_display_list = ctx->display_list;
+		ctx->display_list = NULL;
+	}
+	else
+	{
+		// Normal case (0) WITHOUT region definitions: keep existing display_list (Arte fix)
+		// Do not clear ctx->display_list
+		tmp_display_list = NULL; // Nothing to free from old list
 	}
 
-	tmp_display_list = ctx->display_list;
-	ctx->display_list = NULL;
-
-	while (buf + 5 < buf_end)
+	// Rebuild display list if we have regions to parse
+	if (has_region_definitions)
 	{
-		region_id = *buf++;
-		buf += 1;
-
-		dbg_print(CCX_DMT_DVB, ", REGION %d ADDED", region_id);
-
-		display = tmp_display_list;
-		tmp_ptr = &tmp_display_list;
-
-		while (display && display->region_id != region_id)
+		while (buf + 6 <= buf_end)
 		{
-			tmp_ptr = &display->next;
-			display = display->next;
-		}
+			region_id = *buf++;
+			buf += 1;
+			display = tmp_display_list;
+			tmp_ptr = &tmp_display_list;
 
-		if (!display)
-		{
-			display = (struct DVBSubRegionDisplay *)malloc(
-			    sizeof(struct DVBSubRegionDisplay));
+			while (display && display->region_id != region_id)
+			{
+				tmp_ptr = &display->next;
+				display = display->next;
+			}
+
 			if (!display)
 			{
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_page_segment: Out of memory allocating display.");
+				display = (struct DVBSubRegionDisplay *)malloc(
+				    sizeof(struct DVBSubRegionDisplay));
+				if (!display)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_parse_page_segment: Out of memory allocating display.");
+				}
+				memset(display, 0, sizeof(struct DVBSubRegionDisplay));
 			}
-			memset(display, 0, sizeof(struct DVBSubRegionDisplay));
+
+			display->region_id = region_id;
+
+			display->x_pos = RB16(buf);
+			buf += 2;
+			display->y_pos = RB16(buf);
+			buf += 2;
+
+			*tmp_ptr = display->next;
+
+			display->next = ctx->display_list;
+			ctx->display_list = display;
 		}
-
-		display->region_id = region_id;
-
-		display->x_pos = RB16(buf);
-		buf += 2;
-		display->y_pos = RB16(buf);
-		buf += 2;
-
-		*tmp_ptr = display->next;
-
-		display->next = ctx->display_list;
-		ctx->display_list = display;
 	}
 
+	// Free any leftover regions that weren't reused
 	while (tmp_display_list)
 	{
 		display = tmp_display_list;
-
 		tmp_display_list = display->next;
-
 		free(display);
 	}
+
 	assert(buf <= buf_end);
 }
 
@@ -1518,6 +1609,17 @@ static void dvbsub_parse_display_definition_segment(void *dvb_ctx,
 	}
 }
 
+static uint32_t fnv1a_32(const uint8_t *data, size_t len)
+{
+	uint32_t hash = 2166136261u;
+	for (size_t i = 0; i < len; i++)
+	{
+		hash ^= data[i];
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
 /**
  * Write Subtitle in cc_subtitle structure in CC_BITMAP format
  * when OCR subsystem is present then it also write recognised text in
@@ -1537,6 +1639,61 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	ctx = (DVBSubContext *)dec_ctx->private_data;
 
+	// Safety check: Context may be NULL after PAT change
+	if (!ctx)
+		return -1;
+
+	// Validate we have something to display
+	if (!ctx->display_list)
+	{
+		if (ctx->region_list)
+		{
+			// Heuristic Fix for Arte stream: Valid regions exist but Page Segment was empty.
+			// We auto-populate the display list assuming (0,0) coordinates.
+			DVBSubRegion *r = ctx->region_list;
+			while (r)
+			{
+				// Only add regions with actual pixel data (non-empty pbuf)
+				int has_content = 0;
+				if (r->pbuf && r->buf_size > 0)
+				{
+					for (int i = 0; i < r->buf_size; i++)
+					{
+						if (r->pbuf[i] != 0)
+						{
+							has_content = 1;
+							break;
+						}
+					}
+				}
+
+				if (has_content)
+				{
+					DVBSubRegionDisplay *d = (DVBSubRegionDisplay *)malloc(sizeof(struct DVBSubRegionDisplay));
+					if (d)
+					{
+						memset(d, 0, sizeof(*d));
+						d->region_id = r->id;
+						d->x_pos = 0;
+						d->y_pos = 0;
+						d->next = ctx->display_list;
+						ctx->display_list = d;
+						// Force dirty so this region gets rendered
+						// r->dirty = 1;
+					}
+				}
+				else
+				{
+				}
+				r = r->next;
+			}
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	display_def = ctx->display_definition;
 	sub->type = CC_BITMAP;
 	sub->lang_index = ctx->lang_index;
@@ -1547,11 +1704,17 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		offset_y = display_def->y;
 	}
 
+	// Initialize nb_data before counting dirty regions to avoid stale values
+	// from copy_subtitle() carrying over between calls
+	sub->nb_data = 0;
+
 	for (display = ctx->display_list; display; display = display->next)
 	{
 		region = get_region(ctx, display->region_id);
 		if (region && region->dirty)
+		{
 			sub->nb_data++;
+		}
 	}
 	if (sub->nb_data <= 0)
 	{
@@ -1565,14 +1728,6 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	}
 	rect->data0 = NULL;
 	rect->data1 = NULL;
-
-	sub->flags |= SUB_EOD_MARKER;
-	sub->got_output = 1;
-	sub->data = rect;
-	sub->datatype = CC_DATATYPE_DVB;
-
-	// TODO: if different regions have different cluts, only the last one will be saved.
-	// Don't know if it will affect anything.
 
 	// The first loop, to determine the size of the whole subtitle (made up of different display/regions)
 
@@ -1650,6 +1805,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		}
 		memset(rect->data1, 0, 1024);
 		memcpy(rect->data1, clut_table, (1 << region->depth) * sizeof(uint32_t));
+		rect->nb_colors = (1 << region->depth); // CRITICAL FIX: OCR needs this to know palette size
+
+		// User Quick Test
 		assert(((1 << region->depth) * sizeof(uint32_t)) <= 1024);
 	}
 
@@ -1679,6 +1837,8 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 		int x_off = display->x_pos - x_pos;
 		int y_off = display->y_pos - y_pos;
+		static int oob_warning_printed = 0;
+		int oob_count = 0;
 		for (int y = 0; y < region->height; y++)
 		{
 			for (int x = 0; x < region->width; x++)
@@ -1686,21 +1846,80 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 				int offset = ((y + y_off) * width) + x_off + x;
 				if (offset >= (width * height) || offset < 0)
 				{
-					mprint("write_dvb_sub(): Offset %d (out of bounds!) ignored.\n",
-					       offset);
-					mprint("  Formula: offset=((y + y_off) * width) + x_off + x\n");
-					mprint("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d\n",
-					       y, y_off, width, x_off, x);
+					oob_count++;
+					if (!oob_warning_printed)
+					{
+						mprint("write_dvb_sub(): Out of bounds pixels detected (showing first occurrence only)\n");
+						mprint("  Formula: offset=((y + y_off) * width) + x_off + x\n");
+						mprint("  y=%d, y_off=%d, width=%d, x_off=%d, x=%d, offset=%d\n",
+						       y, y_off, width, x_off, x, offset);
+						oob_warning_printed = 1;
+					}
 				}
 				else
 				{
 					uint8_t c = (uint8_t)region->pbuf[y * region->width + x];
+					if (c != 0)
+					{
+						// DEBUG: Found a non-zero pixel!
+						// mprint("DEBUG-PBUF: Found valid pixel %d at %d,%d\n", c, x, y);
+						// Only print once per frame to avoid spam, or rely on the final dump
+					}
 					rect->data0[offset] = c;
 				}
 			}
 		}
+		region->dirty = 0;
 	}
 
+	if (rect->data0 && rect->data1)
+	{
+		uint32_t current_hash = 2166136261u;
+
+		// Hash the geometry
+		current_hash ^= (uint32_t)rect->x;
+		current_hash *= 16777619u;
+		current_hash ^= (uint32_t)rect->y;
+		current_hash *= 16777619u;
+		current_hash ^= (uint32_t)rect->w;
+		current_hash *= 16777619u;
+		current_hash ^= (uint32_t)rect->h;
+		current_hash *= 16777619u;
+
+		// Hash the pixels
+		current_hash ^= fnv1a_32(rect->data0, width * height);
+		current_hash *= 16777619u;
+
+		// Hash the palette (color table)
+		// We use the last region's depth/nb_colors as that's what determined the palette size
+		current_hash ^= fnv1a_32(rect->data1, (1 << region->depth) * sizeof(uint32_t));
+		current_hash *= 16777619u;
+
+		if (ctx->prev_bitmap_hash == current_hash)
+		{
+			dbg_print(CCX_DMT_DVB, "Duplicate DVB subtitle frame detected (Hash: %08X). Skipping.\n", current_hash);
+			// Free the rect we just allocated since we aren't using it
+			free(rect->data0);
+			free(rect->data1);
+			free(rect);
+			sub->nb_data = 0;    // Ensure nb_data is 0 so the encoder doesn't try to access null data
+			sub->got_output = 0; // CRITICAL: Mark as no output to prevent duplicate encoding
+			return 0;	     // Return 0 to indicate no new subtitle produced
+		}
+
+		ctx->prev_bitmap_hash = current_hash;
+	}
+
+	sub->flags |= SUB_EOD_MARKER;
+	sub->got_output = 1;
+	sub->data = rect;
+	sub->datatype = CC_DATATYPE_DVB;
+
+	// DEBUG: Verify nonzero count manually
+	int nz_count = 0;
+	for (int k = 0; k < width * height; k++)
+		if (rect->data0[k])
+			nz_count++;
 	sub->nb_data = 1; // Set nb_data to 1 since we have merged the images into one image.
 
 	// Perform OCR
@@ -1714,18 +1933,28 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	}
 	if (ctx->ocr_ctx && region)
 	{
+		// DEBUG: Dump before OCR
+		// dump_rect_and_log("before_ocr", rect->data0, rect->w, rect->h, rect->linesize0, 1, 0, 0);
+
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
-		if (ret >= 0)
+		if (ret >= 0 && ocr_str)
+		{
 			rect->ocr_text = ocr_str;
+		}
 		else
+		{
 			rect->ocr_text = NULL;
-		dbg_print(CCX_DMT_DVB, "\nOCR Result: %s\n", rect->ocr_text ? rect->ocr_text : "NULL");
+		}
+
+		// DEBUG: Dump after OCR (if modified)
+		// dump_rect_and_log("after_ocr", rect->data0, rect->w, rect->h, rect->linesize0, ctx->display_definition ? 3 : 1, 0, 0);
 	}
 	else
 	{
 		rect->ocr_text = NULL;
 	}
 #endif
+
 	return 0;
 }
 
@@ -1738,79 +1967,120 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	LLONG current_pts = dec_ctx->timing->current_pts;
 	if (!enc_ctx)
 		return;
+
+	// Deduplication check: Skip if this subtitle is a duplicate
+	// We use composition_id + ancillary_id + PTS to uniquely identify a subtitle
+	// PTS is converted from microseconds to milliseconds for consistency
+	// Skip dedup if --no-dvb-dedup flag is set
+	if (!ccx_options.no_dvb_dedup)
+	{
+		uint64_t pts_ms = (uint64_t)(current_pts / 1000);
+		uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
+
+		if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid,
+					   (uint16_t)ctx->composition_id,
+					   (uint16_t)ctx->ancillary_id))
+		{
+			dbg_print(CCX_DMT_DVB, "DVB: Skipping duplicate subtitle (PTS=%lld, comp_id=%d, anc_id=%d)\n",
+				  current_pts, ctx->composition_id, ctx->ancillary_id);
+			return;
+		}
+
+		// Add to dedup ring buffer
+		dvb_dedup_add(&ctx->dedup_ring, pts_ms, pid,
+			      (uint16_t)ctx->composition_id,
+			      (uint16_t)ctx->ancillary_id);
+	}
+
 	if (enc_ctx->write_previous) // this condition is used for the first subtitle - write_previous will be 0 first so we don't encode a non-existing previous sub
 	{
-		enc_ctx->prev->last_string = NULL; // Reset last recognized sub text
-		// Get the current FTS, which will be the start_time of the new subtitle
-		LLONG next_start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
-		// For DVB subtitles, a subtitle is displayed until the next one appears.
-		// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
-		// This prevents any overlap between consecutive subtitles.
-		if (next_start_time > sub->prev->start_time)
+		enc_ctx->prev->last_str = NULL; // Reset last recognized sub text
+		// Validate current_field before calling get_fts (valid: 1=field1, 2=field2, 3=CEA-708)
+		int caption_field = dec_ctx->current_field;
+		if (caption_field < 1 || caption_field > 3)
 		{
-			sub->prev->end_time = next_start_time;
+			dbg_print(CCX_DMT_DVB, "DVB: invalid current_field %d, using default 1\n", caption_field);
+			caption_field = 1;
+		}
+		// Get the current FTS, which will be the start_time of the new subtitle
+		LLONG next_start_time = get_fts(dec_ctx->timing, caption_field);
+
+		if (!sub->prev)
+		{
+			// Previous subtitle is missing or invalid, skipping write_previous
+			enc_ctx->write_previous = 0;
+			if (enc_ctx->prev)
+			{
+				free_encoder_context(enc_ctx->prev);
+				enc_ctx->prev = NULL;
+				enc_ctx->prev = copy_encoder_context(enc_ctx);
+			}
 		}
 		else
 		{
-			// PTS jump or timeline reset - next_start is at or before our start.
-			// Calculate duration from raw PTS, but cap to reasonable maximum (5 seconds)
-			// to avoid creating subtitles that overlap excessively with subsequent ones.
-			LLONG duration_ms = 0;
-			if (sub->prev->start_pts > 0 && current_pts > sub->prev->start_pts)
-			{
-				duration_ms = (current_pts - sub->prev->start_pts) / (MPEG_CLOCK_FREQ / 1000);
-			}
-			// Cap duration to 4 seconds or timeout if smaller
-			LLONG max_duration = 4000; // 4 seconds
-			if (sub->prev->time_out > 0 && sub->prev->time_out < max_duration)
-			{
-				max_duration = sub->prev->time_out;
-			}
-			if (duration_ms > max_duration)
-			{
-				duration_ms = max_duration;
-			}
-			sub->prev->end_time = sub->prev->start_time + duration_ms;
-		}
-		// Sanity check: if end_time still <= start_time, use minimal duration
-		if (sub->prev->end_time <= sub->prev->start_time)
-		{
-			dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
-			sub->prev->end_time = sub->prev->start_time + 1;
-		}
-		// Apply timeout limit if specified
-		if (sub->prev->time_out > 0 && sub->prev->time_out < sub->prev->end_time - sub->prev->start_time)
-		{
-			sub->prev->end_time = sub->prev->start_time + sub->prev->time_out;
-		}
-		int timeok = 1;
-		if (dec_ctx->extraction_start.set &&
-		    sub->prev->start_time < dec_ctx->extraction_start.time_in_ms)
-			timeok = 0;
-		if (dec_ctx->extraction_end.set &&
-		    sub->prev->end_time > dec_ctx->extraction_end.time_in_ms)
-		{
-			timeok = 0;
-			dec_ctx->processed_enough = 1;
-		}
-		if (timeok)
-		{
-			encode_sub(enc_ctx->prev, sub->prev); // we encode it
 
-			enc_ctx->last_string = enc_ctx->prev->last_string; // Update last recognized string (used in Matroska)
-			enc_ctx->prev->last_string = NULL;
+			// For DVB subtitles, a subtitle is displayed until the next one appears.
+			// Use next_start_time as the end_time to ensure subtitle N ends when N+1 starts.
+			// This prevents any overlap between consecutive subtitles.
+			// Issue 7: Use FTS-based duration calculation always.
+			// If pre_fts_max is available (captured before potential PTS jumps), use it
+			// to accurately end the previous sub at the end of the previous timeline.
+			LLONG fts_end_time = (pre_fts_max > 0) ? pre_fts_max : next_start_time;
 
-			enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
-			enc_ctx->prev_start = enc_ctx->prev->prev_start;
-			sub->prev->got_output = 0;
-			if (enc_ctx->write_format == CCX_OF_WEBVTT)
-			{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
-				enc_ctx->wrote_webvtt_header = 1;
+			LLONG duration = fts_end_time - sub->prev->start_time;
+			LLONG capped_timeout = (sub->prev->time_out > 0 && sub->prev->time_out < DVB_MAX_SUBTITLE_DURATION_MS)
+						   ? sub->prev->time_out
+						   : DVB_MAX_SUBTITLE_DURATION_MS;
+
+			if (duration <= 0 || duration > capped_timeout)
+			{
+				fts_end_time = sub->prev->start_time + capped_timeout;
+			}
+
+			sub->prev->end_time = fts_end_time;
+
+			// Sanity check: if end_time still <= start_time (e.g. due to resets), force 1ms
+			if (sub->prev->end_time <= sub->prev->start_time)
+			{
+				dbg_print(CCX_DMT_DVB, "DVB timing: end <= start, using start+1\n");
+				sub->prev->end_time = sub->prev->start_time + 1;
+			}
+			int timeok = 1;
+			if (dec_ctx->extraction_start.set &&
+			    sub->prev->start_time < dec_ctx->extraction_start.time_in_ms)
+				timeok = 0;
+			if (dec_ctx->extraction_end.set &&
+			    sub->prev->end_time > dec_ctx->extraction_end.time_in_ms)
+			{
+				timeok = 0;
+				dec_ctx->processed_enough = 1;
+			}
+			if (timeok)
+			{
+				encode_sub(enc_ctx->prev, sub->prev); // we encode it
+
+				// Update last recognized string (used in Matroska)
+				// Move ownership from prev to main context
+				if (enc_ctx->prev)
+				{
+					enc_ctx->last_str = enc_ctx->prev->last_str;
+					enc_ctx->prev->last_str = NULL;
+				}
+
+				enc_ctx->srt_counter = enc_ctx->prev->srt_counter; // for dvb subs we need to update the current srt counter because we always encode the previous subtitle (and the counter is increased for the previous context)
+				enc_ctx->prev_start = enc_ctx->prev->prev_start;
+				sub->prev->got_output = 0;
+				if (enc_ctx->write_format == CCX_OF_WEBVTT)
+				{ // we already wrote header, but since we encoded last sub, we must prevent multiple headers in future
+					enc_ctx->wrote_webvtt_header = 1;
+				}
 			}
 		}
 	}
 	/* copy previous encoder context*/
+
 	free_encoder_context(enc_ctx->prev);
+
 	enc_ctx->prev = NULL;
 	enc_ctx->prev = copy_encoder_context(enc_ctx);
 
@@ -1825,19 +2095,31 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In dvbsub_handle_display_segment: Out of memory allocating private_data.");
 	}
-	memcpy(dec_ctx->prev->private_data, dec_ctx->private_data, sizeof(struct DVBSubContext));
+	// Use safe copy that doesn't alias linked list pointers
+	dvbsub_copy_context(dec_ctx->prev->private_data, dec_ctx->private_data);
+
+	// Issue 6: Removed workaround. Version management should be handled by logic, not forcing -1.
+	// Reference: ((DVBSubContext *)dec_ctx->prev->private_data)->version = -1;
+
 	/* copy previous subtitle */
 	free_subtitle(sub->prev);
 	sub->time_out = ctx->time_out;
 	sub->prev = NULL;
 	sub->prev = copy_subtitle(sub);
 	// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
-	sub->prev->start_time = get_fts(dec_ctx->timing, dec_ctx->current_field);
+	// Validate current_field (valid: 1=field1, 2=field2, 3=CEA-708)
+	int sub_caption_field = dec_ctx->current_field;
+	if (sub_caption_field < 1 || sub_caption_field > 3)
+		sub_caption_field = 1;
+	sub->prev->start_time = get_fts(dec_ctx->timing, sub_caption_field);
 	// Store the raw PTS for accurate duration calculation (not affected by PTS jump handling)
 	sub->prev->start_pts = current_pts;
 
-	write_dvb_sub(dec_ctx->prev, sub->prev); // we write the current dvb sub to update decoder context
-	enc_ctx->write_previous = 1;		 // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+	// Use current dec_ctx (not prev) because we need valid region/object data for rendering
+	// dec_ctx->prev has NULL pointers to avoid memory corruption from aliased linked lists
+	write_dvb_sub(dec_ctx, sub->prev); // we write the current dvb sub to update decoder context
+	enc_ctx->write_previous = 1;	   // we update our boolean value so next time the program reaches this block of code, it encodes the previous sub
+
 #ifdef ENABLE_OCR
 	if (sub->prev)
 	{
@@ -1873,10 +2155,25 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	int ret = 0;
 	int got_segment = 0;
 
-	if (buf_size <= 6 || *buf != 0x0f)
+	// Safety check: Context may be NULL after PAT change
+	if (!ctx)
+		return -1;
+
+	// Clear last recognized string to avoid leakage between calls
+	if (enc_ctx)
+		freep(&enc_ctx->last_str);
+
+	// Sync loop: Advance buffer until we find the 0x0F sync byte
+	while (buf_size > 0 && *buf != 0x0f)
 	{
-		mprint("dvbsub_decode: incomplete, broken or empty packet (size = %d, first byte=%02X)\n",
-		       buf_size, *buf);
+		buf++;
+		buf_size--;
+	}
+
+	if (buf_size <= 6)
+	{
+		// Reduced verbosity: only print if we actually failed to find anything useful
+		// mprint("dvbsub_decode: incomplete, broken or empty packet (size = %d)\n", buf_size);
 		return -1;
 	}
 
@@ -1909,10 +2206,11 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 		if (page_id == ctx->composition_id || page_id == ctx->ancillary_id || ctx->composition_id == -1 || ctx->ancillary_id == -1)
 		{
 			// debug traces
+			// Unconditional trace for debugging
+
 			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
 			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
-
 			switch (segment_type)
 			{
 				case DVBSUB_PAGE_SEGMENT:
@@ -1945,11 +2243,18 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 										segment_length);
 					break;
 				case DVBSUB_DISPLAY_SEGMENT: // when we get a display segment, we save the current page
-					dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
+							     // dbg_print(CCX_DMT_DVB, "(DVBSUB_DISPLAY_SEGMENT), SEGMENT LENGTH: %d", segment_length);
 					dvbsub_handle_display_segment(enc_ctx, dec_ctx, sub, pre_fts_max);
+
 					got_segment |= 16;
 					break;
 				default:
+					if (segment_type == 0) // Padding
+					{
+						p += segment_length;
+						continue;
+					}
+
 					dbg_print(CCX_DMT_DVB, "Subtitling segment type 0x%x, page id %d, length %d\n",
 						  segment_type, page_id, segment_length);
 					break;
@@ -1999,54 +2304,45 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 		return -1;
 	}
 
-	if (cfg->n_language > 1)
-	{
-		mprint("DVB subtitles with multiple languages");
-	}
-
 	if (cfg->n_language > MAX_LANGUAGE_PER_DESC)
 	{
-		mprint("not supported more then %d language", MAX_LANGUAGE_PER_DESC);
+		mprint("Warning: more than %d languages in DVB descriptor, only parsing first %d\n", MAX_LANGUAGE_PER_DESC, MAX_LANGUAGE_PER_DESC);
+		cfg->n_language = MAX_LANGUAGE_PER_DESC;
 	}
 
-	unsigned char *data_ptr = data;
-	for (int i = 0; i < cfg->n_language; i++, data_ptr += i * 8)
+	if (cfg->n_language > 1)
 	{
-		/* setting language to undefined if not found in language lkup table */
+		mprint("DVB subtitles with multiple languages\n");
+	}
+
+	for (int i = 0; i < cfg->n_language; i++)
+	{
+		unsigned char *ptr = data + (i * 8);
 		char lang_name[4];
-		dbg_print(CCX_DMT_DVB, "DVBSUB - LANGUAGE \"");
+		lang_name[0] = ptr[0];
+		lang_name[1] = ptr[1];
+		lang_name[2] = ptr[2];
+		lang_name[3] = '\0';
 
-		for (int char_index = 0; char_index < 3; char_index++)
-		{
-			lang_name[char_index] = cctolower(data_ptr[char_index]);
-			dbg_print(CCX_DMT_DVB, "%c", lang_name[char_index]);
-		}
-		dbg_print(CCX_DMT_DVB, "\" FOUND\n");
-
-		int j = 0;
-		for (j = 0, cfg->lang_index[i] = 0; language[j] != NULL; j++)
+		for (int j = 0; language[j] != NULL; j++)
 		{
 			if (!strncmp(lang_name, language[j], 3))
+			{
 				cfg->lang_index[i] = j;
+				break;
+			}
 		}
-
-		cfg->sub_type[i] = data_ptr[3];
-		cfg->composition_id[i] = RB16(data_ptr + 4);
-		cfg->ancillary_id[i] = RB16(data_ptr + 6);
+		cfg->sub_type[i] = ptr[3];
+		cfg->composition_id[i] = RB16(ptr + 4);
+		cfg->ancillary_id[i] = RB16(ptr + 6);
 	}
 
-	/*
-		Abhinav95: The way this function is called right now, only cfg->lang_index[0]
-		gets populated. E.g. for 3 stream languages, it will be called 3 times, and
-		set the language index in only the first element each time. This works with the
-		current state of the DVB code.
-	*/
 	if (ccx_options.dvblang)
 	{
-		if (strcmp(ccx_options.dvblang, language[cfg->lang_index[0]]) && strncmp(ccx_options.dvblang, data, 3))
+		if (strcmp(ccx_options.dvblang, language[cfg->lang_index[0]]) && strncmp(ccx_options.dvblang, (const char *)data, 3))
 		{
-			mprint("Ignoring stream language '%s' not equal to dvblang '%s'\n",
-			       data, ccx_options.dvblang);
+			mprint("Ignoring stream language index %d not equal to dvblang '%s'\n",
+			       cfg->lang_index[0], ccx_options.dvblang);
 			return -1;
 		}
 	}

@@ -402,6 +402,8 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 char *get_basename(char *filename)
 {
 	char *c;
+	char *last_dot = NULL;
+	char *last_slash = NULL;
 	int len;
 	char *basefilename;
 
@@ -417,12 +419,32 @@ char *get_basename(char *filename)
 
 	memcpy(basefilename, filename, len + 1);
 
-	for (c = basefilename + len; c > basefilename && *c != '.'; c--)
+	for (c = basefilename; *c; c++)
 	{
-		;
-	} // Get last .
-	if (*c == '.')
-		*c = 0;
+		if (*c == '.')
+			last_dot = c;
+		else if (*c == '/' || *c == '\\')
+			last_slash = c;
+	}
+
+	if (last_dot)
+	{
+		// If there is a slash, the dot must be AFTER the slash to be an extension
+		if (last_slash)
+		{
+			if (last_dot > last_slash)
+				*last_dot = 0;
+		}
+		else
+		{
+			// No slash, so dot is extension.
+			// However, if the file starts with ., it's usually not considered an extension (e.g. .gitignore)
+			// But for CCExtractor context, we usually strip extension.
+			// If filename is just ".", we shouldn't strip it to empty?
+			if (last_dot != basefilename)
+				*last_dot = 0;
+		}
+	}
 
 	return basefilename;
 }

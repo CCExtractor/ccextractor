@@ -1,4 +1,4 @@
-﻿#include "lib_ccx.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
@@ -352,7 +352,7 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 		There can be 2 types of DVB in .mkv. One is when each display block is followed by empty block in order to
 		allow gaps in time between display blocks. Another one is when display block is followed by another display block.
 		This code handles both cases but we don't save and use empty blocks as sentences, only time_starts of them. */
-		char *dvb_message = enc_ctx->last_string;
+		char *dvb_message = enc_ctx->last_str;
 		if (ret < 0 || dvb_message == NULL)
 		{
 			// No text - no sentence is returned. Free the memory

@@ -201,7 +201,9 @@ struct ccx_s_options // Options from user parameters
 	int multiprogram;
 	int out_interval;
 	int segment_on_key_frames_only;
-	int scc_framerate; // SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+	int split_dvb_subs; // Enable per-stream DVB subtitle extraction (0=disabled, 1=enabled)
+	int no_dvb_dedup;   // Disable DVB subtitle deduplication (0=dedup enabled, 1=dedup disabled)
+	int scc_framerate;  // SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif

@@ -363,6 +363,15 @@ void print_usage(void)
 	mprint("                       stream will be processed. e.g. 'eng' for English.\n");
 	mprint("                       If there are multiple languages, only this specified\n");
 	mprint("                       language stream will be processed (default).\n");
+	mprint("       --split-dvb-subs: Extract each DVB subtitle stream to a separate file.\n");
+	mprint("                       Each file will be named with the base filename plus a\n");
+	mprint("                       language suffix (e.g., output_deu.srt, output_fra.srt).\n");
+	mprint("                       For streams without language tags, uses PID as suffix.\n");
+	mprint("                       Incompatible with: stdout output, manual PID selection,\n");
+	mprint("                       multiprogram mode. Only works with SRT, SAMI, WebVTT.\n");
+	mprint("        --no-dvb-dedup: Disable DVB subtitle deduplication. By default, CCExtractor\n");
+	mprint("                       filters out duplicate DVB subtitles to prevent repetition.\n");
+	mprint("                       Use this flag to output all subtitles as-is.\n");
 	mprint("             --ocrlang: Manually select the name of the Tesseract .traineddata\n");
 	mprint("                       file. Helpful if you want to OCR a caption stream of\n");
 	mprint("                       one language with the data of another language.\n");
@@ -775,7 +784,9 @@ void version(char *location)
 	mprint("	Leptonica Version: %s\n", leptversion);
 	lept_free(leptversion);
 #endif // ENABLE_OCR
+#ifdef GPAC_AVAILABLE
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
+#endif
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char *)utf8proc_version());
 	mprint("	libpng Version: %s\n", PNG_LIBPNG_VER_STRING);
