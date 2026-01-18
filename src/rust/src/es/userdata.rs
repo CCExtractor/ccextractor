@@ -278,7 +278,8 @@ pub unsafe fn user_data(
 
                 if !proceed {
                     debug!(msg_type = DebugMessageFlag::VERBOSE; "\rThe following payload is not properly terminated.");
-                    dump(cc_data.to_vec().as_mut_ptr(), (cc_count * 3 + 1) as _, 0, 0);
+                    let mut cc_data_copy = cc_data.to_vec();
+                    dump(cc_data_copy.as_mut_ptr(), (cc_count * 3 + 1) as _, 0, 0);
                 }
                 debug!(msg_type = DebugMessageFlag::VERBOSE; "Reading {} HD CC blocks", cc_count);
 
@@ -289,10 +290,11 @@ pub unsafe fn user_data(
                 // Please note we store the current value of the global
                 // fts_now variable (and not get_fts()) as we are going to
                 // re-create the timeline in process_hdcc() (Slightly ugly).
+                let mut cc_data_copy = cc_data.to_vec();
                 store_hdcc(
                     enc_ctx,
                     dec_ctx,
-                    cc_data.to_vec().as_mut_ptr(),
+                    cc_data_copy.as_mut_ptr(),
                     cc_count as _,
                     (*dec_ctx.timing).current_tref,
                     (*dec_ctx.timing).fts_now,
@@ -535,7 +537,8 @@ pub unsafe fn user_data(
         }
 
         let vbi_data = &ustream.data[ustream.pos..ustream.pos + 720];
-        decode_vbi(dec_ctx, field, vbi_data.to_vec().as_mut_ptr(), 720, sub);
+        let mut vbi_data_copy = vbi_data.to_vec();
+        decode_vbi(dec_ctx, field, vbi_data_copy.as_mut_ptr(), 720, sub);
         debug!(msg_type = DebugMessageFlag::VERBOSE; "GXF (vbi line {}) user data:", line_nb);
     } else {
         // Some other user data
@@ -543,14 +546,8 @@ pub unsafe fn user_data(
         debug!(msg_type = DebugMessageFlag::VERBOSE; "Unrecognized user data:");
         let udatalen = ustream.data.len() - ustream.pos;
         let dump_len = if udatalen > 128 { 128 } else { udatalen };
-        dump(
-            ustream.data[ustream.pos..ustream.pos + dump_len]
-                .to_vec()
-                .as_mut_ptr(),
-            dump_len as _,
-            0,
-            0,
-        );
+        let mut data_copy = ustream.data[ustream.pos..ustream.pos + dump_len].to_vec();
+        dump(data_copy.as_mut_ptr(), dump_len as _, 0, 0);
     }
 
     debug!(msg_type = DebugMessageFlag::VERBOSE; "User data - processed");
