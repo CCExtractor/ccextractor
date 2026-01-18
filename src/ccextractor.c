@@ -438,25 +438,17 @@ int main(int argc, char *argv[])
 	// Update the Rust logger target after parsing so --quiet is respected
 	ccxr_update_logger_target();
 
-	// if (compile_ret == EXIT_NO_INPUT_FILES)
-	// {
-	// 	fprintf(stderr, "Error: No input file provided.\n");
-	// 	fprintf(stderr, "Usage: ccextractor <input_file>\n\n");
-	// 	print_usage();
-	// 	exit(EXIT_NO_INPUT_FILES);
-	// }
 	if (compile_ret == EXIT_NO_INPUT_FILES)
 	{
-    fprintf(stderr,
-	"Error: No input file provided.\n\n"
-	"Usage:\n"
-	"  ccextractor <input_file> [options]\n\n"
-	"Try:\n"
-	"  ccextractor --help\n");
-
-
-    exit(EXIT_NO_INPUT_FILES);
+		fprintf(stderr, "Error: No input file provided.\n");
+		fprintf(stderr, "Usage: ccextractor <input_file>\n\n");
+		print_usage();
+		exit(EXIT_NO_INPUT_FILES);
 	}
+
+
+
+
 
 
 	else if (compile_ret == EXIT_WITH_HELP)
