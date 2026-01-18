@@ -154,7 +154,7 @@ impl LanguageCode {
                 2 => all_alpha,                                         // Region (2 letters)
                 3 => all_alpha || all_digit,                            // 3 letters or 3 digits
                 4 => all_alpha || (subtag.chars().next().unwrap().is_ascii_digit() && all_alnum), // Script or variant starting with digit
-                5..=8 => all_alnum,                                     // Variant
+                5..=8 => all_alnum, // Variant
                 _ => false,
             };
 
@@ -204,9 +204,7 @@ impl LanguageCode {
                 return true;
             }
             // Or the track's BCP 47 could be a prefix of the filter
-            if self.code.starts_with(bcp.as_str())
-                && self.code[bcp.len()..].starts_with('-')
-            {
+            if self.code.starts_with(bcp.as_str()) && self.code[bcp.len()..].starts_with('-') {
                 return true;
             }
         }
@@ -240,8 +238,7 @@ impl MkvLangFilter {
             });
         }
 
-        let codes: Result<Vec<LanguageCode>, _> =
-            input.split(',').map(LanguageCode::new).collect();
+        let codes: Result<Vec<LanguageCode>, _> = input.split(',').map(LanguageCode::new).collect();
 
         Ok(Self {
             raw: input.to_string(),
@@ -328,11 +325,11 @@ mod tests {
         // Invalid characters
         assert!(LanguageCode::new("en_US").is_err()); // Underscore not allowed
         assert!(LanguageCode::new("en US").is_err()); // Space not allowed
-        assert!(LanguageCode::new("ça").is_err());    // Non-ASCII
+        assert!(LanguageCode::new("ça").is_err()); // Non-ASCII
 
         // Invalid structure
-        assert!(LanguageCode::new("-en").is_err());   // Leading hyphen
-        assert!(LanguageCode::new("en-").is_err());   // Trailing hyphen
+        assert!(LanguageCode::new("-en").is_err()); // Leading hyphen
+        assert!(LanguageCode::new("en-").is_err()); // Trailing hyphen
         assert!(LanguageCode::new("en--US").is_err()); // Double hyphen
 
         // Empty
