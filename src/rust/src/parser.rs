@@ -133,24 +133,6 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     }
     Ok(())
 }
-fn mkvlang_params_check(lang: &str) {
-    for part in lang.split(',') {
-        let count = part.chars().count();
-        if !(3..=6).contains(&count) {
-            fatal!(
-                cause = ExitCause::MalformedParameter;
-                "language codes should be xxx,xxx,xxx,....\n"
-            );
-        }
-
-        if count == 6 && !part.contains('-') {
-            fatal!(
-                cause = ExitCause::MalformedParameter;
-                "last language code is not of the form xxx-xx\n"
-            );
-        }
-    }
-}
 
 fn get_file_buffer_size() -> i32 {
     unsafe { FILEBUFFERSIZE }
@@ -769,9 +751,13 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.mkvlang {
-            self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
-            let str = lang.as_str();
-            mkvlang_params_check(str);
+            match MkvLangFilter::new(lang.as_str()) {
+                Ok(filter) => self.mkvlang = Some(filter),
+                Err(e) => fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "{}\n", e
+                ),
+            }
         }
         if args.srt
             || args.mcc
