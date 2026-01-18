@@ -114,7 +114,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
 
     for line in reader.lines() {
         num += 1;
-        let line = line.unwrap();
+        let line = line?;
         if line.starts_with('#') {
             continue;
         }
