@@ -2444,4 +2444,3 @@ pub mod tests {
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 }
-
