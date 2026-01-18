@@ -726,16 +726,6 @@ impl OptionsExt for Options {
             self.ocrlang = Some(ocrlang.clone());
         }
 
-        // Handle --split-dvb-subs flag
-        if args.split_dvb_subs {
-            self.split_dvb_subs = true;
-        }
-
-        // Handle --no-dvb-dedup flag
-        if args.no_dvb_dedup {
-            self.no_dvb_dedup = true;
-        }
-
         if let Some(ref quant) = args.quant {
             if !(0..=2).contains(quant) {
                 fatal!(
@@ -1676,51 +1666,6 @@ impl OptionsExt for Options {
         #[cfg(feature = "with_libcurl")]
         {
             self.enc_cfg.curlposturl = self.curlposturl.clone();
-        }
-
-        // Validate --split-dvb-subs conflicts
-        if self.split_dvb_subs {
-            if self.cc_to_stdout {
-                fatal!(
-                    cause = ExitCause::IncompatibleParameters;
-                    "--split-dvb-subs cannot be used with stdout output.\n\
-                     Multiple output files cannot be written to stdout."
-                );
-            }
-
-            if self.demux_cfg.ts_forced_cappid {
-                fatal!(
-                    cause = ExitCause::IncompatibleParameters;
-                    "--split-dvb-subs cannot be used with manual PID selection (-pn).\n\
-                     Automatic stream detection is required for multi-stream extraction."
-                );
-            }
-
-            if self.multiprogram {
-                fatal!(
-                    cause = ExitCause::IncompatibleParameters;
-                    "--split-dvb-subs cannot be used with -multiprogram.\n\
-                     These modes have conflicting output file naming schemes."
-                );
-            }
-
-            // Validate supported output formats
-            match self.write_format {
-                OutputFormat::Srt
-                | OutputFormat::Sami
-                | OutputFormat::WebVtt
-                | OutputFormat::Null
-                | OutputFormat::Transcript
-                | OutputFormat::Ssa
-                | OutputFormat::SimpleXml
-                | OutputFormat::SmpteTt => {}
-                _ => {
-                    fatal!(
-                        cause = ExitCause::IncompatibleParameters;
-                        "Unsupported OutputFormat: {:?}. --split-dvb-subs requires SRT, SAMI, WebVTT, Transcript, SSA, SimpleXML, SMPTE-TT or NULL output format.", self.write_format
-                    );
-                }
-            }
         }
     }
 }

@@ -513,13 +513,11 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 }
 struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 {
-	// mprint("DEBUG-TRACE: copy_encoder_context entered\n"); fflush(stdout);
 	struct encoder_ctx *ctx_copy = NULL;
 	ctx_copy = malloc(sizeof(struct encoder_ctx));
 	if (!ctx_copy)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating ctx_copy.");
 	memcpy(ctx_copy, ctx, sizeof(struct encoder_ctx));
-	// mprint("DEBUG-TRACE: copy_encoder_context struct copied\n"); fflush(stdout);
 
 	// Initialize copied pointers to NULL before re-allocating
 	ctx_copy->buffer = NULL;
@@ -531,7 +529,7 @@ struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 	ctx_copy->start_credits_text = NULL;
 	ctx_copy->end_credits_text = NULL;
 	ctx_copy->prev = NULL;
-	ctx_copy->last_str = NULL;
+	ctx_copy->last_string = NULL;
 
 	if (ctx->buffer)
 	{
@@ -557,7 +555,6 @@ struct encoder_ctx *copy_encoder_context(struct encoder_ctx *ctx)
 	}
 	if (ctx->timing)
 	{
-		// mprint("DEBUG-TRACE: copy_encoder_context copying timing\n"); fflush(stdout);
 		ctx_copy->timing = malloc(sizeof(struct ccx_common_timing_ctx));
 		if (!ctx_copy->timing)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_encoder_context: Out of memory allocating timing.");
@@ -673,53 +670,13 @@ struct cc_subtitle *copy_subtitle(struct cc_subtitle *sub)
 	memcpy(sub_copy, sub, sizeof(struct cc_subtitle));
 	sub_copy->datatype = sub->datatype;
 	sub_copy->data = NULL;
-	sub_copy->prev = NULL; // Don't copy prev chain to avoid double-free
 
 	if (sub->data)
 	{
-		if (sub->datatype == CC_DATATYPE_DVB)
-		{
-			// Deep copy for DVB bitmap - must copy pixel data to avoid aliasing
-			struct cc_bitmap *src_bmp = (struct cc_bitmap *)sub->data;
-			struct cc_bitmap *dst_bmp = malloc(sizeof(struct cc_bitmap));
-			if (!dst_bmp)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating bitmap.");
-			memcpy(dst_bmp, src_bmp, sizeof(struct cc_bitmap));
-
-			// Deep copy pixel data buffers (these are the actual bitmap pixels)
-			dst_bmp->data0 = NULL;
-			dst_bmp->data1 = NULL;
-			if (src_bmp->data0 && src_bmp->h > 0 && src_bmp->linesize0 > 0)
-			{
-				size_t size0 = (size_t)src_bmp->h * (size_t)src_bmp->linesize0;
-				dst_bmp->data0 = malloc(size0);
-				if (dst_bmp->data0)
-					memcpy(dst_bmp->data0, src_bmp->data0, size0);
-			}
-			if (src_bmp->data1 && src_bmp->h > 0 && src_bmp->linesize1 > 0)
-			{
-				size_t size1 = (size_t)src_bmp->h * (size_t)src_bmp->linesize1;
-				dst_bmp->data1 = malloc(size1);
-				if (dst_bmp->data1)
-					memcpy(dst_bmp->data1, src_bmp->data1, size1);
-			}
-#ifdef ENABLE_OCR
-			// Deep copy OCR text if present
-			if (src_bmp->ocr_text)
-				dst_bmp->ocr_text = strdup(src_bmp->ocr_text);
-			else
-				dst_bmp->ocr_text = NULL;
-#endif
-			sub_copy->data = dst_bmp;
-		}
-		else
-		{
-			// Original behavior for eia608_screen (608 captions)
-			sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
-			if (!sub_copy->data)
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating data.");
-			memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
-		}
+		sub_copy->data = malloc(sub->nb_data * sizeof(struct eia608_screen));
+		if (!sub_copy->data)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_subtitle: Out of memory allocating data.");
+		memcpy(sub_copy->data, sub->data, sub->nb_data * sizeof(struct eia608_screen));
 	}
 	return sub_copy;
 }
@@ -736,11 +693,8 @@ void free_encoder_context(struct encoder_ctx *ctx)
 	freep(&ctx->subline);
 	freep(&ctx->start_credits_text);
 	freep(&ctx->end_credits_text);
-	// NOTE: Do NOT recurse into ctx->prev here. Ownership of prev is managed by
-	// dinit_encoder() which explicitly calls free_encoder_context(ctx->prev).
-	// Recursing here causes double-free when dinit_encoder cleans up.
 	freep(&ctx->prev);
-	freep(&ctx->last_str);
+	freep(&ctx->last_string);
 	freep(&ctx);
 }
 void free_decoder_context(struct lib_cc_decode *ctx)

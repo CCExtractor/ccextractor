@@ -29,12 +29,12 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 
-void write_stringz_as_smptett(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
-	int len = strlen(str_arg);
+	int len = strlen(string);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
 	if (!unescaped)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_smptett() - not enough memory for unescaped buffer.\n");
@@ -61,14 +61,14 @@ void write_stringz_as_smptett(char *str_arg, struct encoder_ctx *context, LLONG 
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (str_arg[pos_r] == '\\' && str_arg[pos_r + 1] == 'n')
+		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
 		}
 		else
 		{
-			unescaped[pos_w] = str_arg[pos_r];
+			unescaped[pos_w] = string[pos_r];
 			pos_r++;
 		}
 		pos_w++;

@@ -445,9 +445,9 @@ void remap_g0_charset(uint8_t c)
 			fprintf(stderr, "- G0 Latin National Subset ID 0x%1x.%1x is not implemented\n", (c >> 3), (c & 0x7));
 			return;
 		}
-		else if (m >= array_length(G0_LATIN_NATIONAL_SUBSETS))
+		else if (m >= 14)
 		{
-			fprintf(stderr, "- G0 Latin National Subset index %d is out of bounds (max %zu)\n", m, array_length(G0_LATIN_NATIONAL_SUBSETS) - 1);
+			fprintf(stderr, "- G0 Latin National Subset index %d is out of bounds\n", m);
 			return;
 		}
 		else

@@ -525,7 +525,7 @@ struct demuxer_data *get_best_data(struct demuxer_data *data)
 	{
 		if (ptr->codec == CCX_CODEC_DVB)
 		{
-			ret = ptr;
+			ret = data;
 			goto end;
 		}
 	}
@@ -581,14 +581,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 		return CCX_OK;
 	}
 	vpesdatalen = read_video_pes_header(ctx, ptr, cinfo->capbuf, &pesheaderlen, cinfo->capbuflen);
-	if (vpesdatalen < 0 && ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB)
-	{
-		// Fallback: Treat as raw payload if PES header is missing/invalid in split mode
-		vpesdatalen = cinfo->capbuflen;
-		pesheaderlen = 0;
-		dbg_print(CCX_DMT_VERBOSE, "Fallback: Treating broken PES packet as raw DVB payload.\n");
-	}
-
 	if (ccx_options.pes_header_to_stdout && cinfo->codec == CCX_CODEC_DVB) // for teletext we have its own header dump
 	{
 		pes_header_dump(cinfo->capbuf, pesheaderlen);
@@ -604,7 +596,6 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (ccx_options.hauppauge_mode)
 	{
-		// if (cinfo->pid == 0x104) mprint("DEBUG-HAUP: 0x104 detected\n");
 		if (haup_capbuflen % 12 != 0)
 			mprint("Warning: Inconsistent Hauppage's buffer length\n");
 		if (!haup_capbuflen)
@@ -654,9 +645,11 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 	{
 		if (ptr->len + databuflen >= BUFSIZE)
 		{
-			mprint("Warning: PES data packet (%ld) larger than remaining buffer (%lld), skipping packet.\n",
-			       databuflen, BUFSIZE - ptr->len);
-			return CCX_OK;
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
+			      "PES data packet (%ld) larger than remaining buffer (%lld).\n"
+			      "Please send bug report!",
+			      databuflen, BUFSIZE - ptr->len);
+			return CCX_EAGAIN;
 		}
 		memcpy(ptr->buffer + ptr->len, databuf, databuflen);
 		ptr->len += databuflen;
@@ -684,11 +677,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	      cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
 	     !ccx_options.analyze_video_stream))
 	{
-		// In split DVB mode, allow DVB subtitle packets even if ignored
-		if (!(ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB))
-		{
-			return CCX_OK;
-		}
+		return CCX_OK;
 	}
 
 	// Verify PES before copy to capbuf
@@ -697,18 +686,11 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 		    payload->start[2] != 0x01)
 		{
-			if (ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB)
-			{
-				dbg_print(CCX_DMT_VERBOSE, "Notice: Missing PES header in DVB packet (allowing due to split mode)\n");
-			}
-			else
-			{
-				mprint("Notice: Missing PES header\n");
-				dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
-				cinfo->saw_pesstart = 0;
-				errno = EINVAL;
-				return -1;
-			}
+			mprint("Notice: Missing PES header\n");
+			dump(CCX_DMT_DUMPDEF, payload->start, payload->length, 0, 0);
+			cinfo->saw_pesstart = 0;
+			errno = EINVAL;
+			return -1;
 		}
 	}
 
@@ -798,11 +780,6 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (ret != CCX_OK)
 			break;
 
-		if (payload.pid == 0x104)
-		{
-			// mprint("DEBUG-RAW: pid=0x104 err=%d len=%d\n", payload.transport_error, payload.length);
-		}
-
 		// Skip damaged packets, they could do more harm than good
 		if (payload.transport_error)
 		{
@@ -887,9 +864,8 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			case 0: // First time we see this PID
 				if (ctx->PIDs_programs[payload.pid])
 				{
-					unsigned int st = ctx->PIDs_programs[payload.pid]->printable_stream_type;
 					dbg_print(CCX_DMT_PARSE, "\nNew PID found: %u (%s), belongs to program: %u\n", payload.pid,
-						  (st < 256) ? desc[st] : "Unknown",
+						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type],
 						  ctx->PIDs_programs[payload.pid]->program_number);
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
@@ -904,10 +880,9 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			case 1: // Saw it before but we didn't know what program it belonged to. Luckier now?
 				if (ctx->PIDs_programs[payload.pid])
 				{
-					unsigned int st = ctx->PIDs_programs[payload.pid]->printable_stream_type;
 					dbg_print(CCX_DMT_PARSE, "\nProgram for PID: %u (previously unknown) is: %u (%s)\n", payload.pid,
 						  ctx->PIDs_programs[payload.pid]->program_number,
-						  (st < 256) ? desc[st] : "Unknown");
+						  desc[ctx->PIDs_programs[payload.pid]->printable_stream_type]);
 					ctx->PIDs_seen[payload.pid] = 2;
 				}
 				break;
@@ -918,7 +893,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// PTS calculation
-		if (payload.pesstart && payload.length >= 14) // if there is PES Header data in the payload and we didn't get the first pts of that stream
+		if (payload.pesstart) // if there is PES Header data in the payload and we didn't get the first pts of that stream
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
@@ -932,16 +907,13 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 				pts = get_pts(payload.start);
 				// keep in mind we already checked if we have this stream id
 				// we find the index of the packet PID in the have_PIDs array
-				int pid_index = -1;
+				int pid_index;
 				for (int i = 0; i < ctx->num_of_PIDs; i++)
 					if (payload.pid == ctx->have_PIDs[i])
 						pid_index = i;
-				if (pid_index != -1)
-				{
-					ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
-					if (pts < ctx->min_pts[pid_index])
-						ctx->min_pts[pid_index] = pts; // and add its packet pts
-				}
+				ctx->stream_id_of_each_pid[pid_index] = pes_stream_id;
+				if (pts < ctx->min_pts[pid_index])
+					ctx->min_pts[pid_index] = pts; // and add its packet pts
 			}
 		}
 
@@ -985,15 +957,6 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		cinfo = get_cinfo(ctx, payload.pid);
-		cinfo = get_cinfo(ctx, payload.pid);
-		if (payload.pid == 0x104 || payload.pid == 0x106)
-		{
-			// mprint("DEBUG-PID: pid=0x%X cinfo=%p len=%d\n", payload.pid, cinfo, payload.length);
-			if (cinfo)
-			{
-				// mprint("DEBUG-INFO: ignore=%d codec=%d pesstart=%d\n", cinfo->ignore, cinfo->codec, payload.pesstart);
-			}
-		}
 		if (cinfo == NULL)
 		{
 			if (!packet_analysis_mode)
@@ -1009,58 +972,44 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 			   cinfo->stream != CCX_STREAM_TYPE_VIDEO_HEVC) ||
 			  !ccx_options.analyze_video_stream))
 		{
-			// In split DVB mode, do NOT skip/cleanup DVB streams
-			if (ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB)
+			if (cinfo->codec_private_data)
 			{
-				// Fall through - process this DVB packet
-			}
-			else
-			{
-				if (cinfo->codec_private_data)
+				switch (cinfo->codec)
 				{
-					switch (cinfo->codec)
-					{
-						case CCX_CODEC_TELETEXT:
-							telxcc_close(&cinfo->codec_private_data, NULL);
-							break;
-						case CCX_CODEC_DVB:
-							dvbsub_close_decoder(&cinfo->codec_private_data);
-							break;
-						case CCX_CODEC_ISDB_CC:
-							delete_isdb_decoder(&cinfo->codec_private_data);
-						default:
-							break;
-					}
-					cinfo->codec_private_data = NULL;
+					case CCX_CODEC_TELETEXT:
+						telxcc_close(&cinfo->codec_private_data, NULL);
+						break;
+					case CCX_CODEC_DVB:
+						dvbsub_close_decoder(&cinfo->codec_private_data);
+						break;
+					case CCX_CODEC_ISDB_CC:
+						delete_isdb_decoder(&cinfo->codec_private_data);
+					default:
+						break;
 				}
+				cinfo->codec_private_data = NULL;
+			}
 
-				if (cinfo->capbuflen > 0)
-				{
-					freep(&cinfo->capbuf);
-					cinfo->capbufsize = 0;
-					cinfo->capbuflen = 0;
-					delete_demuxer_data_node_by_pid(data, cinfo->pid);
-				}
-				continue;
+			if (cinfo->capbuflen > 0)
+			{
+				freep(&cinfo->capbuf);
+				cinfo->capbufsize = 0;
+				cinfo->capbuflen = 0;
+				delete_demuxer_data_node_by_pid(data, cinfo->pid);
 			}
+			continue;
 		}
 
 		// Video PES start
-		if (payload.pesstart && payload.length >= 6)
+		if (payload.pesstart)
 		{
 			cinfo->saw_pesstart = 1;
 			cinfo->prev_counter = payload.counter - 1;
 		}
 
 		// Discard packets when no pesstart was found.
-		// Exception: DVB in split mode - allow packets to accumulate
 		if (!cinfo->saw_pesstart)
-		{
-			if (!(ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB))
-			{
-				continue;
-			}
-		}
+			continue;
 
 		if ((cinfo->prev_counter == 15 ? 0 : cinfo->prev_counter + 1) != payload.counter)
 		{

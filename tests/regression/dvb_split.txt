@@ -1,6 +1,0 @@
-TEST: split_dvb_multilang
-INPUT: arte_multiaudio.ts
-ARGS: --split-dvb-subs -o output_split
-EXPECT: output_split_fra.srt exists
-
-EXPECT: output_split_deu.srt exists

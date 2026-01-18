@@ -4,10 +4,6 @@
 - Fix: Prevent infinite loop on truncated MKV files
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
-- Fix: Resolve double-free crash in DVB split pipeline cleanup
-- New: DVB subtitle deduplication to prevent repeated subtitles in multi-stream extraction
-  - Automatically detects and skips duplicate subtitles based on PTS, composition ID, and ancillary ID
-  - Use --no-dvb-dedup to disable deduplication if needed
 
 0.96.5 (2026-01-05)
 -------------------
@@ -33,10 +29,6 @@
 
 0.96.3 (2025-12-29)
 -------------------
-- New: DVB multi-stream subtitle extraction with --split-dvb-subs option (#447)
-  - Extract multiple DVB subtitle streams to separate output files simultaneously
-  - Output files named with language and PID (e.g., output_dan_0x091F.srt)
-  - Handles PAT changes in transport streams without crashing
 - New: VOBSUB subtitle extraction with OCR support for MP4 files
 - New: VOBSUB subtitle extraction support for MKV/Matroska files
 - New: Native SCC (Scenarist Closed Caption) input file support - CCExtractor can now read SCC files

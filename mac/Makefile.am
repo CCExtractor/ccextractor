@@ -100,10 +100,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/configuration.c \
 				../src/lib_ccx/configuration.h \
 				../src/lib_ccx/disable_warnings.h \
-			../src/lib_ccx/dvb_subtitle_decoder.c \
-			../src/lib_ccx/dvb_subtitle_decoder.h \
-			../src/lib_ccx/dvb_dedup.c \
-			../src/lib_ccx/dvb_dedup.h \
+				../src/lib_ccx/dvb_subtitle_decoder.c \
+				../src/lib_ccx/dvb_subtitle_decoder.h \
 				../src/lib_ccx/dvd_subtitle_decoder.c \
 				../src/lib_ccx/dvd_subtitle_decoder.h \
 				../src/lib_ccx/es_functions.c \
