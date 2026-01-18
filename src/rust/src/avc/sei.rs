@@ -50,7 +50,7 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return 0;
     }
 
-    let mut payload_type = 0;
+    let mut payload_type: usize = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_type += 255;
         seibuf_idx += 1;
@@ -60,10 +60,10 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_type += seibuf[seibuf_idx] as i32;
+    payload_type += seibuf[seibuf_idx] as usize;
     seibuf_idx += 1;
 
-    let mut payload_size = 0;
+    let mut payload_size: usize = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_size += 255;
         seibuf_idx += 1;
@@ -73,12 +73,12 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_size += seibuf[seibuf_idx] as i32;
+    payload_size += seibuf[seibuf_idx] as usize;
     seibuf_idx += 1;
 
     let mut broken = false;
     let payload_start = seibuf_idx;
-    seibuf_idx += payload_size as usize;
+    seibuf_idx += payload_size;
 
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Payload type: {} size: {} - ", payload_type, payload_size);
 
@@ -94,8 +94,8 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
     debug!(msg_type = DebugMessageFlag::VERBOSE; "");
 
     // Ignore all except user_data_registered_itu_t_t35() payload
-    if !broken && payload_type == 4 && payload_start + payload_size as usize <= seibuf.len() {
-        let payload_data = &seibuf[payload_start..payload_start + payload_size as usize];
+    if !broken && payload_type == 4 && payload_start + payload_size <= seibuf.len() {
+        let payload_data = &seibuf[payload_start..payload_start + payload_size];
         user_data_registered_itu_t_t35(ctx, payload_data);
     }
 
