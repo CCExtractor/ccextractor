@@ -342,6 +342,10 @@ pub unsafe fn user_data(
         let dcd_pos = ustream.pos; // dish caption data position
         match pattern_type {
             0x02 => {
+                if ustream.data.len() - ustream.pos < 4 {
+                    info!("Dish Network caption: insufficient data");
+                    return Ok(1);
+                }
                 // Two byte caption - always on B-frame
                 // The following 4 bytes are:
                 // 0  :  0x09
@@ -389,6 +393,10 @@ pub unsafe fn user_data(
                 // Ignore 3 (0x0A, followed by two unknown) bytes.
             }
             0x04 => {
+                if ustream.data.len() - ustream.pos < 5 {
+                    info!("Dish Network caption: insufficient data");
+                    return Ok(1);
+                }
                 // Four byte caption - always on B-frame
                 // The following 5 bytes are:
                 // 0  :  0x09
@@ -425,6 +433,10 @@ pub unsafe fn user_data(
                 // Ignore 4 (0x020A, followed by two unknown) bytes.
             }
             0x05 => {
+                if ustream.data.len() - ustream.pos < 12 {
+                    info!("Dish Network caption: insufficient data");
+                    return Ok(1);
+                }
                 // Buffered caption - always on I-/P-frame
                 // The following six bytes are:
                 // 0  :  0x04
@@ -432,7 +444,7 @@ pub unsafe fn user_data(
                 // 1  : prev dcd[2]
                 // 2-3: prev dcd[3-4]
                 // 4-5: prev dcd[5-6]
-                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 10]; // Need more bytes for this case
+                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 12]; // Need more bytes for this case
                 debug!(msg_type = DebugMessageFlag::PARSE; " - {:02X}  pch: {:02X} {:5} {:02X}:{:02X}",
                           dcd_data[0], dcd_data[1],
                           (dcd_data[2] as u32) * 256 + (dcd_data[3] as u32),
@@ -534,6 +546,7 @@ pub unsafe fn user_data(
 
         if udatalen < 720 {
             info!("MPEG:VBI: Minimum 720 bytes in luma line required");
+            return Ok(1);
         }
 
         let vbi_data = &ustream.data[ustream.pos..ustream.pos + 720];
