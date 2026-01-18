@@ -134,54 +134,16 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     Ok(())
 }
 fn mkvlang_params_check(lang: &str) {
-    let mut initial = 0;
-    let mut _present = 0;
-
-    for (char_index, c) in lang.to_lowercase().chars().enumerate() {
-        if c == ',' {
-            _present = char_index;
-
-            if _present - initial < 3 || _present - initial > 6 {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "language codes should be xxx,xxx,xxx,....\n"
-                );
-            }
-
-            if _present - initial == 6 {
-                let sub_slice = &lang[initial.._present];
-                if !sub_slice.contains('-') {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "language codes should be xxx,xxx,xxx,....\n"
-                    );
-                }
-            }
-
-            initial = _present + 1;
+    for part in lang.split(',') {
+        let count = part.chars().count();
+        if !(3..=6).contains(&count) {
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "language codes should be xxx,xxx,xxx,....\n"
+            );
         }
-    }
 
-    // Steps to check for the last lang of multiple mkvlangs provided by the user.
-    _present = lang.len() - 1;
-
-    for char_index in (0.._present).rev() {
-        if lang.chars().nth(char_index) == Some(',') {
-            initial = char_index + 1;
-            break;
-        }
-    }
-
-    if _present - initial < 2 || _present - initial > 5 {
-        fatal!(
-            cause = ExitCause::MalformedParameter;
-            "last language code should be xxx.\n"
-        );
-    }
-
-    if _present - initial == 5 {
-        let sub_slice = &lang[initial.._present];
-        if !sub_slice.contains('-') {
+        if count == 6 && !part.contains('-') {
             fatal!(
                 cause = ExitCause::MalformedParameter;
                 "last language code is not of the form xxx-xx\n"
