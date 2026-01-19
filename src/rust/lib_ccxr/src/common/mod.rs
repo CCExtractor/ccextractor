@@ -18,8 +18,10 @@
 
 mod bitstream;
 mod constants;
+mod mkv_lang;
 mod options;
 
 pub use bitstream::*;
 pub use constants::*;
+pub use mkv_lang::*;
 pub use options::*;
