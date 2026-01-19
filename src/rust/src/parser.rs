@@ -1660,7 +1660,7 @@ pub mod tests {
     use crate::{args::*, parser::*};
     use clap::Parser;
     use lib_ccxr::{
-        common::{OutputFormat, SelectCodec, StreamMode, StreamType},
+        common::{MkvLangFilter, OutputFormat, SelectCodec, StreamMode, StreamType},
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
 
@@ -2737,7 +2737,7 @@ pub mod tests {
     #[test]
     fn test_mkvlang_sets_mkv_language() {
         let (options, _) = parse_args(&["--mkvlang", "eng"]);
-        assert_eq!(options.mkvlang.unwrap(), Language::Eng);
+        assert_eq!(options.mkvlang.unwrap(), "eng".parse::<MkvLangFilter>().unwrap());
     }
 
     #[test]
