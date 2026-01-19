@@ -255,4 +255,13 @@ endif (PKG_CONFIG_FOUND)
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
+# ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
+# Force the linker to pull these symbols from ccx before processing ccx_rust.
+if (NOT WIN32 AND NOT APPLE)
+  target_link_options (ccextractor PRIVATE
+    -Wl,--undefined=decode_vbi
+    -Wl,--undefined=do_cb
+    -Wl,--undefined=store_hdcc)
+endif()
+
 install (TARGETS ccextractor DESTINATION bin)
