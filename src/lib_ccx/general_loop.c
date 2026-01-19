@@ -55,12 +55,12 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	do
 	{
 		if (BUFSIZE - data->len < 500)
-		{
+			{
 			mprint("Less than 500 left\n");
 			enough = 1; // Stop when less than 500 bytes are left in buffer
 		}
 		else
-		{
+			{
 			result = buffered_read(ctx->demux_ctx, nextheader, 6);
 			ctx->demux_ctx->past += result;
 			if (result != 6)
@@ -415,7 +415,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		c2++; // Skip blank
 		/*
 		if (strncmp (c2,mpeg_header,strlen (mpeg_header))) // No idea how to deal with this.
-		{
+			{
 			if (!warning_shown)
 			{
 				warning_shown=1;
@@ -439,7 +439,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		if (!bytes)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
 		for (unsigned i = 0; i < byte_count; i++)
-		{
+			{
 			unsigned char high = c2[0];
 			unsigned char low = c2[1];
 			int value = hex_to_int(high, low);
@@ -462,7 +462,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		// then ff, then data with field info, and terminated with ff.
 		if (byte_count > 3 && bytes[0] == 0x03 &&
 		    bytes[2] == 0xff && bytes[byte_count - 1] == 0xff)
-		{
+			{
 			ok = 1;
 			for (unsigned i = 3; i < byte_count - 2; i += 3)
 			{
@@ -476,7 +476,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		// Case 2 (seen in P2Pfiend samples):
 		// Seems to match McPoodle's descriptions on DVD encoding
 		else
-		{
+			{
 			unsigned char magic = bytes[0];
 			/* unsigned extra_field_flag=magic&1; */
 			unsigned caption_count = ((magic >> 1) & 0x1F);
@@ -515,7 +515,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 			}
 		}
 		if (!ok && !warning_shown)
-		{
+			{
 			warning_shown = 1;
 			mprint("\nWarning: This file contains data I can't process: Please submit .hex for analysis!\n");
 		}
@@ -581,7 +581,7 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 	{
 		// Check for CDP identifier
 		if (buffer[pos] != 0x96 || buffer[pos + 1] != 0x69)
-		{
+			{
 			pos++;
 			continue;
 		}
@@ -603,7 +603,7 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 
 		// Look for cc_data section (0x72) within CDP
 		while (cdp_pos < pos + cdp_length - 4)
-		{
+			{
 			if (buffer[cdp_pos] == 0x72) // cc_data section
 			{
 				cc_count = buffer[cdp_pos + 1] & 0x1F;
@@ -629,7 +629,7 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 		}
 
 		if (cc_count > 0 && cc_data != NULL)
-		{
+			{
 			// Calculate PTS based on CDP frame count and frame rate
 			static const int fps_table[] = {0, 24, 24, 25, 30, 30, 50, 60, 60};
 			int fps = (framerate_code < 9) ? fps_table[framerate_code] : 30;
@@ -644,6 +644,7 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 			}
 			set_current_pts(dec_ctx->timing, pts);
 			set_fts(dec_ctx->timing);
+			}
 
 #ifndef DISABLE_RUST
 			// Enable DTVCC decoder for CEA-708 captions
@@ -699,6 +700,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	dec_ctx->timing->pts_set = 2; // MinPtsSet
 	set_current_pts(dec_ctx->timing, 0);
 	set_fts(dec_ctx->timing);
+			}
 
 	do
 	{
@@ -711,14 +713,14 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 
 		// Check if this is DVD raw format using Rust detection
 		if (!is_dvdraw && !is_scc && ccxr_is_dvdraw_header(data->buffer, (unsigned int)data->len))
-		{
+			{
 			is_dvdraw = 1;
 			mprint("Detected McPoodle's DVD raw format\n");
 		}
 
 		// Check if this is SCC format using Rust detection
 		if (!is_scc && !is_dvdraw && ccxr_is_scc_file(data->buffer, (unsigned int)data->len))
-		{
+			{
 			is_scc = 1;
 			mprint("Detected SCC (Scenarist Closed Caption) format\n");
 		}
@@ -726,13 +728,13 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		// Check if this is raw CDP format (starts with 0x9669)
 		if (!is_cdp && !is_scc && !is_dvdraw && data->len >= 2 &&
 		    data->buffer[0] == 0x96 && data->buffer[1] == 0x69)
-		{
+			{
 			is_cdp = 1;
 			mprint("Detected raw CDP (Caption Distribution Packet) format\n");
 		}
 
 		if (is_mcc_output && !is_dvdraw && !is_scc && !is_cdp)
-		{
+			{
 			// For MCC output, encode raw data directly without decoding
 			// This preserves the original CEA-608 byte pairs in CDP format
 			size_t pairs = process_raw_for_mcc(enc_ctx, dec_ctx, data->buffer, data->len);
@@ -740,24 +742,24 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 				caps = 1;
 		}
 		else if (is_dvdraw)
-		{
+			{
 			// Use Rust implementation - handles timing internally
 			ret = ccxr_process_dvdraw(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len);
 		}
 		else if (is_scc)
-		{
+			{
 			// Use Rust SCC implementation - handles timing internally via SMPTE timecodes
 			ret = ccxr_process_scc(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len, ccx_options.scc_framerate);
 		}
 		else if (is_cdp)
-		{
+			{
 			// Process raw CDP packets (e.g., from SDI VANC capture)
 			ret = process_raw_cdp(enc_ctx, dec_ctx, dec_sub, data->buffer, data->len);
 			if (ret > 0)
 				caps = 1;
 		}
 		else
-		{
+			{
 			ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
 			// For raw mode, cb_field1 is incremented by do_cb() for each CC pair.
 			// After processing each chunk, add the accumulated time to current_pts
@@ -767,10 +769,11 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			// when calculating ticks for large raw files (issue #1565).
 			add_current_pts(dec_ctx->timing, (LLONG)cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing);
+			}
 		}
 
 		if (!is_mcc_output && dec_sub->got_output)
-		{
+			{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
@@ -798,11 +801,11 @@ size_t process_raw_with_field(struct lib_cc_decode *dec_ctx, struct cc_subtitle 
 	for (i = 0; i < len; i = i + 3)
 	{
 		if (!dec_ctx->saw_caption_block && *(buffer + i) == 0xff && *(buffer + i + 1) == 0xff)
-		{
+			{
 			// Skip broadcast header
 		}
 		else
-		{
+			{
 			data[0] = buffer[i];
 			data[1] = buffer[i + 1];
 			data[2] = buffer[i + 2];
@@ -826,11 +829,11 @@ size_t process_raw(struct lib_cc_decode *ctx, struct cc_subtitle *sub, unsigned 
 	for (i = 0; i < len; i = i + 2)
 	{
 		if (!ctx->saw_caption_block && *(buffer + i) == 0xff && *(buffer + i + 1) == 0xff)
-		{
+			{
 			// Skip broadcast header
 		}
 		else
-		{
+			{
 			data[1] = buffer[i];
 			data[2] = buffer[i + 1];
 
@@ -870,16 +873,20 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 		if (dec_ctx->timing->pts_set)
 			set_fts(dec_ctx->timing); // Try to fix timing from TS data
+		}
 	}
 	else if (data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
 		// Safety check: Skip if decoder was freed due to PAT change
 		if (dec_ctx->private_data)
-		{
+			{
+			if (data_node->len > 2)
+			{
 			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
 			if (ret < 0)
 				mprint("Return from dvbsub_decode: %d\n", ret);
 			set_fts(dec_ctx->timing);
+			}
 		}
 		got = data_node->len;
 	}
@@ -891,7 +898,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	else if (data_node->bufferdatatype == CCX_DVD_SUBTITLE)
 	{
 		if (dec_ctx->is_alloc == 0)
-		{
+			{
 			dec_ctx->private_data = init_dvdsub_decode();
 			dec_ctx->is_alloc = 1;
 		}
@@ -905,11 +912,11 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		/* Check if teletext context is still valid (may have been freed by dinit_cap
 		   during PAT change while stream was being processed) */
 		if (!dec_ctx->private_data)
-		{
+			{
 			got = data_node->len; // Skip processing, context was freed
 		}
 		else
-		{
+			{
 			/* Process Teletext packets even when no encoder context exists (e.g. -out=report).
 			   This enables tlt_process_pes_packet() to detect subtitle pages by populating
 			   the seen_sub_page[] array inside the teletext decoder. */
@@ -934,7 +941,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	{
 		// The asf_get_more_data() loop sets current_pts when possible
 		if (dec_ctx->timing->pts_set == 0)
-		{
+			{
 			mprint("DVR-MS/ASF file without useful time stamps - count blocks.\n");
 			// Otherwise rely on counting blocks
 			dec_ctx->timing->current_pts = 12345; // Pick a valid PTS time
@@ -942,7 +949,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 
 		if (dec_ctx->timing->current_pts != last_pts)
-		{
+			{
 			// Only initialize the FTS values and reset the cb
 			// counters when the PTS is different. This happens frequently
 			// with ASF files.
@@ -957,6 +964,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
+			}
 
 			last_pts = dec_ctx->timing->current_pts;
 		}
@@ -987,17 +995,18 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 		// Initialize timing if not set (use caption PTS as reference)
 		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
-		{
+			{
 			dec_ctx->timing->min_pts = data_node->pts;
 			dec_ctx->timing->pts_set = 2; // MinPtsSet
 			dec_ctx->timing->sync_pts = data_node->pts;
 			set_fts(dec_ctx->timing);
+			}
 		}
 
 #ifndef DISABLE_RUST
 		// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
 		if (dec_ctx->dtvcc_rust)
-		{
+			{
 			int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
 			if (!is_active)
 			{
@@ -1030,7 +1039,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	if (data_node)
 	{
 		if (got > 0)
-		{
+			{
 			memmove(data_node->buffer, data_node->buffer + got, (size_t)(data_node->len - got));
 			data_node->len -= got;
 		}
@@ -1076,13 +1085,13 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 		// segment_now = 1;
 		if (!ctx->segment_on_key_frames_only ||
 		    dec_ctx->picture_coding_type == CCX_FRAME_TYPE_I_FRAME) // Segment only when an I-Frame is found
-		{
+			{
 			segment_now = 1;
 			enc_ctx->segment_pending = 0;
 			enc_ctx->segment_last_key_frame = 0;
 		}
 		else
-		{
+			{
 			if (enc_ctx->segment_pending) // We already knew we had to segment but can we do it?
 			{
 				if (dec_ctx->num_key_frames > enc_ctx->segment_last_key_frame)
@@ -1104,7 +1113,7 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 
 	if (segment_now)
 	{
-		{
+			{
 			ctx->segment_counter++;
 			if (enc_ctx)
 			{
@@ -1162,7 +1171,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	{
 		int video_pid = get_video_stream(ctx->demux_ctx);
 		if (video_pid != pid && video_pid != -1)
-		{
+			{
 			struct cap_info *cinfo_video = get_cinfo(ctx->demux_ctx, pid);
 			struct lib_cc_decode *dec_ctx_video = update_decoder_list_cinfo(ctx, cinfo_video);
 			*enc_ctx = update_encoder_list_cinfo(ctx, cinfo_video);
@@ -1217,7 +1226,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	{
 		int p_index = 0; // program index
 		for (int i = 0; i < ctx->demux_ctx->nb_program; i++)
-		{
+			{
 			if ((*dec_ctx)->program_number == ctx->demux_ctx->pinfo[i].program_number)
 			{
 				p_index = i;
@@ -1226,7 +1235,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		}
 
 		if ((*dec_ctx)->codec == CCX_CODEC_TELETEXT) // even if there's no sub data, we still need to set the min_pts
-		{
+			{
 			if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1] != UINT64_MAX) // Teletext is synced with subtitle packet PTS
 			{
 				*min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1];
@@ -1235,7 +1244,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			}
 		}
 		if ((*dec_ctx)->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
-		{
+			{
 			if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
 			{
 				*min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
@@ -1260,7 +1269,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	if (*data_node) // no sub data, no need to process non-existing data
 	{
 		if ((*data_node)->pts != CCX_NOPTS)
-		{
+			{
 			struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
 			LLONG pts;
 			if ((*data_node)->tb.num != 1 || (*data_node)->tb.den != MPEG_CLOCK_FREQ)
@@ -1281,7 +1290,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		}
 
 		if ((*data_node)->bufferdatatype == CCX_ISDB_SUBTITLE)
-		{
+			{
 			uint64_t tstamp;
 			if (ctx->demux_ctx->global_timestamp_inited)
 			{
@@ -1302,12 +1311,12 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		// We skip primary processing for DVB here to avoid double-processing (or processing as 'default' output).
 		// Teletext/other streams still go through here.
 		if (*data_node && !(ccx_options.split_dvb_subs && (*dec_ctx)->codec == CCX_CODEC_DVB))
-		{
+			{
 			ret = process_data(*enc_ctx, *dec_ctx, *data_node);
 		}
 
 		if (*enc_ctx != NULL)
-		{
+			{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
 			{
 				*caps = 1;
@@ -1319,7 +1328,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		// DVB streams are parallel consumers, processed AFTER the primary stream
 		// This ensures Teletext controls timing/loop lifetime while DVB is extracted separately
 		if (ccx_options.split_dvb_subs)
-		{
+			{
 			// Guard: Only process DVB if timing has been initialized by Teletext
 			// if ((*dec_ctx)->timing == NULL || (*dec_ctx)->timing->pts_set == 0)
 			// {
@@ -1427,7 +1436,7 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 
 		// Process the last subtitle for DVB
 		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
-		{
+			{
 			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE &&
 			    (*dec_ctx)->dec_sub.prev && (*dec_ctx)->dec_sub.prev->end_time == 0)
 			{
@@ -1505,14 +1514,14 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		position_sanity_check(ctx->demux_ctx);
 		ret = get_more_data(ctx, &datalist);
 		if (ret == CCX_EOF)
-		{
+			{
 			end_of_file = 1;
 		}
 		if (!datalist)
 			continue;
 		position_sanity_check(ctx->demux_ctx);
 		if (!ctx->multiprogram)
-		{
+			{
 			struct encoder_ctx *enc_ctx = NULL;
 			/* Note: Do NOT declare a new 'ret' variable here!
 			   We must update the outer 'ret' to track whether captions were found.
@@ -1532,7 +1541,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 		}
 		else
-		{
+			{
 			struct cap_info *cinfo = NULL;
 			struct cap_info *program_iter = NULL;
 			struct cap_info *ptr = &ctx->demux_ctx->cinfo_tree;
@@ -1577,6 +1586,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[PRIVATE_STREAM_1]; // it means we got the first pts for private stream 1
 							set_current_pts(dec_ctx->timing, min_pts);
 							set_fts(dec_ctx->timing);
+			}
 						}
 					}
 					if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
@@ -1593,6 +1603,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 								dec_ctx->timing->sync_pts = min_pts;
 							}
 							set_fts(dec_ctx->timing);
+			}
 						}
 					}
 				}
@@ -1649,7 +1660,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		// MULTIPROGRAM DVB SECONDARY PASS: Route DVB streams to per-language pipelines
 		// This mirrors the single-program DVB secondary pass at lines 1321-1417 (Bug 3 fix)
 		if (ccx_options.split_dvb_subs)
-		{
+			{
 			struct demuxer_data *dvb_ptr = datalist;
 			while (dvb_ptr)
 			{
@@ -1726,7 +1737,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		if (ctx->live_stream)
-		{
+			{
 			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 			if (!t && ctx->demux_ctx->global_timestamp_inited)
 				t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
@@ -1753,7 +1764,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			}
 		}
 		else
-		{
+			{
 			if (ctx->total_inputsize > 255) // Less than 255 leads to division by zero below.
 			{
 				int progress = (int)((((ctx->total_past + ctx->demux_ctx->past) >> 8) * 100) / (ctx->total_inputsize >> 8));
@@ -1804,7 +1815,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	{
 
 		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
-		{
+			{
 			void *saved_private_data = dec_ctx->private_data;
 			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
 			// NULL out any cinfo entries that shared this private_data pointer
@@ -1916,7 +1927,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	while (1)
 	{
 		if (parsebuf[6] == 0 && parsebuf[7] == 2)
-		{
+			{
 			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
 			if (result != TELETEXT_CHUNK_LEN)
@@ -1940,7 +1951,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		bread += (int)result;
 
 		if (result != 10)
-		{
+			{
 			if (result != 0)
 				mprint("Premature end of file!\n");
 
@@ -1955,7 +1966,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			  print_mstime_static(currfts), cbcount);
 
 		if (cbcount > 0)
-		{
+			{
 			if (cbcount * 3 > parsebufsize)
 			{
 				unsigned char *new_parsebuf = (unsigned char *)realloc(parsebuf, cbcount * 3);
@@ -1980,6 +1991,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			// Process the data
 			set_current_pts(dec_ctx->timing, currfts * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing); // Now set the FTS related variables
+			}
 
 			for (int j = 0; j < cbcount * 3; j = j + 3)
 			{
@@ -1987,7 +1999,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			}
 		}
 		if (dec_sub->got_output)
-		{
+			{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
@@ -2001,7 +2013,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	if (!caps && enc_ctx != NULL)
 	{
 		if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
-		{
+			{
 			caps = 1;
 		}
 	}

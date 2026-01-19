@@ -1580,14 +1580,11 @@ impl OptionsExt for Options {
             );
         }
 
-        if self.split_dvb_subs {
-            if self.cc_to_stdout {
-                fatal!(
-                    cause = ExitCause::IncompatibleParameters;
-                    "--split-dvb-subs cannot be used with stdout output.\n\
-                     Multiple output files cannot be written to stdout."
-                );
-            }
+        if self.split_dvb_subs && self.cc_to_stdout {
+            fatal!(
+                cause = ExitCause::IncompatibleParameters;
+                "--split-dvb-subs cannot be used with stdout output.\n                     Multiple output files cannot be written to stdout."
+            );
         }
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {

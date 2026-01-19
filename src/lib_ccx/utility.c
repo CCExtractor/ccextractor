@@ -424,19 +424,11 @@ char *get_basename(char *filename)
 
 	if (last_dot)
 	{
-		// If there is a slash, the dot must be AFTER the slash to be an extension
-		if (last_slash)
-		{
-			if (last_dot > last_slash)
-				*last_dot = 0;
-		}
-		else
-		{
-			// No slash, so dot is extension.
-			// However, if the file starts with ., it's usually not considered an extension (e.g. .gitignore)
-			// But for CCExtractor context, we usually strip extension.
-			// If filename is just ".", we shouldn't strip it to empty?
-			if (last_dot != basefilename)
+		char *base_start = last_slash ? last_slash + 1 : basefilename;
+		// Strip only if the dot is not the first char of the basename
+		if (last_dot > base_start)
+			*last_dot = 0;
+	}
 				*last_dot = 0;
 		}
 	}

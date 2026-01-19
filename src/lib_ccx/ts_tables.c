@@ -502,7 +502,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 					// Populate cap_info.lang with discovered language for fallback lookup
 					struct cap_info *cinfo = get_cinfo(ctx, elementary_PID);
-					if (cinfo && detected_lang[0] && detected_lang[0] != 'u') // Skip "und"
+					if (cinfo && detected_lang[0] && strncmp(detected_lang, "und", 3) != 0) // Skip "und"
 					{
 						memset(cinfo->lang, 0, sizeof(cinfo->lang));
 						strncpy(cinfo->lang, detected_lang, sizeof(cinfo->lang) - 1);

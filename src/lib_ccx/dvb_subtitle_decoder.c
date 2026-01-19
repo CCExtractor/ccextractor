@@ -1868,6 +1868,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	if (rect->data0 && rect->data1)
 	{
+		if (!region)
+		{
+			free(rect->data0);
+			free(rect->data1);
+			free(rect);
+			sub->nb_data = 0;
+			sub->got_output = 0;
+			return 0;
+		}
 		uint32_t current_hash = 2166136261u;
 
 		// Hash the geometry
@@ -1957,9 +1966,14 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 				   struct cc_subtitle *sub,
 				   LLONG pre_fts_max)
 {
+	if (!enc_ctx || !dec_ctx || !dec_ctx->timing)
+		return;
+
 	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
+	if (!ctx)
+		return;
+
 	LLONG current_pts = dec_ctx->timing->current_pts;
-	if (!enc_ctx)
 		return;
 
 	// Deduplication check: Skip if this subtitle is a duplicate
