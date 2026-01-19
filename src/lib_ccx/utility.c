@@ -429,9 +429,6 @@ char *get_basename(char *filename)
 		if (last_dot > base_start)
 			*last_dot = 0;
 	}
-				*last_dot = 0;
-		}
-	}
 
 	return basefilename;
 }

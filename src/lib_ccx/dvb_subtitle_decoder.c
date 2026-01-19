@@ -1974,7 +1974,6 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 		return;
 
 	LLONG current_pts = dec_ctx->timing->current_pts;
-		return;
 
 	// Deduplication check: Skip if this subtitle is a duplicate
 	// We use composition_id + ancillary_id + PTS to uniquely identify a subtitle

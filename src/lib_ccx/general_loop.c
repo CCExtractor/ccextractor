@@ -873,19 +873,18 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 		if (dec_ctx->timing->pts_set)
 			set_fts(dec_ctx->timing); // Try to fix timing from TS data
-		}
 	}
 	else if (data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
 		// Safety check: Skip if decoder was freed due to PAT change
 		if (dec_ctx->private_data)
-			{
+		{
 			if (data_node->len > 2)
 			{
-			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-			if (ret < 0)
-				mprint("Return from dvbsub_decode: %d\n", ret);
-			set_fts(dec_ctx->timing);
+				ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+				if (ret < 0)
+					mprint("Return from dvbsub_decode: %d\n", ret);
+				set_fts(dec_ctx->timing);
 			}
 		}
 		got = data_node->len;
