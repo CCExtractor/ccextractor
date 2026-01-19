@@ -403,7 +403,7 @@ int start_ccx()
 #endif
 	dinit_libraries(&ctx);
 
-	if (!ret && ccx_options.verbosity >= CCX_VERBOSITY_NORMAL)
+	if (!ret)
 	{
 		mprint("\nNo embedded captions were found in the input file.\n");
 		mprint("Note: Standard YouTube MP4 files usually do not contain embedded captions.\n");
