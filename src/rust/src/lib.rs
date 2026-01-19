@@ -393,6 +393,9 @@ pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active
 /// dec_ctx should not be a null pointer
 /// data should point to cc_data of length cc_count
 /// dec_ctx.dtvcc_rust must point to a valid DtvccRust instance
+
+const MAX_CC_BLOCKS_PER_CALL: c_int = 10_000;
+
 #[no_mangle]
 extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
@@ -401,6 +404,14 @@ extern "C" fn ccxr_process_cc_data(
 ) -> c_int {
     // Null pointer and bounds checks
     if dec_ctx.is_null() || data.is_null() || cc_count <= 0 {
+        return -1;
+    }
+
+    if cc_count > MAX_CC_BLOCKS_PER_CALL {
+        warn!(
+            "ccxr_process_cc_data: cc_count {} exceeds sane limit, dropping packet",
+            cc_count
+        );
         return -1;
     }
 
@@ -919,5 +930,16 @@ mod test {
         assert_eq!(normalize_legacy_option("-".to_string()), "-".to_string());
         // Double dash alone (end of options marker)
         assert_eq!(normalize_legacy_option("--".to_string()), "--".to_string());
+    }
+
+    #[test]
+    fn test_ccxr_process_cc_data_rejects_excessive_cc_count() {
+        let mut ctx = lib_cc_decode::default();
+        let data = [0u8; 3];
+
+        let ret =
+            unsafe { ccxr_process_cc_data(&mut ctx, data.as_ptr(), MAX_CC_BLOCKS_PER_CALL + 1) };
+
+        assert_eq!(ret, -1);
     }
 }
