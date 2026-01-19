@@ -824,6 +824,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->subline = (unsigned char *)malloc(SUBLINESIZE);
 	if (!ctx->subline)
 	{
+		freep(&ctx->transcript_settings);
 		freep(&ctx->out);
 		freep(&ctx->buffer);
 		free(ctx);

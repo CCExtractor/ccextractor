@@ -281,7 +281,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		if (i + 5 + ES_info_length > len)
 		{
 			dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-			continue;
+			break;
 		}
 
 		unsigned char *es_info = buf + i + 5;
@@ -346,7 +346,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			if (i + 5 + ES_info_length > len)
 			{
 				dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-				continue;
+				break;
 			}
 
 			unsigned char *es_info = buf + i + 5;
