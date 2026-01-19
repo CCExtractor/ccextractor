@@ -55,12 +55,12 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 	do
 	{
 		if (BUFSIZE - data->len < 500)
-			{
+		{
 			mprint("Less than 500 left\n");
 			enough = 1; // Stop when less than 500 bytes are left in buffer
 		}
 		else
-			{
+		{
 			result = buffered_read(ctx->demux_ctx, nextheader, 6);
 			ctx->demux_ctx->past += result;
 			if (result != 6)
@@ -439,7 +439,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		if (!bytes)
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory to store processed hex value.\n");
 		for (unsigned i = 0; i < byte_count; i++)
-			{
+		{
 			unsigned char high = c2[0];
 			unsigned char low = c2[1];
 			int value = hex_to_int(high, low);
@@ -581,7 +581,7 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 	{
 		// Check for CDP identifier
 		if (buffer[pos] != 0x96 || buffer[pos + 1] != 0x69)
-			{
+		{
 			pos++;
 			continue;
 		}
@@ -700,7 +700,6 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	dec_ctx->timing->pts_set = 2; // MinPtsSet
 	set_current_pts(dec_ctx->timing, 0);
 	set_fts(dec_ctx->timing);
-			}
 
 	do
 	{
@@ -773,7 +772,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		if (!is_mcc_output && dec_sub->got_output)
-			{
+		{
 			caps = 1;
 			encode_sub(enc_ctx, dec_sub);
 			dec_sub->got_output = 0;
