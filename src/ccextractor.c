@@ -403,12 +403,12 @@ int start_ccx()
 #endif
 	dinit_libraries(&ctx);
 
-	if (!ret)
-	{
-	mprint("\nNo embedded captions were found in the input file.\n");
-	mprint("Note: Standard YouTube MP4 files usually do not contain embedded captions.\n");
 
-	}
+	if (!ret)
+        {
+          mprint("\nNo embedded captions were found in the input file.\n");
+          mprint("Note: Standard YouTube MP4 files usually do not contain embedded captions.\n");
+        }
 
 
 	print_end_msg();
@@ -450,11 +450,6 @@ int main(int argc, char *argv[])
 		print_usage();
 		exit(EXIT_NO_INPUT_FILES);
 	}
-
-
-
-
-
 
 	else if (compile_ret == EXIT_WITH_HELP)
 	{
