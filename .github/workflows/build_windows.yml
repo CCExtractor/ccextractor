@@ -12,6 +12,8 @@ on:
       - ".github/workflows/build_windows.yml"
       - "**.c"
       - "**.h"
+      - "**CMakeLists.txt"
+      - "**.cmake"
       - "windows/**"
       - "src/rust/**"
   pull_request:
@@ -20,6 +22,8 @@ on:
       - ".github/workflows/build_windows.yml"
       - "**.c"
       - "**.h"
+      - "**CMakeLists.txt"
+      - "**.cmake"
       - "windows/**"
       - "src/rust/**"
 
