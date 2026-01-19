@@ -52,8 +52,8 @@ jobs:
             VERSION="${{ github.event.release.tag_name }}"
             VERSION="${VERSION#v}"  # Remove 'v' prefix if present
           else
-            VERSION=$(grep -oP 'CCEXTRACTOR_VERSION_MINOR\s+\K\d+' src/CMakeLists.txt || echo "96")
-            VERSION="0.${VERSION}"
+            # Extract version from lib_ccx.h (e.g., #define VERSION "0.96.5")
+            VERSION=$(grep -oP '#define VERSION "\K[^"]+' src/lib_ccx/lib_ccx.h || echo "0.96")
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
@@ -183,6 +183,13 @@ jobs:
 
           INSTALLED_SIZE=$(du -sk ${PKG_NAME}/usr | cut -f1)
 
+          # Determine dependencies based on build variant
+          if [ "$VARIANT" = "hardsubx" ]; then
+            DEPENDS="libc6, libtesseract4 | libtesseract5, liblept5 | libleptonica, libavcodec58 | libavcodec59 | libavcodec60, libavformat58 | libavformat59 | libavformat60, libavutil56 | libavutil57 | libavutil58, libswscale5 | libswscale6 | libswscale7"
+          else
+            DEPENDS="libc6, libtesseract4 | libtesseract5, liblept5 | libleptonica"
+          fi
+
           cat > ${PKG_NAME}/DEBIAN/control << CTRL
           Package: ccextractor
           Version: ${VERSION}
@@ -190,6 +197,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Installed-Size: ${INSTALLED_SIZE}
+          Depends: ${DEPENDS}
           Maintainer: CCExtractor Development Team <carlos@ccextractor.org>
           Homepage: https://www.ccextractor.org
           Description: ${PKG_DESCRIPTION}
