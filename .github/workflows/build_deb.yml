@@ -249,8 +249,9 @@ jobs:
             PKG_NAME="ccextractor-${VARIANT}_${VERSION}_amd64"
           fi
 
-          # Install and test
-          sudo dpkg -i ${PKG_NAME}.deb
+          # Install and test (apt handles dependencies automatically)
+          sudo apt-get update
+          sudo apt-get install -y ./${PKG_NAME}.deb
           ccextractor --version
 
       - name: Get .deb filename
