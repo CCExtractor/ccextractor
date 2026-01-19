@@ -477,7 +477,11 @@ pub unsafe extern "C" fn ccxr_get_fts(
         1 => CaptionField::Field1,
         2 => CaptionField::Field2,
         3 => CaptionField::Cea708,
-        _ => panic!("incorrect value for caption field"),
+        _ => {
+            // DVB subtitles may pass 0 or other values when decoder context
+            // current_field is uninitialized. Default to Field1 to avoid crash.
+            CaptionField::Field1
+        }
     };
 
     let ans = c::get_fts(&mut context, caption_field);

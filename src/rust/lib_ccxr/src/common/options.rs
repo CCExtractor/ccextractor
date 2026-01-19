@@ -522,6 +522,10 @@ pub struct Options {
     pub multiprogram: bool,
     pub out_interval: i32,
     pub segment_on_key_frames_only: bool,
+    /// Enable per-stream DVB subtitle extraction
+    pub split_dvb_subs: bool,
+    /// Disable DVB subtitle deduplication
+    pub no_dvb_dedup: bool,
     /// SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
     pub scc_framerate: i32,
     /// SCC accurate timing (issue #1120): if true, use bandwidth-aware timing for broadcast compliance
@@ -629,6 +633,8 @@ impl Default for Options {
             multiprogram: Default::default(),
             out_interval: -1,
             segment_on_key_frames_only: Default::default(),
+            split_dvb_subs: Default::default(),
+            no_dvb_dedup: Default::default(),
             scc_framerate: 0,           // 0 = 29.97fps (default)
             scc_accurate_timing: false, // Off by default for backwards compatibility (issue #1120)
             debug_mask: DebugMessageMask::new(

@@ -117,7 +117,7 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 		if (context->is_mkv == 1)
 		{
 			// Save recognized string for later use in matroska.c
-			context->last_string = str;
+			context->last_str = str;
 		}
 		else
 		{

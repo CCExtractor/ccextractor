@@ -615,6 +615,50 @@ impl FromCType<ccx_demux_report> for CcxDemuxReport {
     }
 }
 
+/// # Safety
+/// This function is unsafe because it takes a raw pointer to a C struct.
+impl FromCType<*mut PMT_entry> for *mut PMTEntry {
+    unsafe fn from_ctype(buffer_ptr: *mut PMT_entry) -> Option<Self> {
+        if buffer_ptr.is_null() {
+            return None;
+        }
+
+        let buffer = unsafe { &*buffer_ptr };
+
+        let program_number = if buffer.program_number != 0 {
+            buffer.program_number
+        } else {
+            0
+        };
+
+        let elementary_pid = if buffer.elementary_PID != 0 {
+            buffer.elementary_PID
+        } else {
+            0
+        };
+
+        let stream_type = if buffer.stream_type != 0 {
+            StreamType::from_ctype(buffer.stream_type as u32).unwrap_or(StreamType::Unknownstream)
+        } else {
+            StreamType::Unknownstream
+        };
+
+        let printable_stream_type = if buffer.printable_stream_type != 0 {
+            buffer.printable_stream_type
+        } else {
+            0
+        };
+
+        let mut pmt_entry = PMTEntry {
+            program_number,
+            elementary_pid,
+            stream_type,
+            printable_stream_type,
+        };
+
+        Some(&mut pmt_entry as *mut PMTEntry)
+    }
+}
 impl FromCType<ccx_bufferdata_type> for BufferdataType {
     unsafe fn from_ctype(c_value: ccx_bufferdata_type) -> Option<Self> {
         let rust_value = match c_value {

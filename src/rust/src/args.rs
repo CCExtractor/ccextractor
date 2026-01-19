@@ -28,7 +28,7 @@ const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
-#[command(version = "0.96.5")]
+#[command(version = "1.0")]
 #[command(about = "Teletext portions taken from Petr Kutalek's telxcc
 --------------------------------------------------------------------------
 Originally based on McPoodle's tools. Check his page for lots of information
@@ -591,6 +591,20 @@ pub struct Args {
     /// language stream will be processed (default).
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub dvblang: Option<String>,
+    /// Extract each DVB subtitle stream to a separate file.
+    /// Each file will be named with the base filename plus a
+    /// language suffix (e.g., output_deu.srt, output_fra.srt).
+    /// For streams without language tags, uses PID as suffix.
+    /// Incompatible with: stdout output, manual PID selection,
+    /// multiprogram mode. Only works with SRT, SAMI, WebVTT.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub split_dvb_subs: bool,
+    /// Disable DVB subtitle deduplication when using --split-dvb-subs.
+    /// By default, CCExtractor filters out duplicate DVB subtitles
+    /// to prevent repetition in split output files. Use this flag
+    /// to disable deduplication and output all subtitles as-is.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub no_dvb_dedup: bool,
     /// Manually select the name of the Tesseract .traineddata
     /// file. Helpful if you want to OCR a caption stream of
     /// one language with the data of another language.

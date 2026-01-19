@@ -708,6 +708,16 @@ impl OptionsExt for Options {
             self.ocrlang = Some(ocrlang.clone());
         }
 
+        // Handle --split-dvb-subs flag
+        if args.split_dvb_subs {
+            self.split_dvb_subs = true;
+        }
+
+        // Handle --no-dvb-dedup flag
+        if args.no_dvb_dedup {
+            self.no_dvb_dedup = true;
+        }
+
         if let Some(ref quant) = args.quant {
             if !(0..=2).contains(quant) {
                 fatal!(
@@ -1568,6 +1578,16 @@ impl OptionsExt for Options {
                 cause = ExitCause::IncompatibleParameters;
                 "You cannot use --out=spupng with -stdout.\n"
             );
+        }
+
+        if self.split_dvb_subs {
+            if self.cc_to_stdout {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "--split-dvb-subs cannot be used with stdout output.\n\
+                     Multiple output files cannot be written to stdout."
+                );
+            }
         }
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
@@ -2737,7 +2757,10 @@ pub mod tests {
     #[test]
     fn test_mkvlang_sets_mkv_language() {
         let (options, _) = parse_args(&["--mkvlang", "eng"]);
-        assert_eq!(options.mkvlang.unwrap(), "eng".parse::<MkvLangFilter>().unwrap());
+        assert_eq!(
+            options.mkvlang.unwrap(),
+            "eng".parse::<MkvLangFilter>().unwrap()
+        );
     }
 
     #[test]

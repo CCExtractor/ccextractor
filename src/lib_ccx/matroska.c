@@ -1,4 +1,4 @@
-﻿#include "lib_ccx.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
@@ -352,7 +352,7 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 		There can be 2 types of DVB in .mkv. One is when each display block is followed by empty block in order to
 		allow gaps in time between display blocks. Another one is when display block is followed by another display block.
 		This code handles both cases but we don't save and use empty blocks as sentences, only time_starts of them. */
-		char *dvb_message = enc_ctx->last_string;
+		char *dvb_message = enc_ctx->last_str;
 		if (ret < 0 || dvb_message == NULL)
 		{
 			// No text - no sentence is returned. Free the memory
@@ -742,24 +742,14 @@ int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fram
 	{
 		uint32_t nal_length;
 
-		if (i + nal_unit_size > frame.len)
-			break;
-
-		nal_length =
-		    ((uint32_t)frame.data[i] << 24) |
-		    ((uint32_t)frame.data[i + 1] << 16) |
-		    ((uint32_t)frame.data[i + 2] << 8) |
-		    (uint32_t)frame.data[i + 3];
-
+		nal_length = bswap32(*(long *)&frame.data[i]);
 		i += nal_unit_size;
 
-		if (nal_length > frame.len - i)
-			break;
-
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	} // outer for
+	assert(i == frame.len);
 
 	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 
@@ -787,22 +777,11 @@ int process_hevc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fra
 	{
 		uint32_t nal_length;
 
-		if (i + nal_unit_size > frame.len)
-			break;
-
-		nal_length =
-		    ((uint32_t)frame.data[i] << 24) |
-		    ((uint32_t)frame.data[i + 1] << 16) |
-		    ((uint32_t)frame.data[i + 2] << 8) |
-		    (uint32_t)frame.data[i + 3];
-
+		nal_length = bswap32(*(long *)&frame.data[i]);
 		i += nal_unit_size;
 
-		if (nal_length > frame.len - i)
-			break;
-
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	}
 

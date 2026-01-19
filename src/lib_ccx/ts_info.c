@@ -43,7 +43,18 @@ void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if (iter->pid != pid)
-			iter->ignore = 1;
+		{
+			// In split DVB mode, do NOT ignore DVB subtitle streams
+			// They need to remain in the datalist for secondary pass processing
+			if (ccx_options.split_dvb_subs && iter->codec == CCX_CODEC_DVB)
+			{
+				iter->ignore = 0; // Keep DVB streams active
+			}
+			else
+			{
+				iter->ignore = 1;
+			}
+		}
 	}
 }
 
@@ -296,6 +307,20 @@ void dinit_cap(struct ccx_demuxer *ctx)
 				{
 					if (dec_ctx->private_data == saved_private_data)
 						dec_ctx->private_data = NULL;
+				}
+
+				// Also check subtitle pipelines for shared decoder references
+				// Pipelines have their own decoder and dec_ctx->private_data
+				for (int i = 0; i < lctx->pipeline_count; i++)
+				{
+					struct ccx_subtitle_pipeline *p = lctx->pipelines[i];
+					if (p)
+					{
+						if (p->decoder == saved_private_data)
+							p->decoder = NULL;
+						if (p->dec_ctx && p->dec_ctx->private_data == saved_private_data)
+							p->dec_ctx->private_data = NULL;
+					}
 				}
 			}
 		}
