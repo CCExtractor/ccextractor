@@ -164,7 +164,7 @@ jobs:
 
           # Copy documentation
           cp docs/CHANGES.TXT ${PKG_NAME}/usr/share/doc/ccextractor/changelog
-          cp LICENSE ${PKG_NAME}/usr/share/doc/ccextractor/copyright
+          cp LICENSE.txt ${PKG_NAME}/usr/share/doc/ccextractor/copyright
           gzip -9 -n ${PKG_NAME}/usr/share/doc/ccextractor/changelog
 
           # Generate man page
