@@ -18,7 +18,7 @@ on:
 
 jobs:
   build-deb:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -102,7 +102,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/gpac-install
-          key: gpac-abi-16.4-ubuntu22-deb
+          key: gpac-abi-16.4-ubuntu24-deb
 
       - name: Build GPAC
         if: steps.should_build.outputs.should_build == 'true' && steps.cache-gpac.outputs.cache-hit != 'true'
@@ -183,11 +183,11 @@ jobs:
 
           INSTALLED_SIZE=$(du -sk ${PKG_NAME}/usr | cut -f1)
 
-          # Determine dependencies based on build variant
+          # Determine dependencies based on build variant (Ubuntu 24.04)
           if [ "$VARIANT" = "hardsubx" ]; then
-            DEPENDS="libc6, libtesseract4 | libtesseract5, liblept5 | libleptonica, libavcodec58 | libavcodec59 | libavcodec60, libavformat58 | libavformat59 | libavformat60, libavutil56 | libavutil57 | libavutil58, libswscale5 | libswscale6 | libswscale7"
+            DEPENDS="libc6, libtesseract5, libleptonica6, libavcodec60, libavformat60, libavutil58, libswscale7"
           else
-            DEPENDS="libc6, libtesseract4 | libtesseract5, liblept5 | libleptonica"
+            DEPENDS="libc6, libtesseract5, libleptonica6"
           fi
 
           cat > ${PKG_NAME}/DEBIAN/control << CTRL
