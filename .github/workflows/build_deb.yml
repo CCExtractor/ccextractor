@@ -185,9 +185,9 @@ jobs:
 
           # Determine dependencies based on build variant (Ubuntu 24.04)
           if [ "$VARIANT" = "hardsubx" ]; then
-            DEPENDS="libc6, libtesseract5, libleptonica6, libavcodec60, libavformat60, libavutil58, libswscale7"
+            DEPENDS="libc6, libtesseract5, liblept5, libavcodec60, libavformat60, libavutil58, libswscale7"
           else
-            DEPENDS="libc6, libtesseract5, libleptonica6"
+            DEPENDS="libc6, libtesseract5, liblept5"
           fi
 
           cat > ${PKG_NAME}/DEBIAN/control << CTRL
