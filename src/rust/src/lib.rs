@@ -394,8 +394,8 @@ pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active
 /// data should point to cc_data of length cc_count
 /// dec_ctx.dtvcc_rust must point to a valid DtvccRust instance
 
+/// Maximum number of CC blocks accepted per call to prevent excessive allocation
 const MAX_CC_BLOCKS_PER_CALL: c_int = 10_000;
-
 #[no_mangle]
 extern "C" fn ccxr_process_cc_data(
     dec_ctx: *mut lib_cc_decode,
