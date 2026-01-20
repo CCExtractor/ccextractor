@@ -2160,6 +2160,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	int segment_length;
 	int ret = 0;
 	int got_segment = 0;
+	const uint8_t *orig_buf = buf;
 
 	// Safety check: Context may be NULL after PAT change
 	if (!ctx)
@@ -2178,7 +2179,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 	if (buf_size <= 6)
 	{
-		return -1;
+		return (int)(buf - orig_buf) > 0 ? (int)(buf - orig_buf) : -1;
 	}
 
 	p = buf;
@@ -2275,7 +2276,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	}
 end:
 	if (ret >= 0)
-		ret = p - buf;
+		ret = p - orig_buf;
 
 	return ret;
 }
