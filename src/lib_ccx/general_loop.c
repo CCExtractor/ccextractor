@@ -415,7 +415,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 		c2++; // Skip blank
 		/*
 		if (strncmp (c2,mpeg_header,strlen (mpeg_header))) // No idea how to deal with this.
-			{
+		{
 			if (!warning_shown)
 			{
 				warning_shown=1;

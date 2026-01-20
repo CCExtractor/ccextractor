@@ -146,7 +146,6 @@ bazel*
 .idea/
 
 # Plans (local only)
-plans/
 
 # Rust build and MakeFiles (and CMake files)
 src/rust/CMakeFiles/
@@ -162,7 +161,6 @@ windows/.rustc_info.json
 linux/configure~
 
 # Plans and temporary files
-plans/
 tess.log
 **/tess.log
 ut=srt*

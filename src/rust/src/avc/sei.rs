@@ -177,13 +177,7 @@ pub fn user_data_registered_itu_t_t35(ctx: &mut AvcContextRust, userbuf: &[u8]) 
 
                         local_cc_count = (userbuf[tbuf_idx] & 0x1F) as usize;
 
-                        /*
-                        let process_cc_data_flag = (userbuf[tbuf_idx] & 0x40) >> 6;
-                        if (!process_cc_data_flag)
-                        {
-                        mprint ("process_cc_data_flag == 0, skipping this caption block.\n");
-                        break;
-                        } */
+
                         /*
                         The following tests are not passed in Comcast's sample videos. *tbuf here is always 0x41.
                         if (! (*tbuf & 0x80)) // First bit must be 1

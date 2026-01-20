@@ -2790,10 +2790,7 @@ pub mod tests {
     #[test]
     fn test_mkvlang_sets_mkv_language() {
         let (options, _) = parse_args(&["--mkvlang", "eng"]);
-        assert_eq!(
-            options.mkvlang.unwrap(),
-            Language::Eng
-        );
+        assert_eq!(options.mkvlang.unwrap(), Language::Eng);
     }
 
     #[test]
