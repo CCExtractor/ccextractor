@@ -2792,7 +2792,7 @@ pub mod tests {
         let (options, _) = parse_args(&["--mkvlang", "eng"]);
         assert_eq!(
             options.mkvlang.unwrap(),
-            "eng".parse::<MkvLangFilter>().unwrap()
+            Language::Eng
         );
     }
 
