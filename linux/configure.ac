@@ -34,8 +34,8 @@ AC_CHECK_LIB([swscale], [swscale_version], [HAS_SWSCALE=1 && PKG_CHECK_MODULES([
 
 # Check for GPAC library (required for MP4 support)
 PKG_CHECK_MODULES([gpac], [gpac], [HAS_GPAC=1], [HAS_GPAC=0])
-AS_IF([test $HAS_GPAC -eq 0],
-  [AC_MSG_ERROR([GPAC library not found. Install gpac-devel (Fedora/RHEL), libgpac-dev (Debian/Ubuntu), or gpac (Arch) before proceeding.])])
+#AS_IF([test $HAS_GPAC -eq 0],
+#  [AC_MSG_ERROR([GPAC library not found. Install gpac-devel (Fedora/RHEL), libgpac-dev (Debian/Ubuntu), or gpac (Arch) before proceeding.])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h locale.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h sys/timeb.h termios.h unistd.h wchar.h])

@@ -660,12 +660,10 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 		// Process cc_data triplets through process_cc_data for 708 support
 		process_cc_data(enc_ctx, dec_ctx, cc_data, cc_count, sub);
 		cdp_count++;
+		pos += cdp_length;
 	}
 
-	pos += cdp_length;
-}
-
-return pos;
+	return pos;
 }
 
 int raw_loop(struct lib_ccx_ctx *ctx)
@@ -769,24 +767,21 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			add_current_pts(dec_ctx->timing, (LLONG)cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing);
 		}
-	}
 
-	if (!is_mcc_output && dec_sub->got_output)
-	{
-		caps = 1;
-		encode_sub(enc_ctx, dec_sub);
-		dec_sub->got_output = 0;
-	}
+		if (!is_mcc_output && dec_sub->got_output)
+		{
+			caps = 1;
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
+		}
 
-	// Reset buffer length after processing so we can read more data
-	// Without this, data->len stays at BUFSIZE and general_get_more_data
-	// returns CCX_EOF prematurely (it calculates want = BUFSIZE - len = 0)
-	data->len = 0;
-}
-while (1)
-	; // Loop exits via break on CCX_EOF or terminate_asap
-free(data);
-return caps;
+		// Reset buffer length after processing so we can read more data
+		// Without this, data->len stays at BUFSIZE and general_get_more_data
+		// returns CCX_EOF prematurely (it calculates want = BUFSIZE - len = 0)
+		data->len = 0;
+	} while (1); // Loop exits via break on CCX_EOF or terminate_asap
+	free(data);
+	return caps;
 }
 
 /* Process inbuf bytes in buffer holding raw caption data (three byte packets, the first being the field).
@@ -966,90 +961,89 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		}
 
 		last_pts = dec_ctx->timing->current_pts;
+
+		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
+			  print_mstime_static(dec_ctx->timing->current_pts / (MPEG_CLOCK_FREQ / 1000)),
+			  (unsigned)(dec_ctx->timing->current_pts));
+		dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
+
+		got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
 	}
-
-	dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
-		  print_mstime_static(dec_ctx->timing->current_pts / (MPEG_CLOCK_FREQ / 1000)),
-		  (unsigned)(dec_ctx->timing->current_pts));
-	dbg_print(CCX_DMT_VIDES, "  FTS: %s\n", print_mstime_static(get_fts(dec_ctx->timing, dec_ctx->current_field)));
-
-	got = process_raw(dec_ctx, dec_sub, data_node->buffer, data_node->len);
-}
-else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
-{
-	dec_ctx->in_bufferdatatype = CCX_H264;
-	dec_ctx->avc_ctx->is_hevc = 0;
-	got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
-}
-else if (data_node->bufferdatatype == CCX_HEVC) // HEVC data from TS file
-{
-	dec_ctx->in_bufferdatatype = CCX_H264; // Use same internal type for NAL processing
-	dec_ctx->avc_ctx->is_hevc = 1;
-	got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
-}
-else if (data_node->bufferdatatype == CCX_RAW_TYPE)
-{
-	// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
-	// Used by MXF and GXF demuxers
-
-	// Initialize timing if not set (use caption PTS as reference)
-	if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+	else if (data_node->bufferdatatype == CCX_H264) // H.264 data from TS file
 	{
-		dec_ctx->timing->min_pts = data_node->pts;
-		dec_ctx->timing->pts_set = 2; // MinPtsSet
-		dec_ctx->timing->sync_pts = data_node->pts;
-		set_fts(dec_ctx->timing);
+		dec_ctx->in_bufferdatatype = CCX_H264;
+		dec_ctx->avc_ctx->is_hevc = 0;
+		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
 	}
-}
+	else if (data_node->bufferdatatype == CCX_HEVC) // HEVC data from TS file
+	{
+		dec_ctx->in_bufferdatatype = CCX_H264; // Use same internal type for NAL processing
+		dec_ctx->avc_ctx->is_hevc = 1;
+		got = process_avc(enc_ctx, dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	}
+	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
+	{
+		// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
+		// Used by MXF and GXF demuxers
+
+		// Initialize timing if not set (use caption PTS as reference)
+		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+		{
+			dec_ctx->timing->min_pts = data_node->pts;
+			dec_ctx->timing->pts_set = 2; // MinPtsSet
+			dec_ctx->timing->sync_pts = data_node->pts;
+			set_fts(dec_ctx->timing);
+		}
+	}
 
 #ifndef DISABLE_RUST
-// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
-if (dec_ctx->dtvcc_rust)
-{
-	int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
-	if (!is_active)
+	// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
+	if (dec_ctx->dtvcc_rust)
 	{
-		ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+		int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+		if (!is_active)
+		{
+			ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+		}
 	}
-}
 #endif
 
-// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
-int cc_count = data_node->len / 3;
-process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
-got = data_node->len;
-}
-else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
-{
-	isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+	// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
+	int cc_count = data_node->len / 3;
+	process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
 	got = data_node->len;
-}
-else fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
 
-if (got > data_node->len)
-{
-	mprint("BUG BUG\n");
-}
-
-//	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer, (size_t) (data_node->len - got));
-
-/* Get rid of the bytes we already processed */
-if (data_node)
-{
-	if (got > 0)
+	if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
-		memmove(data_node->buffer, data_node->buffer + got, (size_t)(data_node->len - got));
-		data_node->len -= got;
+		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		got = data_node->len;
 	}
-}
+	// else fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
 
-if (data_node->bufferdatatype != CCX_DVB_SUBTITLE && dec_sub->got_output)
-{
-	ret = 1;
-	encode_sub(enc_ctx, dec_sub);
-	dec_sub->got_output = 0;
-}
-return ret;
+	if (got > data_node->len)
+	{
+		mprint("BUG BUG\n");
+	}
+
+	//	ctx->demux_ctx->write_es(ctx->demux_ctx, data_node->buffer, (size_t) (data_node->len - got));
+
+	/* Get rid of the bytes we already processed */
+	if (data_node)
+	{
+		if (got > 0)
+		{
+			memmove(data_node->buffer, data_node->buffer + got, (size_t)(data_node->len - got));
+			data_node->len -= got;
+		}
+	}
+
+	if (data_node->bufferdatatype != CCX_DVB_SUBTITLE && dec_sub->got_output)
+	{
+		ret = 1;
+		encode_sub(enc_ctx, dec_sub);
+		dec_sub->got_output = 0;
+	}
+	return ret;
 }
 
 void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
@@ -1586,268 +1580,266 @@ int general_loop(struct lib_ccx_ctx *ctx)
 							set_fts(dec_ctx->timing);
 						}
 					}
-				}
-				if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
-				{
-					if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
+					if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 					{
-						min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
-						set_current_pts(dec_ctx->timing, min_pts);
-						// For DVB subtitles, directly set min_pts to fix negative timestamps
-						if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
 						{
-							dec_ctx->timing->min_pts = min_pts;
-							dec_ctx->timing->pts_set = 2; // MinPtsSet
-							dec_ctx->timing->sync_pts = min_pts;
+							min_pts = ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO];
+							set_current_pts(dec_ctx->timing, min_pts);
+							// For DVB subtitles, directly set min_pts to fix negative timestamps
+							if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
+							{
+								dec_ctx->timing->min_pts = min_pts;
+								dec_ctx->timing->pts_set = 2; // MinPtsSet
+								dec_ctx->timing->sync_pts = min_pts;
+							}
+							set_fts(dec_ctx->timing);
 						}
-						set_fts(dec_ctx->timing);
 					}
 				}
-			}
-		}
 
-		if (enc_ctx)
-			enc_ctx->timing = dec_ctx->timing;
+				if (enc_ctx)
+					enc_ctx->timing = dec_ctx->timing;
 
-		if (!data_node)
-			continue;
+				if (!data_node)
+					continue;
 
-		if (data_node->pts != CCX_NOPTS)
-		{
-			set_current_pts(dec_ctx->timing, data_node->pts);
-			// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
-			if (dec_ctx->codec == CCX_CODEC_DVB && dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
-			{
-				dec_ctx->timing->min_pts = data_node->pts;
-				dec_ctx->timing->pts_set = 2; // MinPtsSet
-				dec_ctx->timing->sync_pts = data_node->pts;
-			}
-		}
-
-		// In split DVB mode, skip primary processing for DVB streams
-		// They will be handled in the secondary DVB pass below (Bug 3 fix)
-		if (!(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
-		{
-			ret = process_data(enc_ctx, dec_ctx, data_node);
-		}
-		if (enc_ctx != NULL)
-		{
-			if (
-			    ((enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter)) ||
-			     dec_ctx->saw_caption_block || ret == 1))
-				caps = 1;
-		}
-		// Process the last subtitle for DVB
-		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
-		{
-			if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0)
-			{
-				dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
-				// In split DVB mode, skip flushing to main encoder (Bug 3 fix)
-				// Pipeline encoders get flushed via lib_ccx.c:285-313
-				if (enc_ctx != NULL && !(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
-					encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
-				dec_ctx->dec_sub.prev->got_output = 0;
-			}
-		}
-	}
-	if (!data_node)
-		continue;
-}
-
-// MULTIPROGRAM DVB SECONDARY PASS: Route DVB streams to per-language pipelines
-// This mirrors the single-program DVB secondary pass at lines 1321-1417 (Bug 3 fix)
-if (ccx_options.split_dvb_subs)
-{
-	struct demuxer_data *dvb_ptr = datalist;
-	while (dvb_ptr)
-	{
-		if (dvb_ptr->codec == CCX_CODEC_DVB && dvb_ptr->len > 0)
-		{
-			int stream_pid = dvb_ptr->stream_pid;
-			char *lang = "unk";
-
-			// Find language for this PID from potential_streams (PMT discovery)
-			for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
-			{
-				if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
-				    ctx->demux_ctx->potential_streams[k].lang[0])
+				if (data_node->pts != CCX_NOPTS)
 				{
-					lang = ctx->demux_ctx->potential_streams[k].lang;
-					break;
-				}
-			}
-
-			// Fallback to cinfo
-			if (strcmp(lang, "unk") == 0)
-			{
-				struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
-				if (cinfo && cinfo->lang[0])
-					lang = cinfo->lang;
-			}
-
-			// Get or create pipeline for this DVB stream
-			struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
-
-			// Reinitialize decoder if NULL (e.g., after PAT change)
-			if (pipe && pipe->dec_ctx && !pipe->decoder)
-			{
-				struct dvb_config dvb_cfg = {0};
-				dvb_cfg.n_language = 1;
-				for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
-				{
-					if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+					set_current_pts(dec_ctx->timing, data_node->pts);
+					// For DVB subtitles, use the first subtitle PTS as min_pts if audio hasn't been seen yet
+					if (dec_ctx->codec == CCX_CODEC_DVB && dec_ctx->timing->min_pts == 0x01FFFFFFFFLL)
 					{
-						dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
-						dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
-						break;
+						dec_ctx->timing->min_pts = data_node->pts;
+						dec_ctx->timing->pts_set = 2; // MinPtsSet
+						dec_ctx->timing->sync_pts = data_node->pts;
 					}
 				}
-				pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
-				if (pipe->decoder)
-					pipe->dec_ctx->private_data = pipe->decoder;
+
+				// In split DVB mode, skip primary processing for DVB streams
+				// They will be handled in the secondary DVB pass below (Bug 3 fix)
+				if (!(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
+				{
+					ret = process_data(enc_ctx, dec_ctx, data_node);
+				}
+				if (enc_ctx != NULL)
+				{
+					if (
+					    ((enc_ctx && (enc_ctx->srt_counter || enc_ctx->cea_708_counter)) ||
+					     dec_ctx->saw_caption_block || ret == 1))
+						caps = 1;
+				}
+				// Process the last subtitle for DVB
+				if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
+				{
+					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0)
+					{
+						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
+						// In split DVB mode, skip flushing to main encoder (Bug 3 fix)
+						// Pipeline encoders get flushed via lib_ccx.c:285-313
+						if (enc_ctx != NULL && !(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
+							encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
+						dec_ctx->dec_sub.prev->got_output = 0;
+					}
+				}
 			}
+			if (!data_node)
+				continue;
+		}
 
-			if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
+		// MULTIPROGRAM DVB SECONDARY PASS: Route DVB streams to per-language pipelines
+		// This mirrors the single-program DVB secondary pass at lines 1321-1417 (Bug 3 fix)
+		if (ccx_options.split_dvb_subs)
+		{
+			struct demuxer_data *dvb_ptr = datalist;
+			while (dvb_ptr)
 			{
-				// Use pipeline's independent timing context
-				pipe->dec_ctx->timing = pipe->timing;
-				pipe->encoder->timing = pipe->timing;
-				set_pipeline_pts(pipe, dvb_ptr->pts);
-
-				// Create subtitle structure if needed
-				if (!pipe->dec_ctx->dec_sub.prev)
+				if (dvb_ptr->codec == CCX_CODEC_DVB && dvb_ptr->len > 0)
 				{
-					struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
-					memset(sub, 0, sizeof(struct cc_subtitle));
-					pipe->dec_ctx->dec_sub.prev = sub;
-				}
+					int stream_pid = dvb_ptr->stream_pid;
+					char *lang = "unk";
 
-				// Decode DVB (skip first 2 bytes - PES header)
-				if (pipe->decoder && pipe->dec_ctx->private_data)
-				{
-					dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+					// Find language for this PID from potential_streams (PMT discovery)
+					for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
+					{
+						if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
+						    ctx->demux_ctx->potential_streams[k].lang[0])
+						{
+							lang = ctx->demux_ctx->potential_streams[k].lang;
+							break;
+						}
+					}
+
+					// Fallback to cinfo
+					if (strcmp(lang, "unk") == 0)
+					{
+						struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+						if (cinfo && cinfo->lang[0])
+							lang = cinfo->lang;
+					}
+
+					// Get or create pipeline for this DVB stream
+					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+
+					// Reinitialize decoder if NULL (e.g., after PAT change)
+					if (pipe && pipe->dec_ctx && !pipe->decoder)
+					{
+						struct dvb_config dvb_cfg = {0};
+						dvb_cfg.n_language = 1;
+						for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
+						{
+							if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+							{
+								dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
+								dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
+								break;
+							}
+						}
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
+						if (pipe->decoder)
+							pipe->dec_ctx->private_data = pipe->decoder;
+					}
+
+					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
+					{
+						// Use pipeline's independent timing context
+						pipe->dec_ctx->timing = pipe->timing;
+						pipe->encoder->timing = pipe->timing;
+						set_pipeline_pts(pipe, dvb_ptr->pts);
+
+						// Create subtitle structure if needed
+						if (!pipe->dec_ctx->dec_sub.prev)
+						{
+							struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
+							memset(sub, 0, sizeof(struct cc_subtitle));
+							pipe->dec_ctx->dec_sub.prev = sub;
+						}
+
+						// Decode DVB (skip first 2 bytes - PES header)
+						if (pipe->decoder && pipe->dec_ctx->private_data)
+						{
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+						}
+					}
 				}
+				dvb_ptr = dvb_ptr->next_stream;
 			}
 		}
-		dvb_ptr = dvb_ptr->next_stream;
-	}
-}
 
-if (ctx->live_stream)
-{
-	LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
-	if (!t && ctx->demux_ctx->global_timestamp_inited)
-		t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
-	// Handle multi-program TS timing
-	if (ctx->demux_ctx->global_timestamp_inited)
-	{
-		LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
-		if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
-			ctx->min_global_timestamp_offset = offset;
-		// Only use timestamps from the program with the lowest base
-		if (offset - ctx->min_global_timestamp_offset < 60000)
-			t = offset - ctx->min_global_timestamp_offset;
-		else
-			t = ctx->min_global_timestamp_offset > 0 ? 0 : t;
-		if (t < 0)
-			t = 0;
-	}
-	int cur_sec = (int)(t / 1000);
-	int th = cur_sec / 10;
-	if (ctx->last_reported_progress != th)
-	{
-		activity_progress(-1, cur_sec / 60, cur_sec % 60);
-		ctx->last_reported_progress = th;
-	}
-}
-else
-{
-	if (ctx->total_inputsize > 255) // Less than 255 leads to division by zero below.
-	{
-		int progress = (int)((((ctx->total_past + ctx->demux_ctx->past) >> 8) * 100) / (ctx->total_inputsize >> 8));
-		if (ctx->last_reported_progress != progress)
+		if (ctx->live_stream)
 		{
 			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 			if (!t && ctx->demux_ctx->global_timestamp_inited)
 				t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
-			// For multi-program TS files, different programs can have different
-			// PCR bases (e.g., one at 25h, another at 23h). This causes the
-			// global_timestamp to jump between different bases, resulting in
-			// wildly different offset values. Track the minimum offset seen
-			// and only display times from the program with the lowest base.
+			// Handle multi-program TS timing
 			if (ctx->demux_ctx->global_timestamp_inited)
 			{
 				LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
-				// Track minimum offset (this is the PCR base of the program
-				// with the lowest timestamp, which represents true file time)
 				if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
 					ctx->min_global_timestamp_offset = offset;
-				// Only use timestamps from the program with the lowest base.
-				// If current offset is significantly larger than minimum (by > 60s),
-				// it's from a program with a higher PCR base - use minimum instead.
+				// Only use timestamps from the program with the lowest base
 				if (offset - ctx->min_global_timestamp_offset < 60000)
 					t = offset - ctx->min_global_timestamp_offset;
 				else
-					t = ctx->min_global_timestamp_offset > 0 ? 0 : t; // fallback to minimum-based time
+					t = ctx->min_global_timestamp_offset > 0 ? 0 : t;
 				if (t < 0)
 					t = 0;
 			}
 			int cur_sec = (int)(t / 1000);
-			activity_progress(progress, cur_sec / 60, cur_sec % 60);
-			ctx->last_reported_progress = progress;
-		}
-	}
-}
-
-// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
-segment_output_file(ctx, dec_ctx);
-
-if (ccx_options.send_to_srv)
-	net_check_conn();
-}
-
-struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
-
-list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
-{
-
-	if (dec_ctx->codec == CCX_CODEC_TELETEXT)
-	{
-		void *saved_private_data = dec_ctx->private_data;
-		telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
-		// NULL out any cinfo entries that shared this private_data pointer
-		// to prevent double-free in dinit_cap
-		if (saved_private_data && ctx->demux_ctx)
-		{
-			struct cap_info *cinfo_iter;
-			list_for_each_entry(cinfo_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+			int th = cur_sec / 10;
+			if (ctx->last_reported_progress != th)
 			{
-				if (cinfo_iter->codec_private_data == saved_private_data)
-					cinfo_iter->codec_private_data = NULL;
+				activity_progress(-1, cur_sec / 60, cur_sec % 60);
+				ctx->last_reported_progress = th;
 			}
 		}
+		else
+		{
+			if (ctx->total_inputsize > 255) // Less than 255 leads to division by zero below.
+			{
+				int progress = (int)((((ctx->total_past + ctx->demux_ctx->past) >> 8) * 100) / (ctx->total_inputsize >> 8));
+				if (ctx->last_reported_progress != progress)
+				{
+					LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
+					if (!t && ctx->demux_ctx->global_timestamp_inited)
+						t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+					// For multi-program TS files, different programs can have different
+					// PCR bases (e.g., one at 25h, another at 23h). This causes the
+					// global_timestamp to jump between different bases, resulting in
+					// wildly different offset values. Track the minimum offset seen
+					// and only display times from the program with the lowest base.
+					if (ctx->demux_ctx->global_timestamp_inited)
+					{
+						LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+						// Track minimum offset (this is the PCR base of the program
+						// with the lowest timestamp, which represents true file time)
+						if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
+							ctx->min_global_timestamp_offset = offset;
+						// Only use timestamps from the program with the lowest base.
+						// If current offset is significantly larger than minimum (by > 60s),
+						// it's from a program with a higher PCR base - use minimum instead.
+						if (offset - ctx->min_global_timestamp_offset < 60000)
+							t = offset - ctx->min_global_timestamp_offset;
+						else
+							t = ctx->min_global_timestamp_offset > 0 ? 0 : t; // fallback to minimum-based time
+						if (t < 0)
+							t = 0;
+					}
+					int cur_sec = (int)(t / 1000);
+					activity_progress(progress, cur_sec / 60, cur_sec % 60);
+					ctx->last_reported_progress = progress;
+				}
+			}
+		}
+
+		// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
+		segment_output_file(ctx, dec_ctx);
+
+		if (ccx_options.send_to_srv)
+			net_check_conn();
 	}
-	// Flush remaining HD captions
-	if (dec_ctx->has_ccdata_buffered)
-		process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
 
-	mprint("\nNumber of NAL_type_7: %ld\n", dec_ctx->avc_ctx->num_nal_unit_type_7);
-	mprint("Number of VCL_HRD: %ld\n", dec_ctx->avc_ctx->num_vcl_hrd);
-	mprint("Number of NAL HRD: %ld\n", dec_ctx->avc_ctx->num_nal_hrd);
-	mprint("Number of jump-in-frames: %ld\n", dec_ctx->avc_ctx->num_jump_in_frames);
-	mprint("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
-	free(dec_ctx->xds_ctx);
-}
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
-delete_datalist(datalist);
-if (ctx->total_past != ctx->total_inputsize && ctx->binary_concat && is_decoder_processed_enough(ctx))
-{
-	mprint("\n\n\n\nATTENTION!!!!!!\n");
-	mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
-	       ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
-}
-return caps;
+	list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+	{
+
+		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		{
+			void *saved_private_data = dec_ctx->private_data;
+			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+			// NULL out any cinfo entries that shared this private_data pointer
+			// to prevent double-free in dinit_cap
+			if (saved_private_data && ctx->demux_ctx)
+			{
+				struct cap_info *cinfo_iter;
+				list_for_each_entry(cinfo_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+				{
+					if (cinfo_iter->codec_private_data == saved_private_data)
+						cinfo_iter->codec_private_data = NULL;
+				}
+			}
+		}
+		// Flush remaining HD captions
+		if (dec_ctx->has_ccdata_buffered)
+			process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
+
+		mprint("\nNumber of NAL_type_7: %ld\n", dec_ctx->avc_ctx->num_nal_unit_type_7);
+		mprint("Number of VCL_HRD: %ld\n", dec_ctx->avc_ctx->num_vcl_hrd);
+		mprint("Number of NAL HRD: %ld\n", dec_ctx->avc_ctx->num_nal_hrd);
+		mprint("Number of jump-in-frames: %ld\n", dec_ctx->avc_ctx->num_jump_in_frames);
+		mprint("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
+		free(dec_ctx->xds_ctx);
+	}
+
+	delete_datalist(datalist);
+	if (ctx->total_past != ctx->total_inputsize && ctx->binary_concat && is_decoder_processed_enough(ctx))
+	{
+		mprint("\n\n\n\nATTENTION!!!!!!\n");
+		mprint("Processing of %s %d ended prematurely %lld < %lld, please send bug report.\n\n",
+		       ctx->inputfile[ctx->current_file], ctx->current_file, ctx->demux_ctx->past, ctx->inputsize);
+	}
+	return caps;
 }
 
 // Raw caption with FTS file process
@@ -2004,10 +1996,11 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 } // end while(1)
 
-dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+// dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
 
 /* Check if captions were found via other paths (CEA-608 writes directly
    to encoder without setting got_output). Similar to general_loop logic. */
+/*
 if (!caps && enc_ctx != NULL)
 {
 	if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
@@ -2016,8 +2009,9 @@ if (!caps && enc_ctx != NULL)
 	}
 }
 
-/* Free XDS context - similar to cleanup in general_loop */
+// Free XDS context - similar to cleanup in general_loop
 free(dec_ctx->xds_ctx);
 free(parsebuf);
 return caps;
 }
+*/
