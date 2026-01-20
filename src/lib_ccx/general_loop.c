@@ -644,21 +644,21 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 			}
 			set_current_pts(dec_ctx->timing, pts);
 			set_fts(dec_ctx->timing);
-		}
 
 #ifndef DISABLE_RUST
-		// Enable DTVCC decoder for CEA-708 captions
-		if (dec_ctx->dtvcc_rust)
-		{
-			int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
-			if (!is_active)
+			// Enable DTVCC decoder for CEA-708 captions
+			if (dec_ctx->dtvcc_rust)
 			{
-				ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+				int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+				if (!is_active)
+				{
+					ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+				}
 			}
-		}
 #endif
-		// Process cc_data triplets through process_cc_data for 708 support
-		process_cc_data(enc_ctx, dec_ctx, cc_data, cc_count, sub);
+			// Process cc_data triplets through process_cc_data for 708 support
+			process_cc_data(enc_ctx, dec_ctx, cc_data, cc_count, sub);
+		}
 		cdp_count++;
 		pos += cdp_length;
 	}
@@ -998,7 +998,7 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 #ifndef DISABLE_RUST
 	// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
-	if (dec_ctx->dtvcc_rust)
+	if (data_node->bufferdatatype == CCX_RAW_TYPE && dec_ctx->dtvcc_rust)
 	{
 		int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
 		if (!is_active)
@@ -1009,9 +1009,12 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 #endif
 
 	// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
-	int cc_count = data_node->len / 3;
-	process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
-	got = data_node->len;
+	if (data_node->bufferdatatype == CCX_RAW_TYPE)
+	{
+		int cc_count = data_node->len / 3;
+		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
+		got = data_node->len;
+	}
 
 	if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
@@ -1987,31 +1990,29 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		{
 			do_cb(dec_ctx, parsebuf + j, dec_sub);
 		}
-	}
-	if (dec_sub->got_output)
+
+		if (dec_sub->got_output)
+		{
+			caps = 1;
+			encode_sub(enc_ctx, dec_sub);
+			dec_sub->got_output = 0;
+		}
+	} // end while(1)
+
+	// dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+
+	/* Check if captions were found via other paths (CEA-608 writes directly
+	   to encoder without setting got_output). Similar to general_loop logic. */
+	if (!caps && enc_ctx != NULL)
 	{
-		caps = 1;
-		encode_sub(enc_ctx, dec_sub);
-		dec_sub->got_output = 0;
+		if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
+		{
+			caps = 1;
+		}
 	}
-} // end while(1)
 
-// dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
-
-/* Check if captions were found via other paths (CEA-608 writes directly
-   to encoder without setting got_output). Similar to general_loop logic. */
-/*
-if (!caps && enc_ctx != NULL)
-{
-	if (enc_ctx->srt_counter || enc_ctx->cea_708_counter || dec_ctx->saw_caption_block)
-	{
-		caps = 1;
-	}
+	// Free XDS context - similar to cleanup in general_loop
+	free(dec_ctx->xds_ctx);
+	free(parsebuf);
+	return caps;
 }
-
-// Free XDS context - similar to cleanup in general_loop
-free(dec_ctx->xds_ctx);
-free(parsebuf);
-return caps;
-}
-*/

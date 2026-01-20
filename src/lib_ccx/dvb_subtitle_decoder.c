@@ -1980,7 +1980,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	// Skip dedup if --no-dvb-dedup flag is set
 	if (!ccx_options.no_dvb_dedup)
 	{
-		uint64_t pts_ms = (uint64_t)(current_pts / 1000);
+		uint64_t pts_ms = (uint64_t)(current_pts / (MPEG_CLOCK_FREQ / 1000));
 		uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
 
 		if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid,
