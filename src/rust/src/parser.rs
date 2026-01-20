@@ -782,6 +782,13 @@ impl OptionsExt for Options {
                 .filter(|s| !s.is_empty())
                 .collect();
 
+            if tokens.is_empty() {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Invalid mkvlang: {}\n", lang
+                );
+            }
+
             if tokens.len() > 1 {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
