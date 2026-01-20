@@ -773,23 +773,30 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.mkvlang {
-            let mut parsed_lang = None;
-            for lang_str in lang.split(',') {
-                if let Ok(l) = Language::from_str(lang_str.trim()) {
-                    parsed_lang = Some(l);
-                    break;
-                }
-            }
-            if let Some(l) = parsed_lang {
-                self.mkvlang = Some(l);
-            } else {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "Invalid mkvlang: {}\n", lang
-                );
-            }
             let str = lang.as_str();
             mkvlang_params_check(str);
+
+            let tokens: Vec<_> = str
+                .split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            if tokens.len() > 1 {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Multiple mkvlang values are not supported; use a single ISO 639-2 code.\n"
+                );
+            }
+
+            if let Some(token) = tokens.first() {
+                self.mkvlang = Some(Language::from_str(token).unwrap_or_else(|_| {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "Invalid mkvlang: {}\n", lang
+                    )
+                }));
+            }
         }
         if args.srt
             || args.mcc
