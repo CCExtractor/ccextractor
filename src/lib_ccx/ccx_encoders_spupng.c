@@ -759,7 +759,7 @@ uint32_t *utf8_to_utf32(char *src)
 }
 
 // Convert big-endian and little-endian
-#define BigtoLittle32(A) ((((uint32_t)(A) & 0xff000000) >> 24) | (((uint32_t)(A) & 0x00ff0000) >> 8) | (((uint32_t)(A) & 0x0000ff00) << 8) | (((uint32_t)(A) & 0x000000ff) << 24))
+#define BigtoLittle32(A) ((((uint32_t)(A)&0xff000000) >> 24) | (((uint32_t)(A)&0x00ff0000) >> 8) | (((uint32_t)(A)&0x0000ff00) << 8) | (((uint32_t)(A)&0x000000ff) << 24))
 
 // Generate PNG file from an UTF-8 string (str)
 // PNG file will be stored at output
