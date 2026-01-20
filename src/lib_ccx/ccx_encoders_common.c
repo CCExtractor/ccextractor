@@ -725,7 +725,6 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 	free_encoder_context(ctx->prev);
 	ctx->prev = NULL; // Ensure it's nulled after freeing
 	freep(&ctx->last_str);
-	freep(&ctx->transcript_settings);
 	dinit_output_ctx(ctx);
 	freep(&ctx->subline);
 	freep(&ctx->buffer);
@@ -824,7 +823,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->subline = (unsigned char *)malloc(SUBLINESIZE);
 	if (!ctx->subline)
 	{
-		freep(&ctx->transcript_settings);
 		freep(&ctx->out);
 		freep(&ctx->buffer);
 		free(ctx);

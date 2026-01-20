@@ -1868,15 +1868,6 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	if (rect->data0 && rect->data1)
 	{
-		if (!region)
-		{
-			free(rect->data0);
-			free(rect->data1);
-			free(rect);
-			sub->nb_data = 0;
-			sub->got_output = 0;
-			return 0;
-		}
 		uint32_t current_hash = 2166136261u;
 
 		// Hash the geometry
@@ -1966,21 +1957,17 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 				   struct cc_subtitle *sub,
 				   LLONG pre_fts_max)
 {
-	if (!enc_ctx || !dec_ctx || !dec_ctx->timing)
-		return;
-
 	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
-	if (!ctx)
-		return;
-
 	LLONG current_pts = dec_ctx->timing->current_pts;
+	if (!enc_ctx)
+		return;
 	// Deduplication check: Skip if this subtitle is a duplicate
 	// We use composition_id + ancillary_id + PTS to uniquely identify a subtitle
 	// PTS is converted from microseconds to milliseconds for consistency
 	// Skip dedup if --no-dvb-dedup flag is set
 	if (!ccx_options.no_dvb_dedup)
 	{
-		uint64_t pts_ms = (uint64_t)(current_pts / (MPEG_CLOCK_FREQ / 1000));
+		uint64_t pts_ms = (uint64_t)(current_pts / 1000);
 		uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
 
 		if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid,
@@ -2160,7 +2147,6 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	int segment_length;
 	int ret = 0;
 	int got_segment = 0;
-	const uint8_t *orig_buf = buf;
 
 	// Safety check: Context may be NULL after PAT change
 	if (!ctx)
@@ -2179,7 +2165,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 	if (buf_size <= 6)
 	{
-		return (int)(buf - orig_buf) > 0 ? (int)(buf - orig_buf) : -1;
+		return -1;
 	}
 
 	p = buf;
@@ -2276,7 +2262,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 	}
 end:
 	if (ret >= 0)
-		ret = p - orig_buf;
+		ret = p - buf;
 
 	return ret;
 }

@@ -468,7 +468,7 @@ pub struct Options {
     pub ocr_blacklist: bool,
     /// Language filter for MKV subtitle tracks.
     /// Accepts comma-separated ISO 639-2 codes (e.g., "eng,fre") or BCP 47 tags (e.g., "en-US,fr-CA").
-    pub mkvlang: Option<super::MkvLangFilter>,
+    pub mkvlang: Option<Language>,
     /// If true, the video stream will be processed even if we're using a different one for subtitles.
     pub analyze_video_stream: bool,
 

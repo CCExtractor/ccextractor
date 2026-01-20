@@ -134,6 +134,18 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     Ok(())
 }
 
+fn mkvlang_params_check(str: &str) {
+    // Check for invalid characters in the language string
+    for c in str.chars() {
+        if !c.is_alphanumeric() && c != ',' && c != '-' {
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "Invalid character '{}' in --mkvlang parameter. Only alphanumeric characters, commas, and hyphens are allowed.\n", c
+            );
+        }
+    }
+}
+
 fn get_file_buffer_size() -> i32 {
     unsafe { FILEBUFFERSIZE }
 }
@@ -761,13 +773,9 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.mkvlang {
-            match MkvLangFilter::new(lang.as_str()) {
-                Ok(filter) => self.mkvlang = Some(filter),
-                Err(e) => fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "{}\n", e
-                ),
-            }
+            self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
+            let str = lang.as_str();
+            mkvlang_params_check(str);
         }
         if args.srt
             || args.mcc
@@ -1587,6 +1595,34 @@ impl OptionsExt for Options {
             );
         }
 
+        // Additional split_dvb_subs validations
+        if self.split_dvb_subs {
+            // Check for manual PID selection conflict
+            if self.demux_cfg.ts_datastreamtype != StreamType::Unknownstream {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "--split-dvb-subs cannot be used with manual PID selection (--datapid).\n"
+                );
+            }
+            // Check for multiprogram mode conflict
+            if self.multiprogram {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "--split-dvb-subs cannot be used with --multiprogram.\n"
+                );
+            }
+            // Check for supported output formats
+            if self.write_format != OutputFormat::Srt
+                && self.write_format != OutputFormat::Sami
+                && self.write_format != OutputFormat::WebVtt
+            {
+                fatal!(
+                    cause = ExitCause::IncompatibleParameters;
+                    "--split-dvb-subs only supports SRT, SAMI, and WebVTT output formats.\n"
+                );
+            }
+        }
+
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
             self.enc_cfg.encoding = Encoding::UTF8;
             println!("Note: Output format is WebVTT, forcing UTF-8");
@@ -1677,7 +1713,7 @@ pub mod tests {
     use crate::{args::*, parser::*};
     use clap::Parser;
     use lib_ccxr::{
-        common::{MkvLangFilter, OutputFormat, SelectCodec, StreamMode, StreamType},
+        common::{OutputFormat, SelectCodec, StreamMode, StreamType},
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
 

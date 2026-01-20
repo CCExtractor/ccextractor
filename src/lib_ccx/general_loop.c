@@ -658,8 +658,9 @@ static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode 
 #endif
 			// Process cc_data triplets through process_cc_data for 708 support
 			process_cc_data(enc_ctx, dec_ctx, cc_data, cc_count, sub);
+			cdp_count++;
 		}
-		cdp_count++;
+
 		pos += cdp_length;
 	}
 
@@ -874,13 +875,10 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// Safety check: Skip if decoder was freed due to PAT change
 		if (dec_ctx->private_data)
 		{
-			if (data_node->len > 2)
-			{
-				ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-				if (ret < 0)
-					mprint("Return from dvbsub_decode: %d\n", ret);
-				set_fts(dec_ctx->timing);
-			}
+			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+			if (ret < 0)
+				mprint("Return from dvbsub_decode: %d\n", ret);
+			set_fts(dec_ctx->timing);
 		}
 		got = data_node->len;
 	}
@@ -958,9 +956,9 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 
 			frames_since_ref_time = 0;
 			set_fts(dec_ctx->timing);
-		}
 
-		last_pts = dec_ctx->timing->current_pts;
+			last_pts = dec_ctx->timing->current_pts;
+		}
 
 		dbg_print(CCX_DMT_VIDES, "PTS: %s (%8u)",
 			  print_mstime_static(dec_ctx->timing->current_pts / (MPEG_CLOCK_FREQ / 1000)),
@@ -994,34 +992,31 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			dec_ctx->timing->sync_pts = data_node->pts;
 			set_fts(dec_ctx->timing);
 		}
-	}
 
 #ifndef DISABLE_RUST
-	// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
-	if (data_node->bufferdatatype == CCX_RAW_TYPE && dec_ctx->dtvcc_rust)
-	{
-		int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
-		if (!is_active)
+		// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
+		if (dec_ctx->dtvcc_rust)
 		{
-			ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+			int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+			if (!is_active)
+			{
+				ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+			}
 		}
-	}
 #endif
 
-	// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
-	if (data_node->bufferdatatype == CCX_RAW_TYPE)
-	{
+		// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
 		int cc_count = data_node->len / 3;
 		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
 		got = data_node->len;
 	}
-
-	if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
+	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
 		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
 		got = data_node->len;
 	}
-	// else fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
+	else
+		fatal(CCX_COMMON_EXIT_BUG_BUG, "In process_data: datanode->buffer is of unknown data type!");
 
 	if (got > data_node->len)
 	{
@@ -1984,11 +1979,11 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			// Process the data
 			set_current_pts(dec_ctx->timing, currfts * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing); // Now set the FTS related variables
-		}
 
-		for (int j = 0; j < cbcount * 3; j = j + 3)
-		{
-			do_cb(dec_ctx, parsebuf + j, dec_sub);
+			for (int j = 0; j < cbcount * 3; j = j + 3)
+			{
+				do_cb(dec_ctx, parsebuf + j, dec_sub);
+			}
 		}
 
 		if (dec_sub->got_output)
@@ -1999,7 +1994,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 	} // end while(1)
 
-	// dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
+	dbg_print(CCX_DMT_PARSE, "Processed %d bytes\n", bread);
 
 	/* Check if captions were found via other paths (CEA-608 writes directly
 	   to encoder without setting got_output). Similar to general_loop logic. */

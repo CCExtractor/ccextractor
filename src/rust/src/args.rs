@@ -598,14 +598,12 @@ pub struct Args {
     /// Incompatible with: stdout output, manual PID selection,
     /// multiprogram mode. Only works with SRT, SAMI, WebVTT.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    #[arg(conflicts_with_all = ["datapid", "multiprogram"])]
     pub split_dvb_subs: bool,
     /// Disable DVB subtitle deduplication when using --split-dvb-subs.
     /// By default, CCExtractor filters out duplicate DVB subtitles
     /// to prevent repetition in split output files. Use this flag
     /// to disable deduplication and output all subtitles as-is.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
-    #[arg(requires = "split_dvb_subs")]
     pub no_dvb_dedup: bool,
     /// Manually select the name of the Tesseract .traineddata
     /// file. Helpful if you want to OCR a caption stream of

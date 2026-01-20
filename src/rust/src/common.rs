@@ -18,7 +18,6 @@ use lib_ccxr::common::DtvccServiceCharset;
 use lib_ccxr::common::EncoderConfig;
 use lib_ccxr::common::EncodersTranscriptFormat;
 use lib_ccxr::common::Language;
-use lib_ccxr::common::MkvLangFilter;
 use lib_ccxr::common::Options;
 use lib_ccxr::common::OutputFormat;
 use lib_ccxr::common::SelectCodec;
@@ -184,9 +183,9 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
     (*ccx_s_options).ocr_line_split = options.ocr_line_split as _;
     (*ccx_s_options).ocr_blacklist = options.ocr_blacklist as _;
-    if let Some(ref mkvlang) = options.mkvlang {
+    if let Some(mkvlang) = options.mkvlang {
         (*ccx_s_options).mkvlang =
-            replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.as_raw_str());
+            replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.to_ctype().as_str());
     }
     (*ccx_s_options).analyze_video_stream = options.analyze_video_stream as _;
     (*ccx_s_options).hardsubx_ocr_mode = options.hardsubx_ocr_mode.to_ctype();
@@ -428,10 +427,12 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.ocr_line_split = (*ccx_s_options).ocr_line_split != 0;
     options.ocr_blacklist = (*ccx_s_options).ocr_blacklist != 0;
 
-    // Handle mkvlang (C string to Option<MkvLangFilter>)
+    // Handle mkvlang (C string to Option<Language>)
     if !(*ccx_s_options).mkvlang.is_null() {
-        let lang_str = c_char_to_string((*ccx_s_options).mkvlang);
-        options.mkvlang = MkvLangFilter::new(&lang_str).ok();
+        options.mkvlang = Some(
+            Language::from_str(&c_char_to_string((*ccx_s_options).mkvlang))
+                .expect("Invalid language"),
+        )
     }
 
     options.analyze_video_stream = (*ccx_s_options).analyze_video_stream != 0;

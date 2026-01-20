@@ -8,7 +8,7 @@
 
 /* Helper function to write SRT to a specific output file (issue #665 - teletext multi-page)
    Takes output file descriptor and counter pointer as parameters */
-static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end,
+static int write_stringz_as_srt_to_output(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end,
 					  int out_fh, unsigned int *srt_counter)
 {
 	int used;
@@ -16,7 +16,7 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	unsigned h2, m2, s2, ms2;
 	char timeline[128];
 
-	if (!string || !string[0])
+	if (!str_arg || !str_arg[0])
 		return 0;
 
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
@@ -32,7 +32,7 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
 	write_wrapped(out_fh, context->buffer, used);
-	int len = strlen(string);
+	int len = strlen(str_arg);
 	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
 	if (!unescaped)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_srt() - not enough memory for unescaped buffer.\n");
@@ -47,14 +47,14 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
+		if (str_arg[pos_r] == '\\' && str_arg[pos_r + 1] == 'n')
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
 		}
 		else
 		{
-			unescaped[pos_w] = string[pos_r];
+			unescaped[pos_w] = str_arg[pos_r];
 			pos_r++;
 		}
 		pos_w++;
@@ -86,9 +86,9 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
-int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
+int write_stringz_as_srt(char *str_arg, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
-	return write_stringz_as_srt_to_output(string, context, ms_start, ms_end,
+	return write_stringz_as_srt_to_output(str_arg, context, ms_start, ms_end,
 					      context->out->fh, &context->srt_counter);
 }
 
