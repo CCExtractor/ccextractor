@@ -429,10 +429,18 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
 
     // Handle mkvlang (C string to Option<Language>)
     if !(*ccx_s_options).mkvlang.is_null() {
-        options.mkvlang = Some(
-            Language::from_str(&c_char_to_string((*ccx_s_options).mkvlang))
-                .expect("Invalid language"),
-        )
+        let mkvlang_str = c_char_to_string((*ccx_s_options).mkvlang);
+        let mut parsed_lang = None;
+        for lang_str in mkvlang_str.split(',') {
+            if let Ok(lang) = Language::from_str(lang_str.trim()) {
+                parsed_lang = Some(lang);
+                break;
+            }
+        }
+        if parsed_lang.is_none() {
+            eprintln!("Warning: Invalid mkvlang: {}", mkvlang_str);
+        }
+        options.mkvlang = parsed_lang;
     }
 
     options.analyze_video_stream = (*ccx_s_options).analyze_video_stream != 0;

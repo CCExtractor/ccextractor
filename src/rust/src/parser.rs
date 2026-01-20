@@ -773,7 +773,21 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.mkvlang {
-            self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
+            let mut parsed_lang = None;
+            for lang_str in lang.split(',') {
+                if let Ok(l) = Language::from_str(lang_str.trim()) {
+                    parsed_lang = Some(l);
+                    break;
+                }
+            }
+            if let Some(l) = parsed_lang {
+                self.mkvlang = Some(l);
+            } else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "Invalid mkvlang: {}\n", lang
+                );
+            }
             let str = lang.as_str();
             mkvlang_params_check(str);
         }
@@ -1598,7 +1612,7 @@ impl OptionsExt for Options {
         // Additional split_dvb_subs validations
         if self.split_dvb_subs {
             // Check for manual PID selection conflict
-            if self.demux_cfg.ts_datastreamtype != StreamType::Unknownstream {
+            if !self.demux_cfg.ts_cappids.is_empty() || self.demux_cfg.ts_forced_cappid {
                 fatal!(
                     cause = ExitCause::IncompatibleParameters;
                     "--split-dvb-subs cannot be used with manual PID selection (--datapid).\n"
