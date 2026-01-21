@@ -2326,19 +2326,14 @@ pub mod tests {
     }
 
     #[test]
-    fn test_buffersize_with_k_suffix() {
+    fn test_buffersize_parsing() {
+        // Run sequentially to avoid race conditions on global FILEBUFFERSIZE
         let (_, _) = parse_args(&["--buffersize", "64K"]);
         assert_eq!(get_file_buffer_size(), 64 * 1024);
-    }
 
-    #[test]
-    fn test_buffersize_with_m_suffix() {
         let (_, _) = parse_args(&["--buffersize", "2M"]);
         assert_eq!(get_file_buffer_size(), 2 * 1024 * 1024);
-    }
 
-    #[test]
-    fn test_buffersize_with_numeric_value() {
         let (_, _) = parse_args(&["--buffersize", "8192"]);
         assert_eq!(get_file_buffer_size(), 8192);
     }
