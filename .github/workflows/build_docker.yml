@@ -8,8 +8,6 @@ on:
     - 'docker/**'
     - '**.c'
     - '**.h'
-    - '**CMakeLists.txt'
-    - '**.cmake'
     - 'src/rust/**'
   pull_request:
     types: [opened, synchronize, reopened]
@@ -18,8 +16,6 @@ on:
     - 'docker/**'
     - '**.c'
     - '**.h'
-    - '**CMakeLists.txt'
-    - '**.cmake'
     - 'src/rust/**'
 
 jobs:

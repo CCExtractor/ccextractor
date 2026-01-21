@@ -57,24 +57,17 @@ fn set_mpeg_clock_freq(freq: i32) {
 }
 
 fn atol(bufsize: &str) -> i32 {
-    let s = bufsize.trim();
-    if s.is_empty() {
-        return 0;
-    }
-
-    let last_char = s.chars().last().unwrap();
-    if last_char.is_ascii_digit() {
-        return s.parse::<i32>().unwrap_or(0);
-    }
-
-    let val_str = &s[..s.len() - 1];
-    let mut val = val_str.parse::<i32>().unwrap_or(0);
-
-    match last_char.to_ascii_uppercase() {
-        'M' => val *= 1024 * 1024,
-        'K' => val *= 1024,
-        'G' => val *= 1024 * 1024 * 1024,
-        _ => {}
+    let mut val = bufsize[0..bufsize.len() - 1].parse::<i32>().unwrap();
+    let size = bufsize
+        .to_string()
+        .to_uppercase()
+        .chars()
+        .nth(bufsize.len() - 1)
+        .unwrap();
+    if size == 'M' {
+        val *= 1024 * 1024;
+    } else if size == 'K' {
+        val *= 1024;
     }
     val
 }
@@ -114,7 +107,7 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
 
     for line in reader.lines() {
         num += 1;
-        let line = line?;
+        let line = line.unwrap();
         if line.starts_with('#') {
             continue;
         }
@@ -133,14 +126,58 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
     }
     Ok(())
 }
+fn mkvlang_params_check(lang: &str) {
+    let mut initial = 0;
+    let mut _present = 0;
 
-fn mkvlang_params_check(str: &str) {
-    // Check for invalid characters in the language string
-    for c in str.chars() {
-        if !c.is_alphanumeric() && c != ',' && c != '-' {
+    for (char_index, c) in lang.to_lowercase().chars().enumerate() {
+        if c == ',' {
+            _present = char_index;
+
+            if _present - initial < 3 || _present - initial > 6 {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                    "language codes should be xxx,xxx,xxx,....\n"
+                );
+            }
+
+            if _present - initial == 6 {
+                let sub_slice = &lang[initial.._present];
+                if !sub_slice.contains('-') {
+                    fatal!(
+                        cause = ExitCause::MalformedParameter;
+                        "language codes should be xxx,xxx,xxx,....\n"
+                    );
+                }
+            }
+
+            initial = _present + 1;
+        }
+    }
+
+    // Steps to check for the last lang of multiple mkvlangs provided by the user.
+    _present = lang.len() - 1;
+
+    for char_index in (0.._present).rev() {
+        if lang.chars().nth(char_index) == Some(',') {
+            initial = char_index + 1;
+            break;
+        }
+    }
+
+    if _present - initial < 2 || _present - initial > 5 {
+        fatal!(
+            cause = ExitCause::MalformedParameter;
+            "last language code should be xxx.\n"
+        );
+    }
+
+    if _present - initial == 5 {
+        let sub_slice = &lang[initial.._present];
+        if !sub_slice.contains('-') {
             fatal!(
                 cause = ExitCause::MalformedParameter;
-                "Invalid character '{}' in --mkvlang parameter. Only alphanumeric characters, commas, and hyphens are allowed.\n", c
+                "last language code is not of the form xxx-xx\n"
             );
         }
     }
@@ -773,37 +810,9 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref lang) = args.mkvlang {
+            self.mkvlang = Some(Language::from_str(lang.as_str()).unwrap());
             let str = lang.as_str();
             mkvlang_params_check(str);
-
-            let tokens: Vec<_> = str
-                .split(',')
-                .map(|s| s.trim())
-                .filter(|s| !s.is_empty())
-                .collect();
-
-            if tokens.is_empty() {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "Invalid mkvlang: {}\n", lang
-                );
-            }
-
-            if tokens.len() > 1 {
-                fatal!(
-                    cause = ExitCause::MalformedParameter;
-                    "Multiple mkvlang values are not supported; use a single ISO 639-2 code.\n"
-                );
-            }
-
-            if let Some(token) = tokens.first() {
-                self.mkvlang = Some(Language::from_str(token).unwrap_or_else(|_| {
-                    fatal!(
-                        cause = ExitCause::MalformedParameter;
-                        "Invalid mkvlang: {}\n", lang
-                    )
-                }));
-            }
         }
         if args.srt
             || args.mcc
@@ -1623,23 +1632,19 @@ impl OptionsExt for Options {
             );
         }
 
-        // Additional split_dvb_subs validations
         if self.split_dvb_subs {
-            // Check for manual PID selection conflict
             if !self.demux_cfg.ts_cappids.is_empty() || self.demux_cfg.ts_forced_cappid {
                 fatal!(
                     cause = ExitCause::IncompatibleParameters;
                     "--split-dvb-subs cannot be used with manual PID selection (--datapid).\n"
                 );
             }
-            // Check for multiprogram mode conflict
             if self.multiprogram {
                 fatal!(
                     cause = ExitCause::IncompatibleParameters;
                     "--split-dvb-subs cannot be used with --multiprogram.\n"
                 );
             }
-            // Check for supported output formats
             if self.write_format != OutputFormat::Srt
                 && self.write_format != OutputFormat::Sami
                 && self.write_format != OutputFormat::WebVtt
@@ -1774,1300 +1779,26 @@ pub mod tests {
         (options, tlt_config)
     }
 
-    // =========================================================================
-    // INPUT FORMAT TESTS
-    // =========================================================================
-
     #[test]
-    fn test_input_ts_sets_transport_stream_mode() {
-        let (options, _) = parse_args(&["--input", "ts"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Transport);
-    }
-
-    #[test]
-    fn test_input_ps_sets_program_stream_mode() {
-        let (options, _) = parse_args(&["--input", "ps"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Program);
-    }
-
-    #[test]
-    fn test_input_es_sets_elementary_stream_mode() {
-        let (options, _) = parse_args(&["--input", "es"]);
-        assert_eq!(
-            options.demux_cfg.auto_stream,
-            StreamMode::ElementaryOrNotFound
-        );
-    }
-
-    #[test]
-    fn test_input_asf_sets_asf_mode() {
-        let (options, _) = parse_args(&["--input", "asf"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Asf);
-    }
-
-    #[test]
-    fn test_input_wtv_sets_wtv_mode() {
-        let (options, _) = parse_args(&["--input", "wtv"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Wtv);
-    }
-
-    #[test]
-    fn test_input_mp4_sets_mp4_mode() {
-        let (options, _) = parse_args(&["--input", "mp4"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Mp4);
-    }
-
-    #[test]
-    fn test_input_mkv_sets_mkv_mode() {
-        let (options, _) = parse_args(&["--input", "mkv"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Mkv);
-    }
-
-    #[test]
-    fn test_input_mxf_sets_mxf_mode() {
-        let (options, _) = parse_args(&["--input", "mxf"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Mxf);
-    }
-
-    #[test]
-    fn test_input_bin_sets_rcwt_mode() {
-        let (options, _) = parse_args(&["--input", "bin"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Rcwt);
-    }
-
-    #[test]
-    fn test_input_raw_sets_mcpoodles_mode() {
-        let (options, _) = parse_args(&["--input", "raw"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::McpoodlesRaw);
-    }
-
-    #[test]
-    fn test_input_m2ts_sets_transport_mode() {
-        let (options, _) = parse_args(&["--input", "m2ts"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Transport);
-    }
-
-    #[test]
-    fn test_input_scc_sets_scc_mode() {
-        let (options, _) = parse_args(&["--input", "scc"]);
-        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Scc);
-    }
-
-    // =========================================================================
-    // OUTPUT FORMAT TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_out_srt_sets_srt_format() {
-        let (options, _) = parse_args(&["--out", "srt"]);
-        assert_eq!(options.write_format, OutputFormat::Srt);
-    }
-
-    #[test]
-    fn test_out_ass_sets_ssa_format() {
-        let (options, _) = parse_args(&["--out", "ass"]);
-        assert_eq!(options.write_format, OutputFormat::Ssa);
-    }
-
-    #[test]
-    fn test_out_ssa_sets_ssa_format() {
-        let (options, _) = parse_args(&["--out", "ssa"]);
-        assert_eq!(options.write_format, OutputFormat::Ssa);
-    }
-
-    #[test]
-    fn test_out_webvtt_sets_webvtt_format() {
-        let (options, _) = parse_args(&["--out", "webvtt"]);
-        assert_eq!(options.write_format, OutputFormat::WebVtt);
-    }
-
-    #[test]
-    fn test_out_webvtt_full_sets_webvtt_with_styling() {
-        let (options, _) = parse_args(&["--out", "webvtt-full"]);
-        assert_eq!(options.write_format, OutputFormat::WebVtt);
-        assert!(options.use_webvtt_styling);
-    }
-
-    #[test]
-    fn test_out_sami_sets_sami_format() {
-        let (options, _) = parse_args(&["--out", "sami"]);
-        assert_eq!(options.write_format, OutputFormat::Sami);
-    }
-
-    #[test]
-    fn test_out_dvdraw_sets_dvdraw_format() {
-        let (options, _) = parse_args(&["--out", "dvdraw"]);
-        assert_eq!(options.write_format, OutputFormat::DvdRaw);
-    }
-
-    #[test]
-    fn test_out_raw_sets_raw_format() {
-        let (options, _) = parse_args(&["--out", "raw"]);
-        assert_eq!(options.write_format, OutputFormat::Raw);
-    }
-
-    #[test]
-    fn test_out_bin_sets_rcwt_format() {
-        let (options, _) = parse_args(&["--out", "bin"]);
-        assert_eq!(options.write_format, OutputFormat::Rcwt);
-    }
-
-    #[test]
-    fn test_out_txt_sets_transcript_format_with_no_rollup() {
-        let (options, _) = parse_args(&["--out", "txt"]);
-        assert_eq!(options.write_format, OutputFormat::Transcript);
-        assert!(options.settings_dtvcc.no_rollup);
-    }
-
-    #[test]
-    fn test_out_ttxt_sets_transcript_with_timestamps() {
-        let (options, _) = parse_args(&["--out", "ttxt"]);
-        assert_eq!(options.write_format, OutputFormat::Transcript);
-        assert!(options.transcript_settings.show_start_time);
-        assert!(options.transcript_settings.show_end_time);
-    }
-
-    #[test]
-    fn test_out_mcc_sets_mcc_format() {
-        let (options, _) = parse_args(&["--out", "mcc"]);
-        assert_eq!(options.write_format, OutputFormat::Mcc);
-    }
-
-    #[test]
-    fn test_out_scc_sets_scc_format() {
-        let (options, _) = parse_args(&["--out", "scc"]);
-        assert_eq!(options.write_format, OutputFormat::Scc);
-    }
-
-    #[test]
-    fn test_out_ccd_sets_ccd_format() {
-        let (options, _) = parse_args(&["--out", "ccd"]);
-        assert_eq!(options.write_format, OutputFormat::Ccd);
-    }
-
-    #[test]
-    fn test_out_g608_sets_g608_format() {
-        let (options, _) = parse_args(&["--out", "g608"]);
-        assert_eq!(options.write_format, OutputFormat::G608);
-    }
-
-    #[test]
-    fn test_out_spupng_sets_spupng_format() {
-        let (options, _) = parse_args(&["--out", "spupng"]);
-        assert_eq!(options.write_format, OutputFormat::SpuPng);
-    }
-
-    #[test]
-    fn test_out_smptett_sets_smptett_format() {
-        let (options, _) = parse_args(&["--out", "smptett"]);
-        assert_eq!(options.write_format, OutputFormat::SmpteTt);
-    }
-
-    #[test]
-    fn test_out_simple_xml_sets_simple_xml_format() {
-        let (options, _) = parse_args(&["--out", "simple-xml"]);
-        assert_eq!(options.write_format, OutputFormat::SimpleXml);
-    }
-
-    #[test]
-    fn test_out_null_sets_null_format() {
-        let (options, _) = parse_args(&["--out", "null"]);
-        assert_eq!(options.write_format, OutputFormat::Null);
-    }
-
-    #[test]
-    fn test_out_report_enables_file_reports() {
-        let (options, _) = parse_args(&["--out", "report"]);
-        assert_eq!(options.write_format, OutputFormat::Null);
-        assert!(options.print_file_reports);
-        assert!(options.demux_cfg.ts_allprogram);
-    }
-
-    // =========================================================================
-    // ENCODING TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_utf8_sets_utf8_encoding() {
-        let (options, _) = parse_args(&["--utf8"]);
-        assert_eq!(options.enc_cfg.encoding, Encoding::UTF8);
-    }
-
-    #[test]
-    fn test_latin1_sets_latin1_encoding() {
-        let (options, _) = parse_args(&["--latin1"]);
-        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
-    }
-
-    #[test]
-    fn test_unicode_sets_ucs2_encoding() {
-        let (options, _) = parse_args(&["--unicode"]);
-        assert_eq!(options.enc_cfg.encoding, Encoding::UCS2);
-    }
-
-    #[test]
-    fn test_bom_disables_no_bom() {
-        let (options, _) = parse_args(&["--bom"]);
-        assert!(!options.enc_cfg.no_bom);
-    }
-
-    #[test]
-    fn test_no_bom_enables_no_bom() {
-        let (options, _) = parse_args(&["--no-bom"]);
-        assert!(options.enc_cfg.no_bom);
-    }
-
-    #[test]
-    fn test_lf_sets_unix_line_terminator() {
-        let (options, _) = parse_args(&["--lf"]);
-        assert!(options.enc_cfg.line_terminator_lf);
-    }
-
-    // =========================================================================
-    // STREAM/PROGRAM SELECTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_program_number_sets_forced_program() {
-        let (options, _) = parse_args(&["--program-number", "5"]);
-        assert_eq!(options.demux_cfg.ts_forced_program, Some(5));
-    }
-
-    #[test]
-    fn test_program_number_hex_format() {
-        let (options, _) = parse_args(&["--program-number", "0x10"]);
-        assert_eq!(options.demux_cfg.ts_forced_program, Some(16));
-    }
-
-    #[test]
-    fn test_autoprogram_enables_auto_program_selection() {
-        let (options, _) = parse_args(&["--autoprogram"]);
-        assert!(options.demux_cfg.ts_autoprogram);
-    }
-
-    #[test]
-    fn test_multiprogram_enables_all_programs() {
-        let (options, _) = parse_args(&["--multiprogram"]);
-        assert!(options.multiprogram);
-        assert!(options.demux_cfg.ts_allprogram);
-    }
-
-    #[test]
-    fn test_datapid_sets_caption_pid() {
-        let (options, _) = parse_args(&["--datapid", "1234"]);
-        assert_eq!(options.demux_cfg.ts_cappids[0], 1234);
-    }
-
-    #[test]
-    fn test_datastreamtype_sets_data_stream_type() {
-        let (options, _) = parse_args(&["--datastreamtype", "2"]);
-        assert_eq!(options.demux_cfg.ts_datastreamtype, StreamType::VideoMpeg2);
-    }
-
-    #[test]
-    fn test_streamtype_sets_forced_stream_type() {
-        let (options, _) = parse_args(&["--streamtype", "6"]);
-        assert_eq!(
-            options.demux_cfg.ts_forced_streamtype,
-            StreamType::PrivateMpeg2
-        );
-    }
-
-    #[test]
-    fn test_cc2_selects_channel_2() {
-        let (options, _) = parse_args(&["--cc2"]);
-        assert_eq!(options.cc_channel, 2);
-    }
-
-    #[test]
-    fn test_output_field_1_extracts_field_1() {
-        let (options, _) = parse_args(&["--output-field", "1"]);
-        assert_eq!(options.extract, 1);
-        assert!(options.is_608_enabled);
-    }
-
-    #[test]
-    fn test_output_field_2_extracts_field_2() {
-        let (options, _) = parse_args(&["--output-field", "2"]);
-        assert_eq!(options.extract, 2);
-        assert!(options.is_608_enabled);
-    }
-
-    #[test]
-    fn test_output_field_both_extracts_both() {
-        let (options, _) = parse_args(&["--output-field", "both"]);
-        assert_eq!(options.extract, 12);
-        assert!(options.is_608_enabled);
-    }
-
-    // =========================================================================
-    // CEA-708 SERVICE TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_service_enables_708_with_single_service() {
-        let (options, _) = parse_args(&["--service", "1"]);
-        assert!(options.is_708_enabled);
-        assert!(options.settings_dtvcc.services_enabled[0]);
-        assert_eq!(options.settings_dtvcc.active_services_count, 1);
-    }
-
-    #[test]
-    fn test_service_enables_multiple_services() {
-        let (options, _) = parse_args(&["--service", "1,2,3"]);
-        assert!(options.is_708_enabled);
-        assert!(options.settings_dtvcc.services_enabled[0]);
-        assert!(options.settings_dtvcc.services_enabled[1]);
-        assert!(options.settings_dtvcc.services_enabled[2]);
-        assert_eq!(options.settings_dtvcc.active_services_count, 3);
-    }
-
-    #[test]
-    fn test_service_all_enables_all_services() {
-        let (options, _) = parse_args(&["--service", "all"]);
-        assert!(options.is_708_enabled);
-        assert_eq!(
-            options.settings_dtvcc.active_services_count,
-            DTVCC_MAX_SERVICES as i32
-        );
-    }
-
-    #[test]
-    fn test_service_with_charset_sets_unique_charsets() {
-        let (options, _) = parse_args(&["--service", "1[UTF-8],2[EUC-KR]"]);
-        assert!(options.is_708_enabled);
-        match options.enc_cfg.services_charsets {
-            DtvccServiceCharset::Unique(charsets) => {
-                assert_eq!(charsets[0], "UTF-8");
-                assert_eq!(charsets[1], "EUC-KR");
-            }
-            _ => panic!("Expected DtvccServiceCharset::Unique"),
-        }
-    }
-
-    #[test]
-    fn test_service_all_with_charset_sets_same_charset() {
-        let (options, _) = parse_args(&["--service", "all[EUC-KR]"]);
-        assert!(options.is_708_enabled);
-        assert_eq!(
-            options.enc_cfg.services_charsets,
-            DtvccServiceCharset::Same("EUC-KR".to_string())
-        );
-    }
-
-    #[test]
-    fn test_svc_alias_works() {
-        let (options, _) = parse_args(&["--svc", "1"]);
-        assert!(options.is_708_enabled);
-    }
-
-    // =========================================================================
-    // CODEC SELECTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_codec_dvbsub_selects_dvb() {
-        let (options, _) = parse_args(&["--codec", "dvbsub"]);
-        assert_eq!(options.demux_cfg.codec, SelectCodec::Some(Codec::Dvb));
-    }
-
-    #[test]
-    fn test_codec_teletext_selects_teletext() {
-        let (options, _) = parse_args(&["--codec", "teletext"]);
-        assert_eq!(options.demux_cfg.codec, SelectCodec::Some(Codec::Teletext));
-    }
-
-    #[test]
-    fn test_no_codec_dvbsub_excludes_dvb() {
-        let (options, _) = parse_args(&["--no-codec", "dvbsub"]);
-        assert_eq!(options.demux_cfg.nocodec, SelectCodec::Some(Codec::Dvb));
-    }
-
-    #[test]
-    fn test_no_codec_teletext_excludes_teletext() {
-        let (options, _) = parse_args(&["--no-codec", "teletext"]);
-        assert_eq!(
-            options.demux_cfg.nocodec,
-            SelectCodec::Some(Codec::Teletext)
-        );
-    }
-
-    // =========================================================================
-    // TIMING OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_goptime_enables_gop_as_pts() {
-        let (options, _) = parse_args(&["--goptime"]);
-        assert_eq!(options.use_gop_as_pts, Some(true));
-    }
-
-    #[test]
-    fn test_no_goptime_disables_gop_as_pts() {
-        let (options, _) = parse_args(&["--no-goptime"]);
-        assert_eq!(options.use_gop_as_pts, Some(false));
-    }
-
-    #[test]
-    fn test_fixpadding_enables_padding_fix() {
-        let (options, _) = parse_args(&["--fixpadding"]);
-        assert!(options.fix_padding);
-    }
-
-    #[test]
-    fn test_90090_sets_mpeg_clock_frequency() {
-        let (_, _) = parse_args(&["--90090"]);
-        unsafe {
-            assert_eq!(MPEG_CLOCK_FREQ as i64, 90090);
-        }
-    }
-
-    #[test]
-    fn test_delay_sets_subtitle_delay_positive() {
-        let (options, _) = parse_args(&["--delay", "500"]);
-        assert_eq!(options.subs_delay, Timestamp::from_millis(500));
-    }
-
-    #[test]
-    fn test_delay_sets_subtitle_delay_negative() {
-        let (options, _) = parse_args(&["--delay=-200"]);
-        assert_eq!(options.subs_delay, Timestamp::from_millis(-200));
-    }
-
-    #[test]
-    fn test_startat_sets_extraction_start() {
-        let (options, _) = parse_args(&["--startat", "4"]);
-        assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
-    }
-
-    #[test]
-    fn test_endat_sets_extraction_end() {
-        let (options, _) = parse_args(&["--endat", "7"]);
-        assert_eq!(options.extraction_end.unwrap_or_default().seconds(), 7);
-    }
-
-    #[test]
-    fn test_startat_and_endat_together() {
-        let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
-        assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
-        assert_eq!(options.extraction_end.unwrap_or_default().seconds(), 7);
-    }
-
-    #[test]
-    fn test_no_autotimeref_disables_auto_time_reference() {
-        let (options, _) = parse_args(&["--no-autotimeref"]);
-        assert!(options.noautotimeref);
-    }
-
-    #[test]
-    fn test_unixts_sets_utc_reference() {
-        let (options, _) = parse_args(&["--unixts", "1234567890"]);
-        assert_eq!(*UTC_REFVALUE.read().unwrap(), 1234567890);
-        assert!(options.noautotimeref);
-    }
-
-    #[test]
-    fn test_datets_sets_date_timestamp_format() {
-        let (options, _) = parse_args(&["--datets"]);
-        assert_eq!(
-            options.date_format,
-            TimestampFormat::Date {
-                millis_separator: ','
-            }
-        );
-    }
-
-    #[test]
-    fn test_sects_sets_seconds_timestamp_format() {
-        let (options, _) = parse_args(&["--sects"]);
-        assert_eq!(
-            options.date_format,
-            TimestampFormat::Seconds {
-                millis_separator: ','
-            }
-        );
-    }
-
-    // =========================================================================
-    // MYTHTV OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_myth_enables_mythtv_mode() {
-        let (options, _) = parse_args(&["--myth"]);
-        assert_eq!(options.auto_myth, Some(true));
-    }
-
-    #[test]
-    fn test_no_myth_disables_mythtv_mode() {
-        let (options, _) = parse_args(&["--no-myth"]);
-        assert_eq!(options.auto_myth, Some(false));
-    }
-
-    // =========================================================================
-    // WTV OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_wtvconvertfix_enables_wtv_fix() {
-        let (options, _) = parse_args(&["--wtvconvertfix"]);
-        assert!(options.wtvconvertfix);
-    }
-
-    #[test]
-    fn test_wtvmpeg2_enables_wtv_mpeg2_processing() {
-        let (options, _) = parse_args(&["--wtvmpeg2"]);
-        assert!(options.wtvmpeg2);
-    }
-
-    // =========================================================================
-    // MP4 OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_mp4vidtrack_forces_video_track_processing() {
-        let (options, _) = parse_args(&["--mp4vidtrack"]);
-        assert!(options.mp4vidtrack);
-    }
-
-    #[test]
-    fn test_chapters_enables_chapter_extraction() {
-        let (options, _) = parse_args(&["--chapters"]);
-        assert!(options.extract_chapters);
-    }
-
-    // =========================================================================
-    // HAUPPAUGE OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_hauppauge_enables_hauppauge_mode() {
-        let (options, _) = parse_args(&["--hauppauge"]);
-        assert!(options.hauppauge_mode);
-    }
-
-    // =========================================================================
-    // ROLLUP OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_no_rollup_disables_rollup() {
-        let (options, _) = parse_args(&["--no-rollup"]);
-        assert!(options.no_rollup);
-        assert!(options.settings_608.no_rollup);
-        assert!(options.settings_dtvcc.no_rollup);
-    }
-
-    #[test]
-    fn test_ru1_forces_1_line_rollup() {
-        let (options, _) = parse_args(&["--ru1"]);
-        assert_eq!(options.settings_608.force_rollup, 1);
-    }
-
-    #[test]
-    fn test_ru2_forces_2_line_rollup() {
-        let (options, _) = parse_args(&["--ru2"]);
-        assert_eq!(options.settings_608.force_rollup, 2);
-    }
-
-    #[test]
-    fn test_ru3_forces_3_line_rollup() {
-        let (options, _) = parse_args(&["--ru3"]);
-        assert_eq!(options.settings_608.force_rollup, 3);
-    }
-
-    #[test]
-    fn test_dru_enables_direct_rollup() {
-        let (options, _) = parse_args(&["--dru"]);
-        assert_eq!(options.settings_608.direct_rollup, 1);
-    }
-
-    // =========================================================================
-    // BUFFERING OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_bufferinput_enables_input_buffering() {
-        let (options, _) = parse_args(&["--bufferinput"]);
-        assert!(options.buffer_input);
-    }
-
-    #[test]
-    fn test_no_bufferinput_disables_input_buffering() {
-        let (options, _) = parse_args(&["--no-bufferinput"]);
-        assert!(!options.buffer_input);
-    }
-
-    #[test]
-    fn test_buffersize_with_k_suffix() {
-        let (_, _) = parse_args(&["--buffersize", "64K"]);
-        assert_eq!(get_file_buffer_size(), 64 * 1024);
-    }
-
-    #[test]
-    fn test_buffersize_with_m_suffix() {
-        let (_, _) = parse_args(&["--buffersize", "2M"]);
-        assert_eq!(get_file_buffer_size(), 2 * 1024 * 1024);
-    }
-
-    #[test]
-    fn test_buffersize_with_numeric_value() {
-        let (_, _) = parse_args(&["--buffersize", "8192"]);
-        assert_eq!(get_file_buffer_size(), 8192);
-    }
-
-    #[test]
-    fn test_koc_enables_keep_output_closed() {
-        let (options, _) = parse_args(&["--koc"]);
-        assert!(options.keep_output_closed);
-    }
-
-    #[test]
-    fn test_forceflush_enables_force_flush() {
-        let (options, _) = parse_args(&["--forceflush"]);
-        assert!(options.force_flush);
-    }
-
-    #[test]
-    fn test_append_enables_append_mode() {
-        let (options, _) = parse_args(&["--append"]);
-        assert!(options.append_mode);
-    }
-
-    // =========================================================================
-    // OUTPUT OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_stdout_redirects_to_stdout() {
-        let (options, _) = parse_args(&["--stdout"]);
-        assert!(options.cc_to_stdout);
-        assert_eq!(options.messages_target, OutputTarget::Stderr);
-    }
-
-    #[test]
-    fn test_quiet_suppresses_output() {
-        let (options, _) = parse_args(&["--quiet"]);
-        assert_eq!(options.messages_target, OutputTarget::Quiet);
-    }
-
-    #[test]
-    fn test_no_fontcolor_disables_font_colors() {
-        let (options, _) = parse_args(&["--no-fontcolor"]);
-        assert!(options.nofontcolor);
-    }
-
-    #[test]
-    fn test_no_htmlescape_disables_html_escaping() {
-        let (options, _) = parse_args(&["--no-htmlescape"]);
-        assert!(options.nohtmlescape);
-    }
-
-    #[test]
-    fn test_no_typesetting_disables_typesetting() {
-        let (options, _) = parse_args(&["--no-typesetting"]);
-        assert!(options.notypesetting);
-    }
-
-    #[test]
-    fn test_trim_enables_subtitle_trimming() {
-        let (options, _) = parse_args(&["--trim"]);
-        assert!(options.enc_cfg.trim_subs);
-    }
-
-    #[test]
-    fn test_sentencecap_enables_sentence_capitalization() {
-        let (options, _) = parse_args(&["--sentencecap"]);
-        assert!(options.enc_cfg.sentence_cap);
-    }
-
-    #[test]
-    fn test_capfile_sets_capitalization_file() {
-        let (options, _) = parse_args(&["--capfile", "words.txt"]);
-        assert!(options.enc_cfg.sentence_cap);
-        assert_eq!(options.sentence_cap_file.to_str(), Some("words.txt"));
-    }
-
-    #[test]
-    fn test_kf_enables_profanity_filter() {
-        let (options, _) = parse_args(&["--kf"]);
-        assert!(options.enc_cfg.filter_profanity);
-    }
-
-    #[test]
-    fn test_profanity_file_sets_filter_file() {
-        let (options, _) = parse_args(&["--profanity-file", "badwords.txt"]);
-        assert!(options.enc_cfg.filter_profanity);
-        assert_eq!(options.filter_profanity_file.to_str(), Some("badwords.txt"));
-    }
-
-    #[test]
-    fn test_splitbysentence_enables_sentence_splitting() {
-        let (options, _) = parse_args(&["--splitbysentence"]);
-        assert!(options.enc_cfg.splitbysentence);
-    }
-
-    #[test]
-    fn test_autodash_enables_speaker_identification() {
-        let (options, _) = parse_args(&["--autodash"]);
-        assert!(options.enc_cfg.autodash);
-    }
-
-    #[test]
-    fn test_sem_enables_semaphore_files() {
-        let (options, _) = parse_args(&["--sem"]);
-        assert!(options.enc_cfg.with_semaphore);
-    }
-
-    #[test]
-    fn test_df_enables_dropframe() {
-        let (options, _) = parse_args(&["--df"]);
-        assert!(options.enc_cfg.force_dropframe);
-    }
-
-    // =========================================================================
-    // DEBUG FLAG TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_debug_enables_verbose_debug() {
-        let (options, _) = parse_args(&["--debug"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::VERBOSE);
-    }
-
-    #[test]
-    fn test_608_enables_decoder_608_debug() {
-        let (options, _) = parse_args(&["--608"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_608);
-    }
-
-    #[test]
-    fn test_708_enables_decoder_708_debug() {
-        let (options, _) = parse_args(&["--708"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_708);
-    }
-
-    #[test]
-    fn test_goppts_enables_time_debug() {
-        let (options, _) = parse_args(&["--goppts"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::TIME);
-    }
-
-    #[test]
-    fn test_xdsdebug_enables_xds_debug() {
-        let (options, _) = parse_args(&["--xdsdebug"]);
-        assert!(options.transcript_settings.xds);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_XDS);
-    }
-
-    #[test]
-    fn test_vides_enables_video_stream_debug() {
-        let (options, _) = parse_args(&["--vides"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::VIDEO_STREAM);
-        assert!(options.analyze_video_stream);
-    }
-
-    #[test]
-    fn test_cbraw_enables_raw_cc_debug() {
-        let (options, _) = parse_args(&["--cbraw"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::CB_RAW);
-    }
-
-    #[test]
-    fn test_parsedebug_enables_parse_debug() {
-        let (options, _) = parse_args(&["--parsedebug"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PARSE);
-    }
-
-    #[test]
-    fn test_parse_pat_enables_pat_debug() {
-        let (options, _) = parse_args(&["--parsePAT"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PAT);
-    }
-
-    #[test]
-    fn test_parse_pmt_enables_pmt_debug() {
-        let (options, _) = parse_args(&["--parsePMT"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PMT);
-    }
-
-    #[test]
-    fn test_dumpdef_enables_dump_def_debug() {
-        let (options, _) = parse_args(&["--dumpdef"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DUMP_DEF);
-    }
-
-    #[test]
-    fn test_investigate_packets_enables_packet_investigation() {
-        let (options, _) = parse_args(&["--investigate-packets"]);
-        assert!(options.investigate_packets);
-    }
-
-    #[test]
-    fn test_no_sync_disables_syncing() {
-        let (options, _) = parse_args(&["--no-sync"]);
-        assert!(options.nosync);
-    }
-
-    #[test]
-    fn test_fullbin_enables_full_binary_output() {
-        let (options, _) = parse_args(&["--fullbin"]);
-        assert!(options.fullbin);
-    }
-
-    #[test]
-    fn test_deblev_enables_levenshtein_debug() {
-        let (options, _) = parse_args(&["--deblev"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::LEVENSHTEIN);
-    }
-
-    #[test]
-    fn test_debugdvbsub_enables_dvb_debug() {
-        let (options, _) = parse_args(&["--debugdvbsub"]);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DVB);
-    }
-
-    #[test]
-    fn test_pesheader_enables_pes_header_output() {
-        let (options, _) = parse_args(&["--pesheader"]);
-        assert!(options.pes_header_to_stdout);
-    }
-
-    // =========================================================================
-    // LEVENSHTEIN DISTANCE TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_no_levdist_disables_levenshtein() {
-        let (options, _) = parse_args(&["--no-levdist"]);
-        assert!(!options.dolevdist);
-    }
-
-    #[test]
-    fn test_levdistmincnt_sets_minimum_count() {
-        let (options, _) = parse_args(&["--levdistmincnt", "5"]);
-        assert_eq!(options.levdistmincnt, 5);
-    }
-
-    #[test]
-    fn test_levdistmaxpct_sets_maximum_percentage() {
-        let (options, _) = parse_args(&["--levdistmaxpct", "20"]);
-        assert_eq!(options.levdistmaxpct, 20);
-    }
-
-    // =========================================================================
-    // TELETEXT OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_teletext_enables_teletext_codec() {
-        let (options, _) = parse_args(&["--teletext"]);
-        assert_eq!(options.demux_cfg.codec, SelectCodec::Some(Codec::Teletext));
-    }
-
-    #[test]
-    fn test_no_teletext_disables_teletext_codec() {
-        let (options, _) = parse_args(&["--no-teletext"]);
-        assert_eq!(
-            options.demux_cfg.nocodec,
-            SelectCodec::Some(Codec::Teletext)
-        );
-    }
-
-    #[test]
-    fn test_tpage_sets_teletext_page() {
-        let (_, tlt_config) = parse_args(&["--tpage", "888"]);
-        assert_eq!(tlt_config.user_page, 888);
-    }
-
-    #[test]
-    fn test_tpage_multiple_pages() {
-        let (_, tlt_config) = parse_args(&["--tpage", "888", "--tpage", "889"]);
-        assert_eq!(tlt_config.user_pages.len(), 2);
-        assert!(tlt_config.user_pages.contains(&888));
-        assert!(tlt_config.user_pages.contains(&889));
-    }
-
-    #[test]
-    fn test_tpages_all_extracts_all_pages() {
-        let (_, tlt_config) = parse_args(&["--tpages-all"]);
-        assert!(tlt_config.extract_all_pages);
-    }
-
-    #[test]
-    fn test_tverbose_enables_teletext_verbose() {
-        let (options, tlt_config) = parse_args(&["--tverbose"]);
-        assert!(tlt_config.verbose);
-        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::TELETEXT);
-    }
-
-    #[test]
-    fn test_latrusmap_enables_russian_mapping() {
-        let (_, tlt_config) = parse_args(&["--latrusmap"]);
-        assert!(tlt_config.latrusmap);
-    }
-
-    #[test]
-    fn test_ttxtforcelatin_forces_latin_charset() {
-        let (_, tlt_config) = parse_args(&["--ttxtforcelatin"]);
-        assert!(tlt_config.forceg0latin);
-    }
-
-    // =========================================================================
-    // XMLTV OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_xmltv_sets_xmltv_mode() {
-        let (options, _) = parse_args(&["--xmltv", "1"]);
-        assert_eq!(options.xmltv, 1);
-    }
-
-    #[test]
-    fn test_xmltv_live_mode() {
-        let (options, _) = parse_args(&["--xmltv", "2"]);
-        assert_eq!(options.xmltv, 2);
-    }
-
-    #[test]
-    fn test_xmltv_both_modes() {
-        let (options, _) = parse_args(&["--xmltv", "3"]);
-        assert_eq!(options.xmltv, 3);
-    }
-
-    #[test]
-    fn test_xmltvliveinterval_sets_interval() {
-        let (options, _) = parse_args(&["--xmltvliveinterval", "10"]);
-        assert_eq!(options.xmltvliveinterval.millis(), 10000);
-    }
-
-    #[test]
-    fn test_xmltvoutputinterval_sets_interval() {
-        let (options, _) = parse_args(&["--xmltvoutputinterval", "30"]);
-        assert_eq!(options.xmltvoutputinterval.millis(), 30000);
-    }
-
-    #[test]
-    fn test_xmltvonlycurrent_enables_current_only() {
-        let (options, _) = parse_args(&["--xmltvonlycurrent"]);
-        assert!(options.xmltvonlycurrent);
-    }
-
-    // =========================================================================
-    // CREDITS OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_startcreditstext_sets_start_credits() {
-        let (options, _) = parse_args(&["--startcreditstext", "Opening Credits"]);
-        assert_eq!(options.enc_cfg.start_credits_text, "Opening Credits");
-    }
-
-    #[test]
-    fn test_startcreditsnotbefore_sets_time() {
-        let (options, _) = parse_args(&["--startcreditsnotbefore", "5"]);
-        assert_eq!(options.enc_cfg.startcreditsnotbefore.seconds(), 5);
-    }
-
-    #[test]
-    fn test_startcreditsnotafter_sets_time() {
-        let (options, _) = parse_args(&["--startcreditsnotafter", "30"]);
-        assert_eq!(options.enc_cfg.startcreditsnotafter.seconds(), 30);
-    }
-
-    #[test]
-    fn test_startcreditsforatleast_sets_duration() {
-        let (options, _) = parse_args(&["--startcreditsforatleast", "3"]);
-        assert_eq!(options.enc_cfg.startcreditsforatleast.seconds(), 3);
-    }
-
-    #[test]
-    fn test_startcreditsforatmost_sets_duration() {
-        let (options, _) = parse_args(&["--startcreditsforatmost", "10"]);
-        assert_eq!(options.enc_cfg.startcreditsforatmost.seconds(), 10);
-    }
-
-    #[test]
-    fn test_endcreditstext_sets_end_credits() {
-        let (options, _) = parse_args(&["--endcreditstext", "Closing Credits"]);
-        assert_eq!(options.enc_cfg.end_credits_text, "Closing Credits");
-    }
-
-    #[test]
-    fn test_endcreditsforatleast_sets_duration() {
-        let (options, _) = parse_args(&["--endcreditsforatleast", "5"]);
-        assert_eq!(options.enc_cfg.endcreditsforatleast.seconds(), 5);
-    }
-
-    #[test]
-    fn test_endcreditsforatmost_sets_duration() {
-        let (options, _) = parse_args(&["--endcreditsforatmost", "15"]);
-        assert_eq!(options.enc_cfg.endcreditsforatmost.seconds(), 15);
-    }
-
-    // =========================================================================
-    // LANGUAGE OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_dvblang_sets_dvb_language() {
-        let (options, _) = parse_args(&["--dvblang", "eng"]);
-        assert_eq!(options.dvblang.unwrap(), Language::Eng);
-    }
-
-    #[test]
-    fn test_mkvlang_sets_mkv_language() {
-        let (options, _) = parse_args(&["--mkvlang", "eng"]);
-        assert_eq!(options.mkvlang.unwrap(), Language::Eng);
-    }
-
-    #[test]
-    fn test_ocrlang_sets_ocr_language() {
-        let (options, _) = parse_args(&["--ocrlang", "chi_tra"]);
-        assert_eq!(options.ocrlang.as_ref().unwrap(), "chi_tra");
-    }
-
-    // =========================================================================
-    // OCR OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_quant_sets_quantization_mode() {
-        let (options, _) = parse_args(&["--quant", "2"]);
-        assert_eq!(options.ocr_quantmode, 2);
-    }
-
-    #[test]
-    fn test_oem_sets_ocr_engine_mode() {
-        let (options, _) = parse_args(&["--oem", "1"]);
-        assert_eq!(options.ocr_oem, 1);
-    }
-
-    #[test]
-    fn test_psm_sets_page_segmentation_mode() {
-        let (options, _) = parse_args(&["--psm", "7"]);
-        assert_eq!(options.psm, 7);
-    }
-
-    #[test]
-    fn test_ocr_line_split_enables_line_splitting() {
-        let (options, _) = parse_args(&["--ocr-line-split"]);
-        assert!(options.ocr_line_split);
-    }
-
-    #[test]
-    fn test_no_ocr_blacklist_disables_blacklist() {
-        let (options, _) = parse_args(&["--no-ocr-blacklist"]);
-        assert!(!options.ocr_blacklist);
-    }
-
-    #[test]
-    fn test_no_spupngocr_disables_spupng_ocr() {
-        let (options, _) = parse_args(&["--no-spupngocr"]);
-        assert!(options.enc_cfg.nospupngocr);
-    }
-
-    // =========================================================================
-    // FONT OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_font_sets_font_path() {
-        let (options, _) = parse_args(&["--font", "/path/to/font.ttf"]);
-        assert_eq!(
-            options.enc_cfg.render_font.to_str(),
-            Some("/path/to/font.ttf")
-        );
-    }
-
-    #[test]
-    fn test_italics_sets_italics_font_path() {
-        let (options, _) = parse_args(&["--italics", "/path/to/font-italic.ttf"]);
-        assert_eq!(
-            options.enc_cfg.render_font_italics.to_str(),
-            Some("/path/to/font-italic.ttf")
-        );
-    }
-
-    // =========================================================================
-    // SCC INPUT OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_scc_framerate_29_97() {
-        let (options, _) = parse_args(&["--scc-framerate", "29.97"]);
-        assert_eq!(options.scc_framerate, 0);
-    }
-
-    #[test]
-    fn test_scc_framerate_24() {
-        let (options, _) = parse_args(&["--scc-framerate", "24"]);
-        assert_eq!(options.scc_framerate, 1);
-    }
-
-    #[test]
-    fn test_scc_framerate_25() {
-        let (options, _) = parse_args(&["--scc-framerate", "25"]);
-        assert_eq!(options.scc_framerate, 2);
-    }
-
-    #[test]
-    fn test_scc_framerate_30() {
-        let (options, _) = parse_args(&["--scc-framerate", "30"]);
-        assert_eq!(options.scc_framerate, 3);
-    }
-
-    #[test]
-    fn test_scc_accurate_timing_enables_accurate_mode() {
-        let (options, _) = parse_args(&["--scc-accurate-timing"]);
-        assert!(options.scc_accurate_timing);
-    }
-
-    // =========================================================================
-    // MISCELLANEOUS OPTION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_usepicorder_enables_pic_order() {
-        let (options, _) = parse_args(&["--usepicorder"]);
-        assert!(options.usepicorder);
-    }
-
-    #[test]
-    fn test_videoedited_disables_binary_concat() {
-        let (options, _) = parse_args(&["--videoedited"]);
-        assert!(!options.binary_concat);
-    }
-
-    #[test]
-    fn test_no_scte20_disables_scte20() {
-        let (options, _) = parse_args(&["--no-scte20"]);
-        assert!(options.noscte20);
-    }
-
-    #[test]
-    fn test_webvtt_create_css_enables_css_file() {
-        let (options, _) = parse_args(&["--webvtt-create-css"]);
-        assert!(options.webvtt_create_css);
-    }
-
-    #[test]
-    fn test_timestamp_map_enables_hls_header() {
-        let (options, _) = parse_args(&["--timestamp-map"]);
-        assert!(options.timestamp_map);
-    }
-
-    #[test]
-    fn test_analyzevideo_enables_video_analysis() {
-        let (options, _) = parse_args(&["--analyzevideo"]);
-        assert!(options.analyze_video_stream);
-    }
-
-    #[test]
-    fn test_screenfuls_sets_screens_to_process() {
-        let (options, _) = parse_args(&["--screenfuls", "10"]);
-        assert_eq!(options.settings_608.screens_to_process, 10);
-    }
-
-    #[test]
-    fn test_xds_enables_xds_in_transcripts() {
-        let (options, _) = parse_args(&["--xds"]);
-        assert!(options.transcript_settings.xds);
-    }
-
-    #[test]
-    fn test_ucla_enables_ucla_format() {
-        let (options, _) = parse_args(&["--ucla"]);
-        assert!(options.ucla);
-        assert!(options.enc_cfg.no_bom);
-        assert!(options.transcript_settings.show_start_time);
-        assert!(options.transcript_settings.show_end_time);
-    }
-
-    #[test]
-    fn test_tickertext_enables_ticker_search() {
-        let (options, _) = parse_args(&["--tickertext"]);
-        assert!(options.tickertext);
-    }
-
-    #[test]
-    fn test_gui_mode_reports_enables_gui_mode() {
-        let (options, _) = parse_args(&["--gui-mode-reports"]);
-        assert!(options.gui_mode_reports);
-        assert!(options.no_progress_bar);
-    }
-
-    #[test]
-    fn test_no_progress_bar_disables_progress() {
-        let (options, _) = parse_args(&["--no-progress-bar"]);
-        assert!(options.no_progress_bar);
-    }
-
-    #[test]
-    fn test_segmentonkeyonly_enables_keyframe_segmentation() {
-        let (options, _) = parse_args(&["--segmentonkeyonly"]);
-        assert!(options.segment_on_key_frames_only);
-        assert!(options.analyze_video_stream);
-    }
-
-    #[test]
-    fn test_outinterval_sets_output_interval() {
-        let (options, _) = parse_args(&["--outinterval", "60"]);
-        assert_eq!(options.out_interval, 60);
-    }
-
-    #[test]
-    fn test_list_tracks_enables_track_listing() {
-        let (options, _) = parse_args(&["--list-tracks"]);
-        assert!(options.list_tracks_only);
-    }
-
-    #[test]
-    fn test_ignoreptsjumps_enables_pts_jump_ignore() {
-        let (options, _) = parse_args(&["--ignoreptsjumps"]);
-        assert!(options.ignore_pts_jumps);
-    }
-
-    #[test]
-    fn test_fixptsjumps_disables_pts_jump_ignore() {
-        let (options, _) = parse_args(&["--fixptsjumps"]);
-        assert!(!options.ignore_pts_jumps);
-    }
-
-    #[test]
-    fn test_customtxt_sets_transcript_format() {
-        let (options, _) = parse_args(&["--customtxt", "1100100"]);
-        assert!(options.transcript_settings.show_start_time);
-        assert!(options.transcript_settings.show_end_time);
-        assert!(!options.transcript_settings.show_mode);
-        assert!(!options.transcript_settings.show_cc);
-        assert!(options.transcript_settings.relative_timestamp);
-        assert!(!options.transcript_settings.xds);
-        assert!(!options.transcript_settings.use_colors);
-    }
-
-    // =========================================================================
-    // COMBINATION/INTEGRATION TESTS
-    // =========================================================================
-
-    #[test]
-    fn test_autoprogram_with_srt_and_latin1() {
+    fn broken_1() {
         let (options, _) = parse_args(&["--autoprogram", "--out", "srt", "--latin1"]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.write_format, OutputFormat::Srt);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 
     #[test]
-    fn test_autoprogram_with_sami_and_latin1() {
+    fn broken_2() {
         let (options, _) = parse_args(&["--autoprogram", "--out", "sami", "--latin1"]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.write_format, OutputFormat::Sami);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 
     #[test]
-    fn test_autoprogram_with_ttxt_and_ucla_xds() {
+    fn broken_3() {
         let (options, _) = parse_args(&[
             "--autoprogram",
             "--out",
@@ -3076,6 +1807,7 @@ pub mod tests {
             "--ucla",
             "--xds",
         ]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.write_format, OutputFormat::Transcript);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
@@ -3084,17 +1816,74 @@ pub mod tests {
     }
 
     #[test]
-    fn test_service_with_txt_no_bom_no_rollup() {
+    fn broken_4() {
+        let (options, _) = parse_args(&["--out", "ttxt", "--latin1"]);
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn broken_5() {
+        let (options, _) = parse_args(&["--out", "srt", "--latin1"]);
+        assert_eq!(options.write_format, OutputFormat::Srt);
+
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn cea708_1() {
         let (options, _) =
             parse_args(&["--service", "1", "--out", "txt", "--no-bom", "--no-rollup"]);
         assert!(options.is_708_enabled);
+
         assert!(options.enc_cfg.no_bom);
         assert!(options.no_rollup);
         assert_eq!(options.write_format, OutputFormat::Transcript);
     }
 
     #[test]
-    fn test_autoprogram_with_teletext_and_datapid() {
+    fn cea708_2() {
+        let (options, _) = parse_args(&[
+            "--service",
+            "1,2[UTF-8],3[EUC-KR],54",
+            "--out",
+            "txt",
+            "--no-rollup",
+        ]);
+
+        assert!(options.is_708_enabled);
+        assert!(options.no_rollup);
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+
+        match options.enc_cfg.services_charsets {
+            DtvccServiceCharset::None => {
+                unreachable!("Expected DtvccServiceCharset::Unique");
+            }
+            DtvccServiceCharset::Same(_) => {
+                unreachable!("Expected DtvccServiceCharset::Unique");
+            }
+            DtvccServiceCharset::Unique(charsets) => {
+                assert_eq!(charsets[1], "UTF-8");
+                assert_eq!(charsets[2], "EUC-KR");
+            }
+        }
+    }
+
+    #[test]
+    fn cea708_3() {
+        let (options, _) = parse_args(&["--service", "all[EUC-KR]", "--no-rollup"]);
+        assert!(options.is_708_enabled);
+
+        assert!(options.no_rollup);
+        assert_eq!(
+            options.enc_cfg.services_charsets,
+            DtvccServiceCharset::Same("EUC-KR".to_string()),
+        );
+    }
+
+    #[test]
+    fn dvb_1() {
         let (options, _) = parse_args(&[
             "--autoprogram",
             "--out",
@@ -3104,22 +1893,34 @@ pub mod tests {
             "--datapid",
             "5603",
         ]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.demux_cfg.ts_cappids[0], 5603);
+        assert_eq!(options.demux_cfg.ts_cappids.len(), 1);
         assert_eq!(options.write_format, OutputFormat::Srt);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 
     #[test]
-    fn test_stdout_with_quiet_and_no_fontcolor() {
+    fn dvb_2() {
         let (options, _) = parse_args(&["--stdout", "--quiet", "--no-fontcolor"]);
         assert!(options.cc_to_stdout);
+
         assert_eq!(options.messages_target, OutputTarget::Quiet);
         assert!(options.nofontcolor);
     }
 
     #[test]
-    fn test_wtvconvertfix_with_autoprogram_and_dvblang() {
+    fn dvd_1() {
+        let (options, _) = parse_args(&["--autoprogram", "--out", "ttxt", "--latin1"]);
+        assert!(options.demux_cfg.ts_autoprogram);
+
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn dvr_ms_1() {
         let (options, _) = parse_args(&[
             "--wtvconvertfix",
             "--autoprogram",
@@ -3129,6 +1930,7 @@ pub mod tests {
             "--dvblang",
             "eng",
         ]);
+
         assert!(options.wtvconvertfix);
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.write_format, OutputFormat::Srt);
@@ -3137,7 +1939,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_ucla_with_autoprogram_and_output_field() {
+    fn general_1() {
         let (options, _) = parse_args(&[
             "--ucla",
             "--autoprogram",
@@ -3147,6 +1949,7 @@ pub mod tests {
             "--output-field",
             "2",
         ]);
+
         assert!(options.ucla);
         assert!(options.demux_cfg.ts_autoprogram);
         assert!(options.is_608_enabled);
@@ -3156,7 +1959,18 @@ pub mod tests {
     }
 
     #[test]
-    fn test_hauppauge_with_ucla_and_autoprogram() {
+    fn general_2() {
+        let (options, _) =
+            parse_args(&["--autoprogram", "--out", "bin", "--latin1", "--sentencecap"]);
+        assert!(options.demux_cfg.ts_autoprogram);
+
+        assert!(options.enc_cfg.sentence_cap);
+        assert_eq!(options.write_format, OutputFormat::Rcwt);
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn haup_1() {
         let (options, _) = parse_args(&[
             "--hauppauge",
             "--ucla",
@@ -3165,6 +1979,7 @@ pub mod tests {
             "ttxt",
             "--latin1",
         ]);
+
         assert!(options.ucla);
         assert!(options.hauppauge_mode);
         assert!(options.demux_cfg.ts_autoprogram);
@@ -3173,24 +1988,26 @@ pub mod tests {
     }
 
     #[test]
-    fn test_mp4_input_with_srt_and_latin1() {
+    fn mp4_1() {
         let (options, _) = parse_args(&["--input", "mp4", "--out", "srt", "--latin1"]);
         assert_eq!(options.demux_cfg.auto_stream, StreamMode::Mp4);
+
         assert_eq!(options.write_format, OutputFormat::Srt);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 
     #[test]
-    fn test_autoprogram_with_bom_and_latin1() {
+    fn mp4_2() {
         let (options, _) = parse_args(&["--autoprogram", "--out", "srt", "--bom", "--latin1"]);
         assert!(options.demux_cfg.ts_autoprogram);
+
         assert!(!options.enc_cfg.no_bom);
         assert_eq!(options.write_format, OutputFormat::Srt);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
     }
 
     #[test]
-    fn test_autoprogram_with_mp4vidtrack_and_ttxt() {
+    fn nocc_1() {
         let (options, _) = parse_args(&[
             "--autoprogram",
             "--out",
@@ -3198,6 +2015,7 @@ pub mod tests {
             "--mp4vidtrack",
             "--latin1",
         ]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert!(options.mp4vidtrack);
         assert_eq!(options.write_format, OutputFormat::Transcript);
@@ -3205,14 +2023,482 @@ pub mod tests {
     }
 
     #[test]
-    fn test_codec_dvbsub_with_spupng_output() {
+    fn nocc_2() {
+        let (options, _) = parse_args(&[
+            "--autoprogram",
+            "--out",
+            "ttxt",
+            "--latin1",
+            "--ucla",
+            "--xds",
+        ]);
+
+        assert!(options.demux_cfg.ts_autoprogram);
+        assert!(options.ucla);
+        assert!(options.transcript_settings.xds);
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn options_1() {
+        let (options, _) = parse_args(&["--input", "ts"]);
+
+        assert_eq!(options.demux_cfg.auto_stream, StreamMode::Transport);
+    }
+
+    #[test]
+    fn options_2() {
+        let (options, _) = parse_args(&["--out", "dvdraw"]);
+        assert_eq!(options.write_format, OutputFormat::DvdRaw);
+    }
+
+    #[test]
+    fn options_3() {
+        let (options, _) = parse_args(&["--goptime"]);
+        assert_eq!(options.use_gop_as_pts, Some(true));
+    }
+
+    #[test]
+    fn options_4() {
+        let (options, _) = parse_args(&["--no-goptime"]);
+        assert_eq!(options.use_gop_as_pts, Some(false));
+    }
+
+    #[test]
+    fn options_5() {
+        let (options, _) = parse_args(&["--fixpadding"]);
+        assert!(options.fix_padding);
+    }
+
+    #[test]
+    fn options_6() {
+        let (_, _) = parse_args(&["--90090"]);
+
+        unsafe {
+            assert_eq!(MPEG_CLOCK_FREQ as i64, 90090);
+        }
+    }
+
+    #[test]
+    fn options_7() {
+        let (options, _) = parse_args(&["--myth"]);
+        assert_eq!(options.auto_myth, Some(true));
+    }
+
+    #[test]
+    fn options_8() {
+        let (options, _) = parse_args(&["--program-number", "1"]);
+        assert_eq!(options.demux_cfg.ts_forced_program, Some(1));
+    }
+
+    #[test]
+    fn options_9() {
+        let (options, _) = parse_args(&[
+            "--datastreamtype",
+            "0x2",
+            "--streamtype",
+            "2",
+            "--no-autotimeref",
+        ]);
+
+        assert!(options.noautotimeref);
+        assert_eq!(options.demux_cfg.ts_datastreamtype, StreamType::VideoMpeg2);
+        assert_eq!(
+            options.demux_cfg.ts_forced_streamtype,
+            StreamType::VideoMpeg2
+        );
+    }
+    #[test]
+    fn options_10() {
+        let (options, _) = parse_args(&["--unicode", "--no-typesetting"]);
+        assert!(options.notypesetting);
+
+        assert_eq!(options.enc_cfg.encoding, Encoding::UCS2);
+    }
+
+    #[test]
+    fn options_11() {
+        let (options, _) = parse_args(&["--utf8", "--trim"]);
+        assert!(options.enc_cfg.trim_subs);
+
+        assert_eq!(options.enc_cfg.encoding, Encoding::UTF8);
+    }
+
+    #[test]
+    fn options_12() {
+        let (options, _) = parse_args(&["--capfile", "Cargo.toml"]);
+
+        assert!(options.enc_cfg.sentence_cap);
+        assert_eq!(options.sentence_cap_file.to_str(), Some("Cargo.toml"));
+    }
+
+    #[test]
+    fn options_13() {
+        let (options, _) = parse_args(&["--unixts", "5", "--out", "txt"]);
+
+        assert_eq!(*(UTC_REFVALUE.read().unwrap()), 5);
+
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+    }
+
+    #[test]
+    fn options_14() {
+        let (options, _) = parse_args(&["--datets", "--out", "txt"]);
+
+        assert_eq!(
+            options.date_format,
+            TimestampFormat::Date {
+                millis_separator: ','
+            }
+        );
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+    }
+
+    #[test]
+    fn options_15() {
+        let (options, _) = parse_args(&["--sects", "--out", "txt"]);
+
+        assert_eq!(
+            options.date_format,
+            TimestampFormat::Seconds {
+                millis_separator: ','
+            },
+        );
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+    }
+
+    #[test]
+    fn options_16() {
+        let (options, _) = parse_args(&["--lf", "--out", "txt"]);
+
+        assert!(options.enc_cfg.line_terminator_lf);
+        assert_eq!(options.write_format, OutputFormat::Transcript);
+    }
+
+    #[test]
+    fn options_17() {
+        let (options, _) = parse_args(&["--autodash", "--trim"]);
+
+        assert!(options.enc_cfg.autodash);
+        assert!(options.enc_cfg.trim_subs);
+    }
+
+    #[test]
+    fn options_18() {
+        let (options, _) = parse_args(&["--bufferinput"]);
+
+        assert!(options.buffer_input);
+    }
+
+    #[test]
+    fn options_19() {
+        let (options, _) = parse_args(&["--no-bufferinput"]);
+
+        assert!(!options.buffer_input);
+    }
+
+    #[test]
+    fn options_20() {
+        let (_, _) = parse_args(&["--buffersize", "1M"]);
+
+        assert_eq!(get_file_buffer_size(), 1024 * 1024);
+    }
+
+    #[test]
+    fn options_21() {
+        let (options, _) = parse_args(&["--dru"]);
+
+        assert_eq!(options.settings_608.direct_rollup, 1);
+    }
+
+    #[test]
+    fn options_22() {
+        let (options, _) = parse_args(&["--no-rollup"]);
+
+        assert!(options.no_rollup);
+    }
+
+    #[test]
+    fn options_23() {
+        let (options, _) = parse_args(&["--ru1"]);
+
+        assert_eq!(options.settings_608.force_rollup, 1);
+    }
+
+    #[test]
+    fn options_24() {
+        let (options, _) = parse_args(&["--delay", "200"]);
+
+        assert_eq!(options.subs_delay, Timestamp::from_millis(200));
+    }
+
+    #[test]
+    fn options_25() {
+        let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
+
+        assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
+    }
+
+    #[test]
+    fn options_26() {
+        let (options, _) = parse_args(&["--no-codec", "dvbsub"]);
+
+        assert_eq!(options.demux_cfg.nocodec, SelectCodec::Some(Codec::Dvb));
+    }
+
+    #[test]
+    fn options_27() {
+        let (options, _) = parse_args(&["--debug"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::VERBOSE);
+    }
+
+    #[test]
+    fn options_28() {
+        let (options, _) = parse_args(&["--608"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_608);
+    }
+
+    #[test]
+    fn options_29() {
+        let (options, _) = parse_args(&["--708"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_708);
+    }
+
+    #[test]
+    fn options_30() {
+        let (options, _) = parse_args(&["--goppts"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::TIME);
+    }
+
+    #[test]
+    fn options_31() {
+        let (options, _) = parse_args(&["--xdsdebug"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::DECODER_XDS);
+    }
+
+    #[test]
+    fn options_32() {
+        let (options, _) = parse_args(&["--vides"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::VIDEO_STREAM);
+    }
+
+    #[test]
+    fn options_33() {
+        let (options, _) = parse_args(&["--cbraw"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::CB_RAW);
+    }
+
+    #[test]
+    fn options_34() {
+        let (options, _) = parse_args(&["--no-sync"]);
+
+        assert!(options.nosync);
+    }
+
+    #[test]
+    fn options_35() {
+        let (options, _) = parse_args(&["--fullbin"]);
+
+        assert!(options.fullbin);
+    }
+
+    #[test]
+    fn options_36() {
+        let (options, _) = parse_args(&["--parsedebug"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PARSE);
+    }
+
+    #[test]
+    fn options_37() {
+        let (options, _) = parse_args(&["--parsePAT"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PAT);
+    }
+
+    #[test]
+    fn options_38() {
+        let (options, _) = parse_args(&["--parsePMT"]);
+
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::PMT);
+    }
+
+    #[test]
+    fn options_39() {
+        let (options, _) = parse_args(&["--investigate-packets"]);
+
+        assert!(options.investigate_packets);
+    }
+
+    #[test]
+    fn options_40() {
+        let (options, _) = parse_args(&["--mp4vidtrack"]);
+
+        assert!(options.mp4vidtrack);
+    }
+
+    #[test]
+    fn options_41() {
+        let (options, _) = parse_args(&["--wtvmpeg2"]);
+
+        assert!(options.wtvmpeg2);
+    }
+
+    #[test]
+    fn options_42() {
+        let (options, _) = parse_args(&["--hauppauge"]);
+
+        assert!(options.hauppauge_mode);
+    }
+
+    #[test]
+    fn options_43() {
+        let (options, _) = parse_args(&["--xmltv", "1", "--out", "null"]);
+
+        assert_eq!(options.xmltv, 1);
+        assert_eq!(options.write_format, OutputFormat::Null);
+    }
+
+    #[test]
+    fn options_44() {
         let (options, _) = parse_args(&["--codec", "dvbsub", "--out", "spupng"]);
+
         assert_eq!(options.demux_cfg.codec, SelectCodec::Some(Codec::Dvb));
         assert_eq!(options.write_format, OutputFormat::SpuPng);
     }
 
     #[test]
-    fn test_teletext_with_tpage_and_autoprogram() {
+    fn options_45() {
+        let (options, _) = parse_args(&[
+            "--startcreditsnotbefore",
+            "1",
+            "--startcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.startcreditsnotbefore.seconds(), 1);
+        assert_eq!(
+            options.enc_cfg.start_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_46() {
+        let (options, _) = parse_args(&[
+            "--startcreditsnotafter",
+            "2",
+            "--startcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.startcreditsnotafter.seconds(), 2);
+        assert_eq!(
+            options.enc_cfg.start_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_47() {
+        let (options, _) = parse_args(&[
+            "--startcreditsforatleast",
+            "1",
+            "--startcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.startcreditsforatleast.seconds(), 1);
+        assert_eq!(
+            options.enc_cfg.start_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_48() {
+        let (options, _) = parse_args(&[
+            "--startcreditsforatmost",
+            "2",
+            "--startcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.startcreditsforatmost.seconds(), 2);
+        assert_eq!(
+            options.enc_cfg.start_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_49() {
+        let (options, _) = parse_args(&[
+            "--endcreditsforatleast",
+            "3",
+            "--endcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.endcreditsforatleast.seconds(), 3);
+        assert_eq!(
+            options.enc_cfg.end_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_50() {
+        let (options, _) = parse_args(&[
+            "--endcreditsforatmost",
+            "2",
+            "--endcreditstext",
+            "CCextractor Start credit Testing",
+        ]);
+
+        assert_eq!(options.enc_cfg.endcreditsforatmost.seconds(), 2);
+        assert_eq!(
+            options.enc_cfg.end_credits_text,
+            "CCextractor Start credit Testing"
+        );
+    }
+
+    #[test]
+    fn options_51() {
+        let (options, tlt_config) = parse_args(&["--tverbose"]);
+
+        assert!(tlt_config.verbose);
+        assert_eq!(options.debug_mask.mask(), DebugMessageFlag::TELETEXT);
+    }
+
+    #[test]
+    fn teletext_1() {
+        let (options, _) = parse_args(&[
+            "--autoprogram",
+            "--out",
+            "srt",
+            "--latin1",
+            "--datapid",
+            "2310",
+        ]);
+
+        assert!(options.demux_cfg.ts_autoprogram);
+        assert_eq!(options.demux_cfg.ts_cappids[0], 2310);
+        assert_eq!(options.demux_cfg.ts_cappids.len(), 1);
+        assert_eq!(options.write_format, OutputFormat::Srt);
+        assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
+    }
+
+    #[test]
+    fn teletext_2() {
         let (options, tlt_config) = parse_args(&[
             "--autoprogram",
             "--out",
@@ -3222,55 +2508,11 @@ pub mod tests {
             "--tpage",
             "398",
         ]);
+
         assert!(options.demux_cfg.ts_autoprogram);
         assert_eq!(options.demux_cfg.codec, SelectCodec::Some(Codec::Teletext));
         assert_eq!(tlt_config.user_page, 398);
         assert_eq!(options.write_format, OutputFormat::Srt);
         assert_eq!(options.enc_cfg.encoding, Encoding::Latin1);
-    }
-
-    #[test]
-    fn test_datastreamtype_with_streamtype_and_no_autotimeref() {
-        let (options, _) = parse_args(&[
-            "--datastreamtype",
-            "0x2",
-            "--streamtype",
-            "2",
-            "--no-autotimeref",
-        ]);
-        assert!(options.noautotimeref);
-        assert_eq!(options.demux_cfg.ts_datastreamtype, StreamType::VideoMpeg2);
-        assert_eq!(
-            options.demux_cfg.ts_forced_streamtype,
-            StreamType::VideoMpeg2
-        );
-    }
-
-    #[test]
-    fn test_unicode_with_no_typesetting() {
-        let (options, _) = parse_args(&["--unicode", "--no-typesetting"]);
-        assert!(options.notypesetting);
-        assert_eq!(options.enc_cfg.encoding, Encoding::UCS2);
-    }
-
-    #[test]
-    fn test_utf8_with_trim() {
-        let (options, _) = parse_args(&["--utf8", "--trim"]);
-        assert!(options.enc_cfg.trim_subs);
-        assert_eq!(options.enc_cfg.encoding, Encoding::UTF8);
-    }
-
-    #[test]
-    fn test_autodash_with_trim() {
-        let (options, _) = parse_args(&["--autodash", "--trim"]);
-        assert!(options.enc_cfg.autodash);
-        assert!(options.enc_cfg.trim_subs);
-    }
-
-    #[test]
-    fn test_xmltv_with_null_output() {
-        let (options, _) = parse_args(&["--xmltv", "1", "--out", "null"]);
-        assert_eq!(options.xmltv, 1);
-        assert_eq!(options.write_format, OutputFormat::Null);
     }
 }

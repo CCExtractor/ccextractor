@@ -278,8 +278,7 @@ pub unsafe fn user_data(
 
                 if !proceed {
                     debug!(msg_type = DebugMessageFlag::VERBOSE; "\rThe following payload is not properly terminated.");
-                    let mut cc_data_copy = cc_data.to_vec();
-                    dump(cc_data_copy.as_mut_ptr(), (cc_count * 3 + 1) as _, 0, 0);
+                    dump(cc_data.to_vec().as_mut_ptr(), (cc_count * 3 + 1) as _, 0, 0);
                 }
                 debug!(msg_type = DebugMessageFlag::VERBOSE; "Reading {} HD CC blocks", cc_count);
 
@@ -290,11 +289,10 @@ pub unsafe fn user_data(
                 // Please note we store the current value of the global
                 // fts_now variable (and not get_fts()) as we are going to
                 // re-create the timeline in process_hdcc() (Slightly ugly).
-                let mut cc_data_copy = cc_data.to_vec();
                 store_hdcc(
                     enc_ctx,
                     dec_ctx,
-                    cc_data_copy.as_mut_ptr(),
+                    cc_data.to_vec().as_mut_ptr(),
                     cc_count as _,
                     (*dec_ctx.timing).current_tref,
                     (*dec_ctx.timing).fts_now,
@@ -342,10 +340,6 @@ pub unsafe fn user_data(
         let dcd_pos = ustream.pos; // dish caption data position
         match pattern_type {
             0x02 => {
-                if ustream.data.len() - ustream.pos < 4 {
-                    info!("Dish Network caption: insufficient data");
-                    return Ok(1);
-                }
                 // Two byte caption - always on B-frame
                 // The following 4 bytes are:
                 // 0  :  0x09
@@ -393,10 +387,6 @@ pub unsafe fn user_data(
                 // Ignore 3 (0x0A, followed by two unknown) bytes.
             }
             0x04 => {
-                if ustream.data.len() - ustream.pos < 5 {
-                    info!("Dish Network caption: insufficient data");
-                    return Ok(1);
-                }
                 // Four byte caption - always on B-frame
                 // The following 5 bytes are:
                 // 0  :  0x09
@@ -433,10 +423,6 @@ pub unsafe fn user_data(
                 // Ignore 4 (0x020A, followed by two unknown) bytes.
             }
             0x05 => {
-                if ustream.data.len() - ustream.pos < 12 {
-                    info!("Dish Network caption: insufficient data");
-                    return Ok(1);
-                }
                 // Buffered caption - always on I-/P-frame
                 // The following six bytes are:
                 // 0  :  0x04
@@ -444,7 +430,7 @@ pub unsafe fn user_data(
                 // 1  : prev dcd[2]
                 // 2-3: prev dcd[3-4]
                 // 4-5: prev dcd[5-6]
-                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 12]; // Need more bytes for this case
+                let dcd_data = &ustream.data[dcd_pos..dcd_pos + 10]; // Need more bytes for this case
                 debug!(msg_type = DebugMessageFlag::PARSE; " - {:02X}  pch: {:02X} {:5} {:02X}:{:02X}",
                           dcd_data[0], dcd_data[1],
                           (dcd_data[2] as u32) * 256 + (dcd_data[3] as u32),
@@ -546,12 +532,10 @@ pub unsafe fn user_data(
 
         if udatalen < 720 {
             info!("MPEG:VBI: Minimum 720 bytes in luma line required");
-            return Ok(1);
         }
 
         let vbi_data = &ustream.data[ustream.pos..ustream.pos + 720];
-        let mut vbi_data_copy = vbi_data.to_vec();
-        decode_vbi(dec_ctx, field, vbi_data_copy.as_mut_ptr(), 720, sub);
+        decode_vbi(dec_ctx, field, vbi_data.to_vec().as_mut_ptr(), 720, sub);
         debug!(msg_type = DebugMessageFlag::VERBOSE; "GXF (vbi line {}) user data:", line_nb);
     } else {
         // Some other user data
@@ -559,8 +543,14 @@ pub unsafe fn user_data(
         debug!(msg_type = DebugMessageFlag::VERBOSE; "Unrecognized user data:");
         let udatalen = ustream.data.len() - ustream.pos;
         let dump_len = if udatalen > 128 { 128 } else { udatalen };
-        let mut data_copy = ustream.data[ustream.pos..ustream.pos + dump_len].to_vec();
-        dump(data_copy.as_mut_ptr(), dump_len as _, 0, 0);
+        dump(
+            ustream.data[ustream.pos..ustream.pos + dump_len]
+                .to_vec()
+                .as_mut_ptr(),
+            dump_len as _,
+            0,
+            0,
+        );
     }
 
     debug!(msg_type = DebugMessageFlag::VERBOSE; "User data - processed");
