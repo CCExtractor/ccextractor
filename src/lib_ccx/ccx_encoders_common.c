@@ -742,7 +742,6 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 {
 	int ret;
 	int i;
-	// Use calloc to initialize all fields to 0/NULL (Safety fix for copy_encoder_context)
 	struct encoder_ctx *ctx = calloc(1, sizeof(struct encoder_ctx));
 	if (!ctx)
 		return NULL;
@@ -793,18 +792,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->last_str = NULL;
 
-	// Deep copy transcript settings because opt is often stack-allocated and temporary
-	// Storing &opt->transcript_settings leads to Use-After-Free in copy_encoder_context
-	ctx->transcript_settings = malloc(sizeof(struct ccx_encoders_transcript_format));
-	if (ctx->transcript_settings)
-		memcpy(ctx->transcript_settings, &opt->transcript_settings, sizeof(struct ccx_encoders_transcript_format));
-	else
-	{
-		freep(&ctx->buffer);
-		dinit_output_ctx(ctx);
-		free(ctx);
-		return NULL;
-	}
+	ctx->transcript_settings = &opt->transcript_settings;
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;
 	ctx->filter_profanity = opt->filter_profanity;

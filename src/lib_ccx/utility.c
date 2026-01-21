@@ -397,8 +397,6 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 char *get_basename(char *filename)
 {
 	char *c;
-	char *last_dot = NULL;
-	char *last_slash = NULL;
 	int len;
 	char *basefilename;
 
@@ -414,21 +412,12 @@ char *get_basename(char *filename)
 
 	memcpy(basefilename, filename, len + 1);
 
-	for (c = basefilename; *c; c++)
+	for (c = basefilename + len; c > basefilename && *c != '.'; c--)
 	{
-		if (*c == '.')
-			last_dot = c;
-		else if (*c == '/' || *c == '\\')
-			last_slash = c;
-	}
-
-	if (last_dot)
-	{
-		char *base_start = last_slash ? last_slash + 1 : basefilename;
-		// Strip only if the dot is not the first char of the basename
-		if (last_dot > base_start)
-			*last_dot = 0;
-	}
+		;
+	} // Get last .
+	if (*c == '.')
+		*c = 0;
 
 	return basefilename;
 }

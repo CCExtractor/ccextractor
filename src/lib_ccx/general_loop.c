@@ -875,10 +875,13 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// Safety check: Skip if decoder was freed due to PAT change
 		if (dec_ctx->private_data)
 		{
-			ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-			if (ret < 0)
-				mprint("Return from dvbsub_decode: %d\n", ret);
-			set_fts(dec_ctx->timing);
+			if (data_node->len > 2)
+			{
+				ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+				if (ret < 0)
+					mprint("Return from dvbsub_decode: %d\n", ret);
+				set_fts(dec_ctx->timing);
+			}
 		}
 		got = data_node->len;
 	}
@@ -1447,7 +1450,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 	enum ccx_stream_mode_enum stream_mode = CCX_SM_ELEMENTARY_OR_NOT_FOUND;
 	struct demuxer_data *datalist = NULL;
 	struct demuxer_data *data_node = NULL;
-	int (*get_more_data)(struct lib_ccx_ctx *c, struct demuxer_data **d) = NULL;
+	int (*get_more_data)(struct lib_ccx_ctx * c, struct demuxer_data * *d) = NULL;
 	int ret = 0;
 	int caps = 0;
 
@@ -1894,7 +1897,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 #ifndef DISABLE_RUST
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
 #else
-	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+	dec_ctx->dtvcc->encoder = (void *)enc_ctx;			   // WARN: otherwise cea-708 will not work
 #endif
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{

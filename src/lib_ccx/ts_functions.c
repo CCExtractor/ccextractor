@@ -798,6 +798,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		if (ret != CCX_OK)
 			break;
 
+		// Skip damaged packets, they could do more harm than good
 		if (payload.transport_error)
 		{
 			dbg_print(CCX_DMT_VERBOSE, "Packet (pid %u) skipped - transport error.\n",

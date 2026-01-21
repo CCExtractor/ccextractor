@@ -64,20 +64,20 @@ static void dump_rect_and_log(const char *label, const uint8_t *data, int w, int
 
 #define YUV_TO_RGB1_CCIR(cb1, cr1)                                                               \
 	{                                                                                        \
-		cb = (cb1) - 128;                                                                \
-		cr = (cr1) - 128;                                                                \
+		cb = (cb1)-128;                                                                  \
+		cr = (cr1)-128;                                                                  \
 		r_add = FIX(1.40200 * 255.0 / 224.0) * cr + ONE_HALF;                            \
 		g_add = -FIX(0.34414 * 255.0 / 224.0) * cb - FIX(0.71414 * 255.0 / 224.0) * cr + \
 			ONE_HALF;                                                                \
 		b_add = FIX(1.77200 * 255.0 / 224.0) * cb + ONE_HALF;                            \
 	}
 
-#define YUV_TO_RGB2_CCIR(r, g, b, y1)                 \
-	{                                             \
-		y = ((y1) - 16) * FIX(255.0 / 219.0); \
-		r = cm[(y + r_add) >> SCALEBITS];     \
-		g = cm[(y + g_add) >> SCALEBITS];     \
-		b = cm[(y + b_add) >> SCALEBITS];     \
+#define YUV_TO_RGB2_CCIR(r, g, b, y1)               \
+	{                                           \
+		y = ((y1)-16) * FIX(255.0 / 219.0); \
+		r = cm[(y + r_add) >> SCALEBITS];   \
+		g = cm[(y + g_add) >> SCALEBITS];   \
+		b = cm[(y + b_add) >> SCALEBITS];   \
 	}
 
 #define times4(x) x, x, x, x
@@ -1868,6 +1868,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	if (rect->data0 && rect->data1)
 	{
+		if (!region)
+		{
+			free(rect->data0);
+			free(rect->data1);
+			free(rect);
+			sub->nb_data = 0;
+			sub->got_output = 0;
+			return 0;
+		}
 		uint32_t current_hash = 2166136261u;
 
 		// Hash the geometry
@@ -1957,10 +1966,14 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 				   struct cc_subtitle *sub,
 				   LLONG pre_fts_max)
 {
-	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
-	LLONG current_pts = dec_ctx->timing->current_pts;
-	if (!enc_ctx)
+	if (!enc_ctx || !dec_ctx || !dec_ctx->timing)
 		return;
+
+	DVBSubContext *ctx = (DVBSubContext *)dec_ctx->private_data;
+	if (!ctx)
+		return;
+
+	LLONG current_pts = dec_ctx->timing->current_pts;
 	// Deduplication check: Skip if this subtitle is a duplicate
 	// We use composition_id + ancillary_id + PTS to uniquely identify a subtitle
 	// PTS is converted from microseconds to milliseconds for consistency
