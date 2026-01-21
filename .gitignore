@@ -161,6 +161,21 @@ windows/*/CACHEDIR.TAG
 windows/.rustc_info.json
 linux/configure~
 
+# local junk
+build-system/
+*.backup
+*.save
+*.patch
+*.a
+README.srt
+no_subs.ts
+
+fix_hardsubx.cmake
+fix_libraries.cmake
+mac/configure~
+*.current
+
+
 # Plans and temporary files
 plans/
 tess.log

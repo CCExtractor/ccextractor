@@ -7,6 +7,8 @@ use std::os::raw::{c_int, c_uchar};
 pub mod common;
 pub mod g608;
 pub mod simplexml;
+pub mod smptett;
+
 /// # Safety
 /// This function is unsafe because it deferences to raw pointers and performs operations on pointer slices.
 #[no_mangle]
