@@ -1981,7 +1981,7 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	if (!ccx_options.no_dvb_dedup)
 	{
 		uint64_t pts_ms = (uint64_t)(current_pts / 1000);
-		uint32_t pid = (uint32_t)dec_ctx->program_number; // Use program number as PID proxy
+		uint32_t pid = (uint32_t)(dec_ctx->pid ? dec_ctx->pid : dec_ctx->program_number);
 
 		if (dvb_dedup_is_duplicate(&ctx->dedup_ring, pts_ms, pid,
 					   (uint16_t)ctx->composition_id,

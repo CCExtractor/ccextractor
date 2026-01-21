@@ -124,6 +124,7 @@ struct ccx_decoders_common_settings_t
 	unsigned send_to_srv;
 	unsigned int hauppauge_mode; // If 1, use PID=1003, process specially and so on
 	int program_number;
+	int pid;
 	enum ccx_code_type codec;
 	int xds_write_to_file;
 	void *private_data;
@@ -162,6 +163,7 @@ struct lib_cc_decode
 	unsigned total_pulldownfields;
 	unsigned total_pulldownframes;
 	int program_number;
+	int pid;
 	struct list_head list;
 	struct ccx_common_timing_ctx *timing;
 	enum ccx_code_type codec;
@@ -208,7 +210,7 @@ struct lib_cc_decode
 	int false_pict_header;
 
 	dtvcc_ctx *dtvcc;
-	void *dtvcc_rust;  // Persistent Rust CEA-708 decoder context
+	void *dtvcc_rust; // Persistent Rust CEA-708 decoder context
 	int current_field;
 	// Analyse/use the picture information
 	int maxtref; // Use to remember the temporal reference number

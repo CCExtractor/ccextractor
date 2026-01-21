@@ -801,6 +801,7 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	}
 	pipe->dec_ctx->private_data = pipe->decoder;
 	pipe->dec_ctx->codec = CCX_CODEC_DVB;
+	pipe->dec_ctx->pid = pid;
 	pipe->dec_ctx->prev = calloc(1, sizeof(struct lib_cc_decode));
 	if (pipe->dec_ctx->prev)
 	{

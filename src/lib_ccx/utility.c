@@ -502,6 +502,65 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 	return ptr;
 }
 
+/**
+ * Ensures the output filename has the expected extension.
+ * If the filename already ends with the expected extension, returns a copy.
+ * If the filename has a different extension, respects user's choice and returns a copy.
+ * If no extension exists, appends the expected extension.
+ *
+ * @param filename The original filename
+ * @param extension The expected extension (e.g., ".srt")
+ * @return Newly allocated string with proper extension (caller must free), or NULL on error
+ */
+char *ensure_output_extension(const char *filename, const char *extension)
+{
+	if (!filename)
+		return NULL;
+
+	size_t fname_len = strlen(filename);
+	size_t ext_len = extension ? strlen(extension) : 0;
+
+	// If no extension needed, just return a copy
+	if (ext_len == 0)
+		return strdup(filename);
+
+	// Check if filename already ends with the extension (case-insensitive)
+	if (fname_len >= ext_len)
+	{
+		const char *fname_ext = filename + fname_len - ext_len;
+		if (strcasecmp(fname_ext, extension) == 0)
+		{
+			// Already has the correct extension
+			return strdup(filename);
+		}
+	}
+
+	// Find the basename (part after last '/' or '\')
+	const char *last_sep = strrchr(filename, '/');
+	const char *last_sep_win = strrchr(filename, '\\');
+	if (last_sep_win > last_sep)
+		last_sep = last_sep_win;
+
+	const char *basename_start = last_sep ? last_sep + 1 : filename;
+	const char *existing_ext = strrchr(basename_start, '.');
+
+	// If filename already has a different extension (not just ending with '.'), respect user's choice
+	if (existing_ext && existing_ext != basename_start && strlen(existing_ext) > 1)
+	{
+		// Has an existing extension, return as-is
+		return strdup(filename);
+	}
+
+	// No extension found (or only ends with '.'), append the expected extension
+	size_t new_len = fname_len + ext_len + 1;
+	char *result = malloc(new_len);
+	if (!result)
+		return NULL;
+
+	snprintf(result, new_len, "%s%s", filename, extension);
+	return result;
+}
+
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 {
 	if (utf16_char < 0x80)

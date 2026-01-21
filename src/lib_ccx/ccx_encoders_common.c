@@ -589,24 +589,24 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	{
 		if (cfg->output_filename != NULL)
 		{
-			// Use the given output file name for the field specified by
-			// the -1, -2 switch. If -12 is used, the filename is used for
-			// field 1.
+			extension = get_file_extension(cfg->write_format);
+
 			if ((cfg->extract == 12) && (cfg->write_format != CCX_OF_MCC))
 			{
 				char *basefilename = get_basename(cfg->output_filename);
-				extension = get_file_extension(cfg->write_format);
+				char *out_filename = ensure_output_extension(cfg->output_filename, extension);
 
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
-				check_ret(cfg->output_filename);
+				ret = init_write(&ctx->out[0], out_filename, cfg->with_semaphore);
+				check_ret(out_filename);
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
 				free(basefilename);
 			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore);
-				check_ret(cfg->output_filename);
+				char *out_filename = ensure_output_extension(cfg->output_filename, extension);
+				ret = init_write(ctx->out, out_filename, cfg->with_semaphore);
+				check_ret(out_filename);
 			}
 		}
 		else if (cfg->write_format != CCX_OF_NULL)

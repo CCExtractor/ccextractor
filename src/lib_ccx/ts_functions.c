@@ -685,7 +685,7 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	     !ccx_options.analyze_video_stream))
 	{
 		// In split DVB mode, allow DVB subtitle packets even if ignored
-		if (!(ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB))
+		if (cinfo->codec != CCX_CODEC_DVB)
 		{
 			return CCX_OK;
 		}
@@ -1043,7 +1043,7 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		// Exception: DVB in split mode - allow packets to accumulate
 		if (!cinfo->saw_pesstart)
 		{
-			if (!(ccx_options.split_dvb_subs && cinfo->codec == CCX_CODEC_DVB))
+			if (cinfo->codec != CCX_CODEC_DVB)
 			{
 				continue;
 			}

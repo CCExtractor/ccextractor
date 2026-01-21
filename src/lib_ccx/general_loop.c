@@ -883,6 +883,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				set_fts(dec_ctx->timing);
 			}
 		}
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PES)
@@ -898,6 +900,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			dec_ctx->is_alloc = 1;
 		}
 		process_spu(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
@@ -908,6 +912,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		   during PAT change while stream was being processed) */
 		if (!dec_ctx->private_data)
 		{
+			if (dec_ctx->codec == CCX_CODEC_DVB)
+				dec_ctx->pid = data_node->stream_pid;
 			got = data_node->len; // Skip processing, context was freed
 		}
 		else
@@ -929,6 +935,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				return ret;
 
 			/* Mark processed byte count */
+			if (dec_ctx->codec == CCX_CODEC_DVB)
+				dec_ctx->pid = data_node->stream_pid;
 			got = data_node->len;
 		}
 	}
@@ -1011,11 +1019,15 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
 		int cc_count = data_node->len / 3;
 		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
 		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else
@@ -1581,7 +1593,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 							set_fts(dec_ctx->timing);
 						}
 					}
-					if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 					{
 						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
 						{
