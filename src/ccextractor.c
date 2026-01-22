@@ -413,6 +413,7 @@ int start_ccx()
 		mprint("NOTICE: Due to the major rework in 0.49, we needed to change part of the timing\n");
 		mprint("code in the MythTV's branch. Please report results to the address above. If\n");
 		mprint("something is broken it will be fixed. Thanks\n");
+		mprint("NOTICE: This message is shown only when MythTV compatibility mode is enabled.\n");
 	}
 
 	return ret ? EXIT_OK : EXIT_NO_CAPTIONS;
