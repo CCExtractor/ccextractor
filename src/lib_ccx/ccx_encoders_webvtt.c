@@ -834,7 +834,7 @@ void write_webvtt_header(struct encoder_ctx *context)
 		// {
 		// 	write_wrapped(context->out->fh, "\r\n", 2);
 		// }
-				// Issue #1743: write default X-TIMESTAMP-MAP when timing info is unavailable
+		// Issue #1743: write default X-TIMESTAMP-MAP when timing info is unavailable
 		if (ccx_options.timestamp_map)
 		{
 			const char *default_header =
