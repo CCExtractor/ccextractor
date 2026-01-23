@@ -1,12 +1,11 @@
 name: ccextractor
 base: core22
-version: git
+version: '0.96.5'
 summary: Closed Caption Extractor
 description: |
   CCExtractor is a tool for extracting closed captions from video files.
 website: https://www.ccextractor.org
 source-code: https://github.com/CCExtractor/ccextractor
-
 confinement: classic
 
 apps:
@@ -18,15 +17,39 @@ apps:
       - home
 
 parts:
+  gpac:
+    plugin: make
+    source: https://github.com/gpac/gpac.git
+    source-tag: abi-16.4
+    build-packages:
+      - build-essential
+      - pkg-config
+      - zlib1g-dev
+      - libssl-dev
+      - libfreetype6-dev
+      - libjpeg-dev
+      - libpng-dev
+    override-build: |
+      set -eux
+      ./configure --prefix=/usr
+      make -j$(nproc)
+      make DESTDIR=$SNAPCRAFT_PART_INSTALL install-lib
+      sed -i "s|^prefix=.*|prefix=$SNAPCRAFT_STAGE/usr|" $SNAPCRAFT_PART_INSTALL/usr/lib/pkgconfig/gpac.pc
+    stage:
+      - usr/lib/libgpac*
+      - usr/lib/pkgconfig/gpac.pc
+      - usr/include/gpac
+
   ccextractor:
+    after: [gpac]
     plugin: cmake
     source: .
     source-subdir: src
-
+    build-environment:
+      - PKG_CONFIG_PATH: "$SNAPCRAFT_STAGE/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
     build-snaps:
       - cmake/latest/stable
       - rustup/latest/stable
-
     build-packages:
       - build-essential
       - pkg-config
@@ -34,7 +57,6 @@ parts:
       - llvm-dev
       - libclang-dev
       - libzvbi-dev
-      - libgpac-dev
       - libtesseract-dev
       - libavcodec-dev
       - libavformat-dev
@@ -48,10 +70,7 @@ parts:
       - zlib1g-dev
       - libblas3
       - liblapack3
-
-
     stage-packages:
-      - libgpac11
       - libzvbi0
       - libfreetype6
       - libpng16-16
@@ -74,17 +93,12 @@ parts:
       - liba52-0.7.4
       - libpulse0
       - pulseaudio-utils
-
     override-build: |
       set -eux
-
       rustup toolchain install stable
       rustup default stable
       export PATH="$HOME/.cargo/bin:$PATH"
-
       snapcraftctl build
-
-      # Install runtime wrapper for command-chain
       install -D -m 0755 \
         $SNAPCRAFT_PROJECT_DIR/snap/local/run-ccextractor.sh \
         $SNAPCRAFT_PART_INSTALL/local/run-ccextractor.sh

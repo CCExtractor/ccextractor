@@ -1,9 +1,7 @@
 #!/bin/sh
 set -e
-
-# Default fallback 
+# Default fallback
 LIB_TRIPLET="x86_64-linux-gnu"
-
 # Detect multiarch directory if present
 for d in "$SNAP/usr/lib/"*-linux-gnu; do
     if [ -d "$d" ]; then
@@ -11,8 +9,8 @@ for d in "$SNAP/usr/lib/"*-linux-gnu; do
         break
     fi
 done
-
-export LD_LIBRARY_PATH="$SNAP/usr/lib/$LIB_TRIPLET:\
+export LD_LIBRARY_PATH="$SNAP/usr/lib:\
+$SNAP/usr/lib/$LIB_TRIPLET:\
 $SNAP/usr/lib/$LIB_TRIPLET/blas:\
 $SNAP/usr/lib/$LIB_TRIPLET/lapack:\
 $SNAP/usr/lib/$LIB_TRIPLET/pulseaudio:\
