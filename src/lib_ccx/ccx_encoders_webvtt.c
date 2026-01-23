@@ -230,13 +230,37 @@ void write_webvtt_header(struct encoder_ctx *context)
 	else
 	{
 		// Must have another newline if X-TIMESTAMP-MAP is not used
-		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		// if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		// {
+		// 	write_wrapped(context->out->fh, "\n", 1);
+		// }
+		// else
+		// {
+		// 	write_wrapped(context->out->fh, "\r\n", 2);
+		// }
+				// Issue #1743: write default X-TIMESTAMP-MAP when timing info is unavailable
+		if (ccx_options.timestamp_map)
 		{
-			write_wrapped(context->out->fh, "\n", 1);
+			const char *default_header =
+			    ccx_options.enc_cfg.line_terminator_lf
+				? "X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:0\n\n"
+				: "X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:0\r\n\r\n";
+
+			write_wrapped(context->out->fh,
+				      default_header,
+				      strlen(default_header));
 		}
 		else
 		{
-			write_wrapped(context->out->fh, "\r\n", 2);
+			// Must have another newline if X-TIMESTAMP-MAP is not used
+			if (ccx_options.enc_cfg.line_terminator_lf == 1)
+			{
+				write_wrapped(context->out->fh, "\n", 1);
+			}
+			else
+			{
+				write_wrapped(context->out->fh, "\r\n", 2);
+			}
 		}
 	}
 
