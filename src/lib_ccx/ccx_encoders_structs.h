@@ -39,6 +39,8 @@ struct spupng_t
 	int fileIndex;
 	int xOffset;
 	int yOffset;
+	int img_w;
+	int img_h;
 };
 
 #endif

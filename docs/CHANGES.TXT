@@ -1,7 +1,7 @@
 0.96.6 (unreleased)
 -------------------
-- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow.
-- Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)  
+- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow. 
+- Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
 - Fix: Prevent infinite loop on truncated MKV files
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
@@ -62,6 +62,7 @@
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
   - Output files are named with page suffix (e.g., output_p100.srt, output_p200.srt)
+- Fix: SPUPNG subtitle offset calculation to center based on actual image dimensions
 
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
   New: Chinese, Korean, Japanese support - proper encoding and OCR.

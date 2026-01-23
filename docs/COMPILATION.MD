@@ -1,3 +1,16 @@
+# Installation
+
+## Homebrew 
+The easiest way to install CCExtractor for Mac and Linux is through Homebrew:
+
+```bash
+brew install ccextractor
+```
+Note: If you don't have Homebrew installed, see [brew.sh](https://brew.sh/)
+ for installation instructions.
+
+---
+
 # Compiling CCExtractor
 
 You may compile CCExtractor across all major platforms using `CMakeLists.txt` stored under `ccextractor/src/` directory. Autoconf and custom build scripts are also available. See platform specific instructions in the below sections.

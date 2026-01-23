@@ -466,8 +466,9 @@ pub struct Options {
     pub ocr_line_split: bool,
     /// If true, use character blacklist to prevent common OCR errors (e.g. | vs I)
     pub ocr_blacklist: bool,
-    /// The name of the language stream for MKV
-    pub mkvlang: Option<Language>,
+    /// Language filter for MKV subtitle tracks.
+    /// Accepts comma-separated ISO 639-2 codes (e.g., "eng,fre") or BCP 47 tags (e.g., "en-US,fr-CA").
+    pub mkvlang: Option<super::MkvLangFilter>,
     /// If true, the video stream will be processed even if we're using a different one for subtitles.
     pub analyze_video_stream: bool,
 
