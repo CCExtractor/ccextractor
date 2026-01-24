@@ -41,6 +41,7 @@ int stringztoms(const char *s, struct ccx_boundary_time *bt);
 char *get_basename(char *filename);
 const char *get_file_extension(const enum ccx_output_format write_format);
 char *create_outfilename(const char *basename, const char *suffix, const char *extension);
+char *ensure_output_extension(const char *filename, const char *extension);
 int verify_crc32(uint8_t *buf, int len);
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out);
 LLONG change_timebase(LLONG val, struct ccx_rational cur_tb, struct ccx_rational dest_tb);

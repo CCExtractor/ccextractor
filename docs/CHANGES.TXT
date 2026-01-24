@@ -1,5 +1,10 @@
 0.96.6 (unreleased)
 -------------------
+- New: --split-dvb-subs option to extract each DVB subtitle stream to a separate output file with language-based naming
+- New: --no-dvb-dedup option to disable DVB subtitle deduplication
+- Improvement: Ring buffer deduplication prevents repeated subtitles in split DVB output
+- Improvement: Multi-pipeline support for parallel DVB stream processing
+- Improvement: Post-EOF DVB packet handling for complete extraction
 - Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
 - Fix: Prevent infinite loop on truncated MKV files
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)

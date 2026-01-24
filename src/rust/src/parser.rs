@@ -929,6 +929,14 @@ impl OptionsExt for Options {
             self.demux_cfg.ts_allprogram = true;
         }
 
+        if args.split_dvb_subs {
+            self.split_dvb_subs = true;
+        }
+
+        if args.no_dvb_dedup {
+            self.no_dvb_dedup = true;
+        }
+
         if args.list_tracks {
             self.list_tracks_only = true;
         }

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-Full|x64">
@@ -35,6 +35,7 @@
     <ClInclude Include="..\src\lib_ccx\ccx_encoders_mcc.h" />
     <ClInclude Include="..\src\lib_ccx\disable_warnings.h" />
     <ClInclude Include="..\src\lib_ccx\dvb_subtitle_decoder.h" />
+    <ClInclude Include="..\src\lib_ccx\dvb_dedup.h" />
     <ClInclude Include="..\src\lib_ccx\lib_ccx.h" />
     <ClInclude Include="..\src\lib_ccx\teletext.h" />
     <ClInclude Include="..\src\lib_ccx\utility.h" />
@@ -104,6 +105,7 @@
     <ClCompile Include=" ..\src\lib_ccx\cc_bitstream.c" />
     <ClCompile Include=" ..\src\lib_ccx\configuration.c" />
     <ClCompile Include=" ..\src\lib_ccx\dvb_subtitle_decoder.c" />
+    <ClCompile Include=" ..\src\lib_ccx\dvb_dedup.c" />
     <ClCompile Include=" ..\src\lib_ccx\dvd_subtitle_decoder.c" />
     <ClCompile Include=" ..\src\lib_ccx\es_functions.c" />
     <ClCompile Include=" ..\src\lib_ccx\es_userdata.c" />

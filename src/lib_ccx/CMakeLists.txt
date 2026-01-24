@@ -1,9 +1,9 @@
 cmake_policy (SET CMP0037 NEW)
 
 if(MSVC)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W3 /wd4005 /wd4996")
+    set (CMAKE_C_FLAGS "-W3 /wd4005 /wd4996")
 else (MSVC)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -g -std=gnu99")
+    set (CMAKE_C_FLAGS "-Wall -Wno-pointer-sign -g -std=gnu99")
 endif(MSVC)
 
 if(WIN32)
@@ -11,10 +11,13 @@ if(WIN32)
 endif(WIN32)
 
 find_package(PkgConfig)
-pkg_check_modules (GPAC REQUIRED gpac)
+pkg_check_modules (GPAC gpac)
 
-set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
-set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+if (GPAC_FOUND)
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+    add_definitions(-DGPAC_AVAILABLE)
+endif()
 
 if (WITH_FFMPEG)
     find_package(PkgConfig)
@@ -58,6 +61,10 @@ endif (WITH_OCR)
 
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
+
+if (NOT GPAC_FOUND)
+    list(FILTER SOURCEFILE EXCLUDE REGEX "mp4.c$")
+endif()
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
 target_link_libraries (ccx ${EXTRA_LIBS})

@@ -281,7 +281,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		if (i + 5 + ES_info_length > len)
 		{
 			dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-			break;
+			continue;
 		}
 
 		unsigned char *es_info = buf + i + 5;
@@ -346,7 +346,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			if (i + 5 + ES_info_length > len)
 			{
 				dbg_print(CCX_DMT_GENERIC_NOTICES, "Warning: ES_info_length exceeds buffer, skipping.\n");
-				break;
+				continue;
 			}
 
 			unsigned char *es_info = buf + i + 5;
@@ -385,6 +385,60 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				if (CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
 					struct dvb_config cnf;
+					char detected_lang[4] = "und";
+
+					if (desc_len >= 3)
+					{
+						// ISO 639-2 compliant: accept only [a-zA-Z]{3}, convert to lowercase
+						int is_valid_lang = 1;
+						for (int li = 0; li < 3; li++)
+						{
+							char c = (char)es_info[li];
+							if (c >= 'A' && c <= 'Z')
+								detected_lang[li] = c + 32; // to lowercase
+							else if (c >= 'a' && c <= 'z')
+								detected_lang[li] = c;
+							else
+							{
+								is_valid_lang = 0;
+								break;
+							}
+						}
+						detected_lang[3] = '\0';
+
+						if (!is_valid_lang)
+						{
+							strcpy(detected_lang, "und");
+							dbg_print(CCX_DMT_PMT, "Warning: Invalid language code, using 'und'\n");
+						}
+					}
+
+					// If split mode enabled, track for pipeline creation
+					if (ccx_options.split_dvb_subs && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+					{
+						int found = 0;
+						for (int k = 0; k < ctx->potential_stream_count; k++)
+						{
+							if (ctx->potential_streams[k].pid == (int)elementary_PID)
+							{
+								found = 1;
+								break;
+							}
+						}
+
+						if (!found)
+						{
+							int p_idx = ctx->potential_stream_count;
+							ctx->potential_streams[p_idx].pid = (int)elementary_PID;
+							ctx->potential_streams[p_idx].stream_type = CCX_STREAM_TYPE_DVB_SUB;
+							ctx->potential_streams[p_idx].mpeg_type = stream_type;
+							memcpy(ctx->potential_streams[p_idx].lang, detected_lang, 4);
+							// Issue 2: Race Condition fix - populate metadata BEFORE incrementing count
+							// We can't fully populate yet (composition_id is parsed below), so we defer increment
+							// OR we just use the index p_idx and increment later.
+						}
+					}
+
 #ifndef ENABLE_OCR
 					if (ccx_options.write_format != CCX_OF_SPUPNG)
 					{
@@ -392,17 +446,67 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						continue;
 					}
 #endif
-					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB))
+					if (!IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_DVB) &&
+					    !(ccx_options.split_dvb_subs && ctx->codec != CCX_CODEC_DVB))
 						continue;
 
 					memset((void *)&cnf, 0, sizeof(struct dvb_config));
 					ret = parse_dvb_description(&cnf, es_info, desc_len);
 					if (ret < 0)
 						break;
+
+					// Update metadata with specific IDs
+					if (ccx_options.split_dvb_subs)
+					{
+						int k_idx = -1;
+						int found = 0;
+						// Find if we already added it (or find the spot we are about to add)
+						for (int k = 0; k < ctx->potential_stream_count; k++)
+						{
+							if (ctx->potential_streams[k].pid == (int)elementary_PID)
+							{
+								k_idx = k;
+								found = 1;
+								break;
+							}
+						}
+
+						if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+						{
+							// It's the new one we are building
+							k_idx = ctx->potential_stream_count;
+							ctx->potential_streams[k_idx].pid = (int)elementary_PID;
+							ctx->potential_streams[k_idx].stream_type = CCX_STREAM_TYPE_DVB_SUB;
+							ctx->potential_streams[k_idx].mpeg_type = stream_type;
+							memcpy(ctx->potential_streams[k_idx].lang, detected_lang, 4);
+						}
+
+						if (k_idx != -1)
+						{
+							ctx->potential_streams[k_idx].composition_id = cnf.composition_id[0];
+							ctx->potential_streams[k_idx].ancillary_id = cnf.ancillary_id[0];
+							dbg_print(CCX_DMT_GENERIC_NOTICES, "Discovered DVB stream PID 0x%X lang=%s composition_id=%d ancillary_id=%d\n",
+								  elementary_PID, detected_lang, cnf.composition_id[0], cnf.ancillary_id[0]);
+
+							// Only increment if it was a new one
+							if (!found && ctx->potential_stream_count < MAX_POTENTIAL_STREAMS)
+							{
+								ctx->potential_stream_count++;
+							}
+						}
+					}
 					ptr = dvbsub_init_decoder(&cnf);
 					if (ptr == NULL)
 						break;
 					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
+
+					// Populate cap_info.lang with discovered language for fallback lookup
+					struct cap_info *cinfo = get_cinfo(ctx, elementary_PID);
+					if (cinfo && detected_lang[0] && strncmp(detected_lang, "und", 3) != 0) // Skip "und"
+					{
+						memset(cinfo->lang, 0, sizeof(cinfo->lang));
+						strncpy(cinfo->lang, detected_lang, sizeof(cinfo->lang) - 1);
+					}
 					max_dif = 30;
 				}
 			}
@@ -661,8 +765,16 @@ int parse_PAT(struct ccx_demuxer *ctx)
 		dinit_cap(ctx);
 		clear_PMT_array(ctx);
 		memset(ctx->PIDs_seen, 0, sizeof(int) * 65536); // Forget all we saw
-		if (!tlt_config.user_page)			// If the user didn't select a page...
-			tlt_config.page = 0;			// ..forget whatever we detected.
+		ctx->num_of_PIDs = 0;
+		memset(ctx->have_PIDs, -1, (MAX_PSI_PID + 1) * sizeof(int));
+		for (int i = 0; i < (MAX_PSI_PID + 1); i++)
+		{
+			ctx->min_pts[i] = UINT64_MAX;
+		}
+		memset(ctx->stream_id_of_each_pid, 0, (MAX_PSI_PID + 1) * sizeof(uint8_t));
+
+		if (!tlt_config.user_page)   // If the user didn't select a page...
+			tlt_config.page = 0; // ..forget whatever we detected.
 
 		gotpes = 1;
 	}

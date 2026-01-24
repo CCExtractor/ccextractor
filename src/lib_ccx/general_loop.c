@@ -202,6 +202,8 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 					}
 					// FIXME: Temporary bypass
 					data->bufferdatatype = CCX_DVD_SUBTITLE;
+					// Use substream ID as stream_pid for PS files to differentiate DVB subtitle streams
+					data->stream_pid = nextheader[7];
 
 					data->len = result;
 					enough = 1;
@@ -778,7 +780,6 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		// Without this, data->len stays at BUFSIZE and general_get_more_data
 		// returns CCX_EOF prematurely (it calculates want = BUFSIZE - len = 0)
 		data->len = 0;
-
 	} while (1); // Loop exits via break on CCX_EOF or terminate_asap
 	free(data);
 	return caps;
@@ -871,10 +872,19 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_DVB_SUBTITLE)
 	{
-		ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
-		if (ret < 0)
-			mprint("Return from dvbsub_decode: %d\n", ret);
-		set_fts(dec_ctx->timing);
+		// Safety check: Skip if decoder was freed due to PAT change
+		if (dec_ctx->private_data)
+		{
+			if (data_node->len > 2)
+			{
+				ret = dvbsub_decode(enc_ctx, dec_ctx, data_node->buffer + 2, data_node->len - 2, dec_sub);
+				if (ret < 0)
+					mprint("Return from dvbsub_decode: %d\n", ret);
+				set_fts(dec_ctx->timing);
+			}
+		}
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_PES)
@@ -890,6 +900,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 			dec_ctx->is_alloc = 1;
 		}
 		process_spu(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_TELETEXT)
@@ -900,6 +912,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		   during PAT change while stream was being processed) */
 		if (!dec_ctx->private_data)
 		{
+			if (dec_ctx->codec == CCX_CODEC_DVB)
+				dec_ctx->pid = data_node->stream_pid;
 			got = data_node->len; // Skip processing, context was freed
 		}
 		else
@@ -921,6 +935,8 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 				return ret;
 
 			/* Mark processed byte count */
+			if (dec_ctx->codec == CCX_CODEC_DVB)
+				dec_ctx->pid = data_node->stream_pid;
 			got = data_node->len;
 		}
 	}
@@ -1003,11 +1019,15 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
 		int cc_count = data_node->len / 3;
 		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
 		isdbsub_decode(dec_ctx, data_node->buffer, data_node->len, dec_sub);
+		if (dec_ctx->codec == CCX_CODEC_DVB)
+			dec_ctx->pid = data_node->stream_pid;
 		got = data_node->len;
 	}
 	else
@@ -1133,10 +1153,19 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	// struct encoder_ctx *enc_ctx = NULL;
 	//  Find most promising stream: teletex, DVB, ISDB
 	int pid = get_best_stream(ctx->demux_ctx);
+
+	// NOTE: For DVB split mode, we do NOT mutate pid here.
+	// Mutating pid to -1 causes demuxer PES buffer errors because it changes
+	// the stream selection semantics unexpectedly. Instead, we keep primary
+	// stream processing unchanged and handle DVB streams in a separate
+	// read-only secondary pass after the primary stream is processed.
+
 	if (pid < 0)
 	{
+		// Let get_best_data pick the primary stream (usually Teletext)
 		*data_node = get_best_data(*datalist);
 	}
+
 	else
 	{
 		ignore_other_stream(ctx->demux_ctx, pid);
@@ -1281,23 +1310,140 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 		}
 		if ((*data_node)->bufferdatatype == CCX_TELETEXT && (*dec_ctx)->private_data) // if we have teletext subs, we set the min_pts here
 			set_tlt_delta(*dec_ctx, (*dec_ctx)->timing->current_pts);
-		ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+
+		// Primary stream processing
+		// In split DVB mode, DVB streams are handled in the secondary pass below.
+		// We skip primary processing for DVB here to avoid double-processing (or processing as 'default' output).
+		// Teletext/other streams still go through here.
+		if (*data_node && !(ccx_options.split_dvb_subs && (*dec_ctx)->codec == CCX_CODEC_DVB))
+		{
+			ret = process_data(*enc_ctx, *dec_ctx, *data_node);
+		}
+
 		if (*enc_ctx != NULL)
 		{
 			if ((*enc_ctx)->srt_counter || (*enc_ctx)->cea_708_counter || (*dec_ctx)->saw_caption_block || ret == 1)
 			{
 				*caps = 1;
-				/* Also update ret to indicate captions were found.
-				   This is needed for CEA-708 which writes directly via Rust
-				   and doesn't set got_output like CEA-608/DVB do. */
 				ret = 1;
 			}
 		}
 
+		// SECONDARY PASS: Process DVB streams in split mode
+		// DVB streams are parallel consumers, processed AFTER the primary stream
+		// This ensures Teletext controls timing/loop lifetime while DVB is extracted separately
+		if (ccx_options.split_dvb_subs)
+		{
+			// Guard: Only process DVB if timing has been initialized by Teletext
+			// if ((*dec_ctx)->timing == NULL || (*dec_ctx)->timing->pts_set == 0)
+			// {
+			// 	goto skip_dvb_secondary_pass;
+			struct demuxer_data *dvb_ptr = *datalist;
+			while (dvb_ptr)
+			{
+				// Process DVB nodes (in split mode, even if they were the "best" stream,
+				// we route them here to ensure they get a proper named pipeline)
+				if (dvb_ptr->codec == CCX_CODEC_DVB &&
+				    dvb_ptr->len > 0)
+				{
+					int stream_pid = dvb_ptr->stream_pid;
+					char *lang = "unk";
+
+					// Find language for this PID - check potential_streams first (PMT discovery)
+					for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
+					{
+						if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
+						    ctx->demux_ctx->potential_streams[k].lang[0])
+						{
+							lang = ctx->demux_ctx->potential_streams[k].lang;
+							break;
+						}
+					}
+
+					// Fallback to cinfo if potential_streams didn't have it
+					if (strcmp(lang, "unk") == 0)
+					{
+						struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+						if (cinfo && cinfo->lang[0])
+							lang = cinfo->lang;
+					}
+
+					// Get or create pipeline for this DVB stream
+					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+
+					// Reinitialize decoder if it was NULLed out by PAT change
+					if (pipe && pipe->dec_ctx && !pipe->decoder)
+					{
+						struct dvb_config dvb_cfg = {0};
+						dvb_cfg.n_language = 1;
+						// Lookup composition/ancillary IDs from potential_streams
+						if (ctx->demux_ctx)
+						{
+							for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
+							{
+								if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+								{
+									dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
+									dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
+									break;
+								}
+							}
+						}
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
+						if (pipe->decoder)
+							pipe->dec_ctx->private_data = pipe->decoder;
+					}
+
+					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
+					{
+						// Use pipeline's own independent timing context
+						// This avoids synchronization issues if primary stream (Teletext) has different timing characteristics
+						pipe->dec_ctx->timing = pipe->timing;
+						pipe->encoder->timing = pipe->timing;
+
+						// Set the PTS for this DVB packet before decoding
+						// Without this, the DVB decoder will use stale timing
+						set_pipeline_pts(pipe, dvb_ptr->pts);
+
+						// Create subtitle structure if needed
+						if (!pipe->dec_ctx->dec_sub.prev)
+						{
+							// This should be handled by get_or_create_pipeline but safety check
+							struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
+							memset(sub, 0, sizeof(struct cc_subtitle));
+							pipe->dec_ctx->dec_sub.prev = sub;
+						}
+
+						// Decode DVB using the per-pipeline decoder context
+						// This ensures each stream has its own prev pointers
+						// Skip first 2 bytes (PES header) as done in process_data for DVB
+
+						// Safety check: Skip if decoder was freed due to PAT change
+						if (pipe->decoder && pipe->dec_ctx->private_data)
+						{
+							int offset = 2;
+							// Auto-detect offset based on sync byte 0x0F
+							if (dvb_ptr->len > 2 && dvb_ptr->buffer[2] == 0x0f)
+								offset = 2;
+							else if (dvb_ptr->len > 0 && dvb_ptr->buffer[0] == 0x0f)
+								offset = 0;
+
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + offset, dvb_ptr->len - offset, &pipe->dec_ctx->dec_sub);
+						}
+						// CRITICAL: Reset length so buffer can be reused/filled again
+						dvb_ptr->len = 0;
+					}
+				}
+				dvb_ptr = dvb_ptr->next_stream;
+			}
+		}
+	skip_dvb_secondary_pass:
+
 		// Process the last subtitle for DVB
 		if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
 		{
-			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE && (*dec_ctx)->dec_sub.prev->end_time == 0)
+			if ((*data_node)->bufferdatatype == CCX_DVB_SUBTITLE &&
+			    (*dec_ctx)->dec_sub.prev && (*dec_ctx)->dec_sub.prev->end_time == 0)
 			{
 				// Use get_fts() which properly handles PTS jumps and maintains monotonic timing
 				(*dec_ctx)->dec_sub.prev->end_time = get_fts((*dec_ctx)->timing, (*dec_ctx)->current_field);
@@ -1447,7 +1593,6 @@ int general_loop(struct lib_ccx_ctx *ctx)
 							set_fts(dec_ctx->timing);
 						}
 					}
-					if (dec_ctx->codec == CCX_CODEC_DVB) // DVB will always have to be in sync with audio (no matter the min_pts of the other streams)
 					{
 						if (ctx->demux_ctx->pinfo[p_index].got_important_streams_min_pts[AUDIO] != UINT64_MAX) // it means we got the first pts for audio
 						{
@@ -1483,7 +1628,12 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					}
 				}
 
-				ret = process_data(enc_ctx, dec_ctx, data_node);
+				// In split DVB mode, skip primary processing for DVB streams
+				// They will be handled in the secondary DVB pass below (Bug 3 fix)
+				if (!(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
+				{
+					ret = process_data(enc_ctx, dec_ctx, data_node);
+				}
 				if (enc_ctx != NULL)
 				{
 					if (
@@ -1497,7 +1647,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					if (data_node->bufferdatatype == CCX_DVB_SUBTITLE && dec_ctx && dec_ctx->dec_sub.prev && dec_ctx->dec_sub.prev->end_time == 0)
 					{
 						dec_ctx->dec_sub.prev->end_time = (dec_ctx->timing->current_pts - dec_ctx->timing->min_pts) / (MPEG_CLOCK_FREQ / 1000);
-						if (enc_ctx != NULL)
+						// In split DVB mode, skip flushing to main encoder (Bug 3 fix)
+						// Pipeline encoders get flushed via lib_ccx.c:285-313
+						if (enc_ctx != NULL && !(ccx_options.split_dvb_subs && dec_ctx && dec_ctx->codec == CCX_CODEC_DVB))
 							encode_sub(enc_ctx->prev, dec_ctx->dec_sub.prev);
 						dec_ctx->dec_sub.prev->got_output = 0;
 					}
@@ -1506,6 +1658,86 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (!data_node)
 				continue;
 		}
+
+		// MULTIPROGRAM DVB SECONDARY PASS: Route DVB streams to per-language pipelines
+		// This mirrors the single-program DVB secondary pass at lines 1321-1417 (Bug 3 fix)
+		if (ccx_options.split_dvb_subs)
+		{
+			struct demuxer_data *dvb_ptr = datalist;
+			while (dvb_ptr)
+			{
+				if (dvb_ptr->codec == CCX_CODEC_DVB && dvb_ptr->len > 0)
+				{
+					int stream_pid = dvb_ptr->stream_pid;
+					char *lang = "unk";
+
+					// Find language for this PID from potential_streams (PMT discovery)
+					for (int k = 0; k < ctx->demux_ctx->potential_stream_count; k++)
+					{
+						if (ctx->demux_ctx->potential_streams[k].pid == stream_pid &&
+						    ctx->demux_ctx->potential_streams[k].lang[0])
+						{
+							lang = ctx->demux_ctx->potential_streams[k].lang;
+							break;
+						}
+					}
+
+					// Fallback to cinfo
+					if (strcmp(lang, "unk") == 0)
+					{
+						struct cap_info *cinfo = get_cinfo(ctx->demux_ctx, stream_pid);
+						if (cinfo && cinfo->lang[0])
+							lang = cinfo->lang;
+					}
+
+					// Get or create pipeline for this DVB stream
+					struct ccx_subtitle_pipeline *pipe = get_or_create_pipeline(ctx, stream_pid, CCX_STREAM_TYPE_DVB_SUB, lang);
+
+					// Reinitialize decoder if NULL (e.g., after PAT change)
+					if (pipe && pipe->dec_ctx && !pipe->decoder)
+					{
+						struct dvb_config dvb_cfg = {0};
+						dvb_cfg.n_language = 1;
+						for (int j = 0; j < ctx->demux_ctx->potential_stream_count; j++)
+						{
+							if (ctx->demux_ctx->potential_streams[j].pid == stream_pid)
+							{
+								dvb_cfg.composition_id[0] = ctx->demux_ctx->potential_streams[j].composition_id;
+								dvb_cfg.ancillary_id[0] = ctx->demux_ctx->potential_streams[j].ancillary_id;
+								break;
+							}
+						}
+						pipe->decoder = dvbsub_init_decoder(&dvb_cfg);
+						if (pipe->decoder)
+							pipe->dec_ctx->private_data = pipe->decoder;
+					}
+
+					if (pipe && pipe->encoder && pipe->decoder && pipe->dec_ctx)
+					{
+						// Use pipeline's independent timing context
+						pipe->dec_ctx->timing = pipe->timing;
+						pipe->encoder->timing = pipe->timing;
+						set_pipeline_pts(pipe, dvb_ptr->pts);
+
+						// Create subtitle structure if needed
+						if (!pipe->dec_ctx->dec_sub.prev)
+						{
+							struct cc_subtitle *sub = malloc(sizeof(struct cc_subtitle));
+							memset(sub, 0, sizeof(struct cc_subtitle));
+							pipe->dec_ctx->dec_sub.prev = sub;
+						}
+
+						// Decode DVB (skip first 2 bytes - PES header)
+						if (pipe->decoder && pipe->dec_ctx->private_data)
+						{
+							dvbsub_decode(pipe->encoder, pipe->dec_ctx, dvb_ptr->buffer + 2, dvb_ptr->len - 2, &pipe->dec_ctx->dec_sub);
+						}
+					}
+				}
+				dvb_ptr = dvb_ptr->next_stream;
+			}
+		}
+
 		if (ctx->live_stream)
 		{
 			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
@@ -1767,6 +1999,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 				do_cb(dec_ctx, parsebuf + j, dec_sub);
 			}
 		}
+
 		if (dec_sub->got_output)
 		{
 			caps = 1;
@@ -1787,7 +2020,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 	}
 
-	/* Free XDS context - similar to cleanup in general_loop */
+	// Free XDS context - similar to cleanup in general_loop
 	free(dec_ctx->xds_ctx);
 	free(parsebuf);
 	return caps;

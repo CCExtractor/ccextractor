@@ -221,6 +221,7 @@ int start_ccx()
 				if (!ret)
 					ret = tmp;
 				break;
+#ifdef GPAC_AVAILABLE
 			case CCX_SM_MP4:
 				mprint("\rAnalyzing data with GPAC (MP4 library)\n");
 				close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
@@ -241,6 +242,7 @@ int start_ccx()
 				if (!ret)
 					ret = tmp;
 				break;
+#endif
 			case CCX_SM_MKV:
 				mprint("\rAnalyzing data in Matroska mode\n");
 				tmp = matroska_loop(ctx);
