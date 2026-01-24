@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
 #include "lib_ccx.h"
 #include "ccx_common_option.h"
 #include "activity.h"
