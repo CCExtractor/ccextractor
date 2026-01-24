@@ -5,6 +5,9 @@
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
+- Fix: DVB subtitle OCR extraction using undefined region variable causing failures
+- Fix: SPUPNG format missing <subpictures> wrapper tags due to premature footer writing
+- Fix: DVB subtitle regions not being marked as processed, causing duplicate entries
 
 0.96.5 (2026-01-05)
 -------------------
