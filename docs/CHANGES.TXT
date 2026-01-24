@@ -10,7 +10,8 @@
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
-
+- Fix: Windows MSVC build error for strcasecmp in ensure_output_extension
+- Fix: Windows CI fallback download URL for GPAC (corrected 404 error)
 0.96.5 (2026-01-05)
 -------------------
 - New: CCExtractor is available again via Homebrew on macOS and Linux.
