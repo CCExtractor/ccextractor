@@ -59,7 +59,7 @@ jobs:
           # Fallback: Download from GPAC website
           if (-not $chocoSuccess) {
             Write-Host "Chocolatey failed, downloading GPAC directly..."
-            $gpacUrl = "https://download.tsi.telecom-paristech.fr/gpac/release/2.4.0/gpac-2.4.0-rev0-gc05db8ba-master-x64.exe"
+            $gpacUrl = "https://download.tsi.telecom-paristech.fr/gpac/release/2.4/gpac-2.4-rev0-g5d70253a-master-x64.exe"
             $installer = "$env:TEMP\gpac-installer.exe"
             Invoke-WebRequest -Uri $gpacUrl -OutFile $installer -UseBasicParsing
             Start-Process -FilePath $installer -ArgumentList "/S" -Wait
