@@ -154,11 +154,6 @@ void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out)
 
 	spupng_write_header((struct spupng_t *)out->spupng_data, ctx->multiple_files, ctx->first_input_file);
 
-	if (ctx->write_format == CCX_OF_RAW)
-	{ // WARN: Memory leak with this flag, free by hand. Maybe bug.
-		spupng_write_footer(out->spupng_data);
-		spunpg_free(out->spupng_data);
-	}
 }
 
 void write_spumux_footer(struct ccx_s_write *out)
@@ -501,6 +496,12 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 			write_spucomment(sp, str);
 			freep(&str);
 		}
+	}
+#else
+	// Even without OCR, clear any ocr_text pointers to prevent use-after-free
+	for (i = 0, rect = sub->data; i < sub->nb_data; i++, rect++)
+	{
+		rect->ocr_text = NULL;
 	}
 #endif
 

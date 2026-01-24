@@ -1712,9 +1712,17 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
 	}
-	if (ctx->ocr_ctx && region)
+	// Use the first region for bgcolor reference
+	DVBSubRegion *first_region = NULL;
+	for (display = ctx->display_list; display; display = display->next)
 	{
-		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
+		first_region = get_region(ctx, display->region_id);
+		if (first_region)
+			break;
+	}
+	if (ctx->ocr_ctx && first_region)
+	{
+		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, first_region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0)
 			rect->ocr_text = ocr_str;
 		else
@@ -1726,6 +1734,15 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		rect->ocr_text = NULL;
 	}
 #endif
+	
+	// Clear dirty flag for all processed regions
+	for (display = ctx->display_list; display; display = display->next)
+	{
+		region = get_region(ctx, display->region_id);
+		if (region)
+			region->dirty = 0;
+	}
+	
 	return 0;
 }
 
