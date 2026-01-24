@@ -1534,6 +1534,10 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	uint32_t *clut_table;
 	int offset_x = 0, offset_y = 0;
 	int x_pos = -1, y_pos = -1, width = 0, height = 0;
+#ifdef ENABLE_OCR
+	char *ocr_str = NULL;
+	DVBSubRegion *first_region = NULL;
+#endif
 
 	ctx = (DVBSubContext *)dec_ctx->private_data;
 
@@ -1705,16 +1709,20 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 
 	// Perform OCR
 #ifdef ENABLE_OCR
-	char *ocr_str = NULL;
 	// Lazy OCR initialization: only init when we actually have a bitmap to process
 	if (!ctx->ocr_initialized)
 	{
 		ctx->ocr_ctx = init_ocr(ctx->lang_index);
 		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
 	}
-	if (ctx->ocr_ctx && region)
+	// Find first region for bgcolor
+	for (display = ctx->display_list; display && !first_region; display = display->next)
 	{
-		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
+		first_region = get_region(ctx, display->region_id);
+	}
+	if (ctx->ocr_ctx && first_region)
+	{
+		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, first_region->bgcolor, dec_ctx->ocr_quantmode);
 		if (ret >= 0)
 			rect->ocr_text = ocr_str;
 		else
@@ -1726,6 +1734,13 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 		rect->ocr_text = NULL;
 	}
 #endif
+	// Clear dirty flags for all processed regions
+	for (display = ctx->display_list; display; display = display->next)
+	{
+		region = get_region(ctx, display->region_id);
+		if (region)
+			region->dirty = 0;
+	}
 	return 0;
 }
 
