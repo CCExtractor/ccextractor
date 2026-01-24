@@ -129,10 +129,14 @@ pub fn sleepandchecktimeout(start: u64, ccx_options: &mut Options) {
         .expect("System time went backwards")
         .as_secs();
 
-    if ccx_options.live_stream.is_some() && ccx_options.live_stream.unwrap().seconds() != 0 {
-        if current_time > start + ccx_options.live_stream.unwrap().millis() as u64 {
-            // Timeout elapsed
-            ccx_options.live_stream = Option::from(Timestamp::from_millis(0));
+    if let Some(live_stream) = ccx_options.live_stream {
+        if live_stream.seconds() != 0 {
+            if current_time > start + live_stream.millis() as u64 {
+                // Timeout elapsed
+                ccx_options.live_stream = Option::from(Timestamp::from_millis(0));
+            } else {
+                sleep_secs(1);
+            }
         } else {
             sleep_secs(1);
         }
