@@ -290,7 +290,9 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		}
 
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
+		if (dec_ctx->timing && dec_ctx->timing->pts_set >= 2 &&
+		    dec_ctx->timing->current_pts >= dec_ctx->timing->min_pts)
+			cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)
 		{
@@ -319,21 +321,11 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 			// Check if there's a pending subtitle in the prev buffer
 			if (p->dec_ctx->dec_sub.prev && p->dec_ctx->dec_sub.prev->data && p->encoder->prev)
 			{
-				// Calculate end time for the last subtitle
-				LLONG current_fts = 0;
-				if (p->dec_ctx->timing)
-				{
-					current_fts = get_fts(p->dec_ctx->timing, p->dec_ctx->current_field);
-				}
-
-				// Force end time if missing
+				// Force end time if missing - use 2 second fallback
+				// Note: We skip get_fts() here because split DVB pipelines may have
+				// timing contexts in invalid states that cause Rust overflow panics
 				if (p->dec_ctx->dec_sub.prev->end_time == 0)
-				{
-					if (current_fts > p->dec_ctx->dec_sub.prev->start_time)
-						p->dec_ctx->dec_sub.prev->end_time = current_fts;
-					else
-						p->dec_ctx->dec_sub.prev->end_time = p->dec_ctx->dec_sub.prev->start_time + 2000; // 2s fallback
-				}
+					p->dec_ctx->dec_sub.prev->end_time = p->dec_ctx->dec_sub.prev->start_time + 2000;
 
 				encode_sub(p->encoder->prev, p->dec_ctx->dec_sub.prev);
 			}
