@@ -366,7 +366,9 @@ void print_usage(void)
 	mprint("       --split-dvb-subs: Extract each DVB subtitle stream to a separate file.\n");
 	mprint("                       Each file will be named with the base filename plus a\n");
 	mprint("                       language suffix (e.g., output_deu.srt, output_fra.srt).\n");
-	mprint("                       For streams without language tags, uses PID as suffix.\n");
+	mprint("                       If multiple streams share the same language, a counter\n");
+	mprint("                       is added (e.g., output_fra_2.srt, output_fra_3.srt).\n");
+	mprint("                       Streams without language tags use 'und' (undefined).\n");
 	mprint("                       Incompatible with: stdout output, manual PID selection,\n");
 	mprint("                       multiprogram mode. Only works with SRT, SAMI, WebVTT.\n");
 	mprint("        --no-dvb-dedup: Disable DVB subtitle deduplication. By default, CCExtractor\n");

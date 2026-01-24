@@ -405,7 +405,7 @@ int start_ccx()
 #endif
 	dinit_libraries(&ctx);
 
-	if (!ret)
+	if (!ret && !ccx_options.split_dvb_subs)
 		mprint("\nNo captions were found in input.\n");
 
 	print_end_msg();

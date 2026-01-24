@@ -23,8 +23,13 @@ void dinit_write(struct ccx_s_write *wb)
 		// This commonly happens with -12 option when one field has no captions
 		if (file_size == 0 && wb->filename != NULL)
 		{
-			unlink(wb->filename);
-			mprint("Deleted empty output file: %s\n", wb->filename);
+			// In split mode, the main output file is empty by design (actual output goes to split files)
+			// So we skip deletion and the message to avoid confusion
+			if (!ccx_options.split_dvb_subs)
+			{
+				unlink(wb->filename);
+				mprint("Deleted empty output file: %s\n", wb->filename);
+			}
 		}
 	}
 	freep(&wb->filename);

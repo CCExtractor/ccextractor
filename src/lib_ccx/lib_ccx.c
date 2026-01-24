@@ -672,18 +672,51 @@ struct ccx_subtitle_pipeline *get_or_create_pipeline(struct lib_ccx_ctx *ctx, in
 	pipe->stream_type = stream_type;
 	snprintf(pipe->lang, sizeof(pipe->lang), "%.3s", lang ? lang : "und");
 
-	// Generate output filename: {basefilename}_{lang}_{PID}.ext
-	// Always include PID to handle multiple streams with same language
-	const char *ext = ctx->extension ? ctx->extension : ".srt";
-	if (strcmp(pipe->lang, "und") == 0 || strcmp(pipe->lang, "unk") == 0 || pipe->lang[0] == '\0')
+	// Generate output filename: {basefilename}_{lang}.ext or {basefilename}_{lang}_{count}.ext
+	// Use language counter to handle multiple streams with same language (avoids PID in filename)
+	static struct
 	{
-		snprintf(pipe->filename, sizeof(pipe->filename), "%s_0x%04X%s",
-			 ctx->basefilename, pid, ext);
+		char lang[4];
+		int count;
+	} lang_counts[64];
+	static int lang_count_idx = 0;
+
+	const char *ext = ctx->extension ? ctx->extension : ".srt";
+
+	// Normalize unknown languages to "und"
+	const char *lang_to_use = pipe->lang;
+	if (strcmp(pipe->lang, "unk") == 0 || pipe->lang[0] == '\0')
+		lang_to_use = "und";
+
+	// Find or add language in counter array
+	int count = 0;
+	for (int i = 0; i < lang_count_idx; i++)
+	{
+		if (strcmp(lang_counts[i].lang, lang_to_use) == 0)
+		{
+			count = ++lang_counts[i].count;
+			break;
+		}
+	}
+	if (count == 0 && lang_count_idx < 64)
+	{
+		strncpy(lang_counts[lang_count_idx].lang, lang_to_use, 3);
+		lang_counts[lang_count_idx].lang[3] = '\0';
+		lang_counts[lang_count_idx].count = 1;
+		lang_count_idx++;
+		count = 1;
+	}
+
+	// Generate filename: first occurrence has no counter, subsequent have _2, _3, etc.
+	if (count == 1)
+	{
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s%s",
+			 ctx->basefilename, lang_to_use, ext);
 	}
 	else
 	{
-		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s_0x%04X%s",
-			 ctx->basefilename, pipe->lang, pid, ext);
+		snprintf(pipe->filename, sizeof(pipe->filename), "%s_%s_%d%s",
+			 ctx->basefilename, lang_to_use, count, ext);
 	}
 
 	// Initialize encoder for this pipeline
