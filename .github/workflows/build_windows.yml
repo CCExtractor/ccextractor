@@ -39,9 +39,32 @@ jobs:
         with:
           msbuild-architecture: x64
 
-      # Install GPAC (fast, ~30s, not worth caching complexity)
+      # Install GPAC with fallback if Chocolatey fails
       - name: Install gpac
-        run: choco install gpac --version 2.4.0 --no-progress
+        shell: pwsh
+        run: |
+          # Try Chocolatey first
+          $chocoSuccess = $false
+          for ($i = 1; $i -le 3; $i++) {
+            Write-Host "Attempt $i/3: Installing GPAC via Chocolatey..."
+            choco install gpac --version 2.4.0 --no-progress -y
+            if ($LASTEXITCODE -eq 0) {
+              $chocoSuccess = $true
+              Write-Host "GPAC installed via Chocolatey"
+              break
+            }
+            Start-Sleep -Seconds 10
+          }
+
+          # Fallback: Download from GPAC website
+          if (-not $chocoSuccess) {
+            Write-Host "Chocolatey failed, downloading GPAC directly..."
+            $gpacUrl = "https://download.tsi.telecom-paristech.fr/gpac/release/2.4.0/gpac-2.4.0-rev0-gc05db8ba-master-x64.exe"
+            $installer = "$env:TEMP\gpac-installer.exe"
+            Invoke-WebRequest -Uri $gpacUrl -OutFile $installer -UseBasicParsing
+            Start-Process -FilePath $installer -ArgumentList "/S" -Wait
+            Write-Host "GPAC installed from direct download"
+          }
 
       # Use lukka/run-vcpkg for better caching
       - name: Setup vcpkg
