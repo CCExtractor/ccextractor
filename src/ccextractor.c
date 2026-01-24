@@ -259,6 +259,9 @@ int start_ccx()
 		}
 		list_for_each_entry(dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
 		{
+                        if (!dec_ctx->timing)
+                        continue;
+
 			mprint("\n");
 			dbg_print(CCX_DMT_DECODER_608, "\nTime stamps after last caption block was written:\n");
 			dbg_print(CCX_DMT_DECODER_608, "GOP: %s	  \n", print_mstime_static(gop_time.ms));
