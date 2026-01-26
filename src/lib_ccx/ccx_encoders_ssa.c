@@ -17,7 +17,7 @@ static void ass_position_from_row(
 
 	// Map CEA-608 row (0–14) to ASS Y coordinate
 	// SSA default PlayResY is 288
-	int top = play_res_y * 60 / 100; // start of lower third
+	int top = play_res_y * 10 / 100; // start of lower third
 	int bottom = play_res_y * 95 / 100;
 
 	int y = top + (row * (bottom - top) / 14);
