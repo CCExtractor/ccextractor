@@ -1,0 +1,76 @@
+name: ccextractor
+base: core22
+version: git
+summary: Extract subtitles from video files
+description: |
+  CCExtractor is a tool that produces subtitle files from various video sources.
+  It can extract closed captions, teletext, DVB subtitles, and other subtitle
+  formats from video files, TV recordings, and live streams.
+  
+  Features:
+  - Extract subtitles from multiple video formats
+  - Support for closed captions, teletext, and DVB
+  - OCR support for bitmap-based subtitles
+  - Multiple output formats (SRT, WebVTT, etc.)
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  ccextractor:
+    command: usr/bin/ccextractor
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-bind
+
+parts:
+  ccextractor:
+    plugin: nil
+    source: https://github.com/CCExtractor/ccextractor.git
+    source-type: git
+    override-build: |
+      # Navigate to the linux directory where build script is located
+      cd $SNAPCRAFT_PART_SRC/linux
+      
+      # Make build script executable
+      chmod +x build
+      
+      # Run the build script
+      ./build
+      
+      # Create installation directory
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/bin
+      
+      # Copy the built binary
+      cp ccextractor $SNAPCRAFT_PART_INSTALL/usr/bin/
+      
+    build-packages:
+      - gcc
+      - g++
+      - make
+      - cmake
+      - pkg-config
+      - libcurl4-gnutls-dev
+      - tesseract-ocr
+      - libtesseract-dev
+      - libleptonica-dev
+      - zlib1g-dev
+      - libglew-dev
+      - libglfw3-dev
+      - libpng-dev
+      
+    stage-packages:
+      - libcurl4
+      - libtesseract4
+      - libleptonica-dev
+      - tesseract-ocr-eng
+      - libglew2.2
+      - libglfw3
+      - libpng16-16
+      - zlib1g
