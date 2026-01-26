@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>ccextractor</id>
-    <version>0.96.3</version>
+    <version>0.96.5</version>
     <title>CCExtractor</title>
     <authors>CCExtractor Development Team</authors>
     <owners>CCExtractor</owners>

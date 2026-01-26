@@ -777,6 +777,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		return NULL;
 	}
 	ctx->in_fileformat = opt->in_format;
+	ctx->is_pal = (opt->in_format == 2);
 
 	/** used in case of SUB_EOD_MARKER */
 	ctx->prev_start = -1;
@@ -843,6 +844,9 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->segment_last_key_frame = 0;
 	ctx->nospupngocr = opt->nospupngocr;
 	ctx->scc_framerate = opt->scc_framerate;
+	ctx->scc_accurate_timing = opt->scc_accurate_timing;
+	ctx->scc_last_transmission_end = 0;
+	ctx->scc_last_display_end = 0;
 
 	// Initialize teletext multi-page output arrays (issue #665)
 	ctx->tlt_out_count = 0;

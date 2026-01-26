@@ -28,7 +28,7 @@ const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
-#[command(version = "1.0")]
+#[command(version = "0.96.5")]
 #[command(about = "Teletext portions taken from Petr Kutalek's telxcc
 --------------------------------------------------------------------------
 Originally based on McPoodle's tools. Check his page for lots of information
@@ -227,7 +227,7 @@ pub struct Args {
     /// "all[EUC-KR]") and it will encode specified charset to
     /// UTF-8 using iconv. See iconv documentation to check if
     /// required encoding/charset is supported.
-    #[arg(long="service", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long="service", alias="svc", value_name="services", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cea708services: Option<String>,
     /// With the exception of McPoodle's raw format, which is just the closed
     /// caption data with no other info, CCExtractor can usually detect the
@@ -295,6 +295,13 @@ pub struct Args {
     /// Example: --scc-framerate 25
     #[arg(long="scc-framerate", verbatim_doc_comment, value_name="fps", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub scc_framerate: Option<String>,
+    /// Enable bandwidth-aware timing for SCC output (issue #1120).
+    /// When enabled, captions are pre-loaded ahead of their display time
+    /// based on the EIA-608 transmission bandwidth (2 bytes/frame).
+    /// This ensures YouTube and broadcast compliance by preventing
+    /// caption collisions. Use this for professional SCC output.
+    #[arg(long="scc-accurate-timing", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    pub scc_accurate_timing: bool,
     /// By default, ccextractor will process input files in
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you
@@ -395,10 +402,10 @@ pub struct Args {
     /// reference to the received data. Use this parameter if
     /// you prefer your own reference. Note: Current this only
     /// affects Teletext in timed transcript with --datets.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="noautotimeref", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub no_autotimeref: bool,
     /// Ignore SCTE-20 data if present.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="noscte20", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub no_scte20: bool,
     /// Create a separate file for CSS instead of inline.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
@@ -453,7 +460,7 @@ pub struct Args {
     /// Do not append a BOM (Byte Order Mark) to output
     /// files. Note that this may break files when using
     /// Windows. This is the default in non-Windows builds.
-    #[arg(long, verbatim_doc_comment, conflicts_with="bom", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="nobom", verbatim_doc_comment, conflicts_with="bom", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub no_bom: bool,
     /// Encode subtitles in Unicode instead of Latin-1.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -486,7 +493,7 @@ pub struct Args {
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="sc", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub sentencecap: bool,
     /// Add the contents of 'file' to the list of words
     /// that must be capitalized. For example, if file
@@ -630,6 +637,18 @@ pub struct Args {
     /// bypassing hacks that are Tesseract-specific.
     #[arg(long, verbatim_doc_comment, value_name="mode", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub psm: Option<u8>,
+    /// Split subtitle images into lines before OCR.
+    /// Uses PSM 7 (single text line mode) for each line,
+    /// which can improve accuracy for multi-line bitmap subtitles
+    /// (VOBSUB, DVD, DVB).
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub ocr_line_split: bool,
+    /// Disable the OCR character blacklist.
+    /// By default, CCExtractor blacklists characters like |, \, `, _
+    /// that are commonly misrecognized (e.g. 'I' as '|').
+    /// Use this flag to disable the blacklist.
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub no_ocr_blacklist: bool,
     /// For MKV subtitles, select which language's caption
     /// stream will be processed. e.g. 'eng' for English.
     /// Language codes can be either the 3 letters bibliographic
@@ -682,7 +701,7 @@ pub struct Args {
     /// If you hate the repeated lines caused by the roll-up
     /// emulation, you can have ccextractor write only one
     /// line at a time, getting rid of these repeated lines.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, alias="noru", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub no_rollup: bool,
     /// roll-up captions can consist of 2, 3 or 4 visible
     /// lines at any time (the number of lines is part of
@@ -811,10 +830,10 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parsedebug: bool,
     /// Print Program Association Table dump.
-    #[arg(long="parsePAT", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePAT", alias="pat", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pat: bool,
     /// Print Program Map Table dump.
-    #[arg(long="parsePMT", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePMT", alias="pmt", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pmt: bool,
     /// Hex-dump defective TS packets.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
@@ -849,7 +868,7 @@ pub struct Args {
     /// for video streams that have both teletext packets
     /// and CEA-608/708 packets (if teletext is processed
     /// then CEA-608/708 processing is disabled).
-    #[arg(long, verbatim_doc_comment, conflicts_with="teletext", help_heading=TELETEXT_OPTIONS)]
+    #[arg(long, alias="noteletext", verbatim_doc_comment, conflicts_with="teletext", help_heading=TELETEXT_OPTIONS)]
     pub no_teletext: bool,
     /// Use the passed format to customize the (Timed) Transcript
     /// output. The format must be like this: 1100100 (7 digits).
@@ -978,6 +997,8 @@ pub enum InFormat {
     Mkv,
     /// Material Exchange Format (MXF).
     Mxf,
+    /// Scenarist Closed Caption (SCC).
+    Scc,
     #[cfg(feature = "wtv_debug")]
     // For WTV Debug mode only
     Hex,

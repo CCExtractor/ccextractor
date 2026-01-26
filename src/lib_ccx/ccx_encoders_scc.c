@@ -10,6 +10,171 @@ unsigned char odd_parity(const unsigned char byte)
 	return byte | !(cc608_parity(byte) % 2) << 7;
 }
 
+/**
+ * SCC Accurate Timing Implementation (Issue #1120)
+ *
+ * EIA-608 bandwidth constraints:
+ * - 2 bytes per frame at 29.97 FPS (or configured frame rate)
+ * - Captions must be pre-loaded before display time
+ * - Each control code takes 2 bytes (sent twice for reliability = 4 bytes total)
+ * - Text characters take 1 byte each
+ */
+
+// Get frame rate value from scc_framerate setting
+// 0=29.97 (default), 1=24, 2=25, 3=30
+static float get_scc_fps_internal(int scc_framerate)
+{
+	switch (scc_framerate)
+	{
+		case 1:
+			return 24.0f;
+		case 2:
+			return 25.0f;
+		case 3:
+			return 30.0f;
+		default:
+			return 29.97f;
+	}
+}
+
+/**
+ * Calculate total bytes needed to transmit a caption
+ *
+ * Byte costs:
+ * - Control code (RCL, EOC, ENM, EDM): 2 bytes x 2 (sent twice) = 4 bytes
+ * - Preamble code: 2 bytes x 2 = 4 bytes
+ * - Tab offset: 2 bytes x 2 = 4 bytes
+ * - Mid-row code (color/style): 2 bytes x 2 = 4 bytes
+ * - Text character: 1 byte each
+ * - Padding: 1 byte if odd number of text bytes
+ */
+static unsigned int calculate_caption_bytes(const struct eia608_screen *data)
+{
+	unsigned int total_bytes = 0;
+
+	// RCL (Resume Caption Loading): 4 bytes
+	total_bytes += 4;
+
+	for (unsigned char row = 0; row < 15; ++row)
+	{
+		if (!data->row_used[row])
+			continue;
+
+		int first, last;
+		find_limit_characters(data->characters[row], &first, &last, CCX_DECODER_608_SCREEN_WIDTH);
+
+		if (first > last)
+			continue;
+
+		// Assume we need at least one preamble per row: 4 bytes
+		total_bytes += 4;
+
+		// Count characters on this row
+		unsigned int char_count = 0;
+		enum font_bits prev_font = FONT_REGULAR;
+		enum ccx_decoder_608_color_code prev_color = COL_WHITE;
+		int prev_col = -1;
+
+		for (int col = first; col <= last; ++col)
+		{
+			// Check if we need position codes
+			if (prev_col != col - 1 && prev_col != -1)
+			{
+				// Need preamble + possible tab offset: 4-8 bytes
+				total_bytes += 4;
+				if (col % 4 != 0)
+					total_bytes += 4; // Tab offset
+			}
+
+			// Check if we need mid-row style codes
+			if (data->fonts[row][col] != prev_font || data->colors[row][col] != prev_color)
+			{
+				total_bytes += 4; // Mid-row code
+				prev_font = data->fonts[row][col];
+				prev_color = data->colors[row][col];
+			}
+
+			// Text character
+			char_count++;
+			prev_col = col;
+		}
+
+		// Add text bytes (1 per character, rounded up to even)
+		total_bytes += char_count;
+		if (char_count % 2 == 1)
+			total_bytes++; // Padding
+	}
+
+	// EOC (End of Caption): 4 bytes
+	total_bytes += 4;
+
+	// ENM (Erase Non-displayed Memory): 4 bytes
+	total_bytes += 4;
+
+	return total_bytes;
+}
+
+/**
+ * Calculate the pre-roll start time for a caption
+ *
+ * @param display_time When the caption should appear on screen (ms)
+ * @param total_bytes Total bytes to transmit
+ * @param fps Frame rate
+ * @return Time to begin loading the caption (ms)
+ */
+static LLONG calculate_preroll_time(LLONG display_time, unsigned int total_bytes, float fps)
+{
+	// Calculate transmission time in milliseconds
+	// 2 bytes per frame, so frames_needed = (total_bytes + 1) / 2
+	float ms_per_frame = 1000.0f / fps;
+	unsigned int frames_needed = (total_bytes + 1) / 2;
+	LLONG transmission_time_ms = (LLONG)(frames_needed * ms_per_frame);
+
+	// Add 1 frame for EOC to be sent before display
+	LLONG one_frame_ms = (LLONG)ms_per_frame;
+
+	LLONG preroll_start = display_time - transmission_time_ms - one_frame_ms;
+
+	// Don't go negative
+	if (preroll_start < 0)
+		preroll_start = 0;
+
+	return preroll_start;
+}
+
+/**
+ * Check for collision with previous caption transmission and resolve it
+ *
+ * @param context Encoder context with timing state
+ * @param preroll_start Proposed pre-roll start time (will be modified if collision)
+ * @param display_time Caption display time (may be adjusted)
+ * @param fps Frame rate
+ * @return true if timing was adjusted due to collision
+ */
+static bool resolve_collision(struct encoder_ctx *context, LLONG *preroll_start,
+			      LLONG *display_time, float fps)
+{
+	// Check if our preroll would start before previous caption finishes transmitting
+	// This prevents bandwidth collision but allows visual overlap (like scc_tools)
+	// Visual overlap is fine - the EOC command swaps buffers atomically
+	if (context->scc_last_transmission_end > 0 &&
+	    *preroll_start < context->scc_last_transmission_end)
+	{
+		// Bandwidth collision detected - shift our caption forward
+		// Add 1 frame buffer to ensure no overlap
+		LLONG one_frame_ms = (LLONG)(1000.0f / fps);
+		LLONG new_preroll = context->scc_last_transmission_end + one_frame_ms;
+		LLONG shift = new_preroll - *preroll_start;
+
+		*preroll_start = new_preroll;
+		*display_time += shift;
+
+		return true;
+	}
+
+	return false;
+}
+
 struct control_code_info
 {
 	unsigned int byte1_odd;
@@ -689,8 +854,13 @@ void add_timestamp(const struct encoder_ctx *context, LLONG time, const bool dis
 
 	// SMPTE format - use configurable frame rate (issue #1191)
 	float fps = get_scc_fps(context->scc_framerate);
-	float frame = milli * fps / 1000;
-	fdprintf(context->out->fh, "%02u:%02u:%02u:%02.f\t", hour, minute, second, frame);
+	// Calculate frame number from milliseconds, ensuring it stays in valid range 0 to fps-1
+	// Use floor to avoid rounding up to fps (e.g., 29.97 -> 30 is invalid)
+	int max_frames = (int)fps;
+	int frame = (int)(milli * fps / 1000.0f);
+	if (frame >= max_frames)
+		frame = max_frames - 1; // Cap at max valid frame (e.g., 29 for 29.97fps)
+	fdprintf(context->out->fh, "%02u:%02u:%02u:%02d\t", hour, minute, second, frame);
 }
 
 void clear_screen(const struct encoder_ctx *context, LLONG end_time, const unsigned char channel, const bool disassemble)
@@ -710,8 +880,51 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 	unsigned char current_row = UINT8_MAX;
 	unsigned char current_column = UINT8_MAX;
 
-	// 1. Load the caption
-	add_timestamp(context, data->start_time, disassemble);
+	// Timing variables for accurate timing mode (issue #1120)
+	LLONG actual_start_time = data->start_time; // When caption should display
+	LLONG actual_end_time = data->end_time;	    // When caption should clear
+	LLONG preroll_start = data->start_time;	    // When to start loading (default: same as display)
+	float fps = get_scc_fps_internal(context->scc_framerate);
+	bool use_separate_display_time = false; // Whether to write EOC at separate timestamp
+
+	// If accurate timing is enabled, calculate pre-roll and handle collisions
+	if (context->scc_accurate_timing)
+	{
+		// Calculate total bytes needed for this caption
+		unsigned int total_bytes = calculate_caption_bytes(data);
+
+		// Calculate when we need to start loading
+		preroll_start = calculate_preroll_time(actual_start_time, total_bytes, fps);
+
+		// Check for collisions with previous caption and resolve
+		if (resolve_collision(context, &preroll_start, &actual_start_time, fps))
+		{
+			// Timing was adjusted due to collision
+			// Also adjust end time by the same amount
+			LLONG shift = actual_start_time - data->start_time;
+			actual_end_time = data->end_time + shift;
+		}
+
+		// Update timing state for next caption
+		float ms_per_frame = 1000.0f / fps;
+		unsigned int frames_needed = (total_bytes + 1) / 2;
+		LLONG transmission_time_ms = (LLONG)(frames_needed * ms_per_frame);
+		context->scc_last_transmission_end = preroll_start + transmission_time_ms;
+		context->scc_last_display_end = actual_end_time;
+
+		// Enable separate display timing (like scc_tools)
+		use_separate_display_time = true;
+
+		// 1. Load the caption at pre-roll time
+		add_timestamp(context, preroll_start, disassemble);
+	}
+	else
+	{
+		// Legacy mode: use original timing
+		// 1. Load the caption
+		add_timestamp(context, data->start_time, disassemble);
+	}
+
 	write_control_code(context->out->fh, data->channel, RCL, disassemble, &bytes_written);
 	for (uint8_t row = 0; row < 15; ++row)
 	{
@@ -794,12 +1007,26 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 		check_padding(context->out->fh, disassemble, &bytes_written);
 	}
 
-	// 2. Show the caption
+	// 2. Show the caption (EOC = End of Caption, makes it visible)
+	if (use_separate_display_time)
+	{
+		// For accurate timing: write display command at actual display time
+		// This matches scc_tools behavior where load and display are separate
+		add_timestamp(context, actual_start_time, disassemble);
+	}
 	write_control_code(context->out->fh, data->channel, EOC, disassemble, &bytes_written);
 	write_control_code(context->out->fh, data->channel, ENM, disassemble, &bytes_written);
 
-	// 3. Clear the caption
-	clear_screen(context, data->end_time, data->channel, disassemble);
+	// 3. Clear the caption at the end time
+	// In accurate timing mode, skip clear - the next caption's EOC will handle the transition
+	// This matches scc_tools behavior which doesn't write EDM between consecutive captions
+	if (!use_separate_display_time)
+	{
+		// Legacy mode: always write clear
+		clear_screen(context, actual_end_time, data->channel, disassemble);
+	}
+	// In accurate timing mode, scc_last_display_end is still tracked for reference
+	// but we don't write the clear command to avoid out-of-order timestamps
 
 	return 1;
 }

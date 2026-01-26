@@ -82,7 +82,6 @@ impl<'a> SendTarget<'a> {
                 "Unable to connect, address passed is null\n"
             );
         }
-        info!("Target address: {}\n", config.target_addr); // TODO remove this
         info!("Target port: {}\n", config.port.unwrap_or(DEFAULT_TCP_PORT));
         let tcp_stream = TcpStream::connect((
             config.target_addr,

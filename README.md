@@ -28,6 +28,7 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+
 ### Windows Package Managers
 
 **WinGet:**
@@ -60,6 +61,34 @@ More usage information can be found on our website:
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
+
+### Building from Source
+
+- [Building on Windows using WSL](docs/build-wsl.md)
+
+#### Linux (Autotools) build notes
+
+CCExtractor also supports an autotools-based build system under the `linux/`
+directory.
+
+Important notes:
+- The autotools workflow lives inside `linux/`. The `configure` script is
+  generated there and should be run from that directory.
+- Typical build steps are:
+```
+cd linux
+./autogen.sh
+./configure
+make
+```
+- Rust support is enabled automatically if `cargo` and `rustc` are available
+  on the system. In that case, Rust components are built and linked during
+  `make`.
+- If you encounter unexpected build or linking issues, a clean rebuild
+  (`make clean` or a fresh clone) is recommended, especially when Rust is
+  involved.
+
+This build flow has been tested on Linux and WSL.
 
 ## Compiling CCExtractor
 

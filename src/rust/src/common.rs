@@ -18,6 +18,7 @@ use lib_ccxr::common::DtvccServiceCharset;
 use lib_ccxr::common::EncoderConfig;
 use lib_ccxr::common::EncodersTranscriptFormat;
 use lib_ccxr::common::Language;
+use lib_ccxr::common::MkvLangFilter;
 use lib_ccxr::common::Options;
 use lib_ccxr::common::OutputFormat;
 use lib_ccxr::common::SelectCodec;
@@ -181,9 +182,11 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).ocr_oem = options.ocr_oem as _;
     (*ccx_s_options).psm = options.psm as _;
     (*ccx_s_options).ocr_quantmode = options.ocr_quantmode as _;
-    if let Some(mkvlang) = options.mkvlang {
+    (*ccx_s_options).ocr_line_split = options.ocr_line_split as _;
+    (*ccx_s_options).ocr_blacklist = options.ocr_blacklist as _;
+    if let Some(ref mkvlang) = options.mkvlang {
         (*ccx_s_options).mkvlang =
-            replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.to_ctype().as_str());
+            replace_rust_c_string((*ccx_s_options).mkvlang, mkvlang.as_raw_str());
     }
     (*ccx_s_options).analyze_video_stream = options.analyze_video_stream as _;
     (*ccx_s_options).hardsubx_ocr_mode = options.hardsubx_ocr_mode.to_ctype();
@@ -209,11 +212,9 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
             replace_rust_c_string((*ccx_s_options).udpaddr, &options.udpaddr.clone().unwrap());
     }
     (*ccx_s_options).udpport = options.udpport as _;
-    if options.tcpport.is_some() {
-        (*ccx_s_options).tcpport = replace_rust_c_string(
-            (*ccx_s_options).tcpport,
-            &options.tcpport.unwrap().to_string(),
-        );
+    if let Some(tcpport) = options.tcpport {
+        (*ccx_s_options).tcpport =
+            replace_rust_c_string((*ccx_s_options).tcpport, &tcpport.to_string());
     }
     if options.tcp_password.is_some() {
         (*ccx_s_options).tcp_password = replace_rust_c_string(
@@ -233,11 +234,9 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
             &options.srv_addr.clone().unwrap(),
         );
     }
-    if options.srv_port.is_some() {
-        (*ccx_s_options).srv_port = replace_rust_c_string(
-            (*ccx_s_options).srv_port,
-            &options.srv_port.unwrap().to_string(),
-        );
+    if let Some(srv_port) = options.srv_port {
+        (*ccx_s_options).srv_port =
+            replace_rust_c_string((*ccx_s_options).srv_port, &srv_port.to_string());
     }
     (*ccx_s_options).noautotimeref = options.noautotimeref as _;
     (*ccx_s_options).input_source = options.input_source as _;
@@ -251,15 +250,12 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     // Subsequent calls from ccxr_demuxer_open/close should NOT modify inputfile because
     // C code holds references to those strings throughout processing.
     // Freeing them would cause use-after-free and double-free errors.
-    if options.inputfile.is_some() && (*ccx_s_options).inputfile.is_null() {
-        (*ccx_s_options).inputfile = string_to_c_chars(options.inputfile.clone().unwrap());
-        (*ccx_s_options).num_input_files = options
-            .inputfile
-            .as_ref()
-            .unwrap()
-            .iter()
-            .filter(|s| !s.is_empty())
-            .count() as _;
+    if let Some(ref inputfile) = options.inputfile {
+        if (*ccx_s_options).inputfile.is_null() {
+            (*ccx_s_options).inputfile = string_to_c_chars(inputfile.clone());
+            (*ccx_s_options).num_input_files =
+                inputfile.iter().filter(|s| !s.is_empty()).count() as _;
+        }
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
     // Only set enc_cfg on the first call (when output_filename is null).
@@ -278,6 +274,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).scc_framerate = options.scc_framerate;
     // Also copy to enc_cfg so the encoder uses the same frame rate for SCC output
     (*ccx_s_options).enc_cfg.scc_framerate = options.scc_framerate;
+    (*ccx_s_options).enc_cfg.scc_accurate_timing = options.scc_accurate_timing.into();
     #[cfg(feature = "with_libcurl")]
     {
         if options.curlposturl.is_some() {
@@ -419,13 +416,13 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.ocr_oem = (*ccx_s_options).ocr_oem as i8;
     options.psm = (*ccx_s_options).psm;
     options.ocr_quantmode = (*ccx_s_options).ocr_quantmode as u8;
+    options.ocr_line_split = (*ccx_s_options).ocr_line_split != 0;
+    options.ocr_blacklist = (*ccx_s_options).ocr_blacklist != 0;
 
-    // Handle mkvlang (C string to Option<Language>)
+    // Handle mkvlang (C string to Option<MkvLangFilter>)
     if !(*ccx_s_options).mkvlang.is_null() {
-        options.mkvlang = Some(
-            Language::from_str(&c_char_to_string((*ccx_s_options).mkvlang))
-                .expect("Invalid language"),
-        )
+        let lang_str = c_char_to_string((*ccx_s_options).mkvlang);
+        options.mkvlang = MkvLangFilter::new(&lang_str).ok();
     }
 
     options.analyze_video_stream = (*ccx_s_options).analyze_video_stream != 0;
@@ -535,6 +532,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.out_interval = (*ccx_s_options).out_interval;
     options.segment_on_key_frames_only = (*ccx_s_options).segment_on_key_frames_only != 0;
     options.scc_framerate = (*ccx_s_options).scc_framerate;
+    options.scc_accurate_timing = (*ccx_s_options).enc_cfg.scc_accurate_timing != 0;
 
     // Handle optional features with conditional compilation
     #[cfg(feature = "with_libcurl")]
@@ -978,6 +976,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             },
             extract_only_708: self.extract_only_708 as _,
             scc_framerate: 0, // Will be set from ccx_options.scc_framerate in copy_to_c
+            scc_accurate_timing: 0, // Will be set from ccx_options.scc_accurate_timing in copy_to_c
         }
     }
 }

@@ -434,10 +434,21 @@ void remap_g0_charset(uint8_t c)
 {
 	if (c != primary_charset.current)
 	{
+		if (c >= 56)
+		{
+			fprintf(stderr, "- G0 Latin National Subset ID 0x%1x.%1x is out of bounds\n", (c >> 3), (c & 0x7));
+			return;
+		}
 		uint8_t m = G0_LATIN_NATIONAL_SUBSETS_MAP[c];
 		if (m == 0xff)
 		{
 			fprintf(stderr, "- G0 Latin National Subset ID 0x%1x.%1x is not implemented\n", (c >> 3), (c & 0x7));
+			return;
+		}
+		else if (m >= 14)
+		{
+			fprintf(stderr, "- G0 Latin National Subset index %d is out of bounds\n", m);
+			return;
 		}
 		else
 		{
@@ -1392,7 +1403,7 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	uint8_t pes_ext_flag;
 	// extension
 	uint32_t t = 0;
-	uint16_t i;
+	uint32_t i;
 	struct TeletextCtx *ctx = dec_ctx->private_data;
 	ctx->sentence_cap = sentence_cap;
 
@@ -1468,6 +1479,9 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	if (pes_packet_length > size)
 		pes_packet_length = size;
 
+	if (size < 9)
+		return CCX_OK;
+
 	// optional PES header marker bits (10.. ....)
 	if ((buffer[6] & 0xc0) == 0x80)
 	{
@@ -1480,8 +1494,16 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	{
 		if ((optional_pes_header_included == YES) && ((buffer[7] & 0x80) > 0))
 		{
-			ctx->using_pts = YES;
-			dbg_print(CCX_DMT_TELETEXT, "- PID 0xbd PTS available\n");
+			if (size < 14)
+			{
+				ctx->using_pts = NO;
+				dbg_print(CCX_DMT_TELETEXT, "- PID 0xbd PTS signaled but packet too short, using TS PCR\n");
+			}
+			else
+			{
+				ctx->using_pts = YES;
+				dbg_print(CCX_DMT_TELETEXT, "- PID 0xbd PTS available\n");
+			}
 		}
 		else
 		{
@@ -1554,10 +1576,16 @@ int tlt_process_pes_packet(struct lib_cc_decode *dec_ctx, uint8_t *buffer, uint1
 	if (optional_pes_header_included == YES)
 		i += 3 + optional_pes_header_length;
 
-	while (i <= pes_packet_length - 6)
+	while (i + 2 <= pes_packet_length)
 	{
 		uint8_t data_unit_id = buffer[i++];
 		uint8_t data_unit_len = buffer[i++];
+
+		if (i + data_unit_len > pes_packet_length)
+		{
+			dbg_print(CCX_DMT_TELETEXT, "- Teletext data unit length %u exceeds PES packet length, stopping.\n", data_unit_len);
+			break;
+		}
 
 		if ((data_unit_id == DATA_UNIT_EBU_TELETEXT_NONSUBTITLE) || (data_unit_id == DATA_UNIT_EBU_TELETEXT_SUBTITLE))
 		{

@@ -6,6 +6,7 @@
 #include "dvb_subtitle_decoder.h"
 #include "ccx_decoders_isdb.h"
 #include "file_buffer.h"
+#include <inttypes.h>
 
 #ifdef DEBUG_SAVE_TS_PACKETS
 #include <sys/types.h>
@@ -568,6 +569,13 @@ int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, 
 
 	if (cinfo->codec == CCX_CODEC_TELETEXT)
 	{
+		if (cinfo->capbuflen > BUFSIZE - ptr->len)
+		{
+			fatal(CCX_COMMON_EXIT_BUG_BUG,
+			      "Teletext packet (%" PRId64 ") larger than remaining buffer (%" PRId64 ").\n",
+			      cinfo->capbuflen, (int64_t)(BUFSIZE - ptr->len));
+		}
+
 		memcpy(ptr->buffer + ptr->len, cinfo->capbuf, cinfo->capbuflen);
 		ptr->len += cinfo->capbuflen;
 		return CCX_OK;
@@ -662,7 +670,6 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 
 int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 {
-	int newcapbuflen;
 
 	if (cinfo->ignore == CCX_TRUE &&
 	    ((cinfo->stream != CCX_STREAM_TYPE_VIDEO_MPEG2 &&
@@ -688,17 +695,22 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	}
 
 	// copy payload to capbuf
-	newcapbuflen = cinfo->capbuflen + payload->length;
-	if (newcapbuflen > cinfo->capbufsize)
+	if (payload->length > INT64_MAX - cinfo->capbuflen)
 	{
-		unsigned char *new_capbuf = (unsigned char *)realloc(cinfo->capbuf, newcapbuflen);
+		mprint("Error: capbuf size overflow\n");
+		return -1;
+	}
+	int64_t newcapbuflen = (int64_t)cinfo->capbuflen + payload->length;
+	if (newcapbuflen > (int64_t)cinfo->capbufsize)
+	{
+		unsigned char *new_capbuf = (unsigned char *)realloc(cinfo->capbuf, (size_t)newcapbuflen);
 		if (!new_capbuf)
 			return -1;
 		cinfo->capbuf = new_capbuf;
-		cinfo->capbufsize = newcapbuflen;
+		cinfo->capbufsize = newcapbuflen; // Note: capbufsize is int in struct cap_info
 	}
 	memcpy(cinfo->capbuf + cinfo->capbuflen, payload->start, payload->length);
-	cinfo->capbuflen = newcapbuflen;
+	cinfo->capbuflen = newcapbuflen; // Note: capbuflen is int in struct cap_info
 
 	return CCX_OK;
 }

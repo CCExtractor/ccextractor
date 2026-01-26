@@ -1,0 +1,283 @@
+name: Build Linux .deb Package
+
+on:
+  # Build on releases
+  release:
+    types: [published]
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type (all, basic, hardsubx)'
+        required: false
+        default: 'all'
+  # Build on pushes to workflow file for testing
+  push:
+    paths:
+      - '.github/workflows/build_deb.yml'
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [basic, hardsubx]
+
+    steps:
+      - name: Check if should build this variant
+        id: should_build
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            INPUT_TYPE="${{ github.event.inputs.build_type }}"
+            if [ "$INPUT_TYPE" = "all" ] || [ "$INPUT_TYPE" = "${{ matrix.build_type }}" ]; then
+              echo "should_build=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/checkout@v6
+
+      - name: Get version
+        if: steps.should_build.outputs.should_build == 'true'
+        id: version
+        run: |
+          # Extract version from source or use tag
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          else
+            # Extract version from lib_ccx.h (e.g., #define VERSION "0.96.5")
+            VERSION=$(grep -oP '#define VERSION "\K[^"]+' src/lib_ccx/lib_ccx.h || echo "0.96")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Install base dependencies
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            pkg-config \
+            zlib1g-dev \
+            libpng-dev \
+            libjpeg-dev \
+            libfreetype-dev \
+            libxml2-dev \
+            libcurl4-gnutls-dev \
+            libssl-dev \
+            clang \
+            libclang-dev \
+            tesseract-ocr \
+            libtesseract-dev \
+            libleptonica-dev \
+            patchelf
+
+      - name: Install FFmpeg dependencies (HardSubX)
+        if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx'
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            libavcodec-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libswscale-dev \
+            libswresample-dev \
+            libavfilter-dev \
+            libavdevice-dev
+
+      - name: Install Rust toolchain
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache GPAC build
+        if: steps.should_build.outputs.should_build == 'true'
+        id: cache-gpac
+        uses: actions/cache@v5
+        with:
+          path: ~/gpac-install
+          key: gpac-abi-16.4-ubuntu24-deb
+
+      - name: Build GPAC
+        if: steps.should_build.outputs.should_build == 'true' && steps.cache-gpac.outputs.cache-hit != 'true'
+        run: |
+          git clone -b abi-16.4 --depth 1 https://github.com/gpac/gpac
+          cd gpac
+          ./configure --prefix=/usr
+          make -j$(nproc)
+          make DESTDIR=$HOME/gpac-install install-lib
+
+      - name: Install GPAC to system
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          sudo cp -r $HOME/gpac-install/usr/lib/* /usr/lib/
+          sudo cp -r $HOME/gpac-install/usr/include/* /usr/include/
+          sudo ldconfig
+
+      - name: Build CCExtractor
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          mkdir build && cd build
+          if [ "${{ matrix.build_type }}" = "hardsubx" ]; then
+            cmake ../src -DCMAKE_BUILD_TYPE=Release -DWITH_OCR=ON -DWITH_HARDSUBX=ON
+          else
+            cmake ../src -DCMAKE_BUILD_TYPE=Release -DWITH_OCR=ON
+          fi
+          make -j$(nproc)
+
+      - name: Test build
+        if: steps.should_build.outputs.should_build == 'true'
+        run: ./build/ccextractor --version
+
+      - name: Create .deb package structure
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VARIANT="${{ matrix.build_type }}"
+
+          if [ "$VARIANT" = "basic" ]; then
+            PKG_NAME="ccextractor_${VERSION}_amd64"
+          else
+            PKG_NAME="ccextractor-${VARIANT}_${VERSION}_amd64"
+          fi
+
+          mkdir -p ${PKG_NAME}/DEBIAN
+          mkdir -p ${PKG_NAME}/usr/bin
+          mkdir -p ${PKG_NAME}/usr/lib/ccextractor
+          mkdir -p ${PKG_NAME}/usr/share/doc/ccextractor
+          mkdir -p ${PKG_NAME}/usr/share/man/man1
+
+          # Copy binary
+          cp build/ccextractor ${PKG_NAME}/usr/bin/
+
+          # Copy GPAC library
+          cp $HOME/gpac-install/usr/lib/libgpac.so* ${PKG_NAME}/usr/lib/ccextractor/
+
+          # Set rpath so ccextractor finds bundled libgpac
+          patchelf --set-rpath '/usr/lib/ccextractor:$ORIGIN/../lib/ccextractor' ${PKG_NAME}/usr/bin/ccextractor
+
+          # Copy documentation
+          cp docs/CHANGES.TXT ${PKG_NAME}/usr/share/doc/ccextractor/changelog
+          cp LICENSE.txt ${PKG_NAME}/usr/share/doc/ccextractor/copyright
+          gzip -9 -n ${PKG_NAME}/usr/share/doc/ccextractor/changelog
+
+          # Generate man page
+          help2man --no-info --name="closed captions and teletext subtitle extractor" \
+            ./build/ccextractor > ${PKG_NAME}/usr/share/man/man1/ccextractor.1 2>/dev/null || true
+          if [ -f ${PKG_NAME}/usr/share/man/man1/ccextractor.1 ]; then
+            gzip -9 -n ${PKG_NAME}/usr/share/man/man1/ccextractor.1
+          fi
+
+          # Create control file
+          if [ "$VARIANT" = "basic" ]; then
+            PKG_DESCRIPTION="CCExtractor - closed captions and teletext subtitle extractor"
+          else
+            PKG_DESCRIPTION="CCExtractor (with HardSubX) - closed captions and teletext subtitle extractor"
+          fi
+
+          INSTALLED_SIZE=$(du -sk ${PKG_NAME}/usr | cut -f1)
+
+          # Determine dependencies based on build variant (Ubuntu 24.04)
+          if [ "$VARIANT" = "hardsubx" ]; then
+            DEPENDS="libc6, libtesseract5, liblept5, libcurl3t64-gnutls, libavcodec60, libavformat60, libavutil58, libswscale7, libavdevice60, libswresample4, libavfilter9"
+          else
+            DEPENDS="libc6, libtesseract5, liblept5, libcurl3t64-gnutls"
+          fi
+
+          cat > ${PKG_NAME}/DEBIAN/control << CTRL
+          Package: ccextractor
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Installed-Size: ${INSTALLED_SIZE}
+          Depends: ${DEPENDS}
+          Maintainer: CCExtractor Development Team <carlos@ccextractor.org>
+          Homepage: https://www.ccextractor.org
+          Description: ${PKG_DESCRIPTION}
+           CCExtractor is a tool that extracts closed captions and teletext subtitles
+           from video files and streams. It supports a wide variety of input formats
+           including MPEG, H.264/AVC, H.265/HEVC, MP4, MKV, WTV, and transport streams.
+           .
+           This package includes a bundled GPAC library for MP4 support.
+          CTRL
+
+          # Remove leading spaces from control file
+          sed -i 's/^          //' ${PKG_NAME}/DEBIAN/control
+
+          # Create postinst to update library cache
+          cat > ${PKG_NAME}/DEBIAN/postinst << 'POSTINST'
+          #!/bin/sh
+          set -e
+          ldconfig
+          POSTINST
+          chmod 755 ${PKG_NAME}/DEBIAN/postinst
+
+          # Create postrm to update library cache
+          cat > ${PKG_NAME}/DEBIAN/postrm << 'POSTRM'
+          #!/bin/sh
+          set -e
+          ldconfig
+          POSTRM
+          chmod 755 ${PKG_NAME}/DEBIAN/postrm
+
+          # Set permissions
+          chmod 755 ${PKG_NAME}/usr/bin/ccextractor
+          chmod 755 ${PKG_NAME}/usr/lib/ccextractor
+          find ${PKG_NAME}/usr/lib/ccextractor -name "*.so*" -exec chmod 644 {} \;
+
+          # Build the .deb
+          dpkg-deb --build --root-owner-group ${PKG_NAME}
+
+          echo "deb_name=${PKG_NAME}.deb" >> $GITHUB_OUTPUT
+
+      - name: Test .deb package
+        if: steps.should_build.outputs.should_build == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VARIANT="${{ matrix.build_type }}"
+
+          if [ "$VARIANT" = "basic" ]; then
+            PKG_NAME="ccextractor_${VERSION}_amd64"
+          else
+            PKG_NAME="ccextractor-${VARIANT}_${VERSION}_amd64"
+          fi
+
+          # Install and test (apt handles dependencies automatically)
+          sudo apt-get update
+          sudo apt-get install -y ./${PKG_NAME}.deb
+          ccextractor --version
+
+      - name: Get .deb filename
+        if: steps.should_build.outputs.should_build == 'true'
+        id: deb_name
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VARIANT="${{ matrix.build_type }}"
+
+          if [ "$VARIANT" = "basic" ]; then
+            echo "name=ccextractor_${VERSION}_amd64.deb" >> $GITHUB_OUTPUT
+          else
+            echo "name=ccextractor-${VARIANT}_${VERSION}_amd64.deb" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload .deb artifact
+        if: steps.should_build.outputs.should_build == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.deb_name.outputs.name }}
+          path: ${{ steps.deb_name.outputs.name }}
+
+      - name: Upload to Release
+        if: steps.should_build.outputs.should_build == 'true' && github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.deb_name.outputs.name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,6 +18,7 @@
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
 #include "ccx_demuxer_mxf.h"
+#include "ccx_dtvcc.h"
 
 int end_of_file = 0; // End of file?
 
@@ -566,6 +567,104 @@ static size_t process_raw_for_mcc(struct encoder_ctx *enc_ctx, struct lib_cc_dec
 }
 
 // Raw file process
+// Parse raw CDP (Caption Distribution Packet) data
+// Returns number of bytes processed
+static size_t process_raw_cdp(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx,
+			      struct cc_subtitle *sub, unsigned char *buffer, size_t len)
+{
+	size_t pos = 0;
+	int cdp_count = 0;
+
+	while (pos + 10 < len) // Minimum CDP size
+	{
+		// Check for CDP identifier
+		if (buffer[pos] != 0x96 || buffer[pos + 1] != 0x69)
+		{
+			pos++;
+			continue;
+		}
+
+		unsigned char cdp_length = buffer[pos + 2];
+		if (pos + cdp_length > len)
+			break; // Incomplete CDP packet
+
+		unsigned char framerate_byte = buffer[pos + 3];
+		int framerate_code = framerate_byte >> 4;
+
+		// Skip to find cc_data section (0x72)
+		size_t cdp_pos = pos + 4; // After identifier, length, framerate
+		int cc_count = 0;
+		unsigned char *cc_data = NULL;
+
+		// Skip header sequence counter (2 bytes)
+		cdp_pos += 2;
+
+		// Look for cc_data section (0x72) within CDP
+		while (cdp_pos < pos + cdp_length - 4)
+		{
+			if (buffer[cdp_pos] == 0x72) // cc_data section
+			{
+				cc_count = buffer[cdp_pos + 1] & 0x1F;
+				cc_data = buffer + cdp_pos + 2;
+				break;
+			}
+			else if (buffer[cdp_pos] == 0x71) // time code section
+			{
+				cdp_pos += 5; // Skip time code section
+			}
+			else if (buffer[cdp_pos] == 0x73) // service info section
+			{
+				break; // Past cc_data
+			}
+			else if (buffer[cdp_pos] == 0x74) // footer
+			{
+				break;
+			}
+			else
+			{
+				cdp_pos++;
+			}
+		}
+
+		if (cc_count > 0 && cc_data != NULL)
+		{
+			// Calculate PTS based on CDP frame count and frame rate
+			static const int fps_table[] = {0, 24, 24, 25, 30, 30, 50, 60, 60};
+			int fps = (framerate_code < 9) ? fps_table[framerate_code] : 30;
+			LLONG pts = (LLONG)cdp_count * 90000 / fps;
+
+			// Set timing if not already set
+			if (dec_ctx->timing->pts_set == 0)
+			{
+				dec_ctx->timing->min_pts = pts;
+				dec_ctx->timing->pts_set = 2;
+				dec_ctx->timing->sync_pts = pts;
+			}
+			set_current_pts(dec_ctx->timing, pts);
+			set_fts(dec_ctx->timing);
+
+#ifndef DISABLE_RUST
+			// Enable DTVCC decoder for CEA-708 captions
+			if (dec_ctx->dtvcc_rust)
+			{
+				int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+				if (!is_active)
+				{
+					ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+				}
+			}
+#endif
+			// Process cc_data triplets through process_cc_data for 708 support
+			process_cc_data(enc_ctx, dec_ctx, cc_data, cc_count, sub);
+			cdp_count++;
+		}
+
+		pos += cdp_length;
+	}
+
+	return pos;
+}
+
 int raw_loop(struct lib_ccx_ctx *ctx)
 {
 	LLONG ret;
@@ -576,6 +675,7 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	int caps = 0;
 	int is_dvdraw = 0;     // Flag to track if this is DVD raw format
 	int is_scc = 0;	       // Flag to track if this is SCC format
+	int is_cdp = 0;	       // Flag to track if this is raw CDP format
 	int is_mcc_output = 0; // Flag for MCC output format
 
 	dec_ctx = update_decoder_list(ctx);
@@ -621,7 +721,15 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 			mprint("Detected SCC (Scenarist Closed Caption) format\n");
 		}
 
-		if (is_mcc_output && !is_dvdraw && !is_scc)
+		// Check if this is raw CDP format (starts with 0x9669)
+		if (!is_cdp && !is_scc && !is_dvdraw && data->len >= 2 &&
+		    data->buffer[0] == 0x96 && data->buffer[1] == 0x69)
+		{
+			is_cdp = 1;
+			mprint("Detected raw CDP (Caption Distribution Packet) format\n");
+		}
+
+		if (is_mcc_output && !is_dvdraw && !is_scc && !is_cdp)
 		{
 			// For MCC output, encode raw data directly without decoding
 			// This preserves the original CEA-608 byte pairs in CDP format
@@ -638,6 +746,13 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		{
 			// Use Rust SCC implementation - handles timing internally via SMPTE timecodes
 			ret = ccxr_process_scc(dec_ctx, dec_sub, data->buffer, (unsigned int)data->len, ccx_options.scc_framerate);
+		}
+		else if (is_cdp)
+		{
+			// Process raw CDP packets (e.g., from SDI VANC capture)
+			ret = process_raw_cdp(enc_ctx, dec_ctx, dec_sub, data->buffer, data->len);
+			if (ret > 0)
+				caps = 1;
 		}
 		else
 		{
@@ -861,7 +976,34 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 	}
 	else if (data_node->bufferdatatype == CCX_RAW_TYPE)
 	{
-		got = process_raw_with_field(dec_ctx, dec_sub, data_node->buffer, data_node->len);
+		// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
+		// Used by MXF and GXF demuxers
+
+		// Initialize timing if not set (use caption PTS as reference)
+		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+		{
+			dec_ctx->timing->min_pts = data_node->pts;
+			dec_ctx->timing->pts_set = 2; // MinPtsSet
+			dec_ctx->timing->sync_pts = data_node->pts;
+			set_fts(dec_ctx->timing);
+		}
+
+#ifndef DISABLE_RUST
+		// Enable DTVCC decoder for CEA-708 captions from MXF/GXF
+		if (dec_ctx->dtvcc_rust)
+		{
+			int is_active = ccxr_dtvcc_is_active(dec_ctx->dtvcc_rust);
+			if (!is_active)
+			{
+				ccxr_dtvcc_set_active(dec_ctx->dtvcc_rust, 1);
+			}
+		}
+#endif
+
+		// Use process_cc_data to properly invoke DTVCC decoder for 708 captions
+		int cc_count = data_node->len / 3;
+		process_cc_data(enc_ctx, dec_ctx, data_node->buffer, cc_count, dec_sub);
+		got = data_node->len;
 	}
 	else if (data_node->bufferdatatype == CCX_ISDB_SUBTITLE)
 	{
@@ -1050,7 +1192,11 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 	cinfo = get_cinfo(ctx->demux_ctx, pid);
 	*enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 	*dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder((*dec_ctx)->dtvcc_rust, *enc_ctx);
+#else
 	(*dec_ctx)->dtvcc->encoder = (void *)(*enc_ctx);
+#endif
 
 	if ((*dec_ctx)->timing->min_pts == 0x01FFFFFFFFLL) // if we didn't set the min_pts of the program
 	{
@@ -1274,7 +1420,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 
 				enc_ctx = update_encoder_list_cinfo(ctx, cinfo);
 				dec_ctx = update_decoder_list_cinfo(ctx, cinfo);
+#ifndef DISABLE_RUST
+				ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
+#else
 				dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+#endif
 
 				if (dec_ctx->timing->min_pts == 0x01FFFFFFFFLL) // if we didn't set the min_pts of the program
 				{
@@ -1358,7 +1508,24 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		}
 		if (ctx->live_stream)
 		{
-			int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
+			if (!t && ctx->demux_ctx->global_timestamp_inited)
+				t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+			// Handle multi-program TS timing
+			if (ctx->demux_ctx->global_timestamp_inited)
+			{
+				LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+				if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
+					ctx->min_global_timestamp_offset = offset;
+				// Only use timestamps from the program with the lowest base
+				if (offset - ctx->min_global_timestamp_offset < 60000)
+					t = offset - ctx->min_global_timestamp_offset;
+				else
+					t = ctx->min_global_timestamp_offset > 0 ? 0 : t;
+				if (t < 0)
+					t = 0;
+			}
+			int cur_sec = (int)(t / 1000);
 			int th = cur_sec / 10;
 			if (ctx->last_reported_progress != th)
 			{
@@ -1376,6 +1543,28 @@ int general_loop(struct lib_ccx_ctx *ctx)
 					LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 					if (!t && ctx->demux_ctx->global_timestamp_inited)
 						t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+					// For multi-program TS files, different programs can have different
+					// PCR bases (e.g., one at 25h, another at 23h). This causes the
+					// global_timestamp to jump between different bases, resulting in
+					// wildly different offset values. Track the minimum offset seen
+					// and only display times from the program with the lowest base.
+					if (ctx->demux_ctx->global_timestamp_inited)
+					{
+						LLONG offset = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
+						// Track minimum offset (this is the PCR base of the program
+						// with the lowest timestamp, which represents true file time)
+						if (ctx->min_global_timestamp_offset < 0 || offset < ctx->min_global_timestamp_offset)
+							ctx->min_global_timestamp_offset = offset;
+						// Only use timestamps from the program with the lowest base.
+						// If current offset is significantly larger than minimum (by > 60s),
+						// it's from a program with a higher PCR base - use minimum instead.
+						if (offset - ctx->min_global_timestamp_offset < 60000)
+							t = offset - ctx->min_global_timestamp_offset;
+						else
+							t = ctx->min_global_timestamp_offset > 0 ? 0 : t; // fallback to minimum-based time
+						if (t < 0)
+							t = 0;
+					}
 					int cur_sec = (int)(t / 1000);
 					activity_progress(progress, cur_sec / 60, cur_sec % 60);
 					ctx->last_reported_progress = progress;
@@ -1484,7 +1673,11 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
+#else
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
+#endif
 	if (parsebuf[6] == 0 && parsebuf[7] == 2)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;

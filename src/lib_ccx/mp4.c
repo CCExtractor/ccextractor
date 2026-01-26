@@ -749,7 +749,11 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 					dbg_print(CCX_DMT_PARSE, "MP4-708: atom skipped (cc_type < 2)\n");
 					continue;
 				}
+#ifndef DISABLE_RUST
+				ccxr_dtvcc_process_data(dec_ctx->dtvcc_rust, cc_valid, cc_type, temp[2], temp[3]);
+#else
 				dtvcc_process_data(dec_ctx->dtvcc, (unsigned char *)temp);
+#endif
 				cb_708++;
 			}
 			if (ctx->write_format == CCX_OF_MCC)
@@ -887,10 +891,19 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	if (enc_ctx)
 		enc_ctx->timing = dec_ctx->timing;
 
-	// WARN: otherwise cea-708 will not work
+		// WARN: otherwise cea-708 will not work
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
+#else
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx;
+#endif
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
+	if (file == NULL)
+	{
+		mprint("Error: NULL file path provided to processmp4\n");
+		return -1;
+	}
 	mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
 	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);

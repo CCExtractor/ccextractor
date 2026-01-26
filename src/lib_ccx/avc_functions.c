@@ -392,20 +392,24 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 unsigned char *sei_message(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 {
 	int payload_type = 0;
-	while (*seibuf == 0xff)
+	while (seibuf < seiend && *seibuf == 0xff)
 	{
 		payload_type += 255;
 		seibuf++;
 	}
+	if (seibuf >= seiend)
+		return NULL;
 	payload_type += *seibuf;
 	seibuf++;
 
 	int payload_size = 0;
-	while (*seibuf == 0xff)
+	while (seibuf < seiend && *seibuf == 0xff)
 	{
 		payload_size += 255;
 		seibuf++;
 	}
+	if (seibuf >= seiend)
+		return NULL;
 	payload_size += *seibuf;
 	seibuf++;
 
@@ -992,9 +996,9 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 
 	if (nal_unit_type == 5)
 	{
+		// idr_pic_id: Read to advance bitstream position; value not needed for caption extraction
 		tmp = read_exp_golomb_unsigned(&q1);
 		dvprint("idr_pic_id=            % 4lld (%#llX)\n", tmp, tmp);
-		// TODO
 	}
 	if (dec_ctx->avc_ctx->pic_order_cnt_type == 0)
 	{
