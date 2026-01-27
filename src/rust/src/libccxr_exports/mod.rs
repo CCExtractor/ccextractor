@@ -77,6 +77,10 @@ pub unsafe extern "C" fn ccxr_update_logger_target() {
 /// or less than `len`.
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_verify_crc32(buf: *const u8, len: c_int) -> c_int {
+    // Safety: avoid NULL pointer and negative length causing usize wraparound
+    if buf.is_null() || len < 0 {
+        return 0;
+    }
     let buf = std::slice::from_raw_parts(buf, len as usize);
     if verify_crc32(buf) {
         1
