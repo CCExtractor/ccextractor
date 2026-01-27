@@ -11,7 +11,8 @@ CCExtractor is a tool used to produce subtitles for TV recordings from almost an
 
 Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
+The official repository is https://github.com/CCExtractor/ccextractor, with `master` being the most stable branch.
+
 
 ### **Features**
 
@@ -24,9 +25,28 @@ The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtra
 
 The core functionality is written in C. Other languages used include C++ and Python.
 
+## Quick Start
+
+If you already have CCExtractor installed, extracting subtitles is simple.
+
+### 1. Install CCExtractor
+
+- Download precompiled binaries from  
+  https://ccextractor.org/public/general/downloads/
+
+Or install using a Windows package manager (see below).
+
+### 2. Extract subtitles from a video
+
+Run the following command:
+
+```bash
+ccextractor <input>
+```
+
 ## Installation and Usage
 
-Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
+Downloads for precompiled binaries and source code are avilable at : https://ccextractor.org/public/general/downloads/
 
 
 ### Windows Package Managers
@@ -53,14 +73,17 @@ Extracting subtitles is relatively simple. Just run the following command:
 
 This will extract the subtitles.
 
-More usage information can be found on our website:
+More usage documentation:
 
-- [Using the command line tool](https://ccextractor.org/public/general/command_line_usage/)
-- [Using the Flutter GUI](https://ccextractor.org/public/general/flutter_gui/)
+- command line tool<br>
+ (https://ccextractor.org/public/general/command_line_usage/)
+- Flutter GUI <br>
+ (https://ccextractor.org/public/general/flutter_gui/)
 
-You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
+Run `ccextractor` without arguments to see all available options.
 
-You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
+sample files for testing 
+https://ccextractor.org/public/general/tvsamples/ .
 
 ### Building from Source
 
@@ -72,8 +95,8 @@ CCExtractor also supports an autotools-based build system under the `linux/`
 directory.
 
 Important notes:
-- The autotools workflow lives inside `linux/`. The `configure` script is
-  generated there and should be run from that directory.
+- The autotools workflow lives inside `linux/` directory.
+- The `configure` script is generated there and should be run from that directory.
 - Typical build steps are:
 ```
 cd linux
@@ -92,7 +115,8 @@ This build flow has been tested on Linux and WSL.
 
 ## Compiling CCExtractor
 
-To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
+For platform-specific build instructions, see:
+https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD
 
 ## Support
 
