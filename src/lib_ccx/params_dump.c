@@ -258,6 +258,10 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info *info)
 
 void print_file_report(struct lib_ccx_ctx *ctx)
 {
+	if (ccx_options.report_format == REPORT_FORMAT_JSON) {
+		print_file_report_json(ctx);
+		return;
+	}
 	struct lib_cc_decode *dec_ctx = NULL;
 	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
 
@@ -425,4 +429,497 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	freep(&ctx->freport.data_from_608);
 	memset(&ctx->freport, 0, sizeof(struct file_report));
 #undef Y_N
+}
+
+// Helper function to escape JSON strings
+static void json_escape_string(const char *str, char *out, size_t out_size)
+{
+	size_t pos = 0;
+	if (!str)
+	{
+		out[0] = '\0';
+		return;
+	}
+	for (const char *p = str; *p && pos < out_size - 1; p++)
+	{
+		switch (*p)
+		{
+			case '"':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = '"';
+				}
+				break;
+			case '\\':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = '\\';
+				}
+				break;
+			case '\b':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = 'b';
+				}
+				break;
+			case '\f':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = 'f';
+				}
+				break;
+			case '\n':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = 'n';
+				}
+				break;
+			case '\r':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = 'r';
+				}
+				break;
+			case '\t':
+				if (pos + 2 < out_size)
+				{
+					out[pos++] = '\\';
+					out[pos++] = 't';
+				}
+				break;
+			default:
+				if ((unsigned char)*p < 0x20)
+				{
+					// Control character - escape as \uXXXX
+					if (pos + 6 < out_size)
+					{
+						snprintf(out + pos, out_size - pos, "\\u%04x", (unsigned char)*p);
+						pos += 6;
+					}
+				}
+				else
+				{
+					out[pos++] = *p;
+				}
+				break;
+		}
+	}
+	out[pos] = '\0';
+}
+
+// Helper function to get stream mode as string
+static const char *get_stream_mode_string(enum ccx_stream_mode_enum mode)
+{
+	switch (mode)
+	{
+		case CCX_SM_TRANSPORT:
+			return "Transport Stream";
+		case CCX_SM_PROGRAM:
+			return "Program Stream";
+		case CCX_SM_ASF:
+			return "ASF";
+		case CCX_SM_WTV:
+			return "WTV";
+		case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
+			return "Not Found";
+		case CCX_SM_MP4:
+			return "MP4";
+		case CCX_SM_MCPOODLESRAW:
+			return "McPoodle's raw";
+		case CCX_SM_RCWT:
+			return "BIN";
+#ifdef WTV_DEBUG
+		case CCX_SM_HEX_DUMP:
+			return "Hex";
+#endif
+		default:
+			return "Unknown";
+	}
+}
+
+void print_file_report_json(struct lib_ccx_ctx *ctx)
+{
+	struct lib_cc_decode *dec_ctx = NULL;
+	struct ccx_demuxer *demux_ctx = ctx->demux_ctx;
+	char escaped_str[4096];
+	int first_item = 1;
+
+	// Early return if file not opened
+	if (ccx_options.input_source == CCX_DS_FILE)
+	{
+		if (ctx->current_file < 0 || ctx->current_file >= ctx->num_input_files)
+		{
+			printf("{\"error\":\"file is not opened yet\"}\n");
+			return;
+		}
+	}
+
+	printf("{\n");
+
+	// File/Source
+	printf("  \"file\": \"");
+	switch (ccx_options.input_source)
+	{
+		case CCX_DS_FILE:
+			json_escape_string(ctx->inputfile[ctx->current_file], escaped_str, sizeof(escaped_str));
+			printf("%s", escaped_str);
+			break;
+		case CCX_DS_STDIN:
+			printf("stdin");
+			break;
+		case CCX_DS_TCP:
+		case CCX_DS_NETWORK:
+			printf("network");
+			break;
+	}
+	printf("\",\n");
+
+	// Stream Mode
+	printf("  \"stream_mode\": \"%s\"", get_stream_mode_string(demux_ctx->stream_mode));
+	first_item = 0;
+
+	// Transport Stream specific fields
+	if (demux_ctx->stream_mode == CCX_SM_TRANSPORT)
+	{
+		printf(",\n  \"program_count\": %u", demux_ctx->freport.program_cnt);
+
+		// Program Numbers
+		printf(",\n  \"program_numbers\": [");
+		for (int i = 0; i < demux_ctx->nb_program; i++)
+		{
+			if (i > 0)
+				printf(", ");
+			printf("%u", demux_ctx->pinfo[i].program_number);
+		}
+		printf("]");
+
+		// DVB Subtitle PIDs
+		printf(",\n  \"dvb_subtitle_pids\": [");
+		int first_dvb = 1;
+		for (int j = 0; j < SUB_STREAMS_CNT; j++)
+		{
+			if (demux_ctx->freport.dvb_sub_pid[j] != 0)
+			{
+				if (!first_dvb)
+					printf(", ");
+				printf("%u", demux_ctx->freport.dvb_sub_pid[j]);
+				first_dvb = 0;
+			}
+		}
+		printf("]");
+
+		// Teletext Subtitle PIDs
+		printf(",\n  \"teletext_subtitle_pids\": [");
+		int first_tlt = 1;
+		for (int j = 0; j < SUB_STREAMS_CNT; j++)
+		{
+			if (demux_ctx->freport.tlt_sub_pid[j] != 0)
+			{
+				if (!first_tlt)
+					printf(", ");
+				printf("%u", demux_ctx->freport.tlt_sub_pid[j]);
+				first_tlt = 0;
+			}
+		}
+		printf("]");
+
+		// PIDs list
+		printf(",\n  \"pids\": [");
+		int first_pid = 1;
+		for (int i = 0; i < 65536; i++)
+		{
+			if (demux_ctx->PIDs_programs[i] == 0)
+				continue;
+
+			if (!first_pid)
+				printf(", ");
+			printf("\n    {\"pid\": %u, \"program\": %u, \"stream_type\": \"", i,
+			       demux_ctx->PIDs_programs[i]->program_number);
+
+			int is_dvb = 0, is_tlt = 0;
+			for (int j = 0; j < SUB_STREAMS_CNT; j++)
+			{
+				if (demux_ctx->freport.dvb_sub_pid[j] == i)
+				{
+					printf("DVB Subtitles");
+					is_dvb = 1;
+					break;
+				}
+				if (demux_ctx->freport.tlt_sub_pid[j] == i)
+				{
+					printf("Teletext Subtitles");
+					is_tlt = 1;
+					break;
+				}
+			}
+			if (!is_dvb && !is_tlt)
+			{
+				const char *stream_desc = desc[demux_ctx->PIDs_programs[i]->printable_stream_type];
+				if (stream_desc)
+				{
+					json_escape_string(stream_desc, escaped_str, sizeof(escaped_str));
+					printf("%s", escaped_str);
+				}
+				else
+				{
+					printf("Unknown");
+				}
+			}
+			printf("\"}");
+			first_pid = 0;
+		}
+		printf("\n  ]");
+	}
+
+	// Programs array
+	printf(",\n  \"programs\": [");
+	struct cap_info *program;
+	int first_program = 1;
+	if (list_empty(&demux_ctx->cinfo_tree.all_stream))
+	{
+		// No programs, but we still need to output EIA-608/CEA-708 if available
+		dec_ctx = update_decoder_list_cinfo(ctx, NULL);
+		if (dec_ctx && (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0 ||
+				dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0))
+		{
+			printf("\n    {");
+			printf("\n      \"atsc_closed_caption\": {");
+			if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+			{
+				printf("\n        \"eia608\": {");
+				printf("\n          \"present\": true");
+				if (ctx->freport.data_from_608)
+				{
+					printf(",\n          \"xds\": %s",
+					       ctx->freport.data_from_608->xds ? "true" : "false");
+					printf(",\n          \"cc1\": %s",
+					       ctx->freport.data_from_608->cc_channels[0] ? "true" : "false");
+					printf(",\n          \"cc2\": %s",
+					       ctx->freport.data_from_608->cc_channels[1] ? "true" : "false");
+					printf(",\n          \"cc3\": %s",
+					       ctx->freport.data_from_608->cc_channels[2] ? "true" : "false");
+					printf(",\n          \"cc4\": %s",
+					       ctx->freport.data_from_608->cc_channels[3] ? "true" : "false");
+				}
+				printf("\n        }");
+			}
+			else
+			{
+				printf("\n        \"eia608\": {\"present\": false}");
+			}
+			if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+			{
+				printf(",");
+				printf("\n        \"cea708\": {");
+				printf("\n          \"present\": true");
+				if (ctx->freport.data_from_708)
+				{
+					printf(",\n          \"services\": [");
+					int first_svc = 1;
+					for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+					{
+						if (ctx->freport.data_from_708->services[i] != 0)
+						{
+							if (!first_svc)
+								printf(", ");
+							printf("%d", i);
+							first_svc = 0;
+						}
+					}
+					printf("]");
+					printf(",\n          \"primary_language_present\": %s",
+					       ctx->freport.data_from_708->services[1] ? "true" : "false");
+					printf(",\n          \"secondary_language_present\": %s",
+					       ctx->freport.data_from_708->services[2] ? "true" : "false");
+				}
+				printf("\n        }");
+			}
+			else
+			{
+				printf(",");
+				printf("\n        \"cea708\": {\"present\": false}");
+			}
+			printf("\n      }");
+			printf("\n    }");
+		}
+	}
+
+	list_for_each_entry(program, &demux_ctx->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+	{
+		if (!first_program)
+			printf(",");
+		printf("\n    {");
+		printf("\n      \"program_number\": %u", program->program_number);
+
+		// DVB Subtitles
+		struct cap_info *info = get_sib_stream_by_type(program, CCX_CODEC_DVB);
+		printf(",\n      \"dvb_subtitles\": %s", info ? "true" : "false");
+
+		// Teletext
+		info = get_sib_stream_by_type(program, CCX_CODEC_TELETEXT);
+		printf(",\n      \"teletext\": {");
+		if (info)
+		{
+			printf("\n        \"present\": true");
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			if (dec_ctx && dec_ctx->codec == CCX_CODEC_TELETEXT)
+			{
+				struct TeletextCtx *tlt_ctx = dec_ctx->private_data;
+				if (tlt_ctx)
+				{
+					printf(",\n        \"pages_with_subtitles\": [");
+					int first_page = 1;
+					for (int i = 0; i < MAX_TLT_PAGES; i++)
+					{
+						if (tlt_ctx->seen_sub_page[i] != 0)
+						{
+							if (!first_page)
+								printf(", ");
+							printf("%d", i);
+							first_page = 0;
+						}
+					}
+					printf("]");
+				}
+			}
+		}
+		else
+		{
+			printf("\n        \"present\": false");
+		}
+		printf("\n      }");
+
+		// ATSC Closed Caption
+		info = get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC);
+		printf(",\n      \"atsc_closed_caption\": {");
+		if (info)
+		{
+			printf("\n        \"present\": true");
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			if (dec_ctx)
+			{
+				if (dec_ctx->cc_stats[0] > 0 || dec_ctx->cc_stats[1] > 0)
+				{
+					printf(",");
+					printf("\n        \"eia608\": {");
+					printf("\n          \"present\": true");
+					if (ctx->freport.data_from_608)
+					{
+						printf(",\n          \"xds\": %s",
+						       ctx->freport.data_from_608->xds ? "true" : "false");
+						printf(",\n          \"cc1\": %s",
+						       ctx->freport.data_from_608->cc_channels[0] ? "true" : "false");
+						printf(",\n          \"cc2\": %s",
+						       ctx->freport.data_from_608->cc_channels[1] ? "true" : "false");
+						printf(",\n          \"cc3\": %s",
+						       ctx->freport.data_from_608->cc_channels[2] ? "true" : "false");
+						printf(",\n          \"cc4\": %s",
+						       ctx->freport.data_from_608->cc_channels[3] ? "true" : "false");
+					}
+					printf("\n        }");
+				}
+				else
+				{
+					printf(",");
+					printf("\n        \"eia608\": {\"present\": false}");
+				}
+				if (dec_ctx->cc_stats[2] > 0 || dec_ctx->cc_stats[3] > 0)
+				{
+					printf(",");
+					printf("\n        \"cea708\": {");
+					printf("\n          \"present\": true");
+					if (ctx->freport.data_from_708)
+					{
+						printf(",\n          \"services\": [");
+						int first_svc = 1;
+						for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+						{
+							if (ctx->freport.data_from_708->services[i] != 0)
+							{
+								if (!first_svc)
+									printf(", ");
+								printf("%d", i);
+								first_svc = 0;
+							}
+						}
+						printf("]");
+						printf(",\n          \"primary_language_present\": %s",
+						       ctx->freport.data_from_708->services[1] ? "true" : "false");
+						printf(",\n          \"secondary_language_present\": %s",
+						       ctx->freport.data_from_708->services[2] ? "true" : "false");
+					}
+					printf("\n        }");
+				}
+				else
+				{
+					printf(",");
+					printf("\n        \"cea708\": {\"present\": false}");
+				}
+			}
+		}
+		else
+		{
+			printf("\n        \"present\": false");
+		}
+		printf("\n      }");
+
+		// Video properties
+		info = get_best_sib_stream(program);
+		if (info)
+		{
+			dec_ctx = update_decoder_list_cinfo(ctx, info);
+			if (dec_ctx && dec_ctx->in_bufferdatatype == CCX_PES &&
+			    (demux_ctx->stream_mode == CCX_SM_TRANSPORT ||
+			     demux_ctx->stream_mode == CCX_SM_PROGRAM ||
+			     demux_ctx->stream_mode == CCX_SM_ASF ||
+			     demux_ctx->stream_mode == CCX_SM_WTV))
+			{
+				printf(",\n      \"video\": {");
+				printf("\n        \"width\": %u", dec_ctx->current_hor_size);
+				printf(",\n        \"height\": %u", dec_ctx->current_vert_size);
+				const char *aspect_str = aspect_ratio_types[dec_ctx->current_aspect_ratio];
+				if (aspect_str)
+				{
+					json_escape_string(aspect_str, escaped_str, sizeof(escaped_str));
+					printf(",\n        \"aspect_ratio\": \"%s\"", escaped_str);
+				}
+				else
+				{
+					printf(",\n        \"aspect_ratio\": \"Unknown\"");
+				}
+				const char *fps_str = framerates_types[dec_ctx->current_frame_rate];
+				if (fps_str)
+				{
+					json_escape_string(fps_str, escaped_str, sizeof(escaped_str));
+					printf(",\n        \"frame_rate\": \"%s\"", escaped_str);
+				}
+				else
+				{
+					printf(",\n        \"frame_rate\": \"Unknown\"");
+				}
+				printf("\n      }");
+			}
+		}
+
+		printf("\n    }");
+		first_program = 0;
+	}
+	printf("\n  ]");
+
+	// MPEG-4 Timed Text
+	printf(",\n  \"mpeg4_timed_text\": {");
+	printf("\n    \"present\": %s", ctx->freport.mp4_cc_track_cnt > 0 ? "true" : "false");
+	if (ctx->freport.mp4_cc_track_cnt > 0)
+	{
+		printf(",\n    \"track_count\": %u", ctx->freport.mp4_cc_track_cnt);
+	}
+	printf("\n  }");
+
+	printf("\n}\n");
 }
