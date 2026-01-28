@@ -610,7 +610,6 @@ pub struct Args {
     #[arg(long = "autoextract-all", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub autoextract_all: bool,
 
-    
     pub quant: Option<u8>,
     /// Select the OEM mode for Tesseract.
     /// Available modes :
