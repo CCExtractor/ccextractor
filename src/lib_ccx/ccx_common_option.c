@@ -3,6 +3,8 @@
 #include "ccx_decoders_708.h"
 #include "utility.h"
 
+
+
 extern ccx_encoders_transcript_format ccx_encoders_default_transcript_settings;
 /* Parameters */
 void init_options(struct ccx_s_options *options)
@@ -41,6 +43,7 @@ void init_options(struct ccx_s_options *options)
 	options->live_stream = 0;     // 0 -> A regular file
 	options->messages_target = 1; // 1=stdout
 	options->print_file_reports = 0;
+	options->report_format = REPORT_FORMAT_TEXT;
 	options->timestamp_map = 0; // Disable X-TIMESTAMP-MAP header by default
 
 	/* Levenshtein's parameters, for string comparison */

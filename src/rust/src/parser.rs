@@ -220,6 +220,17 @@ impl OptionsExt for Options {
     fn set_output_format(&mut self, args: &Args) {
         self.write_format_rewritten = true;
 
+        if let Some(ref raw_out) = args.raw_out {
+            if raw_out == "report=json" {
+                self.write_format = OutputFormat::Null;
+                self.messages_target = OutputTarget::Quiet;
+                self.print_file_reports = true;
+                self.report_format = ReportFormat::Json;
+                self.demux_cfg.ts_allprogram = true;
+                return;
+            }
+        }
+
         if self.send_to_srv && args.out.unwrap_or(OutFormat::Null) != OutFormat::Bin {
             println!("Output format is changed to bin\n");
             self.set_output_format_type(OutFormat::Bin);
