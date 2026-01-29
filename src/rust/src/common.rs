@@ -81,6 +81,11 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     (*ccx_s_options).extraction_start = options.extraction_start.to_ctype();
     (*ccx_s_options).extraction_end = options.extraction_end.to_ctype();
     (*ccx_s_options).print_file_reports = options.print_file_reports as _;
+    // Report output format (e.g. "json")
+    if let Some(ref fmt) = options.report_format {
+        (*ccx_s_options).report_format =
+            replace_rust_c_string((*ccx_s_options).report_format, fmt.as_str());
+    }
     // Preserve the original C-managed report pointer to avoid dangling pointer issues.
     let saved_608_report = (*ccx_s_options).settings_608.report;
     (*ccx_s_options).settings_608 = options.settings_608.to_ctype();
@@ -323,6 +328,7 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
             .expect("Invalid extraction end time"),
         ),
         print_file_reports: (*ccx_s_options).print_file_reports != 0,
+        report_format: None,
         // Handle settings_608 and settings_dtvcc - assuming FromCType trait is implemented for these
         settings_608: Decoder608Settings::from_ctype((*ccx_s_options).settings_608)
             .unwrap_or(Decoder608Settings::default()),
@@ -343,6 +349,10 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
         no_progress_bar: (*ccx_s_options).no_progress_bar != 0,
         ..Default::default()
     };
+
+    if !(*ccx_s_options).report_format.is_null() {
+        options.report_format = Some(c_char_to_string((*ccx_s_options).report_format));
+    }
 
     // Handle sentence_cap_file (C string to PathBuf)
     if !(*ccx_s_options).sentence_cap_file.is_null() {
