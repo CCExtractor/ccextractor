@@ -61,6 +61,19 @@ More usage information can be found on our website:
 You can also find the list of parameters and their brief description by running `ccextractor` without any arguments.
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
+### WebVTT Output Options
+
+When using WebVTT output format (-out=webvtt), the following option is available:
+
+**--timestamp-map**
+
+Enables the X-TIMESTAMP-MAP header in WebVTT output files. This header is required for Apple HLS (HTTP Live Streaming) workflows but is optional for standard WebVTT usage.
+
+- **Default:** Disabled
+- **Usage:** ccextractor input.ts -out=webvtt --timestamp-map
+
+According to the HLS specification (RFC 8216), the X-TIMESTAMP-MAP metadata header should be added to each WebVTT file when used in HLS contexts. This option addresses issue [#1127](https://github.com/CCExtractor/ccextractor/issues/1127).
+
 
 ### Building from Source
 
