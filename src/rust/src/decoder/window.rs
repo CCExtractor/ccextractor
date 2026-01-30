@@ -167,7 +167,9 @@ impl dtvcc_window {
                 } else {
                     let layout = layout.unwrap();
                     // deallocate previous memory
-                    dealloc(self.rows[row_index] as *mut u8, layout);
+                    if !self.rows[row_index].is_null() {
+                        dealloc(self.rows[row_index] as *mut u8, layout);
+                    }
 
                     // allocate new zero initialized memory
                     let ptr = alloc_zeroed(layout);
