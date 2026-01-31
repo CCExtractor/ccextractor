@@ -45,10 +45,10 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
+use std::alloc::{dealloc, Layout};
 #[cfg(not(test))]
 use std::os::raw::c_ulong;
 use std::os::raw::{c_uchar, c_void};
-use std::alloc::{dealloc, Layout};
 use std::{
     ffi::CStr,
     io::Write,
@@ -274,10 +274,13 @@ pub extern "C" fn ccxr_dtvcc_free(dtvcc_ptr: *mut std::ffi::c_void) {
                 if is_true(window.memory_reserved) {
                     for row_ptr in window.rows.iter() {
                         if !row_ptr.is_null() {
-                                unsafe {
-                                    let layout = Layout::array::<dtvcc_symbol>(decoder::CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
-                                    dealloc(*row_ptr as *mut u8, layout);
-                                }
+                            unsafe {
+                                let layout = Layout::array::<dtvcc_symbol>(
+                                    decoder::CCX_DTVCC_MAX_COLUMNS as usize,
+                                )
+                                .unwrap();
+                                dealloc(*row_ptr as *mut u8, layout);
+                            }
                         }
                     }
                 }
