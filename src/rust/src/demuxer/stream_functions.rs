@@ -1,7 +1,8 @@
 use crate::bindings::ccx_demuxer;
 use crate::demuxer::common_types::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
-use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c};
+use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c, free};
+use std::os::raw::c_void;
 use cfg_if::cfg_if;
 use lib_ccxr::common::{Options, StreamMode};
 use lib_ccxr::fatal;
@@ -145,7 +146,7 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
         copy_demuxer_from_rust_to_c(demuxer, ctx);
         let private = ccx_gxf_init(demuxer);
         ctx.private_data = private as *mut core::ffi::c_void;
-        drop(Box::from_raw(demuxer));
+        free(demuxer as *mut c_void);
     }
 
     // WTV check
@@ -269,7 +270,7 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
             let private = ccx_mxf_init(demuxer);
             ctx.private_data = private as *mut core::ffi::c_void;
         }
-        drop(Box::from_raw(demuxer));
+        free(demuxer as *mut c_void);
     }
 
     // Still not found

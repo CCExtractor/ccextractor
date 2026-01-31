@@ -21,7 +21,7 @@ extern "C" {
     fn activity_input_file_closed();
     fn close(fd: c_int) -> c_int;
     fn malloc(size: usize) -> *mut c_void;
-    fn free(ptr: *mut c_void);
+    pub fn free(ptr: *mut c_void);
     fn calloc(nmemb: usize, size: usize) -> *mut c_void;
 }
 

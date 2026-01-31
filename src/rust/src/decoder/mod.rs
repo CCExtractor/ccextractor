@@ -25,7 +25,7 @@ const CCX_DTVCC_NO_LAST_SEQUENCE: i32 = -1;
 const CCX_DTVCC_SCREENGRID_ROWS: u8 = 75;
 const CCX_DTVCC_SCREENGRID_COLUMNS: u8 = 210;
 const CCX_DTVCC_MAX_ROWS: u8 = 15;
-const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
+pub const CCX_DTVCC_MAX_COLUMNS: u8 = 32 * 2;
 
 /// Context required for processing 708 data
 pub struct Dtvcc<'a> {
