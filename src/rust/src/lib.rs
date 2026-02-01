@@ -21,6 +21,7 @@ pub mod decoder;
 pub mod demuxer;
 pub mod encoder;
 pub mod es;
+pub mod ffi_alloc;
 pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
@@ -45,7 +46,6 @@ use utils::is_true;
 
 use env_logger::{builder, Target};
 use log::{warn, LevelFilter};
-use std::alloc::{dealloc, Layout};
 #[cfg(not(test))]
 use std::os::raw::c_ulong;
 use std::os::raw::{c_uchar, c_void};
@@ -273,14 +273,8 @@ pub extern "C" fn ccxr_dtvcc_free(dtvcc_ptr: *mut std::ffi::c_void) {
             for window in decoder.windows.iter() {
                 if is_true(window.memory_reserved) {
                     for row_ptr in window.rows.iter() {
-                        if !row_ptr.is_null() {
-                            unsafe {
-                                let layout = Layout::array::<dtvcc_symbol>(
-                                    decoder::CCX_DTVCC_MAX_COLUMNS as usize,
-                                )
-                                .unwrap();
-                                dealloc(*row_ptr as *mut u8, layout);
-                            }
+                        unsafe {
+                            decoder::dealloc_row(*row_ptr);
                         }
                     }
                 }
