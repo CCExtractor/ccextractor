@@ -50,7 +50,7 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return 0;
     }
 
-    let mut payload_type = 0;
+    let mut payload_type: u32 = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_type += 255;
         seibuf_idx += 1;
@@ -60,10 +60,10 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_type += seibuf[seibuf_idx] as i32;
+    payload_type += seibuf[seibuf_idx] as u32;
     seibuf_idx += 1;
 
-    let mut payload_size = 0;
+    let mut payload_size: u32 = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_size += 255;
         seibuf_idx += 1;
@@ -73,7 +73,7 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_size += seibuf[seibuf_idx] as i32;
+    payload_size += seibuf[seibuf_idx] as u32;
     seibuf_idx += 1;
 
     let mut broken = false;
