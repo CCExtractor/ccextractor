@@ -1,5 +1,6 @@
 0.96.6 (unreleased)
 -------------------
+- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow. 
 - Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
 - Fix: Prevent infinite loop on truncated MKV files
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
