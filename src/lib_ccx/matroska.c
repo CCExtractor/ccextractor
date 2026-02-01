@@ -742,14 +742,24 @@ int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fram
 	{
 		uint32_t nal_length;
 
-		nal_length = bswap32(*(long *)&frame.data[i]);
+		if (i + nal_unit_size > frame.len)
+			break;
+
+		nal_length =
+		    ((uint32_t)frame.data[i] << 24) |
+		    ((uint32_t)frame.data[i + 1] << 16) |
+		    ((uint32_t)frame.data[i + 2] << 8) |
+		    (uint32_t)frame.data[i + 3];
+
 		i += nal_unit_size;
 
+		if (nal_length > frame.len - i)
+			break;
+
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	} // outer for
-	assert(i == frame.len);
 
 	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 
@@ -777,11 +787,22 @@ int process_hevc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fra
 	{
 		uint32_t nal_length;
 
-		nal_length = bswap32(*(long *)&frame.data[i]);
+		if (i + nal_unit_size > frame.len)
+			break;
+
+		nal_length =
+		    ((uint32_t)frame.data[i] << 24) |
+		    ((uint32_t)frame.data[i + 1] << 16) |
+		    ((uint32_t)frame.data[i + 2] << 8) |
+		    (uint32_t)frame.data[i + 3];
+
 		i += nal_unit_size;
 
+		if (nal_length > frame.len - i)
+			break;
+
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	}
 

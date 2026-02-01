@@ -28,7 +28,7 @@ const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
-#[command(version = "1.0")]
+#[command(version = "0.96.5")]
 #[command(about = "Teletext portions taken from Petr Kutalek's telxcc
 --------------------------------------------------------------------------
 Originally based on McPoodle's tools. Check his page for lots of information
