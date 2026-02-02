@@ -730,7 +730,8 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
         &mut _capitalization_list,
         &mut _profane,
     );
-
+    // Default is 1 (Enabled). If user says --no-timestamp-map, force it to false (0).
+    opt.timestamp_map = !args.no_timestamp_map;
     // Handle --list-tracks mode: list tracks and exit early
     if opt.list_tracks_only {
         use std::path::Path;
