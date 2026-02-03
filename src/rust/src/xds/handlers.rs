@@ -87,19 +87,20 @@ pub unsafe fn write_xds_string(
     let data_element = &mut *new_data.add(sub.nb_data as usize);
     let c_str = CString::new(p).map_err(|_| XDSError::Err)?;
 
-    let len = c_str.as_bytes_with_nul().len();
-    let ptr = unsafe { malloc(len) as *mut i8 }; // fixing c/rust mem mismatch
+    let len = c_str.as_bytes().len(); // length w/o null terminator - matching C's vsnprintf return
+    let alloc_len = len + 1; // allocate space for null terminator
+    let ptr = unsafe { malloc(alloc_len) as *mut i8 }; // fixing c/rust mem mismatch
     if ptr.is_null() {
         return Err(XDSError::Err);
     }
     unsafe {
-        std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, len); // fixing c/rust mem mismatch
+        std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, alloc_len); // copy including null terminator
     }
 
     data_element.format = 2;
     data_element.start_time = ts_start_of_xds;
     if let Some(timing) = ctx.timing.as_mut() {
-        data_element.end_time = get_fts(timing, CaptionField::Cea708).millis();
+        data_element.end_time = get_fts(timing, CaptionField::Field2).millis();
     }
     data_element.xds_str = ptr;
     data_element.xds_len = len;
@@ -179,15 +180,15 @@ impl CcxDecodersXdsContext<'_> {
             for i in 0..NUM_XDS_BUFFERS {
                 if self.xds_buffers[i].in_use != 0
                     && self.xds_buffers[i]
-                        .xds_class
-                        .map(|c| c.to_c_int())
-                        .unwrap_or(-1)
-                        == xds_class
+                    .xds_class
+                    .map(|c| c.to_c_int())
+                    .unwrap_or(-1)
+                    == xds_class
                     && self.xds_buffers[i]
-                        .xds_type
-                        .map(|t| t.to_c_int())
-                        .unwrap_or(-1)
-                        == lo as i32
+                    .xds_type
+                    .map(|t| t.to_c_int())
+                    .unwrap_or(-1)
+                    == lo as i32
                 {
                     matching_buf = i as i32;
                     break;

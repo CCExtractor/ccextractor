@@ -17,6 +17,7 @@ pub mod types;
 
 use crate::bindings::*;
 use crate::ctorust::FromCType;
+use crate::libccxr_exports::time::generate_timing_context;
 use crate::xds::handlers::{do_end_of_xds, TS_START_OF_XDS};
 use crate::xds::types::{copy_xds_context_from_rust_to_c, CcxDecodersXdsContext};
 use std::os::raw::c_int;
@@ -46,6 +47,15 @@ pub unsafe extern "C" fn ccxr_do_end_of_xds(
         Some(c) => c,
         None => return,
     };
+
+    // populate timing from the C ctx's timing ptr
+    let c_timing_ptr = (*ctx).timing;
+    let mut timing_ctx = if !c_timing_ptr.is_null() {
+        Some(generate_timing_context(c_timing_ptr))
+    } else {
+        None
+    };
+    rust_ctx.timing = timing_ctx.as_mut();
 
     // Call the Rust implementation
     do_end_of_xds(&mut *sub, &mut rust_ctx, expected_checksum);
