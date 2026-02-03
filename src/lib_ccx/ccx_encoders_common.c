@@ -176,6 +176,10 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 		case CCX_OF_CCD:
 			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
 			break;
+		case CCX_OF_WEBVTT:
+			// Ensure X-TIMESTAMP-MAP header is written even if no subtitles were found
+			write_webvtt_header(ctx);
+			break;
 		default: // Nothing to do, no footer on this format
 			break;
 	}
@@ -733,6 +737,8 @@ void dinit_encoder(struct encoder_ctx **arg, LLONG current_fts)
 int reset_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 {
 	dinit_output_ctx(ctx);
+	// Reset header flags for new output file (important for segmented output)
+	ctx->wrote_webvtt_header = 0;
 	return init_output_ctx(ctx, cfg);
 }
 
@@ -1330,6 +1336,9 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 		free(basename);
 	}
+
+	// Reset header flags for new output file
+	enc_ctx->wrote_webvtt_header = 0;
 
 	write_subtitle_file_header(enc_ctx, enc_ctx->out);
 

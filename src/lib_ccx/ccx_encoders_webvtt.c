@@ -212,33 +212,29 @@ void write_webvtt_header(struct encoder_ctx *context)
 	if (context->wrote_webvtt_header) // Already done
 		return;
 
-	if (ccx_options.timestamp_map && context->timing != NULL && context->timing->sync_pts2fts_set)
+	char header_string[200];
+	int used;
+
+	// Always write X-TIMESTAMP-MAP for HLS compliance (RFC 8216 §3.5)
+	// Use timing info when available, otherwise use safe default
+	if (context->timing != NULL && context->timing->sync_pts2fts_set)
 	{
-		char header_string[200];
-		int used;
 		unsigned h1, m1, s1, ms1;
 		millis_to_time(context->timing->sync_pts2fts_fts, &h1, &m1, &s1, &ms1);
 
-		// If the user has enabled X-TIMESTAMP-MAP
 		snprintf(header_string, sizeof(header_string), "X-TIMESTAMP-MAP=MPEGTS:%ld,LOCAL:%02u:%02u:%02u.%03u%s",
 			 context->timing->sync_pts2fts_pts, h1, m1, s1, ms1,
 			 ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
-
-		used = encode_line(context, context->buffer, (unsigned char *)header_string);
-		write_wrapped(context->out->fh, context->buffer, used);
 	}
 	else
 	{
-		// Must have another newline if X-TIMESTAMP-MAP is not used
-		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
-		{
-			write_wrapped(context->out->fh, "\n", 1);
-		}
-		else
-		{
-			write_wrapped(context->out->fh, "\r\n", 2);
-		}
+		// No timing info available - use safe default for HLS compatibility
+		snprintf(header_string, sizeof(header_string), "X-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000%s",
+			 ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 	}
+
+	used = encode_line(context, context->buffer, (unsigned char *)header_string);
+	write_wrapped(context->out->fh, context->buffer, used);
 
 	if (ccx_options.webvtt_create_css)
 	{

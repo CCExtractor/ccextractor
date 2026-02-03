@@ -250,6 +250,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
 void write_stringz_as_smptett(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+void write_webvtt_header(struct encoder_ctx *context);
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context);

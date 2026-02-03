@@ -121,7 +121,7 @@ struct ccx_s_options // Options from user parameters
 				    >0 -> Live stream with a timeout of this value in seconds */
 	char *filter_profanity_file; // Extra profanity word file
 	int messages_target;	     // 0 = nowhere (quiet), 1=stdout, 2=stderr
-	int timestamp_map;	     // If 1, add WebVTT X-TIMESTAMP-MAP header
+	int timestamp_map;	     // (Deprecated) X-TIMESTAMP-MAP is now always included in WebVTT output
 	/* Levenshtein's parameters, for string comparison */
 	int dolevdist;			  // 0 => don't attempt to correct typos with this algorithm
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"

@@ -268,7 +268,7 @@ void print_usage(void)
 	mprint("                       less or equal than the max allowed..\n");
 	mprint("	   --analyzevideo  Analyze the video stream even if it's not used for\n");
 	mprint("                       subtitles. This allows to provide video information.\n");
-	mprint("  --timestamp-map      Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)\n");
+	mprint("  --timestamp-map      (Deprecated - X-TIMESTAMP-MAP is now always included in WebVTT output for HLS compliance)\n");
 	mprint("Levenshtein distance:\n");
 	mprint("           --no-levdist: Don't attempt to correct typos with Levenshtein distance.\n");
 	mprint(" --levdistmincnt value: Minimum distance we always allow regardless\n");

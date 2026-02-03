@@ -422,7 +422,7 @@ pub struct Args {
     /// subtitles. This allows to provide video information.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub analyzevideo: bool,
-    /// Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)
+    /// (Deprecated) X-TIMESTAMP-MAP is now always included in WebVTT output for HLS compliance
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub timestamp_map: bool,
     /// Don't attempt to correct typos with Levenshtein distance.

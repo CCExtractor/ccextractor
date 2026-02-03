@@ -397,7 +397,7 @@ pub struct Options {
     /// Extra profanity word file
     pub filter_profanity_file: PathBuf,
     pub messages_target: OutputTarget,
-    /// If true, add WebVTT X-TIMESTAMP-MAP header
+    /// (Deprecated) X-TIMESTAMP-MAP is now always included in WebVTT output for HLS compliance
     pub timestamp_map: bool,
     /* Levenshtein's parameters, for string comparison */
     /// false => don't attempt to correct typos with this algorithm
