@@ -84,7 +84,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     // Report output format (e.g. "json")
     if let Some(ref fmt) = options.report_format {
         (*ccx_s_options).report_format =
-        replace_rust_c_string((*ccx_s_options).report_format, fmt.as_str());
+            replace_rust_c_string((*ccx_s_options).report_format, fmt.as_str());
     }
     // Preserve the original C-managed report pointer to avoid dangling pointer issues.
     let saved_608_report = (*ccx_s_options).settings_608.report;
