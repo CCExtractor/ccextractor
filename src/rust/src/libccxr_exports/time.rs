@@ -138,7 +138,7 @@ pub unsafe extern "C" fn ccxr_millis_to_time(
 /// # Safety
 ///
 /// `ctx` should not be null.
-unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingContext {
+pub unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingContext {
     let pts_set = match (*ctx).pts_set {
         0 => PtsSet::No,
         1 => PtsSet::Received,

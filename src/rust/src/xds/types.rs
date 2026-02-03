@@ -503,6 +503,7 @@ pub unsafe fn copy_xds_context_from_rust_to_c(
     if bitstream_ptr.is_null() {
         return;
     }
+    let original_timing = (*bitstream_ptr).timing;
     let output = ccx_decoders_xds_context {
         current_xds_min: rust_ctx.current_xds_min,
         current_xds_hour: rust_ctx.current_xds_hour,
@@ -522,7 +523,7 @@ pub unsafe fn copy_xds_context_from_rust_to_c(
         cur_xds_payload: rust_ctx.cur_xds_payload,
         cur_xds_payload_length: rust_ctx.cur_xds_payload_length,
         cur_xds_packet_type: rust_ctx.cur_xds_packet_type,
-        timing: null_mut(),
+        timing: original_timing,
         current_ar_start: rust_ctx.current_ar_start,
         current_ar_end: rust_ctx.current_ar_end,
         xds_write_to_file: if rust_ctx.xds_write_to_file { 1 } else { 0 },
