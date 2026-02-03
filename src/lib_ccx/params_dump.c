@@ -333,37 +333,33 @@ void print_cc_report(struct lib_ccx_ctx *ctx, struct cap_info *info)
 void print_file_report_json(struct lib_ccx_ctx *ctx)
 {
 	struct ccx_demuxer *demux = ctx->demux_ctx;
-	struct cap_info *program;
 
-	int real_pg_count = 0;
-	list_for_each_entry(program, &demux->cinfo_tree.pg_stream, pg_stream, struct cap_info)
-	{
-		real_pg_count++;
-	}
+	// Use PAT-based program count
+	int program_count = demux->nb_program;
 
-	struct cap_info **pg_array = malloc(sizeof(*pg_array) * real_pg_count);
-	if (!pg_array)
+	// Build array of program numbers from PAT
+	unsigned *program_numbers = malloc(sizeof(unsigned) * program_count);
+	if (!program_numbers)
 	{
 		fprintf(stderr, "Out of memory while building report JSON\n");
 		return;
 	}
 
-	int idx = 0;
-	list_for_each_entry(program, &demux->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+	for (int i = 0; i < program_count; i++)
 	{
-		pg_array[idx++] = program;
+		program_numbers[i] = demux->pinfo[i].program_number;
 	}
 
-	/* sort by program number */
-	for (int i = 0; i < real_pg_count - 1; i++)
+	// Sort program numbers
+	for (int i = 0; i < program_count - 1; i++)
 	{
-		for (int j = i + 1; j < real_pg_count; j++)
+		for (int j = i + 1; j < program_count; j++)
 		{
-			if (pg_array[i]->program_number > pg_array[j]->program_number)
+			if (program_numbers[i] > program_numbers[j])
 			{
-				struct cap_info *tmp = pg_array[i];
-				pg_array[i] = pg_array[j];
-				pg_array[j] = tmp;
+				unsigned tmp = program_numbers[i];
+				program_numbers[i] = program_numbers[j];
+				program_numbers[j] = tmp;
 			}
 		}
 	}
@@ -401,14 +397,14 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 	json_escape(stream_mode_to_string(demux->stream_mode));
 	printf(",\n");
 
-	printf("    \"program_count\": %d,\n", real_pg_count);
+	printf("    \"program_count\": %d,\n", program_count);
 
 	printf("    \"program_numbers\": [");
-	for (int i = 0; i < real_pg_count; i++)
+	for (int i = 0; i < program_count; i++)
 	{
 		if (i)
 			printf(", ");
-		printf("%u", pg_array[i]->program_number);
+		printf("%u", program_numbers[i]);
 	}
 	printf("],\n");
 
@@ -447,24 +443,49 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 	printf("  \"programs\": [\n");
 	first = 1;
 
-	for (int pi = 0; pi < real_pg_count; pi++)
+	for (int pi = 0; pi < program_count; pi++)
 	{
-		program = pg_array[pi];
-		struct lib_cc_decode *dec_ctx;
-		struct cap_info *info;
+		unsigned pn = program_numbers[pi];
+
+		// Find matching cap_info for this program number
+		struct cap_info *program_ci = NULL;
+		struct cap_info *iter;
+		list_for_each_entry(iter, &demux->cinfo_tree.pg_stream, pg_stream, struct cap_info)
+		{
+			if (iter->program_number == (int)pn)
+			{
+				program_ci = iter;
+				break;
+			}
+		}
+
+		// Compute caption metadata ONLY if cap_info exists
+		struct lib_cc_decode *dec_ctx = NULL;
+		bool has_608 = false;
+		bool has_708 = false;
+		bool has_dvb = false;
+		bool has_tt = false;
+		bool has_any_captions = false;
+
+		if (program_ci)
+		{
+			dec_ctx = update_decoder_list_cinfo(ctx, program_ci);
+
+			has_608 = (dec_ctx->cc_stats[0] || dec_ctx->cc_stats[1]);
+			has_708 = (dec_ctx->cc_stats[2] || dec_ctx->cc_stats[3]);
+
+			has_dvb = (get_sib_stream_by_type(program_ci, CCX_CODEC_DVB) != NULL);
+			has_tt = (get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT) != NULL);
+
+			has_any_captions = has_608 || has_708 || has_dvb || has_tt;
+		}
 
 		if (!first)
 			printf(",\n");
 		first = 0;
 
-		dec_ctx = update_decoder_list_cinfo(ctx, program);
-
-		bool has_608 = (dec_ctx->cc_stats[0] || dec_ctx->cc_stats[1]);
-		bool has_708 = (dec_ctx->cc_stats[2] || dec_ctx->cc_stats[3]);
-		bool has_any_captions = has_608 || has_708;
-
 		printf("    {\n");
-		printf("      \"program_number\": %u,\n", program->program_number);
+		printf("      \"program_number\": %u,\n", pn);
 		printf("      \"summary\": {\n");
 		printf("        \"has_any_captions\": %s,\n", has_any_captions ? "true" : "false");
 		printf("        \"has_608\": %s,\n", has_608 ? "true" : "false");
@@ -473,11 +494,11 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 
 		printf("      \"services\": {\n");
 		printf("        \"dvb_subtitles\": %s,\n",
-		       get_sib_stream_by_type(program, CCX_CODEC_DVB) ? "true" : "false");
+		       (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_DVB)) ? "true" : "false");
 		printf("        \"teletext\": %s,\n",
-		       get_sib_stream_by_type(program, CCX_CODEC_TELETEXT) ? "true" : "false");
+		       (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT)) ? "true" : "false");
 		printf("        \"atsc_closed_caption\": %s\n",
-		       get_sib_stream_by_type(program, CCX_CODEC_ATSC_CC) ? "true" : "false");
+		       (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_ATSC_CC)) ? "true" : "false");
 		printf("      },\n");
 
 		printf("      \"captions\": {\n");
@@ -489,12 +510,16 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		// NOTE: EIA-608 / CEA-708 data is currently stream-global and therefore
 		// identical across programs in multi-program streams.
 		printf("          \"xds\": %s,\n",
-		       ctx->freport.data_from_608->xds ? "true" : "false");
+		       (program_ci && ctx->freport.data_from_608->xds) ? "true" : "false");
 		printf("          \"channels\": {\n");
-		printf("            \"cc1\": %s,\n", ctx->freport.data_from_608->cc_channels[0] ? "true" : "false");
-		printf("            \"cc2\": %s,\n", ctx->freport.data_from_608->cc_channels[1] ? "true" : "false");
-		printf("            \"cc3\": %s,\n", ctx->freport.data_from_608->cc_channels[2] ? "true" : "false");
-		printf("            \"cc4\": %s\n", ctx->freport.data_from_608->cc_channels[3] ? "true" : "false");
+		printf("            \"cc1\": %s,\n",
+		       (program_ci && ctx->freport.data_from_608->cc_channels[0]) ? "true" : "false");
+		printf("            \"cc2\": %s,\n",
+		       (program_ci && ctx->freport.data_from_608->cc_channels[1]) ? "true" : "false");
+		printf("            \"cc3\": %s,\n",
+		       (program_ci && ctx->freport.data_from_608->cc_channels[2]) ? "true" : "false");
+		printf("            \"cc4\": %s\n",
+		       (program_ci && ctx->freport.data_from_608->cc_channels[3]) ? "true" : "false");
 		printf("          }\n");
 		printf("        },\n");
 
@@ -502,14 +527,17 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		printf("          \"present\": %s,\n", has_708 ? "true" : "false");
 		printf("          \"services\": [");
 		int sf = 1;
-		for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+		if (program_ci)
 		{
-			if (!ctx->freport.data_from_708->services[i])
-				continue;
-			if (!sf)
-				printf(", ");
-			sf = 0;
-			printf("%d", i);
+			for (int i = 0; i < CCX_DTVCC_MAX_SERVICES; i++)
+			{
+				if (!ctx->freport.data_from_708->services[i])
+					continue;
+				if (!sf)
+					printf(", ");
+				sf = 0;
+				printf("%d", i);
+			}
 		}
 		printf("]\n");
 		printf("        }\n"); // end cea_708
@@ -517,18 +545,22 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 
 		// Decide upfront if video will actually be printed
 		bool print_video = false;
-		info = get_best_sib_stream(program);
+		struct cap_info *info = NULL;
 
-		if (info)
+		if (program_ci)
 		{
-			dec_ctx = update_decoder_list_cinfo(ctx, info);
-			if (dec_ctx->in_bufferdatatype == CCX_PES &&
-			    (demux->stream_mode == CCX_SM_TRANSPORT ||
-			     demux->stream_mode == CCX_SM_PROGRAM ||
-			     demux->stream_mode == CCX_SM_ASF ||
-			     demux->stream_mode == CCX_SM_WTV))
+			info = get_best_sib_stream(program_ci);
+			if (info)
 			{
-				print_video = true;
+				dec_ctx = update_decoder_list_cinfo(ctx, info);
+				if (dec_ctx->in_bufferdatatype == CCX_PES &&
+				    (demux->stream_mode == CCX_SM_TRANSPORT ||
+				     demux->stream_mode == CCX_SM_PROGRAM ||
+				     demux->stream_mode == CCX_SM_ASF ||
+				     demux->stream_mode == CCX_SM_WTV))
+				{
+					print_video = true;
+				}
 			}
 		}
 
@@ -557,7 +589,7 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 	printf("\n  ]\n");
 	printf("}\n");
 
-	free(pg_array);
+	free(program_numbers);
 }
 
 void print_file_report(struct lib_ccx_ctx *ctx)
