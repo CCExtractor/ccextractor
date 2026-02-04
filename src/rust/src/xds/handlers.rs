@@ -763,13 +763,13 @@ pub unsafe fn xds_do_current_and_future(
 
             // Extract program name from payload (bytes 2 to payload_length - 2)
             let name_end = (ctx.cur_xds_payload_length - 1) as usize;
-            let name_bytes: Vec<u8> = payload[2..name_end]
-                .iter()
-                .copied()
-                .filter(|&b| b != 0)
-                .collect();
+            let name_slice = &payload[2..name_end];
+            let name_bytes = match name_slice.iter().position(|&b| b == 0) {
+                Some(pos) => &name_slice[..pos],
+                None => name_slice,
+            };
 
-            let xds_program_name = String::from_utf8_lossy(&name_bytes).to_string();
+            let xds_program_name = String::from_utf8_lossy(name_bytes).to_string();
 
             debug!(
                 msg_type = DebugMessageFlag::DECODER_XDS;
@@ -953,13 +953,13 @@ pub unsafe fn xds_do_current_and_future(
 
             // Extract description from payload
             let desc_end = (ctx.cur_xds_payload_length - 1) as usize;
-            let desc_bytes: Vec<u8> = payload[2..desc_end]
-                .iter()
-                .copied()
-                .filter(|&b| b != 0)
-                .collect();
+            let desc_slice = &payload[2..desc_end];
+            let desc_bytes = match desc_slice.iter().position(|&b| b == 0) {
+                Some(pos) => &desc_slice[..pos],
+                None => desc_slice,
+            };
 
-            let xds_desc = String::from_utf8_lossy(&desc_bytes).to_string();
+            let xds_desc = String::from_utf8_lossy(desc_bytes).to_string();
 
             if !xds_desc.is_empty() {
                 let line_num = ctx.cur_xds_packet_type - 0x10; // XDS_TYPE_PROGRAM_DESC_1 = 0x10
@@ -1056,13 +1056,13 @@ pub unsafe fn xds_do_channel(
 
             // Extract network name from payload (bytes 2 to payload_length - 2)
             let name_end = (ctx.cur_xds_payload_length - 1) as usize;
-            let name_bytes: Vec<u8> = payload[2..name_end]
-                .iter()
-                .copied()
-                .filter(|&b| b != 0)
-                .collect();
+            let name_slice = &payload[2..name_end];
+            let name_bytes = match name_slice.iter().position(|&b| b == 0) {
+                Some(pos) => &name_slice[..pos],
+                None => name_slice,
+            };
 
-            let xds_network_name = String::from_utf8_lossy(&name_bytes).to_string();
+            let xds_network_name = String::from_utf8_lossy(name_bytes).to_string();
 
             debug!(
                 msg_type = DebugMessageFlag::DECODER_XDS;
@@ -1093,13 +1093,13 @@ pub unsafe fn xds_do_channel(
 
             // Extract call letters from payload (bytes 2 to payload_length - 2)
             let letters_end = (ctx.cur_xds_payload_length - 1) as usize;
-            let letters_bytes: Vec<u8> = payload[2..letters_end]
-                .iter()
-                .copied()
-                .filter(|&b| b != 0)
-                .collect();
+            let letters_slice = &payload[2..letters_end];
+            let letters_bytes = match letters_slice.iter().position(|&b| b == 0) {
+                Some(pos) => &letters_slice[..pos],
+                None => letters_slice,
+            };
 
-            let xds_call_letters = String::from_utf8_lossy(&letters_bytes).to_string();
+            let xds_call_letters = String::from_utf8_lossy(letters_bytes).to_string();
 
             debug!(
                 msg_type = DebugMessageFlag::DECODER_XDS;
