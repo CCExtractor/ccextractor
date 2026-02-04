@@ -180,15 +180,15 @@ impl CcxDecodersXdsContext<'_> {
             for i in 0..NUM_XDS_BUFFERS {
                 if self.xds_buffers[i].in_use != 0
                     && self.xds_buffers[i]
-                    .xds_class
-                    .map(|c| c.to_c_int())
-                    .unwrap_or(-1)
-                    == xds_class
+                        .xds_class
+                        .map(|c| c.to_c_int())
+                        .unwrap_or(-1)
+                        == xds_class
                     && self.xds_buffers[i]
-                    .xds_type
-                    .map(|t| t.to_c_int())
-                    .unwrap_or(-1)
-                    == lo as i32
+                        .xds_type
+                        .map(|t| t.to_c_int())
+                        .unwrap_or(-1)
+                        == lo as i32
                 {
                     matching_buf = i as i32;
                     break;
