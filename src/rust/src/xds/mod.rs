@@ -17,8 +17,8 @@ pub mod types;
 
 use crate::bindings::*;
 use crate::ctorust::FromCType;
-use crate::libccxr_exports::time::generate_timing_context;
 use crate::libccxr_exports::time::apply_timing_info;
+use crate::libccxr_exports::time::generate_timing_context;
 use crate::xds::handlers::{do_end_of_xds, TS_START_OF_XDS};
 use crate::xds::types::{copy_xds_context_from_rust_to_c, CcxDecodersXdsContext};
 use std::os::raw::c_int;

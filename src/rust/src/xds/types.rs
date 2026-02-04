@@ -41,7 +41,6 @@ use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::write_back_to_common_timing_ctx;
 use lib_ccxr::time::TimingContext;
 use std::os::raw::c_int;
-use std::ptr::null_mut;
 
 pub const NUM_BYTES_PER_PACKET: usize = 35; // Class + type (repeated for convenience) + data + zero
 pub const NUM_XDS_BUFFERS: usize = 9; // CEA recommends no more than one level of interleaving. Play it safe
