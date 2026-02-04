@@ -18,6 +18,7 @@ pub mod types;
 use crate::bindings::*;
 use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::generate_timing_context;
+use crate::libccxr_exports::time::apply_timing_info;
 use crate::xds::handlers::{do_end_of_xds, TS_START_OF_XDS};
 use crate::xds::types::{copy_xds_context_from_rust_to_c, CcxDecodersXdsContext};
 use std::os::raw::c_int;
@@ -41,6 +42,9 @@ pub unsafe extern "C" fn ccxr_do_end_of_xds(
     if sub.is_null() || ctx.is_null() {
         return;
     }
+
+    // trying to sync cb_field2 etc globals from C to GLOBAL_TIMING_INFO. hope this works
+    apply_timing_info();
 
     // Convert C context to Rust
     let mut rust_ctx = match CcxDecodersXdsContext::from_ctype(*ctx) {

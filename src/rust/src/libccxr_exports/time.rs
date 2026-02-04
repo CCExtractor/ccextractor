@@ -275,7 +275,7 @@ pub unsafe fn write_back_to_common_timing_ctx(
 /// # Safety
 ///
 /// All the static variables should be initialized and in valid state.
-unsafe fn apply_timing_info() {
+pub(crate) unsafe fn apply_timing_info() {
     let Ok(mut timing_info) = GLOBAL_TIMING_INFO.write() else {
         // RwLock is poisoned, skip updating
         return;
