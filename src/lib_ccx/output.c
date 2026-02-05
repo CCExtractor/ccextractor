@@ -249,9 +249,20 @@ void writercwtdata(struct lib_cc_decode *ctx, const unsigned char *data, struct 
 	LLONG currfts = ctx->timing->fts_now + ctx->timing->fts_global;
 	static uint16_t cbcount = 0;
 	static int cbempty = 0;
-	static unsigned char cbbuffer[0xFFFF * 3]; // TODO: use malloc
+	// static unsigned char cbbuffer[0xFFFF * 3]; // TODO: use malloc
+	static unsigned char *cbbuffer = NULL; // Dynamic allocation
 	static unsigned char cbheader[8 + 2];
 
+	// Allocate buffer on first use
+	if (cbbuffer == NULL) {
+		cbbuffer = (unsigned char *)malloc(0xFFFF * 3);
+		if (cbbuffer == NULL) {
+			ccx_common_logging.log_ftn("Out of memory allocating buffer in writercwtdata()\n");
+			return;
+		}
+		dbg_print(CCX_DMT_VERBOSE, "Allocated %zu bytes for cbbuffer in writercwtdata()\n", (size_t)(0xFFFF * 3));
+	}
+	
 	if ((prevfts != currfts && prevfts != -1) || data == NULL || cbcount == 0xFFFF)
 	{
 		// Remove trailing empty or 608 padding caption blocks
