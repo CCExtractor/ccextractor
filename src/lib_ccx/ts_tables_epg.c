@@ -147,7 +147,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		m = m - 1 - k * 12;
 
 		timeinfo.tm_year = y - 1900;
-		timeinfo.tm_mon  = m - 1;
+		timeinfo.tm_mon = m - 1;
 		timeinfo.tm_mday = d;
 
 		// Decode BCD time (lower 24 bits: HHMMSS)
@@ -164,17 +164,16 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		mktime(&timeinfo);
 
 		snprintf(event->start_time_string,
-		         sizeof(event->start_time_string),
-		         "%04d%02d%02d%02d%02d%02d +0000",
-		         timeinfo.tm_year + 1900,
-		         timeinfo.tm_mon + 1,
-		         timeinfo.tm_mday,
-		         timeinfo.tm_hour,
-		         timeinfo.tm_min,
-		         timeinfo.tm_sec);
+			 sizeof(event->start_time_string),
+			 "%04d%02d%02d%02d%02d%02d +0000",
+			 timeinfo.tm_year + 1900,
+			 timeinfo.tm_mon + 1,
+			 timeinfo.tm_mday,
+			 timeinfo.tm_hour,
+			 timeinfo.tm_min,
+			 timeinfo.tm_sec);
 	}
 }
-
 
 // Fills event.end_time_string in XMLTV with passed DVB time + duration
 void EPG_DVB_calc_end_time(struct EPG_event *event, uint64_t time, uint32_t duration)
