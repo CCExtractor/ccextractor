@@ -136,6 +136,7 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 	if (mjd > 0)
 	{
 		long y, m, d, k;
+		struct tm timeinfo = {0};
 
 		// algo: ETSI EN 300 468 - ANNEX C
 		y = (long)((mjd - 15078.2) / 365.25);
@@ -145,9 +146,35 @@ void EPG_DVB_calc_start_time(struct EPG_event *event, uint64_t time)
 		y = y + k + 1900;
 		m = m - 1 - k * 12;
 
-		snprintf(event->start_time_string, sizeof(event->start_time_string), "%02ld%02ld%02ld%06" PRIu64 "+0000", y, m, d, time & 0xffffff);
+		timeinfo.tm_year = y - 1900;
+		timeinfo.tm_mon  = m - 1;
+		timeinfo.tm_mday = d;
+
+		// Decode BCD time (lower 24 bits: HHMMSS)
+		uint32_t bcd = (uint32_t)(time & 0xFFFFFF);
+
+		timeinfo.tm_sec = (bcd & 0x0f) + (10 * ((bcd & 0xf0) >> 4));
+
+		timeinfo.tm_min = ((bcd & 0x0f00) >> 8) + (10 * ((bcd & 0xf000) >> 12));
+
+		timeinfo.tm_hour = ((bcd & 0x0f0000) >> 16) + (10 * ((bcd & 0xf00000) >> 20));
+
+		timeinfo.tm_isdst = -1;
+
+		mktime(&timeinfo);
+
+		snprintf(event->start_time_string,
+		         sizeof(event->start_time_string),
+		         "%04d%02d%02d%02d%02d%02d +0000",
+		         timeinfo.tm_year + 1900,
+		         timeinfo.tm_mon + 1,
+		         timeinfo.tm_mday,
+		         timeinfo.tm_hour,
+		         timeinfo.tm_min,
+		         timeinfo.tm_sec);
 	}
 }
+
 
 // Fills event.end_time_string in XMLTV with passed DVB time + duration
 void EPG_DVB_calc_end_time(struct EPG_event *event, uint64_t time, uint32_t duration)
