@@ -6,6 +6,7 @@
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
+- Fix: segmentation fault when using --multiprogram
 
 0.96.5 (2026-01-05)
 -------------------
