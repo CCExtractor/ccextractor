@@ -18,7 +18,7 @@ tesseract-sys = { version = "0.5.15", optional = true, default-features = false 
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
 strum_macros = "0.25.3"
-time = "0.3.39"
+time = "0.3.47"
 cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
