@@ -249,8 +249,21 @@ void writercwtdata(struct lib_cc_decode *ctx, const unsigned char *data, struct 
 	LLONG currfts = ctx->timing->fts_now + ctx->timing->fts_global;
 	static uint16_t cbcount = 0;
 	static int cbempty = 0;
-	static unsigned char cbbuffer[0xFFFF * 3]; // TODO: use malloc
+	static unsigned char *cbbuffer = NULL;
+	static int cbbuffer_initialized = 0;
 	static unsigned char cbheader[8 + 2];
+
+	if (!cbbuffer_initialized)
+	{
+		cbbuffer = (unsigned char *)malloc(0xFFFF * 3);
+		if (cbbuffer == NULL)
+		{
+			mprint("Error: Failed to allocate memory for cbbuffer\n");
+			return;
+		}
+		cbbuffer_initialized = 1;
+		dbg_print(CCX_DMT_VERBOSE, "Allocated RCWT buffer (%d bytes)\n", 0xFFFF * 3);
+	}
 
 	if ((prevfts != currfts && prevfts != -1) || data == NULL || cbcount == 0xFFFF)
 	{

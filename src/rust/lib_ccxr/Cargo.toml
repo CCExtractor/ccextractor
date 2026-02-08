@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bitflags = "2.9.0"
 thiserror = "1.0.69"
-time = { version = "0.3.39", features = ["macros", "formatting"] }
+time = { version = "0.3.47", features = ["macros", "formatting"] }
 derive_more = "0.99.19"
 url = "2.5.4"
 num_enum = "0.7.3"

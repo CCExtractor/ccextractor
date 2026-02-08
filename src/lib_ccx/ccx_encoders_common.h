@@ -184,8 +184,8 @@ struct encoder_ctx
 	int nospupngocr;
 	int is_pal;
 
-	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT]; // Output files per teletext page
-	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];       // Page numbers for each output slot
+	struct ccx_s_write *tlt_out[MAX_TLT_PAGES_EXTRACT];  // Output files per teletext page
+	uint16_t tlt_out_pages[MAX_TLT_PAGES_EXTRACT];	     // Page numbers for each output slot
 	unsigned int tlt_srt_counter[MAX_TLT_PAGES_EXTRACT]; // SRT counter per page
 	int tlt_out_count;				     // Number of teletext output files
 };
@@ -262,6 +262,9 @@ int write_cc_bitmap_as_libcurl(struct cc_subtitle *sub, struct encoder_ctx *cont
 
 void write_spumux_header(struct encoder_ctx *ctx, struct ccx_s_write *out);
 void write_spumux_footer(struct ccx_s_write *out);
+
+// WebVTT header writer (issue #1743 - ensures header is written even for empty files)
+void write_webvtt_header(struct encoder_ctx *context);
 
 struct cc_subtitle *reformat_cc_bitmap_through_sentence_buffer(struct cc_subtitle *sub, struct encoder_ctx *context);
 

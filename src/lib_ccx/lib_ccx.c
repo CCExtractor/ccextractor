@@ -473,7 +473,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 		}
 
 		list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
-		freep(ccx_options.enc_cfg.output_filename);
+		freep(&ccx_options.enc_cfg.output_filename);
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
