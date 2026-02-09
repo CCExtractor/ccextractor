@@ -7,6 +7,8 @@
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
+- Refactor: Move demuxer-related options (live_stream, buffer_input, input_source, binary_concat)
+  from global ccx_options to ccx_demuxer struct for better encapsulation and testability
 - Fix: segmentation fault when using --multiprogram
 
 0.96.5 (2026-01-05)

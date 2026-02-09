@@ -148,6 +148,13 @@ struct ccx_demuxer
 	// Remember if the last header was valid. Used to suppress too much output
 	// and the expected unrecognized first header for TiVo files.
 	int strangeheader;
+
+	// Options moved from global ccx_options for encapsulation
+	int live_stream;                   // -1=live no timeout, 0=regular file, >0=live with timeout (seconds)
+	int buffer_input;                  // Buffer input data
+	enum ccx_datasource input_source;  // Source type (file, stdin, network, tcp)
+	int binary_concat;                 // Concatenate binary files
+
 #ifdef ENABLE_FFMPEG
 	void *ffmpeg_ctx;
 #endif
