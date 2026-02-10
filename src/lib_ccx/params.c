@@ -347,6 +347,9 @@ void print_usage(void)
 	mprint("                       to the output file.\n");
 	mprint("                  --lf: Use LF (UNIX) instead of CRLF (DOS, Windows) as line\n");
 	mprint("                       terminator.\n");
+	mprint("     --null-terminated: Use \\0 instead of CRLF or LF for frame termination (see '--lf').\n");
+	mprint("                       e.g use '--txt --stdout --null-terminated' when piping to\n");
+	mprint("                       'websocat -0' (https://github.com/vi/websocat)\n");
 	mprint("                  --df: For MCC Files, force dropframe frame count.\n");
 	mprint("            --autodash: Based on position on screen, attempt to determine\n");
 	mprint("                       the different speakers and a dash (-) when each\n");

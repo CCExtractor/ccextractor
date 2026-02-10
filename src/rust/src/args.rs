@@ -559,6 +559,9 @@ pub struct Args {
     /// terminator.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub lf: bool,
+    /// Use \0 instead of CRLF or LF for frame termination (see '--lf')
+    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    pub null_terminated: bool,
     /// For MCC Files, force dropframe frame count.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub df: bool,

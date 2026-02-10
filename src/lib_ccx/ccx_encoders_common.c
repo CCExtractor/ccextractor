@@ -841,6 +841,17 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *)"<br>");
 
+	if (opt->frame_terminator_0)
+	{
+		ctx->encoded_end_frame[0] = '\0';
+		ctx->encoded_end_frame_length = 1;
+	}
+	else
+	{
+		memcpy(ctx->encoded_end_frame, ctx->encoded_crlf, ctx->encoded_crlf_length + 1);
+		ctx->encoded_end_frame_length = ctx->encoded_crlf_length;
+	}
+
 	for (i = 0; i < ctx->nb_out; i++)
 		write_subtitle_file_header(ctx, ctx->out + i);
 

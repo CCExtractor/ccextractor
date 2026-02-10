@@ -950,6 +950,7 @@ impl CType<encoder_cfg> for EncoderConfig {
             no_type_setting: self.no_type_setting as _,
             cc_to_stdout: self.cc_to_stdout as _,
             line_terminator_lf: self.line_terminator_lf as _,
+            frame_terminator_0: self.frame_terminator_0 as _,
             subs_delay: self.subs_delay.millis(),
             program_number: self.program_number as _,
             in_format: self.in_format,
