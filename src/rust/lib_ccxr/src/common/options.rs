@@ -55,6 +55,8 @@ pub struct CommonTimingCtx {
     pub seen_known_frame_type: i32, // 0 = No, 1 = Yes. Tracks if we've seen a frame with known type
     pub pending_min_pts: i64,       // Minimum PTS seen while waiting for frame type determination
     pub unknown_frame_count: u32,   // Count of set_fts calls with unknown frame type
+    pub first_large_gap_pts: i64,   // PTS when large gap (>100ms) first detected. Used for H.264 I-frame detection
+    pub seen_large_gap: i32,        // 0 = No, 1 = Yes. Flag indicating large gap detected for H.264 fallback
     pub current_pts: i64,
     pub current_picture_coding_type: FrameType,
     pub current_tref: i32, // Store temporal reference of current frame

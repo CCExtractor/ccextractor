@@ -90,6 +90,8 @@ impl FromCType<*const ccx_common_timing_ctx> for CommonTimingCtx {
             seen_known_frame_type: ctx.seen_known_frame_type,
             pending_min_pts: ctx.pending_min_pts,
             unknown_frame_count: ctx.unknown_frame_count,
+            first_large_gap_pts: ctx.first_large_gap_pts,
+            seen_large_gap: ctx.seen_large_gap,
             current_pts: ctx.current_pts,
             current_picture_coding_type,
             current_tref: ctx.current_tref,

@@ -842,6 +842,11 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			}
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+			// CRITICAL FIX: For pop-on to roll-up transition with no scrolling (first CR, single line),
+			// set the start time to the current time. Otherwise, the caption would have start_time=0
+			// because current_visible_start_ms was never set for the rollup buffer.
+			else if (context->rollup_from_popon)
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
 			break;
 		case COM_ERASENONDISPLAYEDMEMORY:
@@ -874,6 +879,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
+			// For pop-on captions, current_visible_start_ms might not be set yet
+			// (write_char skips setting it for MODE_POPON). Set it now if needed.
+			if (context->current_visible_start_ms == 0)
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;

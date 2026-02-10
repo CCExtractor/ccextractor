@@ -44,8 +44,16 @@ pub struct TimingContext {
     /// Tracks the minimum PTS seen while waiting for frame type determination.
     /// Used for H.264 streams where frame types are never set.
     pending_min_pts: MpegClockTick,
+    /// Tracks the first PTS seen (not minimum). Used for H.264 fallback to avoid
+    /// using reordered B-frame PTS as reference.
+    first_pts: MpegClockTick,
     /// Counts set_fts() calls with unknown frame type. Used to trigger fallback for H.264.
     unknown_frame_count: u32,
+    /// Tracks the PTS when we first detect a large gap (>100ms) between pending_min_pts and current_pts.
+    /// This indicates transition from B-frames to I/P frames in H.264 streams.
+    first_large_gap_pts: MpegClockTick,
+    /// Flag indicating whether we've seen a large gap for H.264 fallback.
+    seen_large_gap: bool,
     pub current_pts: MpegClockTick,
     pub current_picture_coding_type: FrameType,
     /// Store temporal reference of current frame.
@@ -114,7 +122,10 @@ impl TimingContext {
             min_pts_adjusted: false,
             seen_known_frame_type: false,
             pending_min_pts: MpegClockTick::new(0x01FFFFFFFF),
+            first_pts: MpegClockTick::new(0x01FFFFFFFF),
             unknown_frame_count: 0,
+            first_large_gap_pts: MpegClockTick::new(0x01FFFFFFFF),
+            seen_large_gap: false,
             current_pts: MpegClockTick::new(0),
             current_picture_coding_type: FrameType::ResetOrUnknown,
             current_tref: FrameCount::new(0),
@@ -266,8 +277,40 @@ impl TimingContext {
             if self.current_pts < self.pending_min_pts {
                 self.pending_min_pts = self.current_pts;
             }
+
+            // Track the first PTS seen (not minimum, just first).
+            // For container formats, the first frame's PTS is the correct reference point.
+            // Later B-frames may have lower PTS due to display order reordering.
+            if self.first_pts.as_i64() == 0x01FFFFFFFF {
+                self.first_pts = self.current_pts;
+            }
+
             if is_frame_type_unknown {
                 self.unknown_frame_count += 1;
+            }
+
+            // Track the first time we see a large gap between pending_min_pts and current_pts.
+            // For H.264 streams with B-frame reordering, this gap indicates the transition
+            // from low-PTS B-frames to higher-PTS I/P frames. The current_pts at this moment
+            // is near the first I-frame, which is the correct timing reference.
+            // Use the same threshold as MPEG-2 garbage detection (defined below).
+            if !self.seen_large_gap
+                && self.pending_min_pts.as_i64() != 0x01FFFFFFFF
+                && self.first_pts.as_i64() != 0x01FFFFFFFF
+            {
+                let gap_ticks = self.current_pts.as_i64() - self.pending_min_pts.as_i64();
+                let gap_ms = if timing_info.mpeg_clock_freq > 0 {
+                    gap_ticks * 1000 / timing_info.mpeg_clock_freq
+                } else {
+                    // Assume 90kHz if not set
+                    gap_ticks * 1000 / 90000
+                };
+
+                if gap_ms > H264_GAP_THRESHOLD_MS {
+                    // Large gap detected: save current_pts as the first I-frame reference
+                    self.first_large_gap_pts = self.current_pts;
+                    self.seen_large_gap = true;
+                }
             }
 
             // Determine if we should allow setting min_pts on this frame.
@@ -284,17 +327,27 @@ impl TimingContext {
             // - Fallback: If we've processed many frames without seeing a known frame type
             //   (H.264 in MPEG-PS), eventually use pending_min_pts after 100+ calls.
             const FALLBACK_THRESHOLD: u32 = 100;
-            // Threshold for garbage detection: ~100ms (3 frames at 30fps)
+            // Threshold for MPEG-2 garbage detection: ~100ms (3 frames at 30fps)
             // Gap larger than this suggests garbage leading frames from truncated GOP
             const GARBAGE_GAP_THRESHOLD_MS: i64 = 100;
+            // H.264 gap detection: 500ms — must exceed normal B-frame reordering (up to ~300ms)
+            // but catch the real content transition gap (634ms+ in test streams)
+            const H264_GAP_THRESHOLD_MS: i64 = 500;
             let (allow_min_pts_set, pts_for_min) = if is_frame_type_unknown {
                 // Frame type unknown - check if we should use fallback
                 if self.unknown_frame_count >= FALLBACK_THRESHOLD
                     && !self.seen_known_frame_type
-                    && self.pending_min_pts.as_i64() != 0x01FFFFFFFF
+                    && self.first_pts.as_i64() != 0x01FFFFFFFF
                 {
-                    // H.264 fallback: Use pending_min_pts after threshold
-                    (true, self.pending_min_pts)
+                    // H.264 fallback: Apply garbage gap detection similar to MPEG-2 I-frame logic.
+                    // If we detected a large gap (>100ms) between pending_min_pts and a later PTS,
+                    // use the PTS from when the gap was first detected (near the first I-frame).
+                    // Otherwise, use pending_min_pts (no B-frame reordering detected).
+                    if self.seen_large_gap {
+                        (true, self.first_large_gap_pts)
+                    } else {
+                        (true, self.pending_min_pts)
+                    }
                 } else {
                     (false, self.current_pts)
                 }
@@ -556,6 +609,7 @@ impl TimingContext {
         min_pts_adjusted: bool,
         seen_known_frame_type: bool,
         pending_min_pts: MpegClockTick,
+        first_pts: MpegClockTick,
         unknown_frame_count: u32,
         current_pts: MpegClockTick,
         current_picture_coding_type: FrameType,
@@ -572,13 +626,18 @@ impl TimingContext {
         sync_pts2fts_fts: Timestamp,
         sync_pts2fts_pts: MpegClockTick,
         pts_reset: bool,
+        first_large_gap_pts: MpegClockTick,
+        seen_large_gap: bool,
     ) -> TimingContext {
         TimingContext {
             pts_set,
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            first_pts,
             unknown_frame_count,
+            first_large_gap_pts,
+            seen_large_gap,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -610,6 +669,7 @@ impl TimingContext {
         bool,
         bool,
         MpegClockTick,
+        MpegClockTick,
         u32,
         MpegClockTick,
         FrameType,
@@ -626,13 +686,18 @@ impl TimingContext {
         Timestamp,
         MpegClockTick,
         bool,
+        MpegClockTick,
+        bool,
     ) {
         let TimingContext {
             pts_set,
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            first_pts,
             unknown_frame_count,
+            first_large_gap_pts,
+            seen_large_gap,
             current_pts,
             current_picture_coding_type,
             current_tref,
@@ -655,6 +720,7 @@ impl TimingContext {
             min_pts_adjusted,
             seen_known_frame_type,
             pending_min_pts,
+            first_pts,
             unknown_frame_count,
             current_pts,
             current_picture_coding_type,
@@ -671,6 +737,8 @@ impl TimingContext {
             sync_pts2fts_fts,
             sync_pts2fts_pts,
             pts_reset,
+            first_large_gap_pts,
+            seen_large_gap,
         )
     }
 }
