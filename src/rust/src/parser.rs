@@ -294,12 +294,11 @@ impl OptionsExt for Options {
             //     cause = ExitCause::MalformedParameter;
             //    "Unknown input file format: {}\n", args.input.map(|i| i.to_string()).unwrap_or_else(|| "Unknown".to_string())
             // );
-            
-            // No specific format flag matched, so we fall back to autodetection.
 
+            // No specific format flag matched, so we fall back to autodetection.
         }
     }
-    
+
     fn parse_708_services(&mut self, s: &str) {
         if s.starts_with("all") {
             let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
