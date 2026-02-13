@@ -169,7 +169,7 @@ pub unsafe extern "C" fn ccxr_isdbsub_decode(
             sub_data.end_time as i64,
             info.as_mut_ptr() as *mut c_char,
             mode.as_mut_ptr() as *mut c_char,
-            ccx_encoding_type_CCX_ENC_UTF_8,
+            ccx_encoding_type_CCX_ENC_UTF_8 as u32,
         );
 
         if (*sub).start_time == (*sub).end_time {
