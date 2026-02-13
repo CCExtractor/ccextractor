@@ -103,6 +103,7 @@ extern "C" {
 ///   was returned by `ccxr_init_isdb_decoder`.
 /// - `buf` must point to `buf_size` valid bytes.
 /// - `sub` must be a valid pointer to a `cc_subtitle`.
+#[allow(clippy::unnecessary_cast)]
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_isdbsub_decode(
     dec_ctx: *mut lib_cc_decode,
