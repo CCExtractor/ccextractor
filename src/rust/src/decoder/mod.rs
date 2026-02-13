@@ -287,7 +287,12 @@ impl DtvccRust {
                 let tv_layout = std::alloc::Layout::new::<dtvcc_tv_screen>();
                 let tv_ptr = unsafe { std::alloc::alloc_zeroed(tv_layout) } as *mut dtvcc_tv_screen;
                 if tv_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_tv_screen");
+                    debug!(
+                        msg_type = DebugMessageFlag::DECODER_708;
+                        "DTVCC: Failed to allocate tv_screen for service {}, disabling service",
+                         i + 1
+                    );
+                    continue;
                 }
                 let mut tv_screen = unsafe { Box::from_raw(tv_ptr) };
                 tv_screen.cc_count = 0;
@@ -299,9 +304,14 @@ impl DtvccRust {
                 let decoder_ptr = unsafe { std::alloc::alloc_zeroed(decoder_layout) }
                     as *mut dtvcc_service_decoder;
                 if decoder_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_service_decoder");
-                }
+                    debug!(
+                        msg_type = DebugMessageFlag::DECODER_708;
+                        "DTVCC: Failed to allocate service decoder {}, disabling service",
+                        i + 1
+                    );
 
+                    continue;
+                }
                 let mut decoder = unsafe { Box::from_raw(decoder_ptr) };
 
                 // Set the tv pointer
