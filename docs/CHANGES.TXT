@@ -1,5 +1,6 @@
 0.96.6 (unreleased)
 -------------------
+- Fix: Incorrect strlen argument when writing end timestamps in MKV subtitle extraction (WebVTT, SRT, ASS/SSA)
 - Fix: DVB EIT start time BCD decoding in XMLTV output causing invalid timestamps (#1835)
 - New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow. 
 - Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
