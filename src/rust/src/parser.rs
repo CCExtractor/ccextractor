@@ -773,6 +773,11 @@ impl OptionsExt for Options {
             self.set_output_format(args);
         }
 
+        // --- report-format (used by -out=report) ---
+        if let Some(ref fmt) = args.report_format {
+            self.report_format = Some(fmt.to_lowercase());
+        }
+
         if let Some(ref startcreditstext) = args.startcreditstext {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
