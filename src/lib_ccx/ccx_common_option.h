@@ -90,8 +90,16 @@ struct encoder_cfg
 	int extract_only_708; // 1 if only 708 subs extraction is enabled
 };
 
+typedef enum
+{
+    REPORT_FORMAT_TEXT = 0,
+    REPORT_FORMAT_JSON = 1
+} report_format_t;
+
+
 struct ccx_s_options // Options from user parameters
 {
+	report_format_t report_format;
 	int extract;   // Extract 1st, 2nd or both fields
 	int no_rollup; // Disable roll-up emulation (no duplicate output in generated file)
 	int noscte20;
@@ -201,7 +209,8 @@ struct ccx_s_options // Options from user parameters
 	int multiprogram;
 	int out_interval;
 	int segment_on_key_frames_only;
-	int scc_framerate; // SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
+	int scc_framerate;
+	 // SCC input framerate: 0=29.97 (default), 1=24, 2=25, 3=30
 #ifdef WITH_LIBCURL
 	char *curlposturl;
 #endif

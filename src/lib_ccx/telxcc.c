@@ -884,11 +884,48 @@ page_is_empty:
 			}
 			else
 			{
-				// OK, the old and new buffer don't match. So write the old
-				telxcc_dump_prev_page(ctx, sub);
-				ctx->prev_hide_timestamp = page->hide_timestamp;
-				ctx->prev_show_timestamp = page->show_timestamp;
+				// Instead of dumping immediately, check if sentence ended
+				if (ctx->page_buffer_prev && ctx->page_buffer_cur)
+				{
+					int len = strlen(ctx->page_buffer_prev);
+
+					// Skip trailing spaces/newlines
+					while (len > 0 &&
+						(ctx->page_buffer_prev[len - 1] == ' ' ||
+							ctx->page_buffer_prev[len - 1] == '\n' ||
+							ctx->page_buffer_prev[len - 1] == '\r'))
+					{
+						len--;
+					}
+
+					if (len > 0)
+					{
+						char last = ctx->page_buffer_prev[len - 1];
+
+						// Only flush if sentence looks complete
+						if (last == '.' || last == '?' || last == '!' || last == ':')
+						{
+							telxcc_dump_prev_page(ctx, sub);
+							ctx->prev_hide_timestamp = page->hide_timestamp;
+							ctx->prev_show_timestamp = page->show_timestamp;
+						}
+						else
+						{
+							// Merge current fragment into previous buffer
+							page_buffer_add_string(ctx, " ");
+							page_buffer_add_string(ctx, ctx->page_buffer_cur);
+
+							ctx->prev_hide_timestamp = page->hide_timestamp;
+							ctx->prev_show_timestamp = page->show_timestamp;
+
+							// Do not dump yet, just continue without flushing
+							break;
+						}
+					}
+				}
 			}
+
+
 			break;
 		default:
 			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
