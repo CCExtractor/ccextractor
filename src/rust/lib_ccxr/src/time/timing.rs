@@ -344,7 +344,15 @@ impl TimingContext {
                     // use the PTS from when the gap was first detected (near the first I-frame).
                     // Otherwise, use pending_min_pts (no B-frame reordering detected).
                     if self.seen_large_gap {
-                        (true, self.first_large_gap_pts)
+                        let two_frames = FrameCount::new(2)
+                            .as_mpeg_clock_tick(timing_info.current_fps, timing_info.mpeg_clock_freq);
+                        let adj = self.first_large_gap_pts - two_frames;
+                        let pts_for_min = if adj < self.pending_min_pts {
+                            self.pending_min_pts
+                        } else {
+                            adj
+                        };
+                        (true, pts_for_min)
                     } else {
                         (true, self.pending_min_pts)
                     }
@@ -839,4 +847,5 @@ mod tests {
             "seen_large_gap should be reset on PTS reset"
         );
     }
+
 }
