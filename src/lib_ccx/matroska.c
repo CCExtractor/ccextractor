@@ -1742,6 +1742,12 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		free(filename);
 	}
 
+	if (desc < 0)
+	{
+		mprint("\nError: Cannot create output file for subtitle track\n");
+		return;
+	}
+
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
 
@@ -1880,6 +1886,9 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_end);
 		}
 	}
+
+	if (desc != 1)
+		close(desc);
 }
 
 void free_sub_track(struct matroska_sub_track *track)
