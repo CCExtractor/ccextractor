@@ -509,6 +509,10 @@ impl TimingContext {
         if self.pts_reset {
             self.minimum_fts = Timestamp::from_millis(0);
             self.fts_max = self.fts_now;
+            // PTS reset marks a new timing segment; clear cached H.264 large-gap state
+            // so future fallback decisions use post-reset data.
+            self.first_large_gap_pts = MpegClockTick::new(0x01FFFFFFFF);
+            self.seen_large_gap = false;
             self.pts_reset = false;
         }
 
@@ -771,5 +775,68 @@ impl GlobalTimingInfo {
 impl Default for TimingContext {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pts_reset_clears_large_gap_tracking_state() {
+        {
+            let mut timing_info = GLOBAL_TIMING_INFO.write().unwrap();
+            timing_info.timing_settings.is_elementary_stream = false;
+            timing_info.timing_settings.disable_sync_check = false;
+            timing_info.timing_settings.no_sync = false;
+            timing_info.mpeg_clock_freq = 90_000;
+            timing_info.current_fps = DEFAULT_FRAME_RATE;
+            timing_info.frames_since_ref_time = FrameCount::new(0);
+            timing_info.total_frames_count = FrameCount::new(0);
+        }
+
+        let mut ctx = unsafe {
+            TimingContext::from_raw_parts(
+                PtsSet::MinPtsSet,
+                false,
+                false,
+                MpegClockTick::new(900),
+                MpegClockTick::new(1_000),
+                0,
+                MpegClockTick::new(1_000),
+                FrameType::IFrame,
+                FrameCount::new(0),
+                MpegClockTick::new(900),
+                MpegClockTick::new(1_000),
+                Timestamp::from_millis(100),
+                Timestamp::from_millis(200),
+                Timestamp::from_millis(0),
+                Timestamp::from_millis(0),
+                Timestamp::from_millis(300),
+                Timestamp::from_millis(0),
+                false,
+                Timestamp::from_millis(0),
+                MpegClockTick::new(0),
+                true,
+                MpegClockTick::new(1_500),
+                true,
+            )
+        };
+
+        assert!(ctx.set_fts());
+
+        let (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, pts_reset, first_large_gap_pts, seen_large_gap) =
+            unsafe { ctx.as_raw_parts() };
+
+        assert!(!pts_reset, "pts_reset should be cleared after handling reset");
+        assert_eq!(
+            first_large_gap_pts,
+            MpegClockTick::new(0x01FFFFFFFF),
+            "first_large_gap_pts should be reset on PTS reset"
+        );
+        assert!(
+            !seen_large_gap,
+            "seen_large_gap should be reset on PTS reset"
+        );
     }
 }
