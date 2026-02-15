@@ -230,6 +230,7 @@ void process_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, struct
 // params_dump.c
 void params_dump(struct lib_ccx_ctx *ctx);
 void print_file_report(struct lib_ccx_ctx *ctx);
+void print_file_report_json(struct lib_ccx_ctx *ctx);
 
 // output.c
 void dinit_write(struct ccx_s_write *wb);

@@ -1292,7 +1292,8 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 				}
 
 				handle_single(hi, context);
-				handle_single(lo, context);
+				if (lo >= 0x20)  // ADD THIS CHECK - only write lo if it's a printable character
+					handle_single(lo, context);
 				wrote_to_screen = 1;
 				context->last_c1 = 0;
 				context->last_c2 = 0;
