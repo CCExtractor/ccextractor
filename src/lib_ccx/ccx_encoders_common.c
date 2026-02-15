@@ -48,6 +48,8 @@ static const char *ssa_header =
     "[Script Info]\n\
 Title: Default file\n\
 ScriptType: v4.00+\n\
+PlayResX: 384\n\
+PlayResY: 288\n\
 \n\
 [V4+ Styles]\n\
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n\
