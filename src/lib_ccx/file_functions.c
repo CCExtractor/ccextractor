@@ -249,7 +249,7 @@ void buffered_seek(struct ccx_demuxer *ctx, int offset)
 	}
 }
 
-void sleepandchecktimeout(struct ccx_demuxer *ctx, time_t start)
+static void sleepandchecktimeout(struct ccx_demuxer *ctx, time_t start)
 {
 	if (ctx->input_source == CCX_DS_STDIN)
 	{
