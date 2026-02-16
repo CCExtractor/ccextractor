@@ -1668,6 +1668,7 @@ pub mod tests {
         common::{MkvLangFilter, OutputFormat, SelectCodec, StreamMode, StreamType},
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
+    use serial_test::serial;
 
     /// # Safety
     ///
@@ -2323,18 +2324,21 @@ pub mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_k_suffix() {
         let (_, _) = parse_args(&["--buffersize", "64K"]);
         assert_eq!(get_file_buffer_size(), 64 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_m_suffix() {
         let (_, _) = parse_args(&["--buffersize", "2M"]);
         assert_eq!(get_file_buffer_size(), 2 * 1024 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_numeric_value() {
         let (_, _) = parse_args(&["--buffersize", "8192"]);
         assert_eq!(get_file_buffer_size(), 8192);

@@ -15,6 +15,29 @@ use std::{
     ptr::copy_nonoverlapping,
 };
 
+/// Get the layout for a single caption row
+fn row_layout() -> Layout {
+    Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).expect("row layout calculation")
+}
+
+/// Allocate a new zero-initialized caption row
+///
+/// # Safety
+/// The returned pointer must be freed using `dealloc_row`
+pub unsafe fn alloc_row() -> *mut dtvcc_symbol {
+    alloc_zeroed(row_layout()) as *mut dtvcc_symbol
+}
+
+/// Deallocate a caption row
+///
+/// # Safety
+/// `ptr` must have been allocated by `alloc_row` or `alloc_zeroed` with `row_layout`
+pub unsafe fn dealloc_row(ptr: *mut dtvcc_symbol) {
+    if !ptr.is_null() {
+        dealloc(ptr as *mut u8, row_layout());
+    }
+}
+
 use super::timing::get_time_str;
 use super::{
     CCX_DTVCC_MAX_COLUMNS, CCX_DTVCC_MAX_ROWS, CCX_DTVCC_SCREENGRID_COLUMNS,
@@ -161,23 +184,15 @@ impl dtvcc_window {
     pub fn clear_row(&mut self, row_index: usize) {
         if is_true(self.memory_reserved) {
             unsafe {
-                let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
-                if let Err(e) = layout {
-                    error!("clear_row: Incorrect Layout, {e}");
-                } else {
-                    let layout = layout.unwrap();
-                    // deallocate previous memory
-                    if !self.rows[row_index].is_null() {
-                        dealloc(self.rows[row_index] as *mut u8, layout);
-                    }
+                // deallocate previous memory
+                dealloc_row(self.rows[row_index]);
 
-                    // allocate new zero initialized memory
-                    let ptr = alloc_zeroed(layout);
-                    if ptr.is_null() {
-                        error!("clear_row: Not enough memory",);
-                    }
-                    self.rows[row_index] = ptr as *mut dtvcc_symbol;
+                // allocate new zero initialized memory
+                let ptr = alloc_row();
+                if ptr.is_null() {
+                    error!("clear_row: Not enough memory",);
                 }
+                self.rows[row_index] = ptr;
             }
             for col in 0..CCX_DTVCC_MAX_COLUMNS as usize {
                 // Set pen color and attributes to default value
