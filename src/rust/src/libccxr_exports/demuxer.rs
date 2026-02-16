@@ -453,6 +453,27 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
     }
 }
 
+/// # Safety
+/// This function must be called before the C code frees the demuxer struct.
+/// It frees Rust-allocated resources that C cannot safely free.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_demuxer_delete(ctx: *mut ccx_demuxer) {
+    if ctx.is_null() {
+        return;
+    }
+    let c = &mut *ctx;
+
+    // Free Rust-allocated filebuffer
+    if !c.filebuffer.is_null() {
+        use crate::file_functions::file::FILEBUFFERSIZE;
+        let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+            c.filebuffer,
+            FILEBUFFERSIZE,
+        ));
+        c.filebuffer = std::ptr::null_mut();
+    }
+}
+
 // Extern function for ccx_demuxer_isopen
 /// # Safety
 /// This function is unsafe because it dereferences a raw pointer.
