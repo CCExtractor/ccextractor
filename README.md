@@ -28,6 +28,22 @@ The core functionality is written in C. Other languages used include C++ and Pyt
 
 Downloads for precompiled binaries and source code can be found [on our website](https://ccextractor.org/public/general/downloads/).
 
+### WebVTT Output Options
+
+CCExtractor supports optional WebVTT-specific headers for advanced use cases
+such as HTTP Live Streaming (HLS).
+
+#### `--timestamp-map`
+
+Enable writing the `X-TIMESTAMP-MAP` header in WebVTT output.
+
+This header is required for HLS workflows but is **disabled by default**
+to preserve compatibility with standard WebVTT players.
+
+Example:
+```bash
+ccextractor input.ts --timestamp-map -o output.vtt
+```
 
 ### Windows Package Managers
 

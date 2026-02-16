@@ -120,11 +120,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			start_time = sub->start_time;
 			end_time = sub->end_time;
 		}
-		if (context->sentence_cap)
-		{
-			// TODO capitalize (context, line_number,data);
-			// TODO correct_case_with_dictionary(line_number, data);
-		}
+		if (sub->data)
+			correct_spelling_and_censor_words(context, (unsigned char *)sub->data, strlen((char *)sub->data));
 
 		if (start_time == -1)
 		{

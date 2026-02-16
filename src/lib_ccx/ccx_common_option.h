@@ -190,6 +190,7 @@ struct ccx_s_options // Options from user parameters
 	enum ccx_datasource input_source; // Files, stdin or network
 
 	char *output_filename;
+	char *report_format; // NULL = default text, e.g. "json"
 
 	char **inputfile;    // List of files to process
 	int num_input_files; // How many?

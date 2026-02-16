@@ -370,6 +370,7 @@ pub struct Options {
     /// The end of the segment we actually process
     pub extraction_end: Option<Timestamp>,
     pub print_file_reports: bool,
+    pub report_format: Option<String>,
     /// Contains the settings for the 608 decoder.
     pub settings_608: Decoder608Settings,
     /// Same for 708 decoder
@@ -634,6 +635,7 @@ impl Default for Options {
             segment_on_key_frames_only: Default::default(),
             scc_framerate: 0,           // 0 = 29.97fps (default)
             scc_accurate_timing: false, // Off by default for backwards compatibility (issue #1120)
+            report_format: None,
             debug_mask: DebugMessageMask::new(
                 DebugMessageFlag::GENERIC_NOTICE,
                 DebugMessageFlag::VERBOSE,
