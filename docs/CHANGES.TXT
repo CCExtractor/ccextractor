@@ -1,5 +1,6 @@
 0.96.6 (unreleased)
 -------------------
+- New: Allow output \0 terminated frames via --null-terminated
 - New: Add optional machine-readable JSON output for -out=report via --report-format json
 - Fix: Incorrect strlen argument when writing end timestamps in MKV subtitle extraction (WebVTT, SRT, ASS/SSA)
 - Fix: File descriptor leak and missing open() error check in MKV subtitle track saving
