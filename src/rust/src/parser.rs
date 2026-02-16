@@ -291,7 +291,7 @@ impl OptionsExt for Options {
             self.set_input_format_type(InFormat::Mkv);
         } else {
             fatal!(
-    cause = ExitCause::MalformedParameter;
+                cause = ExitCause::MalformedParameter;
                 "Unknown input file format: {}\n",
                 args.input
                     .map(|i| i.to_string())
