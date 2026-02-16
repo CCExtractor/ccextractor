@@ -290,12 +290,13 @@ impl OptionsExt for Options {
         } else if args.mkv {
             self.set_input_format_type(InFormat::Mkv);
         } else {
-            // fatal!(
-            //     cause = ExitCause::MalformedParameter;
-            //    "Unknown input file format: {}\n", args.input.map(|i| i.to_string()).unwrap_or_else(|| "Unknown".to_string())
-            // );
-
-            // No specific format flag matched, so we fall back to autodetection.
+            fatal!(
+    cause = ExitCause::MalformedParameter;
+                "Unknown input file format: {}\n",
+                args.input
+                    .map(|i| i.to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
+            );
         }
     }
 
@@ -664,18 +665,18 @@ impl OptionsExt for Options {
             self.timestamp_map = true;
         }
 
-        // if args.es
-        //     || args.ts
-        //     || args.ps
-        //     || args.asf
-        //     || args.wtv
-        //     || args.mp4
-        //     || args.mkv
-        //     || args.dvr_ms
-        //     || args.input.is_some()
-        // {
-        self.set_input_format(args);
-        // }
+        if args.es
+            || args.ts
+            || args.ps
+            || args.asf
+            || args.wtv
+            || args.mp4
+            || args.mkv
+            || args.dvr_ms
+            || args.input.is_some()
+        {
+            self.set_input_format(args);
+        }
 
         if let Some(ref codec) = args.codec {
             match codec {
