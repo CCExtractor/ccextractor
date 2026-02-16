@@ -203,8 +203,8 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				mprint("Warning:Loss of data\n");
 			}
 
-			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-			if (ret < context->encoded_crlf_length)
+			ret = write(context->out->fh, context->encoded_end_frame, context->encoded_end_frame_length);
+			if (ret < context->encoded_end_frame_length)
 			{
 				mprint("Warning:Loss of data\n");
 			}
@@ -325,8 +325,8 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			mprint("Warning:Loss of data\n");
 		}
 
-		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		if (ret < context->encoded_crlf_length)
+		ret = write(context->out->fh, context->encoded_end_frame, context->encoded_end_frame_length);
+		if (ret < context->encoded_end_frame_length)
 		{
 			mprint("Warning:Loss of data\n");
 		}
