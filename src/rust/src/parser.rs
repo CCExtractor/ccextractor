@@ -91,9 +91,17 @@ where
 
 fn get_atoi_hex<T>(s: &str) -> T
 where
-    T: Integer + std::str::FromStr<Err = std::num::ParseIntError>,
+    T: Integer + std::str::FromStr,
 {
-    atoi_hex(s).unwrap()
+    match atoi_hex(s) {
+        Ok(v) => v,
+        Err(e) => {
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "{}\n", e
+            );
+        }
+    }
 }
 
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
@@ -1259,6 +1267,9 @@ impl OptionsExt for Options {
 
         if let Some(customtxt) = args.customtxt {
             if !self.transcript_settings.is_final {
+                if self.date_format == TimestampFormat::None {
+                    self.date_format = TimestampFormat::HHMMSSFFF;
+                }
                 let chars = format!("{customtxt:07}").chars().collect::<Vec<char>>();
                 self.transcript_settings.show_start_time = chars[0] == '1';
                 self.transcript_settings.show_end_time = chars[1] == '1';
@@ -1537,9 +1548,11 @@ impl OptionsExt for Options {
 
         // Initialize some Encoder Configuration
         self.enc_cfg.extract = self.extract;
-        let inputfile = self.inputfile.as_ref().unwrap();
-        self.enc_cfg.multiple_files = true;
-        self.enc_cfg.first_input_file.clone_from(&inputfile[0]);
+        if !self.is_inputfile_empty() {
+            let inputfile = self.inputfile.as_ref().unwrap();
+            self.enc_cfg.multiple_files = true;
+            self.enc_cfg.first_input_file.clone_from(&inputfile[0]);
+        }
         self.enc_cfg.cc_to_stdout = self.cc_to_stdout;
         self.enc_cfg.write_format = self.write_format;
         self.enc_cfg.send_to_srv = self.send_to_srv;
