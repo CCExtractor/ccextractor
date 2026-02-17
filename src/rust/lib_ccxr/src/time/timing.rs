@@ -344,8 +344,10 @@ impl TimingContext {
                     // use the PTS from when the gap was first detected (near the first I-frame).
                     // Otherwise, use pending_min_pts (no B-frame reordering detected).
                     if self.seen_large_gap {
-                        let two_frames = FrameCount::new(2)
-                            .as_mpeg_clock_tick(timing_info.current_fps, timing_info.mpeg_clock_freq);
+                        let two_frames = FrameCount::new(2).as_mpeg_clock_tick(
+                            timing_info.current_fps,
+                            timing_info.mpeg_clock_freq,
+                        );
                         let adj = self.first_large_gap_pts - two_frames;
                         let pts_for_min = if adj < self.pending_min_pts {
                             self.pending_min_pts
@@ -833,10 +835,36 @@ mod tests {
 
         assert!(ctx.set_fts());
 
-        let (_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, pts_reset, first_large_gap_pts, seen_large_gap) =
-            unsafe { ctx.as_raw_parts() };
+        let (
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            pts_reset,
+            first_large_gap_pts,
+            seen_large_gap,
+        ) = unsafe { ctx.as_raw_parts() };
 
-        assert!(!pts_reset, "pts_reset should be cleared after handling reset");
+        assert!(
+            !pts_reset,
+            "pts_reset should be cleared after handling reset"
+        );
         assert_eq!(
             first_large_gap_pts,
             MpegClockTick::new(0x01FFFFFFFF),
@@ -847,5 +875,4 @@ mod tests {
             "seen_large_gap should be reset on PTS reset"
         );
     }
-
 }
