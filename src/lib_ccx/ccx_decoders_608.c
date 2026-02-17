@@ -879,10 +879,6 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
-			// For pop-on captions, current_visible_start_ms might not be set yet
-			// (write_char skips setting it for MODE_POPON). Set it now if needed.
-			if (context->current_visible_start_ms == 0)
-				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
