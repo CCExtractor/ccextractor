@@ -411,9 +411,18 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		{
 			// if this any generally used video stream tyoe get clashed with ATSC/SCTE standard
 			// then this code can go in some atsc flag
+			// Validate ES_info_length against buffer bounds to prevent heap overflow
+			if (i + 5 + ES_info_length > len)
+				break;
+
 			unsigned char *es_info = buf + i + 5;
-			for (desc_len = 0; (buf + i + 5 + ES_info_length) > es_info; es_info += desc_len)
+			unsigned char *es_info_end = buf + i + 5 + ES_info_length;
+			for (desc_len = 0; es_info_end > es_info; es_info += desc_len)
 			{
+				// Need at least 2 bytes for descriptor_tag and desc_len
+				if (es_info + 2 > es_info_end)
+					break;
+
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				int nb_service;
 				int is_608;
@@ -437,9 +446,18 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 
 		if (IS_FEASIBLE(ctx->codec, ctx->nocodec, CCX_CODEC_TELETEXT) && ES_info_length && stream_type == CCX_STREAM_TYPE_PRIVATE_MPEG2) // MPEG-2 Packetized Elementary Stream packets containing private data
 		{
+			// Validate ES_info_length against buffer bounds
+			if (i + 5 + ES_info_length > len)
+				continue;
+
 			unsigned char *es_info = buf + i + 5;
-			for (desc_len = 0; (buf + i + 5 + ES_info_length) - es_info; es_info += desc_len)
+			unsigned char *es_info_end = buf + i + 5 + ES_info_length;
+			for (desc_len = 0; es_info_end > es_info; es_info += desc_len)
 			{
+				// Need at least 2 bytes for descriptor_tag and desc_len
+				if (es_info + 2 > es_info_end)
+					break;
+
 				enum ccx_mpeg_descriptor descriptor_tag = (enum ccx_mpeg_descriptor)(*es_info++);
 				desc_len = (*es_info++);
 				if (!IS_VALID_TELETEXT_DESC(descriptor_tag))
@@ -620,6 +638,10 @@ int parse_PAT(struct ccx_demuxer *ctx)
 
 	payload_start = ctx->PID_buffers[0]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0]->buffer_length - (pointer_field + 1);
+
+	// Need at least 8 bytes to read header fields
+	if (payload_length < 8)
+		return 0;
 
 	section_number = payload_start[6];
 	last_section_number = payload_start[7];

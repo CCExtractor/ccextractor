@@ -1,5 +1,6 @@
 use crate::bindings::ccx_demuxer;
 use crate::demuxer::common_types::{CcxDemuxer, CcxStreamMp4Box, STARTBYTESLENGTH};
+use crate::ffi_alloc;
 use crate::file_functions::file::{buffered_read_opt, return_to_buffer};
 use crate::libccxr_exports::demuxer::{alloc_new_demuxer, copy_demuxer_from_rust_to_c};
 use cfg_if::cfg_if;
@@ -145,7 +146,7 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
         copy_demuxer_from_rust_to_c(demuxer, ctx);
         let private = ccx_gxf_init(demuxer);
         ctx.private_data = private as *mut core::ffi::c_void;
-        drop(Box::from_raw(demuxer));
+        ffi_alloc::c_free(demuxer);
     }
 
     // WTV check
@@ -269,7 +270,7 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
             let private = ccx_mxf_init(demuxer);
             ctx.private_data = private as *mut core::ffi::c_void;
         }
-        drop(Box::from_raw(demuxer));
+        ffi_alloc::c_free(demuxer);
     }
 
     // Still not found
@@ -331,10 +332,15 @@ unsafe fn detect_stream_type_common(ctx: &mut CcxDemuxer, ccx_options: &mut Opti
             }
 
             // Now check for PS (Needs PACK header)
+            // The loop below checks 4 consecutive bytes (i, i+1, i+2, i+3), so we need
+            // to stop 3 bytes before the end to avoid out-of-bounds access.
+            // - If buffer < 50000: limit = buffer_size - 3 (scan entire buffer)
+            // - If buffer >= 50000: limit = 49997 (= 50000 - 3, cap the scan range)
+            // We use saturating_sub to safely handle tiny buffers (< 3 bytes).
             let limit = if ctx.startbytes_avail < 50000 {
-                ctx.startbytes_avail - 3
+                ctx.startbytes_avail.saturating_sub(3)
             } else {
-                49997
+                50000 - 3 // Don't scan huge buffers entirely; 50KB is enough
             } as usize;
             for i in 0..limit {
                 if ctx.startbytes[i] == 0x00
@@ -427,15 +433,21 @@ pub fn is_valid_mp4_box(
                 )
             );
 
-            // If the box type is "moov", check if it contains a valid movie header (mvhd)
-            if idx == 2
-                && !(buffer[position + 12] == b'm'
+            // If the box type is "moov", it must contain "mvhd" to be valid.
+            // We need 16 bytes from position to check bytes 12-15 for "mvhd".
+            if idx == 2 {
+                if position + 16 > buffer.len() {
+                    // Not enough bytes to verify mvhd - skip this box
+                    continue;
+                }
+                if !(buffer[position + 12] == b'm'
                     && buffer[position + 13] == b'v'
                     && buffer[position + 14] == b'h'
                     && buffer[position + 15] == b'd')
-            {
-                // If "moov" doesn't have "mvhd", skip it.
-                continue;
+                {
+                    // moov without mvhd is not valid - skip it
+                    continue;
+                }
             }
 
             // Box name matches. Do a crude validation of possible box size,

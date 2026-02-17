@@ -899,6 +899,11 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 #endif
 
 	memset(&dec_sub, 0, sizeof(dec_sub));
+	if (file == NULL)
+	{
+		mprint("Error: NULL file path provided to processmp4\n");
+		return -1;
+	}
 	mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
 	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);

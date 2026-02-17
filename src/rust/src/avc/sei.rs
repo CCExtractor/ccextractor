@@ -50,7 +50,7 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return 0;
     }
 
-    let mut payload_type = 0;
+    let mut payload_type: u32 = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_type += 255;
         seibuf_idx += 1;
@@ -60,10 +60,10 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_type += seibuf[seibuf_idx] as i32;
+    payload_type += seibuf[seibuf_idx] as u32;
     seibuf_idx += 1;
 
-    let mut payload_size = 0;
+    let mut payload_size: u32 = 0;
     while seibuf_idx < seibuf.len() && seibuf[seibuf_idx] == 0xff {
         payload_size += 255;
         seibuf_idx += 1;
@@ -73,7 +73,7 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
         return seibuf_idx;
     }
 
-    payload_size += seibuf[seibuf_idx] as i32;
+    payload_size += seibuf[seibuf_idx] as u32;
     seibuf_idx += 1;
 
     let mut broken = false;
@@ -226,12 +226,10 @@ pub fn user_data_registered_itu_t_t35(ctx: &mut AvcContextRust, userbuf: &[u8]) 
                         }
 
                         // Save the data and process once we know the sequence number
-                        if ((ctx.cc_count as usize + local_cc_count) * 3) + 1 > ctx.cc_databufsize {
+                        let required_size = ((ctx.cc_count as usize + local_cc_count) * 3) + 1;
+                        if required_size > ctx.cc_data.len() {
                             let new_size = ((ctx.cc_count as usize + local_cc_count) * 6) + 1;
-                            unsafe {
-                                ctx.cc_data.set_len(new_size);
-                            }
-                            ctx.cc_data.reserve(new_size);
+                            ctx.cc_data.resize(new_size, 0);
                             ctx.cc_databufsize = new_size;
                         }
 

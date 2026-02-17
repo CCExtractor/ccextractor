@@ -215,7 +215,7 @@ const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
-#[command(version = "1.0")]
+#[command(version = "0.96.5")]
 #[command(about = "Teletext portions taken from Petr Kutalek's telxcc
 --------------------------------------------------------------------------
 Originally based on McPoodle's tools. Check his page for lots of information
@@ -439,8 +439,14 @@ pub struct Args {
     pub dvr_ms: bool,
     #[arg(long, value_name="format", help_heading=OUTPUT_FORMATS)]
     pub out: Option<OutFormat>,
+
+    /// Format for -out=report output (e.g. json)
+    #[arg(long = "report-format", value_name = "FORMAT", help_heading=OUTPUT_FORMATS)]
+    pub report_format: Option<String>,
+
     #[arg(long, hide = true)]
     pub srt: bool,
+
     #[arg(long, hide = true)]
     pub webvtt: bool,
     #[arg(long, hide = true)]

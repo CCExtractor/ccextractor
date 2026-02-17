@@ -122,6 +122,8 @@ void parse_ebml(FILE *file)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -186,6 +188,8 @@ void parse_segment_info(FILE *file)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -484,6 +488,8 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -612,6 +618,8 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -734,14 +742,24 @@ int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fram
 	{
 		uint32_t nal_length;
 
-		nal_length = bswap32(*(long *)&frame.data[i]);
+		if (i + nal_unit_size > frame.len)
+			break;
+
+		nal_length =
+		    ((uint32_t)frame.data[i] << 24) |
+		    ((uint32_t)frame.data[i + 1] << 16) |
+		    ((uint32_t)frame.data[i + 2] << 8) |
+		    (uint32_t)frame.data[i + 3];
+
 		i += nal_unit_size;
 
+		if (nal_length > frame.len - i)
+			break;
+
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	} // outer for
-	assert(i == frame.len);
 
 	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 
@@ -769,11 +787,22 @@ int process_hevc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_fra
 	{
 		uint32_t nal_length;
 
-		nal_length = bswap32(*(long *)&frame.data[i]);
+		if (i + nal_unit_size > frame.len)
+			break;
+
+		nal_length =
+		    ((uint32_t)frame.data[i] << 24) |
+		    ((uint32_t)frame.data[i + 1] << 16) |
+		    ((uint32_t)frame.data[i + 2] << 8) |
+		    (uint32_t)frame.data[i + 3];
+
 		i += nal_unit_size;
 
+		if (nal_length > frame.len - i)
+			break;
+
 		if (nal_length > 0)
-			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&(frame.data[i]), nal_length, &mkv_ctx->dec_sub);
+			do_NAL(enc_ctx, dec_ctx, (unsigned char *)&frame.data[i], nal_length, &mkv_ctx->dec_sub);
 		i += nal_length;
 	}
 
@@ -845,6 +874,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -1197,6 +1228,8 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)
@@ -1241,6 +1274,8 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		if (feof(file))
+			break;
 		code_len++;
 		switch (code)
 		{
@@ -1707,6 +1742,12 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		free(filename);
 	}
 
+	if (desc < 0)
+	{
+		mprint("\nError: Cannot create output file for subtitle track\n");
+		return;
+	}
+
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
 
@@ -1760,7 +1801,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 
 			// writing cue settings list
 			if (blockaddition != NULL)
@@ -1801,7 +1842,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "\n", 1);
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, "\n", 1);
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
@@ -1831,7 +1872,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, ",", 1);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, ",", 1);
 			char *text = ass_ssa_sentence_erase_read_order(sentence->text);
 			char *text_to_free = text; // Save original pointer for freeing
@@ -1845,6 +1886,9 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_end);
 		}
 	}
+
+	if (desc != 1)
+		close(desc);
 }
 
 void free_sub_track(struct matroska_sub_track *track)
@@ -1915,6 +1959,9 @@ void matroska_parse(struct matroska_ctx *mkv_ctx)
 	{
 		code <<= 8;
 		code += mkv_read_byte(file);
+		// Check for EOF after reading - feof() is only set after a failed read
+		if (feof(file))
+			break;
 		code_len++;
 
 		switch (code)

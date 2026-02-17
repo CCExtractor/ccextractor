@@ -1,4 +1,5 @@
 use crate::bindings::{lib_ccx_ctx, list_head};
+use crate::ffi_alloc;
 use lib_ccxr::common::{Codec, Decoder608Report, DecoderDtvccReport, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
 use std::ptr::null_mut;
@@ -109,7 +110,9 @@ impl Default for PSIBuffer {
     fn default() -> Self {
         PSIBuffer {
             prev_ccounter: 0,
-            buffer: Box::into_raw(Box::new(0u8)),
+            // Initialize with null to avoid unnecessary heap allocations and
+            // signal that the buffer is currently empty.
+            buffer: std::ptr::null_mut(),
             buffer_length: 0,
             ccounter: 0,
         }
@@ -274,22 +277,18 @@ impl Default for CcxDemuxer<'_> {
 /// null pointers which are safely ignored.
 impl Drop for CcxDemuxer<'_> {
     fn drop(&mut self) {
-        // Free all non-null PSIBuffer pointers (Rust-owned from Box::into_raw)
+        // Free all non-null PSIBuffer pointers.
+        // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pid_buffers.drain(..) {
-            if !ptr.is_null() {
-                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
-                unsafe {
-                    drop(Box::from_raw(ptr));
-                }
+            unsafe {
+                ffi_alloc::c_free(ptr);
             }
         }
-        // Free all non-null PMTEntry pointers (Rust-owned from Box::into_raw)
+        // Free all non-null PMTEntry pointers.
+        // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pids_programs.drain(..) {
-            if !ptr.is_null() {
-                // SAFETY: These pointers were created via Box::into_raw in copy_demuxer_from_c_to_rust
-                unsafe {
-                    drop(Box::from_raw(ptr));
-                }
+            unsafe {
+                ffi_alloc::c_free(ptr);
             }
         }
     }

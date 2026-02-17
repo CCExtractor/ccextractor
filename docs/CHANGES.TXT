@@ -1,5 +1,21 @@
+0.96.6 (unreleased)
+-------------------
+- New: Add optional machine-readable JSON output for -out=report via --report-format json
+- Fix: Incorrect strlen argument when writing end timestamps in MKV subtitle extraction (WebVTT, SRT, ASS/SSA)
+- Fix: File descriptor leak and missing open() error check in MKV subtitle track saving
+- Fix: DVB EIT start time BCD decoding in XMLTV output causing invalid timestamps (#1835)
+- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow. 
+- New: Implement dictionary-based capitalization and censorship for transcripts 
+- Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
+- Fix: Prevent infinite loop on truncated MKV files
+- Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
+- Fix: Delete empty output files instead of leaving 0-byte files (#1282)
+- Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
+- Fix: segmentation fault when using --multiprogram
+
 0.96.5 (2026-01-05)
 -------------------
+- New: CCExtractor is available again via Homebrew on macOS and Linux.
 - New: Add support for raw CDP (Caption Distribution Packet) files (#1406)
 - New: Add --scc-accurate-timing option for bandwidth-aware SCC output (#1120)
 - Fix: MXF files containing CEA-708 captions not being detected/extracted (#1647)
@@ -52,6 +68,7 @@
   - Extract multiple teletext pages simultaneously with separate output files
   - Use --tpage multiple times (e.g., --tpage 100 --tpage 200)
   - Output files are named with page suffix (e.g., output_p100.srt, output_p200.srt)
+- Fix: SPUPNG subtitle offset calculation to center based on actual image dimensions
 
 - New: Added --list-tracks (-L) option to list all tracks in media files without processing
   New: Chinese, Korean, Japanese support - proper encoding and OCR.

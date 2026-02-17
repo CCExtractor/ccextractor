@@ -69,10 +69,11 @@ pub fn null_pointer<T>() -> *mut T {
 use std::os::raw::c_char;
 
 pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
-    let mut c_strs: Vec<*mut c_char> = Vec::new();
+    let mut c_strs: Vec<*mut c_char> = Vec::with_capacity(strs.len());
     for s in strs {
         c_strs.push(string_to_c_char(&s));
     }
+    c_strs.shrink_to_fit();
     let ptr = c_strs.as_mut_ptr();
     std::mem::forget(c_strs);
     ptr
