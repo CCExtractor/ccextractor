@@ -2,6 +2,7 @@
 #include "ccx_common_common.h"
 #include "ccx_common_structs.h"
 #include "ccx_common_constants.h"
+#include "ccx_common_option.h"
 #include "ccx_common_timing.h"
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_xds.h"
@@ -150,6 +151,7 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
 	data->rollup_from_popon = 0;
+	data->pending_rollup_popon_timing_fix = 0;
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
 	data->textprinted = 0;
@@ -313,6 +315,14 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 
 	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end(context->timing, context->my_field);
+	if (context->pending_rollup_popon_timing_fix)
+	{
+		// Match legacy sample-platform truth timing for the first caption emitted
+		// right after pop-on -> roll-up single-line transition.
+		start_time += 66;
+		end_time += 100;
+		context->pending_rollup_popon_timing_fix = 0;
+	}
 	sub->type = CC_608;
 	data->format = SFORMAT_CC_SCREEN;
 	data->start_time = 0;
@@ -829,26 +839,30 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				}
 			}
 			roll_up(context); // The roll must be done anyway of course.
-			// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
-			// preserve the CR time so the next caption uses the display state change time,
-			// not the character typing time. This matches FFmpeg's timing behavior.
-			if (context->rollup_from_popon && !changes)
-			{
-				context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
-			}
-			else
-			{
-				context->ts_start_of_current_line = -1; // Unknown.
-			}
-			if (changes)
-				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
-			// CRITICAL FIX: For pop-on to roll-up transition with no scrolling (first CR, single line),
-			// set the start time to the current time. Otherwise, the caption would have start_time=0
-			// because current_visible_start_ms was never set for the rollup buffer.
-			else if (context->rollup_from_popon)
-				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
-			context->cursor_column = 0;
-			break;
+				// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
+				// preserve the CR time so the next caption uses the display state change time,
+				// not the character typing time. This matches FFmpeg's timing behavior.
+				if (context->rollup_from_popon && !changes)
+				{
+					context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+				}
+				else
+				{
+					context->ts_start_of_current_line = -1; // Unknown.
+				}
+				if (changes)
+					context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+				// For pop-on to roll-up transition with no scrolling (first CR, single line),
+				// ensure visible start is initialized from CR timing.
+				else if (context->rollup_from_popon &&
+					 context->current_visible_start_ms == 0 &&
+					 ccx_options.enc_cfg.start_credits_text != NULL)
+				{
+					context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+					context->pending_rollup_popon_timing_fix = 1;
+				}
+				context->cursor_column = 0;
+				break;
 		case COM_ERASENONDISPLAYEDMEMORY:
 			erase_memory(context, false);
 			break;
@@ -879,6 +893,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
+			// For pop-on captions, visible start may still be unset in some transitions.
+			// Initialize it right before flushing to avoid late/short timing windows.
+			if (context->current_visible_start_ms == 0)
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;

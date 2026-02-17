@@ -48,6 +48,7 @@ typedef struct ccx_decoder_608_context
 	int my_field;			// Used for sanity checks
 	int my_channel;			// Used for sanity checks
 	int rollup_from_popon;		// Track transition from pop-on/paint-on to roll-up mode
+	int pending_rollup_popon_timing_fix; // Apply one-shot timing correction for pop-on->roll-up transition caption
 	int64_t bytes_processed_608;	// To be written ONLY by process_608
 	int have_cursor_position;
 

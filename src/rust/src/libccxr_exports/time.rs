@@ -149,11 +149,7 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
     let min_pts_adjusted = (*ctx).min_pts_adjusted != 0;
     let seen_known_frame_type = (*ctx).seen_known_frame_type != 0;
     let pending_min_pts = MpegClockTick::new((*ctx).pending_min_pts);
-    // C timing context does not carry first_pts; best-effort seed from pending_min_pts.
-    let first_pts = pending_min_pts;
     let unknown_frame_count = (*ctx).unknown_frame_count;
-    let first_large_gap_pts = MpegClockTick::new((*ctx).first_large_gap_pts);
-    let seen_large_gap = (*ctx).seen_large_gap != 0;
     let current_pts = MpegClockTick::new((*ctx).current_pts);
 
     let current_picture_coding_type = match (*ctx).current_picture_coding_type {
@@ -184,7 +180,6 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
         min_pts_adjusted,
         seen_known_frame_type,
         pending_min_pts,
-        first_pts,
         unknown_frame_count,
         current_pts,
         current_picture_coding_type,
@@ -201,8 +196,6 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
         sync_pts2fts_fts,
         sync_pts2fts_pts,
         pts_reset,
-        first_large_gap_pts,
-        seen_large_gap,
     )
 }
 
@@ -222,7 +215,6 @@ unsafe fn write_back_to_common_timing_ctx(
         min_pts_adjusted,
         seen_known_frame_type,
         pending_min_pts,
-        _first_pts,
         unknown_frame_count,
         current_pts,
         current_picture_coding_type,
@@ -239,8 +231,6 @@ unsafe fn write_back_to_common_timing_ctx(
         sync_pts2fts_fts,
         sync_pts2fts_pts,
         pts_reset,
-        first_large_gap_pts,
-        seen_large_gap,
     ) = timing_ctx.as_raw_parts();
 
     (*ctx).pts_set = match pts_set {
@@ -253,8 +243,6 @@ unsafe fn write_back_to_common_timing_ctx(
     (*ctx).seen_known_frame_type = if seen_known_frame_type { 1 } else { 0 };
     (*ctx).pending_min_pts = pending_min_pts.as_i64();
     (*ctx).unknown_frame_count = unknown_frame_count;
-    (*ctx).first_large_gap_pts = first_large_gap_pts.as_i64();
-    (*ctx).seen_large_gap = if seen_large_gap { 1 } else { 0 };
     (*ctx).current_pts = current_pts.as_i64();
 
     (*ctx).current_picture_coding_type = match current_picture_coding_type {

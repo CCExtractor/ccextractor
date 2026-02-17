@@ -778,8 +778,6 @@ impl CType<ccx_common_timing_ctx> for CommonTimingCtx {
             seen_known_frame_type: self.seen_known_frame_type,
             pending_min_pts: self.pending_min_pts,
             unknown_frame_count: self.unknown_frame_count,
-            first_large_gap_pts: self.first_large_gap_pts,
-            seen_large_gap: self.seen_large_gap,
             current_pts: self.current_pts,
             current_picture_coding_type: self.current_picture_coding_type as _,
             current_tref: self.current_tref,
