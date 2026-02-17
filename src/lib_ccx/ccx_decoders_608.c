@@ -839,30 +839,30 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				}
 			}
 			roll_up(context); // The roll must be done anyway of course.
-				// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
-				// preserve the CR time so the next caption uses the display state change time,
-				// not the character typing time. This matches FFmpeg's timing behavior.
-				if (context->rollup_from_popon && !changes)
-				{
-					context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
-				}
-				else
-				{
-					context->ts_start_of_current_line = -1; // Unknown.
-				}
-				if (changes)
-					context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
-				// For pop-on to roll-up transition with no scrolling (first CR, single line),
-				// ensure visible start is initialized from CR timing.
-				else if (context->rollup_from_popon &&
-					 context->current_visible_start_ms == 0 &&
-					 ccx_options.enc_cfg.start_credits_text != NULL)
-				{
-					context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
-					context->pending_rollup_popon_timing_fix = 1;
-				}
-				context->cursor_column = 0;
-				break;
+			// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
+			// preserve the CR time so the next caption uses the display state change time,
+			// not the character typing time. This matches FFmpeg's timing behavior.
+			if (context->rollup_from_popon && !changes)
+			{
+				context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+			}
+			else
+			{
+				context->ts_start_of_current_line = -1; // Unknown.
+			}
+			if (changes)
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+			// For pop-on to roll-up transition with no scrolling (first CR, single line),
+			// ensure visible start is initialized from CR timing.
+			else if (context->rollup_from_popon &&
+				 context->current_visible_start_ms == 0 &&
+				 ccx_options.enc_cfg.start_credits_text != NULL)
+			{
+				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+				context->pending_rollup_popon_timing_fix = 1;
+			}
+			context->cursor_column = 0;
+			break;
 		case COM_ERASENONDISPLAYEDMEMORY:
 			erase_memory(context, false);
 			break;
