@@ -59,21 +59,27 @@ fn set_mpeg_clock_freq(freq: i32) {
 }
 
 fn atol(bufsize: &str) -> i32 {
-    let size = bufsize.to_uppercase().chars().last().unwrap_or(' ');
-    let multiplier = match size {
-        'M' => 1024 * 1024,
-        'K' => 1024,
-        'G' => 1024 * 1024 * 1024,
-        _ => 1,
-    };
-    let val_str = if size.is_ascii_digit() {
-        bufsize
-    } else {
-        &bufsize[..bufsize.len().saturating_sub(1)]
-    };
+    let s = bufsize.trim();
+    if s.is_empty() {
+        return 0;
+    }
 
-    let val = val_str.parse::<i32>().unwrap();
-    val * multiplier
+    let last_char = s.chars().last().unwrap();
+    if last_char.is_ascii_digit() {
+        return s.parse::<i32>().unwrap_or(0);
+    }
+
+    let val_str = &s[..s.len() - 1];
+    let mut val = val_str.parse::<i32>().unwrap_or(0);
+
+    match last_char.to_ascii_uppercase() {
+        'M' => val *= 1024 * 1024,
+        'K' => val *= 1024,
+        'G' => val *= 1024 * 1024 * 1024,
+        _ => {}
+    }
+
+    val
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
