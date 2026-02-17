@@ -780,6 +780,10 @@ impl OptionsExt for Options {
 
         if let Some(ref startcreditstext) = args.startcreditstext {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
+            // Keep legacy start-credits truth behavior unless user explicitly disables BOM.
+            if !args.no_bom {
+                self.enc_cfg.no_bom = false;
+            }
         }
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
@@ -2689,6 +2693,16 @@ pub mod tests {
     fn test_startcreditstext_sets_start_credits() {
         let (options, _) = parse_args(&["--startcreditstext", "Opening Credits"]);
         assert_eq!(options.enc_cfg.start_credits_text, "Opening Credits");
+        assert!(
+            !options.enc_cfg.no_bom,
+            "startcreditstext should enable BOM by default"
+        );
+    }
+
+    #[test]
+    fn test_startcreditstext_respects_no_bom() {
+        let (options, _) = parse_args(&["--startcreditstext", "Opening Credits", "--no-bom"]);
+        assert!(options.enc_cfg.no_bom);
     }
 
     #[test]
