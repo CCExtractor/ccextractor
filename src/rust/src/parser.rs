@@ -1438,7 +1438,7 @@ impl OptionsExt for Options {
         }
 
         if self.extract_chapters {
-            println!("Request to extract chapters recieved.");
+            println!("Request to extract chapters received.");
             println!("Note that this must only be used with MP4 files,");
             println!("for other files it will simply generate subtitles file.\n");
         }
