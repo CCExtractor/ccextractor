@@ -26,12 +26,14 @@ jobs:
             rust_target: x86_64-pc-windows-msvc
             wix_arch: x64
             suffix: ""
+            gpac_install: "C:\\Program Files\\GPAC"
           - arch: x86
             platform: Win32
             vcpkg_triplet: x86-windows-static
             rust_target: i686-pc-windows-msvc
             wix_arch: x86
             suffix: "_x86"
+            gpac_install: "C:\\Program Files (x86)\\GPAC"
     steps:
     - name: Check out repository
       uses: actions/checkout@v6
@@ -94,7 +96,7 @@ jobs:
         BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
         VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
-      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }}
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
       working-directory: ./windows
     - name: Copy files to directory for installer
       run: mkdir installer; cp ./${{ matrix.platform }}/Release-Full/ccextractorwinfull.exe ./installer; cp ./${{ matrix.platform }}/Release-Full/*.dll ./installer

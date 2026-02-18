@@ -42,7 +42,7 @@ jobs:
             platform: Win32
             vcpkg_triplet: x86-windows-static
             rust_target: i686-pc-windows-msvc
-            gpac_install: "C:\\Program Files\\GPAC"
+            gpac_install: "C:\\Program Files (x86)\\GPAC"
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -119,7 +119,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }}
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
         working-directory: ./windows
 
       - name: Display Release version information
@@ -143,7 +143,7 @@ jobs:
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=${{ matrix.platform }}
+        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
         working-directory: ./windows
 
       - name: Display Debug version information
