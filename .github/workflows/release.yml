@@ -10,13 +10,28 @@ permissions:
 
 env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
-  VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg\.cache
   VCPKG_COMMIT: ab2977be50c702126336e5088f4836060733c899
 
 jobs:
   build_windows:
     runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            platform: x64
+            vcpkg_triplet: x64-windows-static
+            rust_target: x86_64-pc-windows-msvc
+            wix_arch: x64
+            suffix: ""
+          - arch: x86
+            platform: Win32
+            vcpkg_triplet: x86-windows-static
+            rust_target: i686-pc-windows-msvc
+            wix_arch: x86
+            suffix: "_x86"
     steps:
     - name: Check out repository
       uses: actions/checkout@v6
@@ -46,7 +61,7 @@ jobs:
       with:
         msbuild-architecture: x64
     - name: Install gpac
-      run: choco install gpac --version 2.4.0
+      run: choco install gpac --version 2.4.0 ${{ matrix.arch == 'x86' && '--forcex86' || '' }}
     - name: Setup vcpkg
       run: mkdir C:\vcpkg\.cache
     - name: Cache vcpkg
@@ -55,20 +70,22 @@ jobs:
       with:
         path: |
           C:\vcpkg\.cache
-        key: vcpkg-${{ runner.os }}-${{ env.VCPKG_COMMIT }}
+        key: vcpkg-${{ runner.os }}-${{ matrix.vcpkg_triplet }}-${{ env.VCPKG_COMMIT }}
     - name: Build vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg
         ./vcpkg/bootstrap-vcpkg.bat
     - name: Install dependencies
-      run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+      run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --triplet ${{ matrix.vcpkg_triplet }} --x-install-root ${{ github.workspace }}/vcpkg/installed/
       working-directory: windows
-    - uses: actions-rs/toolchain@v1
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
+        targets: ${{ matrix.rust_target }}
     - name: Install Win 10 SDK
       uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
     - name: build Release-Full
       env:
         LIBCLANG_PATH: "C:\\Program Files\\LLVM\\lib"
@@ -76,10 +93,11 @@ jobs:
         CARGO_TARGET_DIR: "..\\..\\windows"
         BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
         VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
+        VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
+      run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }}
       working-directory: ./windows
     - name: Copy files to directory for installer
-      run: mkdir installer; cp ./x64/Release-Full/ccextractorwinfull.exe ./installer; cp ./x64/Release-Full/*.dll ./installer
+      run: mkdir installer; cp ./${{ matrix.platform }}/Release-Full/ccextractorwinfull.exe ./installer; cp ./${{ matrix.platform }}/Release-Full/*.dll ./installer
       working-directory: ./windows
     - name: Download tessdata for OCR support
       run: |
@@ -106,15 +124,15 @@ jobs:
       run: Get-ChildItem -Recurse ./installer
       working-directory: ./windows
     - name: Create portable zip
-      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}_win_portable.zip
+      run: Compress-Archive -Path ./installer/* -DestinationPath ./CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}_win_portable.zip
       working-directory: ./windows
     - name: Build installer
-      run:  wix build -arch x64 -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.msi installer.wxs CustomUI.wxs
+      run:  wix build -arch ${{ matrix.wix_arch }} -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}.msi installer.wxs CustomUI.wxs
       working-directory: ./windows
     - name: Upload as asset
       uses: AButler/upload-release-assets@v3.0
       with:
-        files: './windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.msi;./windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}_win_portable.zip'
+        files: './windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}.msi;./windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}_win_portable.zip'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
   create_linux_package:
     runs-on: ubuntu-latest
