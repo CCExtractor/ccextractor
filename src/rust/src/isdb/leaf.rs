@@ -202,12 +202,12 @@ pub fn parse_caption_management_data(ctx: &mut IsdbSubContext, buf: &[u8]) -> us
         debug!("CC MGMT DATA: DMF 0x{:X}", ctx.dmf);
         pos += 1;
 
-        if ctx.dmf == 0x0C || ctx.dmf == 0x0D || ctx.dmf == 0x0E && pos < buf.len() {
+        if (ctx.dmf == 0x0C || ctx.dmf == 0x0D || ctx.dmf == 0x0E) && pos < buf.len() {
             ctx.dc = buf[pos];
             debug!("Attenuation Due to Rain");
         }
 
-        debug!("CC MGMT DATA: languages: {:?}", &buf[pos - 3..pos]);
+        debug!("CC MGMT DATA: languages: {:?}", &buf[pos..pos+3]);
         if pos + 3 > buf.len() {
             break;
         }
