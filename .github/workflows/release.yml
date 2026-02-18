@@ -27,7 +27,7 @@ jobs:
             wix_arch: x64
             suffix: ""
             gpac_install: "C:\\Program Files\\GPAC"
-            outdir: x64
+            outdir: "x64/"
           - arch: x86
             platform: Win32
             vcpkg_triplet: x86-windows-static
@@ -35,7 +35,7 @@ jobs:
             wix_arch: x86
             suffix: "_x86"
             gpac_install: "C:\\Program Files (x86)\\GPAC"
-            outdir: .
+            outdir: ""
     steps:
     - name: Check out repository
       uses: actions/checkout@v6
@@ -101,7 +101,7 @@ jobs:
       run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
       working-directory: ./windows
     - name: Copy files to directory for installer
-      run: mkdir installer; cp ./${{ matrix.outdir }}/Release-Full/ccextractorwinfull.exe ./installer; cp ./${{ matrix.outdir }}/Release-Full/*.dll ./installer
+      run: mkdir installer; cp ./${{ matrix.outdir }}Release-Full/ccextractorwinfull.exe ./installer; cp ./${{ matrix.outdir }}Release-Full/*.dll ./installer
       working-directory: ./windows
     - name: Download tessdata for OCR support
       run: |

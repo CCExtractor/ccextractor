@@ -38,13 +38,13 @@ jobs:
             vcpkg_triplet: x64-windows-static
             rust_target: x86_64-pc-windows-msvc
             gpac_install: "C:\\Program Files\\GPAC"
-            outdir: x64
+            outdir: "x64/"
           - arch: x86
             platform: Win32
             vcpkg_triplet: x86-windows-static
             rust_target: i686-pc-windows-msvc
             gpac_install: "C:\\Program Files (x86)\\GPAC"
-            outdir: .
+            outdir: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -127,15 +127,15 @@ jobs:
       - name: Display Release version information
         if: matrix.arch == 'x64'
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/${{ matrix.outdir }}/Release-Full
+        working-directory: ./windows/${{ matrix.outdir }}Release-Full
 
       - name: Upload Release artifact
         uses: actions/upload-artifact@v6
         with:
           name: CCExtractor Windows ${{ matrix.arch }} Release build
           path: |
-            ./windows/${{ matrix.outdir }}/Release-Full/ccextractorwinfull.exe
-            ./windows/${{ matrix.outdir }}/Release-Full/*.dll
+            ./windows/${{ matrix.outdir }}Release-Full/ccextractorwinfull.exe
+            ./windows/${{ matrix.outdir }}Release-Full/*.dll
 
       # Build Debug-Full (reuses cached Cargo artifacts)
       - name: Build Debug-Full
@@ -152,13 +152,13 @@ jobs:
         if: matrix.arch == 'x64'
         continue-on-error: true
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/${{ matrix.outdir }}/Debug-Full
+        working-directory: ./windows/${{ matrix.outdir }}Debug-Full
 
       - name: Upload Debug artifact
         uses: actions/upload-artifact@v6
         with:
           name: CCExtractor Windows ${{ matrix.arch }} Debug build
           path: |
-            ./windows/${{ matrix.outdir }}/Debug-Full/ccextractorwinfull.exe
-            ./windows/${{ matrix.outdir }}/Debug-Full/ccextractorwinfull.pdb
-            ./windows/${{ matrix.outdir }}/Debug-Full/*.dll
+            ./windows/${{ matrix.outdir }}Debug-Full/ccextractorwinfull.exe
+            ./windows/${{ matrix.outdir }}Debug-Full/ccextractorwinfull.pdb
+            ./windows/${{ matrix.outdir }}Debug-Full/*.dll
