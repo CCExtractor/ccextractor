@@ -537,9 +537,9 @@ int asf_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 			       asf_data_container.StreamProperties.DecodeStreamNumber);
 		}
 
-		// When reading "Payload parsing information" it occured that "Packet Lenght"
+		// When reading "Payload parsing information" it occurred that "Packet Length"
 		// was not set (Packet Length Type 00) and for "Single Payloads" this means
-		// the Payload Data Length cannot be infered.  Use min_packet_size, max_packet_size instead.
+		// the Payload Data Length cannot be inferred.  Use min_packet_size, max_packet_size instead.
 		if ((min_packet_size > 0) && (min_packet_size == max_packet_size))
 			asf_data_container.PacketSize = min_packet_size;
 
