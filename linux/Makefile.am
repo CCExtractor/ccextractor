@@ -343,9 +343,11 @@ else
 CARGO_RELEASE_ARGS=--release
 endif
 
-./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a:
+RUST_RS_FILES = $(shell find ../src/rust/src ../src/rust/lib_ccxr/src -type f -name '*.rs')
+RUST_MANIFEST_FILES = ../src/rust/Cargo.toml ../src/rust/Cargo.lock ../src/rust/lib_ccxr/Cargo.toml
+
+./rust/@RUST_TARGET_SUBDIR@/libccx_rust.a: $(RUST_RS_FILES) $(RUST_MANIFEST_FILES)
 	cd ../src/rust && \
 	CARGO_TARGET_DIR=../../linux/rust $(CARGO) build $(HARDSUBX_FEATURE_RUST) $(CARGO_RELEASE_ARGS);
 
 EXTRA_DIST = /usr/include/gpac/sync_layer.h ../src/lib_ccx/ccfont2.xbm ../src/thirdparty/utf8proc/utf8proc_data.c fonts/ icon/
-

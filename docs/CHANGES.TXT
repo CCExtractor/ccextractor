@@ -12,6 +12,7 @@
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
 - Fix: segmentation fault when using --multiprogram
+- Fix: H.264 timing drift causing incorrect start credits timestamps in CI tests 226-230 (gap detection threshold + C/Rust FFI serialization)
 
 0.96.5 (2026-01-05)
 -------------------

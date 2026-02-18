@@ -42,13 +42,14 @@ typedef struct ccx_decoder_608_context
 	enum ccx_decoder_608_color_code current_color; // Color we are currently using to write
 	enum font_bits font;			       // Font we are currently using to write
 	int rollup_base_row;
-	LLONG ts_start_of_current_line; /* Time at which the first character for current line was received, =-1 no character received yet */
-	LLONG ts_last_char_received;	/* Time at which the last written character was received, =-1 no character received yet */
-	int new_channel;		// The new channel after a channel change
-	int my_field;			// Used for sanity checks
-	int my_channel;			// Used for sanity checks
-	int rollup_from_popon;		// Track transition from pop-on/paint-on to roll-up mode
-	int64_t bytes_processed_608;	// To be written ONLY by process_608
+	LLONG ts_start_of_current_line;	     /* Time at which the first character for current line was received, =-1 no character received yet */
+	LLONG ts_last_char_received;	     /* Time at which the last written character was received, =-1 no character received yet */
+	int new_channel;		     // The new channel after a channel change
+	int my_field;			     // Used for sanity checks
+	int my_channel;			     // Used for sanity checks
+	int rollup_from_popon;		     // Track transition from pop-on/paint-on to roll-up mode
+	int pending_rollup_popon_timing_fix; // Apply one-shot timing correction for pop-on->roll-up transition caption
+	int64_t bytes_processed_608;	     // To be written ONLY by process_608
 	int have_cursor_position;
 
 	int *halt;	  // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
