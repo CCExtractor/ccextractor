@@ -42,6 +42,9 @@ jobs:
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
+    # NOTE: The sample-platform test runner (CCExtractor/sample-platform)
+    # matches artifact names exactly. Update Artifact_names in
+    # mod_ci/controllers.py there if you rename this artifact.
     - uses: actions/upload-artifact@v6
       with:
         name: CCExtractor Linux build

@@ -129,6 +129,9 @@ jobs:
         run: ./ccextractorwinfull.exe --version
         working-directory: ./windows/${{ matrix.outdir }}Release-Full
 
+      # NOTE: The sample-platform test runner (CCExtractor/sample-platform)
+      # matches artifact names exactly. Update Artifact_names in
+      # mod_ci/controllers.py there if you rename these artifacts.
       - name: Upload Release artifact
         uses: actions/upload-artifact@v6
         with:
