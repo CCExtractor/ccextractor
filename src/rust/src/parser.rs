@@ -780,6 +780,11 @@ impl OptionsExt for Options {
             self.set_output_format(args);
         }
 
+        // --- report-format (used by -out=report) ---
+        if let Some(ref fmt) = args.report_format {
+            self.report_format = Some(fmt.to_lowercase());
+        }
+
         if let Some(ref startcreditstext) = args.startcreditstext {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
@@ -1670,6 +1675,7 @@ pub mod tests {
         common::{MkvLangFilter, OutputFormat, SelectCodec, StreamMode, StreamType},
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
+    use serial_test::serial;
 
     /// # Safety
     ///
@@ -2325,18 +2331,21 @@ pub mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_k_suffix() {
         let (_, _) = parse_args(&["--buffersize", "64K"]);
         assert_eq!(get_file_buffer_size(), 64 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_m_suffix() {
         let (_, _) = parse_args(&["--buffersize", "2M"]);
         assert_eq!(get_file_buffer_size(), 2 * 1024 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_numeric_value() {
         let (_, _) = parse_args(&["--buffersize", "8192"]);
         assert_eq!(get_file_buffer_size(), 8192);

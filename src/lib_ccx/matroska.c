@@ -1742,6 +1742,12 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		free(filename);
 	}
 
+	if (desc < 0)
+	{
+		mprint("\nError: Cannot create output file for subtitle track\n");
+		return;
+	}
+
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
 
@@ -1795,7 +1801,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 
 			// writing cue settings list
 			if (blockaddition != NULL)
@@ -1836,7 +1842,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "\n", 1);
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, "\n", 1);
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
@@ -1866,7 +1872,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, ",", 1);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, ",", 1);
 			char *text = ass_ssa_sentence_erase_read_order(sentence->text);
 			char *text_to_free = text; // Save original pointer for freeing
@@ -1880,6 +1886,9 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_end);
 		}
 	}
+
+	if (desc != 1)
+		close(desc);
 }
 
 void free_sub_track(struct matroska_sub_track *track)

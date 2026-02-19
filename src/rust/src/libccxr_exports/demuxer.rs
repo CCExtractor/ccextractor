@@ -18,12 +18,13 @@ const POISON_PTR_PATTERN: usize = 0xcdcdcdcdcdcdcdcd;
 const POISON_PTR_PATTERN: usize = 0xcdcdcdcd;
 
 extern "C" {
-    fn activity_input_file_closed();
-    fn close(fd: c_int) -> c_int;
-    fn malloc(size: usize) -> *mut c_void;
-    fn free(ptr: *mut c_void);
-    fn calloc(nmemb: usize, size: usize) -> *mut c_void;
+    pub(crate) fn activity_input_file_closed();
+    pub(crate) fn close(fd: c_int) -> c_int;
+    pub(crate) fn malloc(size: usize) -> *mut c_void;
+    pub(crate) fn calloc(nmemb: usize, size: usize) -> *mut c_void;
 }
+
+use crate::ffi_alloc;
 
 pub fn copy_c_array_to_rust_vec(
     c_bytes: &[u8; crate::demuxer::common_types::ARRAY_SIZE],
@@ -110,7 +111,7 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
         // We also check for POISON_PTR_PATTERN for safety in debug builds.
         if !c.PID_buffers[i].is_null() && c.PID_buffers[i] as usize != POISON_PTR_PATTERN {
             unsafe {
-                free(c.PID_buffers[i] as *mut c_void);
+                ffi_alloc::c_free(c.PID_buffers[i]);
                 c.PID_buffers[i] = std::ptr::null_mut();
             }
         }
@@ -152,7 +153,7 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
         // SAFETY: We use C's free to be compatible with memory that might be allocated by C.
         if !c.PIDs_programs[i].is_null() && c.PIDs_programs[i] as usize != POISON_PTR_PATTERN {
             unsafe {
-                free(c.PIDs_programs[i] as *mut c_void);
+                ffi_alloc::c_free(c.PIDs_programs[i]);
                 c.PIDs_programs[i] = std::ptr::null_mut();
             }
         }
@@ -449,6 +450,27 @@ pub unsafe extern "C" fn ccxr_demuxer_close(ctx: *mut ccx_demuxer) {
         close(c.infd);
         c.infd = -1;
         activity_input_file_closed();
+    }
+}
+
+/// # Safety
+/// This function must be called before the C code frees the demuxer struct.
+/// It frees Rust-allocated resources that C cannot safely free.
+#[no_mangle]
+pub unsafe extern "C" fn ccxr_demuxer_delete(ctx: *mut ccx_demuxer) {
+    if ctx.is_null() {
+        return;
+    }
+    let c = &mut *ctx;
+
+    // Free Rust-allocated filebuffer
+    if !c.filebuffer.is_null() {
+        use crate::file_functions::file::FILEBUFFERSIZE;
+        let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(
+            c.filebuffer,
+            FILEBUFFERSIZE,
+        ));
+        c.filebuffer = std::ptr::null_mut();
     }
 }
 
