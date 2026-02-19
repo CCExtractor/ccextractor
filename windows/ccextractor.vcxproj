@@ -314,8 +314,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
-        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
-        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140.dll" "$(OutDir)"
+        if exist "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140_1.dll" xcopy /y "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\libgpac.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\postproc-57.dll" "$(OutDir)"
@@ -361,8 +361,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
-        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
-        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x64\Microsoft.VC143.CRT\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x64\Microsoft.VC143.CRT\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\libgpac.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\postproc-57.dll" "$(OutDir)"
@@ -409,8 +409,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
-        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
-        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140.dll" "$(OutDir)"
+        if exist "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140_1.dll" xcopy /y "$(VCToolsRedistDir)x86\Microsoft.VC143.CRT\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\libgpac.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\postproc-57.dll" "$(OutDir)"
@@ -456,8 +456,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>
-        xcopy /y "$(ProjectDir)\dll\vcruntime140.dll" "$(OutDir)"
-        xcopy /y "$(ProjectDir)\dll\vcruntime140_1.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x64\Microsoft.VC143.CRT\vcruntime140.dll" "$(OutDir)"
+        xcopy /y "$(VCToolsRedistDir)x64\Microsoft.VC143.CRT\vcruntime140_1.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\libgpac.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\OpenSVCDecoder.dll" "$(OutDir)"
         xcopy /y "$(GpacDir)\postproc-57.dll" "$(OutDir)"
