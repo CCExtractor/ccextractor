@@ -2,7 +2,6 @@ name: Build CCExtractor on Windows
 
 env:
   RUSTFLAGS: -Ctarget-feature=+crt-static
-  VCPKG_DEFAULT_TRIPLET: x64-windows-static
   VCPKG_COMMIT: ab2977be50c702126336e5088f4836060733c899
 
 on:
@@ -30,6 +29,22 @@ on:
 jobs:
   build:
     runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            platform: x64
+            vcpkg_triplet: x64-windows-static
+            rust_target: x86_64-pc-windows-msvc
+            gpac_install: "C:\\Program Files\\GPAC"
+            outdir: "x64/"
+          - arch: x86
+            platform: Win32
+            vcpkg_triplet: x86-windows-static
+            rust_target: i686-pc-windows-msvc
+            gpac_install: "C:\\Program Files (x86)\\GPAC"
+            outdir: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -41,7 +56,7 @@ jobs:
 
       # Install GPAC (fast, ~30s, not worth caching complexity)
       - name: Install gpac
-        run: choco install gpac --version 2.4.0 --no-progress
+        run: choco install gpac --version 2.4.0 --no-progress ${{ matrix.arch == 'x86' && '--forcex86' || '' }}
 
       # Use lukka/run-vcpkg for better caching
       - name: Setup vcpkg
@@ -58,13 +73,13 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/vcpkg/installed
-          key: vcpkg-installed-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('windows/vcpkg.json') }}
+          key: vcpkg-installed-${{ runner.os }}-${{ matrix.vcpkg_triplet }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('windows/vcpkg.json') }}
           restore-keys: |
-            vcpkg-installed-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-
+            vcpkg-installed-${{ runner.os }}-${{ matrix.vcpkg_triplet }}-${{ env.VCPKG_COMMIT }}-
 
       - name: Install vcpkg dependencies
         if: steps.vcpkg-installed-cache.outputs.cache-hit != 'true'
-        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --x-install-root ${{ github.workspace }}/vcpkg/installed/
+        run: ${{ github.workspace }}/vcpkg/vcpkg.exe install --triplet ${{ matrix.vcpkg_triplet }} --x-install-root ${{ github.workspace }}/vcpkg/installed/
         working-directory: windows
 
       # Cache Rust/Cargo artifacts
@@ -79,21 +94,24 @@ jobs:
             ${{ runner.os }}-cargo-registry-
 
       # Cache Cargo build artifacts - rust.bat sets CARGO_TARGET_DIR to windows/
-      # which results in artifacts at windows/x86_64-pc-windows-msvc/
       - name: Cache Cargo build artifacts
         uses: actions/cache@v5
         with:
-          path: ${{ github.workspace }}/windows/x86_64-pc-windows-msvc
-          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('src/rust/**/*.rs') }}
+          path: ${{ github.workspace }}/windows/${{ matrix.rust_target }}
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('src/rust/**/*.rs') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-
-            ${{ runner.os }}-cargo-build-
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-build-
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
 
       - name: Install Win 10 SDK
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
 
       # Build Release-Full
       - name: Build Release-Full
@@ -102,20 +120,22 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=x64
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
+        run: msbuild ccextractor.sln /p:Configuration=Release-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
         working-directory: ./windows
 
       - name: Display Release version information
+        if: matrix.arch == 'x64'
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Release-Full
+        working-directory: ./windows/${{ matrix.outdir }}Release-Full
 
       - name: Upload Release artifact
         uses: actions/upload-artifact@v6
         with:
-          name: CCExtractor Windows Release build
+          name: CCExtractor Windows ${{ matrix.arch }} Release build
           path: |
-            ./windows/x64/Release-Full/ccextractorwinfull.exe
-            ./windows/x64/Release-Full/*.dll
+            ./windows/${{ matrix.outdir }}Release-Full/ccextractorwinfull.exe
+            ./windows/${{ matrix.outdir }}Release-Full/*.dll
 
       # Build Debug-Full (reuses cached Cargo artifacts)
       - name: Build Debug-Full
@@ -124,19 +144,21 @@ jobs:
           LLVM_CONFIG_PATH: "C:\\Program Files\\LLVM\\bin\\llvm-config"
           BINDGEN_EXTRA_CLANG_ARGS: -fmsc-version=0
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=x64
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.vcpkg_triplet }}
+        run: msbuild ccextractor.sln /p:Configuration=Debug-Full /p:Platform=${{ matrix.platform }} /p:GpacDir="${{ matrix.gpac_install }}"
         working-directory: ./windows
 
       - name: Display Debug version information
+        if: matrix.arch == 'x64'
         continue-on-error: true
         run: ./ccextractorwinfull.exe --version
-        working-directory: ./windows/x64/Debug-Full
+        working-directory: ./windows/${{ matrix.outdir }}Debug-Full
 
       - name: Upload Debug artifact
         uses: actions/upload-artifact@v6
         with:
-          name: CCExtractor Windows Debug build
+          name: CCExtractor Windows ${{ matrix.arch }} Debug build
           path: |
-            ./windows/x64/Debug-Full/ccextractorwinfull.exe
-            ./windows/x64/Debug-Full/ccextractorwinfull.pdb
-            ./windows/x64/Debug-Full/*.dll
+            ./windows/${{ matrix.outdir }}Debug-Full/ccextractorwinfull.exe
+            ./windows/${{ matrix.outdir }}Debug-Full/ccextractorwinfull.pdb
+            ./windows/${{ matrix.outdir }}Debug-Full/*.dll
