@@ -600,15 +600,20 @@ struct lib_cc_decode *copy_decoder_context(struct lib_cc_decode *ctx)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In copy_decoder_context: Out of memory allocating ctx_copy.");
 	memcpy(ctx_copy, ctx, sizeof(struct lib_cc_decode));
 
-	// Initialize copied pointers to NULL before re-allocating
+	// Initialize copied pointers to NULL before re-allocating.
+	// After memcpy the copy shares all pointers with the original.
+	// Every pointer must either be NULLed (so free_decoder_context
+	// won't double-free) or deep-copied below.
 	ctx_copy->context_cc608_field_1 = NULL;
 	ctx_copy->context_cc608_field_2 = NULL;
 	ctx_copy->timing = NULL;
 	ctx_copy->avc_ctx = NULL;
 	ctx_copy->private_data = NULL;
 	ctx_copy->dtvcc = NULL;
+	ctx_copy->dtvcc_rust = NULL;
 	ctx_copy->xds_ctx = NULL;
 	ctx_copy->vbi_decoder = NULL;
+	ctx_copy->prev = NULL;
 
 	if (ctx->context_cc608_field_1)
 	{
