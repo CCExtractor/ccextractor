@@ -1706,12 +1706,9 @@ static int write_dvb_sub(struct lib_cc_decode *dec_ctx, struct cc_subtitle *sub)
 	// Perform OCR
 #ifdef ENABLE_OCR
 	char *ocr_str = NULL;
-	// Lazy OCR initialization: only init when we actually have a bitmap to process
-	if (!ctx->ocr_initialized)
-	{
-		ctx->ocr_ctx = init_ocr(ctx->lang_index);
-		ctx->ocr_initialized = 1; // Mark as initialized even if init_ocr returns NULL
-	}
+	// OCR must be initialized on the main (non-prev) decoder context before
+	// copying to prev, so that all copies share the same Tesseract instance.
+	// See dvbsub_handle_display_segment() where this is done.
 	if (ctx->ocr_ctx && region)
 	{
 		int ret = ocr_rect(ctx->ocr_ctx, rect, &ocr_str, region->bgcolor, dec_ctx->ocr_quantmode);
@@ -1813,6 +1810,21 @@ void dvbsub_handle_display_segment(struct encoder_ctx *enc_ctx,
 	free_encoder_context(enc_ctx->prev);
 	enc_ctx->prev = NULL;
 	enc_ctx->prev = copy_encoder_context(enc_ctx);
+
+#ifdef ENABLE_OCR
+	/* Lazy-init OCR on the main context so that the memcpy into prev
+	 * inherits the same Tesseract instance.  Previously the init happened
+	 * inside write_dvb_sub() which operates on prev -- that created a new
+	 * Tesseract instance every frame and leaked it when prev was freed. */
+	{
+		DVBSubContext *dvb_main = (DVBSubContext *)dec_ctx->private_data;
+		if (!dvb_main->ocr_initialized)
+		{
+			dvb_main->ocr_ctx = init_ocr(dvb_main->lang_index);
+			dvb_main->ocr_initialized = 1;
+		}
+	}
+#endif
 
 	/* copy previous decoder context */
 	free_decoder_context(dec_ctx->prev);
