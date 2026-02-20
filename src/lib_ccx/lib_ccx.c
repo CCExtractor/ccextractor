@@ -7,6 +7,7 @@
 #include "ccx_decoders_isdb.h"
 
 struct ccx_common_logging_t ccx_common_logging;
+extern void free_rust_c_string_array(char **arr, size_t count);
 static struct ccx_decoders_common_settings_t *init_decoder_setting(
     struct ccx_s_options *opt)
 {
@@ -272,9 +273,11 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	freep(&ccx_options.enc_cfg.output_filename);
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);
-	for (i = 0; i < lctx->num_input_files; i++)
-		freep(&lctx->inputfile[i]);
-	freep(&lctx->inputfile);
+	if (lctx->inputfile)
+	{
+		free_rust_c_string_array(lctx->inputfile, lctx->num_input_files);
+		lctx->inputfile = NULL;
+	}
 	freep(ctx);
 }
 
