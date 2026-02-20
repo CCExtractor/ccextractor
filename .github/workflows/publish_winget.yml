@@ -6,7 +6,7 @@
 #    - PR to: https://github.com/microsoft/winget-pkgs
 #
 # 2. Create a fork of microsoft/winget-pkgs under the CCExtractor organization
-#    - https://github.com/CCExtractor/winget-pkgs (needs to be created)
+#    - https://github.com/CCExtractor/winget-pkgs
 #
 # 3. Create a GitHub Personal Access Token (classic) with 'public_repo' scope
 #    - Add as repository secret: WINGET_TOKEN
@@ -39,4 +39,5 @@ jobs:
           identifier: CCExtractor.CCExtractor
           installers-regex: '\.msi$'  # Only use the MSI installer
           token: ${{ secrets.WINGET_TOKEN }}
+          fork-user: CCExtractor
           release-tag: ${{ github.event.inputs.release_tag || github.event.workflow_run.head_branch }}
