@@ -83,7 +83,8 @@ pub fn string_to_c_chars(strs: Vec<String>) -> *mut *mut c_char {
 /// # Safety
 /// The pointers must have been allocated by `string_to_c_chars` or be null.
 /// `count` must be the number of strings in the array.
-pub unsafe fn free_rust_c_string_array(arr: *mut *mut c_char, count: usize) {
+#[no_mangle]
+pub unsafe extern "C" fn free_rust_c_string_array(arr: *mut *mut c_char, count: usize) {
     if arr.is_null() {
         return;
     }
