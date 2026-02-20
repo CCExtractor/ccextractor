@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
     - uses: actions/checkout@v6
     - name: run autogen
       run: ./autogen.sh
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
     - uses: actions/checkout@v6
     - name: cmake
       run: mkdir build && cd build && cmake ../src
@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
-        run: sudo apt update && sudo apt-get install libgpac-dev
+        run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
       - uses: actions/checkout@v6
       - name: cache 
         uses: actions/cache@v5
