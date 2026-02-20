@@ -47,7 +47,7 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
+	    if (pos_r < len - 1 && string[pos_r] == '\\' && string[pos_r + 1] == 'n')		
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
