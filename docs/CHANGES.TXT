@@ -1,5 +1,7 @@
 0.96.6 (2026-02-19)
 -------------------
+- Fix: PTS rollover false-trigger in batch file processing causing subtitle timestamps
+  to be offset by ~26.5 hours when processing multiple TS files (#2131)
 - New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json
 - New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow
