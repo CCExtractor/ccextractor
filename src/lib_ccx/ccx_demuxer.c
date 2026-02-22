@@ -6,6 +6,7 @@
 #ifndef DISABLE_RUST
 void ccxr_demuxer_reset(struct ccx_demuxer *ctx);
 void ccxr_demuxer_close(struct ccx_demuxer *ctx);
+void ccxr_demuxer_delete(struct ccx_demuxer *ctx);
 int ccxr_demuxer_isopen(const struct ccx_demuxer *ctx);
 int ccxr_demuxer_open(struct ccx_demuxer *ctx, const char *file);
 LLONG ccxr_demuxer_get_file_size(struct ccx_demuxer *ctx);
@@ -304,6 +305,12 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 {
 	struct ccx_demuxer *lctx = *ctx;
 	int i;
+
+#ifndef DISABLE_RUST
+	// Let Rust free any memory it allocated
+	ccxr_demuxer_delete(lctx);
+#endif
+
 	dinit_cap(lctx);
 	freep(&lctx->last_pat_payload);
 	for (i = 0; i < MAX_PSI_PID; i++)
@@ -322,7 +329,14 @@ void ccx_demuxer_delete(struct ccx_demuxer **ctx)
 			freep(lctx->PIDs_programs + i);
 	}
 
+#ifdef DISABLE_RUST
+	// Only free filebuffer in pure C mode - Rust handles its own memory
 	freep(&lctx->filebuffer);
+#else
+	// Rust already freed this in ccxr_demuxer_delete, just clear the pointer
+	lctx->filebuffer = NULL;
+#endif
+
 	freep(ctx);
 }
 
