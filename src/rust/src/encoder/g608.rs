@@ -191,9 +191,9 @@ pub fn write_cc_buffer_as_g608(data: &eia608_screen, context: &mut encoder_ctx) 
     }
 
     // Create timeline string for timestamps
-    // TODO (GSoC): Expand this to calculate proper coordinate mapping for vertical/Japanese text 
+    // TODO (GSoC): Expand this to calculate proper coordinate mapping for vertical/Japanese text
     let is_webvtt = context.write_format == crate::bindings::ccx_output_format::CCX_OF_WEBVTT;
-    
+
     let timestamp_line = if is_webvtt {
         // WebVTT Standard requires dots instead of commas for milliseconds
         // and supports trailing settings (e.g., vertical text direction, alignment)
