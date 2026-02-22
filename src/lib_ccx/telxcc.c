@@ -1357,6 +1357,33 @@ int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx)
 	}
 	return CCX_OK;
 }
+
+int tlt_print_seen_pages_json(struct lib_cc_decode *dec_ctx)
+{
+	struct TeletextCtx *ctx = NULL;
+
+	if (dec_ctx->codec != CCX_CODEC_TELETEXT)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	ctx = dec_ctx->private_data;
+
+	printf("[");
+	int first = 1;
+	for (int i = 0; i < MAX_TLT_PAGES; i++)
+	{
+		if (ctx->seen_sub_page[i] == 0)
+			continue;
+		if (!first)
+			printf(", ");
+		first = 0;
+		printf("%d", i);
+	}
+	printf("]");
+	return CCX_OK;
+}
 void set_tlt_delta(struct lib_cc_decode *dec_ctx, uint64_t pts)
 {
 	struct TeletextCtx *ctx = dec_ctx->private_data;
