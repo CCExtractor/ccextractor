@@ -429,8 +429,16 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		int is_dvb = 0, is_tlt = 0;
 		for (int k = 0; k < SUB_STREAMS_CNT; k++)
 		{
-			if (demux->freport.dvb_sub_pid[k] == (unsigned)pid) { is_dvb = 1; break; }
-			if (demux->freport.tlt_sub_pid[k] == (unsigned)pid) { is_tlt = 1; break; }
+			if (demux->freport.dvb_sub_pid[k] == (unsigned)pid)
+			{
+				is_dvb = 1;
+				break;
+			}
+			if (demux->freport.tlt_sub_pid[k] == (unsigned)pid)
+			{
+				is_tlt = 1;
+				break;
+			}
 		}
 		if (is_dvb)
 			printf(", \"type\": \"dvb_subtitle\"");
