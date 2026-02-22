@@ -100,7 +100,7 @@ struct spupng_t *spunpg_init(struct ccx_s_write *out)
 
 	if (NULL == sp->pngfile || NULL == sp->relative_path_png)
 		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "spunpg_init: Memory allocation failed (sp->pngfile)");
-	sp->fileIndex = 0;
+	sp->fileIndex = -1; /* first call to inc_spupng_fileindex will set this to 0 → sub0000.png */
 	snprintf(sp->pngfile, pngfile_size, "%s/sub%04d.png", sp->dirname, sp->fileIndex);
 
 	// Make relative path
@@ -136,8 +136,18 @@ void spunpg_free(struct spupng_t *sp)
 void spupng_write_header(struct spupng_t *sp, int multiple_files, char *first_input_file)
 {
 	fprintf(sp->fpxml, "<subpictures>\n<stream>\n");
+
 	if (multiple_files)
-		fprintf(sp->fpxml, "<!-- %s -->\n", first_input_file);
+	{
+		/* Normalize to basename so XML output is platform-independent */
+		const char *base = strrchr(first_input_file, '/');
+		if (!base)
+			base = strrchr(first_input_file, '\\');
+
+		base = base ? base + 1 : first_input_file;
+
+		fprintf(sp->fpxml, "<!-- %s -->\n", base);
+	}
 }
 
 void spupng_write_footer(struct spupng_t *sp)
@@ -397,14 +407,13 @@ int write_cc_bitmap_as_spupng(struct cc_subtitle *sub, struct encoder_ctx *conte
 	if (sub->data == NULL)
 		return 0;
 
-	inc_spupng_fileindex(sp);
-
 	if (sub->nb_data == 0 && (sub->flags & SUB_EOD_MARKER))
 	{
 		context->prev_start = -1;
-		// No subtitle data, skip writing
 		return 0;
 	}
+
+	inc_spupng_fileindex(sp);
 	rect = sub->data;
 	for (i = 0; i < sub->nb_data; i++)
 	{
