@@ -10,8 +10,9 @@
 name: Publish to Chocolatey
 
 on:
-  release:
-    types: [released]
+  workflow_run:
+    workflows: ["Upload releases"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -22,6 +23,9 @@ on:
 jobs:
   publish:
     runs-on: windows-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -30,7 +34,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          TAG="${{ github.event.inputs.release_tag || github.event.release.tag_name }}"
+          TAG="${{ github.event.inputs.release_tag || github.event.workflow_run.head_branch }}"
           # Strip 'v' prefix if present
           VERSION="${TAG#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT

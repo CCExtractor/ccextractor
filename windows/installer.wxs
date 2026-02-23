@@ -39,7 +39,12 @@
                 KeyPath="yes"/>
         </Component>
     </StandardDirectory>
-		<StandardDirectory Id="ProgramFiles64Folder">
+		<?if $(sys.BUILDARCH) = x86 ?>
+		<?define ProgramFilesDir = "ProgramFilesFolder" ?>
+		<?else ?>
+		<?define ProgramFilesDir = "ProgramFiles64Folder" ?>
+		<?endif ?>
+		<StandardDirectory Id="$(var.ProgramFilesDir)">
 			<Directory Id="INSTALLFOLDER" Name="CCExtractor">
 				<Directory Id="CCX_tessdata" Name="tessdata"/>
 				<Directory Id="CCX_data" Name="data">

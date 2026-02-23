@@ -1,18 +1,32 @@
-0.96.6 (unreleased)
+0.96.6 (2026-02-19)
 -------------------
 - New: Allow output \0 terminated frames via --null-terminated
+- New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json
+- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow
+- New: Implement dictionary-based capitalization and censorship for transcripts
+- Fix: Massive OCR memory leak — Tesseract instance was recreated and leaked every DVB subtitle
+  frame, causing ~28 GB peak memory on a 2-hour film (#2114)
+- Fix: SPUPNG subtitle offset calculation for EIA-608/teletext (#893)
+- Fix: Empty WebVTT files now include required header for HLS compatibility (#1743)
+- Fix: macOS hardsubx (burned-in subtitle extraction) on Apple Silicon
+- Fix: Teletext decoder crash on malformed BCD data (#1990)
+- Fix: Crash in report-only mode (-out=report) with AVC streams
 - Fix: Incorrect strlen argument when writing end timestamps in MKV subtitle extraction (WebVTT, SRT, ASS/SSA)
 - Fix: File descriptor leak and missing open() error check in MKV subtitle track saving
 - Fix: DVB EIT start time BCD decoding in XMLTV output causing invalid timestamps (#1835)
-- New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow. 
-- New: Implement dictionary-based capitalization and censorship for transcripts 
+- Fix: DVB subtitle duration capped to prevent 65-second page timeout display bug
 - Fix: Clear status line output on Linux/WSL to prevent text artifacts (#2017)
 - Fix: Prevent infinite loop on truncated MKV files
-- Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
+- Fix: Correct progress time display for multi-program Transport Streams
 - Fix: Delete empty output files instead of leaving 0-byte files (#1282)
 - Fix: --mkvlang now supports BCP 47 language tags (e.g., en-US, zh-Hans-CN) and multiple codes
-- Fix: segmentation fault when using --multiprogram
+- Fix: Segmentation fault when using --multiprogram
+- Fix: Dangling pointers in decoder context copy causing potential crashes on cleanup
+- Fix: 16 MB memory leak per file in Rust/C FFI demuxer layer
+- Fix: Spurious numbers printed to console during processing
+- Fix: Heap overflow in Transport Stream PAT/PMT parsing (security fix)
+- Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
 
 0.96.5 (2026-01-05)
 -------------------
