@@ -29,7 +29,9 @@ pub fn get_fts_max(ctx: &mut TimingContext) -> Timestamp {
 
 /// Rust equivalent for `print_mstime_static` function in C. Uses Rust-native types as input and output.
 pub fn print_mstime_static(mstime: Timestamp, sep: char) -> String {
-    mstime.to_hms_millis_time(sep).unwrap()
+    mstime
+        .to_hms_millis_time(sep)
+        .unwrap_or_else(|_| "INVALID".to_string())
 }
 
 /// Rust equivalent for `print_debug_timing` function in C. Uses Rust-native types as input and output.
