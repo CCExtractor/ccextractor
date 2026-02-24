@@ -8,7 +8,6 @@
 
 int temp_debug = 0; // This is a convenience variable used to enable/disable debug on variable conditions. Find references to understand.
 volatile sig_atomic_t change_filename_requested = 0;
-
 extern int ccxr_verify_crc32(uint8_t *buf, int len);
 extern int ccxr_levenshtein_dist(const uint64_t *s1, const uint64_t *s2, unsigned s1len, unsigned s2len);
 extern int ccxr_levenshtein_dist_char(const char *s1, const char *s2, unsigned s1len, unsigned s2len);
@@ -269,23 +268,32 @@ void sleep_secs(int secs)
 #endif
 }
 
+#ifndef DISABLE_RUST
+extern int ccxr_hex_to_int(char high, char low);
 int hex_to_int(char high, char low)
 {
-	unsigned char h, l;
-	if (high >= '0' && high <= '9')
-		h = high - '0';
-	else if (high >= 'a' && high <= 'f')
-		h = high - 'a' + 10;
-	else
-		return -1;
-	if (low >= '0' && low <= '9')
-		l = low - '0';
-	else if (low >= 'a' && low <= 'f')
-		l = low - 'a' + 10;
-	else
-		return -1;
-	return h * 16 + l;
+    return ccxr_hex_to_int(high, low);
 }
+#else
+int hex_to_int(char high, char low)
+{
+    unsigned char h, l;
+    if (high >= '0' && high <= '9')
+        h = high - '0';
+    else if (high >= 'a' && high <= 'f')
+        h = high - 'a' + 10;
+    else
+        return -1;
+    if (low >= '0' && low <= '9')
+        l = low - '0';
+    else if (low >= 'a' && low <= 'f')
+        l = low - 'a' + 10;
+    else
+        return -1;
+    return h * 16 + l;
+}
+#endif
+
 int hex_string_to_int(char *string, int len)
 {
 	int total_return = 0;
@@ -302,7 +310,6 @@ int hex_string_to_int(char *string, int len)
 	}
 	return total_return;
 }
-
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int))
 {
