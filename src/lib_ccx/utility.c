@@ -272,25 +272,25 @@ void sleep_secs(int secs)
 extern int ccxr_hex_to_int(char high, char low);
 int hex_to_int(char high, char low)
 {
-    return ccxr_hex_to_int(high, low);
+	return ccxr_hex_to_int(high, low);
 }
 #else
 int hex_to_int(char high, char low)
 {
-    unsigned char h, l;
-    if (high >= '0' && high <= '9')
-        h = high - '0';
-    else if (high >= 'a' && high <= 'f')
-        h = high - 'a' + 10;
-    else
-        return -1;
-    if (low >= '0' && low <= '9')
-        l = low - '0';
-    else if (low >= 'a' && low <= 'f')
-        l = low - 'a' + 10;
-    else
-        return -1;
-    return h * 16 + l;
+	unsigned char h, l;
+	if (high >= '0' && high <= '9')
+		h = high - '0';
+	else if (high >= 'a' && high <= 'f')
+		h = high - 'a' + 10;
+	else
+		return -1;
+	if (low >= '0' && low <= '9')
+		l = low - '0';
+	else if (low >= 'a' && low <= 'f')
+		l = low - 'a' + 10;
+	else
+		return -1;
+	return h * 16 + l;
 }
 #endif
 
