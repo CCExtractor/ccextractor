@@ -16,6 +16,11 @@ pkg_check_modules (GPAC REQUIRED gpac)
 set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
 set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
 
+# Add GPAC library directory to linker search path on Windows
+if(WIN32 AND GPAC_LIBRARY_DIRS)
+    link_directories(${GPAC_LIBRARY_DIRS})
+endif()
+
 if (WITH_FFMPEG)
     find_package(PkgConfig)
 
@@ -60,6 +65,12 @@ endif (WITH_OCR)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
+
+# Ensure ccx library uses dynamic CRT to match main executable
+if(MSVC)
+    set_property(TARGET ccx PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
 target_link_libraries (ccx ${EXTRA_LIBS})
 target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
 

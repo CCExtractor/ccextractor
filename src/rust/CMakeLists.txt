@@ -33,6 +33,15 @@ corrosion_import_crate(
     FEATURES ${FEATURES}
 )
 
+# Ensure Rust library uses dynamic CRT to match main executable
+if(MSVC)
+    set_property(TARGET ccx_rust PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+    # Override Rust's default static CRT linkage
+    set_target_properties(ccx_rust PROPERTIES
+        INTERFACE_LINK_OPTIONS "/NODEFAULTLIB:libcmt;/DEFAULTLIB:msvcrt"
+    )
+endif()
+
 add_test(
     NAME ccx_rust_test
     COMMAND $<TARGET_FILE:Rust::Cargo> test

@@ -42,6 +42,12 @@ configure_file (
 
 add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP)
 
+# Set global CRT policy to dynamic (/MD) before any targets are defined
+# This ensures all targets use the same CRT to avoid linker errors
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   add_definitions(-DGPAC_64_BITS)
 endif()
@@ -156,8 +162,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set (EXTRA_LIBS ${EXTRA_LIBS} iconv)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-
-set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
+# Add platform-specific system libraries
+if(NOT WIN32)
+    set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
+endif()
 
 find_package (PkgConfig)
 
@@ -240,6 +248,11 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
+# Add GPAC library directory to linker search path on Windows
+if(WIN32)
+    link_directories("C:/Program Files/GPAC/sdk/lib")
+endif()
+
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 
 ########################################################
@@ -253,6 +266,12 @@ endif (PKG_CONFIG_FOUND)
 
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
+
+# Add legacy_stdio_definitions to resolve CRT import symbols on Windows
+if(MSVC)
+    target_link_libraries(ccextractor legacy_stdio_definitions.lib)
+endif()
+
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 # ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
