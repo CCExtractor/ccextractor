@@ -289,7 +289,12 @@ impl DtvccRust {
                 let tv_layout = std::alloc::Layout::new::<dtvcc_tv_screen>();
                 let tv_ptr = unsafe { std::alloc::alloc_zeroed(tv_layout) } as *mut dtvcc_tv_screen;
                 if tv_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_tv_screen");
+                    eprintln!(
+        "[x86 OOM] Failed to allocate dtvcc_tv_screen (size={} bytes) for service {}",
+        tv_layout.size(),
+        i + 1
+    );
+                    std::alloc::handle_alloc_error(tv_layout);
                 }
                 let mut tv_screen = unsafe { Box::from_raw(tv_ptr) };
                 tv_screen.cc_count = 0;
@@ -301,7 +306,12 @@ impl DtvccRust {
                 let decoder_ptr = unsafe { std::alloc::alloc_zeroed(decoder_layout) }
                     as *mut dtvcc_service_decoder;
                 if decoder_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_service_decoder");
+                    eprintln!(
+        "[x86 OOM] Failed to allocate dtvcc_service_decoder (size={} bytes) for service {}",
+        decoder_layout.size(),
+        i + 1
+    );
+                    std::alloc::handle_alloc_error(decoder_layout);
                 }
 
                 let mut decoder = unsafe { Box::from_raw(decoder_ptr) };

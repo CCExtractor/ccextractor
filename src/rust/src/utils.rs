@@ -113,12 +113,16 @@ pub unsafe extern "C" fn free_rust_c_string_array(arr: *mut *mut c_char, count: 
 /// issues. It is the caller's responsibility to ensure that the returned
 /// `Box<T>` is used and dropped correctly.
 pub fn get_zero_allocated_obj<T>() -> Box<T> {
-    use std::alloc::{alloc_zeroed, Layout};
+    use std::alloc::{alloc_zeroed, handle_alloc_error, Layout};
 
     unsafe {
         let layout = Layout::new::<T>();
-        let allocation = alloc_zeroed(layout) as *mut T;
+        let ptr = alloc_zeroed(layout) as *mut T;
 
-        Box::from_raw(allocation)
+        if ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+
+        Box::from_raw(ptr)
     }
 }
