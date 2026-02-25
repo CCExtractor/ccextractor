@@ -12,9 +12,6 @@ pub unsafe extern "C" fn ccxr_hex_to_int(high: c_char, low: c_char) -> c_int {
 }
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_hex_string_to_int(string: *const c_char, len: c_int) -> c_int {
-    let s = std::ffi::CStr::from_ptr(string)
-        .to_str()
-        .unwrap_or("");
+    let s = std::ffi::CStr::from_ptr(string).to_str().unwrap_or("");
     lib_ccxr::util::hex::hex_string_to_int(s, len as usize).unwrap_or(-1)
-    
 }

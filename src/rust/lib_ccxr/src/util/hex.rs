@@ -41,7 +41,7 @@ mod tests {
         assert_eq!(hex_string_to_int("ff", 2), Some(255));
         assert_eq!(hex_string_to_int("00", 2), Some(0));
         assert_eq!(hex_string_to_int("ffff", 4), Some(65535));
-        assert_eq!(hex_string_to_int("4f", 1), Some(4));   // only takes first char
-        assert_eq!(hex_string_to_int("zz", 2), None);      // invalid
+        assert_eq!(hex_string_to_int("4f", 1), Some(4)); // only takes first char
+        assert_eq!(hex_string_to_int("zz", 2), None); // invalid
     }
 }
