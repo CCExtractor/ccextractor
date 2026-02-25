@@ -34,6 +34,4 @@ mod tests {
         assert_eq!(&buffer[..test_string.len()], test_string.as_bytes());
         assert_eq!(buffer[test_string.len()], 0);
     }
-}    
-
-
+}
