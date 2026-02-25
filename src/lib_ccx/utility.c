@@ -298,7 +298,7 @@ int hex_to_int(char high, char low)
 extern int ccxr_hex_string_to_int(const char *string, int len);
 int hex_string_to_int(char *string, int len)
 {
-    return ccxr_hex_string_to_int(string, len);
+	return ccxr_hex_string_to_int(string, len);
 }
 #else
 int hex_string_to_int(char *string, int len)
