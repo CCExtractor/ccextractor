@@ -294,6 +294,13 @@ int hex_to_int(char high, char low)
 }
 #endif
 
+#ifndef DISABLE_RUST
+extern int ccxr_hex_string_to_int(const char *string, int len);
+int hex_string_to_int(char *string, int len)
+{
+    return ccxr_hex_string_to_int(string, len);
+}
+#else
 int hex_string_to_int(char *string, int len)
 {
 	int total_return = 0;
@@ -310,6 +317,8 @@ int hex_string_to_int(char *string, int len)
 	}
 	return total_return;
 }
+#endif
+
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int))
 {

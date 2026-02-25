@@ -15,6 +15,13 @@ pub fn hex_to_int(high: char, low: char) -> Option<i32> {
     let l = hex_char_to_val(low)?;
     Some(h * 16 + l)
 }
+pub fn hex_string_to_int(string: &str, len: usize) -> Option<i32> {
+    let mut result = 0;
+    for c in string.chars().take(len) {
+        result = result * 16 + hex_char_to_val(c)?;
+    }
+    Some(result)
+}
 
 #[cfg(test)]
 mod tests {
@@ -27,5 +34,14 @@ mod tests {
         assert_eq!(hex_to_int('f', 'f'), Some(255));
         assert_eq!(hex_to_int('z', '1'), None); // invalid
         assert_eq!(hex_to_int('A', 'F'), None); // uppercase not supported
+    }
+    #[test]
+    fn test_hex_string_to_int() {
+        assert_eq!(hex_string_to_int("4f", 2), Some(79));
+        assert_eq!(hex_string_to_int("ff", 2), Some(255));
+        assert_eq!(hex_string_to_int("00", 2), Some(0));
+        assert_eq!(hex_string_to_int("ffff", 4), Some(65535));
+        assert_eq!(hex_string_to_int("4f", 1), Some(4));   // only takes first char
+        assert_eq!(hex_string_to_int("zz", 2), None);      // invalid
     }
 }
