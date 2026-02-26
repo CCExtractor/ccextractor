@@ -122,7 +122,7 @@ size_t print_scc_time(struct ccx_boundary_time time, char *buf)
 	// Format produces "HH:MM:SS;FF" = 11 chars + null, use 32 for safety
 	const size_t max_time_len = 32;
 
-	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * 29.97 / 1000);
+	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * current_fps / 1000);
 
 	return (size_t)snprintf(buf + time.set, max_time_len, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
 }
