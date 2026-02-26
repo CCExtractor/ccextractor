@@ -54,3 +54,28 @@ pub unsafe fn ccxr_get_str_basic(
     }
     result
 }
+use crate::bindings::{eia608_screen, encoder_ctx};
+use std::os::raw::c_int;
+
+/// The foundational trait defining what any subtitle encoder must implement.
+/// This provides a clean API for the parser to send data to the encoder.
+pub trait SubtitleEncoder {
+    /// Processes a CEA-608 screen and routes it to the correct output sink.
+    fn encode_g608(&mut self, data: &eia608_screen) -> c_int;
+    
+    // TODO (GSoC): Add `encode_708`, `encode_teletext`, etc., as the port progresses.
+}
+
+/// The primary base struct for the Rust Encoder.
+/// Currently wraps the C encoder_ctx, but serves as the foundation for a pure-Rust state.
+pub struct CoreEncoder<'a> {
+    pub ctx: &'a mut encoder_ctx,
+}
+
+// Here is where we finally plug in the disconnected wires!
+impl<'a> SubtitleEncoder for CoreEncoder<'a> {
+    fn encode_g608(&mut self, data: &eia608_screen) -> c_int {
+        // Route the data to the previously unplugged g608 sink
+        crate::encoder::g608::write_cc_buffer_as_g608(data, self.ctx)
+    }
+}
