@@ -55,14 +55,13 @@ pub unsafe fn ccxr_get_str_basic(
     result
 }
 use crate::bindings::{eia608_screen, encoder_ctx};
-use std::os::raw::c_int;
 
 /// The foundational trait defining what any subtitle encoder must implement.
 /// This provides a clean API for the parser to send data to the encoder.
 pub trait SubtitleEncoder {
     /// Processes a CEA-608 screen and routes it to the correct output sink.
     fn encode_g608(&mut self, data: &eia608_screen) -> c_int;
-    
+
     // TODO (GSoC): Add `encode_708`, `encode_teletext`, etc., as the port progresses.
 }
 
