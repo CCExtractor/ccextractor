@@ -133,7 +133,7 @@ jobs:
       # matches artifact names exactly. Update Artifact_names in
       # mod_ci/controllers.py there if you rename these artifacts.
       - name: Upload Release artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: CCExtractor Windows ${{ matrix.arch }} Release build
           path: |
@@ -158,7 +158,7 @@ jobs:
         working-directory: ./windows/${{ matrix.outdir }}Debug-Full
 
       - name: Upload Debug artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: CCExtractor Windows ${{ matrix.arch }} Debug build
           path: |

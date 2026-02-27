@@ -45,7 +45,7 @@ jobs:
     # NOTE: The sample-platform test runner (CCExtractor/sample-platform)
     # matches artifact names exactly. Update Artifact_names in
     # mod_ci/controllers.py there if you rename this artifact.
-    - uses: actions/upload-artifact@v6
+    - uses: actions/upload-artifact@v7
       with:
         name: CCExtractor Linux build
         path: ./linux/artifacts

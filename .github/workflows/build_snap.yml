@@ -39,7 +39,7 @@ jobs:
         run: ls -lh *.snap
 
       - name: Upload snap as workflow artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: CCExtractor Snap
           path: "*.snap"
