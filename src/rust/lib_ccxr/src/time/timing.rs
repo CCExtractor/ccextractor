@@ -155,7 +155,7 @@ impl TimingContext {
             .current_pts
             .as_timestamp(timing_info.mpeg_clock_freq)
             .to_hms_millis_time(':')
-            .unwrap_or_else(|_| "TIMING_PATCH_ACTIVE".to_string());
+            .unwrap_or_else(|_| "INVALID".to_string());
 
         let fts_string = self
             .fts_now
