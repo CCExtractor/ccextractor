@@ -1,6 +1,7 @@
 0.96.6 (2026-02-19)
 -------------------
 - New: Allow output \0 terminated frames via --null-terminated
+- FIX: spupng start numbering at sub0000, avoid index advance on empty EOD, normalize header filename
 - New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json
 - New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow
@@ -27,6 +28,11 @@
 - Fix: Spurious numbers printed to console during processing
 - Fix: Heap overflow in Transport Stream PAT/PMT parsing (security fix)
 - Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
+- Fix: Configuration file parser bugs — heap buffer overflow on long lines, broken EOF
+  detection due to incorrect fgetc() return type, and last line dropped if file lacks
+  trailing newline
+- Fix: Typos in configuration keys: FIX_PADDINDG → FIX_PADDING,
+  INVASTIGATE_PACKET → INVESTIGATE_PACKET
 
 0.96.5 (2026-01-05)
 -------------------
