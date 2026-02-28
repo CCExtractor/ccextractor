@@ -55,7 +55,7 @@ LLONG get_total_file_size(struct lib_ccx_ctx *ctx) // -1 if one of the file(s) f
 			}
 		}
 
-		if (!ccx_options.live_stream)
+		if (!ctx->demux_ctx->live_stream)
 			ts += get_file_size(h);
 		close(h);
 	}
@@ -116,12 +116,12 @@ can be done */
 int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 {
 	int ret = 0;
-	if (ctx->current_file == -1 || !ccx_options.binary_concat)
+	if (ctx->current_file == -1 || !ctx->demux_ctx->binary_concat)
 	{
 		ctx->demux_ctx->reset(ctx->demux_ctx);
 	}
 
-	switch (ccx_options.input_source)
+	switch (ctx->demux_ctx->input_source)
 	{
 		case CCX_DS_STDIN:
 		case CCX_DS_NETWORK:
@@ -160,7 +160,7 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		}
 		close_input_file(ctx);
 
-		if (ccx_options.binary_concat)
+		if (ctx->demux_ctx->binary_concat)
 		{
 			ctx->total_past += ctx->inputsize;
 			ctx->demux_ctx->past = 0; // Reset always or at the end we'll have double the size
@@ -181,10 +181,10 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		else
 		{
 			activity_input_file_open(ctx->inputfile[ctx->current_file]);
-			if (!ccx_options.live_stream)
+			if (!ctx->demux_ctx->live_stream)
 			{
 				ctx->inputsize = ctx->demux_ctx->get_filesize(ctx->demux_ctx);
-				if (!ccx_options.binary_concat)
+				if (!ctx->demux_ctx->binary_concat)
 					ctx->total_inputsize = ctx->inputsize;
 			}
 			return 1; // Succeeded
@@ -249,24 +249,24 @@ void buffered_seek(struct ccx_demuxer *ctx, int offset)
 	}
 }
 
-void sleepandchecktimeout(time_t start)
+static void sleepandchecktimeout(struct ccx_demuxer *ctx, time_t start)
 {
-	if (ccx_options.input_source == CCX_DS_STDIN)
+	if (ctx->input_source == CCX_DS_STDIN)
 	{
 		// CFS: Not 100% sure about this. Fine for files, not so sure what happens if stdin is
 		// real time input from hardware.
 		sleep_secs(1);
-		ccx_options.live_stream = 0;
+		ctx->live_stream = 0;
 		return;
 	}
 
-	if (ccx_options.live_stream == -1) // Just sleep, no timeout to check
+	if (ctx->live_stream == -1) // Just sleep, no timeout to check
 	{
 		sleep_secs(1);
 		return;
 	}
-	if (time(NULL) > start + ccx_options.live_stream) // More than live_stream seconds elapsed. No more live
-		ccx_options.live_stream = 0;
+	if (time(NULL) > start + ctx->live_stream) // More than live_stream seconds elapsed. No more live
+		ctx->live_stream = 0;
 	else
 		sleep_secs(1);
 }
@@ -302,13 +302,11 @@ void return_to_buffer(struct ccx_demuxer *ctx, unsigned char *buffer, unsigned i
 /**
  * @param buffer can be NULL, in case when user want to just buffer it or skip some data.
  *
- * Global options that have effect on this function are following
- * 1) ccx_options.live_stream
- * 2) ccx_options.buffer_input
- * 3) ccx_options.input_source
- * 4) ccx_options.binary_concat
- *
- * TODO instead of using global ccx_options move them to ccx_demuxer
+ * Options that have effect on this function (now stored in ctx):
+ * 1) ctx->live_stream
+ * 2) ctx->buffer_input
+ * 3) ctx->input_source
+ * 4) ctx->binary_concat
  */
 size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
@@ -318,15 +316,15 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 
 	position_sanity_check(ctx);
 
-	if (ccx_options.live_stream > 0)
+	if (ctx->live_stream > 0)
 		time(&seconds);
 
-	if (ccx_options.buffer_input || ctx->filebuffer_pos < ctx->bytesinbuffer)
+	if (ctx->buffer_input || ctx->filebuffer_pos < ctx->bytesinbuffer)
 	{
 		// Needs to return data from filebuffer_start+pos to filebuffer_start+pos+bytes-1;
 		int eof = (ctx->infd == -1);
 
-		while ((!eof || ccx_options.live_stream) && bytes)
+		while ((!eof || ctx->live_stream) && bytes)
 		{
 			if (terminate_asap)
 				break;
@@ -334,12 +332,12 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 			{
 				// No more data available immediately, we sleep a while to give time
 				// for the data to come up
-				sleepandchecktimeout(seconds);
+				sleepandchecktimeout(ctx, seconds);
 			}
 			size_t ready = ctx->bytesinbuffer - ctx->filebuffer_pos;
 			if (ready == 0) // We really need to read more
 			{
-				if (!ccx_options.buffer_input)
+				if (!ctx->buffer_input)
 				{
 					// We got in the buffering code because of the initial buffer for
 					// detection stuff. However we don't want more buffering so
@@ -367,16 +365,16 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 						}
 						// if both above lseek returned -1 (error); i would be 0 here and
 						// in case when its not live stream copied would decrease and bytes would...
-						if (i == 0 && ccx_options.live_stream)
+						if (i == 0 && ctx->live_stream)
 						{
-							if (ccx_options.input_source == CCX_DS_STDIN)
+							if (ctx->input_source == CCX_DS_STDIN)
 							{
-								ccx_options.live_stream = 0;
+								ctx->live_stream = 0;
 								break;
 							}
 							else
 							{
-								sleepandchecktimeout(seconds);
+								sleepandchecktimeout(ctx, seconds);
 							}
 						}
 						else
@@ -385,8 +383,8 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 							bytes -= i;
 						}
 
-					} while ((i || ccx_options.live_stream ||
-						  (ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))) &&
+					} while ((i || ctx->live_stream ||
+						  (ctx->binary_concat && switch_to_next_file(ctx->parent, copied))) &&
 						 bytes);
 					return copied;
 				}
@@ -395,9 +393,9 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 				int keep = ctx->bytesinbuffer > 8 ? 8 : ctx->bytesinbuffer;
 				memmove(ctx->filebuffer, ctx->filebuffer + (FILEBUFFERSIZE - keep), keep);
 				int i;
-				if (ccx_options.input_source == CCX_DS_FILE || ccx_options.input_source == CCX_DS_STDIN)
+				if (ctx->input_source == CCX_DS_FILE || ctx->input_source == CCX_DS_STDIN)
 					i = read(ctx->infd, ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
-				else if (ccx_options.input_source == CCX_DS_TCP)
+				else if (ctx->input_source == CCX_DS_TCP)
 					i = net_tcp_read(ctx->infd, (char *)ctx->filebuffer + keep, FILEBUFFERSIZE - keep);
 				else
 					i = net_udp_read(ctx->infd, (char *)ctx->filebuffer + keep, FILEBUFFERSIZE - keep, ccx_options.udpsrc, ccx_options.udpaddr);
@@ -409,7 +407,7 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
-					if (ccx_options.live_stream || ((struct lib_ccx_ctx *)ctx->parent)->inputsize <= origin_buffer_size || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					if (ctx->live_stream || ((struct lib_ccx_ctx *)ctx->parent)->inputsize <= origin_buffer_size || !(ctx->binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
 				ctx->filebuffer_pos = keep;
@@ -437,15 +435,15 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 		{
 			int i;
 			while (bytes > 0 && ctx->infd != -1 &&
-			       ((i = read(ctx->infd, buffer, bytes)) != 0 || ccx_options.live_stream ||
-				(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied))))
+			       ((i = read(ctx->infd, buffer, bytes)) != 0 || ctx->live_stream ||
+				(ctx->binary_concat && switch_to_next_file(ctx->parent, copied))))
 			{
 				if (terminate_asap)
 					break;
 				if (i == -1)
 					fatal(EXIT_READ_ERROR, "Error reading input file!\n");
 				else if (i == 0)
-					sleepandchecktimeout(seconds);
+					sleepandchecktimeout(ctx, seconds);
 				else
 				{
 					copied += i;
@@ -478,11 +476,11 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 			bytes = bytes - (unsigned int)copied;
 			if (copied == 0)
 			{
-				if (ccx_options.live_stream)
-					sleepandchecktimeout(seconds);
+				if (ctx->live_stream)
+					sleepandchecktimeout(ctx, seconds);
 				else
 				{
-					if (ccx_options.binary_concat)
+					if (ctx->binary_concat)
 						switch_to_next_file(ctx->parent, 0);
 					else
 						break;
