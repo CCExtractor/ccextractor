@@ -494,9 +494,13 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			// touch anything else
 			if (stream_type >= 0x80 && stream_type <= 0xFF)
 			{
-				mprint("I can't tell the stream type of the manually selected PID.\n");
-				mprint("Please pass -streamtype to select manually.\n");
-				fatal(EXIT_FAILURE, "-streamtype has to be manually selected.");
+				if (ccx_options.demux_cfg.ts_forced_streamtype == CCX_STREAM_TYPE_UNKNOWNSTREAM)
+				{
+					mprint("I can't tell the stream type of the manually selected PID.\n");
+					mprint("Please pass -streamtype to select manually.\n");
+					fatal(EXIT_FAILURE, "-streamtype has to be manually selected.");
+				}
+				dbg_print(CCX_DMT_VERBOSE, "User manually set stream type %d, accepting private stream.\n", ccx_options.demux_cfg.ts_forced_streamtype);
 			}
 			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL);
 			continue;
