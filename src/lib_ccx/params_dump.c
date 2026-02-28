@@ -424,6 +424,27 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		       pid,
 		       demux->PIDs_programs[pid]->program_number);
 		json_escape(desc[demux->PIDs_programs[pid]->printable_stream_type]);
+
+		/* Tag DVB subtitle and Teletext PIDs */
+		int is_dvb = 0, is_tlt = 0;
+		for (int k = 0; k < SUB_STREAMS_CNT; k++)
+		{
+			if (demux->freport.dvb_sub_pid[k] == (unsigned)pid)
+			{
+				is_dvb = 1;
+				break;
+			}
+			if (demux->freport.tlt_sub_pid[k] == (unsigned)pid)
+			{
+				is_tlt = 1;
+				break;
+			}
+		}
+		if (is_dvb)
+			printf(", \"type\": \"dvb_subtitle\"");
+		else if (is_tlt)
+			printf(", \"type\": \"teletext_subtitle\"");
+
 		printf(" }");
 	}
 	printf("\n    ]\n");
@@ -500,6 +521,19 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		printf("        \"atsc_closed_caption\": %s\n",
 		       (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_ATSC_CC)) ? "true" : "false");
 		printf("      },\n");
+
+		/* Teletext seen pages */
+		if (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT))
+		{
+			struct cap_info *tlt_info = get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT);
+			struct lib_cc_decode *tlt_dec = update_decoder_list_cinfo(ctx, tlt_info);
+			if (tlt_dec && tlt_dec->codec == CCX_CODEC_TELETEXT)
+			{
+				printf("      \"teletext_pages\": ");
+				tlt_print_seen_pages_json(tlt_dec);
+				printf(",\n");
+			}
+		}
 
 		printf("      \"captions\": {\n");
 		printf("        \"present\": %s,\n", has_any_captions ? "true" : "false");
