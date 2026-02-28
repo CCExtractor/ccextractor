@@ -1,4 +1,4 @@
-﻿#include "lib_ccx.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
