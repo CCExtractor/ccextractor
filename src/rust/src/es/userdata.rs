@@ -533,7 +533,6 @@ pub unsafe fn user_data(
     }
     // GXF vbi OEM code
     else if ud_header.starts_with(&[0x73, 0x52, 0x21, 0x06]) {
-        let udatalen = ustream.data.len() - ustream.pos;
         ustream.read_bytes(4)?; // skip header code
         ustream.read_bytes(2)?; // skip data length
         let line_nb = ustream.read_bits(16)? as u16;
@@ -548,7 +547,7 @@ pub unsafe fn user_data(
             info!("MPEG:VBI: only support Luma line");
         }
 
-        if udatalen < 720 {
+        if ustream.bits_left < 720 * 8 {
             info!("MPEG:VBI: Minimum 720 bytes in luma line required");
             return Ok(1);
         }
