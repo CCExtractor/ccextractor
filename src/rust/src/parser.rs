@@ -1249,6 +1249,10 @@ impl OptionsExt for Options {
             self.enc_cfg.line_terminator_lf = true;
         }
 
+        if args.null_terminated {
+            self.enc_cfg.frame_terminator_0 = true;
+        }
+
         if args.df {
             self.enc_cfg.force_dropframe = true;
         }

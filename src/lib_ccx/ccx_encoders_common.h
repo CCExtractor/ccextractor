@@ -146,6 +146,8 @@ struct encoder_ctx
 	unsigned int encoded_crlf_length;
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
+	unsigned char encoded_end_frame[16];
+	unsigned int encoded_end_frame_length;
 
 	// MCC File
 	int header_printed_flag;

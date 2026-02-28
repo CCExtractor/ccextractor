@@ -4,6 +4,7 @@
 
 0.96.6 (2026-02-19)
 -------------------
+- New: Allow output \0 terminated frames via --null-terminated
 - FIX: spupng start numbering at sub0000, avoid index advance on empty EOD, normalize header filename
 - New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json

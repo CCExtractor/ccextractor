@@ -67,6 +67,7 @@ struct encoder_cfg
 	int no_type_setting;
 	int cc_to_stdout;	// If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
 	int line_terminator_lf; // 0 = CRLF, 1=LF
+	int frame_terminator_0; // 0 = frames terminated by line_terminator_lf, 1 = frames terminated by \0
 	LLONG subs_delay;	// ms to delay (or advance) subs
 	int program_number;
 	unsigned char in_format;
