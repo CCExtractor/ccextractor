@@ -285,10 +285,17 @@ impl OptionsExt for Options {
             self.set_input_format_type(InFormat::Asf);
         } else if args.wtv {
             self.set_input_format_type(InFormat::Wtv);
+        } else if args.mp4 {
+            self.set_input_format_type(InFormat::Mp4);
+        } else if args.mkv {
+            self.set_input_format_type(InFormat::Mkv);
         } else {
             fatal!(
                 cause = ExitCause::MalformedParameter;
-               "Unknown input file format: {}\n", args.input.unwrap()
+                "Unknown input file format: {}\n",
+                args.input
+                    .map(|i| i.to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
             );
         }
     }
