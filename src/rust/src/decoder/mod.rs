@@ -860,7 +860,11 @@ pub mod test {
 
         // Verify: no decoders allocated at startup
         for i in 0..DTVCC_MAX_SERVICES {
-            assert!(dtvcc.decoders[i].is_none(), "decoder[{}] should be None before any data", i);
+            assert!(
+                dtvcc.decoders[i].is_none(),
+                "decoder[{}] should be None before any data",
+                i
+            );
         }
 
         // Build a minimal CEA-708 packet targeting service 1:
@@ -875,7 +879,10 @@ pub mod test {
         dtvcc.process_cc_data(1, 2, 0x00, 0x00); // packet complete: 4 bytes → triggers processing
 
         // After processing, decoder for service 1 (index 0) must be lazily allocated
-        assert!(dtvcc.decoders[0].is_some(), "decoder[0] should be allocated after receiving service 1 data");
+        assert!(
+            dtvcc.decoders[0].is_some(),
+            "decoder[0] should be allocated after receiving service 1 data"
+        );
 
         // Verify the allocated decoder's tv_screen has the correct service number
         let decoder = dtvcc.decoders[0].as_ref().unwrap();
@@ -885,7 +892,11 @@ pub mod test {
 
         // Other decoders should still be None (no data sent to them)
         for i in 1..DTVCC_MAX_SERVICES {
-            assert!(dtvcc.decoders[i].is_none(), "decoder[{}] should still be None", i);
+            assert!(
+                dtvcc.decoders[i].is_none(),
+                "decoder[{}] should still be None",
+                i
+            );
         }
     }
 }
