@@ -269,7 +269,7 @@ jobs:
 
       - name: Upload .deb artifact
         if: steps.should_build.outputs.should_build == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.deb_name.outputs.name }}
           path: ${{ steps.deb_name.outputs.name }}
