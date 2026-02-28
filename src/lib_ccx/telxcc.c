@@ -1369,6 +1369,11 @@ int tlt_print_seen_pages_json(struct lib_cc_decode *dec_ctx)
 	}
 
 	ctx = dec_ctx->private_data;
+	if (!ctx)
+	{
+		printf("[]");
+		return CCX_OK;
+	}
 
 	printf("[");
 	int first = 1;

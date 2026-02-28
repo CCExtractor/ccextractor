@@ -523,9 +523,9 @@ void print_file_report_json(struct lib_ccx_ctx *ctx)
 		printf("      },\n");
 
 		/* Teletext seen pages */
-		if (program_ci && get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT))
+		struct cap_info *tlt_info = program_ci ? get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT) : NULL;
+		if (tlt_info)
 		{
-			struct cap_info *tlt_info = get_sib_stream_by_type(program_ci, CCX_CODEC_TELETEXT);
 			struct lib_cc_decode *tlt_dec = update_decoder_list_cinfo(ctx, tlt_info);
 			if (tlt_dec && tlt_dec->codec == CCX_CODEC_TELETEXT)
 			{
