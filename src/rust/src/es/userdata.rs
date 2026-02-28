@@ -180,9 +180,13 @@ pub unsafe fn user_data(
                 ustream.skip_bits(5)?; // line_offset - unused
                 let cc_data1 = ustream.read_bits(8)? as u32;
                 let cc_data2 = ustream.read_bits(8)? as u32;
-                ustream.read_bits(1)?; // TODO: Add syntax check */
+                let marker_bit = ustream.read_bits(1)?;
                 if ustream.bits_left < 0 {
                     fatal!(cause = ExitCause::Bug; "In user_data: ustream->bitsleft < 0. Cannot continue.");
+                }
+                if marker_bit == 0 {
+                    debug!(msg_type = DebugMessageFlag::VERBOSE; "user_data: SCTE-20 syntax error - marker bit is 0");
+                    continue; // Skip processing this corrupted block
                 }
 
                 // Field_number is either
