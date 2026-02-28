@@ -26,6 +26,7 @@ pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
 pub mod hlist;
+pub mod isdb;
 pub mod libccxr_exports;
 pub mod parser;
 pub mod track_lister;

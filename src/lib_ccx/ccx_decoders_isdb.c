@@ -281,6 +281,10 @@ typedef struct
  */
 void delete_isdb_decoder(void **isdb_ctx)
 {
+#ifndef DISABLE_RUST
+	ccxr_delete_isdb_decoder(isdb_ctx);
+	return;
+#endif
 	ISDBSubContext *ctx = *isdb_ctx;
 	struct ISDBText *text = NULL;
 	struct ISDBText *text1 = NULL;
@@ -312,6 +316,9 @@ static void init_layout(ISDBSubLayout *ls)
 
 void *init_isdb_decoder(void)
 {
+#ifndef DISABLE_RUST
+	return ccxr_init_isdb_decoder();
+#endif
 	ISDBSubContext *ctx;
 
 	ctx = malloc(sizeof(ISDBSubContext));
@@ -1349,7 +1356,7 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 	{
 		isdb_log("ISDB group A\n");
 	}
-	else if ((id >> 4) == 0)
+	else if ((id >> 4) == 0) // TODO : both branches have same condition?
 	{
 		isdb_log("ISDB group B\n");
 	}
@@ -1403,6 +1410,9 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 
 int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf_size, struct cc_subtitle *sub)
 {
+#ifndef DISABLE_RUST
+	return ccxr_isdbsub_decode(dec_ctx, buf, buf_size, sub);
+#endif
 	const uint8_t *header_end = NULL;
 	int ret = 0;
 	ISDBSubContext *ctx = dec_ctx->private_data;
@@ -1430,6 +1440,9 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 }
 int isdb_set_global_time(struct lib_cc_decode *dec_ctx, uint64_t timestamp)
 {
+#ifndef DISABLE_RUST
+	return ccxr_isdb_set_global_time(dec_ctx->private_data, timestamp);
+#endif
 	ISDBSubContext *ctx = dec_ctx->private_data;
 	ctx->timestamp = timestamp;
 	return CCX_OK;
