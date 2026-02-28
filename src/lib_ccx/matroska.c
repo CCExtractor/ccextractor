@@ -726,18 +726,17 @@ static long bswap32(long v)
 	return swapped;
 }
 
-
 int process_mpeg2_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
 {
-        struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
-        struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
-        // Set timing from frame timestamp
-        set_current_pts(dec_ctx->timing, frame.FTS * (MPEG_CLOCK_FREQ / 1000));
-        set_fts(dec_ctx->timing);
-        // Use the existing MPEG-2 elementary stream processor (same as mp4.c and general_loop.c)
-        process_m2v(enc_ctx, dec_ctx, frame.data, frame.len, &mkv_ctx->dec_sub);
-        mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
-        return 0;
+	struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+	// Set timing from frame timestamp
+	set_current_pts(dec_ctx->timing, frame.FTS * (MPEG_CLOCK_FREQ / 1000));
+	set_fts(dec_ctx->timing);
+	// Use the existing MPEG-2 elementary stream processor (same as mp4.c and general_loop.c)
+	process_m2v(enc_ctx, dec_ctx, frame.data, frame.len, &mkv_ctx->dec_sub);
+	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+	return 0;
 }
 
 int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
