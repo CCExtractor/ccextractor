@@ -2837,6 +2837,11 @@ pub mod tests {
         assert_eq!(options.scc_framerate, 4);
     }
     #[test]
+    fn test_scc_framerate_23_976() {
+        let (options, _) = parse_args(&["--scc-framerate", "23.976"]);
+        assert_eq!(options.scc_framerate, 4);
+    }
+    #[test]
     fn test_scc_framerate_24() {
         let (options, _) = parse_args(&["--scc-framerate", "24"]);
         assert_eq!(options.scc_framerate, 1);

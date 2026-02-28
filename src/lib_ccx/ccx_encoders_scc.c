@@ -21,7 +21,7 @@ unsigned char odd_parity(const unsigned char byte)
  */
 
 // Get frame rate value from scc_framerate setting
-// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.98
+// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.976 (aka 23.98)
 static float get_scc_fps_internal(int scc_framerate)
 {
 	switch (scc_framerate)
@@ -829,7 +829,7 @@ enum control_code get_font_code(enum font_bits font, enum ccx_decoder_608_color_
 }
 
 // Get frame rate value from scc_framerate setting
-// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.98
+// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.976 (aka 23.98)
 static float get_scc_fps(int scc_framerate)
 {
 	switch (scc_framerate)
