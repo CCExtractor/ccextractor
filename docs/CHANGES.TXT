@@ -1,5 +1,6 @@
 0.96.6 (2026-02-19)
 -------------------
+- Fix: Prevent startup OOM on 32-bit (x86) Windows by lazily allocating CEA-708 service decoders and adding proper alloc error handling.
 - New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json
 - New: Add Snap packaging support with Snapcraft configuration and GitHub Actions CI workflow

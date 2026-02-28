@@ -760,7 +760,7 @@ pub mod test {
         // Verify encoder is initially null (set later)
         assert!(dtvcc.encoder.is_null());
 
-        // Verify first decoder is created (service 0 is enabled)
+        // Lazy allocation: no decoders are created at initialization, even if the service is enabled
         assert!(dtvcc.decoders[0].is_none());
 
         // Verify other decoders are not created
