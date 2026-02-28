@@ -691,7 +691,8 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 	int is_avc = (track == mkv_ctx->avc_track_number);
 	int is_hevc = (track == mkv_ctx->hevc_track_number);
 
-	if (!is_avc && !is_hevc)
+	int is_mpeg2 = (track == mkv_ctx->mpeg2_track_number);
+	if (!is_avc && !is_hevc && !is_mpeg2)
 	{
 		// Skip everything except AVC/HEVC tracks
 		skip_bytes(file, len - 1); // 1 byte for track
@@ -710,6 +711,8 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 
 	if (is_hevc)
 		process_hevc_frame_mkv(mkv_ctx, frame);
+	else if (is_mpeg2)
+		process_mpeg2_frame_mkv(mkv_ctx, frame);
 	else
 		process_avc_frame_mkv(mkv_ctx, frame);
 
@@ -721,6 +724,20 @@ static long bswap32(long v)
 	// For 0x12345678 returns 78563412
 	long swapped = ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24);
 	return swapped;
+}
+
+
+int process_mpeg2_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
+{
+        struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+        struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+        // Set timing from frame timestamp
+        set_current_pts(dec_ctx->timing, frame.FTS * (MPEG_CLOCK_FREQ / 1000));
+        set_fts(dec_ctx->timing);
+        // Use the existing MPEG-2 elementary stream processor (same as mp4.c and general_loop.c)
+        process_m2v(enc_ctx, dec_ctx, frame.data, frame.len, &mkv_ctx->dec_sub);
+        mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+        return 0;
 }
 
 int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
@@ -940,6 +957,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 					mkv_ctx->avc_track_number = track_number;
 				else if (strcmp((const char *)codec_id_string, (const char *)hevc_codec_id) == 0)
 					mkv_ctx->hevc_track_number = track_number;
+				else if (strcmp((const char *)codec_id_string, (const char *)mpeg2_codec_id) == 0)
+					mkv_ctx->mpeg2_track_number = track_number;
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACK_CODEC_PRIVATE:
 				// We handle DVB's private data differently
@@ -2042,6 +2061,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
 	mkv_ctx->avc_track_number = -1;
 	mkv_ctx->hevc_track_number = -1;
+	mkv_ctx->mpeg2_track_number = -1;
 
 	matroska_parse(mkv_ctx);
 
@@ -2055,6 +2075,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	int sentence_count = mkv_ctx->sentence_count;
 	int avc_track_found = mkv_ctx->avc_track_number > -1;
 	int hevc_track_found = mkv_ctx->hevc_track_number > -1;
+	int mpeg2_track_found = mkv_ctx->mpeg2_track_number > -1;
 	int got_output = mkv_ctx->dec_sub.got_output;
 
 	matroska_free_all(mkv_ctx);
@@ -2068,10 +2089,12 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 		mprint("Found AVC track. ");
 	else if (hevc_track_found)
 		mprint("Found HEVC track. ");
+	else if (mpeg2_track_found)
+		mprint("Found MPEG2 track. ");
 	else
-		mprint("Found no AVC/HEVC track. ");
+		mprint("Found no AVC/HEVC/MPEG2 track. ");
 
-	if (got_output)
+	if (got_output || mpeg2_track_found)
 		return 1;
 	return sentence_count;
 }
