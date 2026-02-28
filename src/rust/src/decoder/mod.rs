@@ -846,4 +846,46 @@ pub mod test {
         assert!(dtvcc.is_header_parsed);
         assert_eq!(dtvcc.last_sequence, CCX_DTVCC_NO_LAST_SEQUENCE); // Not processed yet
     }
+
+    #[test]
+    fn test_dtvcc_lazy_decoder_allocation() {
+        let settings = create_test_dtvcc_settings();
+        let mut dtvcc = DtvccRust::new(&settings);
+
+        // Set up encoder and timing so process_current_packet can reach
+        // the lazy allocation path (it guards on both being non-null)
+        let mut encoder = get_zero_allocated_obj::<encoder_ctx>();
+        let encoder_ptr = &mut *encoder as *mut encoder_ctx;
+        dtvcc.set_encoder(encoder_ptr);
+
+        // Verify: no decoders allocated at startup
+        for i in 0..DTVCC_MAX_SERVICES {
+            assert!(dtvcc.decoders[i].is_none(), "decoder[{}] should be None before any data", i);
+        }
+
+        // Build a minimal CEA-708 packet targeting service 1:
+        //   byte 0: (seq=0 << 6) | length_code=2  →  0x02  →  max_len = 2*2 = 4 bytes
+        //   byte 1: (service=1 << 5) | block_len=1 →  0x21
+        //   byte 2: 0x00  (1 byte of service block data)
+        //   byte 3: 0x00  (null service block / padding)
+        //
+        // cc_type=3 starts the packet, cc_type=2 continues it.
+        // When packet_length reaches max_len, process_current_packet fires.
+        dtvcc.process_cc_data(1, 3, 0x02, 0x21); // packet start: 2 bytes
+        dtvcc.process_cc_data(1, 2, 0x00, 0x00); // packet complete: 4 bytes → triggers processing
+
+        // After processing, decoder for service 1 (index 0) must be lazily allocated
+        assert!(dtvcc.decoders[0].is_some(), "decoder[0] should be allocated after receiving service 1 data");
+
+        // Verify the allocated decoder's tv_screen has the correct service number
+        let decoder = dtvcc.decoders[0].as_ref().unwrap();
+        assert!(!decoder.tv.is_null(), "tv_screen pointer should be set");
+        let service_number = unsafe { (*decoder.tv).service_number };
+        assert_eq!(service_number, 1, "tv_screen.service_number should be 1");
+
+        // Other decoders should still be None (no data sent to them)
+        for i in 1..DTVCC_MAX_SERVICES {
+            assert!(dtvcc.decoders[i].is_none(), "decoder[{}] should still be None", i);
+        }
+    }
 }
