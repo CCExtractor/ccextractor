@@ -1,5 +1,6 @@
 0.96.6 (2026-02-19)
 -------------------
+- New: Add 23.98fps as valid --scc-framerate value; clarify help text covers input and output (#2147)
 - FIX: spupng start numbering at sub0000, avoid index advance on empty EOD, normalize header filename
 - New: 32-bit (x86) Windows build and installer (#2116)
 - New: Add optional machine-readable JSON output for -out=report via --report-format json

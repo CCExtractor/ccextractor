@@ -839,6 +839,7 @@ impl OptionsExt for Options {
         if let Some(ref fps_str) = args.scc_framerate {
             self.scc_framerate = match fps_str.as_str() {
                 "29.97" | "29" => 0,
+                "23.98" | "23.976" => 4,
                 "24" => 1,
                 "25" => 2,
                 "30" => 3,
@@ -2830,6 +2831,11 @@ pub mod tests {
         assert_eq!(options.scc_framerate, 0);
     }
 
+    #[test]
+    fn test_scc_framerate_23_98() {
+        let (options, _) = parse_args(&["--scc-framerate", "23.98"]);
+        assert_eq!(options.scc_framerate, 4);
+    }
     #[test]
     fn test_scc_framerate_24() {
         let (options, _) = parse_args(&["--scc-framerate", "24"]);
