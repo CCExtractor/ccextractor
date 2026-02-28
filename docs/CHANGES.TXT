@@ -4,6 +4,7 @@
 
 0.96.6 (2026-02-19)
 -------------------
+- Fix: Prevent startup OOM on 32-bit (x86) Windows by lazily allocating CEA-708 service decoders and adding proper alloc error handling.
 - New: Add 23.98fps as valid --scc-framerate value; clarify help text covers input and output (#2147)
 - FIX: spupng start numbering at sub0000, avoid index advance on empty EOD, normalize header filename
 - New: 32-bit (x86) Windows build and installer (#2116)
