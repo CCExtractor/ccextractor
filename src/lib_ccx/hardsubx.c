@@ -12,14 +12,19 @@
 
 int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
+	struct encoder_ctx *enc_ctx = NULL;
+	int ret = -1;
+
 	if (avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL) != 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error reading input file!\n");
+		goto cleanup;
 	}
 
 	if (avformat_find_stream_info(ctx->format_ctx, NULL) < 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error reading input stream!\n");
+		goto cleanup;
 	}
 
 	// Important call in order to determine media information using ffmpeg
@@ -38,18 +43,21 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	if (ctx->video_stream_id == -1)
 	{
 		fatal(EXIT_READ_ERROR, "Video Stream not found!\n");
+		goto cleanup;
 	}
 
 	ctx->codec_ctx = avcodec_alloc_context3(NULL);
 	if (!ctx->codec_ctx)
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate codec context!\n");
+		goto cleanup;
 	}
 
 	// Assign codec parameters to codec context
 	if (avcodec_parameters_to_context(ctx->codec_ctx, ctx->format_ctx->streams[ctx->video_stream_id]->codecpar) < 0)
 	{
 		fatal(EXIT_READ_ERROR, "Could not initialize codec context!\n");
+		goto cleanup;
 	}
 
 	// Find decoder for the codec context
@@ -57,11 +65,13 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	if (ctx->codec == NULL)
 	{
 		fatal(EXIT_READ_ERROR, "Input codec is not supported!\n");
+		goto cleanup;
 	}
 
 	if (avcodec_open2(ctx->codec_ctx, ctx->codec, &ctx->options_dict) < 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error opening input codec!\n");
+		goto cleanup;
 	}
 
 	ctx->frame = av_frame_alloc();
@@ -69,10 +79,16 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	if (!ctx->frame || !ctx->rgb_frame)
 	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize frame!");
+		goto cleanup;
 	}
 
 	int frame_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 16);
 	ctx->rgb_buffer = (uint8_t *)av_malloc(frame_bytes * sizeof(uint8_t));
+	if (!ctx->rgb_buffer)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to allocate RGB buffer!");
+		goto cleanup;
+	}
 
 	ctx->sws_ctx = sws_getContext(
 	    ctx->codec_ctx->width,
@@ -83,6 +99,11 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	    AV_PIX_FMT_RGB24,
 	    SWS_BILINEAR,
 	    NULL, NULL, NULL);
+	if (!ctx->sws_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Failed to create scaling context!");
+		goto cleanup;
+	}
 
 	av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, ctx->codec_ctx->width, ctx->codec_ctx->height, 1);
 
@@ -101,10 +122,14 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	// 	);
 	// avpicture_fill((AVPicture*)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720);
 	// av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720, 1);
-
+	
 	// Pass on the processing context to the appropriate functions
-	struct encoder_ctx *enc_ctx;
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
+	if (!enc_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Failed to initialize encoder!");
+		goto cleanup;
+	}
 
 	mprint("Beginning burned-in subtitle detection...\n");
 
@@ -118,7 +143,9 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		hardsubx_process_frames_linear(ctx, enc_ctx);
 
 	dinit_encoder(&enc_ctx, 0); // TODO: Replace 0 with end timestamp
+	ret = 0;
 
+cleanup:
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
 	if (ctx->sws_ctx)
@@ -127,8 +154,12 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 		av_frame_free(&ctx->frame);
 	if (ctx->rgb_frame)
 		av_frame_free(&ctx->rgb_frame);
-	avcodec_free_context(&ctx->codec_ctx);
-	avformat_close_input(&ctx->format_ctx);
+	if (ctx->codec_ctx)
+		avcodec_free_context(&ctx->codec_ctx);
+	if (ctx->format_ctx)
+		avformat_close_input(&ctx->format_ctx);
+
+	return ret;
 }
 
 void _hardsubx_params_dump(struct ccx_s_options *options, struct lib_hardsubx_ctx *ctx)
@@ -228,12 +259,31 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	// Initialize HardsubX data structures
 	struct lib_hardsubx_ctx *ctx = (struct lib_hardsubx_ctx *)malloc(sizeof(struct lib_hardsubx_ctx));
 	if (!ctx)
+	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for HardsubX data structures.");
+		return NULL;
+	}
 	memset(ctx, 0, sizeof(struct lib_hardsubx_ctx));
 
 	ctx->tess_handle = TessBaseAPICreate();
+	if (!ctx->tess_handle)
+	{
+		free(ctx);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Failed to create Tesseract API handle.");
+		return NULL;
+	}
+
 	char *pars_vec = strdup("debug_file");
 	char *pars_values = strdup("/dev/null");
+	if (!pars_vec || !pars_values)
+	{
+		free(pars_vec);
+		free(pars_values);
+		TessBaseAPIDelete(ctx->tess_handle);
+		free(ctx);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for HardsubX string duplication.");
+		return NULL;
+	}
 	char *tessdata_path = NULL;
 
 	char *lang = (char *)options->ocrlang;
@@ -248,6 +298,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			free(pars_vec);
 			free(pars_values);
+			TessBaseAPIDelete(ctx->tess_handle);
 			free(ctx);
 			return NULL;
 		}
@@ -259,6 +310,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 			mprint("eng.traineddata not found! No Switching Possible\n");
 			free(pars_vec);
 			free(pars_values);
+			TessBaseAPIDelete(ctx->tess_handle);
 			free(ctx);
 			return NULL;
 		}
@@ -288,8 +340,10 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	// Note: tessdata_path points to static string or getenv() result, do NOT free
 	if (ret != 0)
 	{
+		TessBaseAPIDelete(ctx->tess_handle);
 		free(ctx);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract");
+		return NULL;
 	}
 
 	// Initialize attributes common to lib_ccx context
@@ -323,6 +377,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 		TessBaseAPIDelete(ctx->tess_handle);
 		free(ctx);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize subtitle structure.");
+		return NULL;
 	}
 	memset(ctx->dec_sub, 0, sizeof(struct cc_subtitle));
 
