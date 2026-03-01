@@ -47,7 +47,7 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	// Scan for \n in the string and replace it with a 0
 	while (pos_r < len)
 	{
-		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
+		if (pos_r < len - 1 && string[pos_r] == '\\' && string[pos_r + 1] == 'n')
 		{
 			unescaped[pos_w] = 0;
 			pos_r += 2;
@@ -62,7 +62,7 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 	unescaped[pos_w] = 0;
 	// Now read the unescaped string (now several string'z and write them)
 	unsigned char *begin = unescaped;
-	while (begin < unescaped + len)
+	while (begin < unescaped + pos_w)
 	{
 		unsigned int u = encode_line(context, el, begin);
 		if (context->encoding != CCX_ENC_UNICODE)
