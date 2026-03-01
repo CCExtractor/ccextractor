@@ -129,3 +129,4 @@ pub unsafe extern "C" fn ccxr_levenshtein_dist_char(
 
     ans.min(c_int::MAX as usize) as c_int
 }
+pub mod util;
