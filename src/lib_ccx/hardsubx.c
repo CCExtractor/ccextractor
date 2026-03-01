@@ -403,6 +403,7 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 
 void hardsubx(struct ccx_s_options *options, struct lib_ccx_ctx *ctx_normal)
 {
+	// This is similar to the 'main' function in ccextractor.c, but for hard subs
 	mprint("HardsubX (Hard Subtitle Extractor) - Burned-in subtitle extraction subsystem\n");
 
 	// Initialize HardsubX data structures
