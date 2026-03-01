@@ -157,7 +157,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
+# Unix-specific system libraries (not available on Windows)
+if(NOT WIN32)
+    set (EXTRA_LIBS ${EXTRA_LIBS} -lm -lpthread -ldl)
+endif()
 
 find_package (PkgConfig)
 
