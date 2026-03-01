@@ -390,11 +390,11 @@ impl Timestamp {
     }
 
     /// SCC time formatting
-    pub fn to_scc_time(&self) -> Result<String, TimestampError> {
+    pub fn to_scc_time(&self, fps: f64) -> Result<String, TimestampError> {
         let mut result = String::new();
 
         let (h, m, s, _) = self.as_hms_millis()?;
-        let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * 29.97 / 1000.0;
+        let frame = (self.millis - 1000 * (s + 60 * (m + 60 * h)) as i64) as f64 * fps / 1000.0;
 
         write!(result, "{h:02}:{m:02}:{s:02};{frame:02}")?;
 
