@@ -5,7 +5,7 @@ use std::sync::RwLock;
 
 /// The maximum allowed difference between [`TimingContext::current_pts`] and [`TimingContext::sync_pts`] in seconds.
 ///
-/// If the difference crosses this value, a PTS jump has occured and is handled accordingly.
+/// If the difference crosses this value, a PTS jump has occurred and is handled accordingly.
 const MAX_DIF: i64 = 5;
 
 /// A unique global instance of [`GlobalTimingInfo`] to be used throughout the program.
