@@ -19,7 +19,7 @@ unsigned pts_big_change;
 
 // PTS timing related stuff
 
-double current_fps = (double)30000.0 / 1001; /* 29.97 */ // TODO: Get from framerates_values[] instead
+double current_fps = (double)30000.0 / 1001; /* 29.97 — default, updated at runtime from stream NAL data */
 
 int frames_since_ref_time = 0;
 unsigned total_frames_count;
