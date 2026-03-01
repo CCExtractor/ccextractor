@@ -1102,19 +1102,20 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 			ctx->segment_counter++;
 			if (enc_ctx)
 			{
+				struct encoder_cfg local_cfg = ccx_options.enc_cfg;
 				// list_del(&enc_ctx->list);
 				// dinit_encoder(&enc_ctx, t);
-				const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
+				const char *extension = get_file_extension(local_cfg.write_format);
 				// Format: "%s_%06d%s" needs: basefilename + '_' + up to 10 digits + extension + null
 				size_t needed_len = strlen(ctx->basefilename) + 1 + 10 + strlen(extension) + 1;
-				freep(&ccx_options.enc_cfg.output_filename);
-				ccx_options.enc_cfg.output_filename = malloc(needed_len);
-				if (!ccx_options.enc_cfg.output_filename)
+				local_cfg.output_filename = malloc(needed_len);
+				if (!local_cfg.output_filename)
 				{
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In segment handling: Out of memory allocating output filename.");
 				}
-				snprintf(ccx_options.enc_cfg.output_filename, needed_len, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
-				reset_output_ctx(enc_ctx, &ccx_options.enc_cfg);
+				snprintf(local_cfg.output_filename, needed_len, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
+				reset_output_ctx(enc_ctx, &local_cfg);
+				freep(&local_cfg.output_filename);
 			}
 		}
 	}
