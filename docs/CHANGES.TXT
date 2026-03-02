@@ -1,6 +1,7 @@
 0.96.7 (unreleased)
 -------------------
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
+- Fix: Add NULL check for strdup("eng") in parse_segment_track_entry()
 
 0.96.6 (2026-02-19)
 -------------------
