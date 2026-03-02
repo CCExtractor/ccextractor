@@ -122,7 +122,6 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_
 	// 	);
 	// avpicture_fill((AVPicture*)ctx->rgb_frame, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720);
 	// av_image_fill_arrays(ctx->rgb_frame->data, ctx->rgb_frame->linesize, ctx->rgb_buffer, AV_PIX_FMT_RGB24, 1280, 720, 1);
-	
 	// Pass on the processing context to the appropriate functions
 	enc_ctx = init_encoder(&ccx_options.enc_cfg);
 	if (!enc_ctx)
