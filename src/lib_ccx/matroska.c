@@ -879,11 +879,9 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 
 	ULLONG track_number = 0;
 	enum matroska_track_entry_type track_type = MATROSKA_TRACK_TYPE_VIDEO;
-	
 	char *lang = strdup("eng");
 	if (lang == NULL)
-    fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
-	
+    (EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
 	char *header = NULL;
 	char *lang_ietf = NULL;
 	char *codec_id_string = NULL;
@@ -1050,7 +1048,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 					{
 						lang = strdup("eng");
 						if (lang == NULL)
-    						fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
+							fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
 					}
 				}
 				else
