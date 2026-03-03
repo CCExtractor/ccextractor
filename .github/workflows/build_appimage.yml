@@ -143,7 +143,7 @@ jobs:
 
       - name: Upload AppImage artifact
         if: steps.should_build.outputs.should_build == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.appimage_name.outputs.name }}
           path: linux/${{ steps.appimage_name.outputs.name }}

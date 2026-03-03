@@ -42,7 +42,7 @@ jobs:
       run: mkdir ./mac/artifacts
     - name: Copy release artifact
       run: cp ./mac/ccextractor ./mac/artifacts/
-    - uses: actions/upload-artifact@v6
+    - uses: actions/upload-artifact@v7
       with:
         name: CCExtractor mac build
         path: ./mac/artifacts

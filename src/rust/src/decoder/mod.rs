@@ -275,52 +275,10 @@ impl DtvccRust {
         // Initialize decoders - only for active services
         // Note: dtvcc_service_decoder is a large struct, so we must allocate it
         // directly on the heap to avoid stack overflow.
+        // Lazy allocation: no decoders created at startup
         let decoders = {
             const INIT: Option<Box<dtvcc_service_decoder>> = None;
-            let mut decoders = [INIT; DTVCC_MAX_SERVICES];
-
-            for (i, d) in decoders.iter_mut().enumerate() {
-                if i >= opts.services_enabled.len() || !is_true(opts.services_enabled[i]) {
-                    continue;
-                }
-
-                // Create owned tv_screen on the heap using zeroed allocation
-                // to avoid stack overflow (dtvcc_tv_screen is also large)
-                let tv_layout = std::alloc::Layout::new::<dtvcc_tv_screen>();
-                let tv_ptr = unsafe { std::alloc::alloc_zeroed(tv_layout) } as *mut dtvcc_tv_screen;
-                if tv_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_tv_screen");
-                }
-                let mut tv_screen = unsafe { Box::from_raw(tv_ptr) };
-                tv_screen.cc_count = 0;
-                tv_screen.service_number = i as i32 + 1;
-
-                // Allocate decoder directly on heap using zeroed memory to avoid
-                // stack overflow (dtvcc_service_decoder is very large)
-                let decoder_layout = std::alloc::Layout::new::<dtvcc_service_decoder>();
-                let decoder_ptr = unsafe { std::alloc::alloc_zeroed(decoder_layout) }
-                    as *mut dtvcc_service_decoder;
-                if decoder_ptr.is_null() {
-                    panic!("Failed to allocate dtvcc_service_decoder");
-                }
-
-                let mut decoder = unsafe { Box::from_raw(decoder_ptr) };
-
-                // Set the tv pointer
-                decoder.tv = Box::into_raw(tv_screen);
-
-                // Initialize windows
-                for window in decoder.windows.iter_mut() {
-                    window.memory_reserved = 0;
-                }
-
-                // Call reset handler
-                decoder.handle_reset();
-
-                *d = Some(decoder);
-            }
-
-            decoders
+            [INIT; DTVCC_MAX_SERVICES]
         };
 
         // Encoder is set later via set_encoder()
@@ -351,6 +309,40 @@ impl DtvccRust {
         self.encoder = encoder;
     }
 
+    fn allocate_decoder(service_index: usize) -> Box<dtvcc_service_decoder> {
+        use std::alloc::{alloc_zeroed, handle_alloc_error, Layout};
+
+        unsafe {
+            // Allocate tv_screen
+            let tv_layout = Layout::new::<dtvcc_tv_screen>();
+            let tv_ptr = alloc_zeroed(tv_layout) as *mut dtvcc_tv_screen;
+            if tv_ptr.is_null() {
+                handle_alloc_error(tv_layout);
+            }
+
+            let mut tv_screen = Box::from_raw(tv_ptr);
+            tv_screen.cc_count = 0;
+            tv_screen.service_number = service_index as i32 + 1;
+
+            // Allocate decoder
+            let decoder_layout = Layout::new::<dtvcc_service_decoder>();
+            let decoder_ptr = alloc_zeroed(decoder_layout) as *mut dtvcc_service_decoder;
+            if decoder_ptr.is_null() {
+                handle_alloc_error(decoder_layout);
+            }
+
+            let mut decoder = Box::from_raw(decoder_ptr);
+
+            decoder.tv = Box::into_raw(tv_screen);
+
+            for window in decoder.windows.iter_mut() {
+                window.memory_reserved = 0;
+            }
+
+            decoder.handle_reset();
+            decoder
+        }
+    }
     /// Process cc data and add it to the dtvcc packet.
     ///
     /// This is the main entry point for CEA-708 data processing.
@@ -467,11 +459,18 @@ impl DtvccRust {
             }
 
             if service_number > 0 && is_true(self.services_active[(service_number - 1) as usize]) {
-                if let Some(decoder) = &mut self.decoders[(service_number - 1) as usize] {
-                    // Get encoder and timing references
+                let idx = (service_number - 1) as usize;
+
+                // Lazy allocation
+                if self.decoders[idx].is_none() {
+                    self.decoders[idx] = Some(Self::allocate_decoder(idx));
+                }
+
+                if let Some(decoder) = &mut self.decoders[idx] {
                     if !self.encoder.is_null() && !self.timing.is_null() {
                         let encoder = unsafe { &mut *self.encoder };
                         let timing = unsafe { &mut *self.timing };
+
                         decoder.process_service_block(
                             &self.packet[pos as usize..(pos + block_length) as usize],
                             encoder,
@@ -761,8 +760,8 @@ pub mod test {
         // Verify encoder is initially null (set later)
         assert!(dtvcc.encoder.is_null());
 
-        // Verify first decoder is created (service 0 is enabled)
-        assert!(dtvcc.decoders[0].is_some());
+        // Lazy allocation: no decoders are created at initialization, even if the service is enabled
+        assert!(dtvcc.decoders[0].is_none());
 
         // Verify other decoders are not created
         assert!(dtvcc.decoders[1].is_none());
@@ -846,5 +845,58 @@ pub mod test {
         // State is preserved across all calls!
         assert!(dtvcc.is_header_parsed);
         assert_eq!(dtvcc.last_sequence, CCX_DTVCC_NO_LAST_SEQUENCE); // Not processed yet
+    }
+
+    #[test]
+    fn test_dtvcc_lazy_decoder_allocation() {
+        let settings = create_test_dtvcc_settings();
+        let mut dtvcc = DtvccRust::new(&settings);
+
+        // Set up encoder and timing so process_current_packet can reach
+        // the lazy allocation path (it guards on both being non-null)
+        let mut encoder = get_zero_allocated_obj::<encoder_ctx>();
+        let encoder_ptr = &mut *encoder as *mut encoder_ctx;
+        dtvcc.set_encoder(encoder_ptr);
+
+        // Verify: no decoders allocated at startup
+        for i in 0..DTVCC_MAX_SERVICES {
+            assert!(
+                dtvcc.decoders[i].is_none(),
+                "decoder[{}] should be None before any data",
+                i
+            );
+        }
+
+        // Build a minimal CEA-708 packet targeting service 1:
+        //   byte 0: (seq=0 << 6) | length_code=2  →  0x02  →  max_len = 2*2 = 4 bytes
+        //   byte 1: (service=1 << 5) | block_len=1 →  0x21
+        //   byte 2: 0x00  (1 byte of service block data)
+        //   byte 3: 0x00  (null service block / padding)
+        //
+        // cc_type=3 starts the packet, cc_type=2 continues it.
+        // When packet_length reaches max_len, process_current_packet fires.
+        dtvcc.process_cc_data(1, 3, 0x02, 0x21); // packet start: 2 bytes
+        dtvcc.process_cc_data(1, 2, 0x00, 0x00); // packet complete: 4 bytes → triggers processing
+
+        // After processing, decoder for service 1 (index 0) must be lazily allocated
+        assert!(
+            dtvcc.decoders[0].is_some(),
+            "decoder[0] should be allocated after receiving service 1 data"
+        );
+
+        // Verify the allocated decoder's tv_screen has the correct service number
+        let decoder = dtvcc.decoders[0].as_ref().unwrap();
+        assert!(!decoder.tv.is_null(), "tv_screen pointer should be set");
+        let service_number = unsafe { (*decoder.tv).service_number };
+        assert_eq!(service_number, 1, "tv_screen.service_number should be 1");
+
+        // Other decoders should still be None (no data sent to them)
+        for i in 1..DTVCC_MAX_SERVICES {
+            assert!(
+                dtvcc.decoders[i].is_none(),
+                "decoder[{}] should still be None",
+                i
+            );
+        }
     }
 }

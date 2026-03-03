@@ -161,10 +161,16 @@ int user_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, struct
 				skip_bits(ustream, 5); // line_offset - unused
 				cc_data1 = (unsigned int)read_bits(ustream, 8);
 				cc_data2 = (unsigned int)read_bits(ustream, 8);
-				read_bits(ustream, 1); // TODO: Add syntax check */
+				unsigned char marker_bit = read_bits(ustream, 1);
 
 				if (ustream->bitsleft < 0)
 					fatal(CCX_COMMON_EXIT_BUG_BUG, "In user_data: ustream->bitsleft < 0. Cannot continue.");
+
+				if (marker_bit == 0)
+				{
+					dbg_print(CCX_DMT_VERBOSE, "user_data: SCTE-20 syntax error - marker bit is 0\n");
+					continue; // Skip processing this corrupted block
+				}
 
 				// Field_number is either
 				//  0 .. forbidden

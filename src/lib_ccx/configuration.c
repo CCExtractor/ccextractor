@@ -48,14 +48,14 @@ struct conf_map configuration_map[] = {
     {"OUTPUT_FORMAT", offsetof(struct ccx_s_options, write_format), set_int},
     {"VIDEO_EDITED", offsetof(struct ccx_s_options, binary_concat), set_int},
     {"GOP_TIME", offsetof(struct ccx_s_options, use_gop_as_pts), set_int},
-    {"FIX_PADDINDG", offsetof(struct ccx_s_options, fix_padding), set_int},
+    {"FIX_PADDING", offsetof(struct ccx_s_options, fix_padding), set_int},
     {"GUI_MODE_REPORTS", offsetof(struct ccx_s_options, gui_mode_reports), set_int},
     {"NO_PROGRESS_BAR", offsetof(struct ccx_s_options, no_progress_bar), set_int},
     {"CAP_FILE", offsetof(struct ccx_s_options, sentence_cap_file), set_string},
     {"PROFANITY_FILE", offsetof(struct ccx_s_options, filter_profanity_file), set_string},
     {"START_AT", offsetof(struct ccx_s_options, extraction_start), set_time},
     {"END_AT", offsetof(struct ccx_s_options, extraction_end), set_time},
-    {"INVASTIGATE_PACKET", offsetof(struct ccx_s_options, investigate_packets), set_int},
+    {"INVESTIGATE_PACKET", offsetof(struct ccx_s_options, investigate_packets), set_int},
     {"FULL_BIN", offsetof(struct ccx_s_options, fullbin), set_int},
     {"NO_SYNC", offsetof(struct ccx_s_options, nosync), set_int},
     {"HAUPPAUGE_MODE", offsetof(struct ccx_s_options, hauppauge_mode), set_int},
@@ -91,12 +91,14 @@ static int parse_opts(char *str, struct ccx_s_options *opt)
 static void parse_file(FILE *f, struct ccx_s_options *opt)
 {
 	char *str = (char *)malloc(128);
-	char c = '\0';
+	if (!str)
+		return;
+	int c = '\0';
 	int comments = 0;
 	int i = 0;
 	int ret = 0;
 	*str = '\0';
-	while ((c = (char)fgetc(f)) != EOF)
+	while ((c = fgetc(f)) != EOF)
 	{
 		if (c == '\n')
 		{
@@ -116,8 +118,18 @@ static void parse_file(FILE *f, struct ccx_s_options *opt)
 			comments = 1;
 			continue;
 		}
-		str[i] = c;
-		i++;
+		if (i < 127)
+		{
+			str[i] = c;
+			str[i + 1] = '\0';
+			i++;
+		}
+	}
+	if (str[0] != '\0')
+	{
+		ret = parse_opts(str, opt);
+		if (ret < 0)
+			mprint("invalid configuration file\n");
 	}
 	free(str);
 }
