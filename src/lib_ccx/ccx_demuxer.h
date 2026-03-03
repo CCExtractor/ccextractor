@@ -174,6 +174,7 @@ struct demuxer_data
 	unsigned char *buffer;
 	size_t len;
 	unsigned int rollover_bits; // The PTS rolls over every 26 hours and that can happen in the middle of a stream.
+	LLONG prev_pts_33;          // Previous 33-bit PTS for this stream's rollover detection (per-stream, not shared)
 	LLONG pts;
 	struct ccx_rational tb;
 	struct demuxer_data *next_stream;
