@@ -8,8 +8,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#define DEBUG_OUT 0
-
 /* Protocol constants: */
 #define INT_LEN 10
 #define OK 1
@@ -93,7 +91,7 @@ ssize_t read_byte(int fd, char *status);
 
 void init_sockets(void);
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 void pr_command(char c);
 #endif
 
@@ -143,7 +141,7 @@ void net_send_header(const unsigned char *data, size_t len)
 #endif
 	assert(srv_sd > 0);
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "Sending header (len = %u): \n", len);
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
@@ -151,7 +149,7 @@ void net_send_header(const unsigned char *data, size_t len)
 
 	if (write_block(srv_sd, BIN_HEADER, data, len) <= 0)
 	{
-		printf("Can't send BIN header\n");
+		fprintf(stderr, "Can't send BIN header\n");
 		return;
 	}
 
@@ -172,13 +170,13 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 #endif
 	assert(srv_sd > 0);
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[C] Sending %u bytes\n", len);
 #endif
 
 	if (write_block(srv_sd, BIN_DATA, data, len) <= 0)
 	{
-		printf("Can't send BIN data\n");
+		fprintf(stderr, "Can't send BIN data\n");
 		return -1;
 	}
 
@@ -212,7 +210,7 @@ void net_check_conn()
 		rc = read_byte(srv_sd, &c);
 		if (c == PING)
 		{
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 			fprintf(stderr, "[S] Received PING\n");
 #endif
 			last_ping = now;
@@ -238,7 +236,7 @@ void net_check_conn()
 	{
 		if (write_block(srv_sd, PING, NULL, 0) < 0)
 		{
-			printf("Unable to send data\n");
+			fprintf(stderr, "Unable to send data\n");
 			exit(EXIT_FAILURE);
 		}
 
@@ -324,7 +322,7 @@ void net_send_epg(
 		memcpy(end, category, c);
 	end += c;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
 #endif
 
@@ -420,7 +418,7 @@ int net_udp_read(int socket, void *buffer, size_t length, const char *src_str, c
 ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 {
 	assert(fd > 0);
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[C] ");
 #endif
 
@@ -433,7 +431,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten++;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	pr_command(command);
 	fprintf(stderr, " ");
 #endif
@@ -446,7 +444,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten += rc;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fwrite(len_str, sizeof(char), INT_LEN, stderr);
 	fprintf(stderr, " ");
 #endif
@@ -460,7 +458,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		nwritten += rc;
 	}
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	if (buf != NULL && command != BIN_HEADER && command != BIN_DATA)
 	{
 		fwrite(buf, sizeof(char), buf_len, stderr);
@@ -474,7 +472,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten++;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "\\r");
 #endif
 
@@ -484,7 +482,7 @@ ssize_t write_block(int fd, char command, const char *buf, size_t buf_len)
 		return 0;
 	nwritten++;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "\\n\n");
 #endif
 
@@ -667,11 +665,11 @@ int check_password(int fd, const char *pwd)
 		return 1;
 	}
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[C] Wrong password\n");
 #endif
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[S] PASSWORD\n");
 #endif
 	if (write_byte(fd, PASSWORD) < 0)
@@ -792,7 +790,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		return 0;
 	nread += rc;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "[C] ");
 	pr_command(*command);
 	fprintf(stderr, " ");
@@ -805,7 +803,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		return 0;
 	nread += rc;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fwrite(len_str, sizeof(char), INT_LEN, stderr);
 	fprintf(stderr, " ");
 #endif
@@ -836,7 +834,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 			return 0;
 		nread += rc;
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 		if (*command != BIN_DATA && *command != BIN_HEADER)
 		{
 			fwrite(buf, sizeof(char), len, stderr);
@@ -854,21 +852,21 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 
 	if (end[0] != '\r' || end[1] != '\n')
 	{
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 		fprintf(stderr, "read_block(): No end marker present\n");
 		fprintf(stderr, "Closing connection\n");
 #endif
 		return 0;
 	}
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 	fprintf(stderr, "\\r\\n\n");
 #endif
 
 	return nread;
 }
 
-#if DEBUG_OUT
+#ifdef NETWORKING_DEBUG
 void pr_command(char c)
 {
 	switch (c)
