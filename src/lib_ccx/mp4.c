@@ -925,6 +925,22 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	cc_track_count = 0;
 	u32 vobsub_track_count = 0;
 
+#ifdef ENABLE_FFMPEG_MP4
+	for (i = 0; i < track_count; i++)
+	{
+		AVStream *stream = fmt_ctx->streams[i];
+		AVCodecParameters *par = stream->codecpar;
+		mprint("Track %d, codec_type=%d codec_id=%d\n", i + 1, par->codec_type, par->codec_id);
+		if (par->codec_id == AV_CODEC_ID_H264)
+			avc_track_count++;
+		else if (par->codec_id == AV_CODEC_ID_HEVC)
+			hevc_track_count++;
+		else if (par->codec_type == AVMEDIA_TYPE_SUBTITLE)
+			cc_track_count++;
+		else if (par->codec_id == AV_CODEC_ID_DVD_SUBTITLE)
+			vobsub_track_count++;
+	}
+#else
 	for (i = 0; i < track_count; i++)
 	{
 		const u32 type = gf_isom_get_media_type(f, i + 1);
@@ -942,6 +958,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		if (type == GF_ISOM_MEDIA_SUBPIC && subtype == GF_ISOM_SUBTYPE_MPEG4)
 			vobsub_track_count++;
 	}
+#endif
 
 	mprint("MP4: found %u tracks: %u avc, %u hevc, %u cc, %u vobsub\n", track_count, avc_track_count, hevc_track_count, cc_track_count, vobsub_track_count);
 
