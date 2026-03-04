@@ -2035,6 +2035,12 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->current_second = 0;
 	mkv_ctx->filename = ctx->inputfile[ctx->current_file];
 	mkv_ctx->file = create_file(ctx);
+	if (mkv_ctx->file == NULL)
+	{
+		char *fname = mkv_ctx->filename;
+		free(mkv_ctx);
+		fatal(EXIT_READ_ERROR, "Could not open MKV file: %s\n", fname);
+	}
 	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
 	if (mkv_ctx->sub_tracks == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In matroska_loop: Out of memory allocating sub_tracks.");
