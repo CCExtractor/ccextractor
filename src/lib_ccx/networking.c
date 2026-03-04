@@ -142,7 +142,7 @@ void net_send_header(const unsigned char *data, size_t len)
 	assert(srv_sd > 0);
 
 #ifdef NETWORKING_DEBUG
-	fprintf(stderr, "Sending header (len = %u): \n", len);
+	fprintf(stderr, "Sending header (len = %zu): \n", len);
 	fprintf(stderr, "File created by %02X version %02X%02X\n", data[3], data[4], data[5]);
 	fprintf(stderr, "File format revision: %02X%02X\n", data[6], data[7]);
 #endif
@@ -171,7 +171,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	assert(srv_sd > 0);
 
 #ifdef NETWORKING_DEBUG
-	fprintf(stderr, "[C] Sending %u bytes\n", len);
+	fprintf(stderr, "[C] Sending %d bytes\n", len);
 #endif
 
 	if (write_block(srv_sd, BIN_DATA, data, len) <= 0)
@@ -323,7 +323,7 @@ void net_send_epg(
 	end += c;
 
 #ifdef NETWORKING_DEBUG
-	fprintf(stderr, "[C] Sending EPG: %u bytes\n", len);
+	fprintf(stderr, "[C] Sending EPG: %zu bytes\n", len);
 #endif
 
 	if (write_block(srv_sd, EPG_DATA, epg, len) <= 0)

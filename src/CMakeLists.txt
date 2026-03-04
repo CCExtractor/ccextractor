@@ -7,7 +7,6 @@ option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 option (NETWORKING_DEBUG "Enable networking debug output" OFF)
-option (NETWORKING_DEBUG "Enable networking debug output" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -147,10 +146,6 @@ else (MSVC)
 endif(MSVC)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
-if (NETWORKING_DEBUG)
-  add_definitions(-DNETWORKING_DEBUG)
-  message(STATUS "Networking debug output enabled")
-endif (NETWORKING_DEBUG)
 if (NETWORKING_DEBUG)
   add_definitions(-DNETWORKING_DEBUG)
   message(STATUS "Networking debug output enabled")
