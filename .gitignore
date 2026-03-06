@@ -166,3 +166,6 @@ plans/
 tess.log
 **/tess.log
 ut=srt*
+*.bak
+mac/libccx_rust.a
+tests/samples.zip

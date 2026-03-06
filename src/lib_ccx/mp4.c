@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -30,7 +31,6 @@ typedef struct
 } GF_HEVCConfig;
 typedef void GF_ISOFile;
 typedef void GF_GenericSampleDescription;
-#include <assert.h>
 #define GF_4CC(a, b, c, d) ((((u32)(a)) << 24) | (((u32)(b)) << 16) | (((u32)(c)) << 8) | ((u32)(d)))
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -1015,6 +1015,7 @@ static void ffmpeg_stream_to_type_subtype(AVStream *stream, uint32_t *type, uint
 				*type = CCX_MEDIA_CLOSED_CAPTION;
 				*subtype = CCX_SUBTYPE_C608;
 			}
+
 			else if (par->codec_id == AV_CODEC_ID_DVD_SUBTITLE)
 			{
 				*type = CCX_MEDIA_SUBPIC;
@@ -1089,37 +1090,25 @@ static void sample_free(CCX_ISOSample **s)
 	*s = NULL;
 }
 
-static PacketStore **collect_packets(AVFormatContext *fmt_ctx)
+static PacketStore *collect_packets_for_stream(AVFormatContext *fmt_ctx, int stream_idx)
 {
-	int n = fmt_ctx->nb_streams;
-	PacketStore **stores = calloc(n, sizeof(PacketStore *));
-	if (!stores)
+	PacketStore *ps = packet_store_new();
+	if (!ps)
 		return NULL;
-	for (int i = 0; i < n; i++)
-		stores[i] = packet_store_new();
+	av_seek_frame(fmt_ctx, stream_idx, 0, AVSEEK_FLAG_BACKWARD);
 	AVPacket *pkt = av_packet_alloc();
 	while (av_read_frame(fmt_ctx, pkt) >= 0)
 	{
-		int idx = pkt->stream_index;
-		if (idx >= 0 && idx < n)
+		if (pkt->stream_index == stream_idx)
 		{
 			AVPacket *copy = av_packet_alloc();
 			av_packet_ref(copy, pkt);
-			packet_store_push(stores[idx], copy);
+			packet_store_push(ps, copy);
 		}
 		av_packet_unref(pkt);
 	}
 	av_packet_free(&pkt);
-	return stores;
-}
-
-static void free_stores(PacketStore **stores, int n)
-{
-	if (!stores)
-		return;
-	for (int i = 0; i < n; i++)
-		packet_store_free(stores[i]);
-	free(stores);
+	return ps;
 }
 
 static int do_avc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, struct cc_subtitle *sub)
@@ -1177,11 +1166,11 @@ static int do_avc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, 
 		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
 		if (!s)
 			continue;
-		status = process_avc_sample(ctx, ts, (GF_AVCConfig *)&cfg, (GF_ISOSample *)s, sub);
+		status = process_avc_sample(ctx, ts, (GF_AVCConfig *)(void *)&cfg, (GF_ISOSample *)(void *)s, sub);
 		sample_free(&s);
 		if (status != 0)
 			break;
-		int prog = (int)((i * 100) / ps->count);
+		int prog = (int)(((int64_t)i * 100) / ps->count);
 		if (ctx->last_reported_progress != prog)
 		{
 			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
@@ -1240,11 +1229,11 @@ static int do_hevc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps,
 		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
 		if (!s)
 			continue;
-		status = process_hevc_sample(ctx, ts, (GF_HEVCConfig *)&cfg, (GF_ISOSample *)s, sub);
+		status = process_hevc_sample(ctx, ts, (GF_HEVCConfig *)(void *)&cfg, (GF_ISOSample *)(void *)s, sub);
 		sample_free(&s);
 		if (status != 0)
 			break;
-		int prog = (int)((i * 100) / ps->count);
+		int prog = (int)(((int64_t)i * 100) / ps->count);
 		if (ctx->last_reported_progress != prog)
 		{
 			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
@@ -1275,7 +1264,7 @@ static int do_xdvb_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps,
 		set_fts(dec->timing);
 		process_m2v(enc, dec, (unsigned char *)s->data, s->dataLength, sub);
 		sample_free(&s);
-		int prog = (int)((i * 100) / ps->count);
+		int prog = (int)(((int64_t)i * 100) / ps->count);
 		if (ctx->last_reported_progress != prog)
 		{
 			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
@@ -1354,7 +1343,7 @@ static int do_vobsub_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *p
 				free(vs.data);
 			}
 		}
-		int prog = (int)((i * 100) / ps->count);
+		int prog = (int)(((int64_t)i * 100) / ps->count);
 		if (ctx->last_reported_progress != prog)
 		{
 			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
@@ -1419,7 +1408,7 @@ static int do_cc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, u
 			atomStart += al;
 		}
 		sample_free(&sample);
-		int prog = (int)((k * 100) / ps->count);
+		int prog = (int)(((int64_t)k * 100) / ps->count);
 		if (ctx->last_reported_progress != prog)
 		{
 			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
@@ -1491,29 +1480,32 @@ int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *f
 			vob_c++;
 	}
 	mprint("MP4: found %d tracks: %d avc, %d hevc, %d cc, %d vobsub\n", tc, avc_c, hevc_c, cc_c, vob_c);
-	PacketStore **stores = collect_packets(fmt);
-	if (!stores)
-	{
-		avformat_close_input(&fmt);
-		freep(&dec->xds_ctx);
-		return -2;
-	}
 	for (int i = 0; i < tc; i++)
 	{
 		AVStream *st = fmt->streams[i];
 		uint32_t type, subtype;
 		ffmpeg_stream_to_type_subtype(st, &type, &subtype);
 		uint64_t tt = CCX_MEDIA_TYPE(type, subtype);
+		/* Skip streams we don't handle */
+		if (type == 0)
+			continue;
+		PacketStore *ps = collect_packets_for_stream(fmt, i);
+		if (!ps)
+			continue;
 		switch (tt)
 		{
 			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_XDVB):
 				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
 					continue;
+				}
 				if (avc_c > 1)
 					switch_output_file(ctx, enc, i);
-				if (do_xdvb_track(ctx, st, stores[i], &dec_sub) != 0)
+				if (do_xdvb_track(ctx, st, ps, &dec_sub) != 0)
 				{
 					mprint("Error xdvb\n");
+					packet_store_free(ps);
 					goto cleanup;
 				}
 				if (dec_sub.got_output)
@@ -1525,12 +1517,16 @@ int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *f
 				break;
 			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_AVC_H264):
 				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
 					continue;
+				}
 				if (avc_c > 1)
 					switch_output_file(ctx, enc, i);
-				if (do_avc_track(ctx, st, stores[i], &dec_sub) != 0)
+				if (do_avc_track(ctx, st, ps, &dec_sub) != 0)
 				{
 					mprint("Error avc\n");
+					packet_store_free(ps);
 					goto cleanup;
 				}
 				if (dec_sub.got_output)
@@ -1543,13 +1539,17 @@ int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *f
 			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_HEV1):
 			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_HVC1):
 				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
 					continue;
+				}
 				if (hevc_c > 1)
 					switch_output_file(ctx, enc, i);
 				dec->avc_ctx->is_hevc = 1;
-				if (do_hevc_track(ctx, st, stores[i], &dec_sub) != 0)
+				if (do_hevc_track(ctx, st, ps, &dec_sub) != 0)
 				{
 					mprint("Error hevc\n");
+					packet_store_free(ps);
 					goto cleanup;
 				}
 				if (dec_sub.got_output)
@@ -1562,9 +1562,10 @@ int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *f
 			case CCX_MEDIA_TYPE(CCX_MEDIA_SUBPIC, CCX_SUBTYPE_MPEG4):
 				if (vob_c > 1)
 					switch_output_file(ctx, enc, i);
-				if (do_vobsub_track(ctx, st, stores[i], &dec_sub) != 0)
+				if (do_vobsub_track(ctx, st, ps, &dec_sub) != 0)
 				{
 					mprint("Error vobsub\n");
+					packet_store_free(ps);
 					goto cleanup;
 				}
 				if (dec_sub.got_output)
@@ -1574,15 +1575,18 @@ int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *f
 				if (type != CCX_MEDIA_CLOSED_CAPTION && type != CCX_MEDIA_SUBT && type != CCX_MEDIA_TEXT)
 					break;
 				if (avc_c && cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
 					continue;
+				}
 				if (cc_c > 1)
 					switch_output_file(ctx, enc, i);
-				do_cc_track(ctx, st, stores[i], type, subtype, &dec_sub, &mp4_ret);
+				do_cc_track(ctx, st, ps, type, subtype, &dec_sub, &mp4_ret);
 				break;
 		}
+		packet_store_free(ps);
 	}
 cleanup:
-	free_stores(stores, tc);
 	avformat_close_input(&fmt);
 	freep(&dec->xds_ctx);
 	mprint("\nDone processing '%s'\n", file);
@@ -1620,7 +1624,12 @@ int dumpchapters_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char 
 		mprint("failed\n");
 		return 5;
 	}
-	avformat_find_stream_info(fmt, NULL);
+	if (avformat_find_stream_info(fmt, NULL) < 0)
+	{
+		mprint("failed to find stream info\n");
+		avformat_close_input(&fmt);
+		return 5;
+	}
 	mprint("ok\n");
 	int count = (int)fmt->nb_chapters;
 	if (count == 0)
@@ -1689,18 +1698,6 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
 #endif
 
-#ifdef ENABLE_FFMPEG_MP4
-	AVFormatContext *fmt_ctx = NULL;
-	if (avformat_open_input(&fmt_ctx, file, NULL, NULL) < 0)
-	{
-		mprint("Failed to open input file (avformat_open_input() returned error)\n");
-		free(dec_ctx->xds_ctx);
-		return -2;
-	}
-	avformat_find_stream_info(fmt_ctx, NULL);
-	mprint("ok\n");
-	track_count = fmt_ctx->nb_streams;
-#else
 	if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
 	{
 		mprint("Failed to open input file (gf_isom_open() returned error)\n");
@@ -1709,7 +1706,6 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	}
 	mprint("ok\n");
 	track_count = gf_isom_get_track_count(f);
-#endif
 
 	avc_track_count = 0;
 	hevc_track_count = 0;
