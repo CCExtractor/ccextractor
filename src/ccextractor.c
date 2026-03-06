@@ -222,7 +222,7 @@ int start_ccx()
 					ret = tmp;
 				break;
 			case CCX_SM_MP4:
-				mprint("\rAnalyzing data with GPAC (MP4 library)\n");
+				mprint("\rAnalyzing data in MP4 mode\n");
 				close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
 				if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
 				{
