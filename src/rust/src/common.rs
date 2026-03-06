@@ -257,9 +257,16 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     // Freeing them would cause use-after-free and double-free errors.
     if let Some(ref inputfile) = options.inputfile {
         if (*ccx_s_options).inputfile.is_null() {
-            (*ccx_s_options).inputfile = string_to_c_chars(inputfile.clone());
-            (*ccx_s_options).num_input_files =
-                inputfile.iter().filter(|s| !s.is_empty()).count() as _;
+            let non_empty: Vec<String> = options
+                .inputfile
+                .as_ref()
+                .unwrap()
+                .iter()
+                .filter(|s| !s.is_empty())
+                .cloned()
+                .collect();
+            (*ccx_s_options).num_input_files = non_empty.len() as _;
+            (*ccx_s_options).inputfile = string_to_c_chars(non_empty);
         }
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
