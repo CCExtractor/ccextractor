@@ -13,6 +13,23 @@ Subtitles are important for many people. If you're learning a new language, subt
 
 The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
 
+### Quick Start
+
+To quickly extract subtitles from a video file:
+
+1. Download the latest release from:
+   https://github.com/CCExtractor/ccextractor/releases
+
+2. Run CCExtractor on your input file:
+
+```bash
+ccextractor input.ts
+```
+
+3. The subtitles will be extracted and saved as an output subtitle file.
+4. You can test the tool using sample files available here:
+https://ccextractor.org/public/general/tvsamples/
+
 ### **Features**
 
 - Extract subtitles in real-time
