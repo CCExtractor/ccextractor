@@ -1,9 +1,41 @@
+#include <assert.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 
+#ifndef ENABLE_FFMPEG_MP4
 #include <gpac/isomedia.h>
 #include <gpac/mpeg4_odf.h>
+#else
+/* GPAC type stubs so shared functions compile without GPAC headers */
+typedef uint32_t u32;
+typedef int32_t s32;
+typedef int64_t s64;
+typedef double Double;
+typedef uint8_t u8;
+typedef uint64_t u64;
+typedef struct
+{
+	char *data;
+	uint32_t dataLength;
+	uint64_t DTS;
+	uint32_t CTS_Offset;
+} GF_ISOSample;
+typedef struct
+{
+	uint8_t nal_unit_size;
+} GF_AVCConfig;
+typedef struct
+{
+	uint8_t nal_unit_size;
+} GF_HEVCConfig;
+typedef void GF_ISOFile;
+typedef void GF_GenericSampleDescription;
+#define GF_4CC(a, b, c, d) ((((u32)(a)) << 24) | (((u32)(b)) << 16) | (((u32)(c)) << 8) | ((u32)(d)))
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
+#endif
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
@@ -200,6 +232,7 @@ static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCCo
 
 	return status;
 }
+#ifndef ENABLE_FFMPEG_MP4
 static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
@@ -254,7 +287,9 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
@@ -334,7 +369,9 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_I
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
@@ -417,7 +454,9 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
@@ -555,6 +594,7 @@ static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 trac
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
 static char *format_duration(u64 dur, u32 timescale, char *szDur, size_t szDur_size)
 {
@@ -877,8 +917,757 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		}
 
 */
+#ifdef ENABLE_FFMPEG_MP4
+#define CCX_4CC(a, b, c, d) (((uint32_t)(a) << 24) | ((uint32_t)(b) << 16) | ((uint32_t)(c) << 8) | (uint32_t)(d))
+#define CCX_MEDIA_VISUAL CCX_4CC('v', 'i', 'd', 'e')
+#define CCX_MEDIA_CLOSED_CAPTION CCX_4CC('c', 'l', 'c', 'p')
+#define CCX_MEDIA_TEXT CCX_4CC('t', 'e', 'x', 't')
+#define CCX_MEDIA_SUBT CCX_4CC('s', 'b', 't', 'l')
+#define CCX_MEDIA_SUBPIC CCX_4CC('s', 'u', 'b', 'p')
+#define CCX_SUBTYPE_AVC_H264 CCX_4CC('a', 'v', 'c', '1')
+#define CCX_SUBTYPE_HEV1 CCX_4CC('h', 'e', 'v', '1')
+#define CCX_SUBTYPE_HVC1 CCX_4CC('h', 'v', 'c', '1')
+#define CCX_SUBTYPE_XDVB CCX_4CC('x', 'd', 'v', 'b')
+#define CCX_SUBTYPE_MPEG4 CCX_4CC('M', 'P', 'E', 'G')
+#define CCX_SUBTYPE_C608 CCX_4CC('c', '6', '0', '8')
+#define CCX_SUBTYPE_C708 CCX_4CC('c', '7', '0', '8')
+#define CCX_SUBTYPE_TX3G CCX_4CC('t', 'x', '3', 'g')
+#define CCX_MEDIA_TYPE(t, s) (((uint64_t)(t) << 32) | (uint64_t)(s))
+
+typedef struct
+{
+	char *data;
+	uint32_t dataLength;
+	uint64_t DTS;
+	uint32_t CTS_Offset;
+} CCX_ISOSample;
+
+typedef struct
+{
+	uint8_t nal_unit_size;
+} CCX_AVCConfig;
+typedef struct
+{
+	uint8_t nal_unit_size;
+} CCX_HEVCConfig;
+
+typedef struct
+{
+	AVPacket **pkts;
+	int count;
+	int capacity;
+} PacketStore;
+
+static PacketStore *packet_store_new(void)
+{
+	return calloc(1, sizeof(PacketStore));
+}
+
+static int packet_store_push(PacketStore *ps, AVPacket *pkt)
+{
+	if (ps->count == ps->capacity)
+	{
+		int nc = ps->capacity ? ps->capacity * 2 : 64;
+		AVPacket **tmp = realloc(ps->pkts, nc * sizeof(AVPacket *));
+		if (!tmp)
+			return -1;
+		ps->pkts = tmp;
+		ps->capacity = nc;
+	}
+	ps->pkts[ps->count++] = pkt;
+	return 0;
+}
+
+static void packet_store_free(PacketStore *ps)
+{
+	if (!ps)
+		return;
+	for (int i = 0; i < ps->count; i++)
+		av_packet_free(&ps->pkts[i]);
+	free(ps->pkts);
+	free(ps);
+}
+
+static void ffmpeg_stream_to_type_subtype(AVStream *stream, uint32_t *type, uint32_t *subtype)
+{
+	AVCodecParameters *par = stream->codecpar;
+	*type = 0;
+	*subtype = 0;
+	switch (par->codec_type)
+	{
+		case AVMEDIA_TYPE_VIDEO:
+			*type = CCX_MEDIA_VISUAL;
+			if (par->codec_id == AV_CODEC_ID_H264)
+				*subtype = CCX_SUBTYPE_AVC_H264;
+			else if (par->codec_id == AV_CODEC_ID_HEVC)
+				*subtype = CCX_SUBTYPE_HEV1;
+			else if (par->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+				*subtype = CCX_SUBTYPE_XDVB;
+			break;
+		case AVMEDIA_TYPE_SUBTITLE:
+			if (par->codec_id == AV_CODEC_ID_MOV_TEXT)
+			{
+				*type = CCX_MEDIA_TEXT;
+				*subtype = CCX_SUBTYPE_TX3G;
+			}
+			else if (par->codec_id == AV_CODEC_ID_EIA_608)
+			{
+				*type = CCX_MEDIA_CLOSED_CAPTION;
+				*subtype = CCX_SUBTYPE_C608;
+			}
+
+			else if (par->codec_id == AV_CODEC_ID_DVD_SUBTITLE)
+			{
+				*type = CCX_MEDIA_SUBPIC;
+				*subtype = CCX_SUBTYPE_MPEG4;
+			}
+			else
+			{
+				*type = CCX_MEDIA_TEXT;
+			}
+			break;
+		case AVMEDIA_TYPE_DATA:
+		{
+			uint32_t tag = par->codec_tag;
+			uint32_t tag_be = ((tag & 0xFF) << 24) | (((tag >> 8) & 0xFF) << 16) | (((tag >> 16) & 0xFF) << 8) | ((tag >> 24) & 0xFF);
+			if (tag_be == CCX_SUBTYPE_C608)
+			{
+				*type = CCX_MEDIA_CLOSED_CAPTION;
+				*subtype = CCX_SUBTYPE_C608;
+			}
+			else if (tag_be == CCX_SUBTYPE_C708)
+			{
+				*type = CCX_MEDIA_CLOSED_CAPTION;
+				*subtype = CCX_SUBTYPE_C708;
+			}
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+static uint8_t avc_nal_unit_size(const uint8_t *e, int n)
+{
+	if (!e || n < 5 || e[0] != 1)
+		return 4;
+	return (e[4] & 0x03) + 1;
+}
+
+static uint8_t hevc_nal_unit_size(const uint8_t *e, int n)
+{
+	if (!e || n < 22)
+		return 4;
+	return (e[21] & 0x03) + 1;
+}
+
+static CCX_ISOSample *sample_from_packet(AVPacket *pkt)
+{
+	CCX_ISOSample *s = malloc(sizeof(CCX_ISOSample));
+	if (!s)
+		return NULL;
+	s->data = malloc(pkt->size);
+	if (!s->data)
+	{
+		free(s);
+		return NULL;
+	}
+	memcpy(s->data, pkt->data, pkt->size);
+	s->dataLength = pkt->size;
+	int64_t dts = (pkt->dts != AV_NOPTS_VALUE) ? pkt->dts : (pkt->pts != AV_NOPTS_VALUE ? pkt->pts : 0);
+	int64_t pts = (pkt->pts != AV_NOPTS_VALUE) ? pkt->pts : dts;
+	s->DTS = (uint64_t)(dts >= 0 ? dts : 0);
+	s->CTS_Offset = (uint32_t)(pts > dts ? (pts - dts) : 0);
+	return s;
+}
+
+static void sample_free(CCX_ISOSample **s)
+{
+	if (!s || !*s)
+		return;
+	free((*s)->data);
+	free(*s);
+	*s = NULL;
+}
+
+static PacketStore *collect_packets_for_stream(AVFormatContext *fmt_ctx, int stream_idx)
+{
+	PacketStore *ps = packet_store_new();
+	if (!ps)
+		return NULL;
+	av_seek_frame(fmt_ctx, stream_idx, 0, AVSEEK_FLAG_BACKWARD);
+	AVPacket *pkt = av_packet_alloc();
+	while (av_read_frame(fmt_ctx, pkt) >= 0)
+	{
+		if (pkt->stream_index == stream_idx)
+		{
+			AVPacket *copy = av_packet_alloc();
+			av_packet_ref(copy, pkt);
+			packet_store_push(ps, copy);
+		}
+		av_packet_unref(pkt);
+	}
+	av_packet_free(&pkt);
+	return ps;
+}
+
+static int do_avc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	dec->in_bufferdatatype = CCX_H264;
+	if (ps->count < 1)
+		return 0;
+	uint32_t ts = st->time_base.den;
+	CCX_AVCConfig cfg = {avc_nal_unit_size(st->codecpar->extradata, st->codecpar->extradata_size)};
+	const uint8_t *e = st->codecpar->extradata;
+	int en = st->codecpar->extradata_size;
+	if (e && en > 6)
+	{
+		const uint8_t *p = e + 5;
+		int rem = en - 5;
+		int ns = (*p) & 0x1F;
+		p++;
+		rem--;
+		for (int i = 0; i < ns && rem >= 2; i++)
+		{
+			int l = (p[0] << 8) | p[1];
+			p += 2;
+			rem -= 2;
+			if (l <= rem)
+			{
+				do_NAL(enc, dec, (unsigned char *)p, l, sub);
+				p += l;
+				rem -= l;
+			}
+		}
+		if (rem >= 1)
+		{
+			int np = *p & 0xFF;
+			p++;
+			rem--;
+			for (int i = 0; i < np && rem >= 2; i++)
+			{
+				int l = (p[0] << 8) | p[1];
+				p += 2;
+				rem -= 2;
+				if (l <= rem)
+				{
+					do_NAL(enc, dec, (unsigned char *)p, l, sub);
+					p += l;
+					rem -= l;
+				}
+			}
+		}
+	}
+	int status = 0;
+	for (int i = 0; i < ps->count; i++)
+	{
+		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
+		if (!s)
+			continue;
+		status = process_avc_sample(ctx, ts, (GF_AVCConfig *)(void *)&cfg, (GF_ISOSample *)(void *)s, sub);
+		sample_free(&s);
+		if (status != 0)
+			break;
+		int prog = (int)(((int64_t)i * 100) / ps->count);
+		if (ctx->last_reported_progress != prog)
+		{
+			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+			activity_progress(prog, cs / 60, cs % 60);
+			ctx->last_reported_progress = prog;
+		}
+	}
+	int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+	activity_progress(100, cs / 60, cs % 60);
+	return status;
+}
+
+static int do_hevc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	dec->in_bufferdatatype = CCX_H264;
+	dec->avc_ctx->is_hevc = 1;
+	if (ps->count < 1)
+		return 0;
+	uint32_t ts = st->time_base.den;
+	CCX_HEVCConfig cfg = {hevc_nal_unit_size(st->codecpar->extradata, st->codecpar->extradata_size)};
+	const uint8_t *e = st->codecpar->extradata;
+	int en = st->codecpar->extradata_size;
+	if (e && en > 23)
+	{
+		const uint8_t *p = e + 22;
+		int rem = en - 22;
+		int na = *p;
+		p++;
+		rem--;
+		for (int a = 0; a < na && rem >= 3; a++)
+		{
+			p++;
+			rem--;
+			int nn = (p[0] << 8) | p[1];
+			p += 2;
+			rem -= 2;
+			for (int n = 0; n < nn && rem >= 2; n++)
+			{
+				int l = (p[0] << 8) | p[1];
+				p += 2;
+				rem -= 2;
+				if (l <= rem)
+				{
+					do_NAL(enc, dec, (unsigned char *)p, l, sub);
+					p += l;
+					rem -= l;
+				}
+			}
+		}
+	}
+	int status = 0;
+	for (int i = 0; i < ps->count; i++)
+	{
+		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
+		if (!s)
+			continue;
+		status = process_hevc_sample(ctx, ts, (GF_HEVCConfig *)(void *)&cfg, (GF_ISOSample *)(void *)s, sub);
+		sample_free(&s);
+		if (status != 0)
+			break;
+		int prog = (int)(((int64_t)i * 100) / ps->count);
+		if (ctx->last_reported_progress != prog)
+		{
+			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+			activity_progress(prog, cs / 60, cs % 60);
+			ctx->last_reported_progress = prog;
+		}
+	}
+	int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+	activity_progress(100, cs / 60, cs % 60);
+	return status;
+}
+
+static int do_xdvb_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	dec->in_bufferdatatype = CCX_PES;
+	if (ps->count < 1)
+		return 0;
+	uint32_t ts = st->time_base.den;
+	for (int i = 0; i < ps->count; i++)
+	{
+		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
+		if (!s)
+			continue;
+		int32_t sc = (int32_t)s->CTS_Offset;
+		set_current_pts(dec->timing, (s->DTS + sc) * MPEG_CLOCK_FREQ / ts);
+		set_fts(dec->timing);
+		process_m2v(enc, dec, (unsigned char *)s->data, s->dataLength, sub);
+		sample_free(&s);
+		int prog = (int)(((int64_t)i * 100) / ps->count);
+		if (ctx->last_reported_progress != prog)
+		{
+			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+			activity_progress(prog, cs / 60, cs % 60);
+			ctx->last_reported_progress = prog;
+		}
+	}
+	int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+	activity_progress(100, cs / 60, cs % 60);
+	return 0;
+}
+
+static int do_vobsub_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	if (ps->count < 1)
+		return 0;
+	if (!vobsub_ocr_available())
+		fatal(EXIT_NOT_CLASSIFIED, "VOBSUB requires OCR. Rebuild with -DWITH_OCR=ON");
+	struct vobsub_ctx *vob = init_vobsub_decoder();
+	if (!vob)
+		fatal(EXIT_NOT_CLASSIFIED, "VOBSUB decoder init failed");
+	if (st->codecpar->extradata && st->codecpar->extradata_size > 0)
+	{
+		char *hdr = malloc(st->codecpar->extradata_size + 1);
+		if (hdr)
+		{
+			memcpy(hdr, st->codecpar->extradata, st->codecpar->extradata_size);
+			hdr[st->codecpar->extradata_size] = 0;
+			vobsub_parse_palette(vob, hdr);
+			free(hdr);
+		}
+	}
+	uint32_t ts = st->time_base.den;
+	mprint("Processing VOBSUB track (%d samples)\n", ps->count);
+	for (int i = 0; i < ps->count; i++)
+	{
+		CCX_ISOSample *s = sample_from_packet(ps->pkts[i]);
+		if (!s)
+			continue;
+		int32_t sc = (int32_t)s->CTS_Offset;
+		LLONG t0 = (LLONG)((s->DTS + sc) * 1000) / ts, t1 = 0;
+		if (i + 1 < ps->count)
+		{
+			CCX_ISOSample *ns = sample_from_packet(ps->pkts[i + 1]);
+			if (ns)
+			{
+				int32_t nc = (int32_t)ns->CTS_Offset;
+				t1 = (LLONG)((ns->DTS + nc) * 1000) / ts;
+				sample_free(&ns);
+			}
+		}
+		if (!t1)
+			t1 = t0 + 5000;
+		set_current_pts(dec->timing, (s->DTS + sc) * MPEG_CLOCK_FREQ / ts);
+		set_fts(dec->timing);
+		struct cc_subtitle vs;
+		memset(&vs, 0, sizeof(vs));
+		int r = vobsub_decode_spu(vob, (unsigned char *)s->data, s->dataLength, t0, t1, &vs);
+		sample_free(&s);
+		if (r == 0 && vs.got_output)
+		{
+			encode_sub(enc, &vs);
+			sub->got_output = 1;
+			if (vs.data)
+			{
+				struct cc_bitmap *rect = (struct cc_bitmap *)vs.data;
+				for (int j = 0; j < vs.nb_data; j++)
+				{
+					if (rect[j].data0)
+						free(rect[j].data0);
+					if (rect[j].data1)
+						free(rect[j].data1);
+				}
+				free(vs.data);
+			}
+		}
+		int prog = (int)(((int64_t)i * 100) / ps->count);
+		if (ctx->last_reported_progress != prog)
+		{
+			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+			activity_progress(prog, cs / 60, cs % 60);
+			ctx->last_reported_progress = prog;
+		}
+	}
+	int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+	activity_progress(100, cs / 60, cs % 60);
+	delete_vobsub_decoder(&vob);
+	mprint("VOBSUB processing complete\n");
+	return 0;
+}
+
+static int do_cc_track(struct lib_ccx_ctx *ctx, AVStream *st, PacketStore *ps, uint32_t type, uint32_t subtype, struct cc_subtitle *dec_sub, int *mp4_ret)
+{
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	if (ps->count < 1)
+		return 0;
+	uint32_t ts = st->time_base.den;
+	uint64_t track_type = CCX_MEDIA_TYPE(type, subtype);
+	for (int k = 0; k < ps->count; k++)
+	{
+		CCX_ISOSample *sample = sample_from_packet(ps->pkts[k]);
+		if (!sample)
+			continue;
+		int32_t sc = (int32_t)sample->CTS_Offset;
+		set_current_pts(dec->timing, (sample->DTS + sc) * MPEG_CLOCK_FREQ / ts);
+		if (type == CCX_MEDIA_CLOSED_CAPTION)
+			dec->timing->current_picture_coding_type = CCX_FRAME_TYPE_I_FRAME;
+		set_fts(dec->timing);
+		int atomStart = 0;
+		while (atomStart < (int)sample->dataLength)
+		{
+			char *data = sample->data + atomStart;
+			int al = -1;
+			switch (track_type)
+			{
+				case CCX_MEDIA_TYPE(CCX_MEDIA_TEXT, CCX_SUBTYPE_TX3G):
+				case CCX_MEDIA_TYPE(CCX_MEDIA_SUBT, CCX_SUBTYPE_TX3G):
+					al = process_tx3g(ctx, enc, dec, dec_sub, mp4_ret, data, sample->dataLength, 0);
+					break;
+				case CCX_MEDIA_TYPE(CCX_MEDIA_CLOSED_CAPTION, CCX_SUBTYPE_C608):
+				case CCX_MEDIA_TYPE(CCX_MEDIA_CLOSED_CAPTION, CCX_SUBTYPE_C708):
+					al = process_clcp(ctx, enc, dec, dec_sub, mp4_ret, subtype, data, sample->dataLength);
+					break;
+				default:
+				{
+					static int ur = 0;
+					if (!ur)
+					{
+						mprint("\nUnsupported CC track. Please report.\n");
+						ur = 1;
+					}
+					al = -1;
+					break;
+				}
+			}
+			if (al == -1)
+				break;
+			atomStart += al;
+		}
+		sample_free(&sample);
+		int prog = (int)(((int64_t)k * 100) / ps->count);
+		if (ctx->last_reported_progress != prog)
+		{
+			int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+			activity_progress(prog, cs / 60, cs % 60);
+			ctx->last_reported_progress = prog;
+		}
+	}
+	if (subtype == CCX_SUBTYPE_TX3G)
+	{
+		struct encoder_ctx *e2 = update_encoder_list(ctx);
+		struct lib_cc_decode *d2 = update_decoder_list(ctx);
+		process_tx3g(ctx, e2, d2, dec_sub, mp4_ret, NULL, 0, 1);
+	}
+	int cs = (int)(get_fts(dec->timing, dec->current_field) / 1000);
+	activity_progress(100, cs / 60, cs % 60);
+	return 0;
+}
+
+int processmp4_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	int mp4_ret = 0;
+	struct cc_subtitle dec_sub;
+	struct lib_cc_decode *dec = update_decoder_list(ctx);
+	struct encoder_ctx *enc = update_encoder_list(ctx);
+	if (enc)
+		enc->timing = dec->timing;
+#ifndef DISABLE_RUST
+	ccxr_dtvcc_set_encoder(dec->dtvcc_rust, enc);
+#else
+	dec->dtvcc->encoder = (void *)enc;
+#endif
+	memset(&dec_sub, 0, sizeof(dec_sub));
+	if (!file)
+	{
+		mprint("Error: NULL file\n");
+		return -1;
+	}
+	mprint("Opening '%s': ", file);
+	av_log_set_level(AV_LOG_ERROR);
+	AVFormatContext *fmt = NULL;
+	if (avformat_open_input(&fmt, file, NULL, NULL) < 0)
+	{
+		mprint("failed\n");
+		freep(&dec->xds_ctx);
+		return -2;
+	}
+	if (avformat_find_stream_info(fmt, NULL) < 0)
+	{
+		mprint("failed\n");
+		avformat_close_input(&fmt);
+		freep(&dec->xds_ctx);
+		return -2;
+	}
+	mprint("ok\n");
+	int tc = (int)fmt->nb_streams;
+	int avc_c = 0, hevc_c = 0, cc_c = 0, vob_c = 0;
+	for (int i = 0; i < tc; i++)
+	{
+		uint32_t type, subtype;
+		ffmpeg_stream_to_type_subtype(fmt->streams[i], &type, &subtype);
+		mprint("Track %d, type=%c%c%c%c subtype=%c%c%c%c\n", i + 1, (unsigned char)((type >> 24) & 0xFF), (unsigned char)((type >> 16) & 0xFF), (unsigned char)((type >> 8) & 0xFF), (unsigned char)(type & 0xFF), (unsigned char)((subtype >> 24) & 0xFF), (unsigned char)((subtype >> 16) & 0xFF), (unsigned char)((subtype >> 8) & 0xFF), (unsigned char)(subtype & 0xFF));
+		if (type == CCX_MEDIA_CLOSED_CAPTION || type == CCX_MEDIA_SUBT || type == CCX_MEDIA_TEXT)
+			cc_c++;
+		if (type == CCX_MEDIA_VISUAL && subtype == CCX_SUBTYPE_AVC_H264)
+			avc_c++;
+		if (type == CCX_MEDIA_VISUAL && (subtype == CCX_SUBTYPE_HEV1 || subtype == CCX_SUBTYPE_HVC1))
+			hevc_c++;
+		if (type == CCX_MEDIA_SUBPIC && subtype == CCX_SUBTYPE_MPEG4)
+			vob_c++;
+	}
+	mprint("MP4: found %d tracks: %d avc, %d hevc, %d cc, %d vobsub\n", tc, avc_c, hevc_c, cc_c, vob_c);
+	for (int i = 0; i < tc; i++)
+	{
+		AVStream *st = fmt->streams[i];
+		uint32_t type, subtype;
+		ffmpeg_stream_to_type_subtype(st, &type, &subtype);
+		uint64_t tt = CCX_MEDIA_TYPE(type, subtype);
+		/* Skip streams we don't handle */
+		if (type == 0)
+			continue;
+		PacketStore *ps = collect_packets_for_stream(fmt, i);
+		if (!ps)
+			continue;
+		switch (tt)
+		{
+			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_XDVB):
+				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
+					continue;
+				}
+				if (avc_c > 1)
+					switch_output_file(ctx, enc, i);
+				if (do_xdvb_track(ctx, st, ps, &dec_sub) != 0)
+				{
+					mprint("Error xdvb\n");
+					packet_store_free(ps);
+					goto cleanup;
+				}
+				if (dec_sub.got_output)
+				{
+					mp4_ret = 1;
+					encode_sub(enc, &dec_sub);
+					dec_sub.got_output = 0;
+				}
+				break;
+			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_AVC_H264):
+				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
+					continue;
+				}
+				if (avc_c > 1)
+					switch_output_file(ctx, enc, i);
+				if (do_avc_track(ctx, st, ps, &dec_sub) != 0)
+				{
+					mprint("Error avc\n");
+					packet_store_free(ps);
+					goto cleanup;
+				}
+				if (dec_sub.got_output)
+				{
+					mp4_ret = 1;
+					encode_sub(enc, &dec_sub);
+					dec_sub.got_output = 0;
+				}
+				break;
+			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_HEV1):
+			case CCX_MEDIA_TYPE(CCX_MEDIA_VISUAL, CCX_SUBTYPE_HVC1):
+				if (cc_c && !cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
+					continue;
+				}
+				if (hevc_c > 1)
+					switch_output_file(ctx, enc, i);
+				dec->avc_ctx->is_hevc = 1;
+				if (do_hevc_track(ctx, st, ps, &dec_sub) != 0)
+				{
+					mprint("Error hevc\n");
+					packet_store_free(ps);
+					goto cleanup;
+				}
+				if (dec_sub.got_output)
+				{
+					mp4_ret = 1;
+					encode_sub(enc, &dec_sub);
+					dec_sub.got_output = 0;
+				}
+				break;
+			case CCX_MEDIA_TYPE(CCX_MEDIA_SUBPIC, CCX_SUBTYPE_MPEG4):
+				if (vob_c > 1)
+					switch_output_file(ctx, enc, i);
+				if (do_vobsub_track(ctx, st, ps, &dec_sub) != 0)
+				{
+					mprint("Error vobsub\n");
+					packet_store_free(ps);
+					goto cleanup;
+				}
+				if (dec_sub.got_output)
+					mp4_ret = 1;
+				break;
+			default:
+				if (type != CCX_MEDIA_CLOSED_CAPTION && type != CCX_MEDIA_SUBT && type != CCX_MEDIA_TEXT)
+					break;
+				if (avc_c && cfg->mp4vidtrack)
+				{
+					packet_store_free(ps);
+					continue;
+				}
+				if (cc_c > 1)
+					switch_output_file(ctx, enc, i);
+				do_cc_track(ctx, st, ps, type, subtype, &dec_sub, &mp4_ret);
+				break;
+		}
+		packet_store_free(ps);
+	}
+cleanup:
+	avformat_close_input(&fmt);
+	freep(&dec->xds_ctx);
+	mprint("\nDone processing '%s'\n", file);
+	if (avc_c)
+		mprint("Found %d AVC track(s). ", avc_c);
+	else
+		mprint("Found no AVC track(s). ");
+	if (hevc_c)
+		mprint("Found %d HEVC track(s). ", hevc_c);
+	else
+		mprint("Found no HEVC track(s). ");
+	if (cc_c)
+		mprint("Found %d CC track(s). ", cc_c);
+	else
+		mprint("Found no dedicated CC track(s). ");
+	if (vob_c)
+		mprint("Found %d VOBSUB track(s).\n", vob_c);
+	else
+		mprint("\n");
+	ctx->freport.mp4_cc_track_cnt = cc_c;
+	if ((dec->write_format == CCX_OF_MCC) && (dec->saw_caption_block == CCX_TRUE))
+		mp4_ret = 1;
+	return mp4_ret;
+}
+
+int dumpchapters_ffmpeg(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	(void)ctx;
+	(void)cfg;
+	mprint("Opening '%s': ", file);
+	av_log_set_level(AV_LOG_ERROR);
+	AVFormatContext *fmt = NULL;
+	if (avformat_open_input(&fmt, file, NULL, NULL) < 0)
+	{
+		mprint("failed\n");
+		return 5;
+	}
+	if (avformat_find_stream_info(fmt, NULL) < 0)
+	{
+		mprint("failed to find stream info\n");
+		avformat_close_input(&fmt);
+		return 5;
+	}
+	mprint("ok\n");
+	int count = (int)fmt->nb_chapters;
+	if (count == 0)
+	{
+		mprint("No chapters found!\n");
+		avformat_close_input(&fmt);
+		return 0;
+	}
+	char szName[1024];
+	snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
+	FILE *t = fopen(szName, "wt");
+	if (!t)
+	{
+		avformat_close_input(&fmt);
+		return 5;
+	}
+	printf("Writing chapters into %s\n", szName);
+	for (int i = 0; i < count; i++)
+	{
+		AVChapter *ch = fmt->chapters[i];
+		double ss = (double)ch->start * ch->time_base.num / ch->time_base.den;
+		int h = (int)(ss / 3600), m = (int)(ss / 60) - h * 60, s = (int)ss - h * 3600 - m * 60, ms = (int)((ss - (int)ss) * 1000);
+		AVDictionaryEntry *title = av_dict_get(ch->metadata, "title", NULL, 0);
+		fprintf(t, "CHAPTER%02d=%02d:%02d:%02d.%03d\n", i + 1, h, m, s, ms);
+		fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, title ? title->value : "");
+	}
+	fclose(t);
+	avformat_close_input(&fmt);
+	return 1;
+}
+
+#endif // ENABLE_FFMPEG_MP4
+
 int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
+#ifdef ENABLE_FFMPEG_MP4
+	return processmp4_ffmpeg(ctx, cfg, file);
+#else
 	int mp4_ret = 0;
 	GF_ISOFile *f;
 	u32 i, j, track_count, avc_track_count, hevc_track_count, cc_track_count;
@@ -915,9 +1704,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		free(dec_ctx->xds_ctx);
 		return -2;
 	}
-
 	mprint("ok\n");
-
 	track_count = gf_isom_get_track_count(f);
 
 	avc_track_count = 0;
@@ -1235,61 +2022,69 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	}
 
 	return mp4_ret;
+
+#endif // ENABLE_FFMPEG_MP4
 }
 
 int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
-	int mp4_ret = 0;
-	GF_ISOFile *f;
-	mprint("Opening \'%s\': ", file);
+#ifdef ENABLE_FFMPEG_MP4
+	return dumpchapters_ffmpeg(ctx, cfg, file);
+#else
+	{
+		int mp4_ret = 0;
+		GF_ISOFile *f;
+		mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
-	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
+		gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
 #endif
 
-	if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
-	{
-		mprint("failed to open\n");
-		return 5;
-	}
-
-	mprint("ok\n");
-
-	char szName[1024];
-	FILE *t;
-	u32 i, count;
-	count = gf_isom_get_chapter_count(f, 0);
-	if (count > 0)
-	{
-		if (file)
+		if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
 		{
-			snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
+			mprint("failed to open\n");
+			return 5;
+		}
 
-			t = gf_fopen(szName, "wt");
-			if (!t)
-				return 5;
+		mprint("ok\n");
+
+		char szName[1024];
+		FILE *t;
+		u32 i, count;
+		count = gf_isom_get_chapter_count(f, 0);
+		if (count > 0)
+		{
+			if (file)
+			{
+				snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
+
+				t = gf_fopen(szName, "wt");
+				if (!t)
+					return 5;
+			}
+			else
+			{
+				t = stdout;
+			}
+			mp4_ret = 1;
+			printf("Writing chapters into %s\n", szName);
 		}
 		else
 		{
-			t = stdout;
+			mprint("No chapters information found!\n");
 		}
-		mp4_ret = 1;
-		printf("Writing chapters into %s\n", szName);
-	}
-	else
-	{
-		mprint("No chapters information found!\n");
-	}
 
-	for (i = 0; i < count; i++)
-	{
-		u64 chapter_time;
-		const char *name;
-		char szDur[64];
-		gf_isom_get_chapter(f, 0, i + 1, &chapter_time, &name);
-		fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur, sizeof(szDur)));
-		fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, name);
+		for (i = 0; i < count; i++)
+		{
+			u64 chapter_time;
+			const char *name;
+			char szDur[64];
+			gf_isom_get_chapter(f, 0, i + 1, &chapter_time, &name);
+			fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur, sizeof(szDur)));
+			fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, name);
+		}
+		if (file)
+			gf_fclose(t);
+		return mp4_ret;
 	}
-	if (file)
-		gf_fclose(t);
-	return mp4_ret;
+#endif // ENABLE_FFMPEG_MP4
 }

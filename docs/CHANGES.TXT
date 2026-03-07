@@ -1,5 +1,6 @@
 0.96.7 (unreleased)
 -------------------
+- Feature: Added FFmpeg-based MP4 demuxing as alternative to GPAC (enabled with -DWITH_FFMPEG=ON).
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 
 0.96.6 (2026-02-19)
