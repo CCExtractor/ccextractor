@@ -1,5 +1,6 @@
 0.96.7 (unreleased)
 -------------------
+- Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 
 0.96.6 (2026-02-19)
