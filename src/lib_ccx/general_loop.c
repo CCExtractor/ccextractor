@@ -368,6 +368,12 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 	}
 	/* const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present */
 	FILE *fr = fopen(filename, "rt");
+	if (!fr)
+	{
+		mprint("Error: Could not open hex file %s\n", filename);
+		free(line);
+		return;
+	}
 	unsigned char *bytes = NULL;
 	unsigned byte_count = 0;
 	int warning_shown = 0;
