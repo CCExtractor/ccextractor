@@ -1,5 +1,5 @@
 use crate::bindings::{encoder_ctx, ccx_s_write};
-use crate::encoder::FromCType;
+use crate::ctorust::FromCType;
 use lib_ccxr::util::encoding::Encoding;
 use std::ffi::CStr;
 
