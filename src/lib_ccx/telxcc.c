@@ -884,10 +884,92 @@ page_is_empty:
 			}
 			else
 			{
-				// OK, the old and new buffer don't match. So write the old
-				telxcc_dump_prev_page(ctx, sub);
-				ctx->prev_hide_timestamp = page->hide_timestamp;
-				ctx->prev_show_timestamp = page->show_timestamp;
+				// Instead of dumping immediately, check if sentence ended
+				if (ctx->page_buffer_prev && ctx->page_buffer_cur)
+				{
+					int len = strlen(ctx->page_buffer_prev);
+
+					// Skip trailing spaces/newlines
+					while (len > 0 &&
+					       (ctx->page_buffer_prev[len - 1] == ' ' ||
+						ctx->page_buffer_prev[len - 1] == '\n' ||
+						ctx->page_buffer_prev[len - 1] == '\r'))
+					{
+						len--;
+					}
+
+					if (len > 0)
+					{
+						char last = ctx->page_buffer_prev[len - 1];
+
+						// Only flush if sentence looks complete
+						if (last == '.' || last == '?' || last == '!' || last == ':')
+						{
+							// OK, the old and new buffer don't match. So write the old
+							telxcc_dump_prev_page(ctx, sub);
+							ctx->prev_hide_timestamp = page->hide_timestamp;
+							ctx->prev_show_timestamp = page->show_timestamp;
+						}
+						else
+						{
+							// Sentence not finished! Merge current fragment into previous buffer.
+							// First, realloc prev page buffer to fit both
+							size_t new_size = ctx->page_buffer_prev_used + ctx->page_buffer_cur_used + 2; // +1 space, +1 null
+							if (new_size > ctx->page_buffer_prev_size)
+							{
+								char *tmp = (char *)realloc(ctx->page_buffer_prev, new_size + 4096);
+								if (!tmp)
+									fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory for teletext text block merging.\n");
+								ctx->page_buffer_prev = tmp;
+								ctx->page_buffer_prev_size = new_size + 4096;
+							}
+
+							// Append space and then the current buffer
+							ctx->page_buffer_prev[ctx->page_buffer_prev_used++] = ' ';
+							memcpy(ctx->page_buffer_prev + ctx->page_buffer_prev_used, ctx->page_buffer_cur, ctx->page_buffer_cur_used);
+							ctx->page_buffer_prev_used += ctx->page_buffer_cur_used;
+							ctx->page_buffer_prev[ctx->page_buffer_prev_used] = '\0';
+
+							// Also merge the UCS-2 compare buffers
+							if (ctx->ucs2_buffer_prev && ctx->ucs2_buffer_cur)
+							{
+								size_t new_ucs2_size = ctx->ucs2_buffer_prev_used + ctx->ucs2_buffer_cur_used + 2;
+								if (new_ucs2_size > ctx->ucs2_buffer_prev_size)
+								{
+									uint64_t *tmp_ucs2 = (uint64_t *)realloc(ctx->ucs2_buffer_prev, (new_ucs2_size + 4096) * sizeof(uint64_t));
+									if (tmp_ucs2)
+									{
+										ctx->ucs2_buffer_prev = tmp_ucs2;
+										ctx->ucs2_buffer_prev_size = new_ucs2_size + 4096;
+									}
+								}
+								// Append space (0x20) and the rest
+								ctx->ucs2_buffer_prev[ctx->ucs2_buffer_prev_used++] = 0x20;
+								memcpy(ctx->ucs2_buffer_prev + ctx->ucs2_buffer_prev_used, ctx->ucs2_buffer_cur, ctx->ucs2_buffer_cur_used * sizeof(uint64_t));
+								ctx->ucs2_buffer_prev_used += ctx->ucs2_buffer_cur_used;
+								ctx->ucs2_buffer_prev[ctx->ucs2_buffer_prev_used] = 0;
+							}
+
+							ctx->prev_hide_timestamp = page->hide_timestamp;
+							ctx->prev_show_timestamp = page->show_timestamp;
+							break; // Do not dump yet, continue gathering fragments
+						}
+					}
+					else
+					{
+						// Buffer has NO real alphanumeric chars, just whitespace. Flush anyway.
+						telxcc_dump_prev_page(ctx, sub);
+						ctx->prev_hide_timestamp = page->hide_timestamp;
+						ctx->prev_show_timestamp = page->show_timestamp;
+					}
+				}
+				else
+				{
+					// Standard flush if buffers are NULL
+					telxcc_dump_prev_page(ctx, sub);
+					ctx->prev_hide_timestamp = page->hide_timestamp;
+					ctx->prev_show_timestamp = page->show_timestamp;
+				}
 			}
 			break;
 		default:
