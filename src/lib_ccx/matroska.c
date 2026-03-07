@@ -880,6 +880,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	ULLONG track_number = 0;
 	enum matroska_track_entry_type track_type = MATROSKA_TRACK_TYPE_VIDEO;
 	char *lang = strdup("eng");
+    if (!lang)
+	fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating lang.");
 	char *header = NULL;
 	char *lang_ietf = NULL;
 	char *codec_id_string = NULL;
@@ -1031,7 +1033,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 			case MATROSKA_SEGMENT_TRACK_LANGUAGE_IETF:
 				lang_ietf = read_vint_block_string(file);
 				mprint("    Language IETF: %s\n", lang_ietf);
-				// We'll store this for later use rather than freeing it immediately
+							// We'll store this for later use rather than freeing it immediately
 				if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
 				{
 					// Don't free lang_ietf here, store in track
@@ -1041,10 +1043,14 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 						free(lang);
 						lang = NULL;
 					}
+
 					// Default to "eng" if we somehow don't have a language yet
 					if (lang == NULL)
 					{
 						lang = strdup("eng");
+						if (!lang)
+							fatal(EXIT_NOT_ENOUGH_MEMORY,
+							      "In parse_segment_track_entry: Out of memory allocating lang.");
 					}
 				}
 				else
@@ -1053,7 +1059,6 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 					lang_ietf = NULL;
 				}
 				MATROSKA_SWITCH_BREAK(code, code_len);
-
 				/* Misc ids */
 			case MATROSKA_VOID:
 				read_vint_block_skip(file);

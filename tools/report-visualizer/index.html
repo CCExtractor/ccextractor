@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CCExtractor Report Visualizer</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+
+</head>
+<body>
+
+<h1>CCExtractor Report Visualizer</h1>
+
+<p>Upload a <b>report.txt</b> file generated with <code>-out=report</code></p>
+
+<input type="file" id="fileInput">
+
+<div id="results"></div>
+
+<script>
+
+document.getElementById("fileInput").addEventListener("change", function(e){
+
+  const file = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(){
+
+    const text = reader.result;
+    const lines = text.split("\n");
+
+    const container = document.getElementById("results");
+    container.innerHTML = "";
+
+    lines.forEach(line => {
+
+      if(line.toLowerCase().includes("page")){
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <strong>Subtitle Page Found</strong><br>
+          ${line}
+        `;
+
+        container.appendChild(card);
+      }
+
+    });
+
+  };
+
+  reader.readAsText(file);
+
+});
+
+</script>
+
+</body>
+</html>
