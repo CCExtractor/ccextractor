@@ -1630,6 +1630,24 @@ void EPG_free(struct lib_ccx_ctx *ctx)
 {
 	if (ctx->epg_inited)
 	{
+		// Flush any pending EIT sections not triggered by a subsequent
+		// payload_start_indicator packet (e.g. last section in stream)
+		for (int i = 0; i <= 0xfff; i++)
+		{
+			if (ctx->epg_buffers[i].buffer != NULL && ctx->epg_buffers[i].ccounter > 0)
+			{
+				if (ctx->epg_buffers[i].buffer_length > 0)
+				{
+					unsigned char pointer_field = (unsigned char)ctx->epg_buffers[i].buffer[0];
+					if ((size_t)pointer_field + 1 < (size_t)ctx->epg_buffers[i].buffer_length)
+					{
+						EPG_parse_table(ctx, ctx->epg_buffers[i].buffer, ctx->epg_buffers[i].buffer_length);
+					}
+				}
+				free(ctx->epg_buffers[i].buffer);
+				ctx->epg_buffers[i].buffer = NULL;
+			}
+		}
 		if (ccx_options.xmltv == 2 || ccx_options.xmltv == 3 || ccx_options.send_to_srv)
 		{
 			if (ccx_options.send_to_srv)
