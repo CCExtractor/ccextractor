@@ -255,7 +255,7 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     // Subsequent calls from ccxr_demuxer_open/close should NOT modify inputfile because
     // C code holds references to those strings throughout processing.
     // Freeing them would cause use-after-free and double-free errors.
-    if let Some(ref inputfile) = options.inputfile {
+    if let Some(ref _inputfile) = options.inputfile {
         if (*ccx_s_options).inputfile.is_null() {
             let non_empty: Vec<String> = options
                 .inputfile
