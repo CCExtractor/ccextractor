@@ -2,7 +2,6 @@
 #define CCX_DECODER_VBI
 
 #include "zvbi/zvbi_decoder.h"
-#define VBI_DEBUG
 
 #include "ccx_decoders_structs.h"
 #include "ccx_decoders_common.h"
@@ -11,6 +10,8 @@ struct ccx_decoder_vbi_cfg
 {
 #ifdef VBI_DEBUG
 	char *debug_file_name;
+#else
+	int reserved; /* ensure non-empty struct in non-debug builds (MSVC C2016) */
 #endif
 };
 
