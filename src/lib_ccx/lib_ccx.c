@@ -270,7 +270,8 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	freep(&lctx->freport.data_from_708);
 	ccx_demuxer_delete(&lctx->demux_ctx);
 	dinit_decoder_setting(&lctx->dec_global_setting);
-	freep(&ccx_options.enc_cfg.output_filename);
+	// Do not free ccx_options.enc_cfg.output_filename here because it is owned by Rust (allocated via CString::into_raw).
+	// Rust will clean it up if needed. Calling C's free() on it causes an assertion failure on Windows Debug CRTs.
 	freep(&lctx->basefilename);
 	freep(&lctx->pesheaderbuf);
 	if (lctx->inputfile)
@@ -433,17 +434,24 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	{
 		if (ctx->out_interval != -1)
 		{
+			struct encoder_cfg local_cfg = ccx_options.enc_cfg;
 			// Format: "%s_%06d%s" needs: basefilename + '_' + up to 10 digits + extension + null
 			size_t len = strlen(ctx->basefilename) + 1 + 10 + strlen(extension) + 1;
 
-			freep(&ccx_options.enc_cfg.output_filename);
-			ccx_options.enc_cfg.output_filename = malloc(len);
-			if (!ccx_options.enc_cfg.output_filename)
+			local_cfg.output_filename = malloc(len);
+			if (!local_cfg.output_filename)
 			{
 				return NULL;
 			}
 
-			snprintf(ccx_options.enc_cfg.output_filename, len, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
+			snprintf(local_cfg.output_filename, len, "%s_%06d%s", ctx->basefilename, ctx->segment_counter + 1, extension);
+			local_cfg.program_number = pn;
+			local_cfg.in_format = in_format;
+			enc_ctx = init_encoder(&local_cfg);
+			freep(&local_cfg.output_filename); // safely free the malloc'd string
+			if (!enc_ctx)
+				return NULL;
+			list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
 		}
 		if (list_empty(&ctx->enc_ctx_head))
 		{
@@ -457,26 +465,26 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	else
 	{
+		struct encoder_cfg local_cfg = ccx_options.enc_cfg;
 		// Format: "%s_%d%s" needs: basefilename + '_' + up to 10 digits + extension + null
 		size_t len = strlen(ctx->basefilename) + 1 + 10 + strlen(extension) + 1;
 
-		ccx_options.enc_cfg.program_number = pn;
-		ccx_options.enc_cfg.output_filename = malloc(len);
-		if (!ccx_options.enc_cfg.output_filename)
+		local_cfg.program_number = pn;
+		local_cfg.output_filename = malloc(len);
+		if (!local_cfg.output_filename)
 		{
 			return NULL;
 		}
 
-		snprintf(ccx_options.enc_cfg.output_filename, len, "%s_%d%s", ctx->basefilename, pn, extension);
-		enc_ctx = init_encoder(&ccx_options.enc_cfg);
+		snprintf(local_cfg.output_filename, len, "%s_%d%s", ctx->basefilename, pn, extension);
+		enc_ctx = init_encoder(&local_cfg);
+		freep(&local_cfg.output_filename); // safely free the malloc'd string
 		if (!enc_ctx)
 		{
-			freep(&ccx_options.enc_cfg.output_filename);
 			return NULL;
 		}
 
 		list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
-		freep(&ccx_options.enc_cfg.output_filename);
 	}
 	// DVB related
 	enc_ctx->prev = NULL;

@@ -1,6 +1,7 @@
 0.96.7 (unreleased)
 -------------------
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
+- Fix: Resolve Windows MSVC debug build crash caused by cross-CRT invalid free on Rust-allocated output_filename (#2126)
 
 0.96.6 (2026-02-19)
 -------------------
