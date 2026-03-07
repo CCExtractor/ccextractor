@@ -1,5 +1,6 @@
 0.96.7 (unreleased)
 -------------------
+- Fix: Replace DEBUG_OUT 0/1 integer toggle in networking.c with CMake opt-in (-DNETWORKING_DEBUG=ON); fix 3 error messages using printf() instead of fprintf(stderr) (#2174)
 - Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 
