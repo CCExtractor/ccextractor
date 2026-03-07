@@ -21,6 +21,8 @@
 #include "avc_functions.h"
 #include "teletext.h"
 
+#include "ccx_decoders_isdb.h"
+
 #ifdef WITH_LIBCURL
 #include <curl/curl.h>
 #endif
