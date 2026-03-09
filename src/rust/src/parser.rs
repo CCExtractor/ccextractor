@@ -204,6 +204,10 @@ impl OptionsExt for Options {
                 self.messages_target = OutputTarget::Quiet;
                 self.print_file_reports = true;
                 self.demux_cfg.ts_allprogram = true;
+                // Probe both EIA-608 fields so CC3/CC4 are correctly
+                // detected in the report (#2177).
+                self.extract = 12;
+                self.is_608_enabled = true;
             }
             OutFormat::Raw => self.write_format = OutputFormat::Raw,
             OutFormat::Smptett => self.write_format = OutputFormat::SmpteTt,
@@ -1566,6 +1570,7 @@ impl OptionsExt for Options {
         }
 
         if self.write_format != OutputFormat::DvdRaw
+            && self.write_format != OutputFormat::Null
             && self.cc_to_stdout
             && self.extract != 0
             && self.extract == 12
@@ -1914,6 +1919,18 @@ pub mod tests {
         assert_eq!(options.write_format, OutputFormat::Null);
         assert!(options.print_file_reports);
         assert!(options.demux_cfg.ts_allprogram);
+        // Report mode should probe both EIA-608 fields (#2177)
+        assert_eq!(options.extract, 12);
+        assert!(options.is_608_enabled);
+    }
+
+    #[test]
+    fn test_out_report_with_stdout_no_conflict() {
+        // Report mode uses Null output, so --stdout should not conflict
+        // even though extract == 12 (both fields)
+        let (options, _) = parse_args(&["--out", "report", "--stdout"]);
+        assert_eq!(options.write_format, OutputFormat::Null);
+        assert_eq!(options.extract, 12);
     }
 
     // =========================================================================

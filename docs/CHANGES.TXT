@@ -2,6 +2,8 @@
 -------------------
 - Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
+- Fix: Use dynamic current_fps instead of hardcoded 29.97 in CEA-708 SCC frame delay calculations (#2172)
+- Improvement: --out report now probes both EIA-608 fields by default, so CC3/CC4 are correctly detected without requiring --output-field both (#2177)
 
 0.96.6 (2026-02-19)
 -------------------
