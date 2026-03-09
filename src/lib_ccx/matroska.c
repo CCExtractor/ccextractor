@@ -880,6 +880,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	ULLONG track_number = 0;
 	enum matroska_track_entry_type track_type = MATROSKA_TRACK_TYPE_VIDEO;
 	char *lang = strdup("eng");
+	if (lang == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
 	char *header = NULL;
 	char *lang_ietf = NULL;
 	char *codec_id_string = NULL;
@@ -1031,29 +1033,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 			case MATROSKA_SEGMENT_TRACK_LANGUAGE_IETF:
 				lang_ietf = read_vint_block_string(file);
 				mprint("    Language IETF: %s\n", lang_ietf);
-				// We'll store this for later use rather than freeing it immediately
-				if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
-				{
-					// Don't free lang_ietf here, store in track
-					if (lang != NULL)
-					{
-						// If we previously allocated lang, free it as we'll prefer IETF
-						free(lang);
-						lang = NULL;
-					}
-					// Default to "eng" if we somehow don't have a language yet
-					if (lang == NULL)
-					{
-						lang = strdup("eng");
-					}
-				}
-				else
-				{
-					free(lang_ietf); // Free if not a subtitle track
-					lang_ietf = NULL;
-				}
 				MATROSKA_SWITCH_BREAK(code, code_len);
-
 				/* Misc ids */
 			case MATROSKA_VOID:
 				read_vint_block_skip(file);
@@ -1349,21 +1329,18 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 
 char *generate_filename_from_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-	// Use lang_ietf if available, otherwise fall back to lang
-	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
 	const char *basename = get_basename(mkv_ctx->filename);
 	const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
 
-	// Calculate needed size: basename + "_" + lang + "_" + index + "." + extension + null
-	size_t needed = strlen(basename) + strlen(lang_to_use) + strlen(extension) + 32;
+	size_t needed = strlen(basename) + strlen(track->lang) + strlen(extension) + 32;
 	char *buf = malloc(needed);
 	if (buf == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_filename_from_track: Out of memory.");
 
 	if (track->lang_index == 0)
-		snprintf(buf, needed, "%s_%s.%s", basename, lang_to_use, extension);
+		snprintf(buf, needed, "%s_%s.%s", basename, track->lang, extension);
 	else
-		snprintf(buf, needed, "%s_%s_" LLD ".%s", basename, lang_to_use,
+		snprintf(buf, needed, "%s_%s_" LLD ".%s", basename, track->lang,
 			 track->lang_index, extension);
 	return buf;
 }
@@ -1599,17 +1576,16 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 	}
 
 	// Generate base filename (without extension)
-	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
 	const char *basename = get_basename(mkv_ctx->filename);
-	size_t needed = strlen(basename) + strlen(lang_to_use) + 32;
+	size_t needed = strlen(basename) + strlen(track->lang) + 32;
 	char *base_filename = malloc(needed);
 	if (base_filename == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
 
 	if (track->lang_index == 0)
-		snprintf(base_filename, needed, "%s_%s", basename, lang_to_use);
+		snprintf(base_filename, needed, "%s_%s", basename, track->lang);
 	else
-		snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_to_use, track->lang_index);
+		snprintf(base_filename, needed, "%s_%s_" LLD, basename, track->lang, track->lang_index);
 
 	// Create .sub filename
 	char *sub_filename = malloc(needed + 5);
@@ -1664,7 +1640,7 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 
 	// Add language identifier line
 	char lang_line[128];
-	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", lang_to_use);
+	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", track->lang);
 	write_wrapped(idx_desc, lang_line, strlen(lang_line));
 
 	// Buffer for PS/PES headers and padding
@@ -1937,12 +1913,7 @@ void matroska_save_all(struct matroska_ctx *mkv_ctx, char *lang)
 	{
 		if (lang)
 		{
-			// Try to match against IETF tag first if available
-			if (mkv_ctx->sub_tracks[i]->lang_ietf &&
-			    (match = strstr(lang, mkv_ctx->sub_tracks[i]->lang_ietf)) != NULL)
-				save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
-			// Fall back to 3-letter code
-			else if ((match = strstr(lang, mkv_ctx->sub_tracks[i]->lang)) != NULL)
+			if ((match = strstr(lang, mkv_ctx->sub_tracks[i]->lang)) != NULL)
 				save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
 		}
 		else
