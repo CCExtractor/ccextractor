@@ -754,6 +754,7 @@ pub struct Args {
     ///     nothing is selected and no subtitle is generated
     /// --codec teletext
     ///     select the teletext subtitle from elementary stream
+    /// --codec isdb      select ISDB/ARIB subtitle stream (Japanese broadcast)
     #[arg(long, verbatim_doc_comment, value_name="value", help_heading=OUTPUT_AFFECTING_CODEC)]
     pub codec: Option<CCXCodec>,
     /// --no-codec dvbsub
@@ -977,6 +978,7 @@ pub struct Args {
 pub enum CCXCodec {
     Dvbsub,
     Teletext,
+    Isdb,
 }
 
 #[derive(Display, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
