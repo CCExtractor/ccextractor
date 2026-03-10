@@ -184,6 +184,7 @@ char *matroska_track_text_subtitle_id_extensions[] = {
 
 char *avc_codec_id = "V_MPEG4/ISO/AVC";
 char *hevc_codec_id = "V_MPEGH/ISO/HEVC";
+char *mpeg2_codec_id = "V_MPEG2";
 char *dvb_codec_id = "S_DVBSUB";
 
 /* Messages */
@@ -247,6 +248,7 @@ struct matroska_ctx
 	struct cc_subtitle dec_sub;
 	int avc_track_number;  // ID of AVC track. -1 if there is none
 	int hevc_track_number; // ID of HEVC track. -1 if there is none
+	int mpeg2_track_number; // ID of MPEG2 track. -1 if there is none
 	int sub_tracks_count;
 	int block_index;
 	int sentence_count;
@@ -278,6 +280,7 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx);
 void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp);
 int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame);
 int process_hevc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame);
+int process_mpeg2_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame);
 void parse_segment_track_entry(struct matroska_ctx *mkv_ctx);
 void parse_private_codec_data(struct matroska_ctx *mkv_ctx, char *codec_id_string, ULLONG track_number, char *lang);
 void parse_segment_tracks(struct matroska_ctx *mkv_ctx);

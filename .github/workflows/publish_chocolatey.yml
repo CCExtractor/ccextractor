@@ -134,7 +134,7 @@ jobs:
           Write-Host "Package submitted to Chocolatey! It may take some time to be moderated and published."
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: chocolatey-package
           path: packaging/chocolatey/*.nupkg

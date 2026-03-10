@@ -269,6 +269,13 @@ void sleep_secs(int secs)
 #endif
 }
 
+#ifndef DISABLE_RUST
+extern int ccxr_hex_to_int(char high, char low);
+int hex_to_int(char high, char low)
+{
+	return ccxr_hex_to_int(high, low);
+}
+#else
 int hex_to_int(char high, char low)
 {
 	unsigned char h, l;
@@ -286,6 +293,15 @@ int hex_to_int(char high, char low)
 		return -1;
 	return h * 16 + l;
 }
+#endif
+
+#ifndef DISABLE_RUST
+extern int ccxr_hex_string_to_int(const char *string, int len);
+int hex_string_to_int(char *string, int len)
+{
+	return ccxr_hex_string_to_int(string, len);
+}
+#else
 int hex_string_to_int(char *string, int len)
 {
 	int total_return = 0;
@@ -302,6 +318,7 @@ int hex_string_to_int(char *string, int len)
 	}
 	return total_return;
 }
+#endif
 
 #ifndef _WIN32
 void m_signal(int sig, void (*func)(int))

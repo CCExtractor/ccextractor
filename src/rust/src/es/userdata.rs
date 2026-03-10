@@ -1,3 +1,26 @@
+/*!
+ This module handles parsing of MPEG "user data" sections to extract
+ closed captions from various broadcast and container formats.
+
+ Supported caption formats include:
+ - DVD Closed Captions (DVD CC)
+ - SCTE-20 (analog broadcast captions)
+ - ReplayTV 4000/5000 proprietary captions
+ - ATSC / HDTV (CEA-708 via GA94 user data)
+ - Dish Network proprietary captions
+ - Divicom / CEA-608 captions
+ - GXF VBI-based captions
+
+ The `user_data()` function acts as a dispatcher:
+ it detects the caption format based on the user data header
+ and forwards caption bytes to the appropriate decoding pipeline
+ (`do_cb`, `store_hdcc`, or `decode_vbi`).
+
+ NOTE:
+ This code interfaces with legacy C components and therefore
+ contains `unsafe` blocks for raw pointer access and FFI calls.
+*/
+
 /* Return a pointer to a string that holds the printable characters
  * of the caption data block. FOR DEBUG PURPOSES ONLY! */
 use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
@@ -48,12 +71,14 @@ pub unsafe fn user_data(
 
     // Shall not happen
     if ustream.error || ustream.bits_left <= 0 {
-        // ustream->error=1;
+        debug!(
+            msg_type = DebugMessageFlag::VERBOSE;
+            "user_data: invalid or empty bitstream (error={}, bits_left={}), skipping user data",
+            ustream.error,
+            ustream.bits_left
+        );
         return Ok(0); // Actually discarded on call.
-                      // CFS: Seen in a Wobble edited file.
-                      // fatal(CCX_COMMON_EXIT_BUG_BUG, "user_data: Impossible!");
     }
-
     // Do something
     dec_ctx.stat_numuserheaders += 1;
     // header+=4;
@@ -67,6 +92,10 @@ pub unsafe fn user_data(
 
     // DVD CC header, see
     // <http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML>
+    // The following conditional chain detects the caption format
+    // based on the first 4 bytes of the MPEG user data header.
+    // Each format uses a different encapsulation and requires
+    // specialized parsing logic.
     if ud_header.starts_with(&[0x43, 0x43]) {
         dec_ctx.stat_dvdccheaders += 1;
 
@@ -251,7 +280,8 @@ pub unsafe fn user_data(
         data[2] = ustream.bitstream_get_num(1, true)? as u8;
         do_cb(dec_ctx, data.as_mut_ptr(), sub);
     }
-    // HDTV - see A/53 Part 4 (Video)
+    // GA94 identifier (0x47 0x41 0x39 0x34 = "GA94" ASCII)
+    // HDTV user data carrying closed captions, as defined in ATSC A/53 Part 4 (Video)
     else if ud_header.starts_with(&[0x47, 0x41, 0x39, 0x34]) {
         dec_ctx.stat_hdtv += 1;
 

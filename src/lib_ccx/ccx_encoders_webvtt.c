@@ -94,7 +94,7 @@ static const char *webvtt_inline_css = "\r\nSTYLE\n\n"
 				       "  background-color: rgba(255, 255, 255, 0.5);\n"
 				       "}\n"
 				       "::cue(c.bg_green.bg_semi-transparent) {\n"
-				       "  background-color: rgba(0, 256, 0, 0.5);\n"
+				       "  background-color: rgba(0, 255, 0, 0.5);\n"
 				       "}\n"
 				       "::cue(c.bg_blue.bg_semi-transparent) {\n"
 				       "  background-color: rgba(0, 0, 255, 0.5);\n"
@@ -189,6 +189,7 @@ int write_stringz_as_webvtt(char *string, struct encoder_ctx *context, LLONG ms_
 		if (written != context->encoded_crlf_length)
 		{
 			free(el);
+			free(unescaped);
 			return -1;
 		}
 		begin += strlen((const char *)begin) + 1;
@@ -502,16 +503,16 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (open_font != FONT_REGULAR)
 					{
 						if (open_font & FONT_ITALICS)
-							write_wrapped(context->out->fh, strdup("<i>"), 3);
+							write_wrapped(context->out->fh, "<i>", 3);
 						if (open_font & FONT_UNDERLINED)
-							write_wrapped(context->out->fh, strdup("<u>"), 3);
+							write_wrapped(context->out->fh, "<u>", 3);
 					}
 
 					// opening events for colors
 					int open_color = color_events[j] & 0xFF; // Last 16 bytes
 					if (open_color != COL_WHITE)
 					{
-						write_wrapped(context->out->fh, strdup("<c."), 3);
+						write_wrapped(context->out->fh, "<c.", 3);
 						write_wrapped(context->out->fh, color_text[open_color][0], strlen(color_text[open_color][0]));
 						write_wrapped(context->out->fh, ">", 1);
 					}
@@ -532,7 +533,7 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					int close_color = color_events[j] >> 16; // First 16 bytes
 					if (close_color != COL_WHITE)
 					{
-						write_wrapped(context->out->fh, strdup("</c>"), 4);
+						write_wrapped(context->out->fh, "</c>", 4);
 					}
 
 					// closing events for fonts
@@ -540,9 +541,9 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 					if (close_font != FONT_REGULAR)
 					{
 						if (close_font & FONT_UNDERLINED)
-							write_wrapped(context->out->fh, strdup("</u>"), 4);
+							write_wrapped(context->out->fh, "</u>", 4);
 						if (close_font & FONT_ITALICS)
-							write_wrapped(context->out->fh, strdup("</i>"), 4);
+							write_wrapped(context->out->fh, "</i>", 4);
 					}
 				}
 			}
