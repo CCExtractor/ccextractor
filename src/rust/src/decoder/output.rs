@@ -25,6 +25,7 @@ pub struct Writer<'a> {
 
 impl<'a> Writer<'a> {
     /// Create a new writer context
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cea_708_counter: &'a mut u32,
         subs_delay: LLONG,
