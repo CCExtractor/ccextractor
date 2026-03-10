@@ -41,3 +41,6 @@ pub mod demuxer_data;
 pub mod dvdraw;
 pub mod scc;
 pub mod stream_functions;
+
+#[cfg(feature = "enable_mp4_ffmpeg")]
+pub mod mp4;
