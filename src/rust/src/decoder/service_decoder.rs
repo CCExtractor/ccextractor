@@ -873,8 +873,7 @@ impl dtvcc_service_decoder {
             } else {
                 &ccx_encoders_transcript_format::default()
             };
-            let end_frame = &encoder.encoded_end_frame
-                [..encoder.encoded_end_frame_length as usize];
+            let end_frame = &encoder.encoded_end_frame[..encoder.encoded_end_frame_length as usize];
             let mut writer = Writer::new(
                 &mut encoder.cea_708_counter,
                 encoder.subs_delay,
@@ -1205,8 +1204,7 @@ impl dtvcc_service_decoder {
             let sn = tv.service_number;
             let writer_ctx = &mut encoder.dtvcc_writers[(sn - 1) as usize];
 
-            let end_frame = &encoder.encoded_end_frame
-                [..encoder.encoded_end_frame_length as usize];
+            let end_frame = &encoder.encoded_end_frame[..encoder.encoded_end_frame_length as usize];
             let mut writer = Writer::new(
                 &mut encoder.cea_708_counter,
                 encoder.subs_delay,
