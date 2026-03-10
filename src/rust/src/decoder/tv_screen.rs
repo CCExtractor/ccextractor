@@ -350,7 +350,8 @@ impl dtvcc_tv_screen {
                 }
                 writer.write_to_file(buf.as_bytes())?;
                 self.write_row(writer, row_index, false)?;
-                writer.write_to_file(b"\r\n")?;
+                let end_frame = writer.end_frame.clone();
+                writer.write_to_file(&end_frame)?;
             }
         }
         Ok(())
@@ -800,6 +801,7 @@ mod test {
             0,
             &transcript_settings,
             0,
+            b"\r\n",
         );
 
         // This should succeed without error (fd is valid, not -1)
@@ -835,6 +837,7 @@ mod test {
             0,
             &transcript_settings,
             0,
+            b"\r\n",
         );
 
         // This should return an error, not panic
