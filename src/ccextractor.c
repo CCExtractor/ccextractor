@@ -222,24 +222,30 @@ int start_ccx()
 					ret = tmp;
 				break;
 			case CCX_SM_MP4:
-				mprint("\rAnalyzing data with GPAC (MP4 library)\n");
-				close_input_file(ctx);	     // No need to have it open. GPAC will do it for us
+				mprint("\rAnalyzing data in MP4 mode\n");
+				close_input_file(ctx);	     // No need to have it open. The MP4 library will reopen it
 				if (ctx->current_file == -1) // We don't have a file to open, must be stdin, and GPAC is incompatible with stdin
 				{
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 				}
-				if (ccx_options.extract_chapters)
+				for (int mp4_i = 0; mp4_i < ccx_options.num_input_files; mp4_i++)
 				{
-					tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+					char *mp4_file = ccx_options.inputfile[mp4_i];
+					if (!mp4_file)
+						continue;
+					if (ccx_options.extract_chapters)
+					{
+						tmp = dumpchapters(ctx, &ctx->mp4_cfg, mp4_file);
+					}
+					else
+					{
+						tmp = processmp4(ctx, &ctx->mp4_cfg, mp4_file);
+					}
+					if (ccx_options.print_file_reports)
+						print_file_report(ctx);
+					if (!ret)
+						ret = tmp;
 				}
-				else
-				{
-					tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
-				}
-				if (ccx_options.print_file_reports)
-					print_file_report(ctx);
-				if (!ret)
-					ret = tmp;
 				break;
 			case CCX_SM_MKV:
 				mprint("\rAnalyzing data in Matroska mode\n");

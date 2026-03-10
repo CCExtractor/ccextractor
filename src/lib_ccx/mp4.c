@@ -1,9 +1,14 @@
+#include <assert.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 
+#ifndef ENABLE_FFMPEG_MP4
 #include <gpac/isomedia.h>
 #include <gpac/mpeg4_odf.h>
+#else
+#include "ccx_gpac_types.h"
+#endif
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
@@ -50,7 +55,7 @@ static struct
 	unsigned type[32];
 } s_nalu_stats;
 
-static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConfig *c, GF_ISOSample *s, struct cc_subtitle *sub)
+int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConfig *c, GF_ISOSample *s, struct cc_subtitle *sub)
 {
 	int status = 0;
 	u32 i;
@@ -119,7 +124,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 	return status;
 }
 
-static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCConfig *c, GF_ISOSample *s, struct cc_subtitle *sub)
+int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCConfig *c, GF_ISOSample *s, struct cc_subtitle *sub)
 {
 	int status = 0;
 	u32 i;
@@ -200,6 +205,7 @@ static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCCo
 
 	return status;
 }
+#ifndef ENABLE_FFMPEG_MP4
 static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
@@ -254,7 +260,9 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
@@ -334,7 +342,9 @@ static int process_avc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_I
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count, last_sdi = 0;
@@ -417,7 +427,9 @@ static int process_hevc_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
+#ifndef ENABLE_FFMPEG_MP4
 static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 track, struct cc_subtitle *sub)
 {
 	u32 timescale, i, sample_count;
@@ -555,6 +567,7 @@ static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 trac
 
 	return status;
 }
+#endif // !ENABLE_FFMPEG_MP4
 
 static char *format_duration(u64 dur, u32 timescale, char *szDur, size_t szDur_size)
 {
@@ -877,8 +890,12 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 		}
 
 */
+
 int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
+#ifdef ENABLE_FFMPEG_MP4
+	return ccxr_processmp4(ctx, file);
+#else
 	int mp4_ret = 0;
 	GF_ISOFile *f;
 	u32 i, j, track_count, avc_track_count, hevc_track_count, cc_track_count;
@@ -915,9 +932,7 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		free(dec_ctx->xds_ctx);
 		return -2;
 	}
-
 	mprint("ok\n");
-
 	track_count = gf_isom_get_track_count(f);
 
 	avc_track_count = 0;
@@ -1235,61 +1250,134 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 	}
 
 	return mp4_ret;
+
+#endif // ENABLE_FFMPEG_MP4
 }
 
 int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
-	int mp4_ret = 0;
-	GF_ISOFile *f;
-	mprint("Opening \'%s\': ", file);
+#ifdef ENABLE_FFMPEG_MP4
+	return ccxr_dumpchapters(ctx, file);
+#else
+	{
+		int mp4_ret = 0;
+		GF_ISOFile *f;
+		mprint("Opening \'%s\': ", file);
 #ifdef MP4_DEBUG
-	gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
+		gf_log_set_tool_level(GF_LOG_CONTAINER, GF_LOG_DEBUG);
 #endif
 
-	if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
-	{
-		mprint("failed to open\n");
-		return 5;
-	}
-
-	mprint("ok\n");
-
-	char szName[1024];
-	FILE *t;
-	u32 i, count;
-	count = gf_isom_get_chapter_count(f, 0);
-	if (count > 0)
-	{
-		if (file)
+		if ((f = gf_isom_open(file, GF_ISOM_OPEN_READ, NULL)) == NULL)
 		{
-			snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
+			mprint("failed to open\n");
+			return 5;
+		}
 
-			t = gf_fopen(szName, "wt");
-			if (!t)
-				return 5;
+		mprint("ok\n");
+
+		char szName[1024];
+		FILE *t;
+		u32 i, count;
+		count = gf_isom_get_chapter_count(f, 0);
+		if (count > 0)
+		{
+			if (file)
+			{
+				snprintf(szName, sizeof(szName), "%s.txt", get_basename(file));
+
+				t = gf_fopen(szName, "wt");
+				if (!t)
+					return 5;
+			}
+			else
+			{
+				t = stdout;
+			}
+			mp4_ret = 1;
+			printf("Writing chapters into %s\n", szName);
 		}
 		else
 		{
-			t = stdout;
+			mprint("No chapters information found!\n");
 		}
-		mp4_ret = 1;
-		printf("Writing chapters into %s\n", szName);
+
+		for (i = 0; i < count; i++)
+		{
+			u64 chapter_time;
+			const char *name;
+			char szDur[64];
+			gf_isom_get_chapter(f, 0, i + 1, &chapter_time, &name);
+			fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur, sizeof(szDur)));
+			fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, name);
+		}
+		if (file)
+			gf_fclose(t);
+		return mp4_ret;
+	}
+#endif // ENABLE_FFMPEG_MP4
+}
+
+#ifdef ENABLE_FFMPEG_MP4
+
+#include "mp4_rust_bridge.h"
+
+#ifndef GF_QT_SUBTYPE_C608
+#define GF_QT_SUBTYPE_C608 GF_4CC('c', '6', '0', '8')
+#endif
+
+int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int track_type,
+			      uint32_t timescale, const uint8_t *data,
+			      uint32_t data_len, uint64_t dts,
+			      struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	if (!dec_ctx || !enc_ctx)
+		return -1;
+
+	enc_ctx->timing = dec_ctx->timing;
+
+	/* Set timing so process_clcp / process_tx3g get correct timestamps */
+	set_current_pts(dec_ctx->timing, (LLONG)dts * MPEG_CLOCK_FREQ / timescale);
+	if (track_type == CCX_MP4_TRACK_C608 || track_type == CCX_MP4_TRACK_C708)
+		dec_ctx->timing->current_picture_coding_type = CCX_FRAME_TYPE_I_FRAME;
+	set_fts(dec_ctx->timing);
+
+	int mp4_ret = 0;
+	char *buf = (char *)data;
+
+	if (track_type == CCX_MP4_TRACK_TX3G)
+	{
+		process_tx3g(ctx, enc_ctx, dec_ctx, sub, &mp4_ret,
+			     buf, data_len, 0);
 	}
 	else
 	{
-		mprint("No chapters information found!\n");
+		u32 sub_type = (track_type == CCX_MP4_TRACK_C708)
+				   ? GF_ISOM_SUBTYPE_C708
+				   : GF_QT_SUBTYPE_C608;
+		int atomStart = 0;
+		while (atomStart < (int)data_len)
+		{
+			int atom_len = process_clcp(ctx, enc_ctx, dec_ctx, sub, &mp4_ret,
+						    sub_type, buf + atomStart,
+						    data_len - atomStart);
+			if (atom_len < 0)
+				break;
+			atomStart += atom_len;
+		}
 	}
-
-	for (i = 0; i < count; i++)
-	{
-		u64 chapter_time;
-		const char *name;
-		char szDur[64];
-		gf_isom_get_chapter(f, 0, i + 1, &chapter_time, &name);
-		fprintf(t, "CHAPTER%02d=%s\n", i + 1, format_duration(chapter_time, 1000, szDur, sizeof(szDur)));
-		fprintf(t, "CHAPTER%02dNAME=%s\n", i + 1, name);
-	}
-	if (file)
-		gf_fclose(t);
 	return mp4_ret;
 }
+
+void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+{
+	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+	if (!dec_ctx || !enc_ctx)
+		return;
+	int mp4_ret = 0;
+	process_tx3g(ctx, enc_ctx, dec_ctx, sub, &mp4_ret, NULL, 0, 1);
+}
+
+#endif /* ENABLE_FFMPEG_MP4 */
