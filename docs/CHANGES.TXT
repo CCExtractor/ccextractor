@@ -38,14 +38,8 @@
 - Fix: Configuration file parser bugs — heap buffer overflow on long lines, broken EOF
   detection due to incorrect fgetc() return type, and last line dropped if file lacks
   trailing newline
-- Fix: Typos in configuration keys: FIX_PADDINDG → FIX_PADDING, INVASTIGATE_PACKET → INVESTIGATE_PACKET
-
-0.96.6 (unreleased)
--------------------
-- New: Added ASS/SSA \pos-based positioning for CEA-608 captions when layout is simple (1–2 rows) (#1726)
-- Fix: Prevent infinite loop on truncated MKV files
-- Fix: Various memory safety and stability fixes in demuxers (MP4, PS, MKV, DVB)
-- Fix: Delete empty output files instead of leaving 0-byte files (#1282)
+- Fix: Typos in configuration keys: FIX_PADDINDG → FIX_PADDING,
+  INVASTIGATE_PACKET → INVESTIGATE_PACKET
 
 0.96.5 (2026-01-05)
 -------------------

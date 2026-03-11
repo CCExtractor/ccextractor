@@ -5,23 +5,23 @@
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
 
-static void ass_position_from_row(
+static void ass_position_from_row_col(
     int row,
+    int col,
     int play_res_x,
     int play_res_y,
     int *out_x,
     int *out_y)
 {
-	// Center horizontally
-	*out_x = play_res_x / 2;
+	/* vertical: matches FFmpeg's 0.1 + 0.0533*i formula (0.80/15 = 0.05333) */
+	double top = play_res_y * 0.10;
+	double row_step = (play_res_y * 0.80) / 15.0;
+	*out_y = (int)(top + row * row_step + 0.5);
 
-	// Map CEA-608 row (0–14) to ASS Y coordinate
-	// SSA default PlayResY is 288
-	int top = play_res_y * 10 / 100; // start of lower third
-	int bottom = play_res_y * 95 / 100;
-
-	int y = top + (row * (bottom - top) / 14);
-	*out_y = y;
+	/* horizontal: matches FFmpeg's 0.1 + 0.025*j (0.025 = 0.80/32, 32 cells) */
+	double left = play_res_x * 0.10;
+	double col_step = play_res_x * 0.025;
+	*out_x = (int)(left + col * col_step + 0.5);
 }
 
 int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
@@ -187,11 +187,9 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
 	int wrote_something = 0;
-	int used_row_count = 0;
 
 	int prev_line_start = -1, prev_line_end = -1;	    // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
-	int empty_buf = 1;
 
 	int first_row = -1;
 	int last_row = -1;
@@ -202,18 +200,22 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	{
 		if (data->row_used[i])
 		{
-			empty_buf = 0;
+			first_row = i;
 			break;
 		}
 	}
-	if (empty_buf)
-		return 0;
 
-	for (int i = 0; i < 15; i++)
+	for (int i = 14; i >= 0; i--)
 	{
 		if (data->row_used[i])
-			used_row_count++;
+		{
+			last_row = i;
+			break;
+		}
 	}
+
+	if (first_row < 0)
+		return 0;
 
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
@@ -229,7 +231,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	/*
 	 * ASS precise positioning note:
-	 * We emit {\an2\pos(x,y)} using ASS script resolution coordinates.
+	 * We emit {\an7\pos(x,y)} using ASS script resolution coordinates.
 	 * PlayResX/PlayResY are explicitly declared in the SSA header (384x288),
 	 * which is the SSA/libass default resolution and ensures consistent
 	 * positioning across players.
@@ -247,38 +249,54 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	 * Otherwise, fall back to legacy SSA positioning.
 	 */
 
-	if (used_row_count > 0 && used_row_count <= 2)
+	if ((last_row - first_row) <= 1)
 	{
-		for (int i = 0; i < 15; i++)
+		int first_col = 31;
+
+		for (int r = first_row; r <= last_row; r++)
 		{
-			if (data->row_used[i])
+			if (!data->row_used[r])
+				continue;
+
+			int f = -1, l = -1;
+
+			find_limit_characters(
+			    data->characters[r],
+			    &f,
+			    &l,
+			    CCX_DECODER_608_SCREEN_WIDTH);
+
+			/* Fallback: row_used but only control/padding bytes present */
+			if (f < 0)
 			{
-				first_row = i;
-				break;
+				unsigned char *line = data->characters[r];
+				for (int c = 0; c < CCX_DECODER_608_SCREEN_WIDTH; c++)
+				{
+					if (line[c] != ' ' && line[c] != 0 && line[c] != 0x89) /* match find_limit_characters */
+					{
+						f = c;
+						break;
+					}
+				}
 			}
+
+			/* Safety clamp: fully empty row defaults to left edge */
+			if (f < 0)
+				f = 0;
+
+			if (f < first_col)
+				first_col = f;
 		}
 
-		for (int i = 14; i >= 0; i--)
-		{
-			if (data->row_used[i])
-			{
-				last_row = i;
-				break;
-			}
-		}
+		ass_position_from_row_col(first_row, first_col, 384, 288, &x, &y);
 
-		if (first_row >= 0 && last_row >= 0 && (last_row - first_row) <= 1)
-		{
-			ass_position_from_row(last_row, 384, 288, &x, &y);
+		snprintf(
+		    pos_tag,
+		    sizeof(pos_tag),
+		    "{\\an7\\pos(%d,%d)}",
+		    x, y);
 
-			snprintf(
-			    pos_tag,
-			    sizeof(pos_tag),
-			    "{\\an2\\pos(%d,%d)}",
-			    x, y);
-
-			write_wrapped(context->out->fh, pos_tag, strlen(pos_tag));
-		}
+		write_wrapped(context->out->fh, pos_tag, strlen(pos_tag));
 	}
 
 	int line_count = 0;
