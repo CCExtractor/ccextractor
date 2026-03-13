@@ -1348,6 +1348,8 @@ int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int track_type,
 
 	if (track_type == CCX_MP4_TRACK_TX3G)
 	{
+		/* Override fts_now with correct DTS-based ms timestamp */
+		dec_ctx->timing->fts_now = (LLONG)dts * 1000 / timescale;
 		process_tx3g(ctx, enc_ctx, dec_ctx, sub, &mp4_ret,
 			     buf, data_len, 0);
 	}
