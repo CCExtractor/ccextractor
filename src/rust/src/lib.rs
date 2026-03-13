@@ -27,6 +27,8 @@ pub mod file_functions;
 pub mod hardsubx;
 pub mod hlist;
 pub mod libccxr_exports;
+#[cfg(feature = "enable_mp4_ffmpeg")]
+pub mod mp4_ffmpeg_exports;
 pub mod parser;
 pub mod track_lister;
 pub mod utils;
