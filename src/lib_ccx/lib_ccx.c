@@ -450,7 +450,9 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			enc_ctx = init_encoder(&local_cfg);
 			freep(&local_cfg.output_filename); // safely free the malloc'd string
 			if (!enc_ctx)
+			{
 				return NULL;
+			}
 			list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
 		}
 		if (list_empty(&ctx->enc_ctx_head))
@@ -459,7 +461,9 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			ccx_options.enc_cfg.in_format = in_format;
 			enc_ctx = init_encoder(&ccx_options.enc_cfg);
 			if (!enc_ctx)
+			{
 				return NULL;
+			}
 			list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
 		}
 	}
