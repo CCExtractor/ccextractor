@@ -34,7 +34,7 @@ gdb runtest
 # start under debugger:
 (gdb) run
 
-# if segfault occured:
+# if segfault occurred:
 (gdb) where
 ```
 

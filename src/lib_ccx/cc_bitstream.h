@@ -15,7 +15,7 @@ struct bitstream
 	// read call.  A negative number indicates that a read after the
 	// end of the stream was attempted.
 	int64_t bitsleft;
-	// Indicate an error occured while parsing the bitstream.
+	// Indicate an error occurred while parsing the bitstream.
 	// This is meant to store high level syntax errors, i.e a function
 	// using the bitstream functions found a syntax error.
 	int error;
