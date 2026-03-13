@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.24.0)
 project (CCExtractor)
+
 include (CTest)
 
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
@@ -247,7 +248,6 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
-
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 

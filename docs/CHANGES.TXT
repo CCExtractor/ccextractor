@@ -1,6 +1,5 @@
 0.96.7 (unreleased)
 -------------------
-- Fix: Remove unconditional VBI_DEBUG define — add CMake option -DVBI_DEBUG=ON for opt-in debug builds (#2167)
 - Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 
