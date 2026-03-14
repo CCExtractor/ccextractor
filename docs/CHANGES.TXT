@@ -1,3 +1,4 @@
+- fix(memory): Add NULL checks for strdup() return values in ccx_encoders_helpers.c, output.c, ccx_common_common.c, and matroska.c
 0.96.7 (unreleased)
 -------------------
 - New: Added ASS/SSA \pos-based positioning for CEA-608 captions when layout is simple (1–2 rows) (#1726)

@@ -1,4 +1,5 @@
 #include "ccx_common_common.h"
+#include "lib_ccx.h"
 
 int cc608_parity_table[256];
 
@@ -59,6 +60,8 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 	sub->type = CC_TEXT;
 	sub->enc_type = e_type;
 	sub->data = strdup(str);
+	if (!sub->data)
+		fatal(EXIT_NOT_ENOUGH_MEMORY,"In add_cc_sub: Out of memory allocating sub->data.");
 	sub->datatype = CC_DATATYPE_GENERIC;
 	sub->nb_data = str ? strlen(str) : 0;
 	sub->start_time = start_time;

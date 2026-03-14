@@ -1045,6 +1045,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 					if (lang == NULL)
 					{
 						lang = strdup("eng");
+						if (!lang)
+						 	fatal(EXIT_NOT_ENOUGH_MEMORY,"In parse_segment_track_entry: Out of memory allocating lang.");
 					}
 				}
 				else

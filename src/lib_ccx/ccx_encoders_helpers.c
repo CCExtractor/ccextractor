@@ -1,4 +1,5 @@
 #include "ccx_encoders_helpers.h"
+#include "lib_ccx.h"
 #include "ccx_common_char_encoding.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_structs.h"
@@ -98,6 +99,8 @@ void call_function_if_match(unsigned char *line, struct word_list *list, void (*
 	    '{', '|', '}', '~', '\0'};
 
 	unsigned char *line_token = strdup(line);
+	if (!line_token)
+		fatal(EXIT_NOT_ENOUGH_MEMORY,"In fix_subtitles: Out of memory allocating line_token.");
 	unsigned char *c = strtok(line_token, delim);
 
 	if (c != NULL)
@@ -127,6 +130,8 @@ void telx_correct_case(char *sub_line)
 	    '{', '|', '}', '~', '\0'};
 
 	char *line = strdup(((char *)sub_line));
+	if (!line)
+		fatal(EXIT_NOT_ENOUGH_MEMORY,"In telx_correct_case: Out of memory allocating line.");
 	char *oline = (char *)sub_line;
 	char *c = strtok(line, delim);
 	if (c == NULL)
