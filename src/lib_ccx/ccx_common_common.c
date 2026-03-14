@@ -1,4 +1,5 @@
 #include "ccx_common_common.h"
+#include "lib_ccx.h"
 
 int cc608_parity_table[256];
 
