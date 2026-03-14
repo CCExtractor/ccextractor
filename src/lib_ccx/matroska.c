@@ -1329,20 +1329,20 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 
 char *generate_filename_from_track(struct matroska_ctx *mkvctx, struct matroska_sub_track *track)
 {
-    const char *basename = get_basename(mkvctx->filename);
-    const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
-    /* Prefer the BCP-47 IETF tag (e.g. "zh-Hant") over the legacy
-     * ISO-639-2 code (e.g. "chi") when one is available. */
-    const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
-    size_t needed = strlen(basename) + strlen(lang_tag) + strlen(extension) + 32;
-    char *buf = malloc(needed);
-    if (buf == NULL)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_filename_from_track: Out of memory.");
-    if (track->lang_index == 0)
-        snprintf(buf, needed, "%s%s.%s", basename, lang_tag, extension);
-    else
-        snprintf(buf, needed, "%s%s %lld.%s", basename, lang_tag, track->lang_index, extension);
-    return buf;
+	const char *basename = get_basename(mkvctx->filename);
+	const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
+	/* Prefer the BCP-47 IETF tag (e.g. "zh-Hant") over the legacy
+	 * ISO-639-2 code (e.g. "chi") when one is available. */
+	const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
+	size_t needed = strlen(basename) + strlen(lang_tag) + strlen(extension) + 32;
+	char *buf = malloc(needed);
+	if (buf == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_filename_from_track: Out of memory.");
+	if (track->lang_index == 0)
+		snprintf(buf, needed, "%s%s.%s", basename, lang_tag, extension);
+	else
+		snprintf(buf, needed, "%s%s %lld.%s", basename, lang_tag, track->lang_index, extension);
+	return buf;
 }
 
 char *ass_ssa_sentence_erase_read_order(char *text)
@@ -1569,133 +1569,133 @@ static void process_vobsub_track_ocr(struct matroska_ctx *mkv_ctx, struct matros
 #define VOBSUB_BLOCK_SIZE 2048
 static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-    if (track->sentence_count == 0)
-    {
-        mprint("\nNo VOBSUB subtitles to write");
-        return;
-    }
+	if (track->sentence_count == 0)
+	{
+		mprint("\nNo VOBSUB subtitles to write");
+		return;
+	}
 
-    // Generate base filename (without extension)
-    const char *basename = get_basename(mkv_ctx->filename);
-    /* Prefer the BCP-47 IETF tag over the legacy ISO-639-2 code. */
-    const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
-    size_t needed = strlen(basename) + strlen(lang_tag) + 32;
-    char *base_filename = malloc(needed);
-    if (base_filename == NULL)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+	// Generate base filename (without extension)
+	const char *basename = get_basename(mkv_ctx->filename);
+	/* Prefer the BCP-47 IETF tag over the legacy ISO-639-2 code. */
+	const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
+	size_t needed = strlen(basename) + strlen(lang_tag) + 32;
+	char *base_filename = malloc(needed);
+	if (base_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
 
-    if (track->lang_index == 0)
-        snprintf(base_filename, needed, "%s_%s", basename, lang_tag);
-    else
-        snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_tag, track->lang_index);
+	if (track->lang_index == 0)
+		snprintf(base_filename, needed, "%s_%s", basename, lang_tag);
+	else
+		snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_tag, track->lang_index);
 
-    // Create .sub filename
-    char *sub_filename = malloc(needed + 5);
-    if (sub_filename == NULL)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
-    snprintf(sub_filename, needed + 5, "%s.sub", base_filename);
+	// Create .sub filename
+	char *sub_filename = malloc(needed + 5);
+	if (sub_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+	snprintf(sub_filename, needed + 5, "%s.sub", base_filename);
 
-    // Create .idx filename
-    char *idx_filename = malloc(needed + 5);
-    if (idx_filename == NULL)
-        fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
-    snprintf(idx_filename, needed + 5, "%s.idx", base_filename);
+	// Create .idx filename
+	char *idx_filename = malloc(needed + 5);
+	if (idx_filename == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
+	snprintf(idx_filename, needed + 5, "%s.idx", base_filename);
 
-    mprint("\nOutput files: %s, %s", idx_filename, sub_filename);
+	mprint("\nOutput files: %s, %s", idx_filename, sub_filename);
 
-    // Open .sub file
-    int sub_desc;
+	// Open .sub file
+	int sub_desc;
 #ifdef WIN32
-    sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
 #else
-    sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
+	sub_desc = open(sub_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
 #endif
-    if (sub_desc < 0)
-    {
-        mprint("\nError: Cannot create .sub file");
-        free(base_filename);
-        free(sub_filename);
-        free(idx_filename);
-        return;
-    }
+	if (sub_desc < 0)
+	{
+		mprint("\nError: Cannot create .sub file");
+		free(base_filename);
+		free(sub_filename);
+		free(idx_filename);
+		return;
+	}
 
-    // Open .idx file
-    int idx_desc;
+	// Open .idx file
+	int idx_desc;
 #ifdef WIN32
-    idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
+	idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
 #else
-    idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
+	idx_desc = open(idx_filename, O_WRONLY | O_CREAT | O_TRUNC, S_IWUSR | S_IRUSR);
 #endif
-    if (idx_desc < 0)
-    {
-        mprint("\nError: Cannot create .idx file");
-        close(sub_desc);
-        free(base_filename);
-        free(sub_filename);
-        free(idx_filename);
-        return;
-    }
+	if (idx_desc < 0)
+	{
+		mprint("\nError: Cannot create .idx file");
+		close(sub_desc);
+		free(base_filename);
+		free(sub_filename);
+		free(idx_filename);
+		return;
+	}
 
-    // Write .idx header (from CodecPrivate)
-    if (track->header != NULL)
-        write_wrapped(idx_desc, track->header, strlen(track->header));
+	// Write .idx header (from CodecPrivate)
+	if (track->header != NULL)
+		write_wrapped(idx_desc, track->header, strlen(track->header));
 
-    // Add language identifier line
-    char lang_line[128];
-    snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", track->lang);
-    write_wrapped(idx_desc, lang_line, strlen(lang_line));
+	// Add language identifier line
+	char lang_line[128];
+	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", track->lang);
+	write_wrapped(idx_desc, lang_line, strlen(lang_line));
 
-    // Buffer for PS/PES headers and padding
-    unsigned char header_buf[32];
-    unsigned char zero_buf[VOBSUB_BLOCK_SIZE];
-    memset(zero_buf, 0, VOBSUB_BLOCK_SIZE);
+	// Buffer for PS/PES headers and padding
+	unsigned char header_buf[32];
+	unsigned char zero_buf[VOBSUB_BLOCK_SIZE];
+	memset(zero_buf, 0, VOBSUB_BLOCK_SIZE);
 
-    ULLONG file_pos = 0;
+	ULLONG file_pos = 0;
 
-    // Write each subtitle
-    for (int i = 0; i < track->sentence_count; i++)
-    {
-        struct matroska_sub_sentence *sentence = track->sentences[i];
-        mkv_ctx->sentence_count++;
+	// Write each subtitle
+	for (int i = 0; i < track->sentence_count; i++)
+	{
+		struct matroska_sub_sentence *sentence = track->sentences[i];
+		mkv_ctx->sentence_count++;
 
-        // Convert timestamp to 90kHz PTS
-        ULLONG pts_90khz = sentence->time_start * 90;
+		// Convert timestamp to 90kHz PTS
+		ULLONG pts_90khz = sentence->time_start * 90;
 
-        // Write timestamp entry to .idx
-        char timestamp[32];
-        generate_vobsub_timestamp(timestamp, sizeof(timestamp), sentence->time_start);
-        char idx_entry[128];
-        snprintf(idx_entry, sizeof(idx_entry), "timestamp: %s, filepos: %09" LLX_M "\n",
-                 timestamp, file_pos);
-        write_wrapped(idx_desc, idx_entry, strlen(idx_entry));
+		// Write timestamp entry to .idx
+		char timestamp[32];
+		generate_vobsub_timestamp(timestamp, sizeof(timestamp), sentence->time_start);
+		char idx_entry[128];
+		snprintf(idx_entry, sizeof(idx_entry), "timestamp: %s, filepos: %09" LLX_M "\n",
+			 timestamp, file_pos);
+		write_wrapped(idx_desc, idx_entry, strlen(idx_entry));
 
-        // Generate PS Pack header (14 bytes)
-        generate_ps_pack_header(header_buf, pts_90khz);
-        write_wrapped(sub_desc, (char *)header_buf, 14);
+		// Generate PS Pack header (14 bytes)
+		generate_ps_pack_header(header_buf, pts_90khz);
+		write_wrapped(sub_desc, (char *)header_buf, 14);
 
-        // Generate PES header (15 bytes)
-        int pes_header_len = generate_pes_header(header_buf, pts_90khz, sentence->text_size, 0);
-        write_wrapped(sub_desc, (char *)header_buf, pes_header_len);
+		// Generate PES header (15 bytes)
+		int pes_header_len = generate_pes_header(header_buf, pts_90khz, sentence->text_size, 0);
+		write_wrapped(sub_desc, (char *)header_buf, pes_header_len);
 
-        // Write SPU data
-        write_wrapped(sub_desc, sentence->text, sentence->text_size);
+		// Write SPU data
+		write_wrapped(sub_desc, sentence->text, sentence->text_size);
 
-        // Calculate bytes written and pad to block boundary
-        ULLONG bytes_written = 14 + pes_header_len + sentence->text_size;
-        ULLONG padding_needed = VOBSUB_BLOCK_SIZE - (bytes_written % VOBSUB_BLOCK_SIZE);
-        if (padding_needed < VOBSUB_BLOCK_SIZE)
-        {
-            write_wrapped(sub_desc, (char *)zero_buf, padding_needed);
-            bytes_written += padding_needed;
-        }
-        file_pos += bytes_written;
-    }
+		// Calculate bytes written and pad to block boundary
+		ULLONG bytes_written = 14 + pes_header_len + sentence->text_size;
+		ULLONG padding_needed = VOBSUB_BLOCK_SIZE - (bytes_written % VOBSUB_BLOCK_SIZE);
+		if (padding_needed < VOBSUB_BLOCK_SIZE)
+		{
+			write_wrapped(sub_desc, (char *)zero_buf, padding_needed);
+			bytes_written += padding_needed;
+		}
+		file_pos += bytes_written;
+	}
 
-    close(sub_desc);
-    close(idx_desc);
-    free(base_filename);
-    free(sub_filename);
-    free(idx_filename);
+	close(sub_desc);
+	close(idx_desc);
+	free(base_filename);
+	free(sub_filename);
+	free(idx_filename);
 }
 
 void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
@@ -1909,34 +1909,34 @@ void free_sub_track(struct matroska_sub_track *track)
 
 void matroska_save_all(struct matroska_ctx *mkv_ctx, char *lang)
 {
-    for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
-    {
-        if (lang)
-        {
-            /* Match against lang_ietf (BCP-47, e.g. "en-US") first,
-             * then fall back to lang (ISO-639-2, e.g. "eng").
-             * This lets users pass either form to --mkvlang. */
-            int matched = 0;
-            if (mkv_ctx->sub_tracks[i]->lang_ietf &&
-                strstr(lang, mkv_ctx->sub_tracks[i]->lang_ietf) != NULL)
-                matched = 1;
-            if (!matched &&
-                strstr(lang, mkv_ctx->sub_tracks[i]->lang) != NULL)
-                matched = 1;
-            if (matched)
-                save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
-        }
-        else
-            save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
-    }
+	for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
+	{
+		if (lang)
+		{
+			/* Match against lang_ietf (BCP-47, e.g. "en-US") first,
+			 * then fall back to lang (ISO-639-2, e.g. "eng").
+			 * This lets users pass either form to --mkvlang. */
+			int matched = 0;
+			if (mkv_ctx->sub_tracks[i]->lang_ietf &&
+			    strstr(lang, mkv_ctx->sub_tracks[i]->lang_ietf) != NULL)
+				matched = 1;
+			if (!matched &&
+			    strstr(lang, mkv_ctx->sub_tracks[i]->lang) != NULL)
+				matched = 1;
+			if (matched)
+				save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
+		}
+		else
+			save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
+	}
 
-    // EIA-608
-    update_decoder_list(mkv_ctx->ctx);
-    if (mkv_ctx->dec_sub.got_output)
-    {
-        struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
-        encode_sub(enc_ctx, &mkv_ctx->dec_sub);
-    }
+	// EIA-608
+	update_decoder_list(mkv_ctx->ctx);
+	if (mkv_ctx->dec_sub.got_output)
+	{
+		struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+		encode_sub(enc_ctx, &mkv_ctx->dec_sub);
+	}
 }
 
 void matroska_free_all(struct matroska_ctx *mkv_ctx)
