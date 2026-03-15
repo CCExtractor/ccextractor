@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libleptonica-dev libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev libswresample-dev libswscale-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libleptonica-dev libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev libavdevice-dev libswresample-dev libswscale-dev
     - uses: actions/checkout@v6
     - name: cmake (default GPAC build)
       run: mkdir build && cd build && cmake ../src
