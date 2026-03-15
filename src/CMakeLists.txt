@@ -181,26 +181,26 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
-
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+  pkg_check_modules (SWRESAMPLE REQUIRED libswresample)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG_MP4")
 
-  pkg_check_modules (SWRESAMPLE REQUIRED libswresample)
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWRESAMPLE_LIBRARIES})
-  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
+  # NOTE: FFmpeg libs are added to EXTRA_FFMPEG_LIBS (not EXTRA_LIBS) so we
+  # can place them AFTER ccx_rust in the link order. GNU ld processes
+  # left-to-right; ccx_rust (containing rsmpeg) references FFmpeg symbols
+  # like swr_get_out_samples, so FFmpeg shared libs must come after it.
+  set (EXTRA_FFMPEG_LIBS ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES}
+       ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES} ${SWSCALE_LIBRARIES}
+       ${SWRESAMPLE_LIBRARIES})
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
@@ -231,12 +231,6 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
-
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
@@ -252,6 +246,11 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+
+  # Collect FFmpeg libs for placement after ccx_rust (same reason as WITH_FFMPEG)
+  set (EXTRA_FFMPEG_LIBS ${EXTRA_FFMPEG_LIBS} ${AVFORMAT_LIBRARIES}
+       ${AVUTIL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES}
+       ${SWSCALE_LIBRARIES})
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
@@ -265,24 +264,23 @@ if (PKG_CONFIG_FOUND)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
 endif (PKG_CONFIG_FOUND)
 
+# FFmpeg libs go AFTER ccx_rust. GNU ld processes left-to-right:
+# ccx_rust (containing rsmpeg) references FFmpeg symbols like
+# swr_get_out_samples, so the shared libs must appear later to resolve them.
+if (EXTRA_FFMPEG_LIBS)
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${EXTRA_FFMPEG_LIBS})
+endif()
 
 target_link_libraries (ccextractor ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 # ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
 # Force the linker to pull these symbols from ccx before processing ccx_rust.
-# Also re-add FFmpeg libs after ccx_rust: GNU ld processes left-to-right,
-# and ccx_rust (containing rsmpeg) needs FFmpeg symbols like swr_get_out_samples.
-# We use target_link_options so CMake won't deduplicate them.
 if (NOT WIN32 AND NOT APPLE)
   target_link_options (ccextractor PRIVATE
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
-  if (WITH_FFMPEG)
-    target_link_options (ccextractor PRIVATE
-      -lswresample -lavformat -lavutil -lavcodec -lswscale)
-  endif()
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)
