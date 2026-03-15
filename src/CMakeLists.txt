@@ -262,17 +262,19 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+
+  # Corrosion places ccx_rust at the absolute end of the link line.
+  # On Linux (GNU ld), ccx_rust contains rsmpeg which references FFmpeg
+  # symbols like swr_get_out_samples. By adding FFmpeg libs as INTERFACE
+  # dependencies of ccx_rust, CMake places them right after ccx_rust.
+  if (EXTRA_FFMPEG_LIBS)
+    set_property(TARGET ccx_rust APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${EXTRA_FFMPEG_LIBS})
+  endif()
 endif (PKG_CONFIG_FOUND)
 
-# FFmpeg libs go AFTER ccx_rust. GNU ld processes left-to-right:
-# ccx_rust (containing rsmpeg) references FFmpeg symbols like
-# swr_get_out_samples, so the shared libs must appear later to resolve them.
-if (EXTRA_FFMPEG_LIBS)
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${EXTRA_FFMPEG_LIBS})
-endif()
-
-target_link_libraries (ccextractor ${EXTRA_LIBS})
+target_link_libraries (ccextractor PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
+
 
 # ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
 # Force the linker to pull these symbols from ccx before processing ccx_rust.
