@@ -2,19 +2,26 @@
 
 **In raising this pull request, I confirm the following (please check boxes):**
 
+Reason for this PR:
+
+- [ ] This PR adds new functionality.
+- [ ] This PR fixes a bug that I have personally experienced or that a real user has reported and for which a sample exists.
+- [ ] This PR is porting code from C to Rust.
+
+Sanity check:
 - [ ] I have read and understood the [contributors guide](https://github.com/CCExtractor/ccextractor/blob/master/.github/CONTRIBUTING.md).
 - [ ] I have checked that another pull request for this purpose does not exist.
-- [ ] I have considered, and confirmed that this submission will be valuable to others.
-- [ ] I accept that this submission may not be used, and the pull request closed at the will of the maintainer.
-- [ ] I give this submission freely, and claim no ownership to its content.
-- [ ] **I have mentioned this change in the [changelog](https://github.com/CCExtractor/ccextractor/blob/master/docs/CHANGES.TXT).**
+- [ ] If the PR adds new functionality, I've added it to the changelog. If it's just a bug fix, I have NOT added it to the changelog.
+- [ ] I am NOT adding new C code unless it's to fix an existing, reproducible bug.
 
-**My familiarity with the project is as follows (check one):**
+Repro instructions:
 
-- [ ] I have never used CCExtractor.
-- [ ] I have used CCExtractor just a couple of times.
-- [ ] I absolutely love CCExtractor, but have not contributed previously.
-- [ ] I am an active contributor to CCExtractor.
+This is *essential*. We will not merge ANY PR that doesn't come with detailed instructions, *including a sample*. We don't want
+"fixes" for theoretical issues that an AI agent found, without context. If you can't reproduce the bug, don't send a PR. 
+
+Creating PRs with AI is very quick, but we still have humans (even if AI assisted) going over each.
+
+Be mindful of reviewers' time.
 
 ---
 
