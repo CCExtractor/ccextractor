@@ -263,17 +263,6 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
-
-  # On Linux, the GNU linker processes libraries left-to-right.
-  # ccx_rust (containing rsmpeg) needs FFmpeg symbols, so we must
-  # add FFmpeg libs again after ccx_rust to resolve them.
-  if (WITH_FFMPEG)
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${SWRESAMPLE_LIBRARIES})
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
-    set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
-  endif()
 endif (PKG_CONFIG_FOUND)
 
 
@@ -282,11 +271,18 @@ target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
 
 # ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
 # Force the linker to pull these symbols from ccx before processing ccx_rust.
+# Also re-add FFmpeg libs after ccx_rust: GNU ld processes left-to-right,
+# and ccx_rust (containing rsmpeg) needs FFmpeg symbols like swr_get_out_samples.
+# We use target_link_options so CMake won't deduplicate them.
 if (NOT WIN32 AND NOT APPLE)
   target_link_options (ccextractor PRIVATE
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
+  if (WITH_FFMPEG)
+    target_link_options (ccextractor PRIVATE
+      -lswresample -lavformat -lavutil -lavcodec -lswscale)
+  endif()
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)
