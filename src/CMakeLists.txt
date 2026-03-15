@@ -263,6 +263,17 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+
+  # On Linux, the GNU linker processes libraries left-to-right.
+  # ccx_rust (containing rsmpeg) needs FFmpeg symbols, so we must
+  # add FFmpeg libs again after ccx_rust to resolve them.
+  if (WITH_FFMPEG)
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${SWRESAMPLE_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+  endif()
 endif (PKG_CONFIG_FOUND)
 
 
