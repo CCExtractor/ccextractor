@@ -28,10 +28,10 @@ static int32_t bridge_bswap32(int32_t v)
 }
 
 int ccx_mp4_process_avc_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
-                               unsigned char nal_unit_size,
-                               unsigned char *data, unsigned int data_length,
-                               long long dts, int cts_offset,
-                               struct cc_subtitle *sub)
+			       unsigned char nal_unit_size,
+			       unsigned char *data, unsigned int data_length,
+			       long long dts, int cts_offset,
+			       struct cc_subtitle *sub)
 {
 	int status = 0;
 	unsigned int i;
@@ -89,10 +89,10 @@ int ccx_mp4_process_avc_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
 }
 
 int ccx_mp4_process_hevc_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
-                                unsigned char nal_unit_size,
-                                unsigned char *data, unsigned int data_length,
-                                long long dts, int cts_offset,
-                                struct cc_subtitle *sub)
+				unsigned char nal_unit_size,
+				unsigned char *data, unsigned int data_length,
+				long long dts, int cts_offset,
+				struct cc_subtitle *sub)
 {
 	int status = 0;
 	unsigned int i;
@@ -149,9 +149,9 @@ int ccx_mp4_process_hevc_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
 	if (dec_ctx->avc_ctx->cc_count > 0)
 	{
 		store_hdcc(enc_ctx, dec_ctx, dec_ctx->avc_ctx->cc_data,
-		           dec_ctx->avc_ctx->cc_count,
-		           dec_ctx->timing->current_tref,
-		           dec_ctx->timing->fts_now, sub);
+			   dec_ctx->avc_ctx->cc_count,
+			   dec_ctx->timing->current_tref,
+			   dec_ctx->timing->fts_now, sub);
 		dec_ctx->avc_ctx->cc_buffer_saved = CCX_TRUE;
 		dec_ctx->avc_ctx->cc_count = 0;
 	}
@@ -160,10 +160,10 @@ int ccx_mp4_process_hevc_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
 }
 
 int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int sub_type_c608,
-                              unsigned char *data, unsigned int data_length,
-                              long long dts, int cts_offset,
-                              unsigned int timescale,
-                              struct cc_subtitle *sub)
+			      unsigned char *data, unsigned int data_length,
+			      long long dts, int cts_offset,
+			      unsigned int timescale,
+			      struct cc_subtitle *sub)
 {
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
@@ -219,7 +219,7 @@ int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int sub_type_c608,
 
 #ifndef DISABLE_RUST
 			ccxr_dtvcc_process_data(dec_ctx->dtvcc_rust, cc_valid, cc_type,
-			                        cc_data[1], cc_data[2]);
+						cc_data[1], cc_data[2]);
 #else
 			unsigned char temp[4];
 			temp[0] = cc_valid;
@@ -236,10 +236,10 @@ int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int sub_type_c608,
 }
 
 int ccx_mp4_process_tx3g_packet(struct lib_ccx_ctx *ctx,
-                                unsigned char *data, unsigned int data_length,
-                                long long dts, int cts_offset,
-                                unsigned int timescale,
-                                struct cc_subtitle *sub)
+				unsigned char *data, unsigned int data_length,
+				long long dts, int cts_offset,
+				unsigned int timescale,
+				struct cc_subtitle *sub)
 {
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);

@@ -124,11 +124,7 @@ fn get_nal_unit_size_from_extradata(extradata: &[u8], is_hevc: bool) -> u8 {
 /// # Safety
 /// ctx and sub must be valid pointers
 #[cfg(feature = "enable_mp4_ffmpeg")]
-pub unsafe fn processmp4_rust(
-    ctx: *mut lib_ccx_ctx,
-    path: &CStr,
-    sub: *mut cc_subtitle,
-) -> c_int {
+pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_subtitle) -> c_int {
     let path_str = path.to_bytes();
     let path_display = String::from_utf8_lossy(path_str);
 
@@ -355,7 +351,14 @@ pub unsafe fn processmp4_rust(
                 TrackType::Cea608 => {
                     if pkt.size > 0 && !pkt.data.is_null() {
                         let r = ccx_mp4_process_cc_packet(
-                            ctx, 1, pkt.data, pkt.size as c_uint, dts, cts_offset, timescale, sub,
+                            ctx,
+                            1,
+                            pkt.data,
+                            pkt.size as c_uint,
+                            dts,
+                            cts_offset,
+                            timescale,
+                            sub,
                         );
                         if r == 0 {
                             mp4_ret = 1;
@@ -365,7 +368,14 @@ pub unsafe fn processmp4_rust(
                 TrackType::Cea708 => {
                     if pkt.size > 0 && !pkt.data.is_null() {
                         let r = ccx_mp4_process_cc_packet(
-                            ctx, 0, pkt.data, pkt.size as c_uint, dts, cts_offset, timescale, sub,
+                            ctx,
+                            0,
+                            pkt.data,
+                            pkt.size as c_uint,
+                            dts,
+                            cts_offset,
+                            timescale,
+                            sub,
                         );
                         if r == 0 {
                             mp4_ret = 1;
@@ -378,7 +388,13 @@ pub unsafe fn processmp4_rust(
                             ccx_mp4_flush_tx3g(ctx, sub);
                         }
                         let r = ccx_mp4_process_tx3g_packet(
-                            ctx, pkt.data, pkt.size as c_uint, dts, cts_offset, timescale, sub,
+                            ctx,
+                            pkt.data,
+                            pkt.size as c_uint,
+                            dts,
+                            cts_offset,
+                            timescale,
+                            sub,
                         );
                         if r == 0 {
                             has_tx3g = true;
@@ -501,8 +517,7 @@ unsafe fn process_extradata_params(
             if offset + 2 > extradata.len() {
                 break;
             }
-            let sps_size =
-                ((extradata[offset] as usize) << 8) | (extradata[offset + 1] as usize);
+            let sps_size = ((extradata[offset] as usize) << 8) | (extradata[offset + 1] as usize);
             offset += 2;
             if offset + sps_size > extradata.len() {
                 break;
@@ -527,8 +542,7 @@ unsafe fn process_extradata_params(
             if offset + 2 > extradata.len() {
                 break;
             }
-            let pps_size =
-                ((extradata[offset] as usize) << 8) | (extradata[offset + 1] as usize);
+            let pps_size = ((extradata[offset] as usize) << 8) | (extradata[offset + 1] as usize);
             offset += 2;
             if offset + pps_size > extradata.len() {
                 break;
@@ -597,8 +611,7 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
         let time_base = (*chapter).time_base;
 
         // Convert to milliseconds
-        let start_ms =
-            (start as f64 * time_base.num as f64 / time_base.den as f64 * 1000.0) as u64;
+        let start_ms = (start as f64 * time_base.num as f64 / time_base.den as f64 * 1000.0) as u64;
         let h = start_ms / 3600000;
         let m = (start_ms / 60000) % 60;
         let s = (start_ms / 1000) % 60;
@@ -607,8 +620,7 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
         // Get chapter title from metadata
         let title = if !(*chapter).metadata.is_null() {
             let key = std::ffi::CString::new("title").unwrap();
-            let entry =
-                ffi::av_dict_get((*chapter).metadata, key.as_ptr(), std::ptr::null(), 0);
+            let entry = ffi::av_dict_get((*chapter).metadata, key.as_ptr(), std::ptr::null(), 0);
             if !entry.is_null() && !(*entry).value.is_null() {
                 CStr::from_ptr((*entry).value)
                     .to_string_lossy()
