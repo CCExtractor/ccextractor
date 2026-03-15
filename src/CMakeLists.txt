@@ -283,6 +283,18 @@ if (NOT WIN32 AND NOT APPLE)
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
+  if (WITH_FFMPEG)
+    target_link_options (ccextractor PRIVATE
+      -Wl,--undefined=ccx_mp4_process_avc_sample
+      -Wl,--undefined=ccx_mp4_process_hevc_sample
+      -Wl,--undefined=ccx_mp4_process_cc_packet
+      -Wl,--undefined=ccx_mp4_process_tx3g_packet
+      -Wl,--undefined=ccx_mp4_flush_tx3g
+      -Wl,--undefined=ccx_mp4_report_progress
+      -Wl,--undefined=mprint
+      -Wl,--undefined=update_decoder_list
+      -Wl,--undefined=update_encoder_list)
+  endif()
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)
