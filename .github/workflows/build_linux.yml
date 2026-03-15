@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libleptonica-dev libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev libswresample-dev libswscale-dev
     - uses: actions/checkout@v6
     - name: cmake (default GPAC build)
       run: mkdir build && cd build && cmake ../src
@@ -94,7 +94,7 @@ jobs:
     - name: Display version information (GPAC build)
       run: ./build/ccextractor --version
     - name: cmake (FFmpeg MP4 build)
-      run: mkdir build_ffmpeg && cd build_ffmpeg && cmake -DUSE_FFMPEG_MP4=ON ../src
+      run: mkdir build_ffmpeg && cd build_ffmpeg && cmake -DWITH_FFMPEG=ON -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build (FFmpeg MP4 build)
       run: make -j$(nproc)
       working-directory: build_ffmpeg
