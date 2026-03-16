@@ -1325,9 +1325,11 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 #define GF_QT_SUBTYPE_C608 GF_4CC('c', '6', '0', '8')
 #endif
 
+static LLONG last_tx3g_end_ms = 0;
+
 int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int track_type,
 			      uint32_t timescale, const uint8_t *data,
-			      uint32_t data_len, uint64_t dts,
+			      uint32_t data_len, uint64_t dts, int64_t duration,
 			      struct cc_subtitle *sub)
 {
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
@@ -1349,7 +1351,9 @@ int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int track_type,
 	if (track_type == CCX_MP4_TRACK_TX3G)
 	{
 		/* Override fts_now with correct DTS-based ms timestamp */
-		dec_ctx->timing->fts_now = (LLONG)dts * 1000 / timescale;
+		dec_ctx->timing->fts_now = (LLONG)(dts * 1000 + timescale / 2) / timescale;
+		if (duration > 0)
+			last_tx3g_end_ms = (LLONG)((dts + duration) * 1000 + timescale / 2) / timescale;
 		process_tx3g(ctx, enc_ctx, dec_ctx, sub, &mp4_ret,
 			     buf, data_len, 0);
 	}
@@ -1378,6 +1382,9 @@ void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	if (!dec_ctx || !enc_ctx)
 		return;
+	/* Use stored end time from last tx3g packet duration */
+	if (last_tx3g_end_ms > 0)
+		dec_ctx->timing->fts_now = last_tx3g_end_ms;
 	int mp4_ret = 0;
 	process_tx3g(ctx, enc_ctx, dec_ctx, sub, &mp4_ret, NULL, 0, 1);
 }

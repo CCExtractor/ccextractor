@@ -260,6 +260,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &str, sub: *mut cc_su
                     data.as_ptr(),
                     data.len() as u32,
                     packet_dts(&pkt),
+                    0, // no duration needed for CC
                     sub,
                 )
             },
@@ -272,6 +273,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &str, sub: *mut cc_su
                     data.as_ptr(),
                     data.len() as u32,
                     packet_dts(&pkt),
+                    0, // no duration needed for CC
                     sub,
                 )
             },
@@ -284,6 +286,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &str, sub: *mut cc_su
                     data.as_ptr(),
                     data.len() as u32,
                     packet_dts(&pkt),
+                    pkt.duration,
                     sub,
                 )
             },

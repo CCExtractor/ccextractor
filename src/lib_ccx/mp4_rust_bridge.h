@@ -23,7 +23,7 @@ int ccx_mp4_process_hevc_sample(struct lib_ccx_ctx *ctx, uint32_t timescale,
 int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int track_type,
 			      uint32_t timescale, const uint8_t *data,
 			      uint32_t data_len, uint64_t dts,
-			      struct cc_subtitle *sub);
+			      int64_t duration, struct cc_subtitle *sub);
 
 void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
 
