@@ -43,7 +43,7 @@ to preserve compatibility with standard WebVTT players.
 Example:
 ```bash
 ccextractor input.ts --timestamp-map -o output.vtt
-
+```
 
 ### Windows Package Managers
 

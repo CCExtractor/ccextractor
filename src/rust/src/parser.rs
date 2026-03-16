@@ -296,10 +296,17 @@ impl OptionsExt for Options {
             self.set_input_format_type(InFormat::Asf);
         } else if args.wtv {
             self.set_input_format_type(InFormat::Wtv);
+        } else if args.mp4 {
+            self.set_input_format_type(InFormat::Mp4);
+        } else if args.mkv {
+            self.set_input_format_type(InFormat::Mkv);
         } else {
             fatal!(
                 cause = ExitCause::MalformedParameter;
-               "Unknown input file format: {}\n", args.input.unwrap()
+                "Unknown input file format: {}\n",
+                args.input
+                    .map(|i| i.to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
             );
         }
     }
@@ -784,6 +791,11 @@ impl OptionsExt for Options {
             self.set_output_format(args);
         }
 
+        // --- report-format (used by -out=report) ---
+        if let Some(ref fmt) = args.report_format {
+            self.report_format = Some(fmt.to_lowercase());
+        }
+
         if let Some(ref startcreditstext) = args.startcreditstext {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
@@ -845,6 +857,7 @@ impl OptionsExt for Options {
         if let Some(ref fps_str) = args.scc_framerate {
             self.scc_framerate = match fps_str.as_str() {
                 "29.97" | "29" => 0,
+                "23.98" | "23.976" => 4,
                 "24" => 1,
                 "25" => 2,
                 "30" => 3,
@@ -1674,6 +1687,7 @@ pub mod tests {
         common::{MkvLangFilter, OutputFormat, SelectCodec, StreamMode, StreamType},
         util::{encoding::Encoding, log::DebugMessageFlag},
     };
+    use serial_test::serial;
 
     /// # Safety
     ///
@@ -2329,18 +2343,21 @@ pub mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_k_suffix() {
         let (_, _) = parse_args(&["--buffersize", "64K"]);
         assert_eq!(get_file_buffer_size(), 64 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_m_suffix() {
         let (_, _) = parse_args(&["--buffersize", "2M"]);
         assert_eq!(get_file_buffer_size(), 2 * 1024 * 1024);
     }
 
     #[test]
+    #[serial]
     fn test_buffersize_with_numeric_value() {
         let (_, _) = parse_args(&["--buffersize", "8192"]);
         assert_eq!(get_file_buffer_size(), 8192);
@@ -2832,6 +2849,16 @@ pub mod tests {
         assert_eq!(options.scc_framerate, 0);
     }
 
+    #[test]
+    fn test_scc_framerate_23_98() {
+        let (options, _) = parse_args(&["--scc-framerate", "23.98"]);
+        assert_eq!(options.scc_framerate, 4);
+    }
+    #[test]
+    fn test_scc_framerate_23_976() {
+        let (options, _) = parse_args(&["--scc-framerate", "23.976"]);
+        assert_eq!(options.scc_framerate, 4);
+    }
     #[test]
     fn test_scc_framerate_24() {
         let (options, _) = parse_args(&["--scc-framerate", "24"]);

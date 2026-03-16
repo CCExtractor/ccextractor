@@ -252,8 +252,14 @@ pub struct Args {
     pub dvr_ms: bool,
     #[arg(long, value_name="format", help_heading=OUTPUT_FORMATS)]
     pub out: Option<OutFormat>,
+
+    /// Format for -out=report output (e.g. json)
+    #[arg(long = "report-format", value_name = "FORMAT", help_heading=OUTPUT_FORMATS)]
+    pub report_format: Option<String>,
+
     #[arg(long, hide = true)]
     pub srt: bool,
+
     #[arg(long, hide = true)]
     pub webvtt: bool,
     #[arg(long, hide = true)]
@@ -290,8 +296,8 @@ pub struct Args {
     /// DVD Recorder)
     #[arg(long="90090", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub mpeg90090: bool,
-    /// Set the frame rate for SCC (Scenarist Closed Caption) input files.
-    /// Valid values: 29.97 (default), 24, 25, 30
+    /// Set the frame rate for Scenarist Closed Captioning (SCC) input parsing and output encoding.
+    /// Valid values: 23.98/23.976, 29.97 (default)/29, 24, 25, 30
     /// Example: --scc-framerate 25
     #[arg(long="scc-framerate", verbatim_doc_comment, value_name="fps", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub scc_framerate: Option<String>,

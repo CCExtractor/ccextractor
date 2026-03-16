@@ -21,6 +21,7 @@ pub mod decoder;
 pub mod demuxer;
 pub mod encoder;
 pub mod es;
+pub mod ffi_alloc;
 pub mod file_functions;
 #[cfg(feature = "hardsubx_ocr")]
 pub mod hardsubx;
@@ -272,10 +273,8 @@ pub extern "C" fn ccxr_dtvcc_free(dtvcc_ptr: *mut std::ffi::c_void) {
             for window in decoder.windows.iter() {
                 if is_true(window.memory_reserved) {
                     for row_ptr in window.rows.iter() {
-                        if !row_ptr.is_null() {
-                            unsafe {
-                                drop(Box::from_raw(*row_ptr));
-                            }
+                        unsafe {
+                            decoder::dealloc_row(*row_ptr);
                         }
                     }
                 }

@@ -3,10 +3,10 @@
 //! This module provides the ability to list all tracks in media files
 //! without processing them for subtitle extraction.
 
+use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
-
 /// Represents a track found in a media file
 #[derive(Debug)]
 pub struct TrackInfo {
@@ -108,7 +108,7 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
 
     // First, skip EBML header
     let ebml_id = read_element_id(&mut reader)?;
-    if ebml_id != 0x1A45DFA3 {
+    if ebml_id != 0x1A45_DFA3 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "Not a valid EBML file",
@@ -119,7 +119,7 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
 
     // Now look for Segment header
     let segment_id = read_element_id(&mut reader)?;
-    if segment_id != 0x18538067 {
+    if segment_id != 0x1853_8067 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "Segment not found",
@@ -131,7 +131,7 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     let segment_start = reader.stream_position()?;
 
     // If segment size is unknown (0xFFFFFFFFFFFFFF for 8-byte VINT), use file size
-    let segment_end = if segment_size >= 0x00FFFFFFFFFFFFFF {
+    let segment_end = if segment_size >= 0x00FF_FFFF_FFFF_FFFF {
         file_size
     } else {
         std::cmp::min(segment_start + segment_size, file_size)
@@ -157,14 +157,14 @@ pub fn list_mkv_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
         let element_start = reader.stream_position()?;
 
         // Tracks element ID: 0x1654AE6B
-        if element_id == 0x1654AE6B {
+        if element_id == 0x1654_AE6B {
             tracks = parse_mkv_tracks(&mut reader, element_size)?;
             break;
         }
 
         // Skip known large elements we don't need
         // Cluster: 0x1F43B675, Cues: 0x1C53BB6B, Attachments: 0x1941A469
-        if element_id == 0x1F43B675 || element_id == 0x1C53BB6B || element_id == 0x1941A469 {
+        if element_id == 0x1F43_B675 || element_id == 0x1C53_BB6B || element_id == 0x1941_A469 {
             // These are usually after tracks, stop searching
             break;
         }
@@ -284,7 +284,7 @@ fn parse_mkv_track_entry<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::
                 // CodecID
                 codec = read_string(reader, element_size)?;
             }
-            0x22B59C => {
+            0x0022_B59C => {
                 // Language
                 language = Some(read_string(reader, element_size)?);
             }
@@ -307,13 +307,16 @@ fn read_uint<R: Read>(reader: &mut R, size: u64) -> std::io::Result<u64> {
     for _ in 0..size {
         let mut byte = [0u8; 1];
         reader.read_exact(&mut byte)?;
-        value = (value << 8) | byte[0] as u64;
+        value = (value << 8) | u64::from(byte[0]);
     }
     Ok(value)
 }
 
 fn read_string<R: Read>(reader: &mut R, size: u64) -> std::io::Result<String> {
-    let mut buffer = vec![0u8; size as usize];
+    // Try to convert. If it fails (too big), return an IO error instead of crashing.
+    let buffer_size = usize::try_from(size)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+    let mut buffer = vec![0u8; buffer_size];
     reader.read_exact(&mut buffer)?;
     // Remove null terminators if present
     while buffer.last() == Some(&0) {
@@ -322,7 +325,10 @@ fn read_string<R: Read>(reader: &mut R, size: u64) -> std::io::Result<String> {
     Ok(String::from_utf8_lossy(&buffer).to_string())
 }
 
-/// List tracks in an MP4 file
+/// List tracks in an MP4 file.
+///
+/// # Errors
+/// Returns an error if the file cannot be opened or parsed.
 pub fn list_mp4_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
@@ -339,7 +345,7 @@ pub fn list_mp4_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let size = u32::from_be_bytes(size_buf) as u64;
+        let size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -388,7 +394,7 @@ fn parse_mp4_moov<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let box_size = u32::from_be_bytes(size_buf) as u64;
+        let box_size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -439,7 +445,7 @@ fn parse_mp4_trak<R: Read + Seek>(
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let box_size = u32::from_be_bytes(size_buf) as u64;
+        let box_size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -494,7 +500,7 @@ fn parse_mp4_mdia<R: Read + Seek>(
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let box_size = u32::from_be_bytes(size_buf) as u64;
+        let box_size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -580,7 +586,7 @@ fn parse_mp4_minf<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let box_size = u32::from_be_bytes(size_buf) as u64;
+        let box_size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -620,7 +626,7 @@ fn parse_mp4_stbl<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
         if reader.read(&mut size_buf)? < 4 {
             break;
         }
-        let box_size = u32::from_be_bytes(size_buf) as u64;
+        let box_size = u64::from(u32::from_be_bytes(size_buf));
 
         let mut type_buf = [0u8; 4];
         if reader.read(&mut type_buf)? < 4 {
@@ -661,6 +667,9 @@ fn parse_mp4_stbl<R: Read + Seek>(reader: &mut R, size: u64) -> std::io::Result<
 }
 
 /// List tracks in a Transport Stream file
+/// # Errors
+/// Returns an error if the file cannot be opened or parsed.
+#[allow(clippy::too_many_lines)]
 pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
@@ -696,7 +705,7 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
             continue;
         }
 
-        let pid = (((packet[offset + 1] & 0x1F) as u16) << 8) | packet[offset + 2] as u16;
+        let pid = ((u16::from(packet[offset + 1] & 0x1F)) << 8) | u16::from(packet[offset + 2]);
         let payload_start = (packet[offset + 1] & 0x40) != 0;
 
         // PAT (PID 0)
@@ -722,10 +731,10 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
 
                     let end = std::cmp::min(payload_offset + section_length - 9, packet_size - 4);
                     while payload_offset + 4 <= end {
-                        let program_num = ((packet[payload_offset] as u16) << 8)
-                            | packet[payload_offset + 1] as u16;
-                        let pmt_pid = (((packet[payload_offset + 2] & 0x1F) as u16) << 8)
-                            | packet[payload_offset + 3] as u16;
+                        let program_num = ((u16::from(packet[payload_offset])) << 8)
+                            | u16::from(packet[payload_offset + 1]);
+                        let pmt_pid = ((u16::from(packet[payload_offset + 2] & 0x1F)) << 8)
+                            | u16::from(packet[payload_offset + 3]);
                         if program_num != 0 {
                             pmt_pids.push(pmt_pid);
                         }
@@ -754,8 +763,8 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
                 if payload_offset + 12 < packet_size {
                     let section_length = (((packet[payload_offset + 1] & 0x0F) as usize) << 8)
                         | packet[payload_offset + 2] as usize;
-                    let _pcr_pid = (((packet[payload_offset + 8] & 0x1F) as u16) << 8)
-                        | packet[payload_offset + 9] as u16;
+                    let _pcr_pid = ((u16::from(packet[payload_offset + 8] & 0x1F)) << 8)
+                        | u16::from(packet[payload_offset + 9]);
                     let program_info_length = (((packet[payload_offset + 10] & 0x0F) as usize)
                         << 8)
                         | packet[payload_offset + 11] as usize;
@@ -769,8 +778,8 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
                     let mut track_num = 1u32;
                     while payload_offset + 5 <= end {
                         let stream_type = packet[payload_offset];
-                        let elementary_pid = (((packet[payload_offset + 1] & 0x1F) as u16) << 8)
-                            | packet[payload_offset + 2] as u16;
+                        let elementary_pid = ((u16::from(packet[payload_offset + 1] & 0x1F)) << 8)
+                            | u16::from(packet[payload_offset + 2]);
                         let es_info_length = (((packet[payload_offset + 3] & 0x0F) as usize) << 8)
                             | packet[payload_offset + 4] as usize;
 
@@ -819,6 +828,9 @@ pub fn list_ts_tracks(path: &Path) -> std::io::Result<Vec<TrackInfo>> {
 }
 
 /// Main function to list tracks for any supported file
+///
+/// # Errors
+/// Returns an error if the file format cannot be detected or parsing fails.
 pub fn list_tracks(path: &Path) -> Result<(), String> {
     let format = detect_format(path).map_err(|e| format!("Error detecting file format: {}", e))?;
 

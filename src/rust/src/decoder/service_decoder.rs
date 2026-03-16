@@ -1259,6 +1259,7 @@ extern "C" fn ccxr_flush_decoder(dtvcc: *mut dtvcc_ctx, decoder: *mut dtvcc_serv
 mod test {
     use super::*;
     use crate::utils::get_zero_allocated_obj;
+    use std::alloc::{alloc_zeroed, dealloc, Layout};
 
     fn setup_test_decoder_with_memory() -> dtvcc_service_decoder {
         let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
@@ -1349,9 +1350,16 @@ mod test {
         decoder.current_window = 1;
         decoder.windows[1].pen_column = 12;
         decoder.windows[1].pen_row = 1;
-        decoder.windows[1].rows[1] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
-        decoder.windows[1].rows[2] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+            decoder.windows[1].rows[i] = unsafe { alloc_zeroed(layout) } as *mut dtvcc_symbol;
+        }
         decoder.windows[1].memory_reserved = 1;
+
+        unsafe {
+            *decoder.windows[1].rows[1] = dtvcc_symbol::new(1);
+            *decoder.windows[1].rows[2] = dtvcc_symbol::new(1);
+        }
 
         decoder.process_hcr();
 
@@ -1367,6 +1375,13 @@ mod test {
             unsafe { decoder.windows[1].rows[2].as_mut() },
             Some(&mut dtvcc_symbol { sym: 1, init: 1 }),
         );
+
+        // Cleanup
+        for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+            unsafe {
+                dealloc(decoder.windows[1].rows[i] as *mut u8, layout);
+            }
+        }
     }
 
     #[test]
@@ -1376,8 +1391,16 @@ mod test {
         decoder.windows[1].pen_column = 2;
         decoder.windows[1].pen_row = 1;
         decoder.windows[1].memory_reserved = 1;
-        decoder.windows[1].rows[1] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
-        decoder.windows[1].rows[2] = Box::into_raw(Box::new(dtvcc_symbol::new(1)));
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+            decoder.windows[1].rows[i] = unsafe { alloc_zeroed(layout) } as *mut dtvcc_symbol;
+        }
+        decoder.windows[1].memory_reserved = 1;
+
+        unsafe {
+            *decoder.windows[1].rows[1] = dtvcc_symbol::new(1);
+            *decoder.windows[1].rows[2] = dtvcc_symbol::new(1);
+        }
 
         decoder.process_ff();
 
@@ -1394,6 +1417,13 @@ mod test {
             unsafe { decoder.windows[1].rows[2].as_mut() },
             Some(&mut dtvcc_symbol::default()),
         );
+
+        // Cleanup
+        for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+            unsafe {
+                dealloc(decoder.windows[1].rows[i] as *mut u8, layout);
+            }
+        }
     }
 
     #[test]

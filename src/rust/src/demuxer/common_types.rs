@@ -1,12 +1,8 @@
 use crate::bindings::{lib_ccx_ctx, list_head};
+use crate::ffi_alloc;
 use lib_ccxr::common::{Codec, Decoder608Report, DecoderDtvccReport, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
-use std::os::raw::c_void;
 use std::ptr::null_mut;
-
-extern "C" {
-    fn free(ptr: *mut c_void);
-}
 
 // Size of the Startbytes Array in CcxDemuxer - const 1MB
 pub(crate) const ARRAY_SIZE: usize = 1024 * 1024;
@@ -284,19 +280,15 @@ impl Drop for CcxDemuxer<'_> {
         // Free all non-null PSIBuffer pointers.
         // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pid_buffers.drain(..) {
-            if !ptr.is_null() {
-                unsafe {
-                    free(ptr as *mut c_void);
-                }
+            unsafe {
+                ffi_alloc::c_free(ptr);
             }
         }
         // Free all non-null PMTEntry pointers.
         // These are freed using C's free to be compatible with memory that might be allocated by C.
         for ptr in self.pids_programs.drain(..) {
-            if !ptr.is_null() {
-                unsafe {
-                    free(ptr as *mut c_void);
-                }
+            unsafe {
+                ffi_alloc::c_free(ptr);
             }
         }
     }

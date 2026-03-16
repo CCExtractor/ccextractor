@@ -1,4 +1,4 @@
-﻿#include "lib_ccx.h"
+#include "lib_ccx.h"
 #include "utility.h"
 #include "matroska.h"
 #include "ccx_encoders_helpers.h"
@@ -691,7 +691,8 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 	int is_avc = (track == mkv_ctx->avc_track_number);
 	int is_hevc = (track == mkv_ctx->hevc_track_number);
 
-	if (!is_avc && !is_hevc)
+	int is_mpeg2 = (track == mkv_ctx->mpeg2_track_number);
+	if (!is_avc && !is_hevc && !is_mpeg2)
 	{
 		// Skip everything except AVC/HEVC tracks
 		skip_bytes(file, len - 1); // 1 byte for track
@@ -710,6 +711,8 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 
 	if (is_hevc)
 		process_hevc_frame_mkv(mkv_ctx, frame);
+	else if (is_mpeg2)
+		process_mpeg2_frame_mkv(mkv_ctx, frame);
 	else
 		process_avc_frame_mkv(mkv_ctx, frame);
 
@@ -721,6 +724,19 @@ static long bswap32(long v)
 	// For 0x12345678 returns 78563412
 	long swapped = ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24);
 	return swapped;
+}
+
+int process_mpeg2_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
+{
+	struct lib_cc_decode *dec_ctx = update_decoder_list(mkv_ctx->ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(mkv_ctx->ctx);
+	// Set timing from frame timestamp
+	set_current_pts(dec_ctx->timing, frame.FTS * (MPEG_CLOCK_FREQ / 1000));
+	set_fts(dec_ctx->timing);
+	// Use the existing MPEG-2 elementary stream processor (same as mp4.c and general_loop.c)
+	process_m2v(enc_ctx, dec_ctx, frame.data, frame.len, &mkv_ctx->dec_sub);
+	mkv_ctx->current_second = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
+	return 0;
 }
 
 int process_avc_frame_mkv(struct matroska_ctx *mkv_ctx, struct matroska_avc_frame frame)
@@ -864,6 +880,10 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	ULLONG track_number = 0;
 	enum matroska_track_entry_type track_type = MATROSKA_TRACK_TYPE_VIDEO;
 	char *lang = strdup("eng");
+	if (lang == NULL)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_track_entry: Out of memory allocating default language.");
+	}
 	char *header = NULL;
 	char *lang_ietf = NULL;
 	char *codec_id_string = NULL;
@@ -940,6 +960,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 					mkv_ctx->avc_track_number = track_number;
 				else if (strcmp((const char *)codec_id_string, (const char *)hevc_codec_id) == 0)
 					mkv_ctx->hevc_track_number = track_number;
+				else if (strcmp((const char *)codec_id_string, (const char *)mpeg2_codec_id) == 0)
+					mkv_ctx->mpeg2_track_number = track_number;
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACK_CODEC_PRIVATE:
 				// We handle DVB's private data differently
@@ -1013,29 +1035,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 			case MATROSKA_SEGMENT_TRACK_LANGUAGE_IETF:
 				lang_ietf = read_vint_block_string(file);
 				mprint("    Language IETF: %s\n", lang_ietf);
-				// We'll store this for later use rather than freeing it immediately
-				if (track_type == MATROSKA_TRACK_TYPE_SUBTITLE)
-				{
-					// Don't free lang_ietf here, store in track
-					if (lang != NULL)
-					{
-						// If we previously allocated lang, free it as we'll prefer IETF
-						free(lang);
-						lang = NULL;
-					}
-					// Default to "eng" if we somehow don't have a language yet
-					if (lang == NULL)
-					{
-						lang = strdup("eng");
-					}
-				}
-				else
-				{
-					free(lang_ietf); // Free if not a subtitle track
-					lang_ietf = NULL;
-				}
 				MATROSKA_SWITCH_BREAK(code, code_len);
-
 				/* Misc ids */
 			case MATROSKA_VOID:
 				read_vint_block_skip(file);
@@ -1331,22 +1331,19 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 
 char *generate_filename_from_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-	// Use lang_ietf if available, otherwise fall back to lang
-	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
 	const char *basename = get_basename(mkv_ctx->filename);
 	const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
-
-	// Calculate needed size: basename + "_" + lang + "_" + index + "." + extension + null
-	size_t needed = strlen(basename) + strlen(lang_to_use) + strlen(extension) + 32;
+	/* Prefer the BCP-47 IETF tag (e.g. "zh-Hant") over the legacy
+	 * ISO-639-2 code (e.g. "chi") when one is available. */
+	const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
+	size_t needed = strlen(basename) + strlen(lang_tag) + strlen(extension) + 32;
 	char *buf = malloc(needed);
 	if (buf == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In generate_filename_from_track: Out of memory.");
-
 	if (track->lang_index == 0)
-		snprintf(buf, needed, "%s_%s.%s", basename, lang_to_use, extension);
+		snprintf(buf, needed, "%s_%s.%s", basename, lang_tag, extension);
 	else
-		snprintf(buf, needed, "%s_%s_" LLD ".%s", basename, lang_to_use,
-			 track->lang_index, extension);
+		snprintf(buf, needed, "%s_%s_" LLD ".%s", basename, lang_tag, track->lang_index, extension);
 	return buf;
 }
 
@@ -1581,17 +1578,18 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 	}
 
 	// Generate base filename (without extension)
-	const char *lang_to_use = track->lang_ietf ? track->lang_ietf : track->lang;
 	const char *basename = get_basename(mkv_ctx->filename);
-	size_t needed = strlen(basename) + strlen(lang_to_use) + 32;
+	/* Prefer the BCP-47 IETF tag over the legacy ISO-639-2 code. */
+	const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
+	size_t needed = strlen(basename) + strlen(lang_tag) + 32;
 	char *base_filename = malloc(needed);
 	if (base_filename == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In save_vobsub_track: Out of memory.");
 
 	if (track->lang_index == 0)
-		snprintf(base_filename, needed, "%s_%s", basename, lang_to_use);
+		snprintf(base_filename, needed, "%s_%s", basename, lang_tag);
 	else
-		snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_to_use, track->lang_index);
+		snprintf(base_filename, needed, "%s_%s_" LLD, basename, lang_tag, track->lang_index);
 
 	// Create .sub filename
 	char *sub_filename = malloc(needed + 5);
@@ -1646,7 +1644,7 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 
 	// Add language identifier line
 	char lang_line[128];
-	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", lang_to_use);
+	snprintf(lang_line, sizeof(lang_line), "\nid: %s, index: 0\n", track->lang);
 	write_wrapped(idx_desc, lang_line, strlen(lang_line));
 
 	// Buffer for PS/PES headers and padding
@@ -1692,7 +1690,6 @@ static void save_vobsub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_
 			write_wrapped(sub_desc, (char *)zero_buf, padding_needed);
 			bytes_written += padding_needed;
 		}
-
 		file_pos += bytes_written;
 	}
 
@@ -1740,6 +1737,12 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IWUSR | S_IRUSR);
 #endif
 		free(filename);
+	}
+
+	if (desc < 0)
+	{
+		mprint("\nError: Cannot create output file for subtitle track\n");
+		return;
 	}
 
 	if (track->header != NULL)
@@ -1795,7 +1798,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 
 			// writing cue settings list
 			if (blockaddition != NULL)
@@ -1836,7 +1839,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "\n", 1);
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, " --> ", 5);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, "\n", 1);
 			int size = 0;
 			while (*(sentence->text + size) == '\n' || *(sentence->text + size) == '\r')
@@ -1866,7 +1869,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			write_wrapped(desc, "Dialogue: Marked=0,", strlen("Dialogue: Marked=0,"));
 			write_wrapped(desc, timestamp_start, strlen(timestamp_start));
 			write_wrapped(desc, ",", 1);
-			write_wrapped(desc, timestamp_end, strlen(timestamp_start));
+			write_wrapped(desc, timestamp_end, strlen(timestamp_end));
 			write_wrapped(desc, ",", 1);
 			char *text = ass_ssa_sentence_erase_read_order(sentence->text);
 			char *text_to_free = text; // Save original pointer for freeing
@@ -1880,6 +1883,9 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_end);
 		}
 	}
+
+	if (desc != 1)
+		close(desc);
 }
 
 void free_sub_track(struct matroska_sub_track *track)
@@ -1905,17 +1911,21 @@ void free_sub_track(struct matroska_sub_track *track)
 
 void matroska_save_all(struct matroska_ctx *mkv_ctx, char *lang)
 {
-	char *match;
 	for (int i = 0; i < mkv_ctx->sub_tracks_count; i++)
 	{
 		if (lang)
 		{
-			// Try to match against IETF tag first if available
+			/* Match against lang_ietf (BCP-47, e.g. "en-US") first,
+			 * then fall back to lang (ISO-639-2, e.g. "eng").
+			 * This lets users pass either form to --mkvlang. */
+			int matched = 0;
 			if (mkv_ctx->sub_tracks[i]->lang_ietf &&
-			    (match = strstr(lang, mkv_ctx->sub_tracks[i]->lang_ietf)) != NULL)
-				save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
-			// Fall back to 3-letter code
-			else if ((match = strstr(lang, mkv_ctx->sub_tracks[i]->lang)) != NULL)
+			    strstr(lang, mkv_ctx->sub_tracks[i]->lang_ietf) != NULL)
+				matched = 1;
+			if (!matched &&
+			    strstr(lang, mkv_ctx->sub_tracks[i]->lang) != NULL)
+				matched = 1;
+			if (matched)
 				save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
 		}
 		else
@@ -2026,6 +2036,12 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->current_second = 0;
 	mkv_ctx->filename = ctx->inputfile[ctx->current_file];
 	mkv_ctx->file = create_file(ctx);
+	if (mkv_ctx->file == NULL)
+	{
+		char *fname = mkv_ctx->filename;
+		free(mkv_ctx);
+		fatal(EXIT_READ_ERROR, "Could not open MKV file: %s\n", fname);
+	}
 	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
 	if (mkv_ctx->sub_tracks == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In matroska_loop: Out of memory allocating sub_tracks.");
@@ -2033,6 +2049,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
 	mkv_ctx->avc_track_number = -1;
 	mkv_ctx->hevc_track_number = -1;
+	mkv_ctx->mpeg2_track_number = -1;
 
 	matroska_parse(mkv_ctx);
 
@@ -2046,6 +2063,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	int sentence_count = mkv_ctx->sentence_count;
 	int avc_track_found = mkv_ctx->avc_track_number > -1;
 	int hevc_track_found = mkv_ctx->hevc_track_number > -1;
+	int mpeg2_track_found = mkv_ctx->mpeg2_track_number > -1;
 	int got_output = mkv_ctx->dec_sub.got_output;
 
 	matroska_free_all(mkv_ctx);
@@ -2059,10 +2077,12 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 		mprint("Found AVC track. ");
 	else if (hevc_track_found)
 		mprint("Found HEVC track. ");
+	else if (mpeg2_track_found)
+		mprint("Found MPEG2 track. ");
 	else
-		mprint("Found no AVC/HEVC track. ");
+		mprint("Found no AVC/HEVC/MPEG2 track. ");
 
-	if (got_output)
+	if (got_output || mpeg2_track_found)
 		return 1;
 	return sentence_count;
 }

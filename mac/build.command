@@ -42,7 +42,16 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-BLD_FLAGS="-std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek"
+# Determine architecture based on cargo (to ensure consistency with Rust part)
+CARGO_ARCH=$(file $(which cargo) | grep -o 'x86_64\|arm64')
+if [[ "$CARGO_ARCH" == "x86_64" ]]; then
+    echo "Detected Intel (x86_64) Cargo. Forcing x86_64 build to match Rust and libraries..."
+    BLD_ARCH="-arch x86_64"
+else
+    BLD_ARCH="-arch arm64"
+fi
+
+BLD_FLAGS="$BLD_ARCH -std=gnu99 -Wno-write-strings -Wno-pointer-sign -D_FILE_OFFSET_BITS=64 -DVERSION_FILE_PRESENT -Dfopen64=fopen -Dopen64=open -Dlseek64=lseek"
 
 # Add flags for bundled libraries (not needed when using system libs)
 if [[ "$USE_SYSTEM_LIBS" != "true" ]]; then

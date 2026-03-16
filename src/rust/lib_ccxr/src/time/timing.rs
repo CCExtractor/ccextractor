@@ -151,8 +151,29 @@ impl TimingContext {
         if self.pts_set == PtsSet::No {
             self.pts_set = PtsSet::Received
         }
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "PTS: {} ({:8})", self.current_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(), self.current_pts.as_i64());
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "  FTS: {} \n", self.fts_now.to_hms_millis_time(':').unwrap());
+        let pts_string = self
+            .current_pts
+            .as_timestamp(timing_info.mpeg_clock_freq)
+            .to_hms_millis_time(':')
+            .unwrap_or_else(|_| "INVALID".to_string());
+
+        let fts_string = self
+            .fts_now
+            .to_hms_millis_time(':')
+            .unwrap_or_else(|_| "INVALID".to_string());
+
+        debug!(
+            msg_type = DebugMessageFlag::VIDEO_STREAM;
+            "PTS: {} ({:8})",
+            pts_string,
+            self.current_pts.as_i64()
+        );
+
+        debug!(
+            msg_type = DebugMessageFlag::VIDEO_STREAM;
+            "  FTS: {} \n",
+            fts_string
+        );
 
         // Check if PTS reset
         if self.current_pts < prev_pts {
@@ -368,7 +389,7 @@ impl TimingContext {
                 debug!(
                     msg_type = DebugMessageFlag::TIME;
                     "\nFirst sync time    PTS: {} {:+}ms (time before this PTS)\n",
-                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(),
+                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap_or_else(|_| "INVALID".to_string()),
                     self.fts_offset.millis()
                 );
                 debug!(
@@ -411,7 +432,7 @@ impl TimingContext {
                 debug!(
                     msg_type = DebugMessageFlag::TIME;
                     "\nNew min PTS time: {} {:+}ms (time before this PTS)\n",
-                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap(),
+                    self.min_pts.as_timestamp(timing_info.mpeg_clock_freq).to_hms_millis_time(':').unwrap_or_else(|_| "INVALID".to_string()),
                     self.fts_offset.millis()
                 );
             }
@@ -506,11 +527,13 @@ impl TimingContext {
             self.sync_pts
                 .as_timestamp(timing_info.mpeg_clock_freq)
                 .to_hms_millis_time(':')
-                .unwrap()
+                .unwrap_or_else(|_| "INVALID".to_string())
         );
         info!(
             "      GOP start FTS: {}\n",
-            gop_time.to_hms_millis_time(':').unwrap()
+            gop_time
+                .to_hms_millis_time(':')
+                .unwrap_or_else(|_| "INVALID".to_string())
         );
 
         // Length first GOP to last GOP
@@ -521,14 +544,16 @@ impl TimingContext {
 
         info!(
             "Last               FTS: {}",
-            self.get_fts_max().to_hms_millis_time(':').unwrap()
+            self.get_fts_max()
+                .to_hms_millis_time(':')
+                .unwrap_or_else(|_| "INVALID".to_string())
         );
         info!(
             "      GOP start FTS: {}\n",
             timing_info
                 .fts_at_gop_start
                 .to_hms_millis_time(':')
-                .unwrap()
+                .unwrap_or_else(|_| "INVALID".to_string())
         );
 
         let one_frame = FrameCount::new(1).as_timestamp(timing_info.current_fps);
@@ -538,10 +563,10 @@ impl TimingContext {
             "Max FTS diff. to   PTS:       {:6}ms              GOP:       {:6}ms\n\n",
             (self.get_fts_max() + one_frame - ptslenms)
                 .to_hms_millis_time(':')
-                .unwrap(),
+                .unwrap_or_else(|_| "INVALID".to_string()),
             (self.get_fts_max() + one_frame - goplenms)
                 .to_hms_millis_time(':')
-                .unwrap()
+                .unwrap_or_else(|_| "INVALID".to_string())
         );
     }
 

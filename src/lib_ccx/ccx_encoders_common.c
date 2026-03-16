@@ -48,6 +48,8 @@ static const char *ssa_header =
     "[Script Info]\n\
 Title: Default file\n\
 ScriptType: v4.00+\n\
+PlayResX: 384\n\
+PlayResY: 288\n\
 \n\
 [V4+ Styles]\n\
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n\
@@ -175,6 +177,14 @@ int write_subtitle_file_footer(struct encoder_ctx *ctx, struct ccx_s_write *out)
 		case CCX_OF_SCC:
 		case CCX_OF_CCD:
 			ret = write(out->fh, ctx->encoded_crlf, ctx->encoded_crlf_length);
+			break;
+		case CCX_OF_WEBVTT:
+			// Ensure WebVTT header is written even if no subtitles were found (issue #1743)
+			// This is required for HLS compatibility
+			if (!ctx->wrote_webvtt_header)
+			{
+				write_webvtt_header(ctx);
+			}
 			break;
 		default: // Nothing to do, no footer on this format
 			break;

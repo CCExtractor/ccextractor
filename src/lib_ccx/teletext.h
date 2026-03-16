@@ -133,6 +133,7 @@ struct TeletextCtx
 };
 
 int tlt_print_seen_pages(struct lib_cc_decode *dec_ctx);
+int tlt_print_seen_pages_json(struct lib_cc_decode *dec_ctx);
 void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub);
 void set_tlt_delta(struct lib_cc_decode *dec_ctx, uint64_t pts);
 #endif
