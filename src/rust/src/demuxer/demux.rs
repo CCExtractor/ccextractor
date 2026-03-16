@@ -247,8 +247,12 @@ impl CcxDemuxer<'_> {
             }
         }
         // Stream mode detection
+        let saved_current_file = self.parent.as_ref().map(|p| p.current_file);
         if self.auto_stream == StreamMode::Autodetect {
             detect_stream_type(self, ccx_options);
+            if let (Some(parent), Some(saved)) = (self.parent.as_mut(), saved_current_file) {
+                parent.current_file = saved;
+            }
             match self.stream_mode {
                 StreamMode::ElementaryOrNotFound => {
                     info!("\rFile seems to be an elementary stream")

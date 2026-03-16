@@ -2005,6 +2005,7 @@ void matroska_parse(struct matroska_ctx *mkv_ctx)
 
 FILE *create_file(struct lib_ccx_ctx *ctx)
 {
+
 	char *filename = ctx->inputfile[ctx->current_file];
 	FILE *file = fopen(filename, "rb");
 	return file;

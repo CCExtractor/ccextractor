@@ -134,9 +134,13 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 			return -1;
 	}
 
+	struct lib_ccx_ctx *parent_ctx = (struct lib_ccx_ctx *)ctx->parent;
+	int saved_current_file = parent_ctx ? parent_ctx->current_file : -1;
 	if (ctx->auto_stream == CCX_SM_AUTODETECT)
 	{
 		detect_stream_type(ctx);
+		if (parent_ctx)
+			parent_ctx->current_file = saved_current_file;
 		switch (ctx->stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
