@@ -5,6 +5,25 @@
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
 
+static void ass_position_from_row_col(
+    int row,
+    int col,
+    int play_res_x,
+    int play_res_y,
+    int *out_x,
+    int *out_y)
+{
+	/* vertical: matches FFmpeg's 0.1 + 0.0533*i formula (0.80/15 = 0.05333) */
+	double top = play_res_y * 0.10;
+	double row_step = (play_res_y * 0.80) / 15.0;
+	*out_y = (int)(top + row * row_step + 0.5);
+
+	/* horizontal: matches FFmpeg's 0.1 + 0.025*j (0.025 = 0.80/32, 32 cells) */
+	double left = play_res_x * 0.10;
+	double col_step = play_res_x * 0.025;
+	*out_x = (int)(left + col * col_step + 0.5);
+}
+
 int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
 	int used;
@@ -171,16 +190,31 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 
 	int prev_line_start = -1, prev_line_end = -1;	    // Column in which the previous line started and ended, for autodash
 	int prev_line_center1 = -1, prev_line_center2 = -1; // Center column of previous line text
-	int empty_buf = 1;
+
+	int first_row = -1;
+	int last_row = -1;
+	int x, y;
+	char pos_tag[64];
+
 	for (int i = 0; i < 15; i++)
 	{
 		if (data->row_used[i])
 		{
-			empty_buf = 0;
+			first_row = i;
 			break;
 		}
 	}
-	if (empty_buf)
+
+	for (int i = 14; i >= 0; i--)
+	{
+		if (data->row_used[i])
+		{
+			last_row = i;
+			break;
+		}
+	}
+
+	if (first_row < 0)
 		return 0;
 
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
@@ -194,6 +228,77 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	dbg_print(CCX_DMT_DECODER_608, "%s", timeline);
 
 	write_wrapped(context->out->fh, context->buffer, used);
+
+	/*
+	 * ASS precise positioning note:
+	 * We emit {\an7\pos(x,y)} using ASS script resolution coordinates.
+	 * PlayResX/PlayResY are explicitly declared in the SSA header (384x288),
+	 * which is the SSA/libass default resolution and ensures consistent
+	 * positioning across players.
+	 *
+	 * Positioning is intentionally guarded to avoid regressions when
+	 * caption layout information is ambiguous.
+	 */
+
+	/* ---- ASS precise positioning ---- */
+
+	/*
+	 * Only apply ASS positioning when:
+	 * - At least one row is present
+	 * - And captions occupy a single logical region (1–2 adjacent rows)
+	 * Otherwise, fall back to legacy SSA positioning.
+	 */
+
+	if ((last_row - first_row) <= 1)
+	{
+		int first_col = 31;
+
+		for (int r = first_row; r <= last_row; r++)
+		{
+			if (!data->row_used[r])
+				continue;
+
+			int f = -1, l = -1;
+
+			find_limit_characters(
+			    data->characters[r],
+			    &f,
+			    &l,
+			    CCX_DECODER_608_SCREEN_WIDTH);
+
+			/* Fallback: row_used but only control/padding bytes present */
+			if (f < 0)
+			{
+				unsigned char *line = data->characters[r];
+				for (int c = 0; c < CCX_DECODER_608_SCREEN_WIDTH; c++)
+				{
+					if (line[c] != ' ' && line[c] != 0 && line[c] != 0x89) /* match find_limit_characters */
+					{
+						f = c;
+						break;
+					}
+				}
+			}
+
+			/* Safety clamp: fully empty row defaults to left edge */
+			if (f < 0)
+				f = 0;
+
+			if (f < first_col)
+				first_col = f;
+		}
+
+		ass_position_from_row_col(first_row, first_col, 384, 288, &x, &y);
+
+		snprintf(
+		    pos_tag,
+		    sizeof(pos_tag),
+		    "{\\an7\\pos(%d,%d)}",
+		    x, y);
+
+		write_wrapped(context->out->fh, pos_tag, strlen(pos_tag));
+	}
+
 	int line_count = 0;
 	for (int i = 0; i < 15; i++)
 	{
