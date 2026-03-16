@@ -61,7 +61,9 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 	dec_ctx = update_decoder_list(ctx);
 	enc_ctx = update_encoder_list(ctx);
 
-	set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+	set_current_pts(dec_ctx->timing,
+    ((int64_t)s->DTS + (int64_t)signed_cts) *
+    (int64_t)MPEG_CLOCK_FREQ / timescale);
 	set_fts(dec_ctx->timing);
 
 	for (i = 0; i < s->dataLength;)
@@ -133,7 +135,9 @@ static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCCo
 	// Enable HEVC mode for NAL parsing
 	dec_ctx->avc_ctx->is_hevc = 1;
 
-	set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+	set_current_pts(dec_ctx->timing,
+    ((int64_t)s->DTS + (int64_t)signed_cts) *
+    (int64_t)MPEG_CLOCK_FREQ / timescale);
 	set_fts(dec_ctx->timing);
 
 	for (i = 0; i < s->dataLength;)
@@ -234,7 +238,9 @@ static int process_xdvb_track(struct lib_ccx_ctx *ctx, const char *basename, GF_
 		if (s != NULL)
 		{
 			s32 signed_cts = (s32)s->CTS_Offset; // Convert from unsigned to signed. GPAC uses u32 but unsigned values are legal.
-			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+			set_current_pts(dec_ctx->timing,
+    ((int64_t)s->DTS + (int64_t)signed_cts) *
+    (int64_t)MPEG_CLOCK_FREQ / timescale);
 			set_fts(dec_ctx->timing);
 
 			process_m2v(enc_ctx, dec_ctx, (unsigned char *)s->data, s->dataLength, sub);
@@ -480,8 +486,7 @@ static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 trac
 		if (s != NULL)
 		{
 			s32 signed_cts = (s32)s->CTS_Offset;
-			LLONG start_time_ms = (LLONG)((s->DTS + signed_cts) * 1000) / timescale;
-
+			LLONG start_time_ms = (((LLONG)s->DTS + (LLONG)signed_cts) * 1000) / timescale;
 			/* Calculate end time from next sample if available */
 			LLONG end_time_ms = 0;
 			if (i + 1 < sample_count)
@@ -491,14 +496,16 @@ static int process_vobsub_track(struct lib_ccx_ctx *ctx, GF_ISOFile *f, u32 trac
 				if (next_s)
 				{
 					s32 next_signed_cts = (s32)next_s->CTS_Offset;
-					end_time_ms = (LLONG)((next_s->DTS + next_signed_cts) * 1000) / timescale;
+					end_time_ms = (((LLONG)next_s->DTS + (LLONG)next_signed_cts) * 1000) /timescale;
 					gf_isom_sample_del(&next_s);
 				}
 			}
 			if (end_time_ms == 0)
 				end_time_ms = start_time_ms + 5000; /* Default 5 second duration */
 
-			set_current_pts(dec_ctx->timing, (s->DTS + signed_cts) * MPEG_CLOCK_FREQ / timescale);
+			set_current_pts(dec_ctx->timing,
+    ((int64_t)s->DTS + (int64_t)signed_cts) *
+    (int64_t)MPEG_CLOCK_FREQ / timescale);
 			set_fts(dec_ctx->timing);
 
 			/* Decode SPU and run OCR */
@@ -1120,7 +1127,9 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					mprint("Data length: %lu\n", sample->dataLength);
 					const LLONG timestamp = (LLONG)((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
 #endif
-					set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset) * MPEG_CLOCK_FREQ / timescale);
+					set_current_pts(dec_ctx->timing,
+					((int64_t)sample->DTS + (int64_t)sample->CTS_Offset) *
+					(int64_t)MPEG_CLOCK_FREQ / timescale);
 					// For caption-only tracks (c608/c708), set frame type to I-frame
 					// so that set_fts() will set min_pts from the first sample.
 					// Without video frames, frame type would stay Unknown and
