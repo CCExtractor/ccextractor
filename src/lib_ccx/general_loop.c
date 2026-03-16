@@ -370,7 +370,7 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 	FILE *fr = fopen(filename, "rt");
 	if (!fr)
 	{
-		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED, "In process_hex: Unable to open file %s for reading.", filename);
+		fatal(EXIT_READ_ERROR, "In process_hex: Unable to open file %s for reading.", filename);
 	}
 	unsigned char *bytes = NULL;
 	unsigned byte_count = 0;
