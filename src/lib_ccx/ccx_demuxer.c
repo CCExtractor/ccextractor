@@ -38,7 +38,7 @@ static void ccx_demuxer_close(struct ccx_demuxer *ctx)
 	ccxr_demuxer_close(ctx);
 #else
 	ctx->past = 0;
-	if (ctx->infd != -1 && ccx_options.input_source == CCX_DS_FILE)
+	if (ctx->infd != -1 && ctx->input_source == CCX_DS_FILE)
 	{
 		close(ctx->infd);
 		ctx->infd = -1;
@@ -81,7 +81,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 	}
 #endif
 	init_file_buffer(ctx);
-	if (ccx_options.input_source == CCX_DS_STDIN)
+	if (ctx->input_source == CCX_DS_STDIN)
 	{
 		if (ctx->infd != -1) // Means we had already processed stdin. So we're done.
 		{
@@ -93,7 +93,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		mprint("\n\r-----------------------------------------------------------------\n");
 		mprint("\rReading from standard input\n");
 	}
-	else if (ccx_options.input_source == CCX_DS_NETWORK)
+	else if (ctx->input_source == CCX_DS_NETWORK)
 	{
 		if (ctx->infd != -1) // Means we have already bound a socket.
 		{
@@ -111,7 +111,7 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 		}
 	}
 
-	else if (ccx_options.input_source == CCX_DS_TCP)
+	else if (ctx->input_source == CCX_DS_TCP)
 	{
 		if (ctx->infd != -1)
 		{
@@ -412,6 +412,13 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 
 	ctx->warning_program_not_found_shown = CCX_FALSE;
 	ctx->strangeheader = 0;
+
+	// Copy options from global ccx_options for encapsulation
+	ctx->live_stream = ccx_options.live_stream;
+	ctx->buffer_input = ccx_options.buffer_input;
+	ctx->input_source = ccx_options.input_source;
+	ctx->binary_concat = ccx_options.binary_concat;
+
 	memset(&ctx->freport, 0, sizeof(ctx->freport));
 
 	for (i = 0; i < MAX_PSI_PID; i++)
