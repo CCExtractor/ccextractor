@@ -13,10 +13,14 @@ else()
     set(PROFILE "release")
 endif()
 
+set(FEATURES "")
+
+if(WITH_FFMPEG)
+    set(FEATURES "${FEATURES} enable_mp4_ffmpeg")
+endif()
+
 if(WITH_OCR AND WITH_HARDSUBX)
-    set(FEATURES "hardsubx_ocr")
-else()
-    set(FEATURES "")
+    set(FEATURES "${FEATURES} hardsubx_ocr")
 endif()
 
 # Check rust version
