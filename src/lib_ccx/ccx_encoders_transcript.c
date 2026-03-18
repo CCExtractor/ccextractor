@@ -355,7 +355,7 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 					mprint("Warning:Loss of data\n");
 				}
 			}
-			
+
 			write_cc_line_as_transcript2(data, context, i);
 			wrote_something = 1;
 		}
