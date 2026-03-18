@@ -24,6 +24,11 @@ while [[ $# -gt 0 ]]; do
       BLD_LINKER="$BLD_LINKER -lswscale -lavutil -pthread -lavformat -lavcodec -lavfilter -lxcb-shm -lxcb -lX11 -llzma -lswresample"
       shift
       ;;
+    -min-rust)
+      MIN_RUST=true
+      BLD_FLAGS="$BLD_FLAGS -DDISABLE_RUST"
+      shift
+      ;;
     -system-libs)
       USE_SYSTEM_LIBS=true
       shift

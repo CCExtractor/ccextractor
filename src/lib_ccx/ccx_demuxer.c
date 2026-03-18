@@ -136,7 +136,19 @@ static int ccx_demuxer_open(struct ccx_demuxer *ctx, const char *file)
 
 	if (ctx->auto_stream == CCX_SM_AUTODETECT)
 	{
+		// Temporarily disable binary_concat during stream detection.
+		// detect_stream_type reads up to 1MB (STARTBYTESLENGTH) via
+		// buffered_read_opt. For files smaller than 1MB, hitting EOF
+		// causes buffered_read_opt to call switch_to_next_file (when
+		// binary_concat is enabled), which increments current_file
+		// past the valid range and closes the file descriptor.
+		// This leaves current_file pointing beyond inputfile[], causing
+		// format-specific handlers (e.g. matroska_loop) to crash when
+		// they access inputfile[current_file].
+		int saved_binary_concat = ccx_options.binary_concat;
+		ccx_options.binary_concat = 0;
 		detect_stream_type(ctx);
+		ccx_options.binary_concat = saved_binary_concat;
 		switch (ctx->stream_mode)
 		{
 			case CCX_SM_ELEMENTARY_OR_NOT_FOUND:
