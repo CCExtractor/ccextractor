@@ -14,7 +14,7 @@ use log::{debug, warn};
 pub struct Writer<'a> {
     pub cea_708_counter: &'a mut u32,
     pub subs_delay: LLONG,
-    pub crlf: String,
+    pub end_frame: Vec<u8>,
     pub write_format: ccx_output_format,
     pub writer_ctx: &'a mut dtvcc_writer_ctx,
     pub no_font_color: bool,
@@ -25,6 +25,7 @@ pub struct Writer<'a> {
 
 impl<'a> Writer<'a> {
     /// Create a new writer context
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cea_708_counter: &'a mut u32,
         subs_delay: LLONG,
@@ -33,11 +34,12 @@ impl<'a> Writer<'a> {
         no_font_color: i32,
         transcript_settings: &'a ccx_encoders_transcript_format,
         no_bom: i32,
+        encoded_end_frame: &[u8],
     ) -> Self {
         Self {
             cea_708_counter,
             subs_delay,
-            crlf: "\r\n".to_owned(),
+            end_frame: encoded_end_frame.to_vec(),
             write_format,
             writer_ctx,
             no_font_color: is_true(no_font_color),

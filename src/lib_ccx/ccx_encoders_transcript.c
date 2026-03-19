@@ -92,7 +92,7 @@ int write_cc_bitmap_as_transcript(struct cc_subtitle *sub, struct encoder_ctx *c
 				}
 			}
 
-			write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			write_wrapped(context->out->fh, context->encoded_end_frame, context->encoded_end_frame_length);
 		}
 	}
 #endif
@@ -134,6 +134,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 
 		str = sub->data;
 
+		int wrote_something = 0;
 		str = strtok_r(str, "\r\n", &save_str);
 		do
 		{
@@ -141,6 +142,15 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 			if (length <= 0)
 			{
 				continue;
+			}
+
+			if (wrote_something)
+			{
+				ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				if (ret < context->encoded_crlf_length)
+				{
+					mprint("Warning:Loss of data\n");
+				}
 			}
 
 			if (context->transcript_settings->showStartTime)
@@ -200,13 +210,15 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 				mprint("Warning:Loss of data\n");
 			}
 
-			ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-			if (ret < context->encoded_crlf_length)
-			{
-				mprint("Warning:Loss of data\n");
-			}
+			wrote_something = 1;
 
 		} while ((str = strtok_r(NULL, "\r\n", &save_str)));
+
+		ret = write(context->out->fh, context->encoded_end_frame, context->encoded_end_frame_length);
+		if (ret < context->encoded_end_frame_length)
+		{
+			mprint("Warning:Loss of data\n");
+		}
 
 		freep(&sub->data);
 		lsub = sub;
@@ -321,18 +333,13 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		{
 			mprint("Warning:Loss of data\n");
 		}
-
-		ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
-		if (ret < context->encoded_crlf_length)
-		{
-			mprint("Warning:Loss of data\n");
-		}
 	}
 	// fprintf (wb->fh,encoded_crlf);
 }
 
 int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	int ret;
 	int wrote_something = 0;
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - TRANSCRIPT caption - - -\n");
 
@@ -340,10 +347,29 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 	{
 		if (data->row_used[i])
 		{
+			if (wrote_something)
+			{
+				ret = write(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+				if (ret < context->encoded_crlf_length)
+				{
+					mprint("Warning:Loss of data\n");
+				}
+			}
+
 			write_cc_line_as_transcript2(data, context, i);
+			wrote_something = 1;
 		}
-		wrote_something = 1;
 	}
+
+	if (wrote_something)
+	{
+		ret = write(context->out->fh, context->encoded_end_frame, context->encoded_end_frame_length);
+		if (ret < context->encoded_end_frame_length)
+		{
+			mprint("Warning:Loss of data\n");
+		}
+	}
+
 	dbg_print(CCX_DMT_DECODER_608, "- - - - - - - - - - - -\r\n");
 	return wrote_something;
 }

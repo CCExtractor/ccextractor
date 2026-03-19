@@ -134,6 +134,7 @@ void init_options(struct ccx_s_options *options)
 	options->enc_cfg.trim_subs = 0; // "	Remove spaces at sides?	"
 	options->enc_cfg.in_format = 1;
 	options->enc_cfg.line_terminator_lf = 0; // 0 = CRLF
+	options->enc_cfg.frame_terminator_0 = 0; // 0 = frames terminated by line_terminator_lf
 	options->enc_cfg.start_credits_text = NULL;
 	options->enc_cfg.end_credits_text = NULL;
 	options->enc_cfg.encoding = CCX_ENC_UTF_8;
