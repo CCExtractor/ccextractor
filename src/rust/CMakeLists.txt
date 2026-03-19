@@ -19,6 +19,14 @@ else()
     set(FEATURES "")
 endif()
 
+if(WITH_FFMPEG)
+    if(FEATURES STREQUAL "")
+        set(FEATURES "enable_mp4_ffmpeg")
+    else()
+        set(FEATURES "${FEATURES};enable_mp4_ffmpeg")
+    endif()
+endif()
+
 # Check rust version
 set(MSRV "1.87.0")
 if(Rust_VERSION VERSION_GREATER_EQUAL ${MSRV})

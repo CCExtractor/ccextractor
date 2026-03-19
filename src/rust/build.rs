@@ -43,6 +43,22 @@ fn main() {
         "mprint",
     ]);
 
+    #[cfg(feature = "enable_mp4_ffmpeg")]
+    allowlist_functions.extend_from_slice(&[
+        "ccx_mp4_process_avc_sample",
+        "ccx_mp4_process_hevc_sample",
+        "ccx_mp4_process_cc_packet",
+        "ccx_mp4_process_tx3g_packet",
+        "ccx_mp4_flush_tx3g",
+        "ccx_mp4_report_progress",
+        "update_decoder_list",
+        "update_encoder_list",
+        "do_NAL",
+        "mprint",
+        "ccxr_dtvcc_set_encoder",
+        "ccxr_dtvcc_process_data",
+    ]);
+
     let mut allowlist_types = Vec::new();
     allowlist_types.extend_from_slice(&[
         // Match both lowercase (dtvcc_*) and uppercase (DTVCC_*) patterns
@@ -78,6 +94,31 @@ fn main() {
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h");
+
+    // enable FFmpeg MP4 demuxer if feature is on
+    #[cfg(feature = "enable_mp4_ffmpeg")]
+    {
+        builder = builder.clang_arg("-DENABLE_FFMPEG_MP4");
+
+        // Add FFmpeg include paths (same logic as hardsubx_ocr)
+        if let Ok(ffmpeg_include) = env::var("FFMPEG_INCLUDE_DIR") {
+            builder = builder.clang_arg(format!("-I{}", ffmpeg_include));
+        }
+        if cfg!(target_os = "macos") {
+            if std::path::Path::new("/opt/homebrew/include").exists() {
+                builder = builder.clang_arg("-I/opt/homebrew/include");
+            } else if std::path::Path::new("/usr/local/include").exists() {
+                builder = builder.clang_arg("-I/usr/local/include");
+            }
+        }
+        if cfg!(target_os = "linux") {
+            if let Ok(lib) = pkg_config::Config::new().probe("libavcodec") {
+                for path in lib.include_paths {
+                    builder = builder.clang_arg(format!("-I{}", path.display()));
+                }
+            }
+        }
+    }
 
     // enable hardsubx if and only if the feature is on
     #[cfg(feature = "hardsubx_ocr")]

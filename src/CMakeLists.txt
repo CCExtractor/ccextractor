@@ -181,21 +181,26 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
-
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+  pkg_check_modules (SWRESAMPLE REQUIRED libswresample)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG_MP4")
+
+  # NOTE: FFmpeg libs are added to EXTRA_FFMPEG_LIBS (not EXTRA_LIBS) so we
+  # can place them AFTER ccx_rust in the link order. GNU ld processes
+  # left-to-right; ccx_rust (containing rsmpeg) references FFmpeg symbols
+  # like swr_get_out_samples, so FFmpeg shared libs must come after it.
+  set (EXTRA_FFMPEG_LIBS ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES}
+       ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES} ${SWSCALE_LIBRARIES}
+       ${SWRESAMPLE_LIBRARIES})
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
@@ -228,12 +233,6 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
 
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
-  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
-
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
@@ -251,6 +250,11 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+
+  # Collect FFmpeg libs for placement after ccx_rust (same reason as WITH_FFMPEG)
+  set (EXTRA_FFMPEG_LIBS ${EXTRA_FFMPEG_LIBS} ${AVFORMAT_LIBRARIES}
+       ${AVUTIL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES}
+       ${SWSCALE_LIBRARIES})
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
@@ -262,11 +266,19 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+
+  # Corrosion places ccx_rust at the absolute end of the link line.
+  # On Linux (GNU ld), ccx_rust contains rsmpeg which references FFmpeg
+  # symbols like swr_get_out_samples. By adding FFmpeg libs as INTERFACE
+  # dependencies of ccx_rust, CMake places them right after ccx_rust.
+  if (EXTRA_FFMPEG_LIBS)
+    set_property(TARGET ccx_rust APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${EXTRA_FFMPEG_LIBS})
+  endif()
 endif (PKG_CONFIG_FOUND)
 
-
-target_link_libraries (ccextractor ${EXTRA_LIBS})
+target_link_libraries (ccextractor PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccextractor PUBLIC ${EXTRA_INCLUDES})
+
 
 # ccx_rust (Rust) calls C functions from ccx (like decode_vbi).
 # Force the linker to pull these symbols from ccx before processing ccx_rust.
@@ -275,6 +287,18 @@ if (NOT WIN32 AND NOT APPLE)
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
+  if (WITH_FFMPEG)
+    target_link_options (ccextractor PRIVATE
+      -Wl,--undefined=ccx_mp4_process_avc_sample
+      -Wl,--undefined=ccx_mp4_process_hevc_sample
+      -Wl,--undefined=ccx_mp4_process_cc_packet
+      -Wl,--undefined=ccx_mp4_process_tx3g_packet
+      -Wl,--undefined=ccx_mp4_flush_tx3g
+      -Wl,--undefined=ccx_mp4_report_progress
+      -Wl,--undefined=mprint
+      -Wl,--undefined=update_decoder_list
+      -Wl,--undefined=update_encoder_list)
+  endif()
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)
