@@ -368,10 +368,21 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 	}
 	/* const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present */
 	FILE *fr = fopen(filename, "rt");
+	if (fr == NULL)
+	{
+		fatal(CCX_COMMON_EXIT_FILE_CREATION_FAILED,
+		      "In process_hex: Unable to open file: %s\n", filename);
+	}
 	unsigned char *bytes = NULL;
 	unsigned byte_count = 0;
 	int warning_shown = 0;
 	struct demuxer_data *data = alloc_demuxer_data();
+	if (data == NULL)
+	{
+		fclose(fr);
+		fatal(EXIT_NOT_ENOUGH_MEMORY,
+		      "In process_hex: Out of memory allocating demuxer data.\n");
+	}
 	while (fgets(line, max - 1, fr) != NULL)
 	{
 		char *c1, *c2 = NULL; // Positions for first and second colons
