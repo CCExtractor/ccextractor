@@ -151,6 +151,13 @@ if (VBI_DEBUG)
   add_definitions(-DVBI_DEBUG)
   message(STATUS "VBI debug output enabled")
 endif (VBI_DEBUG)
+
+option (NETWORKING_DEBUG "Enable networking debug output" OFF)
+
+if (NETWORKING_DEBUG)
+  add_definitions(-DNETWORKING_DEBUG)
+  message(STATUS "Networking debug output enabled")
+endif (NETWORKING_DEBUG)
 add_subdirectory (lib_ccx)
 
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
