@@ -41,6 +41,7 @@ This header is required for HLS workflows but is **disabled by default**
 to preserve compatibility with standard WebVTT players.
 
 Example:
+
 ```bash
 ccextractor input.ts --timestamp-map -o output.vtt
 ```
@@ -48,16 +49,19 @@ ccextractor input.ts --timestamp-map -o output.vtt
 ### Windows Package Managers
 
 **WinGet:**
+
 ```powershell
 winget install CCExtractor.CCExtractor
 ```
 
 **Chocolatey:**
+
 ```powershell
 choco install ccextractor
 ```
 
 **Scoop:**
+
 ```powershell
 scoop bucket add extras
 scoop install ccextractor
@@ -78,9 +82,16 @@ You can also find the list of parameters and their brief description by running 
 
 You can find sample files on [our website](https://ccextractor.org/public/general/tvsamples/) to test the software.
 
-### Building from Source
+### Building from Source(Building on Windows using Visual Studio)
 
-- [Building on Windows using WSL](docs/build-wsl.md)
+1. Install Visual Studio (Community Edition) with "Desktop development with C++".
+2. Navigate to the "windows" folder in the repository.
+3. Open "the ccextractor.sln" file using Visual Studio.
+4. Select the desired build configuration .
+5. Click on "Build Solution" from the Build menu.
+6. After a successful build, run the generated executable.
+
+This is the recommended method for building CCExtractor on Windows.
 
 #### Linux (Autotools) build notes
 
@@ -88,15 +99,18 @@ CCExtractor also supports an autotools-based build system under the `linux/`
 directory.
 
 Important notes:
+
 - The autotools workflow lives inside `linux/`. The `configure` script is
   generated there and should be run from that directory.
 - Typical build steps are:
+
 ```
 cd linux
 ./autogen.sh
 ./configure
 make
 ```
+
 - Rust support is enabled automatically if `cargo` and `rustc` are available
   on the system. In that case, Rust components are built and linked during
   `make`.
