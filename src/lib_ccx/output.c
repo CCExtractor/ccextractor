@@ -69,10 +69,14 @@ int init_write(struct ccx_s_write *wb, char *filename, int with_semaphore)
 	wb->fh = -1;
 	wb->temporarily_closed = 0;
 	wb->filename = filename;
-	wb->original_filename = strdup(filename);
-	if (!wb->original_filename)
+	wb->original_filename = NULL;
+	if (filename)
 	{
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_write: Out of memory duplicating filename.");
+		wb->original_filename = strdup(filename);
+		if (!wb->original_filename)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_write: Out of memory duplicating filename.");
+		}
 	}
 
 	wb->with_semaphore = with_semaphore;

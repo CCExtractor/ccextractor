@@ -607,10 +607,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				char *basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				char *dup_filename = strdup(cfg->output_filename);
-				if (!dup_filename)
+				char *dup_filename = NULL;
+				if (cfg->output_filename)
 				{
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_encoder: Out of memory duplicating output_filename.");
+					dup_filename = strdup(cfg->output_filename);
+					if (!dup_filename)
+					{
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_encoder: Out of memory duplicating output_filename.");
+					}
 				}
 				ret = init_write(&ctx->out[0], dup_filename, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
@@ -620,10 +624,14 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 			else
 			{
-				char *dup_filename = strdup(cfg->output_filename);
-				if (!dup_filename)
+				char *dup_filename = NULL;
+				if (cfg->output_filename)
 				{
-					fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_encoder: Out of memory duplicating output_filename.");
+					dup_filename = strdup(cfg->output_filename);
+					if (!dup_filename)
+					{
+						fatal(EXIT_NOT_ENOUGH_MEMORY, "In init_encoder: Out of memory duplicating output_filename.");
+					}
 				}
 				ret = init_write(ctx->out, dup_filename, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
