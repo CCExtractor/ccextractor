@@ -98,6 +98,9 @@ void call_function_if_match(unsigned char *line, struct word_list *list, void (*
 	    '{', '|', '}', '~', '\0'};
 
 	unsigned char *line_token = strdup(line);
+	if (line_token == NULL)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY,
+					     "In call_function_if_match: Not enough memory for line copy.\n");
 	unsigned char *c = strtok(line_token, delim);
 
 	if (c != NULL)
@@ -127,6 +130,9 @@ void telx_correct_case(char *sub_line)
 	    '{', '|', '}', '~', '\0'};
 
 	char *line = strdup(((char *)sub_line));
+	if (line == NULL)
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY,
+					     "In telx_correct_case: Not enough memory for line copy.\n");
 	char *oline = (char *)sub_line;
 	char *c = strtok(line, delim);
 	if (c == NULL)

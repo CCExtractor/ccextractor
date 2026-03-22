@@ -519,6 +519,9 @@ static char *ocr_single_line(struct ocrCtx *ctx, PIX *line_pix)
 		{
 			text = strdup(tess_text);
 			TessDeleteText(tess_text);
+			if (text == NULL)
+				fatal(EXIT_NOT_ENOUGH_MEMORY,
+				      "In ocr_single_line: Not enough memory for OCR text.\n");
 		}
 	}
 
