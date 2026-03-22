@@ -257,9 +257,18 @@ pub unsafe fn copy_from_rust(ccx_s_options: *mut ccx_s_options, options: Options
     // Freeing them would cause use-after-free and double-free errors.
     if let Some(ref inputfile) = options.inputfile {
         if (*ccx_s_options).inputfile.is_null() {
-            (*ccx_s_options).inputfile = string_to_c_chars(inputfile.clone());
-            (*ccx_s_options).num_input_files =
-                inputfile.iter().filter(|s| !s.is_empty()).count() as _;
+            // Filter empty strings into a single Vec so that the C array length
+            // and num_input_files are always derived from the same source.
+            // Previously string_to_c_chars received the full (unfiltered) Vec
+            // while num_input_files was the filtered count, causing a mismatch
+            // that let switch_to_next_file() read past the end of the array.
+            let filtered: Vec<String> = inputfile
+                .iter()
+                .filter(|s| !s.is_empty())
+                .cloned()
+                .collect();
+            (*ccx_s_options).num_input_files = filtered.len() as _;
+            (*ccx_s_options).inputfile = string_to_c_chars(filtered);
         }
     }
     (*ccx_s_options).demux_cfg = options.demux_cfg.to_ctype();
