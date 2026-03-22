@@ -19,6 +19,9 @@ static int set_string(void *var, char *val)
 		return -1;
 
 	val1 = strdup(val);
+	if (val1 == NULL)
+		fatal(EXIT_NOT_ENOUGH_MEMORY,
+		      "In set_string: Not enough memory for string copy.\n");
 	*p = val1;
 	return 0;
 }
