@@ -34,3 +34,13 @@ cmake -DWITH_HARDSUBX=ON ../src/
 
 Hint for looking all the things you want to set from outside
 cmake -LAH ../src/
+
+Complete Example:
+
+cd ccextractor
+mkdir build
+cd build
+cmake ../src/
+make
+
+This sequence configures and builds CCExtractor using CMake.
