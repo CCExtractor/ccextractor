@@ -37,8 +37,7 @@ void sigint_handler(int sig)
 
 void print_end_msg(void)
 {
-	mprint("Issues? Open a ticket here\n");
-	mprint("https://github.com/CCExtractor/ccextractor/issues\n");
+	mprint("Issues? Open a ticket here: https://github.com/CCExtractor/ccextractor/issues\n");
 }
 
 int start_ccx()
