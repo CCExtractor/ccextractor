@@ -192,6 +192,14 @@ extern "C" {
     #[allow(clashing_extern_declarations)]
     pub fn ccx_gxf_probe(buf: *const c_uchar, len: c_int) -> c_int;
     pub fn ccx_gxf_init(arg: *mut ccx_demuxer) -> *mut ccx_gxf;
+    pub fn get_decoder_line_encoded(
+        ctx: *mut encoder_ctx,
+        buffer: *mut c_uchar,
+        line_num: c_int,
+        data: *const eia608_screen,
+    ) -> c_uint;
+    pub fn get_teletext_output(ctx: *mut encoder_ctx, teletext_page: u16) -> *mut ccx_s_write;
+    pub fn get_teletext_srt_counter(ctx: *mut encoder_ctx, teletext_page: u16) -> *mut c_uint;
 }
 
 /// Initialize env logger with custom format, using stderr as target
