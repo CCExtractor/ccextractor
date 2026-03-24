@@ -714,7 +714,8 @@ char *ocr_bitmap(void *arg, png_color *palette, png_byte *alpha, unsigned char *
 								{
 									combined_text[combined_len++] = '\n';
 								}
-								strcpy(combined_text + combined_len, line_text);
+								memcpy(combined_text + combined_len, line_text, line_len);
+								combined_text[combined_len + line_len] = '\0';
 								combined_len += line_len;
 							}
 						}
