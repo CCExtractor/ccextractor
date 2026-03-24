@@ -14,6 +14,7 @@ volatile int terminate_asap = 0;
 struct ccx_s_options ccx_options;
 struct lib_ccx_ctx *signal_ctx;
 
+// Handles SIGUSR1 signal to trigger filename change during execution
 void sigusr1_handler(int sig)
 {
 	mprint("Caught SIGUSR1. Filename Change Requested\n");
