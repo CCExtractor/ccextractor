@@ -6,7 +6,6 @@
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 - Fix: Resolve Windows MSVC debug build crash caused by cross-CRT invalid free on Rust-allocated output_filename (#2126)
 - Fix: Use dynamic current_fps instead of hardcoded 29.97 in CEA-708 SCC frame delay calculations (#2172)
-- Fix: Route `--hardsubx --tickertext` through subtitle output, remove debug JPEG dumps, and fix ticker OCR string handling (#2229)
 
 0.96.6 (2026-02-19)
 -------------------
