@@ -76,15 +76,21 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
     payload_size += seibuf[seibuf_idx] as u32;
     seibuf_idx += 1;
 
-    let mut broken = false;
     let payload_start = seibuf_idx;
-    seibuf_idx += payload_size as usize;
+    let mut broken = false;
+    let payload_end = match payload_start.checked_add(payload_size as usize) {
+        Some(end) if end <= seibuf.len() => end,
+        _ => {
+            // Broken payloads use the provided slice but are not sent.
+            broken = true;
+            seibuf.len()
+        }
+    };
+    seibuf_idx = payload_end;
 
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "Payload type: {} size: {} - ", payload_type, payload_size);
 
-    if seibuf_idx > seibuf.len() {
-        // TODO: What do we do here?
-        broken = true;
+    if broken {
         if payload_type == 4 {
             debug!(msg_type = DebugMessageFlag::VERBOSE; "Warning: Subtitles payload seems incorrect (too long), continuing but it doesn't look good..");
         } else {
@@ -94,8 +100,8 @@ pub fn sei_message(ctx: &mut AvcContextRust, seibuf: &[u8]) -> usize {
     debug!(msg_type = DebugMessageFlag::VERBOSE; "");
 
     // Ignore all except user_data_registered_itu_t_t35() payload
-    if !broken && payload_type == 4 && payload_start + payload_size as usize <= seibuf.len() {
-        let payload_data = &seibuf[payload_start..payload_start + payload_size as usize];
+    if !broken && payload_type == 4 {
+        let payload_data = &seibuf[payload_start..payload_end];
         user_data_registered_itu_t_t35(ctx, payload_data);
     }
 
@@ -331,5 +337,51 @@ pub fn user_data_registered_itu_t_t35(ctx: &mut AvcContextRust, userbuf: &[u8]) 
             info!("Not a supported user data SEI");
             info!("  itu_t_35_provider_code: {:04x}", itu_t_35_provider_code);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{sei_message, sei_rbsp};
+    use crate::avc::common_types::AvcContextRust;
+    use lib_ccxr::util::log::{
+        set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget,
+    };
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+
+    fn initialize_logger() {
+        INIT.call_once(|| {
+            set_logger(CCExtractorLogger::new(
+                OutputTarget::Stdout,
+                DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
+                false,
+            ))
+            .ok();
+        });
+    }
+
+    #[test]
+    fn test_sei_slice() {
+        initialize_logger();
+        // contains no terminating byte
+        let bad_sei = [0x04, 0x0C, 0xB5, 0x00, 0x2F, 0x03, 0x06, 0x41, 0xFF, 0x04, 0xAA, 0xBB, 0xFF];
+        let mut ctx = AvcContextRust::default();
+
+        let consumed = sei_message(&mut ctx, &bad_sei);
+        assert_eq!(consumed, bad_sei.len());
+        assert!(ctx.cc_data.is_empty());
+    }
+
+    #[test]
+    fn test_bad_len_rbsp() {
+        initialize_logger();
+        // contains three bytes payload data but 0x05 expected
+        let bad_rbsp = [0x04, 0x05, 0xB5, 0x00, 0x2F, 0x80];
+        let mut ctx = AvcContextRust::default();
+
+        sei_rbsp(&mut ctx, &bad_rbsp);
+        assert_eq!(ctx.num_unexpected_sei_length, 1);
+        assert!(ctx.cc_data.is_empty());
     }
 }
