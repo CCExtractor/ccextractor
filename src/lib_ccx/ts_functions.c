@@ -27,39 +27,39 @@ uint64_t last_pts = 0;		// PTS of last PES packet (debug purposes)
 // Descriptions for ts ccx_stream_type
 const char *desc[256];
 
-char *get_buffer_type_str(struct cap_info *cinfo)
+const char *get_buffer_type_str(struct cap_info *cinfo)
 {
 	if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_MPEG2)
 	{
-		return strdup("MPG");
+		return "MPG";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_H264)
 	{
-		return strdup("H.264");
+		return "H.264";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
 	{
-		return strdup("HEVC");
+		return "HEVC";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ISDB_CC)
 	{
-		return strdup("ISDB CC subtitle");
+		return "ISDB CC subtitle";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_DVB)
 	{
-		return strdup("DVB subtitle");
+		return "DVB subtitle";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_UNKNOWNSTREAM && ccx_options.hauppauge_mode)
 	{
-		return strdup("Hauppage");
+		return "Hauppage";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_TELETEXT)
 	{
-		return strdup("Teletext");
+		return "Teletext";
 	}
 	else if (cinfo->stream == CCX_STREAM_TYPE_PRIVATE_MPEG2 && cinfo->codec == CCX_CODEC_ATSC_CC)
 	{
-		return strdup("CC in private MPEG packet");
+		return "CC in private MPEG packet";
 	}
 	else
 	{
