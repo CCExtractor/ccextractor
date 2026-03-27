@@ -158,7 +158,6 @@ pub unsafe fn xdsprint(
     write_xds_string(sub, ctx, message, TS_START_OF_XDS.load(Ordering::SeqCst))
 }
 
-
 /// Utility methods for XDS buffer management and process_xds_bytes (function).
 impl CcxDecodersXdsContext<'_> {
     /// Count how many XDS buffers are currently in use
@@ -357,7 +356,6 @@ pub unsafe fn xds_do_copy_generation_management_system(
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.aps);
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rcd);
 }
-
 
 /// Handles content advisory/rating information (US TV, MPA, Canadian ratings)
 ///
@@ -596,7 +594,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_LENGH_AND_CURRENT_TIME = 2
-         Some(XdsPacketType::LengthAndCurrentTime) => {
+        Some(XdsPacketType::LengthAndCurrentTime) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -908,8 +906,6 @@ pub unsafe fn xds_do_current_and_future(
 
     was_proc
 }
-
-
 
 /// Processes channel-related XDS data (network name, call letters, TSID)
 ///
