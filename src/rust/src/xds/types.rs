@@ -532,3 +532,455 @@ pub unsafe fn copy_xds_context_from_rust_to_c(
         write_back_to_common_timing_ctx((*bitstream_ptr).timing, timing_ctx);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- XdsClass ---
+
+    #[test]
+    fn test_xds_class_from_c_int_valid() {
+        assert_eq!(XdsClass::from_c_int(0), Some(XdsClass::Current));
+        assert_eq!(XdsClass::from_c_int(1), Some(XdsClass::Future));
+        assert_eq!(XdsClass::from_c_int(2), Some(XdsClass::Channel));
+        assert_eq!(XdsClass::from_c_int(3), Some(XdsClass::Misc));
+        assert_eq!(XdsClass::from_c_int(4), Some(XdsClass::Public));
+        assert_eq!(XdsClass::from_c_int(5), Some(XdsClass::Reserved));
+        assert_eq!(XdsClass::from_c_int(6), Some(XdsClass::Private));
+        assert_eq!(XdsClass::from_c_int(7), Some(XdsClass::End));
+        assert_eq!(XdsClass::from_c_int(0x40), Some(XdsClass::OutOfBand));
+    }
+
+    #[test]
+    fn test_xds_class_from_c_int_invalid() {
+        assert_eq!(XdsClass::from_c_int(-1), None);
+        assert_eq!(XdsClass::from_c_int(8), None);
+        assert_eq!(XdsClass::from_c_int(100), None);
+    }
+
+    #[test]
+    fn test_xds_class_roundtrip() {
+        let classes = [
+            XdsClass::Current,
+            XdsClass::Future,
+            XdsClass::Channel,
+            XdsClass::Misc,
+            XdsClass::Public,
+            XdsClass::Reserved,
+            XdsClass::Private,
+            XdsClass::End,
+            XdsClass::OutOfBand,
+        ];
+        for class in &classes {
+            let c_int = class.to_c_int();
+            let roundtripped = XdsClass::from_c_int(c_int).unwrap();
+            assert_eq!(*class, roundtripped);
+        }
+    }
+
+    // --- XdsType ---
+
+    #[test]
+    fn test_xds_type_current_future_from_c_int() {
+        let class = Some(XdsClass::Current);
+        assert_eq!(
+            XdsType::from_c_int(class, 1),
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::PinStartTime))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 2),
+            Some(XdsType::CurrentFuture(
+                XdsCurrentFutureType::LengthAndCurrentTime
+            ))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 3),
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::ProgramName))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 4),
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::ProgramType))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 5),
+            Some(XdsType::CurrentFuture(
+                XdsCurrentFutureType::ContentAdvisory
+            ))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 6),
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::AudioServices))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 8),
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::Cgms))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 9),
+            Some(XdsType::CurrentFuture(
+                XdsCurrentFutureType::AspectRatioInfo
+            ))
+        );
+        for i in 0x10..=0x17 {
+            assert!(XdsType::from_c_int(class, i).is_some());
+        }
+        assert_eq!(XdsType::from_c_int(class, 7), None);
+        assert_eq!(XdsType::from_c_int(class, 0x18), None);
+    }
+
+    #[test]
+    fn test_xds_type_future_class_same_as_current() {
+        for type_val in [1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17]
+        {
+            assert_eq!(
+                XdsType::from_c_int(Some(XdsClass::Current), type_val),
+                XdsType::from_c_int(Some(XdsClass::Future), type_val)
+            );
+        }
+    }
+
+    #[test]
+    fn test_xds_type_channel_from_c_int() {
+        let class = Some(XdsClass::Channel);
+        assert_eq!(
+            XdsType::from_c_int(class, 1),
+            Some(XdsType::Channel(XdsChannelType::NetworkName))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 2),
+            Some(XdsType::Channel(XdsChannelType::CallLettersAndChannel))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 4),
+            Some(XdsType::Channel(XdsChannelType::Tsid))
+        );
+        assert_eq!(XdsType::from_c_int(class, 3), None);
+        assert_eq!(XdsType::from_c_int(class, 5), None);
+    }
+
+    #[test]
+    fn test_xds_type_misc_from_c_int() {
+        let class = Some(XdsClass::Misc);
+        assert_eq!(
+            XdsType::from_c_int(class, 1),
+            Some(XdsType::Misc(XdsMiscType::TimeOfDay))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 4),
+            Some(XdsType::Misc(XdsMiscType::LocalTimeZone))
+        );
+        assert_eq!(
+            XdsType::from_c_int(class, 0x40),
+            Some(XdsType::Misc(XdsMiscType::OutOfBandChannelNumber))
+        );
+        assert_eq!(XdsType::from_c_int(class, 2), None);
+    }
+
+    #[test]
+    fn test_xds_type_unsupported_classes() {
+        for class in [
+            XdsClass::Public,
+            XdsClass::Reserved,
+            XdsClass::Private,
+            XdsClass::End,
+            XdsClass::OutOfBand,
+        ] {
+            assert_eq!(XdsType::from_c_int(Some(class), 1), None);
+        }
+    }
+
+    #[test]
+    fn test_xds_type_none_class() {
+        assert_eq!(XdsType::from_c_int(None, 1), None);
+    }
+
+    #[test]
+    fn test_xds_type_roundtrip_current_future() {
+        let class = Some(XdsClass::Current);
+        for type_val in [1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17]
+        {
+            let xds_type = XdsType::from_c_int(class, type_val).unwrap();
+            assert_eq!(xds_type.to_c_int(), type_val);
+        }
+    }
+
+    #[test]
+    fn test_xds_type_roundtrip_channel() {
+        let class = Some(XdsClass::Channel);
+        for type_val in [1, 2, 4] {
+            let xds_type = XdsType::from_c_int(class, type_val).unwrap();
+            assert_eq!(xds_type.to_c_int(), type_val);
+        }
+    }
+
+    #[test]
+    fn test_xds_type_roundtrip_misc() {
+        let class = Some(XdsClass::Misc);
+        for type_val in [1, 4, 0x40] {
+            let xds_type = XdsType::from_c_int(class, type_val).unwrap();
+            assert_eq!(xds_type.to_c_int(), type_val);
+        }
+    }
+
+    // --- XdsBuffer ---
+
+    fn make_c_buf(in_use: u32, xds_class: i32, xds_type: i32, used_bytes: u8) -> xds_buffer {
+        let mut bytes = [0u8; NUM_BYTES_PER_PACKET];
+        bytes[0] = 0x01;
+        bytes[1] = 0x03;
+        xds_buffer {
+            in_use,
+            xds_class,
+            xds_type,
+            bytes,
+            used_bytes,
+        }
+    }
+
+    #[test]
+    fn test_xds_buffer_from_ctype_valid_current_program_name() {
+        let c_buf = make_c_buf(1, 0, 3, 4);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        assert_eq!(rust_buf.in_use, 1);
+        assert_eq!(rust_buf.xds_class, Some(XdsClass::Current));
+        assert_eq!(
+            rust_buf.xds_type,
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::ProgramName))
+        );
+        assert_eq!(rust_buf.used_bytes, 4);
+        assert_eq!(rust_buf.bytes[0], 0x01);
+        assert_eq!(rust_buf.bytes[1], 0x03);
+    }
+
+    #[test]
+    fn test_xds_buffer_from_ctype_class_minus1_gives_none() {
+        let c_buf = make_c_buf(0, -1, -1, 0);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        assert_eq!(rust_buf.xds_class, None);
+        assert_eq!(rust_buf.xds_type, None);
+    }
+
+    #[test]
+    fn test_xds_buffer_from_ctype_type_minus1_gives_none() {
+        let c_buf = make_c_buf(1, 0, -1, 2);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        assert_eq!(rust_buf.xds_class, Some(XdsClass::Current));
+        assert_eq!(rust_buf.xds_type, None);
+    }
+
+    #[test]
+    fn test_xds_buffer_from_ctype_invalid_class_gives_none() {
+        let c_buf = make_c_buf(1, 99, 1, 2);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        assert_eq!(rust_buf.xds_class, None);
+        assert_eq!(rust_buf.xds_type, None);
+    }
+
+    #[test]
+    fn test_xds_buffer_from_ctype_invalid_type_for_class_gives_none() {
+        let c_buf = make_c_buf(1, 2, 99, 2);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        assert_eq!(rust_buf.xds_class, Some(XdsClass::Channel));
+        assert_eq!(rust_buf.xds_type, None);
+    }
+
+    #[test]
+    fn test_xds_buffer_to_ctype_valid() {
+        let c_buf = make_c_buf(1, 0, 3, 4);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        let back = unsafe { rust_buf.to_ctype() };
+        assert_eq!(back.in_use, 1);
+        assert_eq!(back.xds_class, 0);
+        assert_eq!(back.xds_type, 3);
+        assert_eq!(back.used_bytes, 4);
+        assert_eq!(back.bytes[0], 0x01);
+        assert_eq!(back.bytes[1], 0x03);
+    }
+
+    #[test]
+    fn test_xds_buffer_to_ctype_none_becomes_minus1() {
+        let c_buf = make_c_buf(0, -1, -1, 0);
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        let back = unsafe { rust_buf.to_ctype() };
+        assert_eq!(back.xds_class, -1);
+        assert_eq!(back.xds_type, -1);
+    }
+
+    #[test]
+    fn test_xds_buffer_roundtrip_all_classes() {
+        let cases: &[(i32, i32)] = &[
+            (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 8), (0, 9),
+            (0, 0x10), (0, 0x17),
+            (1, 3),  // future + programName
+            (2, 1), (2, 2), (2, 4),  // channel
+            (3, 1), (3, 4), (3, 0x40), // mics
+        ];
+        for &(class, typ) in cases {
+            let c_buf = make_c_buf(1, class, typ, 2);
+            let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+            let back = unsafe { rust_buf.to_ctype() };
+            assert_eq!(back.xds_class, class, "class mismatch for ({}, {})", class, typ);
+            assert_eq!(back.xds_type, typ, "type mismatch for ({}, {})", class, typ);
+        }
+    }
+
+    #[test]
+    fn test_xds_buffer_to_ctype_unsupported_class_type_is_none() {
+        for class in [4i32, 5, 6, 7, 0x40] {
+            let c_buf = make_c_buf(1, class, 1, 2);
+            let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+            assert!(rust_buf.xds_class.is_some(), "expected class Some for {}", class);
+            assert_eq!(rust_buf.xds_type, None, "expected type None for class {}", class);
+            let back = unsafe { rust_buf.to_ctype() };
+            assert_eq!(back.xds_type, -1, "expected -1 in C for class {}", class);
+        }
+    }
+
+    #[test]
+    fn test_xds_buffer_bytes_preserved_through_roundtrip() {
+        let mut c_buf = make_c_buf(1, 0, 3, 10);
+        for (i, b) in c_buf.bytes.iter_mut().enumerate() {
+            *b = (i as u8).wrapping_mul(7);
+        }
+        let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
+        let back = unsafe { rust_buf.to_ctype() };
+        assert_eq!(c_buf.bytes, back.bytes);
+    }
+
+    // --- CcxDecodersXdsContext ---
+
+    fn make_c_xds_ctx_zeroed() -> ccx_decoders_xds_context {
+        unsafe { std::mem::zeroed() }
+    }
+
+    #[test]
+    fn test_xds_context_from_ctype_scalars() {
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+        c_ctx.current_xds_min = 42;
+        c_ctx.current_xds_hour = 13;
+        c_ctx.current_xds_date = 15;
+        c_ctx.current_xds_month = 7;
+        c_ctx.current_program_type_reported = 3;
+        c_ctx.xds_start_time_shown = 1;
+        c_ctx.xds_program_length_shown = 2;
+        c_ctx.cur_xds_buffer_idx = 5;
+        c_ctx.cur_xds_packet_class = 0;
+        c_ctx.cur_xds_payload_length = 10;
+        c_ctx.cur_xds_packet_type = 3;
+        c_ctx.current_ar_start = 100;
+        c_ctx.current_ar_end = 200;
+
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert_eq!(rust_ctx.current_xds_min, 42);
+        assert_eq!(rust_ctx.current_xds_hour, 13);
+        assert_eq!(rust_ctx.current_xds_date, 15);
+        assert_eq!(rust_ctx.current_xds_month, 7);
+        assert_eq!(rust_ctx.current_program_type_reported, 3);
+        assert_eq!(rust_ctx.xds_start_time_shown, 1);
+        assert_eq!(rust_ctx.xds_program_length_shown, 2);
+        assert_eq!(rust_ctx.cur_xds_buffer_idx, 5);
+        assert_eq!(rust_ctx.cur_xds_packet_class, 0);
+        assert_eq!(rust_ctx.cur_xds_payload_length, 10);
+        assert_eq!(rust_ctx.cur_xds_packet_type, 3);
+        assert_eq!(rust_ctx.current_ar_start, 100);
+        assert_eq!(rust_ctx.current_ar_end, 200);
+    }
+
+    #[test]
+    fn test_xds_context_from_ctype_write_to_file() {
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+
+        c_ctx.xds_write_to_file = 0;
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert!(!rust_ctx.xds_write_to_file);
+
+        c_ctx.xds_write_to_file = 1;
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert!(rust_ctx.xds_write_to_file);
+
+        c_ctx.xds_write_to_file = 42;
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert!(rust_ctx.xds_write_to_file);
+    }
+
+    #[test]
+    fn test_xds_context_from_ctype_timing_always_none() {
+        let c_ctx = make_c_xds_ctx_zeroed(); // timing pointer is null
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert!(rust_ctx.timing.is_none());
+    }
+
+    #[test]
+    fn test_xds_context_from_ctype_buffers_converted() {
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+        c_ctx.xds_buffers[0].in_use = 1;
+        c_ctx.xds_buffers[0].xds_class = 0; // curr
+        c_ctx.xds_buffers[0].xds_type = 3; // programName
+        c_ctx.xds_buffers[0].used_bytes = 5;
+
+        let rust_ctx = unsafe { CcxDecodersXdsContext::from_ctype(c_ctx) }.unwrap();
+        assert_eq!(rust_ctx.xds_buffers[0].in_use, 1);
+        assert_eq!(rust_ctx.xds_buffers[0].xds_class, Some(XdsClass::Current));
+        assert_eq!(
+            rust_ctx.xds_buffers[0].xds_type,
+            Some(XdsType::CurrentFuture(XdsCurrentFutureType::ProgramName))
+        );
+        assert_eq!(rust_ctx.xds_buffers[0].used_bytes, 5);
+    }
+
+    #[test]
+    fn test_copy_xds_context_scalars() {
+        let mut rust_ctx = CcxDecodersXdsContext::default();
+        rust_ctx.current_xds_min = 30;
+        rust_ctx.current_xds_hour = 9;
+        rust_ctx.current_xds_date = 25;
+        rust_ctx.current_xds_month = 12;
+        rust_ctx.cur_xds_buffer_idx = 3;
+        rust_ctx.current_ar_start = 50;
+        rust_ctx.current_ar_end = 150;
+
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+        unsafe { copy_xds_context_from_rust_to_c(&mut c_ctx as *mut _, &rust_ctx) };
+
+        assert_eq!(c_ctx.current_xds_min, 30);
+        assert_eq!(c_ctx.current_xds_hour, 9);
+        assert_eq!(c_ctx.current_xds_date, 25);
+        assert_eq!(c_ctx.current_xds_month, 12);
+        assert_eq!(c_ctx.cur_xds_buffer_idx, 3);
+        assert_eq!(c_ctx.current_ar_start, 50);
+        assert_eq!(c_ctx.current_ar_end, 150);
+    }
+
+    #[test]
+    fn test_copy_xds_context_write_to_file() {
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+
+        let mut rust_ctx = CcxDecodersXdsContext::default();
+        rust_ctx.xds_write_to_file = false;
+        unsafe { copy_xds_context_from_rust_to_c(&mut c_ctx as *mut _, &rust_ctx) };
+        assert_eq!(c_ctx.xds_write_to_file, 0);
+
+        rust_ctx.xds_write_to_file = true;
+        unsafe { copy_xds_context_from_rust_to_c(&mut c_ctx as *mut _, &rust_ctx) };
+        assert_eq!(c_ctx.xds_write_to_file, 1);
+    }
+
+    #[test]
+    fn test_copy_xds_context_timing_preserved() {
+        let mut c_ctx = make_c_xds_ctx_zeroed();
+        let sentinel: usize = 0xDEAD_BEEF;
+        c_ctx.timing = sentinel as *mut _;
+
+        let rust_ctx = CcxDecodersXdsContext::default(); // timing = None
+        unsafe { copy_xds_context_from_rust_to_c(&mut c_ctx as *mut _, &rust_ctx) };
+
+        assert_eq!(c_ctx.timing as usize, sentinel);
+    }
+
+    #[test]
+    fn test_copy_xds_context_null_ptr_noop() {
+        let rust_ctx = CcxDecodersXdsContext::default();
+        unsafe { copy_xds_context_from_rust_to_c(std::ptr::null_mut(), &rust_ctx) };
+    }
+}
