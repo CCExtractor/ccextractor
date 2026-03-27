@@ -24,8 +24,9 @@ use crate::bindings::*;
 use crate::common::CType;
 use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::write_back_to_common_timing_ctx;
-pub use crate::xds::constants::*;
 use lib_ccxr::time::TimingContext;
+pub use crate::xds::constants::*;
+use std::os::raw::c_int;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -326,9 +327,8 @@ mod tests {
 
     #[test]
     fn test_xds_type_future_class_same_as_current() {
-        for type_val in [
-            1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-        ] {
+        for type_val in [1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17]
+        {
             assert_eq!(
                 XdsType::from_c_int(Some(XdsClass::Current), type_val),
                 XdsType::from_c_int(Some(XdsClass::Future), type_val)
@@ -394,9 +394,8 @@ mod tests {
     #[test]
     fn test_xds_type_roundtrip_current_future() {
         let class = Some(XdsClass::Current);
-        for type_val in [
-            1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-        ] {
+        for type_val in [1, 2, 3, 4, 5, 6, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17]
+        {
             let xds_type = XdsType::from_c_int(class, type_val).unwrap();
             assert_eq!(xds_type.to_c_int(), type_val);
         }
@@ -507,33 +506,17 @@ mod tests {
     #[test]
     fn test_xds_buffer_roundtrip_all_classes() {
         let cases: &[(i32, i32)] = &[
-            (0, 1),
-            (0, 2),
-            (0, 3),
-            (0, 4),
-            (0, 5),
-            (0, 6),
-            (0, 8),
-            (0, 9),
-            (0, 0x10),
-            (0, 0x17),
-            (1, 3), // future + programName
-            (2, 1),
-            (2, 2),
-            (2, 4), // channel
-            (3, 1),
-            (3, 4),
-            (3, 0x40), // mics
+            (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 8), (0, 9),
+            (0, 0x10), (0, 0x17),
+            (1, 3),  // future + programName
+            (2, 1), (2, 2), (2, 4),  // channel
+            (3, 1), (3, 4), (3, 0x40), // mics
         ];
         for &(class, typ) in cases {
             let c_buf = make_c_buf(1, class, typ, 2);
             let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
             let back = unsafe { rust_buf.to_ctype() };
-            assert_eq!(
-                back.xds_class, class,
-                "class mismatch for ({}, {})",
-                class, typ
-            );
+            assert_eq!(back.xds_class, class, "class mismatch for ({}, {})", class, typ);
             assert_eq!(back.xds_type, typ, "type mismatch for ({}, {})", class, typ);
         }
     }
@@ -543,16 +526,8 @@ mod tests {
         for class in [4i32, 5, 6, 7, 0x40] {
             let c_buf = make_c_buf(1, class, 1, 2);
             let rust_buf = unsafe { XdsBuffer::from_ctype(c_buf) }.unwrap();
-            assert!(
-                rust_buf.xds_class.is_some(),
-                "expected class Some for {}",
-                class
-            );
-            assert_eq!(
-                rust_buf.xds_type, None,
-                "expected type None for class {}",
-                class
-            );
+            assert!(rust_buf.xds_class.is_some(), "expected class Some for {}", class);
+            assert_eq!(rust_buf.xds_type, None, "expected type None for class {}", class);
             let back = unsafe { rust_buf.to_ctype() };
             assert_eq!(back.xds_type, -1, "expected -1 in C for class {}", class);
         }
