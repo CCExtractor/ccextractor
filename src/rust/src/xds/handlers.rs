@@ -166,7 +166,8 @@ impl CcxDecodersXdsContext<'_> {
             let xds_class = ((hi - 1) / 2) as i32; // Start codes 1 and 2 are "class type" 0, 3-4 are 2, and so on.
             let is_new = !hi.is_multiple_of(2); // Start codes are even
 
-            log::debug!(
+            debug!(
+                msg_type = DebugMessageFlag::DECODER_XDS;
                 "XDS Start: {}.{}  Is new: {}  | Class: {} ({}), Used buffers: {}",
                 hi,
                 lo,
@@ -206,7 +207,7 @@ impl CcxDecodersXdsContext<'_> {
               3) All buffers are full and we will have to skip this packet.
             */
             if matching_buf == -1 && first_free_buf == -1 {
-                log::info!(
+                info!(
                     "Note: All XDS buffers full (bug or suicidal stream). Ignoring this one ({},{}).",
                     xds_class, lo
                 );
@@ -237,7 +238,8 @@ impl CcxDecodersXdsContext<'_> {
             }
         } else {
             // Informational: 00, or 0x20-0x7F, so 01-0x1f forbidden
-            log::debug!(
+            debug!(
+                msg_type = DebugMessageFlag::DECODER_XDS;
                 "XDS: {:02X}.{:02X} ({}, {})",
                 hi,
                 lo,
@@ -246,7 +248,7 @@ impl CcxDecodersXdsContext<'_> {
             );
 
             if (hi > 0 && hi <= 0x1f) || (lo > 0 && lo <= 0x1f) {
-                log::info!("\rNote: Illegal XDS data");
+                info!("\rNote: Illegal XDS data");
                 return;
             }
         }
@@ -386,8 +388,8 @@ pub unsafe fn xds_do_copy_generation_management_system(
     }
 
     // Debug output (always, when debug mask matches)
-    debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state. copy_permitted);
-    debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state. aps);
+    debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.copy_permitted);
+    debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.aps);
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rcd);
 }
 
