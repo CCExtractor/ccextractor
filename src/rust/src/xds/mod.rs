@@ -13,9 +13,9 @@
 //! For detailed function-level mappings, see the [`handlers`] module documentation
 //! For type definitions, see the [`types`] module
 
-pub mod constants;
 pub mod handlers;
 pub mod types;
+pub mod constants;
 
 use crate::bindings::*;
 use crate::ctorust::FromCType;
