@@ -9,37 +9,26 @@
 //! - [`XdsType`] - Specific type within each class (PIN, Program Name, Content Advisory, etc.)
 //! - [`XdsBuffer`] - Buffer for accumulating XDS packet bytes
 //! - [`CcxDecodersXdsContext`] - Main context structure for XDS decoding state
-//!
-//! # Constants
-//!
-//! - [`NUM_XDS_BUFFERS`] - Maximum number of concurrent XDS buffers (9)
-//! - [`NUM_BYTES_PER_PACKET`] - Maximum bytes per XDS packet (35)
-//! - [`XDS_CLASSES`] - Human-readable names for XDS classes
-//! - [`XDS_PROGRAM_TYPES`] - Program type descriptions (Education, Entertainment, etc.)
-//!
+//! 
 //! # Conversion Guide
 //!
-//! | C (ccx_decoders_xds.c/.h)             | Rust (types.rs)                                   |
-//! |---------------------------------------|---------------------------------------------------|
-//! | `XDS_CLASS_*` constants               | [`XdsClass`] enum                                 |
-//! | `XDS_TYPE_*` constants                | [`XdsType`] enum variants                         |
-//! | `struct xds_buffer`                   | [`XdsBuffer`]                                     |
-//! | `ccx_decoders_xds_context`            | [`CcxDecodersXdsContext`]                         |
-//! | `xds_class` (int)                     | [`XdsClass::from_c_int`], [`XdsClass::to_c_int`]  |
-//! | `xds_type` (int)                      | [`XdsType::from_c_int`], [`XdsType::to_c_int`]    |
-//! | `xds_program_type` array              | [`XDS_PROGRAM_TYPES`] constant array              |
-//! | `xds_classes` array                   | [`XDS_CLASSES`] constant array                    |
-//! | `clear_xds_buffer`                    | [`CcxDecodersXdsContext::clear_xds_buffer`]       |
-//! | `how_many_used`                       | [`CcxDecodersXdsContext::how_many_used`]          |
-//! | `process_xds_bytes`                   | [`CcxDecodersXdsContext::process_xds_bytes`]      |
-//! | `CcxDecodersXdsContext::from_ctype`   | Convert from C `ccx_decoders_xds_context`         |
-//! | `copy_xds_context_from_rust_to_c`     | Sync Rust context back to C struct                |
+//! | C (ccx_decoders_xds.c/.h)          | Rust (types.rs)                               |
+//! |------------------------------------|-----------------------------------------------|
+//! | `struct xds_buffer`                | [`XdsBuffer`]                                 |
+//! | `ccx_decoders_xds_context`         | [`CcxDecodersXdsContext`]                     |
+//! | `clear_xds_buffer`                 | [`CcxDecodersXdsContext::clear_xds_buffer`]   |
+//! | `how_many_used`                    | [`CcxDecodersXdsContext::how_many_used`]      |
+//! | `process_xds_bytes`                | [`CcxDecodersXdsContext::process_xds_bytes`]  |
+//! | C struct -> Rust                   | [`CcxDecodersXdsContext::from_ctype`]         |
+//! | Rust -> C struct                   | [`copy_xds_context_from_rust_to_c`]           |
+
 
 use crate::bindings::*;
 use crate::common::CType;
 use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::write_back_to_common_timing_ctx;
 use lib_ccxr::time::TimingContext;
+pub use crate::xds::constants::*;
 use std::os::raw::c_int;
 
 pub const NUM_BYTES_PER_PACKET: usize = 35; // Class + type (repeated for convenience) + data + zero
