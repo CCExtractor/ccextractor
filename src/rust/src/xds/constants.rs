@@ -14,8 +14,8 @@
 //! | `cur_xds_packet_type` (int match)  | [`XdsPacketType`] enum                           |
 
 use std::os::raw::c_int;
-use std::sync::atomic::AtomicI64;
 use std::sync::Mutex;
+use std::sync::atomic::AtomicI64;
 
 pub const NUM_BYTES_PER_PACKET: usize = 35; // Class + type (repeated for convenience) + data + zero
 pub const NUM_XDS_BUFFERS: usize = 9; // CEA recommends no more than one level of interleaving. Play it safe
