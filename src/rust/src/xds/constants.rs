@@ -13,9 +13,28 @@
 //! | `ts_start_of_xds` global           | [`TS_START_OF_XDS`]                              |
 //! | `cur_xds_packet_type` (int match)  | [`XdsPacketType`] enum                           |
 
+use std::fmt;
 use std::os::raw::c_int;
 use std::sync::atomic::AtomicI64;
 use std::sync::Mutex;
+
+/// XDS write errors
+#[derive(Debug)]
+pub enum XdsError {
+    /// string contains a null byte
+    InvalidString,
+    /// alloc/realloc failed
+    MemoryAllocation,
+}
+
+impl fmt::Display for XdsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            XdsError::InvalidString => write!(f, "XDS string contains interior null byte"),
+            XdsError::MemoryAllocation => write!(f, "XDS memory allocation failed"),
+        }
+    }
+}
 
 pub const NUM_BYTES_PER_PACKET: usize = 35; // Class + type (repeated for convenience) + data + zero
 pub const NUM_XDS_BUFFERS: usize = 9; // CEA recommends no more than one level of interleaving. Play it safe
