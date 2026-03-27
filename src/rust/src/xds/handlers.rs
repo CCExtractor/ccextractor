@@ -18,14 +18,11 @@
 //! | `do_end_of_xds`                           | [`do_end_of_xds`]                                     |
 //! | `xds_debug_test`                          | [`xds_debug_test`]                                    |
 //! | `xds_cea608_test`                         | [`xds_cea608_test`]                                   |
-//! | `XDS_TYPE_*` defines                      | [`XdsPackeType`] enum                                 |
 //! | `XDS_CLASS_*` defines                     | [`XdsClass`] enum                                     |
-//! | `ts_start_of_xds` global                  | Parameter or context field                            |
-//! | `last_c1`, `last_c2` statics              | Context fields or function-local state                |
+//! | `ts_start_of_xds` global                  | [`TS_START_OF_XDS`]                                   |
 //! | `cc_subtitle` struct                      | [`cc_subtitle`] (C binding)                           |
 //! | `eia608_screen` struct                    | [`eia608_screen`] (C binding)                         |
-//! | `SFORMAT_XDS`                             | [`SFORMAT_XDS`] constant                              |
-//! | `get_fts(ctx->timing, 2)`                 | [`TimingContext::get_fts`]                            |
+//! | `cur_xds_packet_type` (int match)         | [`XdsPacketType`] enum                                |
 
 #[allow(clippy::all)]
 pub mod bindings {
@@ -1235,7 +1232,7 @@ pub unsafe fn xds_do_channel(
         }
 
         // XDS_TYPE_TSID = 4
-        Some(XdsPacketType::Tsid => {
+        Some(XdsPacketType::Tsid) => {
             // According to CEA-608, data here (4 bytes) are used to identify the
             // "originating analog licensee".  No interesting data for us.
             was_proc = 1;
