@@ -18,7 +18,7 @@
 //! | `do_end_of_xds`                           | [`do_end_of_xds`]                                     |
 //! | `xds_debug_test`                          | [`xds_debug_test`]                                    |
 //! | `xds_cea608_test`                         | [`xds_cea608_test`]                                   |
-//! | `XDS_TYPE_*` defines                      | [`XdsType`] enum or constants                         |
+//! | `XDS_TYPE_*` defines                      | [`XdsPackeType`] enum                                 |
 //! | `XDS_CLASS_*` defines                     | [`XdsClass`] enum                                     |
 //! | `ts_start_of_xds` global                  | Parameter or context field                            |
 //! | `last_c1`, `last_c2` statics              | Context fields or function-local state                |
@@ -58,10 +58,264 @@ pub static TS_START_OF_XDS: AtomicI64 = AtomicI64::new(-1); // Time at which we 
                                                             // TS_START_OF_XDS.store(new_value, Ordering::SeqCst);
                                                             // let value = TS_START_OF_XDS.load(Ordering::SeqCst);
 
-/// Represents failures during XDS string writing or processing.
-pub enum XDSError {
-    Err,
+
+/// XDS packet type codes used in `cur_xds_packet_type` matching
+///
+/// Maps integer constants from the C `XDS_TYPE_*` defines to a Rust enum
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(i32)]
+pub enum XdsPacketType {
+    PinStartTime = 1,
+    LengthAndCurrentTime = 2,
+    ProgramName = 3,
+    ProgramType = 4,
+    ContentAdvisory = 5,
+    AudioServices = 6,
+    Cgms = 8,
+    AspectRatioInfo = 9,
+    ProgramDesc1 = 0x10,
+    ProgramDesc2 = 0x11,
+    ProgramDesc3 = 0x12,
+    ProgramDesc4 = 0x13,
+    ProgramDesc5 = 0x14,
+    ProgramDesc6 = 0x15,
+    ProgramDesc7 = 0x16,
+    ProgramDesc8 = 0x17,
+    // channel class types
+    NetworkName = 0x101,
+    CallLettersAndChannel = 0x102,
+    Tsid = 0x104,
+    // misc class types
+    TimeOfDay = 0x201,
+    LocalTimeZone = 0x204,
 }
+
+impl XdsPacketType {
+    /// Convert a raw `cur_xds_packet_type` integer (Current/Future class) to enum.
+    pub fn from_current_future(value: i32) -> Option<Self> {
+        match value {
+            1 => Some(Self::PinStartTime),
+            2 => Some(Self::LengthAndCurrentTime),
+            3 => Some(Self::ProgramName),
+            4 => Some(Self::ProgramType),
+            5 => Some(Self::ContentAdvisory),
+            6 => Some(Self::AudioServices),
+            8 => Some(Self::Cgms),
+            9 => Some(Self::AspectRatioInfo),
+            0x10..=0x17 => Some(match value {
+                0x10 => Self::ProgramDesc1,
+                0x11 => Self::ProgramDesc2,
+                0x12 => Self::ProgramDesc3,
+                0x13 => Self::ProgramDesc4,
+                0x14 => Self::ProgramDesc5,
+                0x15 => Self::ProgramDesc6,
+                0x16 => Self::ProgramDesc7,
+                0x17 => Self::ProgramDesc8,
+                _ => unreachable!(),
+            }),
+            _ => None,
+        }
+    }
+
+    /// Convert a raw `cur_xds_packet_type` integer (Channel class) to enum.
+    pub fn from_channel(value: i32) -> Option<Self> {
+        match value {
+            1 => Some(Self::NetworkName),
+            2 => Some(Self::CallLettersAndChannel),
+            4 => Some(Self::Tsid),
+            _ => None,
+        }
+    }
+
+    /// Convert a raw `cur_xds_packet_type` integer (Misc class) to enum.
+    pub fn from_misc(value: i32) -> Option<Self> {
+        match value {
+            1 => Some(Self::TimeOfDay),
+            4 => Some(Self::LocalTimeZone),
+            _ => None,
+        }
+    }
+
+    /// Returns true if this is a program description type (0x10-0x17).
+    pub fn is_program_desc(&self) -> bool {
+        matches!(
+            self,
+            Self::ProgramDesc1
+                | Self::ProgramDesc2
+                | Self::ProgramDesc3
+                | Self::ProgramDesc4
+                | Self::ProgramDesc5
+                | Self::ProgramDesc6
+                | Self::ProgramDesc7
+                | Self::ProgramDesc8
+        )
+    }
+}
+
+// --- structs ---
+
+/// State for Content Advisory caching
+struct ContentAdvisoryState {
+    last_c1: u32,
+    last_c2: u32,
+    age: String,
+    content: String,
+    rating: String,
+}
+
+impl Default for ContentAdvisoryState {
+    fn default() -> Self {
+        ContentAdvisoryState {
+            last_c1: u32::MAX,
+            last_c2: u32::MAX,
+            age: String::new(),
+            content: String::new(),
+            rating: String::new(),
+        }
+    }
+}
+
+
+
+/// State for CGMS (Copy Generation Management System) caching
+struct CgmsState {
+    last_c1: u32,
+    last_c2: u32,
+    copy_permitted: String,
+    aps: String,
+    rcd: String,
+}
+
+impl Default for CgmsState {
+    fn default() -> Self {
+        CgmsState {
+            last_c1: u32::MAX, // equivalent to -1 for unsigned in C
+            last_c2: u32::MAX,
+            copy_permitted: String::new(),
+            aps: String::new(),
+            rcd: String::new(),
+        }
+    }
+}
+
+// --- static / consts ---
+
+/// Cached state for Content Advisory to detect changes
+static CONTENT_ADVISORY_STATE: Mutex<ContentAdvisoryState> = Mutex::new(ContentAdvisoryState {
+    last_c1: u32::MAX,
+    last_c2: u32::MAX,
+    age: String::new(),
+    content: String::new(),
+    rating: String::new(),
+});
+
+/// US TV Parental Guidelines age ratings
+const US_TV_AGE_TEXT: [&str; 8] = [
+    "None",
+    "TV-Y (All Children)",
+    "TV-Y7 (Older Children)",
+    "TV-G (General Audience)",
+    "TV-PG (Parental Guidance Suggested)",
+    "TV-14 (Parents Strongly Cautioned)",
+    "TV-MA (Mature Audience Only)",
+    "None",
+];
+
+/// MPA rating text
+const MPA_RATING_TEXT: [&str; 8] = ["N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated"];
+
+/// Canadian English Language Rating
+const CANADIAN_ENGLISH_RATING_TEXT: [&str; 8] = [
+    "Exempt",
+    "Children",
+    "Children eight years and older",
+    "General programming suitable for all audiences",
+    "Parental Guidance",
+    "Viewers 14 years and older",
+    "Adult Programming",
+    "[undefined]",
+];
+
+/// Canadian French Language Rating
+const CANADIAN_FRENCH_RATING_TEXT: [&str; 8] = [
+    "Exempt?es",
+    "G?n?ral",
+    "G?n?ral - D?conseill? aux jeunes enfants",
+    "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
+    "Cette ?mission ne convient pas aux moins de 16 ans",
+    "Cette ?mission est r?serv?e aux adultes",
+    "[invalid]",
+    "[invalid]",
+];
+
+/// Cached state for Copy Generation Management System (CGMS) to detect changes
+static CGMS_STATE: Mutex<CgmsState> = Mutex::new(CgmsState {
+    last_c1: u32::MAX,
+    last_c2: u32::MAX,
+    copy_permitted: String::new(),
+    aps: String::new(),
+    rcd: String::new(),
+});
+
+/// Copy Generation Management System text descriptions
+const COPY_TEXT: [&str; 4] = [
+    "Copy permitted (no restrictions)",
+    "No more copies (one generation copy has been made)",
+    "One generation of copies can be made",
+    "No copying is permitted",
+];
+
+/// APS (Analog Protection System) mode descriptions
+const APS_TEXT: [&str; 4] = [
+    "No APS",
+    "PSP On; Split Burst Off",
+    "PSP On; 2 line Split Burst On",
+    "PSP On; 4 line Split Burst On",
+];
+
+//  --- helper func ---
+
+/// Frees a pointer and sets it to null.
+///
+/// Converts the raw pointer back into a `Box` to deallocate the memory,
+/// then sets the original pointer to null to prevent use-after-free.
+///
+/// # Safety
+/// - The pointer must have been originally allocated by Rust's `Box::into_raw`
+///   or equivalent. Using this with C-allocated memory will cause undefined behavior.
+/// - The pointer must not be used after this call.
+pub fn freep<T>(ptr: &mut *mut T) {
+    unsafe {
+        if !ptr.is_null() {
+            free(*ptr as *mut c_void);
+            *ptr = null_mut();
+        }
+    }
+}
+
+/// Helper function to copy String into i8 array
+fn string_to_i8_array(s: &str, arr: &mut [i8]) {
+    let bytes = s.as_bytes();
+    let len = std::cmp::min(bytes.len(), arr.len() - 1);
+    for i in 0..len {
+        arr[i] = bytes[i] as i8;
+    }
+    if len < arr.len() {
+        arr[len] = 0;
+    }
+}
+
+/// Helper function to convert i8 array to String
+fn i8_array_to_string(arr: &[i8]) -> String {
+    let bytes: Vec<u8> = arr
+        .iter()
+        .take_while(|&&b| b != 0)
+        .map(|&b| b as u8)
+        .collect();
+    String::from_utf8_lossy(&bytes).to_string()
+}
+
+// --- core XDS handlers ---
 
 /// Writes an XDS string to the subtitle output buffer.
 ///
@@ -74,7 +328,7 @@ pub unsafe fn write_xds_string(
     ctx: &mut CcxDecodersXdsContext,
     p: String,
     ts_start_of_xds: i64,
-) -> Result<(), XDSError> {
+) -> Result<(), ()> {
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
     let new_data =
         unsafe { realloc(sub.data as *mut c_void, new_size as u64) as *mut eia608_screen };
@@ -82,18 +336,18 @@ pub unsafe fn write_xds_string(
         freep(&mut sub.data);
         sub.nb_data = 0;
         info!("No Memory left");
-        return Err(XDSError::Err);
+        return Err(());
     }
     sub.data = new_data as *mut c_void;
     sub.datatype = 0;
     let data_element = &mut *new_data.add(sub.nb_data as usize);
-    let c_str = CString::new(p).map_err(|_| XDSError::Err)?;
+    let c_str = CString::new(p).map_err(|_| ())?;
 
     let len = c_str.as_bytes().len(); // length w/o null terminator - matching C's vsnprintf return
     let alloc_len = len + 1; // allocate space for null terminator
     let ptr = unsafe { malloc(alloc_len) as *mut i8 }; // fixing c/rust mem mismatch
     if ptr.is_null() {
-        return Err(XDSError::Err);
+        return Err(());
     }
     unsafe {
         std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, alloc_len); // copy including null terminator
@@ -122,7 +376,7 @@ pub unsafe fn xdsprint(
     sub: &mut cc_subtitle,
     ctx: &mut CcxDecodersXdsContext,
     message: String,
-) -> Result<(), XDSError> {
+) -> Result<(), ()> {
     if !ctx.xds_write_to_file {
         return Ok(());
     }
@@ -130,23 +384,6 @@ pub unsafe fn xdsprint(
     write_xds_string(sub, ctx, message, TS_START_OF_XDS.load(Ordering::SeqCst))
 }
 
-/// Frees a pointer and sets it to null.
-///
-/// Converts the raw pointer back into a `Box` to deallocate the memory,
-/// then sets the original pointer to null to prevent use-after-free.
-///
-/// # Safety
-/// - The pointer must have been originally allocated by Rust's `Box::into_raw`
-///   or equivalent. Using this with C-allocated memory will cause undefined behavior.
-/// - The pointer must not be used after this call.
-pub fn freep<T>(ptr: &mut *mut T) {
-    unsafe {
-        if !ptr.is_null() {
-            free(*ptr as *mut libc::c_void);
-            *ptr = null_mut();
-        }
-    }
-}
 
 /// Utility methods for XDS buffer management and process_xds_bytes (function).
 impl CcxDecodersXdsContext<'_> {
@@ -268,52 +505,6 @@ impl CcxDecodersXdsContext<'_> {
     }
 }
 
-/// State for CGMS (Copy Generation Management System) caching
-struct CgmsState {
-    last_c1: u32,
-    last_c2: u32,
-    copy_permitted: String,
-    aps: String,
-    rcd: String,
-}
-
-impl Default for CgmsState {
-    fn default() -> Self {
-        CgmsState {
-            last_c1: u32::MAX, // equivalent to -1 for unsigned in C
-            last_c2: u32::MAX,
-            copy_permitted: String::new(),
-            aps: String::new(),
-            rcd: String::new(),
-        }
-    }
-}
-
-/// Cached state for Copy Generation Management System (CGMS) to detect changes
-static CGMS_STATE: Mutex<CgmsState> = Mutex::new(CgmsState {
-    last_c1: u32::MAX,
-    last_c2: u32::MAX,
-    copy_permitted: String::new(),
-    aps: String::new(),
-    rcd: String::new(),
-});
-
-/// Copy Generation Management System text descriptions
-const COPY_TEXT: [&str; 4] = [
-    "Copy permitted (no restrictions)",
-    "No more copies (one generation copy has been made)",
-    "One generation of copies can be made",
-    "No copying is permitted",
-];
-
-/// APS (Analog Protection System) mode descriptions
-const APS_TEXT: [&str; 4] = [
-    "No APS",
-    "PSP On; Split Burst Off",
-    "PSP On; 2 line Split Burst On",
-    "PSP On; 4 line Split Burst On",
-];
-
 /// Decodes and outputs Copy Generation Management System (CGMS) data from XDS packets.
 ///
 /// # Safety
@@ -393,74 +584,6 @@ pub unsafe fn xds_do_copy_generation_management_system(
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rcd);
 }
 
-/// State for Content Advisory caching
-struct ContentAdvisoryState {
-    last_c1: u32,
-    last_c2: u32,
-    age: String,
-    content: String,
-    rating: String,
-}
-
-impl Default for ContentAdvisoryState {
-    fn default() -> Self {
-        ContentAdvisoryState {
-            last_c1: u32::MAX,
-            last_c2: u32::MAX,
-            age: String::new(),
-            content: String::new(),
-            rating: String::new(),
-        }
-    }
-}
-
-/// Cached state for Content Advisory to detect changes
-static CONTENT_ADVISORY_STATE: Mutex<ContentAdvisoryState> = Mutex::new(ContentAdvisoryState {
-    last_c1: u32::MAX,
-    last_c2: u32::MAX,
-    age: String::new(),
-    content: String::new(),
-    rating: String::new(),
-});
-
-/// US TV Parental Guidelines age ratings
-const US_TV_AGE_TEXT: [&str; 8] = [
-    "None",
-    "TV-Y (All Children)",
-    "TV-Y7 (Older Children)",
-    "TV-G (General Audience)",
-    "TV-PG (Parental Guidance Suggested)",
-    "TV-14 (Parents Strongly Cautioned)",
-    "TV-MA (Mature Audience Only)",
-    "None",
-];
-
-/// MPA rating text
-const MPA_RATING_TEXT: [&str; 8] = ["N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated"];
-
-/// Canadian English Language Rating
-const CANADIAN_ENGLISH_RATING_TEXT: [&str; 8] = [
-    "Exempt",
-    "Children",
-    "Children eight years and older",
-    "General programming suitable for all audiences",
-    "Parental Guidance",
-    "Viewers 14 years and older",
-    "Adult Programming",
-    "[undefined]",
-];
-
-/// Canadian French Language Rating
-const CANADIAN_FRENCH_RATING_TEXT: [&str; 8] = [
-    "Exempt?es",
-    "G?n?ral",
-    "G?n?ral - D?conseill? aux jeunes enfants",
-    "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
-    "Cette ?mission ne convient pas aux moins de 16 ans",
-    "Cette ?mission est r?serv?e aux adultes",
-    "[invalid]",
-    "[invalid]",
-];
 
 /// Handles content advisory/rating information (US TV, MPA, Canadian ratings)
 ///
@@ -634,9 +757,11 @@ pub unsafe fn xds_do_current_and_future(
     let payload =
         std::slice::from_raw_parts(ctx.cur_xds_payload, ctx.cur_xds_payload_length as usize);
 
-    match ctx.cur_xds_packet_type {
+    let packet_type = XdsPacketType::from_current_future(ctx.cur_xds_packet_type);
+
+    match packet_type {
         // XDS_TYPE_PIN_START_TIME = 1
-        1 => {
+        Some(XdsPacketType::PinStartTime) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 7 {
                 // We need 4 data bytes
@@ -697,7 +822,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_LENGH_AND_CURRENT_TIME = 2
-        2 => {
+         Some(XdsPacketType::LengthAndCurrentTime) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -762,7 +887,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_PROGRAM_NAME = 3
-        3 => {
+        Some(XdsPacketType::ProgramName) => {
             was_proc = 1;
 
             // Extract program name from payload (bytes 2 to payload_length - 2)
@@ -795,7 +920,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_PROGRAM_TYPE = 4
-        4 => {
+        Some(XdsPacketType::ProgramType) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -879,7 +1004,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_CONTENT_ADVISORY = 5
-        5 => {
+        Some(XdsPacketType::ContentAdvisory) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -889,13 +1014,13 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_AUDIO_SERVICES = 6
-        6 => {
+        Some(XdsPacketType::AudioServices) => {
             was_proc = 1;
             // No sample available - nothing to do
         }
 
         // XDS_TYPE_CGMS = 8
-        8 => {
+        Some(XdsPacketType::Cgms) => {
             was_proc = 1;
             xds_do_copy_generation_management_system(
                 sub,
@@ -906,7 +1031,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_ASPECT_RATIO_INFO = 9
-        9 => {
+        Some(XdsPacketType::AspectRatioInfo) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -952,7 +1077,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_PROGRAM_DESC_1 through XDS_TYPE_PROGRAM_DESC_8 = 0x10-0x17
-        0x10..=0x17 => {
+        Some(ptype) if ptype.is_program_desc() => {
             was_proc = 1;
 
             // Extract description from payload
@@ -1010,27 +1135,7 @@ pub unsafe fn xds_do_current_and_future(
     was_proc
 }
 
-/// Helper function to convert i8 array to String
-fn i8_array_to_string(arr: &[i8]) -> String {
-    let bytes: Vec<u8> = arr
-        .iter()
-        .take_while(|&&b| b != 0)
-        .map(|&b| b as u8)
-        .collect();
-    String::from_utf8_lossy(&bytes).to_string()
-}
 
-/// Helper function to copy String into i8 array
-fn string_to_i8_array(s: &str, arr: &mut [i8]) {
-    let bytes = s.as_bytes();
-    let len = std::cmp::min(bytes.len(), arr.len() - 1);
-    for i in 0..len {
-        arr[i] = bytes[i] as i8;
-    }
-    if len < arr.len() {
-        arr[len] = 0;
-    }
-}
 
 /// Processes channel-related XDS data (network name, call letters, TSID)
 ///
@@ -1053,9 +1158,11 @@ pub unsafe fn xds_do_channel(
     let payload =
         std::slice::from_raw_parts(ctx.cur_xds_payload, ctx.cur_xds_payload_length as usize);
 
-    match ctx.cur_xds_packet_type {
+    let packet_type = XdsPacketType::from_channel(ctx.cur_xds_packet_type);
+
+    match packet_type {
         // XDS_TYPE_NETWORK_NAME = 1
-        1 => {
+        Some(XdsPacketType::NetworkName) => {
             was_proc = 1;
 
             // Extract network name from payload (bytes 2 to payload_length - 2)
@@ -1087,7 +1194,7 @@ pub unsafe fn xds_do_channel(
         }
 
         // XDS_TYPE_CALL_LETTERS_AND_CHANNEL = 2
-        2 => {
+        Some(XdsPacketType::CallLettersAndChannel) => {
             was_proc = 1;
 
             // We need 4-6 data bytes (payload_length 7 or 9)
@@ -1128,7 +1235,7 @@ pub unsafe fn xds_do_channel(
         }
 
         // XDS_TYPE_TSID = 4
-        4 => {
+        Some(XdsPacketType::Tsid => {
             // According to CEA-608, data here (4 bytes) are used to identify the
             // "originating analog licensee".  No interesting data for us.
             was_proc = 1;
@@ -1206,9 +1313,11 @@ pub unsafe fn xds_do_misc(ctx: &mut CcxDecodersXdsContext) -> i32 {
     let payload =
         std::slice::from_raw_parts(ctx.cur_xds_payload, ctx.cur_xds_payload_length as usize);
 
-    match ctx.cur_xds_packet_type {
+    let packet_type = XdsPacketType::from_misc(ctx.cur_xds_packet_type);
+
+    match packet_type {
         // XDS_TYPE_TIME_OF_DAY = 1
-        1 => {
+        Some(XdsPacketType::TimeOfDay) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 9 {
                 // We need 6 data bytes
@@ -1231,7 +1340,7 @@ pub unsafe fn xds_do_misc(ctx: &mut CcxDecodersXdsContext) -> i32 {
         }
 
         // XDS_TYPE_LOCAL_TIME_ZONE = 4
-        4 => {
+        Some(XdsPacketType::LocalTimeZone) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
