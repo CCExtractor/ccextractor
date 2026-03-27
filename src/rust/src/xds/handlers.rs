@@ -26,12 +26,14 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
+use std::alloc::{self, Layout};
 use std::ffi::CString;
+use std::mem::{align_of, size_of};
 use std::os::raw::c_void;
 use std::ptr::null_mut;
 use std::sync::atomic::Ordering;
 
-use crate::bindings::{cc_subtitle, eia608_screen, realloc};
+use crate::bindings::{cc_subtitle, eia608_screen};
 
 use lib_ccxr::debug;
 use lib_ccxr::info;
@@ -42,30 +44,7 @@ use lib_ccxr::util::log::{hex_dump, send_gui, DebugMessageFlag, GuiXdsMessage};
 use crate::xds::constants::*;
 use crate::xds::types::*;
 
-extern "C" {
-    fn malloc(size: usize) -> *mut c_void;
-    fn free(ptr: *mut c_void);
-}
-
 //  --- helper func ---
-
-/// Frees a pointer and sets it to null.
-///
-/// Converts the raw pointer back into a `Box` to deallocate the memory,
-/// then sets the original pointer to null to prevent use-after-free.
-///
-/// # Safety
-/// - The pointer must have been originally allocated by Rust's `Box::into_raw`
-///   or equivalent. Using this with C-allocated memory will cause undefined behavior.
-/// - The pointer must not be used after this call.
-pub fn freep<T>(ptr: &mut *mut T) {
-    unsafe {
-        if !ptr.is_null() {
-            free(*ptr as *mut c_void);
-            *ptr = null_mut();
-        }
-    }
-}
 
 /// Helper function to copy String into i8 array
 fn string_to_i8_array(s: &str, arr: &mut [i8]) {
@@ -94,7 +73,6 @@ fn i8_array_to_string(arr: &[i8]) -> String {
 /// Writes an XDS string to the subtitle output buffer.
 ///
 /// # Safety
-/// - `sub.data` must be a valid pointer previously allocated by C's malloc/realloc, or null.
 /// - The caller must ensure `sub` and `ctx` remain valid for the duration of the call.
 /// - The returned `xds_str` pointer in the screen data must be freed with `CString::from_raw`.
 pub unsafe fn write_xds_string(
@@ -103,11 +81,29 @@ pub unsafe fn write_xds_string(
     p: String,
     ts_start_of_xds: i64,
 ) -> Result<(), ()> {
+    let c_str = CString::new(p).map_err(|_| ())?;
+    let len = c_str.as_bytes().len(); // length w/o null terminator - matching C's vsnprintf return
+    let alloc_len = len + 1; // allocate space for null terminator
+
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
-    let new_data =
-        unsafe { realloc(sub.data as *mut c_void, new_size as u64) as *mut eia608_screen };
+    let screen_align = align_of::<eia608_screen>();
+    let new_data = unsafe {
+        if sub.data.is_null() {
+            let layout = Layout::from_size_align_unchecked(new_size, screen_align);
+            alloc::alloc(layout) as *mut eia608_screen
+        } else {
+            let old_size = sub.nb_data as usize * size_of::<eia608_screen>();
+            let old_layout = Layout::from_size_align_unchecked(old_size, screen_align);
+            alloc::realloc(sub.data as *mut u8, old_layout, new_size) as *mut eia608_screen
+        }
+    };
     if new_data.is_null() {
-        freep(&mut sub.data);
+        if !sub.data.is_null() && sub.nb_data > 0 {
+            let old_size = sub.nb_data as usize * size_of::<eia608_screen>();
+            let old_layout = Layout::from_size_align_unchecked(old_size, screen_align);
+            alloc::dealloc(sub.data as *mut u8, old_layout);
+            sub.data = null_mut();
+        }
         sub.nb_data = 0;
         info!("No Memory left");
         return Err(());
@@ -115,16 +111,14 @@ pub unsafe fn write_xds_string(
     sub.data = new_data as *mut c_void;
     sub.datatype = 0;
     let data_element = &mut *new_data.add(sub.nb_data as usize);
-    let c_str = CString::new(p).map_err(|_| ())?;
 
-    let len = c_str.as_bytes().len(); // length w/o null terminator - matching C's vsnprintf return
-    let alloc_len = len + 1; // allocate space for null terminator
-    let ptr = unsafe { malloc(alloc_len) as *mut i8 }; // fixing c/rust mem mismatch
+    let str_layout = Layout::from_size_align(alloc_len, 1).map_err(|_| ())?;
+    let ptr = unsafe { alloc::alloc(str_layout) as *mut i8 };
     if ptr.is_null() {
         return Err(());
     }
     unsafe {
-        std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, alloc_len); // copy including null terminator
+        std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, alloc_len);
     }
 
     data_element.format = 2;
