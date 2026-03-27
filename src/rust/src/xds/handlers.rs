@@ -105,7 +105,7 @@ pub unsafe fn write_xds_string(
 ) -> Result<(), ()> {
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
     let new_data =
-        unsafe { realloc(sub.data as *mut c_void, new_size as u64) as *mut eia608_screen };
+        unsafe { realloc(sub.data as *mut c_void, (new_size as u64).try_into().unwrap()) as *mut eia608_screen };
     if new_data.is_null() {
         freep(&mut sub.data);
         sub.nb_data = 0;
