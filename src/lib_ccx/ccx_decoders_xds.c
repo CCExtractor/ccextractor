@@ -250,7 +250,7 @@ void clear_xds_buffer(struct ccx_decoders_xds_context *ctx, int num)
 
 void process_xds_bytes(struct ccx_decoders_xds_context *ctx, const unsigned char hi, int lo)
 {
-	ccxr_process_xds_bytes(ctx, hi, lo); 
+	ccxr_process_xds_bytes(ctx, hi, lo);
 	return; // use the rust implementation
 
 	int is_new;
@@ -906,7 +906,7 @@ int xds_do_misc(struct ccx_decoders_xds_context *ctx)
 void do_end_of_xds(struct cc_subtitle *sub, struct ccx_decoders_xds_context *ctx, unsigned char expected_checksum)
 {
 	ccxr_set_ts_start_of_xds(ts_start_of_xds);
-	ccxr_do_end_of_xds(sub, ctx, expected_checksum); 
+	ccxr_do_end_of_xds(sub, ctx, expected_checksum);
 	return; // use the rust implementation
 
 	int cs = 0;
