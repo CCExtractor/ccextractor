@@ -26,7 +26,6 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-use std::convert::TryInto;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::ptr::null_mut;
@@ -105,12 +104,8 @@ pub unsafe fn write_xds_string(
     ts_start_of_xds: i64,
 ) -> Result<(), ()> {
     let new_size = (sub.nb_data + 1) as usize * size_of::<eia608_screen>();
-    let new_data = unsafe {
-        realloc(
-            sub.data as *mut c_void,
-            (new_size as u64).try_into().unwrap(),
-        ) as *mut eia608_screen
-    };
+    let new_data =
+        unsafe { realloc(sub.data as *mut c_void, new_size as u64) as *mut eia608_screen };
     if new_data.is_null() {
         freep(&mut sub.data);
         sub.nb_data = 0;
@@ -162,6 +157,7 @@ pub unsafe fn xdsprint(
 
     write_xds_string(sub, ctx, message, TS_START_OF_XDS.load(Ordering::SeqCst))
 }
+
 
 /// Utility methods for XDS buffer management and process_xds_bytes (function).
 impl CcxDecodersXdsContext<'_> {
@@ -263,7 +259,7 @@ impl CcxDecodersXdsContext<'_> {
             );
 
             if (hi > 0 && hi <= 0x1f) || (lo > 0 && lo <= 0x1f) {
-                info!("\r\x1b[KNote: Illegal XDS data");
+                info!("\rNote: Illegal XDS data");
                 return;
             }
         }
@@ -351,9 +347,9 @@ pub unsafe fn xds_do_copy_generation_management_system(
 
     // Log if changed
     if changed {
-        info!("\r\x1b[KXDS: {}\n", state.copy_permitted);
-        info!("\r\x1b[KXDS: {}\n", state.aps);
-        info!("\r\x1b[KXDS: {}\n", state.rcd);
+        info!("\rXDS: {}\n", state.copy_permitted);
+        info!("\rXDS: {}\n", state.aps);
+        info!("\rXDS: {}\n", state.rcd);
     }
 
     // Debug output (always, when debug mask matches)
@@ -361,6 +357,7 @@ pub unsafe fn xds_do_copy_generation_management_system(
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.aps);
     debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rcd);
 }
+
 
 /// Handles content advisory/rating information (US TV, MPA, Canadian ratings)
 ///
@@ -489,8 +486,8 @@ pub unsafe fn xds_do_content_advisory(
         }
 
         if changed {
-            info!("\r\x1b[KXDS: {}\n  ", state.age);
-            info!("\r\x1b[KXDS: {}\n  ", state.content);
+            info!("\rXDS: {}\n  ", state.age);
+            info!("\rXDS: {}\n  ", state.content);
         }
 
         debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.age);
@@ -502,7 +499,7 @@ pub unsafe fn xds_do_content_advisory(
         let _ = xdsprint(sub, ctx, state.rating.clone());
 
         if changed {
-            info!("\r\x1b[KXDS: {}\n  ", state.rating);
+            info!("\rXDS: {}\n  ", state.rating);
         }
 
         debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rating);
@@ -583,7 +580,7 @@ pub unsafe fn xds_do_current_and_future(
 
             // XDS_CLASS_CURRENT = 0
             if ctx.xds_start_time_shown == 0 && ctx.cur_xds_packet_class == 0 {
-                info!("\r\x1b[KXDS: Program changed.\n");
+                info!("\rXDS: Program changed.\n");
                 info!(
                     "XDS program start time (DD/MM HH:MM) {:02}-{:02} {:02}:{:02}\n",
                     date, month, hour, min
@@ -599,7 +596,7 @@ pub unsafe fn xds_do_current_and_future(
         }
 
         // XDS_TYPE_LENGH_AND_CURRENT_TIME = 2
-        Some(XdsPacketType::LengthAndCurrentTime) => {
+         Some(XdsPacketType::LengthAndCurrentTime) => {
             was_proc = 1;
             if ctx.cur_xds_payload_length < 5 {
                 // We need 2 data bytes
@@ -610,10 +607,7 @@ pub unsafe fn xds_do_current_and_future(
             let hour = (payload[3] & 0x1f) as i32; // 5 bits
 
             if ctx.xds_program_length_shown == 0 {
-                info!(
-                    "\r\x1b[KXDS: Program length (HH:MM): {:02}:{:02}  ",
-                    hour, min
-                );
+                info!("\rXDS: Program length (HH:MM): {:02}:{:02}  ", hour, min);
             } else {
                 debug!(
                     msg_type = DebugMessageFlag::DECODER_XDS;
@@ -693,7 +687,7 @@ pub unsafe fn xds_do_current_and_future(
 
             // XDS_CLASS_CURRENT = 0
             if ctx.cur_xds_packet_class == 0 && xds_program_name != current_name {
-                info!("\r\x1b[KXDS Notice: Program is now {}\n", xds_program_name);
+                info!("\rXDS Notice: Program is now {}\n", xds_program_name);
                 string_to_i8_array(&xds_program_name, &mut ctx.current_xds_program_name);
                 send_gui(GuiXdsMessage::ProgramName(&xds_program_name));
             }
@@ -735,7 +729,7 @@ pub unsafe fn xds_do_current_and_future(
             }
 
             if ctx.current_program_type_reported == 0 {
-                info!("\r\x1b[KXDS Program Type: ");
+                info!("\rXDS Program Type: ");
             }
 
             let mut type_str = String::new();
@@ -883,7 +877,7 @@ pub unsafe fn xds_do_current_and_future(
                 let changed = xds_desc != current_desc;
 
                 if changed {
-                    info!("\r\x1b[KXDS description line {}: {}\n", line_num, xds_desc);
+                    info!("\rXDS description line {}: {}\n", line_num, xds_desc);
                     if (line_num as usize) < 8 {
                         string_to_i8_array(
                             &xds_desc,
@@ -914,6 +908,8 @@ pub unsafe fn xds_do_current_and_future(
 
     was_proc
 }
+
+
 
 /// Processes channel-related XDS data (network name, call letters, TSID)
 ///
