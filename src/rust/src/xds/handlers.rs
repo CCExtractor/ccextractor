@@ -46,10 +46,12 @@ use lib_ccxr::time::c_functions::get_fts;
 use lib_ccxr::time::CaptionField;
 use lib_ccxr::util::log::{hex_dump, send_gui, DebugMessageFlag, GuiXdsMessage};
 
-use libc::free;
-use libc::malloc;
-
 use crate::xds::types::*;
+
+extern "C" {
+    fn malloc(size: usize) -> *mut c_void;
+    fn free(ptr: *mut c_void);
+}
 
 pub static TS_START_OF_XDS: AtomicI64 = AtomicI64::new(-1); // Time at which we switched to XDS mode, =-1 hasn't happened yet
                                                             // Usage example:
