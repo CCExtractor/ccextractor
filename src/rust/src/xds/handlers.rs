@@ -18,11 +18,8 @@
 //! | `do_end_of_xds`                           | [`do_end_of_xds`]                                     |
 //! | `xds_debug_test`                          | [`xds_debug_test`]                                    |
 //! | `xds_cea608_test`                         | [`xds_cea608_test`]                                   |
-//! | `XDS_CLASS_*` defines                     | [`XdsClass`] enum                                     |
-//! | `ts_start_of_xds` global                  | [`TS_START_OF_XDS`]                                   |
 //! | `cc_subtitle` struct                      | [`cc_subtitle`] (C binding)                           |
 //! | `eia608_screen` struct                    | [`eia608_screen`] (C binding)                         |
-//! | `cur_xds_packet_type` (int match)         | [`XdsPacketType`] enum                                |
 
 #[allow(clippy::all)]
 pub mod bindings {
@@ -32,8 +29,7 @@ pub mod bindings {
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::ptr::null_mut;
-use std::sync::atomic::{AtomicI64, Ordering};
-use std::sync::Mutex;
+use std::sync::atomic::Ordering;
 
 use crate::bindings::{cc_subtitle, eia608_screen, realloc};
 
@@ -43,232 +39,13 @@ use lib_ccxr::time::c_functions::get_fts;
 use lib_ccxr::time::CaptionField;
 use lib_ccxr::util::log::{hex_dump, send_gui, DebugMessageFlag, GuiXdsMessage};
 
+use crate::xds::constants::*;
 use crate::xds::types::*;
 
 extern "C" {
     fn malloc(size: usize) -> *mut c_void;
     fn free(ptr: *mut c_void);
 }
-
-pub static TS_START_OF_XDS: AtomicI64 = AtomicI64::new(-1); // Time at which we switched to XDS mode, =-1 hasn't happened yet
-                                                            // Usage example:
-                                                            // TS_START_OF_XDS.store(new_value, Ordering::SeqCst);
-                                                            // let value = TS_START_OF_XDS.load(Ordering::SeqCst);
-
-
-/// XDS packet type codes used in `cur_xds_packet_type` matching
-///
-/// Maps integer constants from the C `XDS_TYPE_*` defines to a Rust enum
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[repr(i32)]
-pub enum XdsPacketType {
-    PinStartTime = 1,
-    LengthAndCurrentTime = 2,
-    ProgramName = 3,
-    ProgramType = 4,
-    ContentAdvisory = 5,
-    AudioServices = 6,
-    Cgms = 8,
-    AspectRatioInfo = 9,
-    ProgramDesc1 = 0x10,
-    ProgramDesc2 = 0x11,
-    ProgramDesc3 = 0x12,
-    ProgramDesc4 = 0x13,
-    ProgramDesc5 = 0x14,
-    ProgramDesc6 = 0x15,
-    ProgramDesc7 = 0x16,
-    ProgramDesc8 = 0x17,
-    // channel class types
-    NetworkName = 0x101,
-    CallLettersAndChannel = 0x102,
-    Tsid = 0x104,
-    // misc class types
-    TimeOfDay = 0x201,
-    LocalTimeZone = 0x204,
-}
-
-impl XdsPacketType {
-    /// Convert a raw `cur_xds_packet_type` integer (Current/Future class) to enum.
-    pub fn from_current_future(value: i32) -> Option<Self> {
-        match value {
-            1 => Some(Self::PinStartTime),
-            2 => Some(Self::LengthAndCurrentTime),
-            3 => Some(Self::ProgramName),
-            4 => Some(Self::ProgramType),
-            5 => Some(Self::ContentAdvisory),
-            6 => Some(Self::AudioServices),
-            8 => Some(Self::Cgms),
-            9 => Some(Self::AspectRatioInfo),
-            0x10..=0x17 => Some(match value {
-                0x10 => Self::ProgramDesc1,
-                0x11 => Self::ProgramDesc2,
-                0x12 => Self::ProgramDesc3,
-                0x13 => Self::ProgramDesc4,
-                0x14 => Self::ProgramDesc5,
-                0x15 => Self::ProgramDesc6,
-                0x16 => Self::ProgramDesc7,
-                0x17 => Self::ProgramDesc8,
-                _ => unreachable!(),
-            }),
-            _ => None,
-        }
-    }
-
-    /// Convert a raw `cur_xds_packet_type` integer (Channel class) to enum.
-    pub fn from_channel(value: i32) -> Option<Self> {
-        match value {
-            1 => Some(Self::NetworkName),
-            2 => Some(Self::CallLettersAndChannel),
-            4 => Some(Self::Tsid),
-            _ => None,
-        }
-    }
-
-    /// Convert a raw `cur_xds_packet_type` integer (Misc class) to enum.
-    pub fn from_misc(value: i32) -> Option<Self> {
-        match value {
-            1 => Some(Self::TimeOfDay),
-            4 => Some(Self::LocalTimeZone),
-            _ => None,
-        }
-    }
-
-    /// Returns true if this is a program description type (0x10-0x17).
-    pub fn is_program_desc(&self) -> bool {
-        matches!(
-            self,
-            Self::ProgramDesc1
-                | Self::ProgramDesc2
-                | Self::ProgramDesc3
-                | Self::ProgramDesc4
-                | Self::ProgramDesc5
-                | Self::ProgramDesc6
-                | Self::ProgramDesc7
-                | Self::ProgramDesc8
-        )
-    }
-}
-
-// --- structs ---
-
-/// State for Content Advisory caching
-struct ContentAdvisoryState {
-    last_c1: u32,
-    last_c2: u32,
-    age: String,
-    content: String,
-    rating: String,
-}
-
-impl Default for ContentAdvisoryState {
-    fn default() -> Self {
-        ContentAdvisoryState {
-            last_c1: u32::MAX,
-            last_c2: u32::MAX,
-            age: String::new(),
-            content: String::new(),
-            rating: String::new(),
-        }
-    }
-}
-
-
-
-/// State for CGMS (Copy Generation Management System) caching
-struct CgmsState {
-    last_c1: u32,
-    last_c2: u32,
-    copy_permitted: String,
-    aps: String,
-    rcd: String,
-}
-
-impl Default for CgmsState {
-    fn default() -> Self {
-        CgmsState {
-            last_c1: u32::MAX, // equivalent to -1 for unsigned in C
-            last_c2: u32::MAX,
-            copy_permitted: String::new(),
-            aps: String::new(),
-            rcd: String::new(),
-        }
-    }
-}
-
-// --- static / consts ---
-
-/// Cached state for Content Advisory to detect changes
-static CONTENT_ADVISORY_STATE: Mutex<ContentAdvisoryState> = Mutex::new(ContentAdvisoryState {
-    last_c1: u32::MAX,
-    last_c2: u32::MAX,
-    age: String::new(),
-    content: String::new(),
-    rating: String::new(),
-});
-
-/// US TV Parental Guidelines age ratings
-const US_TV_AGE_TEXT: [&str; 8] = [
-    "None",
-    "TV-Y (All Children)",
-    "TV-Y7 (Older Children)",
-    "TV-G (General Audience)",
-    "TV-PG (Parental Guidance Suggested)",
-    "TV-14 (Parents Strongly Cautioned)",
-    "TV-MA (Mature Audience Only)",
-    "None",
-];
-
-/// MPA rating text
-const MPA_RATING_TEXT: [&str; 8] = ["N/A", "G", "PG", "PG-13", "R", "NC-17", "X", "Not Rated"];
-
-/// Canadian English Language Rating
-const CANADIAN_ENGLISH_RATING_TEXT: [&str; 8] = [
-    "Exempt",
-    "Children",
-    "Children eight years and older",
-    "General programming suitable for all audiences",
-    "Parental Guidance",
-    "Viewers 14 years and older",
-    "Adult Programming",
-    "[undefined]",
-];
-
-/// Canadian French Language Rating
-const CANADIAN_FRENCH_RATING_TEXT: [&str; 8] = [
-    "Exempt?es",
-    "G?n?ral",
-    "G?n?ral - D?conseill? aux jeunes enfants",
-    "Cette ?mission peut ne pas convenir aux enfants de moins de 13 ans",
-    "Cette ?mission ne convient pas aux moins de 16 ans",
-    "Cette ?mission est r?serv?e aux adultes",
-    "[invalid]",
-    "[invalid]",
-];
-
-/// Cached state for Copy Generation Management System (CGMS) to detect changes
-static CGMS_STATE: Mutex<CgmsState> = Mutex::new(CgmsState {
-    last_c1: u32::MAX,
-    last_c2: u32::MAX,
-    copy_permitted: String::new(),
-    aps: String::new(),
-    rcd: String::new(),
-});
-
-/// Copy Generation Management System text descriptions
-const COPY_TEXT: [&str; 4] = [
-    "Copy permitted (no restrictions)",
-    "No more copies (one generation copy has been made)",
-    "One generation of copies can be made",
-    "No copying is permitted",
-];
-
-/// APS (Analog Protection System) mode descriptions
-const APS_TEXT: [&str; 4] = [
-    "No APS",
-    "PSP On; Split Burst Off",
-    "PSP On; 2 line Split Burst On",
-    "PSP On; 4 line Split Burst On",
-];
 
 //  --- helper func ---
 
