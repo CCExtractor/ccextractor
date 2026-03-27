@@ -80,8 +80,8 @@ pub unsafe fn write_xds_string(
     ctx: &mut CcxDecodersXdsContext,
     p: String,
     ts_start_of_xds: i64,
-) -> Result<(), ()> {
-    let c_str = CString::new(p).map_err(|_| ())?;
+) -> Result<(), XdsError> {
+    let c_str = CString::new(p).map_err(|_| XdsError::InvalidString)?;
     let len = c_str.as_bytes().len(); // length w/o null terminator - matching C's vsnprintf return
     let alloc_len = len + 1; // allocate space for null terminator
 
@@ -106,16 +106,16 @@ pub unsafe fn write_xds_string(
         }
         sub.nb_data = 0;
         info!("No Memory left");
-        return Err(());
+        return Err(XdsError::MemoryAllocation);
     }
     sub.data = new_data as *mut c_void;
     sub.datatype = 0;
     let data_element = &mut *new_data.add(sub.nb_data as usize);
 
-    let str_layout = Layout::from_size_align(alloc_len, 1).map_err(|_| ())?;
+    let str_layout = Layout::from_size_align(alloc_len, 1).map_err(|_| XdsError::MemoryAllocation)?;
     let ptr = unsafe { alloc::alloc(str_layout) as *mut i8 };
     if ptr.is_null() {
-        return Err(());
+        return Err(XdsError::MemoryAllocation);
     }
     unsafe {
         std::ptr::copy_nonoverlapping(c_str.as_ptr(), ptr, alloc_len);
@@ -144,7 +144,7 @@ pub unsafe fn xdsprint(
     sub: &mut cc_subtitle,
     ctx: &mut CcxDecodersXdsContext,
     message: String,
-) -> Result<(), ()> {
+) -> Result<(), XdsError> {
     if !ctx.xds_write_to_file {
         return Ok(());
     }
