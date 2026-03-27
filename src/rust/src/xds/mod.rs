@@ -7,13 +7,15 @@
 //! # Submodules
 //!
 //! - [`handlers`] - XDS packet processing and dispatch functions
-//! - [`types`] - XDS-specific types, enums, and constants
+//! - [`types`] - XDS-specific types
+//! - [`constants`] - XDS enums and constants
 //!
 //! For detailed function-level mappings, see the [`handlers`] module documentation
 //! For type definitions, see the [`types`] module
 
 pub mod handlers;
 pub mod types;
+pub mod constants;
 
 use crate::bindings::*;
 use crate::ctorust::FromCType;
