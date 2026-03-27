@@ -112,7 +112,8 @@ pub unsafe fn write_xds_string(
     sub.datatype = 0;
     let data_element = &mut *new_data.add(sub.nb_data as usize);
 
-    let str_layout = Layout::from_size_align(alloc_len, 1).map_err(|_| XdsError::MemoryAllocation)?;
+    let str_layout =
+        Layout::from_size_align(alloc_len, 1).map_err(|_| XdsError::MemoryAllocation)?;
     let ptr = unsafe { alloc::alloc(str_layout) as *mut i8 };
     if ptr.is_null() {
         return Err(XdsError::MemoryAllocation);
