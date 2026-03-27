@@ -259,7 +259,7 @@ impl CcxDecodersXdsContext<'_> {
             );
 
             if (hi > 0 && hi <= 0x1f) || (lo > 0 && lo <= 0x1f) {
-                info!("\rNote: Illegal XDS data");
+                info!("\r\x1b[KNote: Illegal XDS data");
                 return;
             }
         }
@@ -347,9 +347,9 @@ pub unsafe fn xds_do_copy_generation_management_system(
 
     // Log if changed
     if changed {
-        info!("\rXDS: {}\n", state.copy_permitted);
-        info!("\rXDS: {}\n", state.aps);
-        info!("\rXDS: {}\n", state.rcd);
+        info!("\r\x1b[KXDS: {}\n", state.copy_permitted);
+        info!("\r\x1b[KXDS: {}\n", state.aps);
+        info!("\r\x1b[KXDS: {}\n", state.rcd);
     }
 
     // Debug output (always, when debug mask matches)
@@ -486,8 +486,8 @@ pub unsafe fn xds_do_content_advisory(
         }
 
         if changed {
-            info!("\rXDS: {}\n  ", state.age);
-            info!("\rXDS: {}\n  ", state.content);
+            info!("\r\x1b[KXDS: {}\n  ", state.age);
+            info!("\r\x1b[KXDS: {}\n  ", state.content);
         }
 
         debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.age);
@@ -499,7 +499,7 @@ pub unsafe fn xds_do_content_advisory(
         let _ = xdsprint(sub, ctx, state.rating.clone());
 
         if changed {
-            info!("\rXDS: {}\n  ", state.rating);
+            info!("\r\x1b[KXDS: {}\n  ", state.rating);
         }
 
         debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.rating);
@@ -580,7 +580,7 @@ pub unsafe fn xds_do_current_and_future(
 
             // XDS_CLASS_CURRENT = 0
             if ctx.xds_start_time_shown == 0 && ctx.cur_xds_packet_class == 0 {
-                info!("\rXDS: Program changed.\n");
+                info!("\r\x1b[KXDS: Program changed.\n");
                 info!(
                     "XDS program start time (DD/MM HH:MM) {:02}-{:02} {:02}:{:02}\n",
                     date, month, hour, min
@@ -607,7 +607,7 @@ pub unsafe fn xds_do_current_and_future(
             let hour = (payload[3] & 0x1f) as i32; // 5 bits
 
             if ctx.xds_program_length_shown == 0 {
-                info!("\rXDS: Program length (HH:MM): {:02}:{:02}  ", hour, min);
+                info!("\r\x1b[KXDS: Program length (HH:MM): {:02}:{:02}  ", hour, min);
             } else {
                 debug!(
                     msg_type = DebugMessageFlag::DECODER_XDS;
@@ -687,7 +687,7 @@ pub unsafe fn xds_do_current_and_future(
 
             // XDS_CLASS_CURRENT = 0
             if ctx.cur_xds_packet_class == 0 && xds_program_name != current_name {
-                info!("\rXDS Notice: Program is now {}\n", xds_program_name);
+                info!("\r\x1b[KXDS Notice: Program is now {}\n", xds_program_name);
                 string_to_i8_array(&xds_program_name, &mut ctx.current_xds_program_name);
                 send_gui(GuiXdsMessage::ProgramName(&xds_program_name));
             }
@@ -729,7 +729,7 @@ pub unsafe fn xds_do_current_and_future(
             }
 
             if ctx.current_program_type_reported == 0 {
-                info!("\rXDS Program Type: ");
+                info!("\r\x1b[KXDS Program Type: ");
             }
 
             let mut type_str = String::new();
@@ -877,7 +877,7 @@ pub unsafe fn xds_do_current_and_future(
                 let changed = xds_desc != current_desc;
 
                 if changed {
-                    info!("\rXDS description line {}: {}\n", line_num, xds_desc);
+                    info!("\r\x1b[KXDS description line {}: {}\n", line_num, xds_desc);
                     if (line_num as usize) < 8 {
                         string_to_i8_array(
                             &xds_desc,
