@@ -234,8 +234,10 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->tess_handle = TessBaseAPICreate();
 	char *pars_vec = strdup("debug_file");
 	if (pars_vec == NULL)
+	{
 		fatal(EXIT_NOT_ENOUGH_MEMORY,
 		      "In _init_hardsubx: Not enough memory for pars_vec.\n");
+	}
 	char *pars_values = strdup("/dev/null");
 	if (pars_values == NULL)
 	{
