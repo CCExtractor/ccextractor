@@ -152,8 +152,6 @@ pub unsafe fn switch_to_next_file(
     bytes_in_buffer: i64,
     ccx_options: &mut Options,
 ) -> i32 {
-    let mut ret = 0;
-
     // 1. Initially reset condition
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx.demux_ctx);
     if ctx.current_file == -1 || !ccx_options.binary_concat {
@@ -161,18 +159,17 @@ pub unsafe fn switch_to_next_file(
     }
 
     // 2. Handle special input sources
-    #[allow(deref_nullptr)]
     match ccx_options.input_source {
         DataSource::Stdin | DataSource::Network | DataSource::Tcp => {
-            demux_ctx.open(*ptr::null(), ccx_options);
-            return match ret {
-                r if r < 0 => 0,
-                r if r > 0 => r,
-                _ => 1,
-            };
+            // stdin/network/tcp don't use file-based switching.
+            // Return success immediately — fd is configured in the main open() path.
+            return 1;
         }
         _ => {}
     }
+
+    #[allow(unused_assignments)]
+    let mut ret = 0;
 
     // 3. Close current file handling
 

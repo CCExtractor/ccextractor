@@ -1516,7 +1516,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (!data_node)
 				continue;
 		}
-		if (ctx->live_stream)
+		if (ctx->live_stream && dec_ctx)
 		{
 			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 			if (!t && ctx->demux_ctx->global_timestamp_inited)
@@ -1583,7 +1583,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
-		segment_output_file(ctx, dec_ctx);
+		// dec_ctx is NULL only when no data was processed (e.g. empty stdin)
+		if (dec_ctx)
+			segment_output_file(ctx, dec_ctx);
 
 		if (ccx_options.send_to_srv)
 			net_check_conn();
