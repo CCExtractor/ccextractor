@@ -228,8 +228,10 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 						{
 							prev_subtitle_text = strdup(subtitle_text);
 							if (prev_subtitle_text == NULL)
+							{
 								fatal(EXIT_NOT_ENOUGH_MEMORY,
 								      "In hardsubx_process_frames_linear: Not enough memory for subtitle text.\n");
+							}
 							prev_sub_encoded = 0;
 						}
 					}
@@ -255,8 +257,10 @@ void hardsubx_process_frames_linear(struct lib_hardsubx_ctx *ctx, struct encoder
 					prev_end_time = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 					prev_subtitle_text = strdup(subtitle_text);
 					if (prev_subtitle_text == NULL)
+					{
 						fatal(EXIT_NOT_ENOUGH_MEMORY,
 						      "In hardsubx_process_frames_linear: Not enough memory for subtitle text.\n");
+					}
 					prev_sub_encoded = 0;
 				}
 				prev_packet_pts = ctx->packet.pts;
@@ -521,8 +525,10 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 								{
 									prev_subtitle_text_hard = strdup(subtitle_text_hard);
 									if (prev_subtitle_text_hard == NULL)
+									{
 										fatal(EXIT_NOT_ENOUGH_MEMORY,
 										      "In process_hardsubx_linear_frames_and_normal_subs: Not enough memory for subtitle text.\n");
+									}
 									prev_sub_encoded_hard = 0;
 								}
 							}
@@ -535,8 +541,10 @@ void process_hardsubx_linear_frames_and_normal_subs(struct lib_hardsubx_ctx *har
 							prev_end_time_hard = convert_pts_to_ms(hard_ctx->packet.pts, hard_ctx->format_ctx->streams[hard_ctx->video_stream_id]->time_base);
 							prev_subtitle_text_hard = strdup(subtitle_text_hard);
 							if (prev_subtitle_text_hard == NULL)
+							{
 								fatal(EXIT_NOT_ENOUGH_MEMORY,
 								      "In process_hardsubx_linear_frames_and_normal_subs: Not enough memory for subtitle text.\n");
+							}
 							prev_sub_encoded_hard = 0;
 						}
 						prev_packet_pts_hard = hard_ctx->packet.pts;

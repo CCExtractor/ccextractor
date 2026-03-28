@@ -609,8 +609,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 
 				char *fname0 = strdup(cfg->output_filename);
 				if (fname0 == NULL)
+				{
 					fatal(EXIT_NOT_ENOUGH_MEMORY,
 					      "In init_output_ctx: Not enough memory for output filename.\n");
+				}
 				ret = init_write(&ctx->out[0], fname0, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
@@ -621,8 +623,10 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			{
 				char *fname = strdup(cfg->output_filename);
 				if (fname == NULL)
+				{
 					fatal(EXIT_NOT_ENOUGH_MEMORY,
 					      "In init_output_ctx: Not enough memory for output filename.\n");
+				}
 				ret = init_write(ctx->out, fname, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
 			}
