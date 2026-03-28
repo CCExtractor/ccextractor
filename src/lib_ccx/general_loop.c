@@ -1585,7 +1585,9 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
 		// dec_ctx is NULL only when no data was processed (e.g. empty stdin)
 		if (dec_ctx)
+		{
 			segment_output_file(ctx, dec_ctx);
+		}
 
 		if (ccx_options.send_to_srv)
 			net_check_conn();
