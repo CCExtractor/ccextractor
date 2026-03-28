@@ -96,9 +96,13 @@ void _display_frame(struct lib_hardsubx_ctx *ctx, AVFrame *frame, int width, int
 int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct encoder_ctx *enc_ctx)
 {
 	// Search for ticker text at the bottom of the screen, such as in Russia TV1 or stock prices
+	int prev_sub_encoded = 1; // Previous seen subtitle encoded or not
+	int dist = 0;
 	int cur_sec = 0, total_sec, progress;
 	int frame_number = 0;
+	int64_t prev_begin_time = 0, prev_end_time = 0; // Begin and end time of previous seen subtitle
 	char *ticker_text = NULL;
+	char *prev_ticker_text = NULL;
 
 	while (av_read_frame(ctx->format_ctx, &ctx->packet) >= 0)
 	{
@@ -109,6 +113,9 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 			avcodec_send_packet(ctx->codec_ctx, &ctx->packet);
 			if (avcodec_receive_frame(ctx->codec_ctx, ctx->frame) == 0 && frame_number % 1000 == 0)
 			{
+				int64_t current_pts_ms = 0;
+				current_pts_ms = convert_pts_to_ms(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
+
 				// sws_scale is used to convert the pixel format to RGB24 from all other cases
 				sws_scale(
 				    ctx->sws_ctx,
@@ -120,19 +127,88 @@ int hardsubx_process_frames_tickertext(struct lib_hardsubx_ctx *ctx, struct enco
 				    ctx->rgb_frame->linesize);
 
 				ticker_text = _process_frame_tickertext(ctx, ctx->rgb_frame, ctx->codec_ctx->width, ctx->codec_ctx->height, frame_number);
-				printf("frame_number: %d\n", frame_number);
-
-				if (strlen(ticker_text) > 0)
-					printf("%s\n", ticker_text);
+				if (ticker_text)
+				{
+					char *ticker_text_copy = strdup(ticker_text);
+					free_rust_c_string(ticker_text);
+					ticker_text = ticker_text_copy;
+				}
 
 				cur_sec = (int)convert_pts_to_s(ctx->packet.pts, ctx->format_ctx->streams[ctx->video_stream_id]->time_base);
 				total_sec = (int)convert_pts_to_s(ctx->format_ctx->duration, AV_TIME_BASE_Q);
 				progress = (cur_sec * 100) / total_sec;
 				activity_progress(progress, cur_sec / 60, cur_sec % 60);
+
+				if ((!ticker_text && !prev_ticker_text) || (ticker_text && !strlen(ticker_text) && !prev_ticker_text))
+				{
+					prev_end_time = current_pts_ms;
+				}
+
+				if (ticker_text)
+				{
+					char *double_enter = strstr(ticker_text, "\n\n");
+					if (double_enter != NULL)
+						*(double_enter) = '\0';
+				}
+
+				if (!prev_sub_encoded && prev_ticker_text)
+				{
+					if (ticker_text)
+					{
+						dist = edit_distance(ticker_text, prev_ticker_text, (int)strlen(ticker_text), (int)strlen(prev_ticker_text));
+						if (dist < (0.2 * MIN(strlen(ticker_text), strlen(prev_ticker_text))))
+						{
+							dist = -1;
+							free(ticker_text);
+							ticker_text = NULL;
+							prev_end_time = current_pts_ms;
+						}
+					}
+					if (dist != -1)
+					{
+						add_cc_sub_text(ctx->dec_sub, prev_ticker_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+						encode_sub(enc_ctx, ctx->dec_sub);
+						prev_begin_time = prev_end_time + 1;
+						free(prev_ticker_text);
+						prev_ticker_text = NULL;
+						prev_sub_encoded = 1;
+						prev_end_time = current_pts_ms;
+						if (ticker_text)
+						{
+							prev_ticker_text = ticker_text;
+							ticker_text = NULL;
+							prev_sub_encoded = 0;
+						}
+					}
+					dist = 0;
+				}
+
+				if (!prev_ticker_text && ticker_text)
+				{
+					prev_begin_time = prev_end_time + 1;
+					prev_end_time = current_pts_ms;
+					prev_ticker_text = ticker_text;
+					ticker_text = NULL;
+					prev_sub_encoded = 0;
+				}
+
+				// Free any unconsumed C-owned ticker text from this iteration.
+				free(ticker_text);
+				ticker_text = NULL;
 			}
 		}
 		av_packet_unref(&ctx->packet);
 	}
+
+	if (!prev_sub_encoded)
+	{
+		add_cc_sub_text(ctx->dec_sub, prev_ticker_text, prev_begin_time, prev_end_time, "", "BURN", CCX_ENC_UTF_8);
+		encode_sub(enc_ctx, ctx->dec_sub);
+		prev_sub_encoded = 1;
+	}
+
+	// Cleanup
+	free(prev_ticker_text);
 	activity_progress(100, cur_sec / 60, cur_sec % 60);
 	return 0;
 }
