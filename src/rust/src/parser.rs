@@ -686,6 +686,9 @@ impl OptionsExt for Options {
                 CCXCodec::Dvbsub => {
                     self.demux_cfg.codec = SelectCodec::Some(Codec::Dvb);
                 }
+                CCXCodec::Isdb => {
+                    self.demux_cfg.codec = SelectCodec::Some(Codec::IsdbCc);
+                }
             }
         }
 
@@ -696,6 +699,9 @@ impl OptionsExt for Options {
                 }
                 CCXCodec::Teletext => {
                     self.demux_cfg.nocodec = SelectCodec::Some(Codec::Teletext);
+                }
+                CCXCodec::Isdb => {
+                    self.demux_cfg.nocodec = SelectCodec::Some(Codec::IsdbCc);
                 }
             }
         }
