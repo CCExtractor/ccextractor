@@ -403,6 +403,19 @@ extern "C" fn ccxr_process_cc_data(
         return -1;
     }
 
+    // Cast to usize before any arithmetic to prevent i32 overflow.
+    // CEA-708/ATSC A/53 encodes cc_count in a 5-bit field (max 31); 31 is
+    // also the value used in es/userdata.rs. Reject anything beyond that.
+    const MAX_CC_COUNT: usize = 31;
+    let cc_count_usize = cc_count as usize;
+    if cc_count_usize > MAX_CC_COUNT {
+        warn!(
+            "ccxr_process_cc_data: cc_count {} exceeds maximum {}, discarding frame",
+            cc_count_usize, MAX_CC_COUNT
+        );
+        return -1;
+    }
+
     let dec_ctx = unsafe { &mut *dec_ctx };
 
     // Check dtvcc_rust pointer before dereferencing (not dtvcc!)
@@ -412,8 +425,8 @@ extern "C" fn ccxr_process_cc_data(
     }
 
     let mut ret = -1;
-    let mut cc_data: Vec<u8> = (0..cc_count * 3)
-        .map(|x| unsafe { *data.add(x as usize) })
+    let mut cc_data: Vec<u8> = (0..cc_count_usize * 3)
+        .map(|x| unsafe { *data.add(x) })
         .collect();
 
     // Use the persistent DtvccRust context from dtvcc_rust
