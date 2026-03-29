@@ -107,6 +107,21 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  cmake_ffmpeg_mp4:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install dependencies
+      run: brew install pkg-config gpac ffmpeg tesseract leptonica
+    - name: cmake (FFmpeg MP4 build)
+      run: |
+        mkdir build && cd build
+        cmake -DWITH_FFMPEG=ON -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
+    - name: build
+      run: make -j$(nproc)
+      working-directory: build
+    - name: Display version information
+      run: ./build/ccextractor --version
   build_shell_hardsubx:
     # Test build.command with -hardsubx flag (burned-in subtitle extraction)
     runs-on: macos-latest

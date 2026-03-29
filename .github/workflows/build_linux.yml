@@ -103,6 +103,26 @@ jobs:
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
+  cmake_ffmpeg_mp4:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libleptonica-dev libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev libavdevice-dev libswresample-dev libswscale-dev
+    - uses: actions/checkout@v6
+    - name: cmake (default GPAC build)
+      run: mkdir build && cd build && cmake ../src
+    - name: build (default GPAC build)
+      run: make -j$(nproc)
+      working-directory: build
+    - name: Display version information (GPAC build)
+      run: ./build/ccextractor --version
+    - name: cmake (FFmpeg MP4 build)
+      run: mkdir build_ffmpeg && cd build_ffmpeg && cmake -DWITH_FFMPEG=ON -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
+    - name: build (FFmpeg MP4 build)
+      run: make -j$(nproc)
+      working-directory: build_ffmpeg
+    - name: Display version information (FFmpeg MP4 build)
+      run: ./build_ffmpeg/ccextractor --version
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
