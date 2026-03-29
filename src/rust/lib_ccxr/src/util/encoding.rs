@@ -242,7 +242,7 @@ impl Ucs2String {
             self.as_vec()
                 .iter()
                 .map(|&c| {
-                    cc_to_lowercase(char::from_u32(c as u32).expect("Invalid u32 character")) as u16
+                    cc_to_lowercase(char::from_u32(c as u32).unwrap_or(UNAVAILABLE_CHAR.into())) as u16
                 })
                 .collect(),
         )
@@ -254,7 +254,7 @@ impl Ucs2String {
             self.as_vec()
                 .iter()
                 .map(|&c| {
-                    cc_to_uppercase(char::from_u32(c as u32).expect("Invalid u32 character")) as u16
+                    cc_to_uppercase(char::from_u32(c as u32).unwrap_or(UNAVAILABLE_CHAR.into())) as u16
                 })
                 .collect(),
         )
