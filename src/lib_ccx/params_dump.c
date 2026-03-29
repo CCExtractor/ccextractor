@@ -672,7 +672,7 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 
 			printf("Program Count: %d\n", demux_ctx->freport.program_cnt);
 
-			printf("Program Numbers: ");
+			printf("Program numbers: ");
 
 			for (int i = 0; i < demux_ctx->nb_program; i++)
 				printf("%u ", demux_ctx->pinfo[i].program_number);
