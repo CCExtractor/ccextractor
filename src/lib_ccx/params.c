@@ -153,7 +153,7 @@ void print_usage(void)
 	mprint("                      scc     -> Scenarist Closed Caption format\n");
 	mprint("                      webvtt  -> WebVTT format\n");
 	mprint("                      webvtt-full -> WebVTT format with styling\n");
-	mprint("                      sami    -> MS Synchronized Accesible Media Interface.\n");
+	mprint("                      sami    -> MS Synchronized Accessible Media Interface.\n");
 	mprint("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint("                      raw     -> CC data in McPoodle's Broadcast format.\n");
 	mprint("                      dvdraw  -> CC data in McPoodle's DVD format.\n");
@@ -195,7 +195,7 @@ void print_usage(void)
 	mprint("       --videoedited: By default, ccextractor will process input files in\n");
 	mprint("                       sequence as if they were all one large file (i.e.\n");
 	mprint("                       split by a generic, non video-aware tool. If you\n");
-	mprint("                       are processing video hat was split with a editing\n");
+	mprint("                       are processing video that was split with a editing\n");
 	mprint("                       tool, use --ve so ccextractor doesn't try to rebuild\n");
 	mprint("                       the original timing.\n");
 	mprint("   -s --stream [secs]: Consider the file as a continuous stream that is\n");
@@ -584,7 +584,7 @@ void print_usage(void)
 	mprint("Communication with other programs and console output:\n");
 
 	mprint("   --gui-mode-reports: Report progress and interesting events to stderr\n");
-	mprint("                       in a easy to parse format. This is intended to be\n");
+	mprint("                       in an easy to parse format. This is intended to be\n");
 	mprint("                       used by other programs. See docs directory for.\n");
 	mprint("                       details.\n");
 	mprint("    --no-progress-bar: Suppress the output of the progress bar\n");
@@ -663,7 +663,7 @@ void print_usage(void)
 	mprint("Notes on Levenshtein distance:\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
-	mprint("  for minor changes (plus next characters) then it assumes that line N that a\n");
+	mprint("  for minor changes (plus next characters) then it assumes that line N had a\n");
 	mprint("  typo that was corrected in N+1. This is currently implemented in teletext\n");
 	mprint("  because it's where samples files that could benefit from this were available.\n");
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
@@ -728,6 +728,10 @@ void print_usage(void)
 	mprint("      /tmp/output_2.d/sub0000.png\n");
 	mprint("      /tmp/output_2.d/sub0001.png\n");
 	mprint("      ...");
+	mprint("\n");
+	mprint("Summary options:\n");
+	mprint("         --summary: After extraction, print a brief extraction summary\n");
+	mprint("                       showing total subtitles extracted.\n\n");
 	mprint("\n");
 }
 

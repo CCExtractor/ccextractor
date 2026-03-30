@@ -115,6 +115,7 @@ struct ccx_s_options // Options from user parameters
 	int use_gop_as_pts;	     // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	int fix_padding;	     // Replace 0000 with 8080 in HDTV (needed for some cards)
 	int gui_mode_reports;	     // If 1, output in stderr progress updates so the GUI can grab them
+    int print_summary; /* If 1, print extraction summary after processing */
 	int no_progress_bar;	     // If 1, suppress the output of the progress to stdout
 	char *sentence_cap_file;     // Extra capitalization word file
 	int live_stream;	     /* -1 -> Not a complete file but a live stream, without timeout
