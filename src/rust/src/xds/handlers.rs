@@ -1242,7 +1242,7 @@ pub unsafe fn do_end_of_xds(
             // Info on future program
             // Check if debug mask includes DECODER_XDS
             if let Some(logger) = lib_ccxr::util::log::logger() {
-                if !logger.is_debug_mode() {
+                if !logger.has_debug_flag(DebugMessageFlag::DECODER_XDS) {
                     // Don't bother processing something we don't need
                     was_proc = 1;
                 } else {
