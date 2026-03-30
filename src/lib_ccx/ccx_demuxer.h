@@ -47,7 +47,7 @@ struct program_info
 	int16_t pcr_pid;
 	uint64_t got_important_streams_min_pts[COUNT];
 	int has_all_min_pts;
-	char virtual_channel[16];  // Stores ATSC virtual channel like "2.1"
+	char virtual_channel[16]; // Stores ATSC virtual channel like "2.1"
 };
 
 struct cap_info
@@ -163,7 +163,8 @@ struct ccx_demuxer
 	int (*open)(struct ccx_demuxer *ctx, const char *file_name);
 	int (*is_open)(struct ccx_demuxer *ctx);
 	int (*get_stream_mode)(struct ccx_demuxer *ctx);
-	LLONG (*get_filesize)(struct ccx_demuxer *ctx);
+	LLONG (*get_filesize)
+	(struct ccx_demuxer *ctx);
 };
 
 struct demuxer_data
