@@ -220,7 +220,15 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 				tmp->capbufsize = 0;
 				tmp->ignore = 0;
 			}
-			if (lang) { strncpy(tmp->lang, lang, 3); tmp->lang[3] = '\0'; } else { tmp->lang[0] = '\0'; }
+			if (lang)
+			{
+				strncpy(tmp->lang, lang, 3);
+				tmp->lang[3] = '\0';
+			}
+			else
+			{
+				tmp->lang[0] = '\0';
+			}
 			return CCX_OK;
 		}
 	}
@@ -248,7 +256,15 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 		tmp->codec_private_data = init_private_data(codec);
 	else
 		tmp->codec_private_data = private_data;
-	if (lang) { strncpy(tmp->lang, lang, 3); tmp->lang[3] = '\0'; } else { tmp->lang[0] = '\0'; }
+	if (lang)
+	{
+		strncpy(tmp->lang, lang, 3);
+		tmp->lang[3] = '\0';
+	}
+	else
+	{
+		tmp->lang[0] = '\0';
+	}
 
 	list_add_tail(&(tmp->all_stream), &(ptr->all_stream));
 

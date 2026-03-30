@@ -1344,8 +1344,8 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			{
 				struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
 				LLONG pts = (dvb_data->tb.num != 1 || dvb_data->tb.den != MPEG_CLOCK_FREQ)
-				                ? change_timebase(dvb_data->pts, dvb_data->tb, tb)
-				                : dvb_data->pts;
+						? change_timebase(dvb_data->pts, dvb_data->tb, tb)
+						: dvb_data->pts;
 				set_current_pts(dvb_dec->timing, pts);
 				if (dvb_dec->timing->min_pts == 0x01FFFFFFFFLL)
 				{

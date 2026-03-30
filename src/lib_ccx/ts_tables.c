@@ -404,7 +404,8 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						break;
 					/* Extract 3-byte ISO-639 language code from DVB subtitle descriptor */
 					char dvb_lang[4] = {0};
-					if (desc_len >= 3) {
+					if (desc_len >= 3)
+					{
 						dvb_lang[0] = (char)cctolower(es_info[0]);
 						dvb_lang[1] = (char)cctolower(es_info[1]);
 						dvb_lang[2] = (char)cctolower(es_info[2]);
