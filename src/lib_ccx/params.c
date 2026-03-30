@@ -729,6 +729,10 @@ void print_usage(void)
 	mprint("      /tmp/output_2.d/sub0001.png\n");
 	mprint("      ...");
 	mprint("\n");
+	mprint("Summary options:\n");
+	mprint("         --summary: After extraction, print a brief extraction summary\n");
+	mprint("                       showing total subtitles extracted.\n\n");
+	mprint("\n");
 }
 
 unsigned char sha256_buf[16384];
