@@ -584,7 +584,7 @@ void print_usage(void)
 	mprint("Communication with other programs and console output:\n");
 
 	mprint("   --gui-mode-reports: Report progress and interesting events to stderr\n");
-	mprint("                       in a easy to parse format. This is intended to be\n");
+	mprint("                       in an easy to parse format. This is intended to be\n");
 	mprint("                       used by other programs. See docs directory for.\n");
 	mprint("                       details.\n");
 	mprint("    --no-progress-bar: Suppress the output of the progress bar\n");
@@ -663,7 +663,7 @@ void print_usage(void)
 	mprint("Notes on Levenshtein distance:\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
-	mprint("  for minor changes (plus next characters) then it assumes that line N that a\n");
+	mprint("  for minor changes (plus next characters) then it assumes that line N had a\n");
 	mprint("  typo that was corrected in N+1. This is currently implemented in teletext\n");
 	mprint("  because it's where samples files that could benefit from this were available.\n");
 	mprint("  You can adjust, or disable, the algorithm settings with the following\n");
