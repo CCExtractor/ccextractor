@@ -521,7 +521,7 @@ pub unsafe fn xds_do_current_and_future(
     let mut was_proc = 0;
 
     // Safety check for payload
-    if ctx.cur_xds_payload.is_null() || ctx.cur_xds_payload_length < 3 {
+    if ctx.cur_xds_payload.is_null() {
         return -1; // CCX_EINVAL equivalent
     }
 
@@ -920,7 +920,7 @@ pub unsafe fn xds_do_channel(
     let mut was_proc = 0;
 
     // Safety check for payload
-    if ctx.cur_xds_payload.is_null() || ctx.cur_xds_payload_length < 3 {
+    if ctx.cur_xds_payload.is_null() {
         return -1; // CCX_EINVAL equivalent
     }
 
@@ -1047,7 +1047,7 @@ pub unsafe fn xds_do_private_data(
     ctx: &mut CcxDecodersXdsContext,
 ) -> i32 {
     // Safety check for payload
-    if ctx.cur_xds_payload.is_null() || ctx.cur_xds_payload_length < 3 {
+    if ctx.cur_xds_payload.is_null() {
         return -1; // CCX_EINVAL equivalent
     }
 
@@ -1075,7 +1075,7 @@ pub unsafe fn xds_do_misc(ctx: &mut CcxDecodersXdsContext) -> i32 {
     let was_proc;
 
     // Safety check for payload
-    if ctx.cur_xds_payload.is_null() || ctx.cur_xds_payload_length < 3 {
+    if ctx.cur_xds_payload.is_null() {
         return -1; // CCX_EINVAL equivalent
     }
 
@@ -1210,7 +1210,7 @@ pub unsafe fn do_end_of_xds(
     );
 
     // Validate checksum and minimum length
-    if cs != expected_checksum as i32 || ctx.cur_xds_payload_length < 3 {
+    if cs != expected_checksum as i32 {
         debug!(
             msg_type = DebugMessageFlag::DECODER_XDS;
             "Expected checksum: {:02X}  Calculated: {:02X}\n", expected_checksum, cs
