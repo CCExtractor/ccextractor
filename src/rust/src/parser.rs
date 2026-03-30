@@ -2744,6 +2744,12 @@ pub mod tests {
     }
 
     #[test]
+    fn test_dvblang_case_insensitive() {
+        let (options, _) = parse_args(&["--dvblang", "ENG"]);
+        assert_eq!(options.dvblang.unwrap(), Language::Eng);
+    }
+
+    #[test]
     fn test_mkvlang_sets_mkv_language() {
         let (options, _) = parse_args(&["--mkvlang", "eng"]);
         assert_eq!(

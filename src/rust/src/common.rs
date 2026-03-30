@@ -413,10 +413,16 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
 
     // Handle dvblang (C string to Option<Language>)
     if !(*ccx_s_options).dvblang.is_null() {
-        options.dvblang = Some(
-            Language::from_str(&c_char_to_string((*ccx_s_options).dvblang))
-                .expect("Invalid language"),
-        );
+        let lang_str = c_char_to_string((*ccx_s_options).dvblang);
+        match Language::from_str(&lang_str) {
+            Ok(lang) => options.dvblang = Some(lang),
+            Err(_) => {
+                eprintln!(
+                    "Warning: Unrecognized dvblang value '{}'. Ignoring.",
+                    lang_str
+                );
+            }
+        }
     }
     // Handle ocrlang (C string to String - accepts Tesseract language names directly)
     if !(*ccx_s_options).ocrlang.is_null() {
