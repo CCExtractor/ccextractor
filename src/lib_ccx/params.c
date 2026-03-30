@@ -153,7 +153,7 @@ void print_usage(void)
 	mprint("                      scc     -> Scenarist Closed Caption format\n");
 	mprint("                      webvtt  -> WebVTT format\n");
 	mprint("                      webvtt-full -> WebVTT format with styling\n");
-	mprint("                      sami    -> MS Synchronized Accesible Media Interface.\n");
+	mprint("                      sami    -> MS Synchronized Accessible Media Interface.\n");
 	mprint("                      bin     -> CC data in CCExtractor's own binary format.\n");
 	mprint("                      raw     -> CC data in McPoodle's Broadcast format.\n");
 	mprint("                      dvdraw  -> CC data in McPoodle's DVD format.\n");
