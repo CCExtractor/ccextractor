@@ -480,11 +480,15 @@ pub unsafe fn xds_do_content_advisory(
 
         if changed {
             info!("\rXDS: {}\n  ", state.age);
-            info!("\rXDS: {}\n  ", state.content);
+            if !state.content.is_empty() {
+                info!("\rXDS: {}\n  ", state.content);
+            }
         }
 
         debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.age);
-        debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.content);
+        if !state.content.is_empty() {
+            debug!(msg_type = DebugMessageFlag::DECODER_XDS; "\rXDS: {}\n", state.content);
+        }
     }
 
     // MPA, Canadian English, or Canadian French
