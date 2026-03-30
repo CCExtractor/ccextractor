@@ -63,6 +63,7 @@ struct cap_info
 	int prev_counter;
 	void *codec_private_data;
 	int ignore;
+	char lang[4]; /* ISO-639 language code (DVB subtitle) */
 
 	/**
 	  List joining all stream in TS
@@ -185,7 +186,7 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg);
 void ccx_demuxer_delete(struct ccx_demuxer **ctx);
 struct demuxer_data *alloc_demuxer_data(void);
 void delete_demuxer_data(struct demuxer_data *data);
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data);
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data, const char *lang);
 struct cap_info *get_cinfo(struct ccx_demuxer *ctx, int pid);
 int need_cap_info(struct ccx_demuxer *ctx, int program_number);
 int need_cap_info_for_pid(struct ccx_demuxer *ctx, int pid);
@@ -194,6 +195,7 @@ struct demuxer_data *get_data_stream(struct demuxer_data *data, int pid);
 int get_best_stream(struct ccx_demuxer *ctx);
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid);
 void dinit_cap(struct ccx_demuxer *ctx);
+int copy_capbuf_demux_data(struct ccx_demuxer *ctx, struct demuxer_data **data, struct cap_info *cinfo);
 int get_programme_number(struct ccx_demuxer *ctx, int pid);
 struct cap_info *get_best_sib_stream(struct cap_info *program);
 void ignore_other_sib_stream(struct cap_info *head, int pid);

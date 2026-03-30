@@ -380,7 +380,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					ptr = init_isdb_decoder();
 					if (ptr == NULL)
 						break;
-					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ISDB_CC, program_number, ptr);
+					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ISDB_CC, program_number, ptr, NULL);
 				}
 				if (CCX_MPEG_DSC_DVB_SUBTITLE == descriptor_tag)
 				{
@@ -402,7 +402,15 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 					ptr = dvbsub_init_decoder(&cnf);
 					if (ptr == NULL)
 						break;
-					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr);
+					/* Extract 3-byte ISO-639 language code from DVB subtitle descriptor */
+					char dvb_lang[4] = {0};
+					if (desc_len >= 3) {
+						dvb_lang[0] = (char)cctolower(es_info[0]);
+						dvb_lang[1] = (char)cctolower(es_info[1]);
+						dvb_lang[2] = (char)cctolower(es_info[2]);
+					}
+					update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_DVB, program_number, ptr, dvb_lang);
+					mprint("DVB subtitle PID %u language: %s\n", elementary_PID, dvb_lang[0] ? dvb_lang : "(unknown)");
 					max_dif = 30;
 				}
 			}
@@ -440,7 +448,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 						dbg_print(CCX_DMT_PMT, "%s", is_608 ? " CEA-608" : " CEA-708");
 					}
 				}
-				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL, NULL);
 			}
 		}
 
@@ -462,7 +470,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				desc_len = (*es_info++);
 				if (!IS_VALID_TELETEXT_DESC(descriptor_tag))
 					continue;
-				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_TELETEXT, program_number, NULL);
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_TELETEXT, program_number, NULL, NULL);
 				mprint("VBI/teletext stream ID %u (0x%x) for SID %u (0x%x)\n",
 				       elementary_PID, elementary_PID, program_number, program_number);
 			}
@@ -474,7 +482,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 			unsigned descriptor_tag = buf[i + 5];
 			if (descriptor_tag == 0x45)
 			{
-				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+				update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL, NULL);
 				// mprint ("VBI stream ID %u (0x%x) for SID %u (0x%x) - teletext is disabled, will be processed as closed captions.\n",
 				//		elementary_PID, elementary_PID, program_number, program_number);
 			}
@@ -485,7 +493,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		{
 			if (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC)
 				mprint("Detected HEVC video stream (0x24) - enabling ATSC CC parsing.\n");
-			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL);
+			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_ATSC_CC, program_number, NULL, NULL);
 		}
 
 		if (need_cap_info_for_pid(ctx, elementary_PID) == CCX_TRUE)
@@ -498,7 +506,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 				mprint("Please pass -streamtype to select manually.\n");
 				fatal(EXIT_FAILURE, "-streamtype has to be manually selected.");
 			}
-			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL);
+			update_capinfo(ctx, elementary_PID, stream_type, CCX_CODEC_NONE, program_number, NULL, NULL);
 			continue;
 		}
 

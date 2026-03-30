@@ -568,6 +568,7 @@ impl FromCType<cap_info> for CapInfo {
             prev_counter: info.prev_counter,
             codec_private_data: info.codec_private_data,
             ignore: info.ignore,
+            lang: info.lang,
             all_stream: list_head {
                 next: info.all_stream.next,
                 prev: info.all_stream.prev,
