@@ -31,6 +31,7 @@ void init_options(struct ccx_s_options *options)
 	options->use_gop_as_pts = 0;	   // Use GOP instead of PTS timing (0=do as needed, 1=always, -1=never)
 	options->fix_padding = 0;	   // Replace 0000 with 8080 in HDTV (needed for some cards)
 	options->gui_mode_reports = 0;	   // If 1, output in stderr progress updates so the GUI can grab them
+	opt->print_summary = 0;
 	options->no_progress_bar = 0;	   // If 1, suppress the output of the progress to stdout
 	options->enc_cfg.sentence_cap = 0; // FIX CASE? = Fix case?
 	options->sentence_cap_file = NULL; // Extra words file?
