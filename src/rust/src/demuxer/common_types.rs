@@ -79,6 +79,7 @@ pub struct CapInfo {
     pub prev_counter: i32,
     pub codec_private_data: *mut std::ffi::c_void,
     pub ignore: i32,
+    pub lang: [i8; 4],
 
     /**
      * List joining all streams in TS
@@ -325,6 +326,7 @@ impl Default for CapInfo {
             prev_counter: 0,
             codec_private_data: null_mut(),
             ignore: 0,
+            lang: [0; 4],
 
             all_stream: list_head::default(),
             sib_head: list_head::default(),

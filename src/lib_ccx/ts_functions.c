@@ -412,7 +412,7 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 						       stream_type == CCX_STREAM_TYPE_VIDEO_H264 ? "H.264" : (stream_type == CCX_STREAM_TYPE_VIDEO_HEVC ? "HEVC" : "MPEG-2"));
 
 						// Register this PID as a video stream that may contain captions
-						update_capinfo(ctx, payload->pid, stream_type, CCX_CODEC_ATSC_CC, 0, NULL);
+						update_capinfo(ctx, payload->pid, stream_type, CCX_CODEC_ATSC_CC, 0, NULL, NULL);
 						ctx->PIDs_seen[payload->pid] = 3;
 						return;
 					}
@@ -434,7 +434,7 @@ void look_for_caption_data(struct ccx_demuxer *ctx, struct ts_payload *payload)
 			if (cinfo == NULL)
 			{
 				mprint("Registering PID %u as MPEG-2 video with captions (no PAT/PMT detected).\n", payload->pid);
-				update_capinfo(ctx, payload->pid, CCX_STREAM_TYPE_VIDEO_MPEG2, CCX_CODEC_ATSC_CC, 0, NULL);
+				update_capinfo(ctx, payload->pid, CCX_STREAM_TYPE_VIDEO_MPEG2, CCX_CODEC_ATSC_CC, 0, NULL, NULL);
 			}
 
 			ctx->PIDs_seen[payload->pid] = 3;

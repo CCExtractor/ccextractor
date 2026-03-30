@@ -42,7 +42,7 @@ void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 	struct cap_info *iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
-		if (iter->pid != pid)
+		if (iter->pid != pid && iter->codec != CCX_CODEC_DVB)
 			iter->ignore = 1;
 	}
 }
@@ -92,7 +92,7 @@ void ignore_other_sib_stream(struct cap_info *head, int pid)
 	struct cap_info *iter;
 	list_for_each_entry(iter, &head->sib_head, sib_stream, struct cap_info)
 	{
-		if (iter->pid != pid)
+		if (iter->pid != pid && iter->codec != CCX_CODEC_DVB)
 			iter->ignore = 1;
 	}
 }
@@ -178,7 +178,7 @@ static void *init_private_data(enum ccx_code_type codec)
 			return NULL;
 	}
 }
-int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data)
+int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream, enum ccx_code_type codec, int pn, void *private_data, const char *lang)
 {
 	struct cap_info *ptr;
 	struct cap_info *tmp;
@@ -220,6 +220,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 				tmp->capbufsize = 0;
 				tmp->ignore = 0;
 			}
+			if (lang) { strncpy(tmp->lang, lang, 3); tmp->lang[3] = '\0'; } else { tmp->lang[0] = '\0'; }
 			return CCX_OK;
 		}
 	}
@@ -247,6 +248,7 @@ int update_capinfo(struct ccx_demuxer *ctx, int pid, enum ccx_stream_type stream
 		tmp->codec_private_data = init_private_data(codec);
 	else
 		tmp->codec_private_data = private_data;
+	if (lang) { strncpy(tmp->lang, lang, 3); tmp->lang[3] = '\0'; } else { tmp->lang[0] = '\0'; }
 
 	list_add_tail(&(tmp->all_stream), &(ptr->all_stream));
 
