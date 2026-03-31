@@ -41,6 +41,7 @@ This header is required for HLS workflows but is **disabled by default**
 to preserve compatibility with standard WebVTT players.
 
 Example:
+
 ```bash
 ccextractor input.ts --timestamp-map -o output.vtt
 ```
@@ -48,16 +49,19 @@ ccextractor input.ts --timestamp-map -o output.vtt
 ### Windows Package Managers
 
 **WinGet:**
+
 ```powershell
 winget install CCExtractor.CCExtractor
 ```
 
 **Chocolatey:**
+
 ```powershell
 choco install ccextractor
 ```
 
 **Scoop:**
+
 ```powershell
 scoop bucket add extras
 scoop install ccextractor
@@ -88,15 +92,18 @@ CCExtractor also supports an autotools-based build system under the `linux/`
 directory.
 
 Important notes:
+
 - The autotools workflow lives inside `linux/`. The `configure` script is
   generated there and should be run from that directory.
 - Typical build steps are:
+
 ```
 cd linux
 ./autogen.sh
 ./configure
 make
 ```
+
 - Rust support is enabled automatically if `cargo` and `rustc` are available
   on the system. In that case, Rust components are built and linked during
   `make`.
@@ -109,6 +116,10 @@ This build flow has been tested on Linux and WSL.
 ## Compiling CCExtractor
 
 To learn more about how to compile and build CCExtractor for your platform check the [compilation guide](https://github.com/CCExtractor/ccextractor/blob/master/docs/COMPILATION.MD).
+
+## Performance
+
+- Linux throughput benchmarking guide: [docs/performance/linux-throughput.md](docs/performance/linux-throughput.md)
 
 ## Support
 
