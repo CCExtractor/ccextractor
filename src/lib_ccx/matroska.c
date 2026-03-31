@@ -1899,11 +1899,19 @@ void free_sub_track(struct matroska_sub_track *track)
 	if (track->codec_id_string != NULL)
 		free(track->codec_id_string);
 	for (int i = 0; i < track->sentence_count; i++)
-	{
-		struct matroska_sub_sentence *sentence = track->sentences[i];
-		free(sentence->text);
-		free(sentence);
-	}
+{
+    struct matroska_sub_sentence *sentence = track->sentences[i];
+    free(sentence->text);
+    if (sentence->blockaddition != NULL)
+    {
+        /* cue_settings_list is the base of the message buffer;
+         * cue_identifier and comment are pointers into it */
+        if (sentence->blockaddition->cue_settings_list != NULL)
+            free(sentence->blockaddition->cue_settings_list);
+        free(sentence->blockaddition);
+    }
+    free(sentence);
+}
 	if (track->sentences != NULL)
 		free(track->sentences);
 	free(track);
