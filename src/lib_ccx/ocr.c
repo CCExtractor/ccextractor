@@ -261,10 +261,28 @@ void *init_ocr(int lang_index)
 	}
 
 	ctx->api = TessBaseAPICreate();
+
+	/* Build the correct tessdata path for TessBaseAPIInit4.
+	 * probe_tessdata_location() returns a base dir e.g. "/opt/homebrew/share/".
+	 * TessBaseAPIInit4 expects "<base>/tessdata" as the data path.
+	 * But if TESSDATA_PREFIX already points at the tessdata dir itself,
+	 * avoid appending "tessdata" a second time. */
+	char tess_path[1024];
+	size_t tp_len = strlen(tessdata_path);
+	int already_has_tessdata = (tp_len >= 8 &&
+	    (strcmp(tessdata_path + tp_len - 8, "tessdata/") == 0 ||
+	     strcmp(tessdata_path + tp_len - 8, "tessdata")  == 0));
+	if (already_has_tessdata)
+		snprintf(tess_path, sizeof(tess_path), "%s", tessdata_path);
+	else
+		snprintf(tess_path, sizeof(tess_path), "%s%stessdata",
+		         tessdata_path,
+		         (tessdata_path[tp_len - 1] == '/' || tessdata_path[tp_len - 1] == '\\') ? "" : "/");
+
+	mprint("CCExtractor: using tessdata path: %s\n", tess_path);
+
 	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
 	{
-		char tess_path[1024];
-		snprintf(tess_path, 1024, "%s%s%s", tessdata_path, "/", "tessdata");
 		if (ccx_options.ocr_oem < 0)
 			ccx_options.ocr_oem = 1;
 		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
@@ -274,7 +292,7 @@ void *init_ocr(int lang_index)
 	{
 		if (ccx_options.ocr_oem < 0)
 			ccx_options.ocr_oem = 0;
-		ret = TessBaseAPIInit4(ctx->api, tessdata_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
+		ret = TessBaseAPIInit4(ctx->api, tess_path, lang, ccx_options.ocr_oem, NULL, 0, &pars_vec,
 				       &pars_values, 1, false);
 	}
 
