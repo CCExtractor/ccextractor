@@ -270,14 +270,14 @@ void *init_ocr(int lang_index)
 	char tess_path[1024];
 	size_t tp_len = strlen(tessdata_path);
 	int already_has_tessdata = (tp_len >= 8 &&
-	    (strcmp(tessdata_path + tp_len - 8, "tessdata/") == 0 ||
-	     strcmp(tessdata_path + tp_len - 8, "tessdata")  == 0));
+				    (strcmp(tessdata_path + tp_len - 8, "tessdata/") == 0 ||
+				     strcmp(tessdata_path + tp_len - 8, "tessdata") == 0));
 	if (already_has_tessdata)
 		snprintf(tess_path, sizeof(tess_path), "%s", tessdata_path);
 	else
 		snprintf(tess_path, sizeof(tess_path), "%s%stessdata",
-		         tessdata_path,
-		         (tessdata_path[tp_len - 1] == '/' || tessdata_path[tp_len - 1] == '\\') ? "" : "/");
+			 tessdata_path,
+			 (tessdata_path[tp_len - 1] == '/' || tessdata_path[tp_len - 1] == '\\') ? "" : "/");
 
 	mprint("CCExtractor: using tessdata path: %s\n", tess_path);
 
