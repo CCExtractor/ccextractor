@@ -98,7 +98,7 @@ void EPG_ATSC_decode_ETT_text(uint8_t *offset, uint32_t length, struct EPG_event
 			if (offset + number_bytes > offset_end)
 				return;
 
-			if (number_bytes > 0 && number_bytes < 500 && event->extended_text == NULL)
+			if (number_bytes > 0 && number_bytes < 200 && event->extended_text == NULL)
 			{
 				event->extended_text = malloc(number_bytes + 1);
 				if (event->extended_text)
