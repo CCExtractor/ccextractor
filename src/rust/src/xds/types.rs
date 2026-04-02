@@ -26,7 +26,6 @@ use crate::ctorust::FromCType;
 use crate::libccxr_exports::time::write_back_to_common_timing_ctx;
 pub use crate::xds::constants::*;
 use lib_ccxr::time::TimingContext;
-use std::os::raw::c_int;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
