@@ -266,7 +266,7 @@ impl<'a> CCExtractorLogger {
 
     /// Check if a specific debug flag is set in the current debug mask
     pub fn has_debug_flag(&self, flag: DebugMessageFlag) -> bool {
-      self.debug_mask.mask().intersects(flag)
+        self.debug_mask.mask().intersects(flag)
     }
 
     /// Returns the currently set target for logging messages.
