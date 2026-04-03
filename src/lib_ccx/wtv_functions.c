@@ -366,8 +366,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		// Read the 32 bytes containing the GUID and length and stream_id info
 		if (get_sized_buffer(ctx->demux_ctx, cb, 32) < 0)
 		{
-    		mprint("Error: Failed to read WTV buffer at line 367\n");
-    		return -1;
+			mprint("Error: Failed to read WTV buffer at line 367\n");
+			return -1;
 		}
 		if (cb->buffer == NULL)
 			return CCX_EOF;
@@ -429,9 +429,9 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			uint32_t read_size = (len > 96) ? 96 : len;
 			if (get_sized_buffer(ctx->demux_ctx, cb, read_size) < 0)
 			{
-    			mprint("Error: Failed to read WTV buffer at line 426\n");
-    			return -1;
-		}
+				mprint("Error: Failed to read WTV buffer at line 426\n");
+				return -1;
+			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 			static unsigned char stream_type[16];
@@ -486,8 +486,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
 			if (get_sized_buffer(ctx->demux_ctx, cb, 0x8 + 0x8) < 0)
 			{
-    			mprint("Error: Failed to read WTV buffer at line 479\n");
-    			return -1;
+				mprint("Error: Failed to read WTV buffer at line 479\n");
+				return -1;
 			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
@@ -526,8 +526,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
 			if (get_sized_buffer(ctx->demux_ctx, cb, len) < 0)
 			{
-    			mprint("Error: Failed to read WTV buffer at line 515\n");
-    			return -1;
+				mprint("Error: Failed to read WTV buffer at line 515\n");
+				return -1;
 			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
@@ -551,8 +551,8 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		{
 			if (get_sized_buffer(ctx->demux_ctx, cb, len) < 0)
 			{
-    			mprint("Error: Failed to read WTV buffer at line 536\n");
-    			return -1;
+				mprint("Error: Failed to read WTV buffer at line 536\n");
+				return -1;
 			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
