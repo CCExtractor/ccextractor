@@ -11,7 +11,7 @@ uint64_t get_meta_chunk_start(uint64_t offset);
 uint64_t time_to_pes_time(uint64_t time);
 void add_chunk(struct wtv_chunked_buffer *cb, uint64_t value);
 int qsort_cmpint(const void *a, const void *b);
-void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
+int get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size);
 int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb);
 
