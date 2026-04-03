@@ -135,7 +135,7 @@ void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, u
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
 // it will handle any meta data chunks that need to be skipped in the file
 // Will print error messages and return a null buffer on error.
-void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
+int get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint32_t size)
 {
 	int64_t result;
 	if (cb->buffer != NULL && cb->buffer_size > 0)
@@ -147,7 +147,7 @@ void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, ui
 	{
 		mprint("\nRequested buffer of %i > %i bytes (WTV_MAX_ALLOC)!\n", size, WTV_MAX_ALLOC);
 		cb->buffer = NULL;
-		return;
+		return -1;
 	}
 
 	cb->buffer = (uint8_t *)malloc(size);
@@ -155,7 +155,7 @@ void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, ui
 	{
 		mprint("\nOut of memory allocating buffer of %i bytes!\n", size);
 		cb->buffer_size = 0;
-		return;
+		return -1;
 	}
 	cb->buffer_size = size;
 	uint64_t start = cb->filepos;
@@ -181,11 +181,11 @@ void get_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, ui
 			ctx->past = cb->filepos;
 			cb->buffer = NULL;
 			mprint("\nPremature end of file!\n");
-			return;
+			return -1;
 		}
 	}
 	ctx->past = cb->filepos;
-	return;
+	return 0;
 }
 
 // read_header will read all the required information from
@@ -364,7 +364,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		uint32_t stream_id;
 
 		// Read the 32 bytes containing the GUID and length and stream_id info
-		get_sized_buffer(ctx->demux_ctx, cb, 32);
+		if (get_sized_buffer(ctx->demux_ctx, cb, 32) < 0)
+		{
+    		mprint("Error: Failed to read WTV buffer at line 367\n");
+    		return -1;
+		}
 		if (cb->buffer == NULL)
 			return CCX_EOF;
 
@@ -423,7 +427,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			dbg_print(CCX_DMT_PARSE, "WTV STREAM2\n");
 			// Read 96 bytes to get mediatype at 0x0C and format_subtype at 0x4C
 			uint32_t read_size = (len > 96) ? 96 : len;
-			get_sized_buffer(ctx->demux_ctx, cb, read_size);
+			if (get_sized_buffer(ctx->demux_ctx, cb, read_size) < 0)
+			{
+    			mprint("Error: Failed to read WTV buffer at line 426\n");
+    			return -1;
+		}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 			static unsigned char stream_type[16];
@@ -476,7 +484,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 			int64_t time;
 			// The WTV_TIMING GUID contains a timestamp for the given stream_id
 			dbg_print(CCX_DMT_PARSE, "WTV TIMING\n");
-			get_sized_buffer(ctx->demux_ctx, cb, 0x8 + 0x8);
+			if (get_sized_buffer(ctx->demux_ctx, cb, 0x8 + 0x8) < 0)
+			{
+    			mprint("Error: Failed to read WTV buffer at line 479\n");
+    			return -1;
+			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 
@@ -512,7 +524,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		{
 			// This is the data for a stream we want to process
 			dbg_print(CCX_DMT_PARSE, "\nWTV DATA\n");
-			get_sized_buffer(ctx->demux_ctx, cb, len);
+			if (get_sized_buffer(ctx->demux_ctx, cb, len) < 0)
+			{
+    			mprint("Error: Failed to read WTV buffer at line 515\n");
+    			return -1;
+			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 			memcpy(data->buffer + data->len, cb->buffer, len);
@@ -533,7 +549,11 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		// will process what it can parse.
 		if (!memcmp(guid, WTV_DATA, 16) && check_teletext_stream_id(stream_id, teletext_streams, num_teletext_streams) && dec_ctx->timing->current_pts != 0)
 		{
-			get_sized_buffer(ctx->demux_ctx, cb, len);
+			if (get_sized_buffer(ctx->demux_ctx, cb, len) < 0)
+			{
+    			mprint("Error: Failed to read WTV buffer at line 536\n");
+    			return -1;
+			}
 			if (cb->buffer == NULL)
 				return CCX_EOF;
 
