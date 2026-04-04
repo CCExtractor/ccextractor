@@ -33,7 +33,7 @@ jobs:
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
     - uses: actions/checkout@v6
     - name: build
-      run: ./build -hardsubx
+      run: ./build -hardsubx -min-rust
       working-directory: ./linux
     - name: Display version information
       run: ./ccextractor --version
@@ -48,6 +48,29 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: CCExtractor Linux build
+        path: ./linux/artifacts
+  build_shell_migrations:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
+    - uses: actions/checkout@v6
+    - name: build
+      run: ./build -hardsubx
+      working-directory: ./linux
+    - name: Display version information
+      run: ./ccextractor --version
+      working-directory: ./linux
+    - name: Prepare artifacts
+      run: mkdir ./linux/artifacts
+    - name: Copy release artifact
+      run: cp ./linux/ccextractor ./linux/artifacts/
+    # NOTE: The sample-platform test runner (CCExtractor/sample-platform)
+    # matches artifact names exactly. Update Artifact_names in
+    # mod_ci/controllers.py there if you rename this artifact.
+    - uses: actions/upload-artifact@v7
+      with:
+        name: CCExtractor Linux build (with migrations)
         path: ./linux/artifacts
   build_autoconf:
     runs-on: ubuntu-latest

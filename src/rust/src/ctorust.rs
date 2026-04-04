@@ -442,6 +442,7 @@ impl FromCType<encoder_cfg> for EncoderConfig {
             no_type_setting: cfg.no_type_setting != 0,
             cc_to_stdout: cfg.cc_to_stdout != 0,
             line_terminator_lf: cfg.line_terminator_lf != 0,
+            frame_terminator_0: cfg.frame_terminator_0 != 0,
             subs_delay: Timestamp::from_millis(cfg.subs_delay),
             program_number: cfg.program_number as u32,
             in_format: cfg.in_format,

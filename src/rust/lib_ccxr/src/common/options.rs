@@ -248,6 +248,7 @@ impl Default for EncoderConfig {
             no_type_setting: false,
             cc_to_stdout: false,
             line_terminator_lf: false,
+            frame_terminator_0: false,
             subs_delay: Timestamp::default(),
             program_number: 0,
             in_format: 1,
@@ -324,6 +325,8 @@ pub struct EncoderConfig {
     pub cc_to_stdout: bool,
     /// false = CRLF, true = LF
     pub line_terminator_lf: bool,
+    /// false = frames terminated by line_terminator_lf, true = frames terminated by \0
+    pub frame_terminator_0: bool,
     /// ms to delay (or advance) subs
     pub subs_delay: Timestamp,
     pub program_number: u32,

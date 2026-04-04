@@ -4,9 +4,7 @@ use leptonica_sys::*;
 // #[cfg(feature = "hardsubx_ocr")]
 // use rsmpeg::*;
 
-use std::eprintln;
 use std::ffi;
-use std::format;
 use std::os::raw::c_char;
 use std::process::exit;
 use std::ptr::null;
@@ -255,7 +253,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
     frame: *mut AVFrame,
     width: ::std::os::raw::c_int,
     height: ::std::os::raw::c_int,
-    index: ::std::os::raw::c_int,
+    _index: ::std::os::raw::c_int,
 ) -> *mut ::std::os::raw::c_char {
     let mut im: *mut Pix = pixCreate(width, height, 32);
     let mut lum_im: *mut Pix = pixCreate(width, height, 32);
@@ -290,7 +288,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
 
     let mut feat_im: *mut Pix = pixCreate(width, height, 32);
 
-    for i in (92 * (height / 100))..height {
+    for i in ((92 * height) / 100)..height {
         for j in 0..width {
             let mut p1: u32 = 0;
             let mut p2: u32 = 0;
@@ -306,17 +304,7 @@ pub unsafe extern "C" fn _process_frame_tickertext(
         }
     }
 
-    let subtitle_text = get_ocr_text_simple_threshold(ctx, lum_im, 0.0);
-
-    let write_path: String = format!("./lum_im{}.jpg", index);
-    let write_path_c: *mut c_char = string_to_c_char(&write_path);
-    pixWrite(write_path_c, lum_im, IFF_JFIF_JPEG as i32);
-    let _dealloc = std::ffi::CString::from_raw(write_path_c); // for memory reasons
-
-    let write_path: String = format!("./im{}.jpg", index);
-    let write_path_c: *mut c_char = string_to_c_char(&write_path);
-    pixWrite(write_path_c, lum_im, IFF_JFIF_JPEG as i32);
-    let _dealloc = std::ffi::CString::from_raw(write_path_c); // for memory reasons
+    let subtitle_text = dispatch_classifier_functions(ctx, feat_im);
 
     pixDestroy(&mut im as *mut *mut Pix);
     pixDestroy(&mut gray_im as *mut *mut Pix);
@@ -326,5 +314,5 @@ pub unsafe extern "C" fn _process_frame_tickertext(
     pixDestroy(&mut lum_im as *mut *mut Pix);
     pixDestroy(&mut feat_im as *mut *mut Pix);
 
-    subtitle_text
+    string_to_c_char(&subtitle_text)
 }

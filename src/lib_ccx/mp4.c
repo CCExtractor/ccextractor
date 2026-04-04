@@ -1156,13 +1156,13 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 							case MEDIA_TYPE(GF_ISOM_MEDIA_SUBT, GF_ISOM_SUBTYPE_TX3G): // sbtl:tx3g (they're the same)
 								atom_length = process_tx3g(ctx, enc_ctx, dec_ctx,
 											   &dec_sub, &mp4_ret,
-											   data, sample->dataLength, 0);
+											   data, sample->dataLength - atomStart, 0);
 								break;
 							case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_QT_SUBTYPE_C608):   // clcp:c608
 							case MEDIA_TYPE(GF_ISOM_MEDIA_CLOSED_CAPTION, GF_ISOM_SUBTYPE_C708): // clcp:c708
 								atom_length = process_clcp(ctx, enc_ctx, dec_ctx,
 											   &dec_sub, &mp4_ret, subtype,
-											   data, sample->dataLength);
+											   data, sample->dataLength - atomStart);
 								break;
 							case MEDIA_TYPE(GF_ISOM_MEDIA_TEXT, GF_ISOM_SUBTYPE_TEXT): // text:text
 							{

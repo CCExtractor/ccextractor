@@ -6,6 +6,7 @@ include (CTest)
 option (WITH_FFMPEG "Build using FFmpeg demuxer and decoder" OFF)
 option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
+option (VBI_DEBUG "Enable VBI decoder debug output" OFF)
 
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
@@ -145,6 +146,11 @@ else (MSVC)
 endif(MSVC)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
+
+if (VBI_DEBUG)
+  add_definitions(-DVBI_DEBUG)
+  message(STATUS "VBI debug output enabled")
+endif (VBI_DEBUG)
 add_subdirectory (lib_ccx)
 
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
@@ -205,7 +211,9 @@ if (PKG_CONFIG_FOUND AND WITH_OCR)
   pkg_check_modules (LEPTONICA REQUIRED lept)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
+  link_directories(${TESSERACT_LIBRARY_DIRS})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+  link_directories(${LEPTONICA_LIBRARY_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_OCR")
 endif (PKG_CONFIG_FOUND AND WITH_OCR)
@@ -242,7 +250,9 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   pkg_check_modules (LEPTONICA REQUIRED lept)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${TESSERACT_LIBRARIES})
+  link_directories(${TESSERACT_LIBRARY_DIRS})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${LEPTONICA_LIBRARIES})
+  link_directories(${LEPTONICA_LIBRARY_DIRS})
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})

@@ -48,6 +48,8 @@ static const char *ssa_header =
     "[Script Info]\n\
 Title: Default file\n\
 ScriptType: v4.00+\n\
+PlayResX: 384\n\
+PlayResY: 288\n\
 \n\
 [V4+ Styles]\n\
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n\
@@ -605,7 +607,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 				char *basefilename = get_basename(cfg->output_filename);
 				extension = get_file_extension(cfg->write_format);
 
-				ret = init_write(&ctx->out[0], strdup(cfg->output_filename), cfg->with_semaphore);
+				char *fname0 = strdup(cfg->output_filename);
+				if (fname0 == NULL)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY,
+					      "In init_output_ctx: Not enough memory for output filename.\n");
+				}
+				ret = init_write(&ctx->out[0], fname0, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
 				ret = init_write(&ctx->out[1], create_outfilename(basefilename, "_2", extension), cfg->with_semaphore);
 				check_ret(ctx->out[1].filename);
@@ -613,7 +621,13 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 			}
 			else
 			{
-				ret = init_write(ctx->out, strdup(cfg->output_filename), cfg->with_semaphore);
+				char *fname = strdup(cfg->output_filename);
+				if (fname == NULL)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY,
+					      "In init_output_ctx: Not enough memory for output filename.\n");
+				}
+				ret = init_write(ctx->out, fname, cfg->with_semaphore);
 				check_ret(cfg->output_filename);
 			}
 		}
@@ -840,6 +854,17 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 		ctx->encoded_crlf_length = encode_line(ctx, ctx->encoded_crlf, (unsigned char *)"\r\n");
 
 	ctx->encoded_br_length = encode_line(ctx, ctx->encoded_br, (unsigned char *)"<br>");
+
+	if (opt->frame_terminator_0)
+	{
+		ctx->encoded_end_frame[0] = '\0';
+		ctx->encoded_end_frame_length = 1;
+	}
+	else
+	{
+		memcpy(ctx->encoded_end_frame, ctx->encoded_crlf, ctx->encoded_crlf_length + 1);
+		ctx->encoded_end_frame_length = ctx->encoded_crlf_length;
+	}
 
 	for (i = 0; i < ctx->nb_out; i++)
 		write_subtitle_file_header(ctx, ctx->out + i);
