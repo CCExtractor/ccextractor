@@ -1317,6 +1317,62 @@ int process_non_multiprogram_general_loop(struct lib_ccx_ctx *ctx,
 			}
 		}
 	}
+
+	/* -----------------------------------------------------------------------
+	 * Process additional DVB subtitle PIDs (extra languages).
+	 * ----------------------------------------------------------------------- */
+	{
+		struct cap_info *dvb_iter;
+		list_for_each_entry(dvb_iter, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+		{
+			if (dvb_iter->codec != CCX_CODEC_DVB)
+				continue;
+			if (dvb_iter->pid == pid)
+				continue;
+
+			struct demuxer_data *dvb_data = get_data_stream(*datalist, dvb_iter->pid);
+			if (!dvb_data || dvb_data->len == 0)
+				continue;
+
+			struct encoder_ctx *dvb_enc = update_encoder_list_cinfo(ctx, dvb_iter);
+			struct lib_cc_decode *dvb_dec = update_decoder_list_cinfo(ctx, dvb_iter);
+
+			if (!dvb_enc || !dvb_dec || !dvb_dec->timing)
+				continue;
+
+			if (dvb_data->pts != CCX_NOPTS)
+			{
+				struct ccx_rational tb = {1, MPEG_CLOCK_FREQ};
+				LLONG pts = (dvb_data->tb.num != 1 || dvb_data->tb.den != MPEG_CLOCK_FREQ)
+						? change_timebase(dvb_data->pts, dvb_data->tb, tb)
+						: dvb_data->pts;
+				set_current_pts(dvb_dec->timing, pts);
+				if (dvb_dec->timing->min_pts == 0x01FFFFFFFFLL)
+				{
+					dvb_dec->timing->min_pts = pts;
+					dvb_dec->timing->pts_set = 2;
+					dvb_dec->timing->sync_pts = pts;
+				}
+				set_fts(dvb_dec->timing);
+			}
+			dvb_enc->timing = dvb_dec->timing;
+
+			int dvb_ret = process_data(dvb_enc, dvb_dec, dvb_data);
+			if (dvb_ret || dvb_enc->srt_counter)
+				*caps = 1;
+
+			if (!(!terminate_asap && !end_of_file && is_decoder_processed_enough(ctx) == CCX_FALSE))
+			{
+				if (dvb_dec->dec_sub.prev && dvb_dec->dec_sub.prev->end_time == 0)
+				{
+					dvb_dec->dec_sub.prev->end_time = get_fts(dvb_dec->timing, dvb_dec->current_field);
+					if (dvb_enc != NULL && dvb_enc->prev != NULL)
+						encode_sub(dvb_enc->prev, dvb_dec->dec_sub.prev);
+					dvb_dec->dec_sub.prev->got_output = 0;
+				}
+			}
+		}
+	}
 	return ret;
 }
 
