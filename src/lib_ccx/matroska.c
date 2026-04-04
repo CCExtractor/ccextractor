@@ -1333,6 +1333,8 @@ char *generate_filename_from_track(struct matroska_ctx *mkv_ctx, struct matroska
 {
 	const char *basename = get_basename(mkv_ctx->filename);
 	const char *extension = matroska_track_text_subtitle_id_extensions[track->codec_id];
+	if (extension == NULL)
+		extension = "bin";
 	/* Prefer the BCP-47 IETF tag (e.g. "zh-Hant") over the legacy
 	 * ISO-639-2 code (e.g. "chi") when one is available. */
 	const char *lang_tag = track->lang_ietf ? track->lang_ietf : track->lang;
