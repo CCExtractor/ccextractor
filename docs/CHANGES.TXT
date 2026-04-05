@@ -1,5 +1,6 @@
 0.96.7 (unreleased)
 -------------------
+- Fix: Move C0 bounds check before match in CEA-708 Rust decoder to prevent process_p16 index-out-of-bounds panic on truncated ATSC1.0 TS blocks; improve C1 warn message with command code and lengths (#1407)
 - New: Added ASS/SSA \pos-based positioning for CEA-608 captions when layout is simple (1–2 rows) (#1726)
 - Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
