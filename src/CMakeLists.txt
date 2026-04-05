@@ -297,4 +297,12 @@ if (NOT WIN32 AND NOT APPLE)
     -Wl,--undefined=store_hdcc)
 endif()
 
+if (WITH_FFMPEG AND NOT WIN32 AND NOT APPLE)
+  target_link_options (ccextractor PRIVATE
+    -Wl,--undefined=ccx_mp4_process_avc_sample
+    -Wl,--undefined=ccx_mp4_process_hevc_sample
+    -Wl,--undefined=ccx_mp4_process_cc_packet
+    -Wl,--undefined=ccx_mp4_flush_tx3g)
+endif()
+
 install (TARGETS ccextractor DESTINATION bin)
