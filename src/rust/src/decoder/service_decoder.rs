@@ -77,6 +77,15 @@ impl dtvcc_service_decoder {
         let code = block[0];
         let C0Command { command, length } = C0Command::new(code);
         debug!("C0: [{:?}] ({})", command, block.len());
+        if length as usize > block.len() {
+            warn!(
+                "dtvcc_handle_C0: command {:#04X} needs {} bytes but block only has {}; skipping",
+                code,
+                length,
+                block.len()
+            );
+            return -1;
+        }
         match command {
             // NUL command does nothing
             C0CodeSet::NUL => {}
@@ -89,14 +98,6 @@ impl dtvcc_service_decoder {
             C0CodeSet::EXT1 => {}
             C0CodeSet::P16 => self.process_p16(&block[1..]),
             C0CodeSet::RESERVED => {}
-        }
-        if length as usize > block.len() {
-            warn!(
-                "dtvcc_handle_C0: command is {} bytes long but we only have {}",
-                length,
-                block.len()
-            );
-            return -1;
         }
         length as i32
     }
@@ -286,7 +287,13 @@ impl dtvcc_service_decoder {
         } = C1Command::new(code);
 
         if length as usize > block.len() {
-            warn!("Warning: Not enough bytes for command.");
+            warn!(
+                "dtvcc_handle_C1: command {:#04X} ({}) needs {} bytes but block only has {}; skipping",
+                code,
+                name,
+                length,
+                block.len()
+            );
             return -1;
         }
 
