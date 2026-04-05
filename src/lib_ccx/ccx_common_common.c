@@ -59,6 +59,11 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 	sub->type = CC_TEXT;
 	sub->enc_type = e_type;
 	sub->data = strdup(str);
+	if (sub->data == NULL)
+	{
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY,
+					     "In add_cc_sub_text: Not enough memory for subtitle data.\n");
+	}
 	sub->datatype = CC_DATATYPE_GENERIC;
 	sub->nb_data = str ? strlen(str) : 0;
 	sub->start_time = start_time;

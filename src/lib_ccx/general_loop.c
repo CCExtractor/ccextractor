@@ -368,10 +368,19 @@ void process_hex(struct lib_ccx_ctx *ctx, char *filename)
 	}
 	/* const char *mpeg_header="00 00 01 b2 43 43 01 f8 "; // Always present */
 	FILE *fr = fopen(filename, "rt");
+	if (!fr)
+	{
+		fatal(EXIT_READ_ERROR, "In process_hex: Unable to open file %s for reading.", filename);
+	}
 	unsigned char *bytes = NULL;
 	unsigned byte_count = 0;
 	int warning_shown = 0;
 	struct demuxer_data *data = alloc_demuxer_data();
+	if (!data)
+	{
+		fclose(fr);
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_hex: Out of memory allocating demuxer data.");
+	}
 	while (fgets(line, max - 1, fr) != NULL)
 	{
 		char *c1, *c2 = NULL; // Positions for first and second colons
@@ -1507,7 +1516,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 			if (!data_node)
 				continue;
 		}
-		if (ctx->live_stream)
+		if (ctx->live_stream && dec_ctx)
 		{
 			LLONG t = get_fts(dec_ctx->timing, dec_ctx->current_field);
 			if (!t && ctx->demux_ctx->global_timestamp_inited)
@@ -1574,7 +1583,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		}
 
 		// void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx);
-		segment_output_file(ctx, dec_ctx);
+		// dec_ctx is NULL only when no data was processed (e.g. empty stdin)
+		if (dec_ctx)
+		{
+			segment_output_file(ctx, dec_ctx);
+		}
 
 		if (ccx_options.send_to_srv)
 			net_check_conn();
