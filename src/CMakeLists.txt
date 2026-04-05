@@ -198,6 +198,7 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG_MP4")
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
@@ -289,6 +290,14 @@ if (NOT WIN32 AND NOT APPLE)
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
+endif()
+
+if (WITH_FFMPEG AND NOT WIN32 AND NOT APPLE)
+  target_link_options (ccextractor PRIVATE
+    -Wl,--undefined=ccx_mp4_process_avc_sample
+    -Wl,--undefined=ccx_mp4_process_hevc_sample
+    -Wl,--undefined=ccx_mp4_process_cc_packet
+    -Wl,--undefined=ccx_mp4_flush_tx3g)
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)

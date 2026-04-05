@@ -228,24 +228,35 @@ int start_ccx()
 				{
 					fatal(EXIT_INCOMPATIBLE_PARAMETERS, "MP4 requires an actual file, it's not possible to read from a stream, including stdin.\n");
 				}
+#ifdef ENABLE_FFMPEG_MP4
 				for (int mp4_i = 0; mp4_i < ccx_options.num_input_files; mp4_i++)
 				{
 					char *mp4_file = ccx_options.inputfile[mp4_i];
 					if (!mp4_file)
 						continue;
 					if (ccx_options.extract_chapters)
-					{
 						tmp = dumpchapters(ctx, &ctx->mp4_cfg, mp4_file);
-					}
 					else
-					{
 						tmp = processmp4(ctx, &ctx->mp4_cfg, mp4_file);
-					}
 					if (ccx_options.print_file_reports)
 						print_file_report(ctx);
 					if (!ret)
 						ret = tmp;
 				}
+#else
+				if (ccx_options.extract_chapters)
+				{
+					tmp = dumpchapters(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+				}
+				else
+				{
+					tmp = processmp4(ctx, &ctx->mp4_cfg, ctx->inputfile[ctx->current_file]);
+				}
+				if (ccx_options.print_file_reports)
+					print_file_report(ctx);
+				if (!ret)
+					ret = tmp;
+#endif
 				break;
 			case CCX_SM_MKV:
 				mprint("\rAnalyzing data in Matroska mode\n");
