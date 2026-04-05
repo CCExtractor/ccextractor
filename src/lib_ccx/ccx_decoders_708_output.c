@@ -550,11 +550,11 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 	if (tv->old_cc_time_end > time_show.time_in_ms)
 	{
 		// Correct the frame delay
-		time_show.time_in_ms -= 1000 / current_fps;
+		time_show.time_in_ms -= 1000 / 29.97;
 		print_scc_time(time_show, buf);
 		buf_len = strlen(buf);
 		SCC_SNPRINTF("\t942c 942c");
-		time_show.time_in_ms += 1000 / current_fps;
+		time_show.time_in_ms += 1000 / 29.97;
 		// Clear the buffer and start pop on caption
 		SCC_SNPRINTF("94ae 94ae 9420 9420");
 	}
@@ -566,20 +566,20 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 		buf_len = strlen(buf);
 		SCC_SNPRINTF("\t942c 942c \n\n");
 		// Correct the frame delay
-		time_show.time_in_ms -= 1000 / current_fps;
+		time_show.time_in_ms -= 1000 / 29.97;
 		// Clear the buffer and start pop on caption in new time
 		print_scc_time(time_show, buf + buf_len);
 		buf_len = strlen(buf);
 		SCC_SNPRINTF("\t94ae 94ae 9420 9420");
-		time_show.time_in_ms += 1000 / current_fps;
+		time_show.time_in_ms += 1000 / 29.97;
 	}
 	else
 	{
-		time_show.time_in_ms -= 1000 / current_fps;
+		time_show.time_in_ms -= 1000 / 29.97;
 		print_scc_time(time_show, buf);
 		buf_len = strlen(buf);
 		SCC_SNPRINTF("\t942c 942c 94ae 94ae 9420 9420");
-		time_show.time_in_ms += 1000 / current_fps;
+		time_show.time_in_ms += 1000 / 29.97;
 	}
 
 	int total_subtitle_count = count_captions_lines_scc(tv);
