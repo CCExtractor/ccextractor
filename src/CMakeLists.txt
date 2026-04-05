@@ -181,21 +181,25 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
+  pkg_check_modules (SWRESAMPLE REQUIRED libswresample)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWRESAMPLE_LIBRARIES})
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG_MP4")
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
@@ -227,20 +231,22 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
   pkg_check_modules (AVCODEC REQUIRED libavcodec)
   pkg_check_modules (AVFILTER REQUIRED libavfilter)
   pkg_check_modules (SWSCALE REQUIRED libswscale)
+  pkg_check_modules (SWRESAMPLE REQUIRED libswresample)
 
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
   set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
+  set (EXTRA_LIBS ${EXTRA_LIBS} ${SWRESAMPLE_LIBRARIES})
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
+  set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWRESAMPLE_INCLUDE_DIRS})
 
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
   pkg_check_modules (TESSERACT REQUIRED tesseract)
   pkg_check_modules (LEPTONICA REQUIRED lept)
 
@@ -251,6 +257,7 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
@@ -262,6 +269,14 @@ add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})
 if (PKG_CONFIG_FOUND)
   add_subdirectory (rust)
   set (EXTRA_LIBS ${EXTRA_LIBS} ccx_rust)
+  # Re-add libs after ccx_rust to resolve circular dependencies (Rust calls C and FFmpeg)
+  set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
+  if (WITH_FFMPEG OR WITH_HARDSUBX)
+    if (NOT WIN32 AND NOT APPLE)
+      set (EXTRA_LIBS ${EXTRA_LIBS} "-Wl,--no-as-needed")
+    endif()
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES} ${SWSCALE_LIBRARIES} ${SWRESAMPLE_LIBRARIES})
+  endif()
 endif (PKG_CONFIG_FOUND)
 
 
@@ -275,6 +290,14 @@ if (NOT WIN32 AND NOT APPLE)
     -Wl,--undefined=decode_vbi
     -Wl,--undefined=do_cb
     -Wl,--undefined=store_hdcc)
+endif()
+
+if (WITH_FFMPEG AND NOT WIN32 AND NOT APPLE)
+  target_link_options (ccextractor PRIVATE
+    -Wl,--undefined=ccx_mp4_process_avc_sample
+    -Wl,--undefined=ccx_mp4_process_hevc_sample
+    -Wl,--undefined=ccx_mp4_process_cc_packet
+    -Wl,--undefined=ccx_mp4_flush_tx3g)
 endif()
 
 install (TARGETS ccextractor DESTINATION bin)

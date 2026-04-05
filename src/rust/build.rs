@@ -43,6 +43,15 @@ fn main() {
         "mprint",
     ]);
 
+    #[cfg(feature = "enable_mp4_ffmpeg")]
+    allowlist_functions.extend_from_slice(&[
+        "ccx_mp4_process_avc_sample",
+        "ccx_mp4_process_hevc_sample",
+        "ccx_mp4_process_cc_packet",
+        "ccx_mp4_flush_tx3g",
+        "mprint",
+    ]);
+
     let mut allowlist_types = Vec::new();
     allowlist_types.extend_from_slice(&[
         // Match both lowercase (dtvcc_*) and uppercase (DTVCC_*) patterns
@@ -83,7 +92,17 @@ fn main() {
     #[cfg(feature = "hardsubx_ocr")]
     {
         builder = builder.clang_arg("-DENABLE_HARDSUBX");
+    }
 
+    // Pass -DENABLE_FFMPEG_MP4 for both hardsubx_ocr and enable_mp4_ffmpeg features
+    let has_ffmpeg_mp4 = env::var("CARGO_FEATURE_ENABLE_MP4_FFMPEG").is_ok()
+        || env::var("CARGO_FEATURE_HARDSUBX_OCR").is_ok();
+    if has_ffmpeg_mp4 {
+        builder = builder.clang_arg("-DENABLE_FFMPEG_MP4");
+    }
+
+    #[cfg(feature = "hardsubx_ocr")]
+    {
         // Check FFMPEG_INCLUDE_DIR environment variable (works on all platforms)
         if let Ok(ffmpeg_include) = env::var("FFMPEG_INCLUDE_DIR") {
             builder = builder.clang_arg(format!("-I{}", ffmpeg_include));

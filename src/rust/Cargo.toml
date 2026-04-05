@@ -53,6 +53,7 @@ with_libcurl = []
 
 # hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
 hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+enable_mp4_ffmpeg = ["rsmpeg"]
 sanity_check = []
 
 [profile.release-with-debug]
