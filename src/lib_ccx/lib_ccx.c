@@ -453,10 +453,11 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	{
 		if (ctx->multiprogram == CCX_FALSE)
 		{
-			/* For DVB subtitles with multiple PIDs, match by language */
-			if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0] && enc_ctx->dvb_lang[0])
+			/* For DVB subtitles, match by language — skip non-DVB encoders */
+			if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
 			{
-				if (enc_ctx->program_number == pn &&
+				if (enc_ctx->dvb_lang[0] &&
+				    enc_ctx->program_number == pn &&
 				    strcmp(enc_ctx->dvb_lang, cinfo->lang) == 0)
 					return enc_ctx;
 				continue;
@@ -575,10 +576,16 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
-	memset(enc_ctx->dvb_lang, 0, sizeof(enc_ctx->dvb_lang));
-	if (cinfo)
-		if (cinfo->codec == CCX_CODEC_DVB)
-			enc_ctx->write_previous = 0;
+	if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
+	{
+		strncpy(enc_ctx->dvb_lang, cinfo->lang, 3);
+		enc_ctx->dvb_lang[3] = '\0';
+		enc_ctx->write_previous = 0;
+	}
+	else
+	{
+		memset(enc_ctx->dvb_lang, 0, sizeof(enc_ctx->dvb_lang));
+	}
 	return enc_ctx;
 }
 
