@@ -1004,16 +1004,8 @@ impl<'a> TeletextContext<'a> {
         let mut line_count: u8 = 0;
         let mut time_reported = false;
         // Negative timestamps occur with wrap-around/uninitialized PTS in broadcast captures
-        let timecode_show = self
-            .page_buffer
-            .show_timestamp
-            .to_srt_time()
-            .ok()?;
-        let timecode_hide = self
-            .page_buffer
-            .hide_timestamp
-            .to_srt_time()
-            .ok()?;
+        let timecode_show = self.page_buffer.show_timestamp.to_srt_time().ok()?;
+        let timecode_hide = self.page_buffer.hide_timestamp.to_srt_time().ok()?;
 
         // process data
         for row in 1..25 {

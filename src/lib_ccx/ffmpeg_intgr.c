@@ -64,7 +64,7 @@ void *init_ffmpeg(const char *path)
 	int ret = 0;
 	int stream_index = 0;
 	struct ffmpeg_ctx *ctx;
-	AVCodec *dec = NULL;
+	const AVCodec *dec = NULL;
 
 	if (ccx_options.debug_mask & CCX_DMT_VERBOSE)
 		av_log_set_level(AV_LOG_INFO);
