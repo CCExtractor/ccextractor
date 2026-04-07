@@ -453,8 +453,8 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	{
 		if (ctx->multiprogram == CCX_FALSE)
 		{
-			/* For DVB subtitles with a language tag, match by program_number + language */
-			if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
+			/* For DVB subtitles with multiple PIDs, match by language */
+			if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0] && enc_ctx->dvb_lang[0])
 			{
 				if (enc_ctx->program_number == pn &&
 				    strcmp(enc_ctx->dvb_lang, cinfo->lang) == 0)
@@ -472,30 +472,45 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
 
-	/* Create per-language DVB encoder if needed */
+	/* Create per-language DVB encoder only when there are 2+ DVB subtitle PIDs.
+	   Single-DVB-stream recordings fall through to the standard encoder path
+	   to preserve backward compatible filenames. */
 	if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
 	{
-		struct encoder_cfg local_cfg = ccx_options.enc_cfg;
-		local_cfg.program_number = pn;
-		local_cfg.in_format = in_format;
-		char *basefilename = get_basename(ctx->basefilename);
-		char suffix[8];
-		snprintf(suffix, sizeof(suffix), "_%s", cinfo->lang);
-		local_cfg.output_filename = create_outfilename(basefilename, suffix, extension);
-		free(basefilename);
-
-		enc_ctx = init_encoder(&local_cfg);
-		if (enc_ctx)
+		/* Count DVB subtitle PIDs in this program */
+		int dvb_pid_count = 0;
+		struct cap_info *ci;
+		list_for_each_entry(ci, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 		{
-			enc_ctx->program_number = pn;
-			strncpy(enc_ctx->dvb_lang, cinfo->lang, 3);
-			enc_ctx->dvb_lang[3] = '\0';
-			list_add_tail(&enc_ctx->list, &ctx->enc_ctx_head);
-			enc_ctx->prev = NULL;
-			enc_ctx->write_previous = 0;
+			if (ci->codec == CCX_CODEC_DVB && ci->program_number == cinfo->program_number)
+				dvb_pid_count++;
 		}
-		free(local_cfg.output_filename);
-		return enc_ctx;
+
+		if (dvb_pid_count >= 2)
+		{
+			struct encoder_cfg local_cfg = ccx_options.enc_cfg;
+			local_cfg.program_number = pn;
+			local_cfg.in_format = in_format;
+			char *basefilename = get_basename(ctx->basefilename);
+			char suffix[8];
+			snprintf(suffix, sizeof(suffix), "_%s", cinfo->lang);
+			local_cfg.output_filename = create_outfilename(basefilename, suffix, extension);
+			free(basefilename);
+
+			enc_ctx = init_encoder(&local_cfg);
+			if (enc_ctx)
+			{
+				enc_ctx->program_number = pn;
+				strncpy(enc_ctx->dvb_lang, cinfo->lang, 3);
+				enc_ctx->dvb_lang[3] = '\0';
+				list_add_tail(&enc_ctx->list, &ctx->enc_ctx_head);
+				enc_ctx->prev = NULL;
+				enc_ctx->write_previous = 0;
+			}
+			free(local_cfg.output_filename);
+			return enc_ctx;
+		}
+		/* Single DVB stream: fall through to standard encoder creation */
 	}
 
 	if (ctx->multiprogram == CCX_FALSE)
@@ -560,6 +575,7 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
+	memset(enc_ctx->dvb_lang, 0, sizeof(enc_ctx->dvb_lang));
 	if (cinfo)
 		if (cinfo->codec == CCX_CODEC_DVB)
 			enc_ctx->write_previous = 0;
