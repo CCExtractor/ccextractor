@@ -2,6 +2,7 @@
 -------------------
 - New: Allow output \0 terminated frames via --null-terminated
 - New: Added ASS/SSA \pos-based positioning for CEA-608 captions when layout is simple (1–2 rows) (#1726)
+- New: Auto-extract multi-language DVB subtitles into per-language files.(#2243)
 - Fix: Remove strdup() memory leaks in WebVTT styling encoder, fix invalid CSS rgba(0,256,0) green value, fix missing free(unescaped) on write-error path (#2154)
 - Fix: Prevent crash in Rust timing module when logging out-of-range PTS/FTS timestamps from malformed streams.
 - Fix: Resolve Windows MSVC debug build crash caused by cross-CRT invalid free on Rust-allocated output_filename (#2126)
