@@ -8,6 +8,12 @@ option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 option (VBI_DEBUG "Enable VBI decoder debug output" OFF)
 
+# HARDSUBX requires OCR (tesseract/leptonica) and FFmpeg
+if (WITH_HARDSUBX)
+  set (WITH_OCR ON CACHE BOOL "OCR required by HARDSUBX" FORCE)
+  set (WITH_FFMPEG ON CACHE BOOL "FFmpeg required by HARDSUBX" FORCE)
+endif (WITH_HARDSUBX)
+
 # Version number
 set (CCEXTRACTOR_VERSION_MAJOR 0)
 set (CCEXTRACTOR_VERSION_MINOR 96)
@@ -195,7 +201,6 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (PKG_CONFIG_FOUND AND WITH_FFMPEG)
 
 ########################################################
