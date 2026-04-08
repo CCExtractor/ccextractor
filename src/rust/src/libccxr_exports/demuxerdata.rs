@@ -4,7 +4,6 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_types::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
-use std::os::raw::c_uchar;
 use std::os::raw::{c_int, c_uint};
 
 /// Convert from C demuxer_data to Rust DemuxerData
@@ -362,7 +361,7 @@ mod tests {
         unsafe {
             copy_demuxer_data_from_rust(&mut c_data, &rust_data);
         }
-        
+
         assert_eq!(c_data.len, 100);
         assert_eq!(small_c_buffer, vec![0x42; 100]);
     }
