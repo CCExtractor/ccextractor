@@ -4,7 +4,6 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_types::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
-use std::os::raw::c_uchar;
 use std::os::raw::{c_int, c_uint};
 
 /// Convert from C demuxer_data to Rust DemuxerData
@@ -254,7 +253,11 @@ mod tests {
         };
 
         unsafe {
+            let original_ptr = c_data.buffer;
             copy_demuxer_data_from_rust(&mut c_data, &rust_data);
+
+            // Verify the pointer was NOT reassigned (the bug we're fixing)
+            assert_eq!(c_data.buffer, original_ptr);
 
             // Verify all fields were copied correctly
             assert_eq!(c_data.program_number, rust_data.program_number);
