@@ -402,9 +402,9 @@ struct ccx_demuxer *init_demuxer(void *parent, struct demuxer_cfg *cfg)
 	for (i = 0; i < cfg->nb_ts_cappid; i++)
 	{
 		if (ctx->codec == CCX_CODEC_ANY)
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE, 0, NULL);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, CCX_CODEC_NONE, 0, NULL, NULL);
 		else
-			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec, 0, NULL);
+			update_capinfo(ctx, cfg->ts_cappids[i], cfg->ts_datastreamtype, ctx->codec, 0, NULL, NULL);
 	}
 
 	ctx->flag_ts_forced_cappid = cfg->nb_ts_cappid ? CCX_TRUE : CCX_FALSE;

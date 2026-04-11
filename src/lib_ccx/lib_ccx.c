@@ -222,10 +222,8 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 	struct encoder_ctx *enc_ctx;
 	struct lib_cc_decode *dec_ctx;
 	struct lib_cc_decode *dec_ctx1;
-	int i;
 	list_for_each_entry_safe(dec_ctx, dec_ctx1, &lctx->dec_ctx_head, list, struct lib_cc_decode)
 	{
-		LLONG cfts;
 		void *saved_private_data = dec_ctx->private_data; // Save before close NULLs it
 		if (dec_ctx->codec == CCX_CODEC_DVB)
 			dvbsub_close_decoder(&dec_ctx->private_data);
@@ -248,7 +246,6 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		}
 
 		flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
-		cfts = get_fts(dec_ctx->timing, dec_ctx->current_field);
 		enc_ctx = get_encoder_by_pn(lctx, dec_ctx->program_number);
 		if (enc_ctx && dec_ctx->dec_sub.got_output == CCX_TRUE)
 		{
@@ -257,8 +254,16 @@ void dinit_libraries(struct lib_ccx_ctx **ctx)
 		}
 		list_del(&dec_ctx->list);
 		dinit_cc_decode(&dec_ctx);
-		if (enc_ctx)
+	}
+	/* Clean up all encoders separately.
+	   With multi-DVB, multiple decoders share the same program_number
+	   but have different language-specific encoders. Cleaning encoders
+	   inside the decoder loop caused wrong encoder pairing and double-free. */
+	{
+		struct encoder_ctx *enc_tmp;
+		list_for_each_entry_safe(enc_ctx, enc_tmp, &lctx->enc_ctx_head, list, struct encoder_ctx)
 		{
+			LLONG cfts = 0; // Use 0 as fallback since decoders are already freed
 			list_del(&enc_ctx->list);
 			dinit_encoder(&enc_ctx, cfts);
 		}
@@ -337,6 +342,7 @@ struct lib_cc_decode *update_decoder_list(struct lib_ccx_ctx *ctx)
 			dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
 			if (!dec_ctx->prev || !dec_ctx->dec_sub.prev)
 				ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list: Not enough memory for DVB context");
+			memset(dec_ctx->prev, 0, sizeof(struct lib_cc_decode));
 			memset(dec_ctx->dec_sub.prev, 0, sizeof(struct cc_subtitle));
 		}
 	}
@@ -351,6 +357,14 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	{
 		if (!cinfo || ctx->multiprogram == CCX_FALSE)
 		{
+			/* For DVB subtitles, match by private_data (per-PID decoder) */
+			if (cinfo && cinfo->codec == CCX_CODEC_DVB)
+			{
+				if (dec_ctx->program_number == cinfo->program_number &&
+				    dec_ctx->private_data == cinfo->codec_private_data)
+					return dec_ctx;
+				continue;
+			}
 			/* Update private_data from cinfo if available.
 			   This is needed after PAT changes when dinit_cap() freed the old context
 			   and a new cap_info was created with a new codec_private_data. */
@@ -375,7 +389,16 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	}
 	if (ctx->multiprogram == CCX_FALSE)
 	{
-		if (list_empty(&ctx->dec_ctx_head))
+		/* For DVB, always create a new per-PID decoder even in single-program mode,
+		   because each DVB subtitle PID has its own codec_private_data context. */
+		if (cinfo && cinfo->codec == CCX_CODEC_DVB)
+		{
+			dec_ctx = init_cc_decode(ctx->dec_global_setting);
+			if (!dec_ctx)
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In update_decoder_list_cinfo: Not enough memory allocating dec_ctx for DVB\n");
+			list_add_tail(&(dec_ctx->list), &(ctx->dec_ctx_head));
+		}
+		else if (list_empty(&ctx->dec_ctx_head))
 		{
 			dec_ctx = init_cc_decode(ctx->dec_global_setting);
 			if (!dec_ctx)
@@ -394,6 +417,15 @@ struct lib_cc_decode *update_decoder_list_cinfo(struct lib_ccx_ctx *ctx, struct 
 	// DVB related
 	dec_ctx->prev = NULL;
 	dec_ctx->dec_sub.prev = NULL;
+	if (cinfo && cinfo->codec == CCX_CODEC_DVB)
+	{
+		dec_ctx->prev = malloc(sizeof(struct lib_cc_decode));
+		dec_ctx->dec_sub.prev = malloc(sizeof(struct cc_subtitle));
+		if (!dec_ctx->prev || !dec_ctx->dec_sub.prev)
+			ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "update_decoder_list_cinfo: Not enough memory for DVB context");
+		memset(dec_ctx->prev, 0, sizeof(struct lib_cc_decode));
+		memset(dec_ctx->dec_sub.prev, 0, sizeof(struct cc_subtitle));
+	}
 
 	return dec_ctx;
 }
@@ -420,7 +452,18 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	list_for_each_entry(enc_ctx, &ctx->enc_ctx_head, list, struct encoder_ctx)
 	{
 		if (ctx->multiprogram == CCX_FALSE)
+		{
+			/* For DVB subtitles, match by language — skip non-DVB encoders */
+			if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
+			{
+				if (enc_ctx->dvb_lang[0] &&
+				    enc_ctx->program_number == pn &&
+				    strcmp(enc_ctx->dvb_lang, cinfo->lang) == 0)
+					return enc_ctx;
+				continue;
+			}
 			return enc_ctx;
+		}
 
 		if (enc_ctx->program_number == pn)
 			return enc_ctx;
@@ -429,6 +472,47 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
+
+	/* Create per-language DVB encoder only when there are 2+ DVB subtitle PIDs.
+	   Single-DVB-stream recordings fall through to the standard encoder path
+	   to preserve backward compatible filenames. */
+	if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
+	{
+		/* Count DVB subtitle PIDs in this program */
+		int dvb_pid_count = 0;
+		struct cap_info *ci;
+		list_for_each_entry(ci, &ctx->demux_ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
+		{
+			if (ci->codec == CCX_CODEC_DVB && ci->program_number == cinfo->program_number)
+				dvb_pid_count++;
+		}
+
+		if (dvb_pid_count >= 2)
+		{
+			struct encoder_cfg local_cfg = ccx_options.enc_cfg;
+			local_cfg.program_number = pn;
+			local_cfg.in_format = in_format;
+			char *basefilename = get_basename(ctx->basefilename);
+			char suffix[8];
+			snprintf(suffix, sizeof(suffix), "_%s", cinfo->lang);
+			local_cfg.output_filename = create_outfilename(basefilename, suffix, extension);
+			free(basefilename);
+
+			enc_ctx = init_encoder(&local_cfg);
+			if (enc_ctx)
+			{
+				enc_ctx->program_number = pn;
+				strncpy(enc_ctx->dvb_lang, cinfo->lang, 3);
+				enc_ctx->dvb_lang[3] = '\0';
+				list_add_tail(&enc_ctx->list, &ctx->enc_ctx_head);
+				enc_ctx->prev = NULL;
+				enc_ctx->write_previous = 0;
+			}
+			free(local_cfg.output_filename);
+			return enc_ctx;
+		}
+		/* Single DVB stream: fall through to standard encoder creation */
+	}
 
 	if (ctx->multiprogram == CCX_FALSE)
 	{
@@ -492,9 +576,16 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 	}
 	// DVB related
 	enc_ctx->prev = NULL;
-	if (cinfo)
-		if (cinfo->codec == CCX_CODEC_DVB)
-			enc_ctx->write_previous = 0;
+	if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
+	{
+		strncpy(enc_ctx->dvb_lang, cinfo->lang, 3);
+		enc_ctx->dvb_lang[3] = '\0';
+		enc_ctx->write_previous = 0;
+	}
+	else
+	{
+		memset(enc_ctx->dvb_lang, 0, sizeof(enc_ctx->dvb_lang));
+	}
 	return enc_ctx;
 }
 

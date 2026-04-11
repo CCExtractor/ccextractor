@@ -813,7 +813,17 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 	ctx->is_mkv = 0;
 	ctx->last_string = NULL;
 
-	ctx->transcript_settings = &opt->transcript_settings;
+	/* Deep-copy transcript_settings so the encoder owns it independently of
+	   the caller's encoder_cfg (which may be a stack-local variable). */
+	ctx->transcript_settings = malloc(sizeof(struct ccx_encoders_transcript_format));
+	if (!ctx->transcript_settings)
+	{
+		freep(&ctx->out);
+		freep(&ctx->buffer);
+		free(ctx);
+		return NULL;
+	}
+	memcpy(ctx->transcript_settings, &opt->transcript_settings, sizeof(struct ccx_encoders_transcript_format));
 	ctx->no_bom = opt->no_bom;
 	ctx->sentence_cap = opt->sentence_cap;
 	ctx->filter_profanity = opt->filter_profanity;

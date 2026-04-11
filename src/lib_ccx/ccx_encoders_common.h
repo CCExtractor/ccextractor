@@ -166,6 +166,7 @@ struct encoder_ctx
 	int new_sentence; // Capitalize next letter?
 
 	int program_number;
+	char dvb_lang[4]; /* ISO-639 language code for DVB subtitle encoder */
 	struct list_head list;
 
 	/* split-by-sentence stuff */
