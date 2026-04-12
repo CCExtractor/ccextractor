@@ -90,6 +90,8 @@ pub unsafe extern "C" fn edit_distance(
 ) -> c_int {
     // The actual edit_distance function
 
+    // NULL inputs are treated as empty strings in the FFI boundary.
+    // len1/len2 are assumed to be precomputed valid lengths provided by C code.
     if word1.is_null() && word2.is_null() {
         return 0;
     }
