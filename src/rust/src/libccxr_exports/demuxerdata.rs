@@ -256,7 +256,7 @@ mod tests {
             let original_ptr = c_data.buffer;
             copy_demuxer_data_from_rust(&mut c_data, &rust_data);
 
-            // Verify the pointer was NOT reassigned (the bug we're fixing)
+         
             assert_eq!(c_data.buffer, original_ptr);
 
             // Verify all fields were copied correctly
