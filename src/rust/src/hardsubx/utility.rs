@@ -90,6 +90,16 @@ pub unsafe extern "C" fn edit_distance(
 ) -> c_int {
     // The actual edit_distance function
 
+    if word1.is_null() && word2.is_null() {
+        return 0;
+    }
+    if word1.is_null() {
+        return len2;
+    }
+    if word2.is_null() {
+        return len1;
+    }
+
     let word1_string: &ffi::CStr = ffi::CStr::from_ptr(word1);
     let word2_string: &ffi::CStr = ffi::CStr::from_ptr(word2);
 
