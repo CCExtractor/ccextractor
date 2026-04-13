@@ -15,7 +15,7 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
     } else {
         (R, G, B)
     };
-    
+
     let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
 
     let hsv_rep = Hsv::from_color(rgb);
@@ -40,7 +40,7 @@ pub extern "C" fn rgb_to_lab(R: f32, G: f32, B: f32, L: &mut f32, a: &mut f32, b
     } else {
         (R, G, B)
     };
-    
+
     let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
 
     // Convert from sRGB to Lab (D65 white point is default)
