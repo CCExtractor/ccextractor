@@ -1,6 +1,11 @@
 #!/bin/bash
 echo "Obtaining Git commit"
-commit=(`git rev-parse HEAD 2>/dev/null`)
+if [ -n "$GIT_COMMIT_HASH_OVERRIDE" ]; then
+    commit="$GIT_COMMIT_HASH_OVERRIDE"
+    echo "Using injected commit hash: $commit"
+else
+    commit=(`git rev-parse HEAD 2>/dev/null`)
+fi
 if [ -z "$commit" ]; then
 	echo "Git command not present, trying folder approach"
 	if [ -d "../.git" ]; then 

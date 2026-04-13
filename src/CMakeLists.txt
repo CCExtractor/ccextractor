@@ -21,18 +21,25 @@ set (CCEXTRACTOR_VERSION_MINOR 96)
 # Get project directory
 get_filename_component(BASE_PROJ_DIR ../ ABSOLUTE)
 
-# Get the latest commit hash of the working branch
-IF(EXISTS "${BASE_PROJ_DIR}/.git")
-    execute_process(
-            COMMAND git rev-parse HEAD
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            OUTPUT_VARIABLE GIT_COMMIT_HASH
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-ELSE(EXISTS "${BASE_PROJ_DIR}/.git")
-    set(GIT_BRANCH "Unknown")
-    set(GIT_COMMIT_HASH "Unknown")
-ENDIF(EXISTS "${BASE_PROJ_DIR}/.git")
+# GIT_COMMIT_HASH can be injected via -DGIT_COMMIT_HASH=<value> for Homebrew
+# or any tarball-based build where no .git directory is present.
+# Source builds fall through to git rev-parse automatically.
+set(GIT_COMMIT_HASH "" CACHE STRING
+    "Build provenance override for tarball-based builds (Homebrew, released source tarball)")
+
+if(GIT_COMMIT_HASH STREQUAL "")
+    IF(EXISTS "${BASE_PROJ_DIR}/.git")
+        execute_process(
+                COMMAND git rev-parse HEAD
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                OUTPUT_VARIABLE GIT_COMMIT_HASH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    ELSE(EXISTS "${BASE_PROJ_DIR}/.git")
+        set(GIT_BRANCH "Unknown")
+        set(GIT_COMMIT_HASH "Unknown")
+    ENDIF(EXISTS "${BASE_PROJ_DIR}/.git")
+endif()
 
 #Get the date
 string(TIMESTAMP COMPILATION_DATE %Y-%m-%d)
