@@ -1,6 +1,7 @@
 use palette::{FromColor, Hsv, Lab, LinSrgb};
 
 /// Convert RGB values to HSV color space.
+/// Accepts RGB in [0.0, 1.0]. If values are > 1.0, they are assumed to be 0–255 and normalized.
 ///
 /// # Safety
 ///
@@ -8,7 +9,14 @@ use palette::{FromColor, Hsv, Lab, LinSrgb};
 /// - The references must remain valid for the duration of the function call
 #[no_mangle]
 pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V: &mut f32) {
-    let rgb = LinSrgb::new(R, G, B);
+    let max_val = R.max(G).max(B);
+    let (norm_r, norm_g, norm_b) = if max_val > 1.0 {
+        (R / 255.0, G / 255.0, B / 255.0)
+    } else {
+        (R, G, B)
+    };
+    
+    let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
 
     let hsv_rep = Hsv::from_color(rgb);
 
@@ -18,6 +26,7 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 }
 
 /// Convert RGB values to Lab color space.
+/// Accepts RGB in [0.0, 1.0]. If values are > 1.0, they are assumed to be 0–255 and normalized.
 ///
 /// # Safety
 ///
@@ -25,8 +34,14 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 /// - The references must remain valid for the duration of the function call
 #[no_mangle]
 pub extern "C" fn rgb_to_lab(R: f32, G: f32, B: f32, L: &mut f32, a: &mut f32, b: &mut f32) {
-    // Normalize input RGB from 0-255 to 0.0-1.0
-    let rgb = LinSrgb::new(R / 255.0, G / 255.0, B / 255.0);
+    let max_val = R.max(G).max(B);
+    let (norm_r, norm_g, norm_b) = if max_val > 1.0 {
+        (R / 255.0, G / 255.0, B / 255.0)
+    } else {
+        (R, G, B)
+    };
+    
+    let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
 
     // Convert from sRGB to Lab (D65 white point is default)
     let lab_rep = Lab::from_color(rgb);
