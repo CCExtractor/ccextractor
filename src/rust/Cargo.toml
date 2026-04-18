@@ -49,6 +49,7 @@ tempfile = "3.20.0"
 [features]
 wtv_debug = []
 enable_ffmpeg = []
+enable_mp4_ffmpeg = ["rsmpeg"]
 with_libcurl = []
 
 # hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
