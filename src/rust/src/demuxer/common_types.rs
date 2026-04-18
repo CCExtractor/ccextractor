@@ -2,6 +2,7 @@ use crate::bindings::{lib_ccx_ctx, list_head};
 use crate::ffi_alloc;
 use lib_ccxr::common::{Codec, Decoder608Report, DecoderDtvccReport, StreamMode, StreamType};
 use lib_ccxr::time::Timestamp;
+use std::ffi::c_char;
 use std::ptr::null_mut;
 
 // Size of the Startbytes Array in CcxDemuxer - const 1MB
@@ -79,7 +80,7 @@ pub struct CapInfo {
     pub prev_counter: i32,
     pub codec_private_data: *mut std::ffi::c_void,
     pub ignore: i32,
-    pub lang: [i8; 4],
+    pub lang: [c_char; 4],
 
     /**
      * List joining all streams in TS
