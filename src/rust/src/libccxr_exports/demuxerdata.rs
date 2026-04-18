@@ -4,7 +4,6 @@ use crate::ctorust::FromCType;
 use crate::demuxer::common_types::CcxRational;
 use crate::demuxer::demuxer_data::DemuxerData;
 use lib_ccxr::common::{BufferdataType, Codec};
-use std::os::raw::c_uchar;
 use std::os::raw::{c_int, c_uint};
 
 /// Convert from C demuxer_data to Rust DemuxerData
@@ -37,6 +36,10 @@ pub unsafe fn copy_demuxer_data_to_rust(c_data: *const demuxer_data) -> DemuxerD
 /// - This function copies the buffer content, not just the pointer
 #[allow(clippy::unnecessary_cast)]
 pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: &DemuxerData) {
+    if c_data.is_null() {
+        return;
+    }
+
     (*c_data).program_number = rust_data.program_number as c_int;
     (*c_data).stream_pid = rust_data.stream_pid as c_int;
     if let Some(codec) = rust_data.codec {
@@ -44,8 +47,13 @@ pub unsafe fn copy_demuxer_data_from_rust(c_data: *mut demuxer_data, rust_data: 
     }
     (*c_data).bufferdatatype = rust_data.bufferdatatype.to_ctype();
 
-    (*c_data).buffer = rust_data.buffer as *mut c_uchar;
-    (*c_data).len = rust_data.len;
+    if !rust_data.buffer.is_null() && !(*c_data).buffer.is_null() {
+        let copy_len = std::cmp::min((*c_data).len, rust_data.len);
+        std::ptr::copy_nonoverlapping(rust_data.buffer, (*c_data).buffer, copy_len);
+        (*c_data).len = copy_len;
+    } else {
+        (*c_data).len = 0;
+    }
 
     (*c_data).rollover_bits = rust_data.rollover_bits as c_uint;
     (*c_data).pts = rust_data.pts as i64;
@@ -245,7 +253,10 @@ mod tests {
         };
 
         unsafe {
+            let original_ptr = c_data.buffer;
             copy_demuxer_data_from_rust(&mut c_data, &rust_data);
+
+            assert_eq!(c_data.buffer, original_ptr);
 
             // Verify all fields were copied correctly
             assert_eq!(c_data.program_number, rust_data.program_number);
@@ -257,6 +268,8 @@ mod tests {
             // Verify buffer content was copied
             let copied_buffer = std::slice::from_raw_parts(c_data.buffer, c_data.len);
             assert_eq!(copied_buffer, test_buffer);
+            // Verify the underlying C buffer received the copied data
+            assert_eq!(c_buffer[0], 0xDE);
         }
     }
 
@@ -332,14 +345,13 @@ mod tests {
 
     #[test]
     fn test_copy_demuxer_from_rust_buffer_size_limits() {
-        let mut large_buffer = vec![0x42; 1000]; // Large buffer
+        let mut large_buffer = vec![0x42; 1000];
         let rust_data = DemuxerData {
             buffer: large_buffer.as_mut_ptr(),
             len: 100,
             ..Default::default()
         };
 
-        // Create smaller C buffer
         let mut small_c_buffer = vec![0u8; 100];
         let mut c_data = unsafe {
             demuxer_data {
@@ -351,12 +363,10 @@ mod tests {
 
         unsafe {
             copy_demuxer_data_from_rust(&mut c_data, &rust_data);
-
-            // Should only copy what fits
-            assert_eq!(c_data.len, 100);
-            let copied_buffer = std::slice::from_raw_parts(c_data.buffer, c_data.len);
-            assert_eq!(copied_buffer, &vec![0x42; 100]);
         }
+
+        assert_eq!(c_data.len, 100);
+        assert_eq!(small_c_buffer, vec![0x42; 100]);
     }
 
     #[test]
