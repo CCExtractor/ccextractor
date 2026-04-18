@@ -33,6 +33,13 @@ while [[ $# -gt 0 ]]; do
       USE_SYSTEM_LIBS=true
       shift
       ;;
+    -commit-hash)
+      # Inject build provenance for tarball builds (Homebrew, released source tarball, etc.)
+      # where no .git directory is present. Passed through to pre-build.sh
+      # via the exported env var GIT_COMMIT_HASH_OVERRIDE.
+      export GIT_COMMIT_HASH_OVERRIDE="$2"
+      shift 2
+      ;;
     -*)
       echo "Unknown option $1"
       exit 1
