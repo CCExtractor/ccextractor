@@ -1296,7 +1296,7 @@ impl OptionsExt for Options {
             if t == 0 {
                 t = OffsetDateTime::now_utc().unix_timestamp() as u64;
             }
-            *UTC_REFVALUE.write().unwrap() = t as u64;
+            *UTC_REFVALUE.write().unwrap() = t;
             self.noautotimeref = true;
         }
 

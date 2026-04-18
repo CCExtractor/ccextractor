@@ -189,16 +189,12 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 None
             }
         } else if codec_type == ffi::AVMEDIA_TYPE_SUBTITLE {
-            if codec_tag == FOURCC_C608 {
+            if codec_tag == FOURCC_C608 || codec_id == ffi::AV_CODEC_ID_EIA_608 {
                 Some(TrackType::Cea608)
             } else if codec_tag == FOURCC_C708 {
                 Some(TrackType::Cea708)
-            } else if codec_tag == FOURCC_TX3G {
+            } else if codec_tag == FOURCC_TX3G || codec_id == ffi::AV_CODEC_ID_MOV_TEXT {
                 Some(TrackType::Tx3g)
-            } else if codec_id == ffi::AV_CODEC_ID_MOV_TEXT {
-                Some(TrackType::Tx3g)
-            } else if codec_id == ffi::AV_CODEC_ID_EIA_608 {
-                Some(TrackType::Cea608)
             } else {
                 None
             }
@@ -396,7 +392,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
         ffi::av_packet_unref(&mut pkt);
 
         packet_count += 1;
-        if packet_count % 100 == 0 {
+        if packet_count.is_multiple_of(100) {
             ccx_mp4_report_progress(ctx, packet_count, packet_count + 100);
         }
     }

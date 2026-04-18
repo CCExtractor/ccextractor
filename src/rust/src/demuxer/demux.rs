@@ -279,14 +279,13 @@ impl CcxDemuxer<'_> {
                 // Force stream mode to myth
                 self.stream_mode = StreamMode::Myth;
             }
-            Some(false) => {
+            Some(false)
                 if matches!(
                     self.stream_mode,
                     StreamMode::ElementaryOrNotFound | StreamMode::Program
-                ) && detect_myth(self) != 0
-                {
-                    self.stream_mode = StreamMode::Myth;
-                }
+                ) && detect_myth(self) != 0 =>
+            {
+                self.stream_mode = StreamMode::Myth;
             }
             _ => {}
         }
