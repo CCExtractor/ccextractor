@@ -101,11 +101,8 @@ void process_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, st
 	for (int seq = 0; seq < SORTBUF; seq++)
 	{
 
-		// For container formats (H.264 in MP4/MKV/TS, MPEG-2 PES in TS/PS),
-		// reset cb_field counters before processing each frame's captions.
-		// Container formats associate all captions with the frame's PTS directly,
-		// so the sub-frame cb_field offset is not meaningful.
-		if (dec_ctx->in_bufferdatatype == CCX_H264 || dec_ctx->in_bufferdatatype == CCX_PES)
+		// We rely on this.
+		if (dec_ctx->in_bufferdatatype == CCX_H264)
 			reset_cb = 1;
 
 		// If fts_now is unchanged we rely on cc block counting,
