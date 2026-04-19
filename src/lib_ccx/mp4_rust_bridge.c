@@ -295,9 +295,9 @@ void *ccx_mp4_vobsub_init(void)
 }
 
 int ccx_mp4_vobsub_process(void *vob_opaque, struct lib_ccx_ctx *ctx,
-			    unsigned char *data, unsigned int data_length,
-			    long long start_ms, long long end_ms,
-			    struct cc_subtitle *sub)
+			   unsigned char *data, unsigned int data_length,
+			   long long start_ms, long long end_ms,
+			   struct cc_subtitle *sub)
 {
 	struct vobsub_ctx *vob_ctx = (struct vobsub_ctx *)vob_opaque;
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
