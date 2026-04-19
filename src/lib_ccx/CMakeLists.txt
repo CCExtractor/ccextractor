@@ -38,6 +38,7 @@ if (WITH_FFMPEG)
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
 
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_FFMPEG_MP4")
 endif (WITH_FFMPEG)
 
 if (WITH_OCR)
@@ -59,7 +60,10 @@ endif (WITH_OCR)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
-target_link_libraries (ccx ${EXTRA_LIBS})
+# PRIVATE prevents transitive propagation to consumers (ccextractor).
+# The parent CMakeLists.txt adds all needed libs explicitly, controlling
+# link order so FFmpeg libs appear after ccx_rust (required by GNU ld).
+target_link_libraries (ccx PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
 
 if (WITH_HARDSUBX)

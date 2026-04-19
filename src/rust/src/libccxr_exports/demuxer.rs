@@ -529,7 +529,7 @@ pub unsafe extern "C" fn ccxr_demuxer_get_file_size(ctx: *mut ccx_demuxer) -> i6
         return -1;
     }
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
-    demux_ctx.get_filesize() as i64
+    demux_ctx.get_filesize()
 }
 
 // Extern function for ccx_demuxer_print_cfg

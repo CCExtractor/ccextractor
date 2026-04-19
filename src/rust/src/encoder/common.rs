@@ -256,7 +256,7 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
         unsafe { OutputFormat::from_ctype(ctx.write_format).unwrap_or(OutputFormat::Raw) };
 
     match write_format {
-        OutputFormat::Ccd => {
+        OutputFormat::Ccd
             if write_raw(
                 out.fh,
                 CCD_HEADER.as_ptr() as *const c_void,
@@ -266,23 +266,21 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
                     out.fh,
                     ctx.encoded_crlf.as_ptr() as *const c_void,
                     ctx.encoded_crlf_length as usize,
-                ) == -1
-            {
-                info!("Unable to write CCD header to file\n");
-                return -1;
-            }
+                ) == -1 =>
+        {
+            info!("Unable to write CCD header to file\n");
+            return -1;
         }
 
-        OutputFormat::Scc => {
+        OutputFormat::Scc
             if write_raw(
                 out.fh,
                 SCC_HEADER.as_ptr() as *const c_void,
                 SCC_HEADER.len() - 1,
-            ) == -1
-            {
-                info!("Unable to write SCC header to file\n");
-                return -1;
-            }
+            ) == -1 =>
+        {
+            info!("Unable to write SCC header to file\n");
+            return -1;
         }
 
         OutputFormat::Srt
@@ -395,16 +393,15 @@ pub fn write_subtitle_file_header(ctx: &mut encoder_ctx, out: &mut ccx_s_write) 
             }
         }
 
-        OutputFormat::Raw => {
+        OutputFormat::Raw
             if write_raw(
                 out.fh,
                 BROADCAST_HEADER.as_ptr() as *const c_void,
                 BROADCAST_HEADER.len(),
-            ) < BROADCAST_HEADER.len() as isize
-            {
-                info!("Unable to write Raw header\n");
-                return -1;
-            }
+            ) < BROADCAST_HEADER.len() as isize =>
+        {
+            info!("Unable to write Raw header\n");
+            return -1;
         }
 
         OutputFormat::Mcc => {
