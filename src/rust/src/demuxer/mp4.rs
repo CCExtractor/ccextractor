@@ -11,12 +11,7 @@
 //! - `c708` subtitle (CEA-708 via ccdp)
 //! - `tx3g` / `mov_text` timed-text subtitles
 //!
-//! # Known limitations
-//! - **dvdsub / bitmap subtitles in MP4** are not supported. Samples such as
-//!   `1f3e951d516b.mp4` contain `subp` tracks with DVD-style bitmap subtitles,
-//!   which neither the GPAC backend nor this FFmpeg backend currently decodes.
-//!   Extracting these requires rendering bitmaps and running OCR, which is out
-//!   of scope for the MP4 demuxer itself; track it separately if needed.
+//! - `dvdsub` (DVD bitmap subtitles) via OCR through vobsub_decoder
 
 #[cfg(feature = "enable_mp4_ffmpeg")]
 use rsmpeg::avformat::AVFormatContextInput;
@@ -67,6 +62,18 @@ extern "C" {
 
     fn ccx_mp4_report_progress(ctx: *mut lib_ccx_ctx, cur: c_uint, total: c_uint);
 
+    fn ccx_mp4_vobsub_init() -> *mut std::ffi::c_void;
+    fn ccx_mp4_vobsub_process(
+        vob_ctx: *mut std::ffi::c_void,
+        ctx: *mut lib_ccx_ctx,
+        data: *mut u8,
+        data_length: c_uint,
+        start_ms: i64,
+        end_ms: i64,
+        sub: *mut cc_subtitle,
+    ) -> c_int;
+    fn ccx_mp4_vobsub_free(vob_ctx: *mut std::ffi::c_void);
+
     fn update_decoder_list(ctx: *mut lib_ccx_ctx) -> *mut lib_cc_decode;
     fn update_encoder_list(ctx: *mut lib_ccx_ctx) -> *mut encoder_ctx;
 
@@ -83,6 +90,7 @@ enum TrackType {
     Cea608,
     Cea708,
     Tx3g,
+    DvdSub,
 }
 
 /// Information about a track we want to process
@@ -195,6 +203,8 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 Some(TrackType::Cea708)
             } else if codec_tag == FOURCC_TX3G || codec_id == ffi::AV_CODEC_ID_MOV_TEXT {
                 Some(TrackType::Tx3g)
+            } else if codec_id == ffi::AV_CODEC_ID_DVD_SUBTITLE {
+                Some(TrackType::DvdSub)
             } else {
                 None
             }
@@ -209,6 +219,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 TrackType::Cea608 => "CEA-608",
                 TrackType::Cea708 => "CEA-708",
                 TrackType::Tx3g => "tx3g",
+                TrackType::DvdSub => "dvdsub",
             };
             let msg = format!(
                 "Track {}, type={} timescale={}\n\0",
@@ -238,7 +249,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
         .filter(|t| {
             matches!(
                 t.track_type,
-                TrackType::Cea608 | TrackType::Cea708 | TrackType::Tx3g
+                TrackType::Cea608 | TrackType::Cea708 | TrackType::Tx3g | TrackType::DvdSub
             )
         })
         .count();
@@ -279,6 +290,14 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
         }
     }
 
+    // Init vobsub decoder if we have dvdsub tracks
+    let has_dvdsub = tracks.iter().any(|t| t.track_type == TrackType::DvdSub);
+    let vob_ctx = if has_dvdsub {
+        ccx_mp4_vobsub_init()
+    } else {
+        std::ptr::null_mut()
+    };
+
     // Read packets and dispatch
     let mut mp4_ret: c_int = 0;
     let mut pkt: ffi::AVPacket = std::mem::zeroed();
@@ -286,6 +305,8 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
 
     let mut packet_count: u32 = 0;
     let mut has_tx3g = false;
+    let mut prev_dvdsub_pts: i64 = -1;
+    let mut prev_dvdsub_data: Vec<u8> = Vec::new();
 
     loop {
         let ret = ffi::av_read_frame(fmt_ctx.as_ptr() as *mut _, &mut pkt);
@@ -386,6 +407,37 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                         }
                     }
                 }
+                TrackType::DvdSub => {
+                    if pkt.size > 0 && !pkt.data.is_null() && !vob_ctx.is_null() {
+                        let stream = *(*fmt_ctx.as_ptr()).streams.add(track.stream_index);
+                        let tb = (*stream).time_base;
+                        let cur_pts_ms = if pts != AV_NOPTS_VALUE && tb.den > 0 {
+                            pts * 1000 * tb.num as i64 / tb.den as i64
+                        } else {
+                            0
+                        };
+
+                        // Flush previous dvdsub packet now that we know its end time
+                        if !prev_dvdsub_data.is_empty() && prev_dvdsub_pts >= 0 {
+                            let end_ms = cur_pts_ms;
+                            ccx_mp4_vobsub_process(
+                                vob_ctx,
+                                ctx,
+                                prev_dvdsub_data.as_mut_ptr(),
+                                prev_dvdsub_data.len() as c_uint,
+                                prev_dvdsub_pts,
+                                end_ms,
+                                sub,
+                            );
+                            mp4_ret = 1;
+                        }
+
+                        // Buffer current packet
+                        let data_slice = std::slice::from_raw_parts(pkt.data, pkt.size as usize);
+                        prev_dvdsub_data = data_slice.to_vec();
+                        prev_dvdsub_pts = cur_pts_ms;
+                    }
+                }
             }
         }
 
@@ -400,6 +452,25 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
     // Flush last tx3g subtitle
     if has_tx3g {
         ccx_mp4_flush_tx3g(ctx, sub);
+    }
+
+    // Flush last dvdsub packet (use 5s default duration)
+    if !prev_dvdsub_data.is_empty() && prev_dvdsub_pts >= 0 && !vob_ctx.is_null() {
+        let end_ms = prev_dvdsub_pts + 5000;
+        ccx_mp4_vobsub_process(
+            vob_ctx,
+            ctx,
+            prev_dvdsub_data.as_mut_ptr(),
+            prev_dvdsub_data.len() as c_uint,
+            prev_dvdsub_pts,
+            end_ms,
+            sub,
+        );
+    }
+
+    // Free vobsub decoder
+    if !vob_ctx.is_null() {
+        ccx_mp4_vobsub_free(vob_ctx);
     }
 
     // End-of-stream: encode any caption that finished on the last processed
