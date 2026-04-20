@@ -91,6 +91,17 @@ extern "C"
 	 */
 	void ccx_mp4_report_progress(struct lib_ccx_ctx *ctx, unsigned int cur, unsigned int total);
 
+	/*
+	 * VobSub (DVD subtitle) bridge.
+	 * Wraps vobsub_decoder.c for use from the Rust FFmpeg path.
+	 */
+	void *ccx_mp4_vobsub_init(void);
+	int ccx_mp4_vobsub_process(void *vob_ctx, struct lib_ccx_ctx *ctx,
+				   unsigned char *data, unsigned int data_length,
+				   long long start_ms, long long end_ms,
+				   struct cc_subtitle *sub);
+	void ccx_mp4_vobsub_free(void *vob_ctx);
+
 #ifdef __cplusplus
 }
 #endif

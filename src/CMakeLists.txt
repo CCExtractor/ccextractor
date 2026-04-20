@@ -307,6 +307,9 @@ if (NOT WIN32 AND NOT APPLE)
       -Wl,--undefined=ccx_mp4_process_tx3g_packet
       -Wl,--undefined=ccx_mp4_flush_tx3g
       -Wl,--undefined=ccx_mp4_report_progress
+      -Wl,--undefined=ccx_mp4_vobsub_init
+      -Wl,--undefined=ccx_mp4_vobsub_process
+      -Wl,--undefined=ccx_mp4_vobsub_free
       -Wl,--undefined=mprint
       -Wl,--undefined=update_decoder_list
       -Wl,--undefined=update_encoder_list)

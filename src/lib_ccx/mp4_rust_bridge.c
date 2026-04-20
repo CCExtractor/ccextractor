@@ -15,6 +15,7 @@
 #include "ccx_encoders_mcc.h"
 #include "ccx_mp4.h"
 #include "mp4_rust_bridge.h"
+#include "vobsub_decoder.h"
 
 /* Walk a length-prefixed AVCC/HVCC sample, invoking do_NAL() per NAL unit.
  * AVC and HEVC share the iteration; is_hevc only flips the decoder state and
@@ -277,6 +278,72 @@ void ccx_mp4_report_progress(struct lib_ccx_ctx *ctx, unsigned int cur, unsigned
 		int cur_sec = (int)(get_fts(dec_ctx->timing, dec_ctx->current_field) / 1000);
 		activity_progress(progress, cur_sec / 60, cur_sec % 60);
 		ctx->last_reported_progress = progress;
+	}
+}
+
+/* ── VobSub / DVD subtitle bridge ───────────────────────────────── */
+
+void *ccx_mp4_vobsub_init(void)
+{
+	if (!vobsub_ocr_available())
+	{
+		mprint("VOBSUB to text conversion requires OCR support.\n"
+		       "Please rebuild CCExtractor with -DWITH_OCR=ON\n");
+		return NULL;
+	}
+	return init_vobsub_decoder();
+}
+
+int ccx_mp4_vobsub_process(void *vob_opaque, struct lib_ccx_ctx *ctx,
+			   unsigned char *data, unsigned int data_length,
+			   long long start_ms, long long end_ms,
+			   struct cc_subtitle *sub)
+{
+	struct vobsub_ctx *vob_ctx = (struct vobsub_ctx *)vob_opaque;
+	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
+	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
+
+	set_current_pts(dec_ctx->timing, start_ms * MPEG_CLOCK_FREQ / 1000);
+	set_fts(dec_ctx->timing);
+
+	struct cc_subtitle vob_sub;
+	memset(&vob_sub, 0, sizeof(vob_sub));
+
+	int ret = vobsub_decode_spu(vob_ctx, data, (size_t)data_length,
+				    start_ms, end_ms, &vob_sub);
+
+	if (ret == 0 && vob_sub.got_output)
+	{
+		encode_sub(enc_ctx, &vob_sub);
+		sub->got_output = 1;
+
+		if (vob_sub.data)
+		{
+			struct cc_bitmap *rect = (struct cc_bitmap *)vob_sub.data;
+			for (int j = 0; j < vob_sub.nb_data; j++)
+			{
+				if (rect[j].data0)
+					free(rect[j].data0);
+				if (rect[j].data1)
+					free(rect[j].data1);
+#ifdef ENABLE_OCR
+				if (rect[j].ocr_text)
+					free(rect[j].ocr_text);
+#endif
+			}
+			free(vob_sub.data);
+		}
+	}
+
+	return ret;
+}
+
+void ccx_mp4_vobsub_free(void *vob_opaque)
+{
+	struct vobsub_ctx *vob_ctx = (struct vobsub_ctx *)vob_opaque;
+	if (vob_ctx)
+	{
+		delete_vobsub_decoder(&vob_ctx);
 	}
 }
 
