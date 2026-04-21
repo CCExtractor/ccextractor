@@ -150,6 +150,7 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
 	data->rollup_from_popon = 0;
+	data->ts_first_char_rollup_transition = -1;
 	data->output_format = output_format;
 	data->cc_to_stdout = cc_to_stdout;
 	data->textprinted = 0;
@@ -246,6 +247,12 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 			context->cursor_column++;
 		if (context->ts_start_of_current_line == -1)
 			context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+		// First char after a pop-on -> roll-up transition: remember its FTS so
+		// write_cc_buffer can use it if EOF fires before a scrolling CR.
+		// Unlike ts_start_of_current_line, this field is NOT touched by
+		// intermediate CR commands (changes=0 CRs overwrite ts_start_of_current_line).
+		if (context->rollup_from_popon && context->ts_first_char_rollup_transition == -1)
+			context->ts_first_char_rollup_transition = get_fts(context->timing, context->my_field);
 		context->ts_last_char_received = get_fts(context->timing, context->my_field);
 	}
 }
@@ -310,6 +317,17 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
 	    context->ts_start_of_current_line != -1)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
+
+	// Pop-on -> roll-up transition that never saw a scrolling CR (e.g. EOF
+	// with fewer lines than the roll-up window). The CR handler never ran,
+	// so back-fill current_visible_start_ms from the first-char FTS instead
+	// of emitting a caption starting at 0.
+	if (context->rollup_from_popon && context->ts_first_char_rollup_transition > 0)
+	{
+		context->current_visible_start_ms = context->ts_first_char_rollup_transition;
+		context->rollup_from_popon = 0;
+		context->ts_first_char_rollup_transition = -1;
+	}
 
 	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end(context->timing, context->my_field);
@@ -758,6 +776,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				// Start time will be set when CR causes scrolling (matching FFmpeg behavior)
 				context->rollup_from_popon = 1;
 				context->ts_start_of_current_line = -1;
+				context->ts_first_char_rollup_transition = -1;
 			}
 			erase_memory(context, false);
 
@@ -817,6 +836,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				{
 					context->current_visible_start_ms = context->ts_start_of_current_line;
 					context->rollup_from_popon = 0;
+					context->ts_first_char_rollup_transition = -1;
 				}
 
 				// Only if the roll up would actually cause a line to disappear we write the buffer
