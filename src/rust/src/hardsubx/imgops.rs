@@ -1,7 +1,7 @@
 use palette::{FromColor, Hsv, Lab, LinSrgb};
 
 /// Convert RGB values to HSV color space.
-/// Accepts RGB in [0.0, 1.0]. If values are > 1.0, they are assumed to be 0–255 and normalized.
+/// Accepts RGB in [0, 255] and normalizes to [0.0, 1.0] internally.
 ///
 /// # Safety
 ///
@@ -9,14 +9,7 @@ use palette::{FromColor, Hsv, Lab, LinSrgb};
 /// - The references must remain valid for the duration of the function call
 #[no_mangle]
 pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V: &mut f32) {
-    let max_val = R.max(G).max(B);
-    let (norm_r, norm_g, norm_b) = if max_val > 1.0 {
-        (R / 255.0, G / 255.0, B / 255.0)
-    } else {
-        (R, G, B)
-    };
-
-    let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
+    let rgb = LinSrgb::new(R / 255.0, G / 255.0, B / 255.0);
 
     let hsv_rep = Hsv::from_color(rgb);
 
@@ -26,7 +19,7 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 }
 
 /// Convert RGB values to Lab color space.
-/// Accepts RGB in [0.0, 1.0]. If values are > 1.0, they are assumed to be 0–255 and normalized.
+/// Accepts RGB in [0, 255] and normalizes to [0.0, 1.0] internally.
 ///
 /// # Safety
 ///
@@ -34,14 +27,7 @@ pub extern "C" fn rgb_to_hsv(R: f32, G: f32, B: f32, H: &mut f32, S: &mut f32, V
 /// - The references must remain valid for the duration of the function call
 #[no_mangle]
 pub extern "C" fn rgb_to_lab(R: f32, G: f32, B: f32, L: &mut f32, a: &mut f32, b: &mut f32) {
-    let max_val = R.max(G).max(B);
-    let (norm_r, norm_g, norm_b) = if max_val > 1.0 {
-        (R / 255.0, G / 255.0, B / 255.0)
-    } else {
-        (R, G, B)
-    };
-
-    let rgb = LinSrgb::new(norm_r, norm_g, norm_b);
+    let rgb = LinSrgb::new(R / 255.0, G / 255.0, B / 255.0);
 
     // Convert from sRGB to Lab (D65 white point is default)
     let lab_rep = Lab::from_color(rgb);
@@ -89,25 +75,25 @@ mod test {
         let (mut l, mut a, mut b) = (0.0, 0.0, 0.0);
 
         // Red (255, 0, 0)
-        rgb_to_lab(1.0, 0.0, 0.0, &mut l, &mut a, &mut b);
+        rgb_to_lab(255.0, 0.0, 0.0, &mut l, &mut a, &mut b);
         assert_eq!(l.floor(), 53.0);
         assert_eq!(a.floor(), 80.0);
         assert_eq!(b.floor(), 67.0);
 
         // Green (0, 255, 0)
-        rgb_to_lab(0.0, 1.0, 0.0, &mut l, &mut a, &mut b);
+        rgb_to_lab(0.0, 255.0, 0.0, &mut l, &mut a, &mut b);
         assert_eq!(l.floor(), 87.0);
         assert_eq!(a.floor(), -87.0);
         assert_eq!(b.floor(), 83.0);
 
         // Blue (0, 0, 255)
-        rgb_to_lab(0.0, 0.0, 1.0, &mut l, &mut a, &mut b);
+        rgb_to_lab(0.0, 0.0, 255.0, &mut l, &mut a, &mut b);
         assert_eq!(l.floor(), 32.0);
         assert_eq!(a.floor(), 79.0);
         assert_eq!(b.floor(), -108.0);
 
         // White (255, 255, 255)
-        rgb_to_lab(1.0, 1.0, 1.0, &mut l, &mut a, &mut b);
+        rgb_to_lab(255.0, 255.0, 255.0, &mut l, &mut a, &mut b);
         assert_eq!(l.floor(), 100.0);
         assert_eq!(a.floor(), 0.0);
         assert_eq!(b.floor(), 0.0);
