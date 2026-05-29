@@ -25,6 +25,8 @@ on:
     - 'mac/**'
     - 'package_creators/**'
     - 'src/rust/**'
+  release:
+    types: [published]
 jobs:
   build_shell:
     runs-on: macos-latest
@@ -46,6 +48,13 @@ jobs:
       with:
         name: CCExtractor mac build
         path: ./mac/artifacts
+    - name: Upload macOS binary to Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v3
+      with:
+        files: ./mac/artifacts/ccextractor
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build_shell_system_libs:
     # Test building with system libraries via pkg-config (for Homebrew formula compatibility)
     runs-on: macos-latest
