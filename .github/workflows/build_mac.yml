@@ -42,17 +42,28 @@ jobs:
       working-directory: ./mac
     - name: Prepare artifacts
       run: mkdir ./mac/artifacts
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+        else
+          VERSION=$(sed -n 's/#define VERSION "//;s/"//p' src/lib_ccx/lib_ccx.h 2>/dev/null | head -1 || echo "dev")
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "filename=ccextractor-${VERSION}-macos" >> "$GITHUB_OUTPUT"
     - name: Copy release artifact
-      run: cp ./mac/ccextractor ./mac/artifacts/
+      run: cp ./mac/ccextractor ./mac/artifacts/${{ steps.version.outputs.filename }}
     - uses: actions/upload-artifact@v7
       with:
         name: CCExtractor mac build
-        path: ./mac/artifacts
+        path: ./mac/artifacts/${{ steps.version.outputs.filename }}
     - name: Upload macOS binary to Release
       if: github.event_name == 'release'
       uses: softprops/action-gh-release@v3
       with:
-        files: ./mac/artifacts/ccextractor
+        files: ./mac/artifacts/${{ steps.version.outputs.filename }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build_shell_system_libs:
