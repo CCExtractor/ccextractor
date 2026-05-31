@@ -152,7 +152,7 @@ jobs:
       run:  wix build -arch ${{ matrix.wix_arch }} -ext WixToolset.UI.wixext -d "AppVersion=${{ steps.get_version.outputs.VERSION }}" -o CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}.msi installer.wxs CustomUI.wxs
       working-directory: ./windows
     - name: Upload as asset
-      uses: AButler/upload-release-assets@v3.0
+      uses: AButler/upload-release-assets@v4.0
       with:
         files: './windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}.msi;./windows/CCExtractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}${{ matrix.suffix }}_win_portable.zip'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
       - name: Create .tar.gz without git and windows folders
         run: tar -pczf ./ccextractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.tar.gz --exclude "ccextractor/windows" --exclude "ccextractor/.git" ccextractor
       - name: Upload as asset
-        uses: AButler/upload-release-assets@v3.0
+        uses: AButler/upload-release-assets@v4.0
         with:
           files: './ccextractor.${{ steps.get_version.outputs.DISPLAY_VERSION }}.tar.gz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
