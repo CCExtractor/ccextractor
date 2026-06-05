@@ -1,0 +1,58 @@
+name: Create Release Checksums
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., v0.96.6)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  checksums:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ github.event.inputs.release_tag }}" \
+            --repo ${{ github.repository }} \
+            --json tagName > /dev/null
+
+      - name: Download all release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release_assets
+          gh release download "${{ github.event.inputs.release_tag }}" \
+            --repo ${{ github.repository }} \
+            --dir release_assets \
+            --skip-existing
+
+      - name: Sanity check asset count
+        run: |
+          COUNT=$(ls release_assets | wc -l)
+          echo "Downloaded $COUNT assets"
+          if [ "$COUNT" -lt 5 ]; then
+            echo "ERROR: Only $COUNT assets found. Not all builds may have completed yet."
+            exit 1
+          fi
+
+      - name: Generate checksums.sha256
+        run: |
+          cd release_assets
+          rm -f checksums.sha256
+          sha256sum * | sort -k2 > checksums.sha256
+          cat checksums.sha256
+
+      - name: Upload checksums.sha256 to Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          files: release_assets/checksums.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
