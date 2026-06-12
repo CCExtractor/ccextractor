@@ -1361,19 +1361,38 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 	if (enc_ctx->out->filename != NULL)
 	{ // Close and release the previous handle
 		free(enc_ctx->out->filename);
+		enc_ctx->out->filename = NULL;
 		close(enc_ctx->out->fh);
+		enc_ctx->out->fh = -1;
 	}
+	
 	const char *ext = get_file_extension(ctx->write_format);
 	char suffix[32];
 	snprintf(suffix, sizeof(suffix), "_%d", track_id);
 	char *basename = get_basename(enc_ctx->out->original_filename);
-	if (basename != NULL)
+	if (basename == NULL)
 	{
-		enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
-		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		free(basename);
+		return;
 	}
+	
+	enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
+	if (enc_ctx->out->filename == NULL)
+	{
+		free(basename);
+		return;
+	}
+	
+	enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	free(basename);
 
+	if (enc_ctx->out->fh < 0)
+	{
+		// Clean up if the file descriptor failed to open
+		free(enc_ctx->out->filename);
+		enc_ctx->out->filename = NULL;
+		return;
+	}
+	
 	write_subtitle_file_header(enc_ctx, enc_ctx->out);
 
 	// Reset counters as we switch output file.
