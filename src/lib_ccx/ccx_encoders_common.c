@@ -1352,35 +1352,47 @@ unsigned int get_font_encoded(struct encoder_ctx *ctx, unsigned char *buffer, in
 
 void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, int track_id)
 {
-	// Do nothing when in "report" mode
 	if (enc_ctx == NULL || enc_ctx->out == NULL)
+		return;
+
+	const char *ext = get_file_extension(ctx->write_format);
+
+	char suffix[32];
+
+	snprintf(suffix, sizeof(suffix), "_%d", track_id);
+	// Prepare new values BEFORE freeing old ones
+	char *basename = get_basename(enc_ctx->out->original_filename);
+
+	if (basename == NULL)
+		return;
+	char *new_filename = create_outfilename(basename, suffix, ext);
+
+	free(basename);
+
+	if (new_filename == NULL)
+		return;
+	int new_fh = open(new_filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+
+	if (new_fh == -1)
 	{
+		free(new_filename);
 		return;
 	}
-
+	// Only now is it safe to free and replace the old values
 	if (enc_ctx->out->filename != NULL)
-	{ // Close and release the previous handle
-		free(enc_ctx->out->filename);
-		close(enc_ctx->out->fh);
-	}
-	const char *ext = get_file_extension(ctx->write_format);
-	char suffix[32];
-	snprintf(suffix, sizeof(suffix), "_%d", track_id);
-	char *basename = get_basename(enc_ctx->out->original_filename);
-	if (basename != NULL)
 	{
-		enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
-		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		free(basename);
+		free(enc_ctx->out->filename);
+		enc_ctx->out->filename = NULL;
+		close(enc_ctx->out->fh);
+		enc_ctx->out->fh = -1;
 	}
 
+	enc_ctx->out->filename = new_filename;
+	enc_ctx->out->fh = new_fh;
 	write_subtitle_file_header(enc_ctx, enc_ctx->out);
-
-	// Reset counters as we switch output file.
 	enc_ctx->cea_708_counter = 0;
 	enc_ctx->srt_counter = 0;
 }
-
 /**
  * Get or create the output file for a specific teletext page (issue #665)
  * Creates output files on-demand with suffix _pNNN (e.g., output_p891.srt)
