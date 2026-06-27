@@ -1361,18 +1361,25 @@ void switch_output_file(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx, in
 	if (enc_ctx->out->filename != NULL)
 	{ // Close and release the previous handle
 		free(enc_ctx->out->filename);
+		enc_ctx->out->filename = NULL;
 		close(enc_ctx->out->fh);
 	}
 	const char *ext = get_file_extension(ctx->write_format);
 	char suffix[32];
 	snprintf(suffix, sizeof(suffix), "_%d", track_id);
 	char *basename = get_basename(enc_ctx->out->original_filename);
-	if (basename != NULL)
+	if (basename == NULL)
 	{
-		enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
-		enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
-		free(basename);
+		// Without a basename there is no valid filename/handle to write
+		// to; bail out instead of falling through to write_subtitle_file_header()
+		// with the NULLed filename above (or, before that fix, a dangling
+		// pointer to the just-freed previous filename - see issue #2273).
+		mprint("WARNING: Unable to determine basename for output file when switching to track %d.\n", track_id);
+		return;
 	}
+	enc_ctx->out->filename = create_outfilename(basename, suffix, ext);
+	enc_ctx->out->fh = open(enc_ctx->out->filename, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
+	free(basename);
 
 	write_subtitle_file_header(enc_ctx, enc_ctx->out);
 
