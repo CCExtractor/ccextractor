@@ -262,7 +262,14 @@ impl dtvcc_service_decoder {
             warn!("dtvcc_process_p16: Window has to be defined first");
             return;
         }
-        let sym = dtvcc_symbol::new_16(block[0], block[1]);
+        let Some((&byte0, &byte1)) = block.get(0).zip(block.get(1)) else {
+            warn!(
+                "dtvcc_process_p16: P16 command needs 2 data bytes but block only has {}; skipping",
+                block.len()
+            );
+            return;
+        };
+        let sym = dtvcc_symbol::new_16(byte0, byte1);
         debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
         self.process_character(sym);
     }
@@ -1474,6 +1481,16 @@ mod test {
 
         // 4..infinite -> Invalid print direction
         decoder.windows[1].attribs.print_direction = 4;
+    }
+
+    #[test]
+    fn test_process_p16_insufficient_bytes() {
+        let mut decoder = setup_test_decoder_with_memory();
+
+        decoder.process_p16(&[]);
+        decoder.process_p16(&[b'a']);
+
+        cleanup_test_decoder(&mut decoder);
     }
 
     #[test]
