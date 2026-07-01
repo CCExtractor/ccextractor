@@ -262,14 +262,14 @@ impl dtvcc_service_decoder {
             warn!("dtvcc_process_p16: Window has to be defined first");
             return;
         }
-        let Some((&byte0, &byte1)) = block.get(0).zip(block.get(1)) else {
+        if block.len() < 2 {
             warn!(
-                "dtvcc_process_p16: P16 command needs 2 data bytes but block only has {}; skipping",
+                "dtvcc_process_p16: needs 2 data bytes but block only has {}; skipping",
                 block.len()
             );
             return;
-        };
-        let sym = dtvcc_symbol::new_16(byte0, byte1);
+        }
+        let sym = dtvcc_symbol::new_16(block[0], block[1]);
         debug!("dtvcc_process_p16: [{:4X}]", sym.sym);
         self.process_character(sym);
     }
@@ -1484,16 +1484,6 @@ mod test {
     }
 
     #[test]
-    fn test_process_p16_insufficient_bytes() {
-        let mut decoder = setup_test_decoder_with_memory();
-
-        decoder.process_p16(&[]);
-        decoder.process_p16(&[b'a']);
-
-        cleanup_test_decoder(&mut decoder);
-    }
-
-    #[test]
     fn test_process_p16() {
         let mut decoder = setup_test_decoder_with_memory();
         let block = [b'a', b'b'] as [c_uchar; 2];
@@ -1508,6 +1498,16 @@ mod test {
                 dtvcc_symbol::new_16(block[0], block[1])
             );
         }
+
+        cleanup_test_decoder(&mut decoder);
+    }
+
+    #[test]
+    fn test_process_p16_insufficient_bytes() {
+        let mut decoder = setup_test_decoder_with_memory();
+
+        decoder.process_p16(&[]);
+        decoder.process_p16(&[b'a']);
 
         cleanup_test_decoder(&mut decoder);
     }
