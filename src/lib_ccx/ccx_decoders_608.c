@@ -822,6 +822,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			if (context->output_format == CCX_OF_TRANSCRIPT)
 			{
 				write_cc_line(context, sub);
+				context->ts_start_of_current_line = -1;
 			}
 
 			// In transcript mode, CR doesn't write the whole screen, to avoid
@@ -849,14 +850,14 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				}
 			}
 			roll_up(context); // The roll must be done anyway of course.
-			// When in pop-on to roll-up transition with changes=0 (first CR, only 1 line),
-			// preserve the CR time so the next caption uses the display state change time,
-			// not the character typing time. This matches FFmpeg's timing behavior.
-			if (context->rollup_from_popon && !changes)
-			{
-				context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
-			}
-			else
+			// Pop-on -> roll-up transition, roll-up window not yet full (changes==0):
+			// don't reset ts_start_of_current_line. If still -1 (first CR after the
+			// transition), write_char()'s own `== -1` guard (present since 2014,
+			// commit 617d2d3) sets it to the fts of the first character written after
+			// this CR - which is what the reference corpus anchors caption start
+			// times to. If already set (a later, redundant CR before the window
+			// fills), this preserves it instead of resetting on every CR.
+			if (!context->rollup_from_popon || changes)
 			{
 				context->ts_start_of_current_line = -1; // Unknown.
 			}
