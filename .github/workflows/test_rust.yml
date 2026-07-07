@@ -18,7 +18,7 @@ jobs:
       run:
         working-directory: ./src/rust
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: cache
         uses: actions/cache@v6
         with:

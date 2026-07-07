@@ -37,7 +37,7 @@ jobs:
             outdir: ""
     steps:
     - name: Check out repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Get the version
       id: get_version
       run: |
@@ -159,7 +159,7 @@ jobs:
   create_linux_package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: ./ccextractor
       - name: Get the version
