@@ -204,6 +204,9 @@ impl OptionsExt for Options {
                 self.messages_target = OutputTarget::Quiet;
                 self.print_file_reports = true;
                 self.demux_cfg.ts_allprogram = true;
+                // Probe both EIA-608 fields so CC3/CC4 presence is reported accurately (issue #2177).
+                // Runs before --output-field parsing, so an explicit field choice still overrides this.
+                self.extract = 12;
             }
             OutFormat::Raw => self.write_format = OutputFormat::Raw,
             OutFormat::Smptett => self.write_format = OutputFormat::SmpteTt,
@@ -1573,6 +1576,7 @@ impl OptionsExt for Options {
             && self.cc_to_stdout
             && self.extract != 0
             && self.extract == 12
+            && !self.print_file_reports
         {
             fatal!(
                 cause = ExitCause::IncompatibleParameters;
@@ -1918,6 +1922,15 @@ pub mod tests {
         assert_eq!(options.write_format, OutputFormat::Null);
         assert!(options.print_file_reports);
         assert!(options.demux_cfg.ts_allprogram);
+        // issue #2177: report mode probes both fields by default
+        assert_eq!(options.extract, 12);
+    }
+
+    #[test]
+    fn test_out_report_explicit_field_overrides_both() {
+        let (options, _) = parse_args(&["--out", "report", "--output-field", "1"]);
+        assert!(options.print_file_reports);
+        assert_eq!(options.extract, 1);
     }
 
     // =========================================================================
