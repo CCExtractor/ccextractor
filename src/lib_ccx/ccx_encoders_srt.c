@@ -6,8 +6,13 @@
 #include "ocr.h"
 #include "ccextractor.h"
 
+extern int ccxr_write_stringz_as_srt(const char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);
+extern int ccxr_write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context);
+extern int ccxr_write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context);
+
 /* Helper function to write SRT to a specific output file (issue #665 - teletext multi-page)
    Takes output file descriptor and counter pointer as parameters */
+#if 0 /* C fallback — Rust is always available */
 static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end,
 					  int out_fh, unsigned int *srt_counter)
 {
@@ -83,13 +88,12 @@ static int write_stringz_as_srt_to_output(char *string, struct encoder_ctx *cont
 
 	return 0;
 }
-
+#endif
 /* The timing here is not PTS based, but output based, i.e. user delay must be accounted for
    if there is any */
 int write_stringz_as_srt(char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end)
 {
-	return write_stringz_as_srt_to_output(string, context, ms_start, ms_end,
-					      context->out->fh, &context->srt_counter);
+	return ccxr_write_stringz_as_srt(string, context, ms_start, ms_end);
 }
 
 int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
@@ -156,6 +160,8 @@ int write_cc_bitmap_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 
 int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *context)
 {
+	return ccxr_write_cc_subtitle_as_srt(sub, context);
+#if 0 /* C fallback — Rust is always available */
 	int ret = 0;
 	struct cc_subtitle *osub = sub;
 	struct cc_subtitle *lsub = sub;
@@ -191,10 +197,13 @@ int write_cc_subtitle_as_srt(struct cc_subtitle *sub, struct encoder_ctx *contex
 	}
 
 	return ret;
+#endif
 }
 
 int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *context)
 {
+	return ccxr_write_cc_buffer_as_srt(data, context);
+#if 0 /* C fallback — Rust is always available */
 	int used;
 	unsigned h1, m1, s1, ms1;
 	unsigned h2, m2, s2, ms2;
@@ -311,4 +320,5 @@ int write_cc_buffer_as_srt(struct eia608_screen *data, struct encoder_ctx *conte
 	write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	// printf("$ = %s\n",context->encoded_crlf);
 	return wrote_something;
+#endif
 }
