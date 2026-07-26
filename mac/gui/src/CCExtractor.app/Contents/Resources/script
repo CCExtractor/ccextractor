@@ -1,9 +1,15 @@
 #!/bin/bash
 
+function escape_as() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
 function display() {
+  local escaped
+  escaped="$(escape_as "$1")"
   osascript <<EOT
     tell app "System Events"
-      display dialog "$1" buttons {"OK"} default button 1 with title "CCExtractor"
+      display dialog "$escaped" buttons {"OK"} default button 1 with title "CCExtractor"
       return
     end tell
 EOT
