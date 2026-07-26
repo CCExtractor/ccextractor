@@ -143,7 +143,7 @@ INPUT_SOURCE=0
 # By default its 1, ccextractor will process input files in
 # sequence as if they were all one large file i.e
 # split by a generic, non video-aware tool. If you
-# are processing video hat was split with a editing
+# are processing video that was split with a editing
 # tool, use 0 so ccextractor doesn't try to rebuild
 # the original timing.
 # This tag take 0 or 1 in input

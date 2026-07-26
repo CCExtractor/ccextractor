@@ -311,7 +311,7 @@ pub struct Args {
     /// By default, ccextractor will process input files in
     /// sequence as if they were all one large file (i.e.
     /// split by a generic, non video-aware tool. If you
-    /// are processing video hat was split with a editing
+    /// are processing video that was split with a editing
     /// tool, use --videoedited so ccextractor doesn't try to rebuild
     /// the original timing.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]

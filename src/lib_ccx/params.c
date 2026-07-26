@@ -195,7 +195,7 @@ void print_usage(void)
 	mprint("       --videoedited: By default, ccextractor will process input files in\n");
 	mprint("                       sequence as if they were all one large file (i.e.\n");
 	mprint("                       split by a generic, non video-aware tool. If you\n");
-	mprint("                       are processing video hat was split with a editing\n");
+	mprint("                       are processing video that was split with a editing\n");
 	mprint("                       tool, use --ve so ccextractor doesn't try to rebuild\n");
 	mprint("                       the original timing.\n");
 	mprint("   -s --stream [secs]: Consider the file as a continuous stream that is\n");
