@@ -1054,8 +1054,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
 				}
 			}
-			// it would be nice, if subtitle hides on previous video frame, so we contract 40 ms (1 frame @25 fps)
-			ctx->page_buffer.hide_timestamp = timestamp - 40;
+			// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early".
+			// This is wrong for non-25fps content and causes a visible ~41ms blink gap
+			// in rolling teletext subs, because the WebVTT exporter already subtracts
+			// 1ms to prevent timestamp boundary collisions. That 1ms is sufficient.
+			ctx->page_buffer.hide_timestamp = timestamp;
 			if (ctx->page_buffer.hide_timestamp > timestamp)
 			{
 				ctx->page_buffer.hide_timestamp = 0;
