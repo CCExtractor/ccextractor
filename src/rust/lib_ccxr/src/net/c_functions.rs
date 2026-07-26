@@ -61,16 +61,25 @@ pub fn net_send_epg(
 /// Rust equivalent for `net_tcp_read` function in C. Uses Rust-native types as input and output.
 pub fn net_tcp_read(buffer: &mut [u8]) -> Option<usize> {
     let mut recv_source = SOURCE.write().unwrap();
-    if let Ok(b) = recv_source.as_mut().unwrap().recv_header_or_cc() {
+    if let Ok(b) = recv_source
+        .as_mut()
+        .unwrap()
+        .recv_header_or_cc(buffer.len())
+    {
         if let Some(block) = b {
-            buffer[..block.data().len()].copy_from_slice(block.data());
-            Some(block.data().len())
+            copy_to_buffer(block.data(), buffer)
         } else {
             Some(0)
         }
     } else {
         None
     }
+}
+
+fn copy_to_buffer(data: &[u8], buffer: &mut [u8]) -> Option<usize> {
+    let destination = buffer.get_mut(..data.len())?;
+    destination.copy_from_slice(data);
+    Some(data.len())
 }
 
 /// Rust equivalent for `net_udp_read` function in C. Uses Rust-native types as input and output.
@@ -96,4 +105,25 @@ pub fn start_udp_srv(src: Option<&'static str>, addr: Option<&'static str>, port
         address: addr,
         port,
     }));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::copy_to_buffer;
+
+    #[test]
+    fn copy_to_buffer_rejects_oversized_data() {
+        let mut buffer = [0_u8; 3];
+
+        assert_eq!(copy_to_buffer(b"four", &mut buffer), None);
+        assert_eq!(buffer, [0; 3]);
+    }
+
+    #[test]
+    fn copy_to_buffer_copies_data_that_fits() {
+        let mut buffer = [0_u8; 4];
+
+        assert_eq!(copy_to_buffer(b"four", &mut buffer), Some(4));
+        assert_eq!(&buffer, b"four");
+    }
 }
