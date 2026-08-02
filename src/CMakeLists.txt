@@ -67,13 +67,16 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/lib_hash)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng)
 
+# libpng NEON sources are needed on any arm64/aarch64 target, not just Darwin
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+  include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
+  aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
+endif()
+
 # Check if the operating system is macOS (Darwin)
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm64")
-    # ARM Macs
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     include_directories("/opt/homebrew/include")
-    include_directories(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm)
-    aux_source_directory(${PROJECT_SOURCE_DIR}/thirdparty/libpng/arm SOURCEFILE)
   else()
     include_directories("/usr/local/include")
   endif()
