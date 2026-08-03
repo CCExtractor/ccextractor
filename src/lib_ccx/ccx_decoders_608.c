@@ -317,18 +317,18 @@ int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub)
 	if (context->mode == MODE_FAKE_ROLLUP_1 && // Use the actual start of data instead of last buffer change
 	    context->ts_start_of_current_line != -1)
 		context->current_visible_start_ms = context->ts_start_of_current_line;
-
 	// Pop-on -> roll-up transition that never saw a scrolling CR (e.g. EOF
 	// with fewer lines than the roll-up window). The CR handler never ran,
 	// so back-fill current_visible_start_ms from the first-char FTS instead
 	// of emitting a caption starting at 0.
-	if (context->rollup_from_popon && context->ts_first_char_rollup_transition > 0)
+	if (context->rollup_from_popon &&
+	    context->ts_first_char_rollup_transition > 0 &&
+	    context->current_visible_start_ms <= 0)
 	{
 		context->current_visible_start_ms = context->ts_first_char_rollup_transition;
 		context->rollup_from_popon = 0;
 		context->ts_first_char_rollup_transition = -1;
 	}
-
 	start_time = context->current_visible_start_ms;
 	end_time = get_visible_end(context->timing, context->my_field);
 	sub->type = CC_608;
