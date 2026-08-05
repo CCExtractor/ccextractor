@@ -1121,8 +1121,7 @@ static int dvbsub_parse_object_segment(void *dvb_ctx, const uint8_t *buf,
 	}
 	else if (coding_method == 1)
 	{
-		mprint("dvbsub_parse_object_segment(): character-coded (string) subtitle objects are not supported. Giving up on this object.\n");
-		return -1;
+		mprint("dvbsub_parse_object_segment(): character-coded (string) subtitle objects are not supported. This object will be blank; other objects/regions in this packet are still processed normally.\n");
 	}
 	else
 	{
