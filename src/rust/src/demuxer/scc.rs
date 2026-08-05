@@ -292,11 +292,11 @@ mod tests {
 
         // 24fps - 24 frames = 1 second
         let time_24 = parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24).unwrap();
-        assert!(time_24 >= 999 && time_24 <= 1001); // Approximately 1 second
+        assert!((999..=1001).contains(&time_24)); // Approximately 1 second
 
         // 30fps - 30 frames = 1 second
         let time_30 = parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30).unwrap();
-        assert!(time_30 >= 999 && time_30 <= 1001); // Approximately 1 second
+        assert!((999..=1001).contains(&time_30)); // Approximately 1 second
 
         // Drop-frame separator (semicolon)
         assert_eq!(
