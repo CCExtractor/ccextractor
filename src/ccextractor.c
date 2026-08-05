@@ -9,6 +9,10 @@ CI verification run: 2025-12-19T08:30 - Testing merged fixes from PRs #1847 and 
 #include <stdio.h>
 #include <locale.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
 volatile int terminate_asap = 0;
 
 struct ccx_s_options ccx_options;
@@ -432,6 +436,24 @@ int start_ccx()
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
+	// On Windows, the standard argv is encoded in the local ANSI code page.
+	// We need it in UTF-8, so we fetch the Unicode command line and convert it.
+	int wargc;
+	wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+	if (wargv)
+	{
+		argv = (char **)malloc(wargc * sizeof(char *));
+		argc = wargc;
+		for (int i = 0; i < wargc; i++)
+		{
+			int size = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0, NULL, NULL);
+			argv[i] = (char *)malloc(size);
+			WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, argv[i], size, NULL, NULL);
+		}
+		LocalFree(wargv);
+	}
+#endif
 	setlocale(LC_ALL, ""); // Supports non-English CCs
 			       // Use POSIX locale for numbers so we get "." as decimal separator and no
 			       // thousands' groupoing instead of what the locale might say
