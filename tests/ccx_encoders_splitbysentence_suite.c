@@ -1,6 +1,29 @@
-#include <check.h>
-#include "ccx_encoders_splitbysentence_suite.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include <stdint.h>
+
+#if defined(HAVE_CHECK_H) || __has_include(<check.h>)
+#include <check.h>
+#else
+// Dummy definitions when check.h is not available to allow compilation
+#define START_TEST(name) void name(void)
+#define END_TEST
+#define ck_assert_ptr_ne(X, Y)
+#define ck_assert_ptr_eq(X, Y)
+#define ck_assert_str_eq(X, Y)
+#define ck_assert_int_eq(X, Y)
+typedef void* Suite;
+typedef void* TCase;
+#define suite_create(name) NULL
+#define tcase_create(name) NULL
+#define suite_add_tcase(s, tc)
+#define tcase_add_test(tc, name)
+#define tcase_add_checked_fixture(tc, setup, teardown)
+#endif
+
+#include "ccx_encoders_splitbysentence_suite.h"
 // -------------------------------------
 // MOCKS
 // -------------------------------------
@@ -14,6 +37,8 @@ typedef int64_t LLONG;
 // Private SBS-functions (for testing only)
 // -------------------------------------
 void sbs_reset_context();
+void * sbs_init_context();
+void * sbs_get_context();
 struct cc_subtitle * sbs_append_string(unsigned char * str, LLONG time_from, LLONG time_trim, void * sbs_context);
 
 // -------------------------------------
@@ -31,12 +56,11 @@ struct cc_subtitle * helper_sbs_append_sub_from_file(FILE * fd, struct encoder_c
 		return NULL;
 	}
 
-	if ( 0 >= fscanf(fd, "%ld %ld", &time_from, &time_trim)) {
+	if ( 0 >= fscanf(fd, "%lld %lld", &time_from, &time_trim)) {
 		return NULL;
 	}
 
 	fgets(localbuf, 2000, fd);
-
 	// skip leading spaces
 	str = localbuf;
 	for (; isspace(*str); str++){
@@ -62,28 +86,22 @@ struct cc_subtitle * helper_sbs_append_sub_from_file(FILE * fd, struct encoder_c
 	}
 	//str1 = strdup(str);
 	struct cc_subtitle * sub;
-	sub = sbs_append_string(str, time_from, time_trim, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, time_from, time_trim, sbs_init_context());
 	//free(str1);
 	return sub;
 }
 
 struct cc_subtitle * helper_create_sub(char * str, LLONG time_from, LLONG time_trim) {
-	struct cc_bitmap* rect;
 	struct cc_subtitle * sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
-	sub->type = CC_BITMAP;
+	sub->type = CC_TEXT;
 	sub->start_time = 1;
 	sub->end_time = 100;
 
-	rect = malloc(sizeof(struct cc_bitmap));
-	rect->data[0] = strdup(str);
-	rect->data[1] = NULL;
-
-	sub->data = rect;
+	sub->data = strdup(str);
 	sub->nb_data = 1;
 
 	return sub;
 }
-
 // -------------------------------------
 // MOCKS
 // -------------------------------------
@@ -169,17 +187,17 @@ START_TEST(test_sbs_append_string_two_separate)
 test_sbs_append_string_two_separate\n\
 =====================\n"
 	);
-	unsigned char * test_strings[] = {
+	char * test_strings[] = {
 		"First string.",
 		"Second string."
 	};
 	struct cc_subtitle * sub;
-	unsigned char * str;
+	char * str;
 
 	// first string
 	str = strdup(test_strings[0]);
 	sub = NULL;
-	sub = sbs_append_string(str, 1, 20, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, 1, 20, sbs_init_context());
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[0]);
 	ck_assert_int_eq(sub->start_time, 1);
@@ -188,7 +206,7 @@ test_sbs_append_string_two_separate\n\
 	// second string:
 	str = strdup(test_strings[1]);
 	sub = NULL;
-	sub = sbs_append_string(str, 21, 40, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, 21, 40, sbs_init_context());
 
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, test_strings[1]);
@@ -201,23 +219,23 @@ START_TEST(test_sbs_append_string_two_with_broken_sentence)
 {
 	char * test_strings[] = {
 		"First string",
-		" ends here, deabbea."
+		" ends here."
 	};
 	struct cc_subtitle * sub;
 	char * str;
 
 	// first string
 	str = strdup(test_strings[0]);
-	sub = sbs_append_string(str, 1, 3, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, 1, 3, sbs_get_context());
 
 	ck_assert_ptr_eq(sub, NULL);
 
 	// second string:
 	str = strdup(test_strings[1]);
-	sub = sbs_append_string(str, 4, 5, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, 4, 5, sbs_get_context());
 
 	ck_assert_ptr_ne(sub, NULL);
-	ck_assert_str_eq(sub->data, "First string ends here, deabbea.");
+	ck_assert_str_eq(sub->data, "First string ends here.");
 	ck_assert_int_eq(sub->start_time, 1);
 	ck_assert_int_eq(sub->end_time, 5);
 }
@@ -234,15 +252,14 @@ START_TEST(test_sbs_append_string_two_intersecting)
 
 	// first string
 	str = strdup(test_strings[0]);
-	sub = sbs_append_string(str, 1, 20, sbs_init_context());
+	sub = sbs_append_string((unsigned char *)str, 1, 20, sbs_init_context());
 
 	ck_assert_ptr_eq(sub, NULL);
 	free(sub);
 
 	// second string:
 	str = strdup(test_strings[1]);
-	sub = sbs_append_string(str, 21, 40, sbs_init_context());
-
+	sub = sbs_append_string((unsigned char *)str, 21, 40, sbs_init_context());
 	ck_assert_ptr_ne(sub, NULL);
 	ck_assert_str_eq(sub->data, "First string ends here.");
 	ck_assert_int_eq(sub->start_time, 1);

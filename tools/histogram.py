@@ -16,7 +16,7 @@ from io import open
 class Line(object):
     def __init__(self, lines):
         lines = [line.replace("\n", "").strip() for line in lines]
-        self.id = int(lines[0]) # the first line is the number of the subtile
+        self.id = int(lines[0]) # the first line is the number of the subtitle
         self.start_time, self.end_time = lines[1].split(" --> ")
         self.content = lines[2:]
         

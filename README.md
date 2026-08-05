@@ -11,8 +11,7 @@ CCExtractor is a tool used to produce subtitles for TV recordings from almost an
 
 Subtitles are important for many people. If you're learning a new language, subtitles are a great way to learn it from movies or TV shows. If you are hard of hearing, subtitles can help you better understand what's happening on the screen. We aim to make it easy to generate subtitles by using the command line tool or Windows GUI.
 
-The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) and master being the most stable branch.
-
+The official repository is ([CCExtractor/ccextractor](https://github.com/CCExtractor/ccextractor)) with master being the most stable branch.
 ### **Features**
 
 - Extract subtitles in real-time
