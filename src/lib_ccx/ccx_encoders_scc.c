@@ -96,8 +96,22 @@ static unsigned int calculate_caption_bytes(const struct eia608_screen *data)
 				prev_color = data->colors[row][col];
 			}
 
-			// Text character
-			char_count++;
+			// Text character. Special/extended chars are not written as one byte:
+			// a special char (0x80-0x8f) costs the 2-byte 608 code, and an extended
+			// char (0x90-0xcf) additionally carries a fallback base char before it.
+			// Counting them as 1 byte made the preroll start too late.
+			if (data->characters[row][col] >= 0x90)
+			{
+				char_count += 3;
+			}
+			else if (data->characters[row][col] >= 0x80)
+			{
+				char_count += 2;
+			}
+			else
+			{
+				char_count++;
+			}
 			prev_col = col;
 		}
 
@@ -610,12 +624,14 @@ void check_padding(const int fd, bool disassemble, unsigned int *bytes_written)
  *   special  0x80-0x8f: hi=0x11, lo=c-0x50
  *   extended 0x90-0xaf: hi=0x12, lo=c-0x70
  *   extended 0xb0-0xcf: hi=0x13, lo=c-0x90
- * (hi is the odd-channel value; caller adds 8 for field 2.)
+ * (hi is the channel-1 value; caller adds 8 for channel 2, i.e. CC2/CC4.)
  *
- * Returns the fallback base character transmitted immediately before the extended
- * code, which a decoder lacking extended-character support displays before the extended
- * code backspace-replaces it. When the char's UTF-8 form is a single ASCII byte we reuse it
- * (matches real streams/FFmpeg, e.g. apostrophe -> 0x27 -> "a7"); otherwise a space.
+ * Returns the fallback base character transmitted immediately before an EXTENDED
+ * code, which a decoder lacking extended-character support displays before the
+ * extended code backspace-replaces it. When the char's UTF-8 form is a single ASCII
+ * byte we reuse it (matches real streams/FFmpeg, e.g. apostrophe -> 0x27 -> "a7");
+ * otherwise a space. The return value is unused for special chars, which are
+ * stand-alone and are not preceded by a base character.
  */
 static unsigned char get_extended_scc_code(unsigned char c, unsigned char *hi, unsigned char *lo)
 {
@@ -631,6 +647,13 @@ static unsigned char get_extended_scc_code(unsigned char c, unsigned char *hi, u
 	}
 	else
 	{
+		// The decoder never produces codes above 0xcf (get_char_in_utf_8 maps
+		// 0x80-0xcf and nothing beyond), so clamp rather than emit a lo byte
+		// outside the valid 0x20-0x3f range.
+		if (c > 0xcf)
+		{
+			c = 0xcf;
+		}
 		*hi = 0x13;
 		*lo = c - 0x90;
 	}
@@ -660,22 +683,35 @@ void write_character(const int fd, const unsigned char channel, const unsigned c
 		return;
 	}
 
-	// SCC: special/extended chars (>= 0x80) are not valid single-byte characters. Emit a
-	// padded fallback base char followed by the two-byte extended code, which destructively
-	// backspace-replaces it (e.g. apostrophe -> "a7 80 92 29"). check_padding keeps the
-	// extended pair 2-byte aligned.
+	// SCC: special/extended chars (>= 0x80) are not valid single-byte characters, so emit
+	// the two-byte EIA-608 code they came from.
+	//
+	// EXTENDED chars (0x90-0xcf, hi 0x12/0x13) destructively backspace-replace the cell
+	// before them (ccx_decoders_608.c handle_extended() decrements cursor_column), so the
+	// stream must carry a fallback base char for them to overwrite -- apostrophe becomes
+	// "a7 80 92 29".
+	//
+	// SPECIAL chars (0x80-0x8f, hi 0x11) are stand-alone: handle_double() writes them
+	// without moving the cursor back. Emitting a base char for those would leave it on
+	// screen, inserting a spurious space before every one: a row starting with a music
+	// note came back one column further right on re-decode.
 	if (character >= 0x80)
 	{
 		unsigned char hi, lo;
 		unsigned char base = get_extended_scc_code(character, &hi, &lo);
 		if (!is_odd_channel(channel))
-			hi += 8; // field 2 (CC3/CC4) uses 0x19/0x1a/0x1b
+			hi += 8; // channel 2 (CC2/CC4) uses 0x19/0x1a/0x1b
 
-		if (*bytes_written % 2 == 0)
-			write_wrapped(fd, " ", 1);
-		fdprintf(fd, "%02x", odd_parity(base));
-		++*bytes_written;
+		if (character >= 0x90)
+		{
+			if (*bytes_written % 2 == 0)
+				write_wrapped(fd, " ", 1);
+			fdprintf(fd, "%02x", odd_parity(base));
+			++*bytes_written;
+		}
 
+		// The two-byte code has to start at an even offset so it lands inside a single
+		// SCC word; otherwise it straddles two frames and is read as two other codes.
 		check_padding(fd, disassemble, bytes_written);
 
 		if (*bytes_written % 2 == 0)
@@ -1054,9 +1090,16 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 					else
 					{
 						// Column - 1 because the preamble code is going to
-						// move the cursor to the right
-						position_code = get_preamble_code(row, column - 1);
-						tab_offset_code = get_tab_offset_code(column - 1);
+						// move the cursor to the right. At column 0 there is
+						// no cell to the left: column - 1 wraps to 255 in the
+						// unsigned char parameter and indexes control_codes[]
+						// far out of bounds (row 12 yielded code 186 against
+						// CONTROL_CODE_MAX 147, crashing --out=ccd). Keep the
+						// preamble at column 0 and let the mid-row code take
+						// the first cell, as the space branch above does.
+						const unsigned char pac_column = column > 0 ? column - 1 : 0;
+						position_code = get_preamble_code(row, pac_column);
+						tab_offset_code = get_tab_offset_code(pac_column);
 					}
 					font_code = get_font_code(data->fonts[row][column], data->colors[row][column]);
 				}
