@@ -604,19 +604,91 @@ void check_padding(const int fd, bool disassemble, unsigned int *bytes_written)
 	}
 }
 
-void write_character(const int fd, const unsigned char character, const bool disassemble, unsigned int *bytes_written)
+/**
+ * Reverse-map a CCExtractor internal special/extended char code (>= 0x80) back to
+ * its EIA-608 two-byte code. Mirrors ccx_decoders_608.c handle_double/handle_extended:
+ *   special  0x80-0x8f: hi=0x11, lo=c-0x50
+ *   extended 0x90-0xaf: hi=0x12, lo=c-0x70
+ *   extended 0xb0-0xcf: hi=0x13, lo=c-0x90
+ * (hi is the odd-channel value; caller adds 8 for field 2.)
+ *
+ * Returns the fallback base character transmitted immediately before the extended
+ * code, which a decoder lacking extended-character support displays before the extended
+ * code backspace-replaces it. When the char's UTF-8 form is a single ASCII byte we reuse it
+ * (matches real streams/FFmpeg, e.g. apostrophe -> 0x27 -> "a7"); otherwise a space.
+ */
+static unsigned char get_extended_scc_code(unsigned char c, unsigned char *hi, unsigned char *lo)
 {
-	if (disassemble)
+	if (c <= 0x8f)
 	{
-		write_wrapped(fd, &character, 1);
+		*hi = 0x11;
+		*lo = c - 0x50;
+	}
+	else if (c <= 0xaf)
+	{
+		*hi = 0x12;
+		*lo = c - 0x70;
 	}
 	else
 	{
+		*hi = 0x13;
+		*lo = c - 0x90;
+	}
+
+	unsigned char utf8[4];
+	int n = get_char_in_utf_8(utf8, c);
+	return (n == 1 && utf8[0] < 0x80) ? utf8[0] : ' ';
+}
+
+void write_character(const int fd, const unsigned char channel, const unsigned char character, const bool disassemble, unsigned int *bytes_written)
+{
+	if (disassemble)
+	{
+		// CCD: emit the real UTF-8 glyph for special/extended chars instead of the
+		// raw internal byte (which rendered as garbage, e.g. the apostrophe as U+0099).
+		if (character >= 0x80)
+		{
+			unsigned char utf8[4];
+			int n = get_char_in_utf_8(utf8, character);
+			write_wrapped(fd, utf8, n);
+		}
+		else
+		{
+			write_wrapped(fd, &character, 1);
+		}
+		++*bytes_written;
+		return;
+	}
+
+	// SCC: special/extended chars (>= 0x80) are not valid single-byte characters. Emit a
+	// padded fallback base char followed by the two-byte extended code, which destructively
+	// backspace-replaces it (e.g. apostrophe -> "a7 80 92 29"). check_padding keeps the
+	// extended pair 2-byte aligned.
+	if (character >= 0x80)
+	{
+		unsigned char hi, lo;
+		unsigned char base = get_extended_scc_code(character, &hi, &lo);
+		if (!is_odd_channel(channel))
+			hi += 8; // field 2 (CC3/CC4) uses 0x19/0x1a/0x1b
+
 		if (*bytes_written % 2 == 0)
 			write_wrapped(fd, " ", 1);
+		fdprintf(fd, "%02x", odd_parity(base));
+		++*bytes_written;
 
-		fdprintf(fd, "%02x", odd_parity(character));
+		check_padding(fd, disassemble, bytes_written);
+
+		if (*bytes_written % 2 == 0)
+			write_wrapped(fd, " ", 1);
+		fdprintf(fd, "%02x%02x", odd_parity(hi), odd_parity(lo));
+		*bytes_written += 2;
+		return;
 	}
+
+	if (*bytes_written % 2 == 0)
+		write_wrapped(fd, " ", 1);
+
+	fdprintf(fd, "%02x", odd_parity(character));
 	++*bytes_written; // increment int pointed to by (unsigned int *) bytes_written
 }
 
@@ -967,7 +1039,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 						current_font = data->fonts[row][column];
 						current_color = data->colors[row][column];
 						// Write the character and continue
-						write_character(context->out->fh, data->characters[row][column], disassemble, &bytes_written);
+						write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
 						++current_column;
 						continue;
 					}
@@ -1005,7 +1077,7 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 				current_font = data->fonts[row][column];
 				current_color = data->colors[row][column];
 			}
-			write_character(context->out->fh, data->characters[row][column], disassemble, &bytes_written);
+			write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
 			++current_column;
 		}
 		check_padding(context->out->fh, disassemble, &bytes_written);
