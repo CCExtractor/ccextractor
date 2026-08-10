@@ -177,7 +177,7 @@ int net_send_cc(const unsigned char *data, int len, void *private_data, struct c
 	assert(srv_sd > 0);
 
 #if DEBUG_OUT
-	fprintf(stderr, "[C] Sending %u bytes\n", len);
+	fprintf(stderr, "[C] Sending %d bytes\n", len);
 #endif
 
 	if (write_block(srv_sd, BIN_DATA, data, len) <= 0)
