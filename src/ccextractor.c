@@ -9,6 +9,10 @@ CI verification run: 2025-12-19T08:30 - Testing merged fixes from PRs #1847 and 
 #include <stdio.h>
 #include <locale.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
 volatile int terminate_asap = 0;
 
 struct ccx_s_options ccx_options;
@@ -432,10 +436,46 @@ int start_ccx()
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
+	// On Windows, the standard argv is encoded in the local ANSI code page.
+	// We need it in UTF-8, so we fetch the Unicode command line and convert it.
+	int wargc;
+	wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+	if (wargv)
+	{
+		// +1 for the NULL terminator required by the C standard
+		char **new_argv = (char **)malloc((wargc + 1) * sizeof(char *));
+		if (!new_argv)
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In main: not enough memory for new_argv.\n");
+		for (int i = 0; i < wargc; i++)
+		{
+			int size = WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, NULL, 0, NULL, NULL);
+			if (size == 0)
+				fatal(EXIT_READ_ERROR, "In main: WideCharToMultiByte sizing failed.\n");
+			new_argv[i] = (char *)malloc(size);
+			if (!new_argv[i])
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In main: not enough memory for new_argv[i].\n");
+			WideCharToMultiByte(CP_UTF8, 0, wargv[i], -1, new_argv[i], size, NULL, NULL);
+		}
+		new_argv[wargc] = NULL;
+		LocalFree(wargv);
+		argv = new_argv;
+		argc = wargc;
+	}
+	// Tell the UCRT to treat all narrow char* strings as UTF-8 so that
+	// C file APIs (_open, fopen, etc.) can open paths with non-ASCII characters.
+	setlocale(LC_ALL, ".UTF8");
+	// Ensure the console can display UTF-8 text correctly.
+	SetConsoleOutputCP(CP_UTF8);
+	// Use POSIX locale for numbers so we get "." as decimal separator and no
+	// thousands' grouping instead of what the locale might say
+	setlocale(LC_NUMERIC, "POSIX");
+#else
 	setlocale(LC_ALL, ""); // Supports non-English CCs
 			       // Use POSIX locale for numbers so we get "." as decimal separator and no
 			       // thousands' groupoing instead of what the locale might say
 	setlocale(LC_NUMERIC, "POSIX");
+#endif
 
 	init_options(&ccx_options);
 
