@@ -1055,10 +1055,11 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				}
 			}
 			// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early".
-			// This is wrong for non-25fps content and causes a visible ~41ms blink gap
-			// in rolling teletext subs, because the WebVTT exporter already subtracts
-			// 1ms to prevent timestamp boundary collisions. That 1ms is sufficient.
-			ctx->page_buffer.hide_timestamp = timestamp;
+			// This produced a visible ~40ms blink gap in rolling teletext subs.
+			// It also caused zero-length cues when a page was displayed for exactly 40ms.
+			// Subtracting 1ms provides sufficient separation between adjacent cues
+			// to prevent overlap without causing a perceptible blink.
+			ctx->page_buffer.hide_timestamp = timestamp - 1;
 			if (ctx->page_buffer.hide_timestamp > timestamp)
 			{
 				ctx->page_buffer.hide_timestamp = 0;
