@@ -472,8 +472,8 @@ int main(int argc, char *argv[])
 	setlocale(LC_NUMERIC, "POSIX");
 #else
 	setlocale(LC_ALL, ""); // Supports non-English CCs
-		               // Use POSIX locale for numbers so we get "." as decimal separator and no
-		               // thousands' groupoing instead of what the locale might say
+			       // Use POSIX locale for numbers so we get "." as decimal separator and no
+			       // thousands' groupoing instead of what the locale might say
 	setlocale(LC_NUMERIC, "POSIX");
 #endif
 
