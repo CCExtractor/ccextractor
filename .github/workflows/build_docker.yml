@@ -27,7 +27,7 @@ jobs:
     name: Docker build (minimal)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
     - name: Build minimal image
@@ -51,7 +51,7 @@ jobs:
     name: Docker build (ocr)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
     - name: Build OCR image
@@ -75,7 +75,7 @@ jobs:
     name: Docker build (hardsubx)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
     - name: Build HardSubX image
