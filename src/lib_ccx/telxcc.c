@@ -1054,16 +1054,12 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
 				}
 			}
-			// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early".
-			// This produced a visible ~40ms blink gap in rolling teletext subs.
-			// It also caused zero-length cues when a page was displayed for exactly 40ms.
-			// Subtracting 1ms provides sufficient separation between adjacent cues
-			// to prevent overlap without causing a perceptible blink.
-			ctx->page_buffer.hide_timestamp = timestamp - 1;
-			if (ctx->page_buffer.hide_timestamp > timestamp)
-			{
-				ctx->page_buffer.hide_timestamp = 0;
-			}
+			// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early",
+			// but this produced a visible ~40ms blink gap in rolling teletext subs
+			// and caused zero-length cues when a page was displayed for exactly 40ms.
+			// WebVTT allows touching cues (where the end time of one cue perfectly matches
+			// the start time of the next), which makes rolling look continuous.
+			ctx->page_buffer.hide_timestamp = timestamp;
 			process_page(ctx, &ctx->page_buffer, sub);
 			de_ctr = 0;
 		}
