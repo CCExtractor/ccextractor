@@ -4,6 +4,9 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
+#ifndef _MSC_VER
+#include <strings.h>
+#endif
 
 static void ass_position_from_row_col(
     int row,
