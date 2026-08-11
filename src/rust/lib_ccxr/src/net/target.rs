@@ -91,10 +91,6 @@ impl<'a> SendTarget<'a> {
             |_| fatal!(cause = ExitCause::Failure; "Unable to connect (tcp connection error).\n"),
         );
 
-        tcp_stream.set_nonblocking(true).unwrap_or_else(
-            |_| fatal!(cause = ExitCause::Failure; "Unable to connect (set nonblocking).\n"),
-        );
-
         let mut send_target = SendTarget {
             stream: Some(tcp_stream),
             config,
@@ -223,6 +219,31 @@ impl<'a> SendTarget<'a> {
         self.send_block(&Block::cc_desc(description))
     }
 
+    /// Receive any pending [`Ping`](Command::Ping) blocks without blocking.
+    fn recv_pings(&mut self) -> io::Result<bool> {
+        let stream = self.stream.as_mut().unwrap();
+        stream.set_nonblocking(true)?;
+
+        let result = (|| {
+            let mut received_ping = false;
+            let mut command = [0_u8; 1];
+            loop {
+                match stream.read(&mut command) {
+                    Ok(0) => break,
+                    Ok(1) if command[0] == Command::Ping.into() => received_ping = true,
+                    Ok(_) => break,
+                    Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                    Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
+                    Err(error) => return Err(error),
+                }
+            }
+            Ok(received_ping)
+        })();
+
+        stream.set_nonblocking(false)?;
+        result
+    }
+
     /// Check the connection health and reset connection if necessary.
     ///
     /// This method determines the connection health by comparing the time since last [`Ping`]
@@ -241,22 +262,12 @@ impl<'a> SendTarget<'a> {
             self.last_ping = now;
         }
 
-        loop {
-            if self
-                .recv_block()
-                .ok()
-                .flatten()
-                .map(|x| x.command() == Command::Ping)
-                .unwrap_or(false)
+        if self.recv_pings().unwrap_or(false) {
+            #[cfg(feature = "debug_out")]
             {
-                #[cfg(feature = "debug_out")]
-                {
-                    eprintln!("[S] Received PING");
-                }
-                self.last_ping = now;
-            } else {
-                break;
+                eprintln!("[S] Received PING");
             }
+            self.last_ping = now;
         }
 
         if now - self.last_ping > NO_RESPONSE_INTERVAL {
