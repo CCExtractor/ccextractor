@@ -263,15 +263,24 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 		switch (cur)
 		{
 			case 'F':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</font>");
+				if (ctx->write_format == CCX_OF_SSA)
+					buffer += encode_line(ctx, buffer, (unsigned char *)"{\\c}");
+				else
+					buffer += encode_line(ctx, buffer, (unsigned char *)"</font>");
 				(*pchanged_font)--;
 				break;
 			case 'U':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</u>");
+				if (ctx->write_format == CCX_OF_SSA)
+					buffer += encode_line(ctx, buffer, (unsigned char *)"{\\u0}");
+				else
+					buffer += encode_line(ctx, buffer, (unsigned char *)"</u>");
 				(*punderlined)--;
 				break;
 			case 'I':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</i>");
+				if (ctx->write_format == CCX_OF_SSA)
+					buffer += encode_line(ctx, buffer, (unsigned char *)"{\\i0}");
+				else
+					buffer += encode_line(ctx, buffer, (unsigned char *)"</i>");
 				(*pitalics)--;
 				break;
 		}
@@ -310,7 +319,21 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 
 			// Add new font tag
 			if (MAX_COLOR > its_color)
-				buffer += encode_line(ctx, buffer, (unsigned char *)color_text[its_color][1]);
+			{
+				if (ctx->write_format == CCX_OF_SSA)
+				{
+					const char *ssa_cols[] = {
+						"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", 
+						"{\\c&H0000FF&}", "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", 
+						"{\\c&H", "", ""
+					};
+					buffer += encode_line(ctx, buffer, (unsigned char *)ssa_cols[its_color]);
+				}
+				else
+				{
+					buffer += encode_line(ctx, buffer, (unsigned char *)color_text[its_color][1]);
+				}
+			}
 			else
 			{
 				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_color);
@@ -319,12 +342,43 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 
 			if (its_color == COL_USERDEFINED)
 			{
-				// The previous sentence doesn't copy the whole
-				// <font> tag, just up to the quote before the color
-				buffer += encode_line(ctx, buffer, (unsigned char *)usercolor_rgb);
-				buffer += encode_line(ctx, buffer, (unsigned char *)"\">");
+				if (ctx->write_format == CCX_OF_SSA)
+				{
+					if (strlen((char *)usercolor_rgb) == 7 && usercolor_rgb[0] == '#') {
+						char bgr[7];
+						bgr[0] = usercolor_rgb[5]; bgr[1] = usercolor_rgb[6];
+						bgr[2] = usercolor_rgb[3]; bgr[3] = usercolor_rgb[4];
+						bgr[4] = usercolor_rgb[1]; bgr[5] = usercolor_rgb[2];
+						bgr[6] = '\0';
+						buffer += encode_line(ctx, buffer, (unsigned char *)bgr);
+					}
+					buffer += encode_line(ctx, buffer, (unsigned char *)"&}");
+				}
+				else
+				{
+					buffer += encode_line(ctx, buffer, (unsigned char *)usercolor_rgb);
+					buffer += encode_line(ctx, buffer, (unsigned char *)"\">");
+				}
 			}
-			if (color_text[its_color][1][0]) // That means a <font> was added to the buffer
+			int added_font = 0;
+			if (ctx->write_format == CCX_OF_SSA) {
+				const char *ssa_cols[] = {
+					"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", 
+					"{\\c&H0000FF&}", "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", 
+					"{\\c&H", "", ""
+				};
+				if (MAX_COLOR > its_color && ssa_cols[its_color][0])
+					added_font = 1;
+				else if (its_color == COL_USERDEFINED)
+					added_font = 1;
+			} else {
+				if (MAX_COLOR > its_color && color_text[its_color][1][0])
+					added_font = 1;
+				else if (its_color == COL_USERDEFINED)
+					added_font = 1;
+			}
+
+			if (added_font) // That means a <font> or {\c} was added to the buffer
 			{
 				strncat(tagstack, "F", sizeof(tagstack) - strlen(tagstack) - 1);
 				changed_font++;
@@ -335,7 +389,10 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
 		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
+			if (ctx->write_format == CCX_OF_SSA)
+				buffer += encode_line(ctx, buffer, (unsigned char *)"{\\u1}");
+			else
+				buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
 			strncat(tagstack, "U", sizeof(tagstack) - strlen(tagstack) - 1);
 			underlined++;
 		}
@@ -347,7 +404,10 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
 		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
+			if (ctx->write_format == CCX_OF_SSA)
+				buffer += encode_line(ctx, buffer, (unsigned char *)"{\\i1}");
+			else
+				buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
 			strncat(tagstack, "I", sizeof(tagstack) - strlen(tagstack) - 1);
 			italics++;
 		}
