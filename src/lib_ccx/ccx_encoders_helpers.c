@@ -19,6 +19,12 @@ struct word_list capitalization_list = {
     .capacity = 0,
 };
 
+static const char *ssa_cols[] = {
+	"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", 
+	"{\\c&H0000FF&}", "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", 
+	"{\\c&H", "", ""
+};
+
 struct word_list profane = {
     .words = NULL,
     .len = 0,
@@ -322,11 +328,6 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			{
 				if (ctx->write_format == CCX_OF_SSA)
 				{
-					const char *ssa_cols[] = {
-						"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", 
-						"{\\c&H0000FF&}", "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", 
-						"{\\c&H", "", ""
-					};
 					buffer += encode_line(ctx, buffer, (unsigned char *)ssa_cols[its_color]);
 				}
 				else
@@ -362,11 +363,6 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			}
 			int added_font = 0;
 			if (ctx->write_format == CCX_OF_SSA) {
-				const char *ssa_cols[] = {
-					"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", 
-					"{\\c&H0000FF&}", "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", 
-					"{\\c&H", "", ""
-				};
 				if (MAX_COLOR > its_color && ssa_cols[its_color][0])
 					added_font = 1;
 				else if (its_color == COL_USERDEFINED)
