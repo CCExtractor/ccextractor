@@ -4,9 +4,21 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
-#ifndef _MSC_VER
-#include <strings.h>
-#endif
+#include <ctype.h>
+
+static int ccx_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	for (size_t i = 0; i < n; i++)
+	{
+		int c1 = tolower((unsigned char)s1[i]);
+		int c2 = tolower((unsigned char)s2[i]);
+		if (c1 != c2)
+			return c1 - c2;
+		if (c1 == 0)
+			return 0;
+	}
+	return 0;
+}
 
 static void ass_position_from_row_col(
     int row,
@@ -73,11 +85,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 		for (size_t i = 0; i < NUM_TAG_MAPS; i++)
 		{
 			const tag_map_t *m = &html_to_ass[i];
-#ifdef _MSC_VER
-			if (_strnicmp(string + pos_r, m->from, m->from_len) == 0)
-#else
-			if (strncasecmp(string + pos_r, m->from, m->from_len) == 0)
-#endif
+			if (ccx_strncasecmp(string + pos_r, m->from, m->from_len) == 0)
 			{
 				memcpy(unescaped + pos_w, m->to, m->to_len);
 				pos_w += m->to_len;
@@ -89,11 +97,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 		if (matched)
 			continue;
 
-#ifdef _MSC_VER
-		if (_strnicmp(string + pos_r, "<font color=\"#", 14) == 0)
-#else
-		if (strncasecmp(string + pos_r, "<font color=\"#", 14) == 0)
-#endif
+		if (ccx_strncasecmp(string + pos_r, "<font color=\"#", 14) == 0)
 		{
 			if (pos_r + 21 < len && string[pos_r + 20] == '"' && string[pos_r + 21] == '>')
 			{
@@ -116,11 +120,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 			continue;
 		}
 
-#ifdef _MSC_VER
-		if (_strnicmp(string + pos_r, "<font", 5) == 0)
-#else
-		if (strncasecmp(string + pos_r, "<font", 5) == 0)
-#endif
+		if (ccx_strncasecmp(string + pos_r, "<font", 5) == 0)
 		{
 			while (pos_r < len && string[pos_r] != '>')
 				pos_r++;
@@ -128,11 +128,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 				pos_r++;
 			continue;
 		}
-#ifdef _MSC_VER
-		if (_strnicmp(string + pos_r, "</font>", 7) == 0)
-#else
-		if (strncasecmp(string + pos_r, "</font>", 7) == 0)
-#endif
+		if (ccx_strncasecmp(string + pos_r, "</font>", 7) == 0)
 		{
 			memcpy(unescaped + pos_w, "{\\c}", 4);
 			pos_w += 4;
