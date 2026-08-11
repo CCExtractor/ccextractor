@@ -20,20 +20,21 @@ static int ccx_strncasecmp(const char *s1, const char *s2, size_t n)
 	return 0;
 }
 
-typedef struct {
-    const char *from;
-    size_t from_len;
-    const char *to;
-    size_t to_len;
+typedef struct
+{
+	const char *from;
+	size_t from_len;
+	const char *to;
+	size_t to_len;
 } tag_map_t;
 
 static const tag_map_t html_to_ass[] = {
-    { "<i>",  3, "{\\i1}", 5 },
-    { "</i>", 4, "{\\i0}", 5 },
-    { "<u>",  3, "{\\u1}", 5 },
-    { "</u>", 4, "{\\u0}", 5 },
-    { "<b>",  3, "{\\b1}", 5 },
-    { "</b>", 4, "{\\b0}", 5 },
+    {"<i>", 3, "{\\i1}", 5},
+    {"</i>", 4, "{\\i0}", 5},
+    {"<u>", 3, "{\\u1}", 5},
+    {"</u>", 4, "{\\u0}", 5},
+    {"<b>", 3, "{\\b1}", 5},
+    {"</b>", 4, "{\\b0}", 5},
 };
 #define NUM_TAG_MAPS (sizeof(html_to_ass) / sizeof(html_to_ass[0]))
 
