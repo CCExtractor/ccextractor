@@ -771,7 +771,11 @@ void dtvcc_process_cr(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder)
 			dtvcc_window_copy_to_screen(decoder, window);
 			dtvcc_screen_print(dtvcc, decoder);
 			if (dtvcc->no_rollup)
-				dtvcc_window_clear_row(window, window->pen_row);
+			{
+				for (int row = 0; row < CCX_DTVCC_MAX_ROWS; row++)
+					dtvcc_window_clear_row(window, row);
+				window->is_empty = 1;
+			}
 			else
 				dtvcc_window_rollup(decoder, window);
 		}
