@@ -18,13 +18,27 @@
 size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes);
 
 /**
+ * Bytes still unread in the file buffer.
+ *
+ * bytesinbuffer and filebuffer_pos are both unsigned, so subtracting them without
+ * checking their order wraps around and turns a bounds check into a pass. Callers use
+ * this instead of doing the subtraction themselves.
+ */
+static inline size_t buffered_bytes_left(struct ccx_demuxer *ctx)
+{
+	if (ctx->filebuffer_pos >= ctx->bytesinbuffer)
+		return 0;
+	return (size_t)(ctx->bytesinbuffer - ctx->filebuffer_pos);
+}
+
+/**
  * Skip bytes from file buffer and if needed also seek file for number of bytes.
  *
  */
 static size_t inline buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
 {
 	size_t result;
-	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
+	if (bytes <= buffered_bytes_left(ctx))
 	{
 		ctx->filebuffer_pos += bytes;
 		result = bytes;
@@ -43,7 +57,7 @@ static size_t inline buffered_skip(struct ccx_demuxer *ctx, unsigned int bytes)
 static size_t inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffer, size_t bytes)
 {
 	size_t result;
-	if (bytes <= ctx->bytesinbuffer - ctx->filebuffer_pos)
+	if (bytes <= buffered_bytes_left(ctx))
 	{
 		if (buffer != NULL)
 			memcpy(buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes);
@@ -70,7 +84,7 @@ static size_t inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffe
 static size_t inline buffered_read_byte(struct ccx_demuxer *ctx, unsigned char *buffer)
 {
 	size_t result = 0;
-	if (ctx->bytesinbuffer - ctx->filebuffer_pos)
+	if (buffered_bytes_left(ctx))
 	{
 		if (buffer)
 		{
