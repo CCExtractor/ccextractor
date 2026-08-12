@@ -2,14 +2,17 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include "lib_ccx.h"
+#include "ccx_mp4.h"
+
+#ifdef ENABLE_GPAC
+
 #include <gpac/isomedia.h>
 #include <gpac/mpeg4_odf.h>
-#include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
 #include "ccx_encoders_mcc.h"
 #include "ccx_common_option.h"
-#include "ccx_mp4.h"
 #include "activity.h"
 #include "ccx_dtvcc.h"
 #include "vobsub_decoder.h"
@@ -1121,11 +1124,11 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					const LLONG timestamp = (LLONG)((sample->DTS + sample->CTS_Offset) * 1000) / timescale;
 #endif
 					set_current_pts(dec_ctx->timing, (sample->DTS + sample->CTS_Offset) * MPEG_CLOCK_FREQ / timescale);
-					// For caption-only tracks (c608/c708), set frame type to I-frame
+					// For caption-only tracks (c608/c708, tx3g), set frame type to I-frame
 					// so that set_fts() will set min_pts from the first sample.
 					// Without video frames, frame type would stay Unknown and
 					// min_pts would never be set, causing broken timestamps.
-					if (type == GF_ISOM_MEDIA_CLOSED_CAPTION)
+					if (type == GF_ISOM_MEDIA_CLOSED_CAPTION || type == GF_ISOM_MEDIA_TEXT || type == GF_ISOM_MEDIA_SUBT)
 						dec_ctx->timing->current_picture_coding_type = CCX_FRAME_TYPE_I_FRAME;
 					set_fts(dec_ctx->timing);
 
@@ -1293,3 +1296,24 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 		gf_fclose(t);
 	return mp4_ret;
 }
+
+#else
+
+int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	mprint("GPAC support is disabled. MP4 parsing will not work.\n");
+	return -1;
+}
+
+int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
+{
+	return -1;
+}
+
+unsigned char *ccdp_find_data(unsigned char *ccdp_atom_content, unsigned int len, unsigned int *cc_count)
+{
+	*cc_count = 0;
+	return NULL;
+}
+
+#endif
