@@ -18,7 +18,19 @@ if (WITH_GPAC)
         set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
         set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_GPAC")
     else ()
-        message(WARNING "GPAC not found. Compiling without GPAC support.")
+        message(STATUS "GPAC not found via pkg-config. Falling back to FetchContent...")
+        include(FetchContent)
+        FetchContent_Declare(
+            gpac
+            GIT_REPOSITORY https://github.com/gpac/gpac.git
+            GIT_TAG        master
+        )
+        FetchContent_MakeAvailable(gpac)
+        
+        # Link against the fetched GPAC
+        set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${gpac_SOURCE_DIR}/include)
+        set (EXTRA_LIBS ${EXTRA_LIBS} libgpac)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_GPAC")
     endif ()
 endif ()
 
