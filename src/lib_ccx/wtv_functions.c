@@ -132,6 +132,58 @@ void skip_sized_buffer(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, u
 	ctx->past = cb->filepos;
 }
 
+// Largest element we are willing to believe. Real WTV elements are a few KB; a
+// length beyond this means we are no longer looking at an element header.
+#define WTV_MAX_ELEMENT_LEN (16 * 1024 * 1024)
+// How far to hunt for the next element header before giving up.
+#define WTV_RESYNC_LIMIT (4 * 1024 * 1024)
+
+// The bulk of the GUIDs that start a timeline element share these 15 trailing
+// bytes and differ only in the first (data, sync, index, stream1, stream2...),
+// which makes them a dependable anchor when re-synchronising.
+static const uint8_t wtv_guid_tail[15] = {
+    0xC3, 0xD2, 0xC2, 0x7E, 0x9A, 0xDA, 0x11, 0x8B, 0xF7, 0x00, 0x07, 0xE9, 0x5E, 0xAD, 0x8D};
+
+static int wtv_len_plausible(uint32_t raw_len)
+{
+	return raw_len >= 32 && raw_len <= WTV_MAX_ELEMENT_LEN;
+}
+
+static int wtv_is_anchor(const uint8_t *hdr)
+{
+	uint32_t raw_len;
+	if (memcmp(hdr + 1, wtv_guid_tail, sizeof(wtv_guid_tail)) != 0)
+		return 0;
+	memcpy(&raw_len, hdr + 16, 4);
+	return wtv_len_plausible(raw_len);
+}
+
+// Walk forward until a plausible element header shows up, keeping a rolling
+// 32-byte window so the caller ends up positioned exactly as it would after a
+// normal header read. Returns 1 when re-synchronised.
+static int wtv_resync(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb, uint8_t *hdr)
+{
+	uint64_t scanned = 0;
+
+	while (scanned < WTV_RESYNC_LIMIT)
+	{
+		memmove(hdr, hdr + 8, 24);
+		get_sized_buffer(ctx, cb, 8);
+		if (cb->buffer == NULL)
+			return 0;
+		memcpy(hdr + 24, cb->buffer, 8);
+		scanned += 8;
+		if (wtv_is_anchor(hdr))
+		{
+			mprint("\nWTV: lost element alignment, resynchronised after %llu bytes.\n",
+			       (unsigned long long)scanned);
+			return 1;
+		}
+	}
+	mprint("\nWTV: lost element alignment and could not resynchronise.\n");
+	return 0;
+}
+
 // get_sized_buffer will alloc and set a buffer in the passed wtv_chunked_buffer struct
 // it will handle any meta data chunks that need to be skipped in the file
 // Will print error messages and return a null buffer on error.
@@ -364,23 +416,36 @@ LLONG get_data(struct lib_ccx_ctx *ctx, struct wtv_chunked_buffer *cb, struct de
 		uint32_t stream_id;
 
 		// Read the 32 bytes containing the GUID and length and stream_id info
+		uint8_t hdr[32];
+		uint32_t raw_len;
+
 		get_sized_buffer(ctx->demux_ctx, cb, 32);
 		if (cb->buffer == NULL)
 			return CCX_EOF;
+		memcpy(hdr, cb->buffer, 32);
 
-		memcpy(&guid, cb->buffer, 16); // Read the GUID
+		// A length we cannot believe means we are no longer aligned to an element
+		// boundary -- reading on would hand a bogus size to the seek/skip helpers.
+		// Hunt for the next header instead of trusting it. The end-of-file marker is
+		// exempt: it legitimately carries a zero length and is handled further down.
+		memcpy(&raw_len, hdr + 16, 4);
+		if (memcmp(hdr, WTV_EOF, 16) != 0 && !wtv_len_plausible(raw_len) &&
+		    !wtv_resync(ctx->demux_ctx, cb, hdr))
+			return CCX_EOF;
+
+		memcpy(&guid, hdr, 16); // Read the GUID
 
 		for (x = 0; x < 16; x++)
 			dbg_print(CCX_DMT_PARSE, "%02X ", guid[x]);
 		dbg_print(CCX_DMT_PARSE, "\n");
 
-		memcpy(&len, cb->buffer + 16, 4); // Read the length
+		memcpy(&len, hdr + 16, 4); // Read the length
 		len -= 32;
 		dbg_print(CCX_DMT_PARSE, "len %X\n", len);
 		pad = len % 8 == 0 ? 0 : 8 - (len % 8); // Calculate the padding to add to the length
 		// to get to the next GUID
 		dbg_print(CCX_DMT_PARSE, "pad %X\n", pad);
-		memcpy(&stream_id, cb->buffer + 20, 4);
+		memcpy(&stream_id, hdr + 20, 4);
 		stream_id = stream_id & 0x7f; // Read and calculate the stream_id
 		dbg_print(CCX_DMT_PARSE, "stream_id: 0x%X\n", stream_id);
 
