@@ -469,6 +469,11 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 			return enc_ctx;
 	}
 
+	/* Nothing matched. list_for_each_entry() leaves the iterator pointing at the list
+	   head reinterpreted as an encoder_ctx, which is not a usable encoder, so clear it
+	   to let the code below tell "not found" apart from "found". */
+	enc_ctx = NULL;
+
 	const char *extension = get_file_extension(ccx_options.enc_cfg.write_format);
 	if (!extension && ccx_options.enc_cfg.write_format != CCX_OF_CURL)
 		return NULL;
@@ -487,7 +492,12 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 				dvb_pid_count++;
 		}
 
-		if (dvb_pid_count >= 2)
+		/* Give the stream its own per-language encoder when there is more than one DVB
+		   PID, or when some other stream (teletext, 608/708) already owns an encoder and
+		   this DVB PID is an extra one alongside it. A recording whose only caption
+		   stream is a single DVB PID still reaches the standard path below, because the
+		   encoder list is empty on that first call, which keeps its filename unchanged. */
+		if (dvb_pid_count >= 2 || !list_empty(&ctx->enc_ctx_head))
 		{
 			struct encoder_cfg local_cfg = ccx_options.enc_cfg;
 			local_cfg.program_number = pn;
@@ -574,6 +584,11 @@ struct encoder_ctx *update_encoder_list_cinfo(struct lib_ccx_ctx *ctx, struct ca
 
 		list_add_tail(&(enc_ctx->list), &(ctx->enc_ctx_head));
 	}
+	/* No encoder was found or created. Report it rather than dereferencing the iterator
+	   left behind by the search loop; callers already skip a NULL encoder. */
+	if (!enc_ctx)
+		return NULL;
+
 	// DVB related
 	enc_ctx->prev = NULL;
 	if (cinfo && cinfo->codec == CCX_CODEC_DVB && cinfo->lang[0])
