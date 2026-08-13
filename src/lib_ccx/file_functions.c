@@ -230,16 +230,24 @@ void buffered_seek(struct ccx_demuxer *ctx, int offset)
 	position_sanity_check(ctx);
 	if (offset < 0)
 	{
-		ctx->filebuffer_pos += offset;
-		if (ctx->filebuffer_pos < 0)
+		/* filebuffer_pos and startbytes_pos are unsigned, so "filebuffer_pos += offset"
+		   wrapped around instead of going negative and neither guard below could ever
+		   fire. A backward seek past the start of the buffer left filebuffer_pos at
+		   roughly 2^32, which buffered_read() then trusted. Do the arithmetic signed. */
+		int64_t newpos = (int64_t)ctx->filebuffer_pos + offset;
+		if (newpos < 0)
 		{
 			// We got into the start buffer (hopefully)
-			if ((ctx->filebuffer_pos + ctx->startbytes_pos) < 0)
+			if ((int64_t)ctx->startbytes_pos + newpos < 0)
 			{
 				fatal(CCX_COMMON_EXIT_BUG_BUG, "PANIC: Attempt to seek before buffer start, this is a bug!");
 			}
-			ctx->startbytes_pos += ctx->filebuffer_pos;
+			ctx->startbytes_pos = (unsigned int)((int64_t)ctx->startbytes_pos + newpos);
 			ctx->filebuffer_pos = 0;
+		}
+		else
+		{
+			ctx->filebuffer_pos = (unsigned int)newpos;
 		}
 	}
 	else
