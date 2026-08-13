@@ -61,7 +61,10 @@ static size_t inline buffered_read(struct ccx_demuxer *ctx, unsigned char *buffe
 	{
 		if (buffer != NULL)
 			memcpy(buffer, ctx->filebuffer + ctx->filebuffer_pos, bytes);
-		ctx->filebuffer_pos += bytes;
+		/* The guard above proved bytes fits in what is left of the buffer, and that
+		   remainder is an unsigned int, so narrowing here cannot lose data. Say so
+		   explicitly: MSVC warns C4267 on the implicit size_t -> unsigned int. */
+		ctx->filebuffer_pos += (unsigned int)bytes;
 		result = bytes;
 	}
 	else
