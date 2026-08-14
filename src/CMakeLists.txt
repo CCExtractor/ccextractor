@@ -181,7 +181,7 @@ add_subdirectory (lib_ccx)
 
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
-if (WITH_GPAC)
+if (WITH_GPAC AND GPAC_FOUND)
     set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
 endif()
 # set (EXTRA_LIBS ${EXTRA_LIBS} m)

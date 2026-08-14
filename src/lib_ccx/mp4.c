@@ -1301,12 +1301,13 @@ int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 
 int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
-	mprint("GPAC support is disabled. MP4 parsing will not work.\n");
+	mprint("GPAC support is disabled. MP4 parsing will not work. Recompile with GPAC support to enable this feature.\n");
 	return -1;
 }
 
 int dumpchapters(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 {
+	mprint("GPAC support is disabled. MP4 chapters will not work. Recompile with GPAC support to enable this feature.\n");
 	return -1;
 }
 
