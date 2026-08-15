@@ -11,7 +11,10 @@ int iResult = 0;
 
 LLONG get_file_size(int in)
 {
-	int ret = 0;
+	/* LSEEK returns a 64-bit offset. Storing it in an int truncated the result, so a
+	   successful seek back to a position at or beyond 2 GB could land on a negative
+	   value and be reported as a failure. */
+	LLONG ret = 0;
 	LLONG current = LSEEK(in, 0, SEEK_CUR);
 	LLONG length = LSEEK(in, 0, SEEK_END);
 	if (current < 0 || length < 0)
@@ -344,7 +347,7 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 				// for the data to come up
 				sleepandchecktimeout(seconds);
 			}
-			size_t ready = ctx->bytesinbuffer - ctx->filebuffer_pos;
+			size_t ready = buffered_bytes_left(ctx);
 			if (ready == 0) // We really need to read more
 			{
 				if (!ccx_options.buffer_input)
@@ -417,7 +420,16 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 				{
 					/* If live stream, don't try to switch - acknowledge eof here as it won't
 					   cause a loop end */
-					if (ccx_options.live_stream || ((struct lib_ccx_ctx *)ctx->parent)->inputsize <= origin_buffer_size || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					/* inputsize is a signed 64-bit size while origin_buffer_size is unsigned,
+					   so the comparison used to convert inputsize to unsigned. A negative
+					   inputsize -- what get_filesize() reports when the size could not be
+					   determined -- turned into a huge value, and the test silently read as
+					   "the input is enormous". Say what is meant instead. An unknown size
+					   still does not count as fitting in one read, so behaviour is unchanged. */
+					LLONG parent_inputsize = ((struct lib_ccx_ctx *)ctx->parent)->inputsize;
+					int input_fits_in_one_read = parent_inputsize >= 0 &&
+								     (uint64_t)parent_inputsize <= (uint64_t)origin_buffer_size;
+					if (ccx_options.live_stream || input_fits_in_one_read || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
 				}
 				ctx->filebuffer_pos = keep;
