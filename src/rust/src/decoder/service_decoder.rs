@@ -163,7 +163,6 @@ impl dtvcc_service_decoder {
         };
 
         if is_true(window.is_defined) {
-            let pen_row = window.pen_row;
             window.update_time_hide(timing);
 
             if rollup_required {
@@ -171,7 +170,11 @@ impl dtvcc_service_decoder {
                 self.copy_to_screen(&self.windows[self.current_window as usize]);
                 self.screen_print(encoder, timing);
                 if no_rollup {
-                    self.windows[self.current_window as usize].clear_row(pen_row as usize);
+                    let window = &mut self.windows[self.current_window as usize];
+                    for row in 0..CCX_DTVCC_MAX_ROWS as usize {
+                        window.clear_row(row);
+                    }
+                    window.is_empty = 1;
                 } else {
                     self.windows[self.current_window as usize].rollup();
                 }
@@ -1918,6 +1921,72 @@ mod test {
                 decoder.windows[0].rows[0].add(0).read(),
                 dtvcc_symbol::new(0x41)
             );
+        }
+    }
+
+    #[test]
+    fn test_process_cr_no_rollup_clears_emitted_rows_and_preserves_pen_state() {
+        use std::ffi::CString;
+
+        let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
+        decoder.current_window = 0;
+        decoder.tv = Box::into_raw(Box::new(dtvcc_tv_screen {
+            service_number: 1,
+            ..Default::default()
+        }));
+
+        let window = &mut decoder.windows[0];
+        window.is_defined = 1;
+        window.visible = 1;
+        window.row_count = 2;
+        window.col_count = 4;
+        window.pen_row = 1;
+        window.pen_column = 3;
+        window.memory_reserved = 1;
+        window.is_empty = 0;
+        window.attribs.print_direction = dtvcc_window_pd::DTVCC_WINDOW_PD_LEFT_RIGHT as i32;
+        window.pen_color_pattern = dtvcc_pen_color {
+            fg_color: 0x0f,
+            ..Default::default()
+        };
+        window.pen_attribs_pattern = dtvcc_pen_attribs {
+            italic: 1,
+            ..Default::default()
+        };
+
+        let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize).unwrap();
+        for row in 0..CCX_DTVCC_MAX_ROWS as usize {
+            window.rows[row] = unsafe { alloc_zeroed(layout) } as *mut dtvcc_symbol;
+        }
+        unsafe {
+            *window.rows[0] = dtvcc_symbol::new(0x41);
+            *window.rows[1] = dtvcc_symbol::new(0x42);
+        }
+
+        let output = tempfile::NamedTempFile::new().unwrap();
+        let filename = CString::new(output.path().to_str().unwrap()).unwrap();
+        let mut encoder = encoder_ctx::default();
+        encoder.dtvcc_writers[0].fd = -1;
+        encoder.dtvcc_writers[0].filename = filename.as_ptr() as *mut _;
+        let mut timing = ccx_common_timing_ctx::default();
+
+        decoder.process_cr(&mut encoder, &mut timing, true);
+
+        assert_eq!(decoder.windows[0].pen_row, 1);
+        assert_eq!(decoder.windows[0].pen_column, 0);
+        unsafe {
+            assert_eq!(*decoder.windows[0].rows[0], dtvcc_symbol::default());
+            assert_eq!(*decoder.windows[0].rows[1], dtvcc_symbol::default());
+        }
+        assert_eq!(decoder.windows[0].is_empty, 1);
+        assert_eq!(decoder.windows[0].pen_color_pattern.fg_color, 0x0f);
+        assert_eq!(decoder.windows[0].pen_attribs_pattern.italic, 1);
+
+        for row_ptr in decoder.windows[0].rows.iter() {
+            unsafe { crate::decoder::window::dealloc_row(*row_ptr) };
+        }
+        unsafe {
+            drop(Box::from_raw(decoder.tv));
         }
     }
 }
