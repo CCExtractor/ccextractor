@@ -23,7 +23,7 @@ void dinit_avc(struct avc_ctx **ctx)
 	struct avc_ctx *lctx = *ctx;
 	if (lctx->ccblocks_in_avc_lost > 0)
 	{
-		mprint("Total caption blocks received: %d\n", lctx->ccblocks_in_avc_total);
+		mprint("Total caption  blocks received: %d\n", lctx->ccblocks_in_avc_total);
 		mprint("Total caption blocks lost: %d\n", lctx->ccblocks_in_avc_lost);
 	}
 	freep(&lctx->cc_data);
