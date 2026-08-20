@@ -82,6 +82,15 @@ extern "C" {
     fn encode_sub(enc_ctx: *mut encoder_ctx, sub: *mut cc_subtitle) -> c_int;
 }
 
+/// Prints `message` through `mprint`, always as the argument to a literal
+/// `"%s"` format string. `message` may contain data derived from the input
+/// filename or other untrusted input; passing it as `mprint`'s `fmt`
+/// parameter directly would let any `%` conversion specifier it contains be
+/// interpreted by the underlying `vfprintf` with no corresponding varargs.
+unsafe fn mprint_str(message: *const c_char) {
+    mprint(b"%s\0".as_ptr() as *const c_char, message);
+}
+
 /// Track types we can extract captions from
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum TrackType {
@@ -143,20 +152,20 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
     let path_display = String::from_utf8_lossy(path_str);
 
     let open_msg = format!("Opening '{}' with FFmpeg: \0", path_display);
-    mprint(open_msg.as_ptr() as *const c_char);
+    mprint_str(open_msg.as_ptr() as *const c_char);
 
     // Open the file with FFmpeg
     let fmt_ctx = match AVFormatContextInput::open(path, None, &mut None) {
         Ok(ctx) => ctx,
         Err(e) => {
             let err_msg = format!("Failed to open input file with FFmpeg: {}\n\0", e);
-            mprint(err_msg.as_ptr() as *const c_char);
+            mprint_str(err_msg.as_ptr() as *const c_char);
             return -2;
         }
     };
 
     let ok_msg = b"ok\n\0";
-    mprint(ok_msg.as_ptr() as *const c_char);
+    mprint_str(ok_msg.as_ptr() as *const c_char);
 
     // Set up encoder/decoder
     let dec_ctx = update_decoder_list(ctx);
@@ -225,7 +234,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 "Track {}, type={} timescale={}\n\0",
                 i, type_name, timescale
             );
-            mprint(msg.as_ptr() as *const c_char);
+            mprint_str(msg.as_ptr() as *const c_char);
 
             tracks.push(TrackInfo {
                 stream_index: i,
@@ -261,11 +270,11 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
         hevc_count,
         cc_count
     );
-    mprint(summary.as_ptr() as *const c_char);
+    mprint_str(summary.as_ptr() as *const c_char);
 
     if tracks.is_empty() {
         let msg = b"No processable tracks found\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
         return 0;
     }
 
@@ -490,25 +499,25 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
     ccx_mp4_report_progress(ctx, 100, 100);
 
     let close_msg = b"\nClosing media: ok\n\0";
-    mprint(close_msg.as_ptr() as *const c_char);
+    mprint_str(close_msg.as_ptr() as *const c_char);
 
     if avc_count > 0 {
         let msg = format!("Found {} AVC track(s). \0", avc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
     } else {
         let msg = b"Found no AVC track(s). \0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
     }
     if hevc_count > 0 {
         let msg = format!("Found {} HEVC track(s). \0", hevc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
     }
     if cc_count > 0 {
         let msg = format!("Found {} CC track(s).\n\0", cc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
     } else {
         let msg = b"Found no dedicated CC track(s).\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
     }
 
     (*ctx).freport.mp4_cc_track_cnt = cc_count as u32;
@@ -639,24 +648,24 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
     let path_display = String::from_utf8_lossy(path_str);
 
     let open_msg = format!("Opening '{}': \0", path_display);
-    mprint(open_msg.as_ptr() as *const c_char);
+    mprint_str(open_msg.as_ptr() as *const c_char);
 
     let fmt_ctx = match AVFormatContextInput::open(path, None, &mut None) {
         Ok(ctx) => ctx,
         Err(_) => {
             let msg = b"failed to open\n\0";
-            mprint(msg.as_ptr() as *const c_char);
+            mprint_str(msg.as_ptr() as *const c_char);
             return 5;
         }
     };
 
     let ok_msg = b"ok\n\0";
-    mprint(ok_msg.as_ptr() as *const c_char);
+    mprint_str(ok_msg.as_ptr() as *const c_char);
 
     let nb_chapters = (*fmt_ctx.as_ptr()).nb_chapters as usize;
     if nb_chapters == 0 {
         let msg = b"No chapters information found!\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_str(msg.as_ptr() as *const c_char);
         return 0;
     }
 
@@ -667,7 +676,7 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
     };
 
     let writing_msg = format!("Writing chapters into {}\n\0", out_name);
-    mprint(writing_msg.as_ptr() as *const c_char);
+    mprint_str(writing_msg.as_ptr() as *const c_char);
 
     use std::io::Write;
     for i in 0..nb_chapters {
