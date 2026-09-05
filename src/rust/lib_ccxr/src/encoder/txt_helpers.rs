@@ -42,19 +42,21 @@ fn change_utf8_encoding(dest: &mut [u8], src: &[u8], len: i32, out_enc: Encoding
 
     while src_idx < max {
         let c = src[src_idx];
-        let c_len: usize = if c < 0x80 {
-            1
+        let c_len: usize;
+
+        if c < 0x80 {
+            c_len = 1;
         } else if (c & 0x20) == 0 {
-            2
+            c_len = 2;
         } else if (c & 0x10) == 0 {
-            3
+            c_len = 3;
         } else if (c & 0x08) == 0 {
-            4
+            c_len = 4;
         } else if (c & 0x04) == 0 {
-            5
+            c_len = 5;
         } else {
-            1
-        };
+            c_len = 1;
+        }
 
         match out_enc {
             Encoding::UTF8 => {
