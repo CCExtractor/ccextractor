@@ -17,7 +17,6 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
-#include "ccx_demuxer_mxf.h"
 #include "ccx_dtvcc.h"
 
 int end_of_file = 0; // End of file?
