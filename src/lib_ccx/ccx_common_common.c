@@ -69,15 +69,9 @@ int add_cc_sub_text(struct cc_subtitle *sub, char *str, LLONG start_time,
 	sub->start_time = start_time;
 	sub->end_time = end_time;
 	if (info)
-	{
-		strncpy(sub->info, info, sizeof(sub->info) - 1);
-		sub->info[sizeof(sub->info) - 1] = '\0';
-	}
+		strncpy(sub->info, info, 4);
 	if (mode)
-	{
-		strncpy(sub->mode, mode, sizeof(sub->mode) - 1);
-		sub->mode[sizeof(sub->mode) - 1] = '\0';
-	}
+		strncpy(sub->mode, mode, 4);
 	sub->got_output = 1;
 	sub->next = NULL;
 
