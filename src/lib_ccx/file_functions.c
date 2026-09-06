@@ -371,9 +371,18 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 						{
 							LLONG op, np;
 							op = LSEEK(ctx->infd, 0, SEEK_CUR); // Get current pos
-							if (op + bytes < 0)		    // Would mean moving beyond start of file: Not supported
-								return 0;
+							/* The guard here used to be "op + bytes < 0", meant to catch a
+							   seek before the start of the file. It could not fire: bytes is
+							   unsigned, so the sum was computed unsigned and never went
+							   negative, and every caller passes a forward distance anyway.
+							   What can actually fail is LSEEK itself, and the arithmetic
+							   below then subtracted one error value from another and
+							   reported the result as a byte count. */
+							if (op < 0)
+								return copied;
 							np = LSEEK(ctx->infd, bytes, SEEK_CUR); // Pos after moving
+							if (np < 0)
+								return copied;
 							i = (int)(np - op);
 						}
 						// if both above lseek returned -1 (error); i would be 0 here and
