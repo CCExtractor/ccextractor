@@ -208,6 +208,7 @@ struct block_addition
 	ULLONG cue_identifier_size;
 	char *comment;
 	ULLONG comment_size;
+	char *message_buf;
 };
 
 struct matroska_sub_sentence
