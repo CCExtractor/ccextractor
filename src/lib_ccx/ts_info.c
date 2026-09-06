@@ -37,13 +37,62 @@ int need_cap_info(struct ccx_demuxer *ctx, int program_number)
 	return CCX_FALSE;
 }
 
+/**
+	Warn once about a caption stream that is about to be discarded because it is not
+	the single PID that get_best_stream() selected for this program.
+
+	DVB subtitles are deliberately excluded: extra DVB PIDs are picked up later by the
+	multi-language loop in process_non_multiprogram_general_loop(), so they are not lost
+	and must stay silent. Teletext, ISDB and ATSC caption PIDs have no such handling, so
+	without this notice they would disappear with no indication at all (issue #2333).
+
+	The caller only reaches this for a stream whose ignore flag is still clear, which
+	keeps the message to one line per PID instead of one per demuxer iteration.
+*/
+static void warn_ignored_caption_stream(struct cap_info *iter)
+{
+	const char *codec_name;
+
+	/* Every video elementary stream is registered as CCX_CODEC_ATSC_CC because 608/708
+	   can ride inside it, so an ignored video PID is not a caption stream the user lost
+	   and --datapid is not the way to reach it. Those PIDs also keep being fed to the
+	   decoder when --analyze-video-stream is on. Warn only about the caption-only PIDs. */
+	if (iter->stream == CCX_STREAM_TYPE_VIDEO_MPEG2 ||
+	    iter->stream == CCX_STREAM_TYPE_VIDEO_H264 ||
+	    iter->stream == CCX_STREAM_TYPE_VIDEO_HEVC)
+		return;
+
+	switch (iter->codec)
+	{
+		case CCX_CODEC_TELETEXT:
+			codec_name = "Teletext";
+			break;
+		case CCX_CODEC_ISDB_CC:
+			codec_name = "ISDB";
+			break;
+		case CCX_CODEC_ATSC_CC:
+			codec_name = "ATSC";
+			break;
+		default:
+			return;
+	}
+
+	mprint("Warning: %s caption stream ID %u (0x%x) for SID %u (0x%x) will be ignored - only one caption stream per program is extracted.\n",
+	       codec_name, iter->pid, iter->pid, iter->program_number, iter->program_number);
+	mprint("         Use --datapid %u to extract it in a separate run.\n", iter->pid);
+}
+
 void ignore_other_stream(struct ccx_demuxer *ctx, int pid)
 {
 	struct cap_info *iter;
 	list_for_each_entry(iter, &ctx->cinfo_tree.all_stream, all_stream, struct cap_info)
 	{
 		if (iter->pid != pid && iter->codec != CCX_CODEC_DVB)
+		{
+			if (!iter->ignore)
+				warn_ignored_caption_stream(iter);
 			iter->ignore = 1;
+		}
 	}
 }
 
@@ -93,7 +142,11 @@ void ignore_other_sib_stream(struct cap_info *head, int pid)
 	list_for_each_entry(iter, &head->sib_head, sib_stream, struct cap_info)
 	{
 		if (iter->pid != pid && iter->codec != CCX_CODEC_DVB)
+		{
+			if (!iter->ignore)
+				warn_ignored_caption_stream(iter);
 			iter->ignore = 1;
+		}
 	}
 }
 
