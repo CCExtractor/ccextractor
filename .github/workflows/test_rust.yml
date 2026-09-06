@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - ".github/workflows/test.yml"
+      - "rust-toolchain.toml"
       - "src/rust/**"
     tags-ignore:
       - "*.*"
@@ -10,6 +11,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - ".github/workflows/test.yml"
+      - "rust-toolchain.toml"
       - "src/rust/**"
 jobs:
   test_rust:
@@ -29,10 +31,7 @@ jobs:
             src/rust/lib_ccxr/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - uses: dtolnay/rust-toolchain@stable
       - name: Test main module
         run: cargo test
         working-directory: ./src/rust
