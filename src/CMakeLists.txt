@@ -8,6 +8,7 @@ option (WITH_OCR "Build with OCR (Optical Character Recognition) feature" OFF)
 option (WITH_HARDSUBX "Build with support for burned-in subtitles" OFF)
 option (VBI_DEBUG "Enable VBI decoder debug output" OFF)
 option (NETWORKING_DEBUG "Enable networking debug output" OFF)
+option (WITH_GPAC "Compile with GPAC support" ON)
 
 # HARDSUBX requires OCR (tesseract/leptonica) and FFmpeg
 if (WITH_HARDSUBX)
@@ -55,10 +56,13 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/lib_ccx/compile_info_real.h"
   )
 
-add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY -DNO_GZIP)
+add_definitions(-DVERSION_FILE_PRESENT -DFT2_BUILD_LIBRARY -DNO_GZIP)
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  add_definitions(-DGPAC_64_BITS)
+if (WITH_GPAC)
+  add_definitions(-DGPAC_DISABLE_VTT -DGPAC_DISABLE_OD_DUMP -DGPAC_DISABLE_REMOTERY)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    add_definitions(-DGPAC_64_BITS)
+  endif()
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -177,7 +181,9 @@ add_subdirectory (lib_ccx)
 
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
-set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+if (WITH_GPAC AND GPAC_FOUND)
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+endif()
 # set (EXTRA_LIBS ${EXTRA_LIBS} m)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
