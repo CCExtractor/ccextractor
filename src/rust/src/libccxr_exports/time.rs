@@ -138,7 +138,7 @@ pub unsafe extern "C" fn ccxr_millis_to_time(
 /// # Safety
 ///
 /// `ctx` should not be null.
-unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingContext {
+pub unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingContext {
     let pts_set = match (*ctx).pts_set {
         0 => PtsSet::No,
         1 => PtsSet::Received,
@@ -206,7 +206,7 @@ unsafe fn generate_timing_context(ctx: *const ccx_common_timing_ctx) -> TimingCo
 /// # Safety
 ///
 /// `ctx` should not be null.
-unsafe fn write_back_to_common_timing_ctx(
+pub unsafe fn write_back_to_common_timing_ctx(
     ctx: *mut ccx_common_timing_ctx,
     timing_ctx: &TimingContext,
 ) {
@@ -275,7 +275,7 @@ unsafe fn write_back_to_common_timing_ctx(
 /// # Safety
 ///
 /// All the static variables should be initialized and in valid state.
-unsafe fn apply_timing_info() {
+pub(crate) unsafe fn apply_timing_info() {
     let Ok(mut timing_info) = GLOBAL_TIMING_INFO.write() else {
         // RwLock is poisoned, skip updating
         return;
