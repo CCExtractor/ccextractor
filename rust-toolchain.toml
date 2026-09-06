@@ -1,0 +1,10 @@
+# Pinned so that a new stable rustc cannot introduce clippy lints that fail
+# PRs which did not touch the offending code. Bumping this is a deliberate
+# change; Dependabot opens a PR when a new release is available, and any new
+# lints get fixed there, once, instead of in every open PR.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]
+# The MSVC builds cross-compile with `cargo build --target` (windows/rust.bat),
+# so the target std must exist for the pinned toolchain.
+targets = ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]

@@ -3,6 +3,7 @@ on:
   push:
     paths:
     - '.github/workflows/format.yml'
+    - 'rust-toolchain.toml'
     - 'src/**.c'
     - 'src/**.h'
     - 'src/rust/**'
@@ -12,6 +13,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
     - '.github/workflows/format.yml'
+    - 'rust-toolchain.toml'
     - 'src/**.c'
     - 'src/**.h'
     - 'src/rust/**'
@@ -43,11 +45,7 @@ jobs:
             ${{ matrix.workdir }}/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('${{ matrix.workdir }}/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+      - uses: dtolnay/rust-toolchain@stable
       - name: dependencies
         run: sudo apt update && sudo apt install libtesseract-dev  libavformat-dev libavdevice-dev libswscale-dev yasm
       - name: rustfmt
