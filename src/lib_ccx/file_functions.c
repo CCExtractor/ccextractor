@@ -175,15 +175,23 @@ int switch_to_next_file(struct lib_ccx_ctx *ctx, LLONG bytesinbuffer)
 		if (ctx->current_file >= ctx->num_input_files)
 			break;
 
+		// Hold the name rather than re-indexing after open(). open() reaches
+		// buffered_read_opt(), which calls switch_to_next_file() again under
+		// binary_concat and advances current_file, so the index validated above
+		// no longer points at the file being opened -- and can be past the end.
+		char *current_input_file = ctx->inputfile[ctx->current_file];
+
 		// The following \n keeps the progress percentage from being overwritten.
 		mprint("\n\r-----------------------------------------------------------------\n");
-		mprint("\rOpening file: %s\n", ctx->inputfile[ctx->current_file]);
-		ret = ctx->demux_ctx->open(ctx->demux_ctx, ctx->inputfile[ctx->current_file]);
+		mprint("\rOpening file: %s\n", current_input_file);
+		ret = ctx->demux_ctx->open(ctx->demux_ctx, current_input_file);
 		if (ret < 0)
-			mprint("\rWarning: Unable to open input file [%s]\n", ctx->inputfile[ctx->current_file]);
+		{
+			mprint("\rWarning: Unable to open input file [%s]\n", current_input_file);
+		}
 		else
 		{
-			activity_input_file_open(ctx->inputfile[ctx->current_file]);
+			activity_input_file_open(current_input_file);
 			if (!ccx_options.live_stream)
 			{
 				ctx->inputsize = ctx->demux_ctx->get_filesize(ctx->demux_ctx);

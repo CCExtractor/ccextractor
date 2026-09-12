@@ -227,22 +227,22 @@ pub unsafe fn switch_to_next_file(
             CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
         );
 
+        // Own the name rather than re-indexing after open(). open() reaches
+        // buffered_read_opt(), which calls switch_to_next_file() again under
+        // binary_concat and advances current_file, so the index checked above no
+        // longer points at the file being opened -- and can be past the end.
         let filename =
             CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy();
+        let filename = filename.into_owned();
 
         ret = demux_ctx.open(&filename, ccx_options);
 
         if ret < 0 {
-            println!(
-                "\rWarning: Unable to open input file [{}]",
-                CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
-            );
+            println!("\rWarning: Unable to open input file [{}]", filename);
         } else {
             // Activity reporting
             let mut c = Options::default();
-            c.activity_input_file_open(
-                &CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
-            );
+            c.activity_input_file_open(&filename);
 
             if ccx_options.live_stream.is_some() && ccx_options.live_stream.unwrap().millis() == 0 {
                 ctx.inputsize = demux_ctx.get_filesize();
