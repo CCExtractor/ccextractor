@@ -248,7 +248,19 @@ impl CcxDemuxer<'_> {
         }
         // Stream mode detection
         if self.auto_stream == StreamMode::Autodetect {
+            // Temporarily disable binary_concat during stream detection.
+            // detect_stream_type reads up to 1MB (STARTBYTESLENGTH) via
+            // buffered_read_opt. For files smaller than 1MB, hitting EOF
+            // causes buffered_read_opt to call switch_to_next_file (when
+            // binary_concat is enabled), which increments current_file
+            // while the outer switch_to_next_file() is still inside open().
+            // That double-advance skips inputs and leaves current_file
+            // pointing at the wrong file (or past the array).
+            // Mirror the C guard in ccx_demuxer.c (#2209). See issue #2344.
+            let saved_binary_concat = ccx_options.binary_concat;
+            ccx_options.binary_concat = false;
             detect_stream_type(self, ccx_options);
+            ccx_options.binary_concat = saved_binary_concat;
             match self.stream_mode {
                 StreamMode::ElementaryOrNotFound => {
                     info!("\rFile seems to be an elementary stream")
@@ -647,6 +659,59 @@ mod tests {
             assert_ne!(demuxer.stream_mode, StreamMode::Autodetect);
             demuxer.close(&mut Options::default());
         }
+    }
+
+    #[test]
+    #[serial]
+    fn test_open_does_not_advance_current_file_on_short_input() {
+        // Probe reads 1MB. A tiny file hits EOF during detect_stream_type.
+        // With binary_concat still on, that used to call switch_to_next_file
+        // and bump current_file (issue #2344). open() must leave both the
+        // index and the concat flag unchanged.
+        initialize_logger();
+        let mut first = NamedTempFile::new().unwrap();
+        first.write_all(b"tiny").unwrap();
+        first.flush().unwrap();
+        let mut second = NamedTempFile::new().unwrap();
+        second.write_all(b"tiny2").unwrap();
+        second.flush().unwrap();
+
+        let first_c = CString::new(first.path().to_str().unwrap()).unwrap();
+        let second_c = CString::new(second.path().to_str().unwrap()).unwrap();
+        let mut ptrs = [
+            first_c.as_ptr() as *mut c_char,
+            second_c.as_ptr() as *mut c_char,
+        ];
+
+        let mut parent = lib_ccx_ctx::default();
+        parent.current_file = 0;
+        parent.num_input_files = 2;
+        parent.inputfile = ptrs.as_mut_ptr();
+        parent.inputsize = 0;
+
+        let mut opts = Options::default();
+        opts.binary_concat = true;
+        opts.buffer_input = false;
+        opts.live_stream = None;
+
+        {
+            let mut demuxer = CcxDemuxer::default();
+            demuxer.auto_stream = StreamMode::Autodetect;
+            demuxer.parent = Some(&mut parent);
+            unsafe {
+                assert_eq!(demuxer.open(first.path().to_str().unwrap(), &mut opts), 0);
+                demuxer.close(&mut opts);
+            }
+        }
+
+        assert!(
+            opts.binary_concat,
+            "open() must restore binary_concat so copy_from_rust cannot disable concat for the rest of the run"
+        );
+        assert_eq!(
+            parent.current_file, 0,
+            "detect_stream_type must not switch to the next input file"
+        );
     }
     // #[serial]
     // #[test]
