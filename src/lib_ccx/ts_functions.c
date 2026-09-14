@@ -893,7 +893,10 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// PTS calculation
-		if (payload.pesstart) // if there is PES Header data in the payload and we didn't get the first pts of that stream
+		// A PES header carrying a PTS is at least 14 bytes. A packet whose
+		// adaptation field leaves a shorter payload has nothing to read here,
+		// and dereferencing payload.start would run past the end of tspacket.
+		if (payload.pesstart && payload.length >= 14)
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];

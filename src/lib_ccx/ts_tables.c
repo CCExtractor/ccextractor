@@ -645,6 +645,12 @@ int parse_PAT(struct ccx_demuxer *ctx)
 
 	pointer_field = *(ctx->PID_buffers[0]->buffer);
 
+	// pointer_field comes straight from the stream. If it points at or past
+	// the end of the buffered section, the subtraction below underflows (buffer_length
+	// is uint32_t) and the resulting huge value slips through the length checks.
+	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0]->buffer_length)
+		return 0;
+
 	payload_start = ctx->PID_buffers[0]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0]->buffer_length - (pointer_field + 1);
 
@@ -949,6 +955,12 @@ void parse_SDT(struct ccx_demuxer *ctx)
 	// unsigned int last_section_number = 0;
 
 	pointer_field = *(ctx->PID_buffers[0x11]->buffer);
+
+	// pointer_field comes straight from the stream. If it points at or past
+	// the end of the buffered section, the subtraction below underflows (buffer_length
+	// is uint32_t) and the resulting huge value slips through the length checks.
+	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0x11]->buffer_length)
+		return;
 	payload_start = ctx->PID_buffers[0x11]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0x11]->buffer_length - (pointer_field + 1);
 
