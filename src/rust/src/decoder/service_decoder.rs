@@ -1930,10 +1930,9 @@ mod test {
 
         let mut decoder = get_zero_allocated_obj::<dtvcc_service_decoder>();
         decoder.current_window = 0;
-        decoder.tv = Box::into_raw(Box::new(dtvcc_tv_screen {
-            service_number: 1,
-            ..Default::default()
-        }));
+        let mut tv = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        tv.service_number = 1;
+        decoder.tv = Box::into_raw(tv);
 
         let window = &mut decoder.windows[0];
         window.is_defined = 1;
@@ -1965,10 +1964,24 @@ mod test {
 
         let output = tempfile::NamedTempFile::new().unwrap();
         let filename = CString::new(output.path().to_str().unwrap()).unwrap();
-        let mut encoder = encoder_ctx::default();
+        let mut encoder = get_zero_allocated_obj::<encoder_ctx>();
         encoder.dtvcc_writers[0].fd = -1;
         encoder.dtvcc_writers[0].filename = filename.as_ptr() as *mut _;
         let mut timing = ccx_common_timing_ctx::default();
+
+        // No-rollup CR before the boundary must only advance the pen, leaving
+        // the partially populated window intact.
+        decoder.windows[0].row_count = 4;
+        decoder.process_cr(&mut encoder, &mut timing, true);
+        assert_eq!(decoder.windows[0].pen_row, 2);
+        unsafe {
+            assert_eq!(*decoder.windows[0].rows[0], dtvcc_symbol::new(0x41));
+            assert_eq!(*decoder.windows[0].rows[1], dtvcc_symbol::new(0x42));
+        }
+
+        decoder.windows[0].row_count = 2;
+        decoder.windows[0].pen_row = 1;
+        decoder.windows[0].pen_column = 3;
 
         decoder.process_cr(&mut encoder, &mut timing, true);
 
