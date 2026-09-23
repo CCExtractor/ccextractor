@@ -228,6 +228,49 @@ pub trait BlockStream {
     /// Receive the bytes from network and place them in `buf`.
     fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize>;
 
+    /// Send all bytes in `buf` across the network.
+    fn send_all(&mut self, mut buf: &[u8]) -> Result<bool, NetError> {
+        while !buf.is_empty() {
+            match self.send(buf) {
+                Ok(0) => return Ok(false),
+                Ok(sent) => buf = &buf[sent..],
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+
+        Ok(true)
+    }
+
+    /// Receive enough bytes from the network to fill `buf`.
+    fn recv_exact(&mut self, mut buf: &mut [u8]) -> Result<bool, NetError> {
+        while !buf.is_empty() {
+            match self.recv(buf) {
+                Ok(0) => return Ok(false),
+                Ok(received) => buf = &mut buf[received..],
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+
+        Ok(true)
+    }
+
+    /// Receive and discard `length` bytes from the network.
+    fn discard(&mut self, mut length: usize) -> Result<bool, NetError> {
+        let mut buffer = [0_u8; 4096];
+
+        while length > 0 {
+            let chunk_length = length.min(buffer.len());
+            if !self.recv_exact(&mut buffer[..chunk_length])? {
+                return Ok(false);
+            }
+            length -= chunk_length;
+        }
+
+        Ok(true)
+    }
+
     /// Send a [`Block`] across the network.
     ///
     /// It returns a [`NetError`] if some transmission failure ocurred, or else it will return a bool
@@ -236,7 +279,7 @@ pub trait BlockStream {
     fn send_block(&mut self, block: &Block<'_>) -> Result<bool, NetError> {
         let Block { command, data } = block;
 
-        if self.send(&[(*command).into()])? != 1 {
+        if !self.send_all(&[(*command).into()])? {
             return Ok(false);
         }
 
@@ -246,15 +289,15 @@ pub trait BlockStream {
 
         let mut length_part = [0; LEN_SIZE];
         let _ = write!(length_part.as_mut_slice(), "{}", data.len());
-        if self.send(&length_part)? != LEN_SIZE {
+        if !self.send_all(&length_part)? {
             return Ok(false);
         }
 
-        if !data.is_empty() && self.send(data)? != data.len() {
+        if !self.send_all(data)? {
             return Ok(false);
         }
 
-        if self.send(END_MARKER.as_bytes())? != END_MARKER.len() {
+        if !self.send_all(END_MARKER.as_bytes())? {
             return Ok(false);
         }
 
@@ -266,11 +309,14 @@ pub trait BlockStream {
 
     /// Receive a [`Block`] from the network.
     ///
+    /// Data larger than `max_data_length` is discarded before returning an error so the next block
+    /// remains readable.
+    ///
     /// It returns a [`NetError`] if some transmission failure ocurred or byte format is violated.
     /// It will return a [`None`] if the connection has shutdown down correctly.
-    fn recv_block<'a>(&mut self) -> Result<Option<Block<'a>>, NetError> {
+    fn recv_block<'a>(&mut self, max_data_length: usize) -> Result<Option<Block<'a>>, NetError> {
         let mut command_byte = [0_u8; 1];
-        if self.recv(&mut command_byte)? != 1 {
+        if !self.recv_exact(&mut command_byte)? {
             return Ok(None);
         }
 
@@ -285,7 +331,7 @@ pub trait BlockStream {
         }
 
         let mut length_bytes = [0u8; LEN_SIZE];
-        if self.recv(&mut length_bytes)? != LEN_SIZE {
+        if !self.recv_exact(&mut length_bytes)? {
             return Ok(None);
         }
         let end = length_bytes
@@ -296,13 +342,21 @@ pub trait BlockStream {
             .parse()
             .map_err(|_| NetError::InvalidBytes { location: "length" })?;
 
-        let mut data = vec![0u8; length];
-        if self.recv(&mut data)? != length {
-            return Ok(None);
-        }
+        let data = if length <= max_data_length {
+            let mut data = vec![0u8; length];
+            if !self.recv_exact(&mut data)? {
+                return Ok(None);
+            }
+            Some(data)
+        } else {
+            if !self.discard(length)? {
+                return Ok(None);
+            }
+            None
+        };
 
         let mut end_marker = [0u8; END_MARKER.len()];
-        if self.recv(&mut end_marker)? != END_MARKER.len() {
+        if !self.recv_exact(&mut end_marker)? {
             return Ok(None);
         }
         if end_marker != END_MARKER.as_bytes() {
@@ -311,12 +365,144 @@ pub trait BlockStream {
             });
         }
 
+        let data = data.ok_or(NetError::InvalidBytes { location: "length" })?;
+
         let block = Block::new_owned(command, data);
 
         #[cfg(feature = "debug_out")]
         eprintln!("{}", block);
 
         Ok(Some(block))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::VecDeque;
+
+    struct TestStream {
+        sent: Vec<u8>,
+        received: VecDeque<u8>,
+        max_send_length: usize,
+        max_recv_length: usize,
+        interrupt_send: bool,
+        interrupt_recv: bool,
+    }
+
+    impl TestStream {
+        fn new(received: Vec<u8>, max_send_length: usize, max_recv_length: usize) -> Self {
+            Self {
+                sent: Vec::new(),
+                received: received.into(),
+                max_send_length,
+                max_recv_length,
+                interrupt_send: false,
+                interrupt_recv: false,
+            }
+        }
+    }
+
+    impl BlockStream for TestStream {
+        fn send(&mut self, buf: &[u8]) -> io::Result<usize> {
+            if self.interrupt_send {
+                self.interrupt_send = false;
+                return Err(io::ErrorKind::Interrupted.into());
+            }
+            let length = buf.len().min(self.max_send_length);
+            self.sent.extend_from_slice(&buf[..length]);
+            Ok(length)
+        }
+
+        fn recv(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.interrupt_recv {
+                self.interrupt_recv = false;
+                return Err(io::ErrorKind::Interrupted.into());
+            }
+            let length = buf.len().min(self.max_recv_length).min(self.received.len());
+            for byte in &mut buf[..length] {
+                *byte = self.received.pop_front().unwrap();
+            }
+            Ok(length)
+        }
+    }
+
+    fn encoded_block(command: Command, data: &[u8]) -> Vec<u8> {
+        let mut encoded = vec![command.into()];
+        let mut length = [0_u8; LEN_SIZE];
+        let _ = write!(length.as_mut_slice(), "{}", data.len());
+        encoded.extend_from_slice(&length);
+        encoded.extend_from_slice(data);
+        encoded.extend_from_slice(END_MARKER.as_bytes());
+        encoded
+    }
+
+    #[test]
+    fn send_block_handles_partial_writes() {
+        let mut stream = TestStream::new(Vec::new(), 2, 2);
+        let block = Block::bin_data(b"caption");
+
+        assert!(stream.send_block(&block).unwrap());
+        assert_eq!(stream.sent, encoded_block(Command::BinData, b"caption"));
+    }
+
+    #[test]
+    fn recv_block_handles_partial_reads() {
+        let encoded = encoded_block(Command::BinData, b"caption");
+        let mut stream = TestStream::new(encoded, 2, 2);
+
+        let block = stream.recv_block(7).unwrap().unwrap();
+        assert_eq!(block.command(), Command::BinData);
+        assert_eq!(block.data(), b"caption");
+    }
+
+    #[test]
+    fn block_stream_retries_interrupted_io() {
+        let encoded = encoded_block(Command::BinData, b"caption");
+        let mut stream = TestStream::new(encoded, 2, 2);
+        stream.interrupt_send = true;
+        stream.interrupt_recv = true;
+
+        assert!(stream.send_block(&Block::bin_data(b"caption")).unwrap());
+        let block = stream.recv_block(7).unwrap().unwrap();
+        assert_eq!(block.data(), b"caption");
+    }
+
+    #[test]
+    fn recv_block_returns_none_for_partial_frame_at_eof() {
+        let mut encoded = encoded_block(Command::BinData, b"caption");
+        encoded.pop();
+        let mut stream = TestStream::new(encoded, 2, 2);
+
+        assert!(stream.recv_block(7).unwrap().is_none());
+    }
+
+    #[test]
+    fn recv_block_rejects_invalid_length() {
+        let mut encoded = vec![Command::BinData.into()];
+        encoded.extend_from_slice(b"invalid\0\0\0");
+        let mut stream = TestStream::new(encoded, 2, 2);
+
+        assert!(matches!(
+            stream.recv_block(7),
+            Err(NetError::InvalidBytes { location: "length" })
+        ));
+    }
+
+    #[test]
+    fn recv_block_discards_oversized_frame() {
+        let mut encoded = encoded_block(Command::BinData, b"oversized");
+        encoded.extend_from_slice(&encoded_block(Command::BinData, b"next"));
+        let mut stream = TestStream::new(encoded, 2, 2);
+
+        assert!(matches!(
+            stream.recv_block(4),
+            Err(NetError::InvalidBytes { location: "length" })
+        ));
+
+        let block = stream.recv_block(4).unwrap().unwrap();
+        assert_eq!(block.command(), Command::BinData);
+        assert_eq!(block.data(), b"next");
     }
 }
 
