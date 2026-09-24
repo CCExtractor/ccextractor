@@ -11,10 +11,32 @@ if(WIN32)
 endif(WIN32)
 
 find_package(PkgConfig)
-pkg_check_modules (GPAC REQUIRED gpac)
-
-set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
-set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+if (WITH_GPAC)
+    pkg_check_modules (GPAC gpac)
+    if (GPAC_FOUND)
+        set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
+        set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+        add_definitions(-DENABLE_GPAC)
+        set (GPAC_FOUND ${GPAC_FOUND} PARENT_SCOPE)
+        set (GPAC_LIBRARIES ${GPAC_LIBRARIES} PARENT_SCOPE)
+    else ()
+        message(STATUS "GPAC not found via pkg-config. Falling back to FetchContent...")
+        include(FetchContent)
+        FetchContent_Declare(
+            gpac
+            GIT_REPOSITORY https://github.com/gpac/gpac.git
+            GIT_TAG        master
+        )
+        FetchContent_MakeAvailable(gpac)
+        
+        # Link against the fetched GPAC
+        set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${gpac_SOURCE_DIR}/include)
+        set (EXTRA_LIBS ${EXTRA_LIBS} libgpac)
+        add_definitions(-DENABLE_GPAC)
+        set (GPAC_FOUND TRUE PARENT_SCOPE)
+        set (GPAC_LIBRARIES libgpac PARENT_SCOPE)
+    endif ()
+endif ()
 
 if (WITH_FFMPEG)
     find_package(PkgConfig)
