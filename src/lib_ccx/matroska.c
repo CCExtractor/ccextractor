@@ -429,6 +429,7 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block_additions(
 	struct block_addition *newBA = calloc(1, sizeof(struct block_addition));
 	if (newBA == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block_additions: Out of memory.");
+	newBA->message_buf = message;
 	char *current = message;
 	int lastIndex = 0;
 	int item = 0;
@@ -1900,14 +1901,31 @@ void free_sub_track(struct matroska_sub_track *track)
 		free(track->lang_ietf);
 	if (track->codec_id_string != NULL)
 		free(track->codec_id_string);
+
 	for (int i = 0; i < track->sentence_count; i++)
 	{
 		struct matroska_sub_sentence *sentence = track->sentences[i];
+
 		free(sentence->text);
+
+		if (sentence->blockaddition != NULL)
+		{
+			/* cue_settings_list is the base of the message buffer;
+			 * cue_identifier and comment are pointers into it */
+			if (sentence->blockaddition->message_buf != NULL)
+			{
+				free(sentence->blockaddition->message_buf);
+			}
+
+			free(sentence->blockaddition);
+		}
+
 		free(sentence);
 	}
+
 	if (track->sentences != NULL)
 		free(track->sentences);
+
 	free(track);
 }
 
