@@ -38,7 +38,12 @@ Note:If you installed ffmpeg on non-standard location, please change/update your
 ## How to compile ccextractor
 
 ### On Linux:
-`make ENABLE_FFMPEG=yes`
+```bash
+cd linux
+./autogen.sh
+./configure --enable-ffmpeg
+make
+```
 
 ### On Windows:
 #### Set preprocessor flag `ENABLE_FFMPEG=1`

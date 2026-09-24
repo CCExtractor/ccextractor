@@ -9,4 +9,20 @@ dependencies for ocr mode:
 sudo apt-get install libleptonica-dev libtesseract-dev
 ```
 
-Other than this you just need to cd into the linux directory and run `make` or `make ENABLE_OCR=yes` if you want ocr enabled.
+Other than this you just need to cd into the `linux` directory and build:
+
+```bash
+cd linux
+./autogen.sh
+./configure
+make
+```
+
+If you want OCR enabled, pass `--enable-ocr` to `configure` instead:
+
+```bash
+cd linux
+./autogen.sh
+./configure --enable-ocr
+make
+```
