@@ -74,17 +74,30 @@ jobs:
             libleptonica-dev \
             tesseract-ocr-eng
 
-      - name: Install FFmpeg dependencies (HardSubX)
+      # HardSubX links rsmpeg, which src/rust/Cargo.toml builds against FFmpeg 7
+      # bindings. Ubuntu 22.04 ships FFmpeg 4.4, which does not export the
+      # FFmpeg 5.1+/7 symbols rsmpeg references (av_channel_layout_*,
+      # av_buffersink_get_ch_layout, swr_alloc_set_opts2, av_dict_iterate), so
+      # the distro packages cannot satisfy it. Build FFmpeg 7 here instead and
+      # let linuxdeploy bundle it, which keeps the 22.04 glibc baseline.
+      - name: Cache FFmpeg 7 build (HardSubX)
         if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx'
+        id: cache-ffmpeg
+        uses: actions/cache@v6
+        with:
+          path: /opt/ffmpeg7
+          key: ffmpeg-n7.1-ubuntu22
+
+      - name: Build and install FFmpeg 7 (HardSubX)
+        if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx' && steps.cache-ffmpeg.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get install -y --no-install-recommends \
-            libavcodec-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libavfilter-dev \
-            libavdevice-dev
+          sudo apt-get install -y --no-install-recommends nasm yasm
+          git clone -b n7.1 --depth 1 https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
+          cd ffmpeg-src
+          ./configure --prefix=/opt/ffmpeg7 --enable-shared --disable-static \
+            --disable-programs --disable-doc
+          make -j$(nproc)
+          sudo make install
 
       - name: Install Rust toolchain
         if: steps.should_build.outputs.should_build == 'true'
@@ -96,14 +109,18 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /usr/local/lib/libgpac*
-          key: gpac-v2.4.0-ubuntu22
+          key: gpac-v2.4.0-ubuntu22-${{ matrix.build_type }}
 
       - name: Build and install GPAC
         if: steps.should_build.outputs.should_build == 'true' && steps.cache-gpac.outputs.cache-hit != 'true'
         run: |
           git clone -b v2.4.0 --depth 1 https://github.com/gpac/gpac
           cd gpac
-          ./configure
+          # GPAC v2.4.0 does not compile against FFmpeg 7 (AVInputFormat.priv_data_size
+          # became private), and CCExtractor only uses GPAC for ISOBMFF parsing -- the
+          # minimal/ocr variants already build it with FFmpeg disabled. Saying so
+          # explicitly also keeps the AppImage down to a single FFmpeg ABI.
+          ./configure --disable-ffmpeg
           make -j$(nproc) lib
           sudo make install-lib
           sudo ldconfig
@@ -111,6 +128,16 @@ jobs:
       - name: Update library cache
         if: steps.should_build.outputs.should_build == 'true'
         run: sudo ldconfig
+
+      # Exported after the GPAC step as well, so GPAC cannot pick FFmpeg 7 up even
+      # if --disable-ffmpeg above were ever dropped.
+      - name: Use vendored FFmpeg 7 (HardSubX)
+        if: steps.should_build.outputs.should_build == 'true' && matrix.build_type == 'hardsubx'
+        run: |
+          echo "PKG_CONFIG_PATH=/opt/ffmpeg7/lib/pkgconfig" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/opt/ffmpeg7/lib" >> $GITHUB_ENV
+          sudo ldconfig /opt/ffmpeg7/lib
+          PKG_CONFIG_PATH=/opt/ffmpeg7/lib/pkgconfig pkg-config --modversion libavutil libavcodec libswscale
 
       - name: Build AppImage
         if: steps.should_build.outputs.should_build == 'true'
