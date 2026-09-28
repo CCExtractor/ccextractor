@@ -15,7 +15,7 @@ void init_hdcc(struct lib_cc_decode *ctx)
 		ctx->cc_data_count[j] = 0;
 		ctx->cc_fts[j] = 0;
 	}
-	memset(ctx->cc_data_pkts, 0, SORTBUF * (31 * 3 + 1));
+	memset(ctx->cc_data_pkts, 0, SORTBUF * (HDCC_MAX_TRIPLETS_PER_SLOT * 3 + 1));
 	ctx->has_ccdata_buffered = 0;
 }
 
@@ -67,7 +67,40 @@ void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsi
 			}
 			dec_ctx->cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
 			dec_ctx->cc_data_count[seq_index] = 0;
-			memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
+			// Check against what is already in the slot, not just this call:
+			// the write lands at cc_data_count * 3, so the sum is what must fit.
+			if (dec_ctx->cc_data_count[seq_index] + cc_count > HDCC_MAX_TRIPLETS_PER_SLOT)
+			{
+				static int truncate_warning_shown = 0; // Only display warning once
+				if (!truncate_warning_shown)
+				{
+					mprint("Warning: store_hdcc: cc_data_count %d + cc_count %d exceeds slot capacity %d, truncating. Further occurrences will not be reported.\n",
+					       dec_ctx->cc_data_count[seq_index], cc_count, HDCC_MAX_TRIPLETS_PER_SLOT);
+					truncate_warning_shown = 1;
+				}
+				cc_count = HDCC_MAX_TRIPLETS_PER_SLOT - dec_ctx->cc_data_count[seq_index];
+				memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3);
+				// The source byte at this offset is a triplet, not the end
+				// marker process_hdcc() expects, so write the marker ourselves.
+				dec_ctx->cc_data_pkts[seq_index][HDCC_MAX_TRIPLETS_PER_SLOT * 3] = 0xFF;
+			}
+			else
+			{
+				memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
+			}
+		}
+		else if (dec_ctx->cc_data_count[seq_index] + cc_count > HDCC_MAX_TRIPLETS_PER_SLOT)
+		{
+			// Count-only calls accumulate across calls; don't let the count
+			// run past the slot, or process_hdcc() reads out of bounds.
+			static int clamp_warning_shown = 0; // Only display warning once
+			if (!clamp_warning_shown)
+			{
+				mprint("Warning: store_hdcc: cc_data_count %d + %d exceeds slot capacity %d, clamping. Further occurrences will not be reported.\n",
+				       dec_ctx->cc_data_count[seq_index], cc_count, HDCC_MAX_TRIPLETS_PER_SLOT);
+				clamp_warning_shown = 1;
+			}
+			cc_count = HDCC_MAX_TRIPLETS_PER_SLOT - dec_ctx->cc_data_count[seq_index];
 		}
 		dec_ctx->cc_data_count[seq_index] += cc_count;
 	}
