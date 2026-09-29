@@ -14,7 +14,8 @@
 #define SORTBUF (2 * MAXBFRAMES + 1)
 // Max caption triplets one hdcc slot can hold. Matches src/rust/src/lib.rs's
 // MAX_CC_COUNT — keep both in sync, see the Rust-side unit test that checks this.
-// *10 over the 31 of one cc_data header, because MP4 seems to have different limits.
+// This is the internal storage capacity for one HDCC slot, not the
+// 31-triplet limit of an individual cc_data header.
 #define HDCC_MAX_TRIPLETS_PER_SLOT (10 * 31)
 
 /* flag raised when end of display marker arrives in Dvb Subtitle */
