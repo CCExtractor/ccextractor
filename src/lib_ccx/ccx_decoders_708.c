@@ -773,11 +773,15 @@ void dtvcc_process_cr(dtvcc_ctx *dtvcc, dtvcc_service_decoder *decoder)
 			if (dtvcc->no_rollup)
 			{
 				for (int row = 0; row < CCX_DTVCC_MAX_ROWS; row++)
+				{
 					dtvcc_window_clear_row(window, row);
+				}
 				window->is_empty = 1;
 			}
 			else
+			{
 				dtvcc_window_rollup(decoder, window);
+			}
 		}
 		dtvcc_window_update_time_show(window, dtvcc->timing);
 	}
