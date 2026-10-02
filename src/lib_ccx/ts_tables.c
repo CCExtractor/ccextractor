@@ -649,7 +649,9 @@ int parse_PAT(struct ccx_demuxer *ctx)
 	// the end of the buffered section, the subtraction below underflows (buffer_length
 	// is uint32_t) and the resulting huge value slips through the length checks.
 	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0]->buffer_length)
+	{
 		return 0;
+	}
 
 	payload_start = ctx->PID_buffers[0]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0]->buffer_length - (pointer_field + 1);
@@ -960,9 +962,19 @@ void parse_SDT(struct ccx_demuxer *ctx)
 	// the end of the buffered section, the subtraction below underflows (buffer_length
 	// is uint32_t) and the resulting huge value slips through the length checks.
 	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0x11]->buffer_length)
+	{
 		return;
+	}
 	payload_start = ctx->PID_buffers[0x11]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0x11]->buffer_length - (pointer_field + 1);
+
+	// Everything below reads payload_start[0..11]: table_id, section_length,
+	// current_next_indicator at [5], and the services loop based at [11]. Without
+	// this the "section_length > payload_length - 4" test underflows as well.
+	if (payload_length < 12)
+	{
+		return;
+	}
 
 	// section_number = payload_start[6];
 	// last_section_number = payload_start[7];

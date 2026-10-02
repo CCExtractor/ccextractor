@@ -683,7 +683,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	// Verify PES before copy to capbuf
 	if (cinfo->capbuflen == 0)
 	{
-		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
+		// A PES start code is three bytes. A shorter payload cannot carry one,
+		// and reading start[0..2] would run past the end of the packet, so treat
+		// it the same as a missing header rather than inspecting it.
+		if (payload->length < 3 || payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 		    payload->start[2] != 0x01)
 		{
 			mprint("Notice: Missing PES header\n");
