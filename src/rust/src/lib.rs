@@ -388,6 +388,15 @@ pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active
     dtvcc.is_active = active != 0;
 }
 
+/// Largest cc_count accepted by [`ccxr_process_cc_data`]: the storage capacity
+/// of one `cc_data_pkts` slot, i.e. `HDCC_MAX_TRIPLETS_PER_SLOT` in
+/// src/lib_ccx/ccx_decoders_structs.h. Keep both in sync;
+/// `max_cc_count_matches_hdcc_slot` checks it against the generated bindings.
+///
+/// This is not the 5-bit cc_count wire field (max 31) of a single CEA-708
+/// cc_data header: buffered frames (e.g. MP4) can carry more triplets than that.
+const MAX_CC_COUNT: usize = 310;
+
 /// Process cc_data
 ///
 /// # Safety
@@ -406,9 +415,6 @@ extern "C" fn ccxr_process_cc_data(
     }
 
     // Cast to usize before any arithmetic to prevent i32 overflow.
-    // CEA-708/ATSC A/53 encodes cc_count in a 5-bit field (max 31); 31 is
-    // also the value used in es/userdata.rs. Reject anything beyond that.
-    const MAX_CC_COUNT: usize = 31;
     let cc_count_usize = cc_count as usize;
     if cc_count_usize > MAX_CC_COUNT {
         warn!(
@@ -830,6 +836,15 @@ mod test {
 
         let mut long = [0x97, 0x1F, 0x3C, 0x00];
         assert!(!validate_cc_pair(&mut long));
+    }
+
+    #[test]
+    fn max_cc_count_matches_hdcc_slot() {
+        let ctx = lib_cc_decode::default();
+        assert_eq!(
+            std::mem::size_of_val(&ctx.cc_data_pkts[0]),
+            MAX_CC_COUNT * 3 + 1
+        );
     }
 
     #[test]
