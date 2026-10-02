@@ -1126,7 +1126,9 @@ int processmp4(struct lib_ccx_ctx *ctx, struct ccx_s_mp4Cfg *cfg, char *file)
 					// Without video frames, frame type would stay Unknown and
 					// min_pts would never be set, causing broken timestamps.
 					if (type == GF_ISOM_MEDIA_TEXT || type == GF_ISOM_MEDIA_SUBT || type == GF_ISOM_MEDIA_CLOSED_CAPTION)
+					{
 						dec_ctx->timing->current_picture_coding_type = CCX_FRAME_TYPE_I_FRAME;
+					}
 					set_fts(dec_ctx->timing);
 
 					int atomStart = 0;
