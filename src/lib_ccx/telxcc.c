@@ -981,7 +981,9 @@ static void telx_load_charset(const teletext_page_state_t *s)
 	primary_charset.g0_m29 = s->g0_m29;
 	primary_charset.g0_x28 = s->g0_x28;
 	if (default_g0_charset == LATIN)
+	{
 		remap_g0_charset(s->g0_current);
+	}
 }
 
 static void telx_save_page_state(struct TeletextCtx *ctx)
@@ -989,7 +991,9 @@ static void telx_save_page_state(struct TeletextCtx *ctx)
 	teletext_page_state_t *s;
 
 	if (ctx->current_page_idx < 0)
+	{
 		return;
+	}
 
 	s = &ctx->page_states[ctx->current_page_idx];
 	s->page_buffer = ctx->page_buffer;
@@ -1040,7 +1044,9 @@ static void telx_load_page_state(struct TeletextCtx *ctx, int idx)
 static void telx_switch_page(struct TeletextCtx *ctx, int idx)
 {
 	if (idx == ctx->current_page_idx)
+	{
 		return;
+	}
 	telx_save_page_state(ctx);
 	telx_load_page_state(ctx, idx);
 }
@@ -1051,7 +1057,9 @@ static int telx_page_slot(struct TeletextCtx *ctx, uint16_t page_number)
 	for (int i = 0; i < ctx->num_active_pages; i++)
 	{
 		if (ctx->page_states[i].page_number == page_number)
+		{
 			return i;
+		}
 	}
 
 	if (ctx->num_active_pages >= MAX_TLT_PAGES_EXTRACT)
@@ -1075,7 +1083,9 @@ static int telx_receiving_slot(struct TeletextCtx *ctx, uint8_t m)
 	{
 		int receiving = (i == ctx->current_page_idx) ? ctx->receiving_data : ctx->page_states[i].receiving_data;
 		if (receiving == YES && MAGAZINE(ctx->page_states[i].page_number) == m)
+		{
 			return i;
+		}
 	}
 	return -1;
 }
@@ -1085,11 +1095,15 @@ static int telx_magazine_slot(struct TeletextCtx *ctx, uint8_t m)
 {
 	int idx = telx_receiving_slot(ctx, m);
 	if (idx >= 0)
+	{
 		return idx;
+	}
 	for (int i = 0; i < ctx->num_active_pages; i++)
 	{
 		if (MAGAZINE(ctx->page_states[i].page_number) == m)
+		{
 			return i;
+		}
 	}
 	return -1;
 }
@@ -1106,7 +1120,9 @@ static void telx_begin_page(struct TeletextCtx *ctx, uint8_t charset, uint64_t t
 			for (uint8_t it = 0; it < 40; it++)
 			{
 				if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
+				{
 					ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+				}
 			}
 		}
 		// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early",
@@ -1143,19 +1159,29 @@ static void telx_multi_page_header(struct TeletextCtx *ctx, uint8_t m, uint16_t 
 	for (int i = 0; i < ctx->num_active_pages; i++)
 	{
 		if (ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL && MAGAZINE(ctx->page_states[i].page_number) != m)
+		{
 			continue;
+		}
 		if (i == ctx->current_page_idx)
+		{
 			ctx->receiving_data = NO;
+		}
 		else
+		{
 			ctx->page_states[i].receiving_data = NO;
+		}
 	}
 
 	if (!should_accept_page(page_number, flag_subtitle))
+	{
 		return;
+	}
 
 	int idx = telx_page_slot(ctx, page_number);
 	if (idx < 0)
+	{
 		return;
+	}
 
 	telx_switch_page(ctx, idx);
 	telx_begin_page(ctx, charset, timestamp, sub);
@@ -1178,7 +1204,9 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 	{
 		int idx = (y == 29) ? telx_magazine_slot(ctx, m) : telx_receiving_slot(ctx, m);
 		if (idx < 0)
+		{
 			return;
+		}
 		telx_switch_page(ctx, idx);
 	}
 
@@ -1897,7 +1925,9 @@ static void telx_flush_pending_page(struct TeletextCtx *ttext, struct cc_subtitl
 			for (uint8_t it = 0; it < 40; it++)
 			{
 				if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
+				{
 					ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);
+				}
 			}
 		}
 		// this time we do not subtract any frames, there will be no more frames
@@ -1940,7 +1970,9 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 			}
 		}
 		else
+		{
 			telx_flush_pending_page(ttext, sub);
+		}
 	}
 	freep(&ttext->ucs2_buffer_cur);
 	freep(&ttext->page_buffer_cur);
