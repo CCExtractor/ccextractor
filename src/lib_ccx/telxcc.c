@@ -1051,6 +1051,38 @@ static void telx_switch_page(struct TeletextCtx *ctx, int idx)
 	telx_load_page_state(ctx, idx);
 }
 
+static int telx_slot_receiving(struct TeletextCtx *ctx, int idx)
+{
+	return (idx == ctx->current_page_idx) ? ctx->receiving_data : ctx->page_states[idx].receiving_data;
+}
+
+static int telx_reclaimable_slot(struct TeletextCtx *ctx)
+{
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (ctx->page_states[i].has_text != YES && telx_slot_receiving(ctx, i) != YES)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void telx_release_slot(struct TeletextCtx *ctx, int idx)
+{
+	teletext_page_state_t *s = &ctx->page_states[idx];
+
+	if (idx == ctx->current_page_idx)
+	{
+		telx_save_page_state(ctx);
+		ctx->current_page_idx = -1;
+	}
+	freep(&s->page_buffer_prev);
+	freep(&s->ucs2_buffer_prev);
+	freep(&s->page_buffer_cur);
+	freep(&s->ucs2_buffer_cur);
+}
+
 // Returns the slot for page_number, allocating one if needed. -1 if all slots are taken.
 static int telx_page_slot(struct TeletextCtx *ctx, uint16_t page_number)
 {
@@ -1062,14 +1094,22 @@ static int telx_page_slot(struct TeletextCtx *ctx, uint16_t page_number)
 		}
 	}
 
-	if (ctx->num_active_pages >= MAX_TLT_PAGES_EXTRACT)
+	int idx;
+	if (ctx->num_active_pages < MAX_TLT_PAGES_EXTRACT)
 	{
-		mprint("\rWarning: Teletext page %03x ignored, at most %d pages can be extracted at once.\n",
-		       page_number, MAX_TLT_PAGES_EXTRACT);
-		return -1;
+		idx = ctx->num_active_pages++;
 	}
-
-	int idx = ctx->num_active_pages++;
+	else
+	{
+		idx = telx_reclaimable_slot(ctx);
+		if (idx < 0)
+		{
+			mprint("\rWarning: Teletext page %03x ignored, at most %d pages can be extracted at once.\n",
+			       page_number, MAX_TLT_PAGES_EXTRACT);
+			return -1;
+		}
+		telx_release_slot(ctx, idx);
+	}
 	memset(&ctx->page_states[idx], 0, sizeof(teletext_page_state_t));
 	ctx->page_states[idx].page_number = page_number;
 	telx_save_charset(&ctx->page_states[idx]);
@@ -1081,8 +1121,7 @@ static int telx_receiving_slot(struct TeletextCtx *ctx, uint8_t m)
 {
 	for (int i = 0; i < ctx->num_active_pages; i++)
 	{
-		int receiving = (i == ctx->current_page_idx) ? ctx->receiving_data : ctx->page_states[i].receiving_data;
-		if (receiving == YES && MAGAZINE(ctx->page_states[i].page_number) == m)
+		if (telx_slot_receiving(ctx, i) == YES && MAGAZINE(ctx->page_states[i].page_number) == m)
 		{
 			return i;
 		}
@@ -1172,7 +1211,7 @@ static void telx_multi_page_header(struct TeletextCtx *ctx, uint8_t m, uint16_t 
 		}
 	}
 
-	if (!should_accept_page(page_number, flag_subtitle))
+	if ((page_number & 0xff) == 0xff || !should_accept_page(page_number, flag_subtitle))
 	{
 		return;
 	}
@@ -1313,6 +1352,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
+		if (ctx->current_page_idx >= 0 && memchr(packet->data, 0x0b, 40) != NULL)
+		{
+			ctx->page_states[ctx->current_page_idx].has_text = YES;
+		}
 		--de_ctr;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))

@@ -44,6 +44,7 @@ typedef struct
 	uint8_t g0_current;
 	uint8_t g0_m29;
 	uint8_t g0_x28;
+	uint8_t has_text;
 } teletext_page_state_t;
 
 // application states -- flags for notices that should be printed only once
