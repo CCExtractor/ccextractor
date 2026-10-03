@@ -328,8 +328,8 @@ static int parse_ad_track_desc(struct ccx_demuxer *demux, int len)
 				}
 				ad_track->ad_format = auxi_info[2];
 				ad_track->nb_field = auxi_info[3];
-				ad_track->field_size = *((int16_t *)(auxi_info + 4));	     // RB16(auxi_info + 4);
-				ad_track->packet_size = *((int16_t *)(auxi_info + 6)) * 256; // RB16(auxi_info + 6);
+				ad_track->field_size = RB16(auxi_info + 4);
+				ad_track->packet_size = RB16(auxi_info + 6) * 256;
 				debug("ad_format %d nb_field %d field_size %d packet_size %d track id %d\n",
 				      ad_track->ad_format, ad_track->nb_field, ad_track->field_size, ad_track->packet_size, ad_track->id);
 				break;

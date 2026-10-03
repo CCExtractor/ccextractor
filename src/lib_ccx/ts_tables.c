@@ -125,7 +125,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		return 0;
 	}
 
-	crc = (*(int32_t *)(sbuf + olen - 4));
+	crc = RB32(sbuf + olen - 4);
 	table_id = buf[0];
 
 	/* TO-DO: We're currently parsing the PMT making assumptions that there's only one section with table_id=2,
@@ -527,7 +527,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 	else
 		pinfo->valid_crc = CCX_TRUE;
 
-	pinfo->crc = (*(int32_t *)(sbuf + olen - 4));
+	pinfo->crc = RB32(sbuf + olen - 4);
 
 	return must_flush;
 }
