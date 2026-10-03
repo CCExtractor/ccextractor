@@ -15,6 +15,7 @@
 #define CDP_IDENTIFIER_VALUE_LOW 0x69
 #define CC_DATA_ID 0x72
 #define CDP_FOOTER_ID 0x74
+#define CDP_MAX_CC_COUNT 31 // cc_count is a 5-bit field in ccdata_section (SMPTE ST 334-2)
 
 #define CDP_FRAME_RATE_FORBIDDEN 0x00
 #define CDP_FRAME_RATE_23_976 0x01

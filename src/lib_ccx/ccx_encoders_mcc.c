@@ -130,48 +130,58 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 	    caption_time.minute, caption_time.second, caption_time.frame);
 #endif
 
-	uint8 *w_boilerplate_buffer = add_boilerplate(enc_ctx, cc_data, cc_count, dec_ctx->current_frame_rate);
-	uint16 w_boilerplate_buff_size = ((cc_count * 3) + 16);
-
 	ms_to_frame(enc_ctx, &caption_time, dec_ctx->current_frame_rate, enc_ctx->force_dropframe);
 
-	uint16 num_chars_needed = count_compressed_chars(w_boilerplate_buffer, w_boilerplate_buff_size);
+	// A CDP's cc_count field is only 5 bits wide, so a frame carrying more than
+	// CDP_MAX_CC_COUNT triplets is split into several CDPs. Each one goes on its
+	// own line with the same time code, as the MCC format allows.
+	for (int offset = 0; offset < cc_count; offset += CDP_MAX_CC_COUNT)
+	{
+		int chunk_count = cc_count - offset;
+		if (chunk_count > CDP_MAX_CC_COUNT)
+			chunk_count = CDP_MAX_CC_COUNT;
+
+		uint8 *w_boilerplate_buffer = add_boilerplate(enc_ctx, &cc_data[offset * 3], chunk_count, dec_ctx->current_frame_rate);
+		uint16 w_boilerplate_buff_size = ((chunk_count * 3) + 16);
+
+		uint16 num_chars_needed = count_compressed_chars(w_boilerplate_buffer, w_boilerplate_buff_size);
 
 #if MORE_DEBUG
-	LOG("With CDP Boiler Plate %d byte packet at time: %02d:%02d:%02d;%02d requires %d bytes compressed",
-	    w_boilerplate_buff_size, caption_time.hour, caption_time.minute,
-	    caption_time.second, caption_time.frame, num_chars_needed);
+		LOG("With CDP Boiler Plate %d byte packet at time: %02d:%02d:%02d;%02d requires %d bytes compressed",
+		    w_boilerplate_buff_size, caption_time.hour, caption_time.minute,
+		    caption_time.second, caption_time.frame, num_chars_needed);
 #endif
 
-	size_t compressed_data_size = num_chars_needed + 13;
-	char *compressed_data_buffer = malloc(compressed_data_size);
-	if (!compressed_data_buffer)
-	{
+		size_t compressed_data_size = num_chars_needed + 13;
+		char *compressed_data_buffer = malloc(compressed_data_size);
+		if (!compressed_data_buffer)
+		{
+			free(w_boilerplate_buffer);
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In mcc_encode_cc_data: Out of memory allocating compressed_data_buffer.");
+		}
+
+		snprintf(compressed_data_buffer, compressed_data_size, "%02d:%02d:%02d:%02d\t", caption_time.hour, caption_time.minute,
+			 caption_time.second, caption_time.frame);
+
+		compress_data(w_boilerplate_buffer, w_boilerplate_buff_size, (uint8 *)&compressed_data_buffer[12]);
 		free(w_boilerplate_buffer);
-		fatal(EXIT_NOT_ENOUGH_MEMORY, "In mcc_encode_cc_data: Out of memory allocating compressed_data_buffer.");
-	}
-
-	snprintf(compressed_data_buffer, compressed_data_size, "%02d:%02d:%02d:%02d\t", caption_time.hour, caption_time.minute,
-		 caption_time.second, caption_time.frame);
-
-	compress_data(w_boilerplate_buffer, w_boilerplate_buff_size, (uint8 *)&compressed_data_buffer[12]);
-	free(w_boilerplate_buffer);
 
 #if MORE_DEBUG
-	LOG("Writing Compressed %d byte packet at time: %02d:%02d:%02d;%02d", (num_chars_needed + 13),
-	    caption_time.hour, caption_time.minute, caption_time.second, caption_time.frame);
+		LOG("Writing Compressed %d byte packet at time: %02d:%02d:%02d;%02d", (num_chars_needed + 13),
+		    caption_time.hour, caption_time.minute, caption_time.second, caption_time.frame);
 #endif
 
-	size_t current_len = strlen(compressed_data_buffer);
-	if (current_len + 1 < compressed_data_size)
-	{
-		compressed_data_buffer[current_len] = '\n';
-		compressed_data_buffer[current_len + 1] = '\0';
+		size_t current_len = strlen(compressed_data_buffer);
+		if (current_len + 1 < compressed_data_size)
+		{
+			compressed_data_buffer[current_len] = '\n';
+			compressed_data_buffer[current_len + 1] = '\0';
+		}
+
+		write_wrapped(enc_ctx->out->fh, compressed_data_buffer, strlen(compressed_data_buffer));
+
+		free(compressed_data_buffer);
 	}
-
-	write_wrapped(enc_ctx->out->fh, compressed_data_buffer, strlen(compressed_data_buffer));
-
-	free(compressed_data_buffer);
 
 	return true; // Needed to avoid warning
 		     // With void function type - throws an error
@@ -281,6 +291,7 @@ static uint8 *add_boilerplate(struct encoder_ctx *ctx, unsigned char *cc_data, i
 {
 	ASSERT(cc_data);
 	ASSERT(cc_count > 0);
+	ASSERT(cc_count <= CDP_MAX_CC_COUNT);
 
 	uint8 data_size = cc_count * 3;
 	uint8 *buff_ptr = malloc(data_size + 16);
