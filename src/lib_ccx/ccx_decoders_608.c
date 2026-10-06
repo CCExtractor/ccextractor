@@ -854,7 +854,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			// not the character typing time. This matches FFmpeg's timing behavior.
 			if (context->rollup_from_popon && !changes)
 			{
-				context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
+				// Transcript: anchor to CR time for the next write_cc_line().
+				// SRT: preserve first-char time already set by write_char() for cvm at changes=1.
+				if (context->output_format == CCX_OF_TRANSCRIPT)
+					context->ts_start_of_current_line = get_fts(context->timing, context->my_field);
 			}
 			else
 			{
