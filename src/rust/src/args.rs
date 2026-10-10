@@ -732,7 +732,7 @@ pub struct Args {
     /// all times. For example, --delay 400 makes subtitles
     /// appear 400ms late. You can also use negative numbers
     /// to make subs appear early.
-    #[arg(long, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
+    #[arg(long, allow_negative_numbers=true, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
     pub delay: Option<i64>,
     /// Only write caption information that starts after the
     /// given time.

@@ -39,7 +39,7 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 use args::Args;
 use bindings::*;
 use cfg_if::cfg_if;
-use clap::{error::ErrorKind, Parser};
+use clap::{error::ErrorKind, CommandFactory, Parser};
 use common::{copy_from_rust, CType, CType2};
 use decoder::{Dtvcc, DtvccRust};
 use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
@@ -52,6 +52,7 @@ use log::{warn, LevelFilter};
 use std::os::raw::c_ulong;
 use std::os::raw::{c_uchar, c_void};
 use std::{
+    collections::HashSet,
     ffi::CStr,
     io::Write,
     os::raw::{c_char, c_double, c_int, c_uint},
@@ -677,6 +678,41 @@ fn normalize_legacy_option(arg: String) -> String {
     }
 }
 
+/// Apply [`normalize_legacy_option`] to every argument except option values.
+///
+/// A value such as the `-12` in `--delay -12` must reach clap unchanged,
+/// otherwise it would be rewritten to `--output-field=12`.
+fn normalize_legacy_args(args: Vec<String>) -> Vec<String> {
+    let mut value_options = HashSet::new();
+    for arg in Args::command().get_arguments() {
+        if !arg.get_action().takes_values() {
+            continue;
+        }
+        if let Some(short) = arg.get_short() {
+            value_options.insert(format!("-{}", short));
+        }
+        let longs = arg
+            .get_long()
+            .into_iter()
+            .chain(arg.get_all_aliases().unwrap_or_default());
+        for long in longs {
+            value_options.insert(format!("--{}", long));
+        }
+    }
+
+    let mut expects_value = false;
+    args.into_iter()
+        .map(|arg| {
+            if std::mem::take(&mut expects_value) {
+                return arg;
+            }
+            let arg = normalize_legacy_option(arg);
+            expects_value = value_options.contains(&arg);
+            arg
+        })
+        .collect()
+}
+
 /// # Safety
 /// Safe if argv is a valid pointer
 ///
@@ -702,7 +738,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     // Backward compatibility: Convert single-dash long options to double-dash
     // Old versions of ccextractor accepted -quiet, -stdout, etc. but clap requires --quiet, --stdout
     // This allows scripts using the old syntax to continue working
-    let args: Vec<String> = args.into_iter().map(normalize_legacy_option).collect();
+    let args = normalize_legacy_args(args);
 
     let args: Args = match Args::try_parse_from(args) {
         Ok(args) => args,
@@ -906,6 +942,50 @@ mod test {
             normalize_legacy_option("-12".to_string()),
             "--output-field=12".to_string()
         );
+    }
+
+    fn parse_normalized(args: &[&str]) -> Result<Args, clap::Error> {
+        let args: Vec<String> = std::iter::once("ccextractor")
+            .chain(args.iter().copied())
+            .map(String::from)
+            .collect();
+        Args::try_parse_from(normalize_legacy_args(args))
+    }
+
+    #[test]
+    fn test_negative_delay() {
+        // Negative delays must work as a separate argument, not only as --delay=-500
+        assert_eq!(
+            parse_normalized(&["--delay", "-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+        assert_eq!(
+            parse_normalized(&["--delay=-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+        assert_eq!(
+            parse_normalized(&["-delay", "-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+    }
+
+    #[test]
+    fn test_option_values_not_normalized() {
+        // "-12" after --delay is a value, not the legacy field selection option
+        let args = parse_normalized(&["--delay", "-12", "input.ts"]).unwrap();
+        assert_eq!(args.delay, Some(-12));
+        assert_eq!(args.output_field, None);
+
+        // A standalone -12 is still the legacy field selection option
+        let args = parse_normalized(&["-12", "input.ts"]).unwrap();
+        assert!(args.output_field.is_some());
+        assert_eq!(args.delay, None);
     }
 
     #[test]
