@@ -652,6 +652,7 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// - Single-letter short options (e.g., `-o`) are left unchanged
 /// - Non-option arguments (e.g., `file.ts`) are left unchanged
 /// - Numeric options `-1`, `-2`, `-12` are converted to `--output-field=N` for CEA-608 field selection
+/// - Numeric long options `-608`, `-708`, `-90090` are converted to `--608`, `--708`, `--90090`
 fn normalize_legacy_option(arg: String) -> String {
     // Handle legacy numeric options for CEA-608 field extraction
     // These map to --output-field which is the modern equivalent
@@ -659,6 +660,10 @@ fn normalize_legacy_option(arg: String) -> String {
         "-1" => return "--output-field=1".to_string(),
         "-2" => return "--output-field=2".to_string(),
         "-12" => return "--output-field=12".to_string(),
+        // Legacy long options whose names are numeric. These are matched exactly
+        // rather than by a generic rule so negative numbers passed as option
+        // values are left untouched.
+        "-608" | "-708" | "-90090" => return format!("-{}", arg),
         _ => {}
     }
 
@@ -906,6 +911,57 @@ mod test {
             normalize_legacy_option("-12".to_string()),
             "--output-field=12".to_string()
         );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_numeric_long_options() {
+        // Legacy long options with numeric names get a second dash
+        assert_eq!(
+            normalize_legacy_option("-608".to_string()),
+            "--608".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-708".to_string()),
+            "--708".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-90090".to_string()),
+            "--90090".to_string()
+        );
+        // Other negative numbers (e.g. option values) are left unchanged
+        assert_eq!(
+            normalize_legacy_option("-500".to_string()),
+            "-500".to_string()
+        );
+    }
+
+    #[test]
+    fn test_legacy_spellings_parse() {
+        // Spellings accepted by the C parser (v0.94) must still parse after normalization
+        let parse = |flag: &str| {
+            let args: Vec<String> = ["ccextractor", flag, "input.ts"]
+                .iter()
+                .map(|a| normalize_legacy_option(a.to_string()))
+                .collect();
+            Args::try_parse_from(args)
+                .unwrap_or_else(|e| panic!("legacy option {} rejected: {}", flag, e))
+        };
+
+        assert!(parse("-608").eia608);
+        assert!(parse("-708").eia708);
+        assert!(parse("-90090").mpeg90090);
+        assert!(parse("-UCLA").ucla);
+        assert!(parse("-ucla").ucla);
+        assert!(parse("-CC2").cc2);
+        assert!(parse("-cc2").cc2);
+        assert!(parse("-LF").lf);
+        assert!(parse("-lf").lf);
+        assert!(parse("-DF").df);
+        assert!(parse("-df").df);
+        assert!(parse("-parsePAT").parse_pat);
+        assert!(parse("-parsepat").parse_pat);
+        assert!(parse("-parsePMT").parse_pmt);
+        assert!(parse("-parsepmt").parse_pmt);
     }
 
     #[test]
