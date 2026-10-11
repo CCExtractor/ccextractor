@@ -56,6 +56,15 @@ pub static UTC_REFVALUE: RwLock<u64> = RwLock::new(u64::MAX);
 
 const MAX_TLT_PAGES: usize = 1000;
 
+/// Decode a Hamming 8/4 byte the same way as the C decoder (`unham_8_4`): an
+/// uncorrectable byte decodes to 0x0f instead of being rejected.
+fn unham_8_4(value: u8) -> u8 {
+    decode_hamming_8_4(value).unwrap_or_else(|| {
+        debug!(msg_type = DebugMessageFlag::TELETEXT; "- Unrecoverable data error; UNHAM8/4({:02x})\n", value);
+        0x0f
+    })
+}
+
 const TELETEXT_COLORS: [&str; 8] = [
     "#000000", // black
     "#ff0000", // red
@@ -455,7 +464,8 @@ impl G0Charset {
     /// Return the equivalent UCS-2 character for the given teletext character based on the current
     /// character set.
     pub fn ucs2_char(&self, telx_char: u8) -> Ucs2Char {
-        if get_parity(telx_char) {
+        // Teletext characters use odd parity; even parity means the byte is corrupted
+        if !get_parity(telx_char) {
             debug!(msg_type = DebugMessageFlag::TELETEXT; "- Unrecoverable data error; PARITY({:02x})\n", telx_char);
             return 0x20;
         }
@@ -756,6 +766,8 @@ pub struct TeletextConfig {
     pub latrusmap: bool,
     /// Force Latin G0 charset, ignore Cyrillic designations (issue #1395)
     pub forceg0latin: bool,
+    /// Print notices about detected subtitle pages
+    pub print_file_reports: bool,
 }
 
 impl Default for TeletextConfig {
@@ -778,6 +790,7 @@ impl Default for TeletextConfig {
             nohtmlescape: false,
             latrusmap: false,
             forceg0latin: false,
+            print_file_reports: false,
         }
     }
 }
@@ -1009,8 +1022,9 @@ impl<'a> TeletextContext<'a> {
 
         // process data
         for row in 1..25 {
+            // anchors for string trimming purpose
             let mut col_start: usize = 40;
-            let col_stop: usize = 40;
+            let mut col_stop: usize = 40;
 
             let mut box_open: bool = false;
             for col in 0..40 {
@@ -1039,6 +1053,19 @@ impl<'a> TeletextContext<'a> {
             }
             // line is empty
             if col_start > 39 {
+                continue;
+            }
+
+            for col in (col_start + 1)..=39 {
+                if self.page_buffer.text[row][col] > 0x20 {
+                    if col_stop > 39 {
+                        col_start = col;
+                    }
+                    col_stop = col;
+                }
+            }
+            // line is empty
+            if col_stop > 39 {
                 continue;
             }
 
@@ -1235,6 +1262,40 @@ impl<'a> TeletextContext<'a> {
         ans
     }
 
+    /// Whether the page `page_number` should be extracted (issue #665).
+    fn should_accept_page(&self, page_number: TeletextPageNumber, is_subtitle_page: bool) -> bool {
+        if self.config.extract_all_pages && is_subtitle_page {
+            return true;
+        }
+        if !self.config.user_pages.is_empty() {
+            let page = page_number.bcd_page_to_u16();
+            return self
+                .config
+                .user_pages
+                .iter()
+                .take(MAX_TLT_PAGES_EXTRACT)
+                .any(|&p| p == page);
+        }
+        if self.config.page.get() == 0.into() {
+            // Auto-detect mode
+            return is_subtitle_page;
+        }
+        page_number == self.config.page.get()
+    }
+
+    fn is_multi_page_mode(&self) -> bool {
+        self.config.extract_all_pages || self.config.user_pages.len() > 1
+    }
+
+    /// The G0 character set designated by `triplet`, or Latin with `--ttxtforcelatin` (issue #1395).
+    fn designated_charset(&self, triplet: u32) -> G0CharsetType {
+        if self.config.forceg0latin {
+            G0CharsetType::Latin
+        } else {
+            G0CharsetType::from_triplet(triplet)
+        }
+    }
+
     /// Process the teletext `packet` and append the extracted subtitles in `subtitles`.
     pub fn process_telx_packet(
         &mut self,
@@ -1245,54 +1306,59 @@ impl<'a> TeletextContext<'a> {
         capitalization_list: &[String],
     ) {
         // variable names conform to ETS 300 706, chapter 7.1.2
-        let Some(addr1) = decode_hamming_8_4(packet.address[1]) else {
-            return;
-        };
-        let Some(addr0) = decode_hamming_8_4(packet.address[0]) else {
-            return;
-        };
-        let address = (addr1 << 4) | addr0;
+        let address = (unham_8_4(packet.address[1]) << 4) | unham_8_4(packet.address[0]);
         let mut m = address & 0x7;
         if m == 0 {
             m = 8;
         }
         let y = (address >> 3) & 0x1f;
         let designation_code = if y > 25 {
-            decode_hamming_8_4(packet.data[0]).unwrap_or(0x00)
+            unham_8_4(packet.data[0])
         } else {
             0x00
         };
 
         if y == 0 {
             // CC map
-            let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0);
-            let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0);
+            let h1 = unham_8_4(packet.data[1]);
+            let h0 = unham_8_4(packet.data[0]);
             let i = (h1 << 4) | h0;
 
-            let flag_subtitle = (decode_hamming_8_4(packet.data[5]).unwrap_or(0) & 0x08) >> 3;
+            let flag_subtitle = (unham_8_4(packet.data[5]) & 0x08) >> 3;
             self.cc_map[i as usize] |= flag_subtitle << (m - 1);
 
             let flag_subtitle = flag_subtitle != 0;
 
             if flag_subtitle && (i < 0xff) {
-                let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u32;
-                let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u32;
+                let h1 = unham_8_4(packet.data[1]) as u32;
+                let h0 = unham_8_4(packet.data[0]) as u32;
                 let mut thisp = ((m as u32) << 8) | (h1 << 4) | h0;
 
+                // Same as C's atoi(): read the leading decimal digits, so "8a0" (not valid
+                // BCD) becomes 8 instead of an out-of-range index
                 let t1 = format!("{thisp:x}");
-                // Fallback to original value if parsing fails to avoid panics on malformed BCD
-                thisp = t1.parse().unwrap_or(thisp);
+                let digits: String = t1.chars().take_while(|c| c.is_ascii_digit()).collect();
+                thisp = digits.parse().unwrap_or(0);
                 if !self.seen_sub_page[thisp as usize] {
                     self.seen_sub_page[thisp as usize] = true;
-                    info!(
-                        "\rNotice: Teletext page with possible subtitles detected: {:03}\n",
-                        thisp
-                    );
+                    // Only printed with file reports, to keep regression test output stable
+                    if self.config.print_file_reports {
+                        info!(
+                            "\rNotice: Teletext page with possible subtitles detected: {:03}\n",
+                            thisp
+                        );
+                    }
                 }
             }
-            if (self.config.page.get() == 0.into()) && flag_subtitle && (i < 0xff) {
-                let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u16;
-                let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u16;
+            // Auto-detect page if none specified (and not in multi-page mode)
+            if (self.config.page.get() == 0.into())
+                && !self.config.extract_all_pages
+                && self.config.user_pages.is_empty()
+                && flag_subtitle
+                && (i < 0xff)
+            {
+                let h1 = unham_8_4(packet.data[1]) as u16;
+                let h0 = unham_8_4(packet.data[0]) as u16;
 
                 self.config
                     .page
@@ -1301,11 +1367,11 @@ impl<'a> TeletextContext<'a> {
             }
 
             // Page number and control bits
-            let h1 = decode_hamming_8_4(packet.data[1]).unwrap_or(0) as u16;
-            let h0 = decode_hamming_8_4(packet.data[0]).unwrap_or(0) as u16;
+            let h1 = unham_8_4(packet.data[1]) as u16;
+            let h0 = unham_8_4(packet.data[0]) as u16;
             let page_number: TeletextPageNumber = (((m as u16) << 8) | (h1 << 4) | h0).into();
 
-            let c7 = decode_hamming_8_4(packet.data[7]).unwrap_or(0);
+            let c7 = unham_8_4(packet.data[7]);
             let charset = (c7 & 0x08 | c7 & 0x04 | c7 & 0x02) >> 1;
             // ETS 300 706, chapter 9.3.1.3:
             // When set to '1' the service is designated to be in Serial mode and the transmission of a page is terminated
@@ -1326,6 +1392,9 @@ impl<'a> TeletextContext<'a> {
                 return;
             }
 
+            // Check if this page should be accepted for extraction (issue #665)
+            let accept_this_page = self.should_accept_page(page_number, flag_subtitle);
+
             if self.receiving_data
                 && (((self.transmission_mode == TransmissionMode::Serial)
                     && (page_number.page() != self.config.page.get().page()))
@@ -1334,16 +1403,23 @@ impl<'a> TeletextContext<'a> {
                         && (m == self.config.page.get().magazine())))
             {
                 self.receiving_data = false;
-                if !(self.de_ctr != 0 && flag_subtitle) {
+                if !(self.de_ctr != 0 && flag_subtitle) && !accept_this_page {
                     return;
                 }
             }
 
             // Page transmission is terminated, however now we are waiting for our new page
-            if page_number != self.config.page.get()
-                && !(self.de_ctr != 0 && flag_subtitle && self.receiving_data)
-            {
+            if !accept_this_page && !(self.de_ctr != 0 && flag_subtitle && self.receiving_data) {
                 return;
+            }
+
+            // In multi-page mode, track the page currently being received. In single-page mode
+            // the page comes from the user or auto-detection and must not be overwritten.
+            if self.is_multi_page_mode()
+                && accept_this_page
+                && page_number != self.config.page.get()
+            {
+                self.config.page.replace(page_number);
             }
 
             // Now we have the begining of page transmission; if there is page_buffer pending, process it
@@ -1359,10 +1435,9 @@ impl<'a> TeletextContext<'a> {
                         }
                     }
                 }
-                self.page_buffer.hide_timestamp = timestamp - Timestamp::from_millis(40);
-                if self.page_buffer.hide_timestamp > timestamp {
-                    self.page_buffer.hide_timestamp = Timestamp::from_millis(0);
-                }
+                // Hide exactly when the next page starts. Subtracting one frame (40ms) caused a
+                // visible gap in rolling subtitles and zero-length cues (#2292)
+                self.page_buffer.hide_timestamp = timestamp;
                 if let Some(sub) = self.process_page(capitalization_list) {
                     subtitles.push(sub);
                 }
@@ -1374,7 +1449,7 @@ impl<'a> TeletextContext<'a> {
             self.page_buffer.text = [[0; 40]; 25];
             self.page_buffer.g2_char_present = [[false; 40]; 25];
             self.page_buffer.tainted = false;
-            self.receiving_data = false;
+            self.receiving_data = true;
             if self.g0_charset.charset_type == G0CharsetType::Latin {
                 // G0 Character National Option Sub-sets selection required only for Latin Character Sets
                 self.g0_charset.remove_g0_x28_latin_subset(charset.into())
@@ -1490,8 +1565,8 @@ impl<'a> TeletextContext<'a> {
                     // ETS 300 706, chapter 9.4.2: Packet X/28/0 Format 1 only
                     if (triplet0 & 0x0f) == 0x00 {
                         // ETS 300 706, Table 32
-                        self.g0_charset
-                            .set_charset(G0CharsetType::from_triplet(triplet0)); // Deciding G0 Character Set
+                        let charset = self.designated_charset(triplet0);
+                        self.g0_charset.set_charset(charset); // Deciding G0 Character Set
                         self.g0_charset
                             .set_g0_x28_latin_subset((((triplet0 & 0x3f80) >> 7) as u8).into())
                     }
@@ -1515,8 +1590,8 @@ impl<'a> TeletextContext<'a> {
                     // ETS 300 706, table 11: Coding of Packet M/29/0
                     // ETS 300 706, table 13: Coding of Packet M/29/4
                     if (triplet0 & 0xff) == 0x00 {
-                        self.g0_charset
-                            .set_charset(G0CharsetType::from_triplet(triplet0));
+                        let charset = self.designated_charset(triplet0);
+                        self.g0_charset.set_charset(charset);
                         self.g0_charset
                             .set_g0_m29_latin_subset((((triplet0 & 0x3f80) >> 7) as u8).into())
                     }
@@ -1529,10 +1604,7 @@ impl<'a> TeletextContext<'a> {
             // ETS 300 706, chapter 9.8: Broadcast Service Data Packets
             if !self.states.programme_info_processed {
                 // ETS 300 706, chapter 9.8.1: Packet 8/30 Format 1
-                if decode_hamming_8_4(packet.data[0])
-                    .map(|x| x < 2)
-                    .unwrap_or(false)
-                {
+                if unham_8_4(packet.data[0]) < 2 {
                     let mut t: u32 = 0;
                     info!("- Programme Identification Data = ");
                     for i in 20..40 {
@@ -1628,7 +1700,9 @@ impl<'a> TeletextContext<'a> {
                     }
                 }
 
-                self.telxcc_dump_prev_page();
+                if let Some(sub) = self.telxcc_dump_prev_page() {
+                    subtitles.push(sub);
+                }
             }
         }
     }
@@ -1637,8 +1711,8 @@ impl<'a> TeletextContext<'a> {
 /// Check the given two lines can be considered similar using levenshtein
 /// distance.
 ///
-/// If the levenshtein distance between `ucs2_buf1` and `ucs2_buf2` is less than either
-/// `levdistmincnt` or `levdistmaxpct`% of the length of the shorter line, then the lines are
+/// If the levenshtein distance between `ucs2_buf1` and `ucs2_buf2` is at most the larger of
+/// `levdistmincnt` and `levdistmaxpct`% of the length of the shorter line, then the lines are
 /// considered to be similar. `c1` and `c2` are used for displaying a debug message only.
 ///
 /// # Examples
@@ -1654,11 +1728,14 @@ impl<'a> TeletextContext<'a> {
 /// // Returns true if both lines are same
 /// assert!(fuzzy_cmp("", "", &hello_world, &hello_world, 10, 2));
 ///
-/// // Returns true since the distance is 1 which is less than 2.
+/// // Returns true since the distance is 1 which is at most 2.
 /// assert!(fuzzy_cmp("", "", &hello_world, &hello_Aorld, 10, 2));
 ///
-/// // Returns false since the distance is 2 which is not less than both 2 and 10% of length.
-/// assert!(!fuzzy_cmp("", "", &hello_world, &helld_Aorld, 10, 2));
+/// // Returns true since the distance is 2 which is at most 2.
+/// assert!(fuzzy_cmp("", "", &hello_world, &helld_Aorld, 10, 2));
+///
+/// // Returns false since the distance is 2 which is more than both 1 and 10% of length.
+/// assert!(!fuzzy_cmp("", "", &hello_world, &helld_Aorld, 10, 1));
 ///
 /// // Returns true since the distance is 1 which is less than 20% of length.
 /// assert!(fuzzy_cmp("", "", &hello_world, &hello_Aorld, 20, 2));
@@ -1679,7 +1756,268 @@ pub fn fuzzy_cmp(
 
     // For the second string, only take the first chars (up to the first string length, that's short_len).
     let l = levenshtein(ucs2_buf1, &ucs2_buf2[..short_len]);
-    let is_same = l < max;
+    let is_same = l <= max;
     debug!(msg_type = DebugMessageFlag::LEVENSHTEIN; "\rLEV | {} | {} | Max: {} | Calc: {} | Match: {}\n", c1, c2, max, l, is_same);
     is_same
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::util::log::{set_logger, CCExtractorLogger, DebugMessageMask, OutputTarget};
+
+    /// Hamming 8/4 codewords for the values 0 to 15 (ETS 300 706, chapter 8.2)
+    const HAMMING_8_4: [u8; 16] = [
+        0x15, 0x02, 0x49, 0x5e, 0x64, 0x73, 0x38, 0x2f, 0xd0, 0xc7, 0x8c, 0x9b, 0xa1, 0xb6, 0xfd,
+        0xea,
+    ];
+    const START_BOX: u8 = 0x0b;
+
+    fn init_logger() {
+        let mask = DebugMessageMask::new(DebugMessageFlag::empty(), DebugMessageFlag::empty());
+        let _ = set_logger(CCExtractorLogger::new(OutputTarget::Quiet, mask, false));
+    }
+
+    /// Set the parity bit so the byte has odd parity, as teletext requires.
+    fn odd_parity(c: u8) -> u8 {
+        if c.count_ones() % 2 == 0 {
+            c | 0x80
+        } else {
+            c
+        }
+    }
+
+    fn packet(magazine: u8, row: u8, data: [u8; 40]) -> TeletextPacketPayload {
+        let address = (row << 3) | (magazine & 0x7);
+        TeletextPacketPayload {
+            _clock_in: 0x55,
+            _framing_code: 0x27,
+            address: [
+                HAMMING_8_4[(address & 0x0f) as usize],
+                HAMMING_8_4[(address >> 4) as usize],
+            ],
+            data,
+        }
+    }
+
+    /// Page header (row 0) for the BCD page number `page`, flagged as a subtitle page.
+    fn header(page: u16, serial: bool) -> TeletextPacketPayload {
+        let mut data = [HAMMING_8_4[0]; 40];
+        data[0] = HAMMING_8_4[(page & 0x0f) as usize];
+        data[1] = HAMMING_8_4[((page >> 4) & 0x0f) as usize];
+        data[5] = HAMMING_8_4[0x08]; // C6: subtitle
+        data[7] = HAMMING_8_4[serial as usize]; // C11: serial mode, national option 0
+        packet((page >> 8) as u8, 0, data)
+    }
+
+    /// A row of the page in magazine `page >> 8` showing `text` in a boxed area.
+    fn row(page: u16, row_number: u8, text: &str) -> TeletextPacketPayload {
+        let mut data = [odd_parity(b' '); 40];
+        data[0] = START_BOX;
+        for (i, b) in text.bytes().enumerate() {
+            data[1 + i] = odd_parity(b);
+        }
+        packet((page >> 8) as u8, row_number, data)
+    }
+
+    fn config(page: u16, write_format: OutputFormat) -> TeletextConfig {
+        TeletextConfig {
+            page: TeletextPageNumber(page).into(),
+            write_format,
+            ..Default::default()
+        }
+    }
+
+    fn feed(
+        ctx: &mut TeletextContext,
+        packets: &[(u64, TeletextPacketPayload)],
+        subtitles: &mut Vec<Subtitle>,
+    ) {
+        for (millis, packet) in packets {
+            ctx.process_telx_packet(
+                DataUnit::EbuTeletextSubtitle,
+                packet,
+                Timestamp::from_millis(*millis as i64),
+                subtitles,
+                &[],
+            );
+        }
+    }
+
+    fn texts(subtitles: &[Subtitle]) -> Vec<(String, i64, i64)> {
+        subtitles
+            .iter()
+            .map(|s| {
+                let text = match s.data() {
+                    crate::subtitle::SubtitleData::Text(t) => t.to_utf8(),
+                    _ => String::new(),
+                };
+                (
+                    text.trim().to_string(),
+                    s.start_time().millis(),
+                    s.end_time().millis(),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn test_hamming_codewords() {
+        for (value, &code) in HAMMING_8_4.iter().enumerate() {
+            assert_eq!(decode_hamming_8_4(code), Some(value as u8));
+        }
+    }
+
+    #[test]
+    fn test_unham_8_4_matches_c_on_errors() {
+        init_logger();
+        let bad = (0..=255u8)
+            .find(|&b| decode_hamming_8_4(b).is_none())
+            .unwrap();
+        assert_eq!(unham_8_4(bad), 0x0f);
+        assert_eq!(unham_8_4(HAMMING_8_4[5]), 5);
+    }
+
+    #[test]
+    fn test_ucs2_char_accepts_odd_parity() {
+        init_logger();
+        let charset = G0Charset::new(false);
+        assert_eq!(charset.ucs2_char(odd_parity(b'A')), b'A' as Ucs2Char);
+        // 'A' (0x41) without the parity bit has even parity, so it is corrupted
+        assert_eq!(charset.ucs2_char(b'A'), 0x20);
+    }
+
+    #[test]
+    fn test_single_page_subtitle() {
+        init_logger();
+        let config = config(0x777, OutputFormat::Srt);
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        feed(
+            &mut ctx,
+            &[
+                (1000, header(0x777, true)),
+                (1000, row(0x777, 22, "HELLO")),
+                (3000, header(0x777, true)),
+            ],
+            &mut subtitles,
+        );
+        // Shown until the next page starts, with no 40ms gap (#2292)
+        assert_eq!(texts(&subtitles), vec![("HELLO".to_string(), 1000, 3001)]);
+    }
+
+    #[test]
+    fn test_other_pages_are_ignored() {
+        init_logger();
+        let config = config(0x777, OutputFormat::Srt);
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        feed(
+            &mut ctx,
+            &[
+                (1000, header(0x778, true)),
+                (1000, row(0x778, 22, "OTHER")),
+                (3000, header(0x778, true)),
+            ],
+            &mut subtitles,
+        );
+        assert!(subtitles.is_empty());
+    }
+
+    #[test]
+    fn test_auto_detects_first_subtitle_page() {
+        init_logger();
+        let config = config(0, OutputFormat::Srt);
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        feed(
+            &mut ctx,
+            &[
+                (1000, header(0x777, true)),
+                (1000, row(0x777, 22, "HELLO")),
+                (2000, header(0x777, true)),
+            ],
+            &mut subtitles,
+        );
+        assert_eq!(config.page.get(), TeletextPageNumber(0x777));
+        assert_eq!(texts(&subtitles), vec![("HELLO".to_string(), 1000, 2001)]);
+    }
+
+    #[test]
+    fn test_extract_all_pages() {
+        init_logger();
+        let config = TeletextConfig {
+            extract_all_pages: true,
+            ..config(0, OutputFormat::Srt)
+        };
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        feed(
+            &mut ctx,
+            &[
+                (1000, header(0x777, true)),
+                (1000, row(0x777, 22, "ONE")),
+                (2000, header(0x778, true)),
+                (2000, row(0x778, 22, "TWO")),
+                (3000, header(0x777, true)),
+            ],
+            &mut subtitles,
+        );
+        assert_eq!(
+            texts(&subtitles),
+            vec![
+                ("ONE".to_string(), 1000, 2001),
+                ("TWO".to_string(), 2000, 3001)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_close_writes_last_buffered_page() {
+        init_logger();
+        let config = config(0x777, OutputFormat::Transcript);
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        feed(
+            &mut ctx,
+            &[
+                (1000, header(0x777, true)),
+                (1000, row(0x777, 22, "HELLO")),
+                (2000, header(0x777, true)),
+                (2000, row(0x777, 22, "WORLD")),
+                (3000, header(0x777, true)),
+            ],
+            &mut subtitles,
+        );
+        ctx.close(Some(&mut subtitles), &[]);
+        let lines: Vec<String> = texts(&subtitles).into_iter().map(|t| t.0).collect();
+        assert_eq!(lines, vec!["HELLO", "WORLD"]);
+    }
+
+    #[test]
+    fn test_non_bcd_page_number_does_not_panic() {
+        init_logger();
+        let config = config(0x777, OutputFormat::Srt);
+        let mut ctx = TeletextContext::new(&config);
+        let mut subtitles = Vec::new();
+        // 0x7a0 is not valid BCD; C's atoi() reads it as page 7
+        feed(&mut ctx, &[(1000, header(0x7a0, true))], &mut subtitles);
+        assert!(ctx.seen_sub_page[7]);
+    }
+
+    #[test]
+    fn test_force_latin_ignores_cyrillic_designation() {
+        init_logger();
+        let cyrillic = 0x1000; // ETS 300 706, Table 32: Cyrillic option 1
+        let config = config(0x777, OutputFormat::Srt);
+        let ctx = TeletextContext::new(&config);
+        assert_eq!(ctx.designated_charset(cyrillic), G0CharsetType::Cyrillic1);
+
+        let config = TeletextConfig {
+            forceg0latin: true,
+            ..config
+        };
+        let ctx = TeletextContext::new(&config);
+        assert_eq!(ctx.designated_charset(cyrillic), G0CharsetType::Latin);
+    }
 }

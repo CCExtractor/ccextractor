@@ -1494,6 +1494,7 @@ impl OptionsExt for Options {
 
         // Init telexcc redundant options
         tlt_config.dolevdist = self.dolevdist;
+        tlt_config.print_file_reports = self.print_file_reports;
         tlt_config.levdistmincnt = self.levdistmincnt;
         tlt_config.levdistmaxpct = self.levdistmaxpct;
         tlt_config.extraction_start = self.extraction_start;
