@@ -1,5 +1,6 @@
 0.96.7 (unreleased)
 -------------------
+- Fix: The ccextractor.cnf configuration file was silently ignored since the switch to the Rust argument parser. It is now read in Rust, command line options override it, and lines that can't be applied are reported.
 - Fix: Correctly encode EIA-608 special and extended characters (apostrophes, quotes, music notes, accented letters) in --out=scc and --out=ccd instead of writing raw internal bytes (#2098)
 - Fix: Crash in --out=ccd and corrupt control codes in --out=scc when a caption needs a mid-row style change in column 0 (out-of-bounds control code index)
 - Fix: Move C0 bounds check before match in CEA-708 Rust decoder to prevent process_p16 index-out-of-bounds panic on truncated ATSC1.0 TS blocks; improve C1 warn message with command code and lengths (#1407)

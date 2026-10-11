@@ -125,8 +125,6 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/ccx_mp4.h \
 				../src/lib_ccx/compile_info.h \
 				../src/lib_ccx/compile_info_real.h \
-				../src/lib_ccx/configuration.c \
-				../src/lib_ccx/configuration.h \
 				../src/lib_ccx/disable_warnings.h \
 				../src/lib_ccx/dvb_subtitle_decoder.c \
 				../src/lib_ccx/dvb_subtitle_decoder.h \

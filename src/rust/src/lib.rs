@@ -42,7 +42,11 @@ use cfg_if::cfg_if;
 use clap::{error::ErrorKind, Parser};
 use common::{copy_from_rust, CType, CType2};
 use decoder::{Dtvcc, DtvccRust};
-use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
+use lib_ccxr::{
+    common::{Options, CONFIG_FILE_NAME},
+    teletext::TeletextConfig,
+    util::log::ExitCause,
+};
 use parser::OptionsExt;
 use utils::is_true;
 
@@ -743,6 +747,22 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
 
     let mut opt = Options::default();
     let mut _tlt_config = TeletextConfig::default();
+
+    // Settings from ccextractor.cnf are applied first so command line options override them
+    match std::fs::read_to_string(CONFIG_FILE_NAME) {
+        Ok(contents) => {
+            for warning in opt.apply_config(&contents) {
+                lib_ccxr::info!(
+                    "{}:{}: {}, ignoring this line\n",
+                    CONFIG_FILE_NAME,
+                    warning.line,
+                    warning.message
+                );
+            }
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => lib_ccxr::info!("Could not read {}: {}\n", CONFIG_FILE_NAME, e),
+    }
 
     opt.parse_parameters(
         &args,
