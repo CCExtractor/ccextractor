@@ -683,7 +683,10 @@ int copy_payload_to_capbuf(struct cap_info *cinfo, struct ts_payload *payload)
 	// Verify PES before copy to capbuf
 	if (cinfo->capbuflen == 0)
 	{
-		if (payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
+		// A PES start code is three bytes. A shorter payload cannot carry one,
+		// and reading start[0..2] would run past the end of the packet, so treat
+		// it the same as a missing header rather than inspecting it.
+		if (payload->length < 3 || payload->start[0] != 0x00 || payload->start[1] != 0x00 ||
 		    payload->start[2] != 0x01)
 		{
 			mprint("Notice: Missing PES header\n");
@@ -893,7 +896,10 @@ int64_t ts_readstream(struct ccx_demuxer *ctx, struct demuxer_data **data)
 		}
 
 		// PTS calculation
-		if (payload.pesstart) // if there is PES Header data in the payload and we didn't get the first pts of that stream
+		// A PES header carrying a PTS is at least 14 bytes. A packet whose
+		// adaptation field leaves a shorter payload has nothing to read here,
+		// and dereferencing payload.start would run past the end of tspacket.
+		if (payload.pesstart && payload.length >= 14)
 		{
 			// Packetized Elementary Stream (PES) 32-bit start code
 			uint64_t pes_prefix = (payload.start[0] << 16) | (payload.start[1] << 8) | payload.start[2];
