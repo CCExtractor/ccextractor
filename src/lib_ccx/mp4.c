@@ -31,19 +31,6 @@
 #define GF_ISOM_SUBTYPE_MPEG4 GF_4CC('M', 'P', 'E', 'G')
 #endif
 
-static int16_t bswap16(int16_t v)
-{
-	return ((v >> 8) & 0x00FF) | ((v << 8) & 0xFF00);
-}
-
-static int32_t bswap32(int32_t v)
-{
-	// For 0x12345678 returns 78563412
-	// Use int32_t instead of long for consistent behavior across platforms
-	// (long is 4 bytes on Windows x64 but 8 bytes on Linux x64)
-	int32_t swapped = ((v & 0xFF) << 24) | ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24);
-	return swapped;
-}
 static struct
 {
 	unsigned total;
@@ -84,10 +71,10 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 				nal_length = s->data[i];
 				break;
 			case 2:
-				nal_length = bswap16(*(int16_t *)&s->data[i]);
+				nal_length = RB16(&s->data[i]);
 				break;
 			case 4:
-				nal_length = bswap32(*(int32_t *)&s->data[i]);
+				nal_length = RB32(&s->data[i]);
 				break;
 		}
 		const u32 previous_index = i;
@@ -153,10 +140,10 @@ static int process_hevc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_HEVCCo
 				nal_length = s->data[i];
 				break;
 			case 2:
-				nal_length = bswap16(*(int16_t *)&s->data[i]);
+				nal_length = RB16(&s->data[i]);
 				break;
 			case 4:
-				nal_length = bswap32(*(int32_t *)&s->data[i]);
+				nal_length = RB32(&s->data[i]);
 				break;
 			default:
 				mprint("Unexpected nal_unit_size %u in HEVC config\n", c->nal_unit_size);
