@@ -985,7 +985,9 @@ void parse_SDT(struct ccx_demuxer *ctx)
 	//		| payload_start[4]);
 	// unsigned version_number = (payload_start[5] & 0x3E) >> 1;
 
-	if (section_length > payload_length - 4)
+	// 12 is the smallest legal section: 8 bytes of fields plus the CRC.
+	// Anything shorter would make the services loop length below underflow.
+	if (section_length < 12 || section_length > payload_length - 4)
 	{
 		return;
 	}
