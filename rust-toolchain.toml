@@ -3,7 +3,7 @@
 # change; Dependabot opens a PR when a new release is available, and any new
 # lints get fixed there, once, instead of in every open PR.
 [toolchain]
-channel = "1.98.1"
+channel = "1.99.0"
 components = ["rustfmt", "clippy"]
 # The MSVC builds cross-compile with `cargo build --target` (windows/rust.bat),
 # so the target std must exist for the pinned toolchain.

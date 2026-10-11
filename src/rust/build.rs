@@ -30,7 +30,6 @@ fn main() {
         "store_hdcc",
         "do_cb",
         "decode_vbi",
-        "realloc",
         "write_spumux_footer",
         "write_spumux_header",
     ]);

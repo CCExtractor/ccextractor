@@ -2,6 +2,10 @@ use std::os::raw::c_void;
 
 extern "C" {
     fn free(ptr: *mut c_void);
+    // Declared here rather than through bindgen: bindgen types the size as
+    // `c_ulong`, which rustc >= 1.99 flags as a mismatched definition of a
+    // runtime symbol (`suspicious_runtime_symbol_definitions`).
+    pub fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
 }
 /// Frees memory allocated by C code (malloc/calloc)
 ///

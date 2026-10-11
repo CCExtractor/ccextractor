@@ -1,8 +1,9 @@
 use crate::avc::common_types::*;
 use crate::avc::nal::*;
 use crate::avc::sei::*;
-use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode, realloc};
+use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::ctorust::FromCType;
+use crate::ffi_alloc::realloc;
 use crate::libccxr_exports::time::ccxr_set_fts;
 use crate::{anchor_hdcc, current_fps, process_hdcc, store_hdcc, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::AvcNalType;
