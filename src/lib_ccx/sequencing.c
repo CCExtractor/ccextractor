@@ -15,7 +15,7 @@ void init_hdcc(struct lib_cc_decode *ctx)
 		ctx->cc_data_count[j] = 0;
 		ctx->cc_fts[j] = 0;
 	}
-	memset(ctx->cc_data_pkts, 0, SORTBUF * (31 * 3 + 1));
+	memset(ctx->cc_data_pkts, 0, SORTBUF * (HDCC_MAX_TRIPLETS_PER_SLOT * 3 + 1));
 	ctx->has_ccdata_buffered = 0;
 }
 
