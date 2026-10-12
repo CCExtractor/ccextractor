@@ -1,0 +1,30 @@
+# Line-ending policy for scripts.
+#
+# Git for Windows defaults to core.autocrlf=true, which rewrites LF to CRLF on
+# checkout. That corrupts the shebang of every POSIX script in the tree, so a
+# clone made on Windows cannot run the build documented in docs/COMPILATION.MD
+# or the local-source Docker build in docker/README.md:
+#
+#     $ ./pre-build.sh
+#     /usr/bin/env: 'bash\r': No such file or directory
+#     exit=127
+#
+# Pin these to LF on every platform. Deliberately narrow: no "* text=auto",
+# because many tracked files are committed with CRLF and normalising them all
+# would be a repo-wide rewrite unrelated to this fix.
+
+*.sh            text eol=lf
+*.command       text eol=lf
+
+linux/build             text eol=lf
+linux/build_hardsubx    text eol=lf
+linux/builddebug        text eol=lf
+linux/cleanup           text eol=lf
+linux/module_generator  text eol=lf
+
+mac/cleanup             text eol=lf
+mac/gui/src/CCExtractor.app/Contents/Resources/script text eol=lf
+
+# The mirror case: Windows batch and PowerShell scripts want CRLF.
+*.bat           text eol=crlf
+*.ps1           text eol=crlf
