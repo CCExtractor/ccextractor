@@ -949,6 +949,283 @@ static int is_multi_page_mode(void)
 	return (tlt_config.extract_all_pages || tlt_config.num_user_pages > 1);
 }
 
+/*
+ * Multi-page extraction (--tpages-all, or --tpage given more than once).
+ *
+ * Several pages can be on air at once: in parallel transmission mode each
+ * magazine sends its own page, and their rows are interleaved in the stream.
+ * Everything the decoder keeps about "the page being received" (page_buffer,
+ * the formatted cur/prev buffers used for SRT merging, timestamps,
+ * receiving_data, tlt_config.page) therefore has to be kept per page, or one
+ * page ends up flushing, overwriting and being labelled as another (#2355).
+ *
+ * Rather than threading a page pointer through process_page() and friends,
+ * the state of each extracted page lives in ctx->page_states[] and is swapped
+ * into the context fields before a packet for that page is handled. Single
+ * page mode never touches page_states[] and behaves as before.
+ */
+// The G0 character set is global and changes with every page header, but a page's
+// text is only converted to UCS-2 when that page is flushed. Keep the set each page
+// was received with, so its text is not converted with another page's national subset.
+static void telx_save_charset(teletext_page_state_t *s)
+{
+	s->g0_default = (uint8_t)default_g0_charset;
+	s->g0_current = primary_charset.current;
+	s->g0_m29 = primary_charset.g0_m29;
+	s->g0_x28 = primary_charset.g0_x28;
+}
+
+static void telx_load_charset(const teletext_page_state_t *s)
+{
+	default_g0_charset = (g0_charsets_type)s->g0_default;
+	primary_charset.g0_m29 = s->g0_m29;
+	primary_charset.g0_x28 = s->g0_x28;
+	if (default_g0_charset == LATIN)
+	{
+		remap_g0_charset(s->g0_current);
+	}
+}
+
+static void telx_save_page_state(struct TeletextCtx *ctx)
+{
+	teletext_page_state_t *s;
+
+	if (ctx->current_page_idx < 0)
+	{
+		return;
+	}
+
+	s = &ctx->page_states[ctx->current_page_idx];
+	s->page_buffer = ctx->page_buffer;
+	s->page_buffer_prev = ctx->page_buffer_prev;
+	s->page_buffer_cur = ctx->page_buffer_cur;
+	s->page_buffer_cur_size = ctx->page_buffer_cur_size;
+	s->page_buffer_cur_used = ctx->page_buffer_cur_used;
+	s->page_buffer_prev_size = ctx->page_buffer_prev_size;
+	s->page_buffer_prev_used = ctx->page_buffer_prev_used;
+	s->ucs2_buffer_prev = ctx->ucs2_buffer_prev;
+	s->ucs2_buffer_cur = ctx->ucs2_buffer_cur;
+	s->ucs2_buffer_cur_size = ctx->ucs2_buffer_cur_size;
+	s->ucs2_buffer_cur_used = ctx->ucs2_buffer_cur_used;
+	s->ucs2_buffer_prev_size = ctx->ucs2_buffer_prev_size;
+	s->ucs2_buffer_prev_used = ctx->ucs2_buffer_prev_used;
+	s->prev_hide_timestamp = ctx->prev_hide_timestamp;
+	s->prev_show_timestamp = ctx->prev_show_timestamp;
+	s->receiving_data = ctx->receiving_data;
+	telx_save_charset(s);
+}
+
+static void telx_load_page_state(struct TeletextCtx *ctx, int idx)
+{
+	teletext_page_state_t *s = &ctx->page_states[idx];
+
+	ctx->page_buffer = s->page_buffer;
+	ctx->page_buffer_prev = s->page_buffer_prev;
+	ctx->page_buffer_cur = s->page_buffer_cur;
+	ctx->page_buffer_cur_size = s->page_buffer_cur_size;
+	ctx->page_buffer_cur_used = s->page_buffer_cur_used;
+	ctx->page_buffer_prev_size = s->page_buffer_prev_size;
+	ctx->page_buffer_prev_used = s->page_buffer_prev_used;
+	ctx->ucs2_buffer_prev = s->ucs2_buffer_prev;
+	ctx->ucs2_buffer_cur = s->ucs2_buffer_cur;
+	ctx->ucs2_buffer_cur_size = s->ucs2_buffer_cur_size;
+	ctx->ucs2_buffer_cur_used = s->ucs2_buffer_cur_used;
+	ctx->ucs2_buffer_prev_size = s->ucs2_buffer_prev_size;
+	ctx->ucs2_buffer_prev_used = s->ucs2_buffer_prev_used;
+	ctx->prev_hide_timestamp = s->prev_hide_timestamp;
+	ctx->prev_show_timestamp = s->prev_show_timestamp;
+	ctx->receiving_data = s->receiving_data;
+	telx_load_charset(s);
+
+	ctx->current_page_idx = idx;
+	tlt_config.page = s->page_number;
+}
+
+static void telx_switch_page(struct TeletextCtx *ctx, int idx)
+{
+	if (idx == ctx->current_page_idx)
+	{
+		return;
+	}
+	telx_save_page_state(ctx);
+	telx_load_page_state(ctx, idx);
+}
+
+static int telx_slot_receiving(struct TeletextCtx *ctx, int idx)
+{
+	return (idx == ctx->current_page_idx) ? ctx->receiving_data : ctx->page_states[idx].receiving_data;
+}
+
+static int telx_reclaimable_slot(struct TeletextCtx *ctx)
+{
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (ctx->page_states[i].has_text != YES && telx_slot_receiving(ctx, i) != YES)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+static void telx_release_slot(struct TeletextCtx *ctx, int idx)
+{
+	teletext_page_state_t *s = &ctx->page_states[idx];
+
+	if (idx == ctx->current_page_idx)
+	{
+		telx_save_page_state(ctx);
+		ctx->current_page_idx = -1;
+	}
+	freep(&s->page_buffer_prev);
+	freep(&s->ucs2_buffer_prev);
+	freep(&s->page_buffer_cur);
+	freep(&s->ucs2_buffer_cur);
+}
+
+// Returns the slot for page_number, allocating one if needed. -1 if all slots are taken.
+static int telx_page_slot(struct TeletextCtx *ctx, uint16_t page_number)
+{
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (ctx->page_states[i].page_number == page_number)
+		{
+			return i;
+		}
+	}
+
+	int idx;
+	if (ctx->num_active_pages < MAX_TLT_PAGES_EXTRACT)
+	{
+		idx = ctx->num_active_pages++;
+	}
+	else
+	{
+		idx = telx_reclaimable_slot(ctx);
+		if (idx < 0)
+		{
+			mprint("\rWarning: Teletext page %03x ignored, at most %d pages can be extracted at once.\n",
+			       page_number, MAX_TLT_PAGES_EXTRACT);
+			return -1;
+		}
+		telx_release_slot(ctx, idx);
+	}
+	memset(&ctx->page_states[idx], 0, sizeof(teletext_page_state_t));
+	ctx->page_states[idx].page_number = page_number;
+	telx_save_charset(&ctx->page_states[idx]);
+	return idx;
+}
+
+// Slot of the page currently being received in magazine m, or -1
+static int telx_receiving_slot(struct TeletextCtx *ctx, uint8_t m)
+{
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (telx_slot_receiving(ctx, i) == YES && MAGAZINE(ctx->page_states[i].page_number) == m)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Any extracted page in magazine m (used for magazine level packets such as M/29), or -1
+static int telx_magazine_slot(struct TeletextCtx *ctx, uint8_t m)
+{
+	int idx = telx_receiving_slot(ctx, m);
+	if (idx >= 0)
+	{
+		return idx;
+	}
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (MAGAZINE(ctx->page_states[i].page_number) == m)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Flush whatever is pending in the page buffer and start receiving a new copy of the page
+static void telx_begin_page(struct TeletextCtx *ctx, uint8_t charset, uint64_t timestamp, struct cc_subtitle *sub)
+{
+	// Now we have the begining of page transmission; if there is page_buffer pending, process it
+	if (ctx->page_buffer.tainted == YES)
+	{
+		// Convert telx to UCS-2 before processing
+		for (uint8_t yt = 1; yt <= 23; ++yt)
+		{
+			for (uint8_t it = 0; it < 40; it++)
+			{
+				if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
+				{
+					ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
+				}
+			}
+		}
+		// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early",
+		// but this produced a visible ~40ms blink gap in rolling teletext subs
+		// and caused zero-length cues when a page was displayed for exactly 40ms.
+		// WebVTT allows touching cues (where the end time of one cue perfectly matches
+		// the start time of the next), which makes rolling look continuous.
+		ctx->page_buffer.hide_timestamp = timestamp;
+		process_page(ctx, &ctx->page_buffer, sub);
+		de_ctr = 0;
+	}
+
+	ctx->page_buffer.show_timestamp = timestamp;
+	ctx->page_buffer.hide_timestamp = 0;
+	memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
+	memset(ctx->page_buffer.g2_char_present, 0x00, sizeof(ctx->page_buffer.g2_char_present));
+	ctx->page_buffer.tainted = NO;
+	ctx->receiving_data = YES;
+	if (default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
+	{
+		primary_charset.g0_x28 = UNDEFINED;
+		uint8_t c = (primary_charset.g0_m29 != UNDEFINED) ? primary_charset.g0_m29 : charset;
+		remap_g0_charset(c);
+	}
+}
+
+// Page header in multi-page mode
+static void telx_multi_page_header(struct TeletextCtx *ctx, uint8_t m, uint16_t page_number, uint8_t flag_subtitle,
+				   uint8_t charset, uint64_t timestamp, struct cc_subtitle *sub)
+{
+	// ETS 300 706, chapter 7.2.1: a page is terminated by the next page header with the same
+	// magazine address in parallel transmission mode, or any magazine address in serial mode.
+	// Only the page(s) that header terminates stop receiving; the rest stay on air.
+	for (int i = 0; i < ctx->num_active_pages; i++)
+	{
+		if (ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL && MAGAZINE(ctx->page_states[i].page_number) != m)
+		{
+			continue;
+		}
+		if (i == ctx->current_page_idx)
+		{
+			ctx->receiving_data = NO;
+		}
+		else
+		{
+			ctx->page_states[i].receiving_data = NO;
+		}
+	}
+
+	if ((page_number & 0xff) == 0xff || !should_accept_page(page_number, flag_subtitle))
+	{
+		return;
+	}
+
+	int idx = telx_page_slot(ctx, page_number);
+	if (idx < 0)
+	{
+		return;
+	}
+
+	telx_switch_page(ctx, idx);
+	telx_begin_page(ctx, charset, timestamp, sub);
+}
+
 void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
 {
 	// variable names conform to ETS 300 706, chapter 7.1.2
@@ -959,6 +1236,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		m = 8;
 	y = (address >> 3) & 0x1f;
 	designation_code = (y > 25) ? unham_8_4(packet->data[0]) : 0x00;
+
+	// In multi-page mode, rows and magazine packets go to whichever page is on air in
+	// their magazine, so make that page current before the handlers below look at it.
+	if (is_multi_page_mode() && y >= 1 && y <= 29)
+	{
+		int idx = (y == 29) ? telx_magazine_slot(ctx, m) : telx_receiving_slot(ctx, m);
+		if (idx < 0)
+		{
+			return;
+		}
+		telx_switch_page(ctx, idx);
+	}
+
 	if (y == 0)
 	{
 
@@ -967,7 +1257,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		uint8_t flag_subtitle = (unham_8_4(packet->data[5]) & 0x08) >> 3;
 		uint16_t page_number;
 		uint8_t charset;
-		uint8_t c;
 		ctx->cc_map[i] |= flag_subtitle << (m - 1);
 
 		if ((flag_subtitle == YES) && (i < 0xff))
@@ -1013,6 +1302,12 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE) && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
 
+		if (is_multi_page_mode())
+		{
+			telx_multi_page_header(ctx, m, page_number, flag_subtitle, charset, timestamp, sub);
+			return;
+		}
+
 		// Check if this page should be accepted for extraction (issue #665)
 		int accept_this_page = should_accept_page(page_number, flag_subtitle);
 
@@ -1034,48 +1329,7 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		if (!accept_this_page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
 			return;
 
-		// Update tlt_config.page to track the current page being received (multi-page mode only)
-		// In single-page mode, tlt_config.page is set by auto-detect logic or user specification
-		// This prevents overwriting auto-detect selection with an arbitrary page number
-		if (is_multi_page_mode() && accept_this_page && page_number != tlt_config.page)
-		{
-			tlt_config.page = page_number;
-		}
-
-		// Now we have the begining of page transmission; if there is page_buffer pending, process it
-		if (ctx->page_buffer.tainted == YES)
-		{
-			// Convert telx to UCS-2 before processing
-			for (uint8_t yt = 1; yt <= 23; ++yt)
-			{
-				for (uint8_t it = 0; it < 40; it++)
-				{
-					if (ctx->page_buffer.text[yt][it] != 0x00 && ctx->page_buffer.g2_char_present[yt][it] == 0)
-						ctx->page_buffer.text[yt][it] = telx_to_ucs2(ctx->page_buffer.text[yt][it]);
-				}
-			}
-			// Previously subtracted 40ms (1 frame @ 25fps) to hide subtitle "early",
-			// but this produced a visible ~40ms blink gap in rolling teletext subs
-			// and caused zero-length cues when a page was displayed for exactly 40ms.
-			// WebVTT allows touching cues (where the end time of one cue perfectly matches
-			// the start time of the next), which makes rolling look continuous.
-			ctx->page_buffer.hide_timestamp = timestamp;
-			process_page(ctx, &ctx->page_buffer, sub);
-			de_ctr = 0;
-		}
-
-		ctx->page_buffer.show_timestamp = timestamp;
-		ctx->page_buffer.hide_timestamp = 0;
-		memset(ctx->page_buffer.text, 0x00, sizeof(ctx->page_buffer.text));
-		memset(ctx->page_buffer.g2_char_present, 0x00, sizeof(ctx->page_buffer.g2_char_present));
-		ctx->page_buffer.tainted = NO;
-		ctx->receiving_data = YES;
-		if (default_g0_charset == LATIN) // G0 Character National Option Sub-sets selection required only for Latin Character Sets
-		{
-			primary_charset.g0_x28 = UNDEFINED;
-			c = (primary_charset.g0_m29 != UNDEFINED) ? primary_charset.g0_m29 : charset;
-			remap_g0_charset(c);
-		}
+		telx_begin_page(ctx, charset, timestamp, sub);
 		/*
 		// I know -- not needed; in subtitles we will never need disturbing teletext page status bar
 		// displaying tv station name, current time etc.
@@ -1098,6 +1352,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
+		if (ctx->current_page_idx >= 0 && memchr(packet->data, 0x0b, 40) != NULL)
+		{
+			ctx->page_states[ctx->current_page_idx].has_text = YES;
+		}
 		--de_ctr;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
@@ -1678,6 +1936,8 @@ void *telxcc_init(void)
 	ctx->tlt_packet_counter = 0;
 	ctx->transmission_mode = TRANSMISSION_MODE_SERIAL;
 	ctx->receiving_data = NO;
+	ctx->num_active_pages = 0;
+	ctx->current_page_idx = -1;
 
 	ctx->using_pts = UNDEFINED;
 	ctx->delta = 0;
@@ -1696,6 +1956,31 @@ void telxcc_update_gt(void *codec, uint32_t global_timestamp)
 	ctx->global_timestamp = global_timestamp;
 }
 
+// Output whatever the current page still holds at end of stream
+static void telx_flush_pending_page(struct TeletextCtx *ttext, struct cc_subtitle *sub)
+{
+	// output any pending close caption
+	if (ttext->page_buffer.tainted == YES)
+	{
+		// Convert telx to UCS-2 before processing
+		for (uint8_t yt = 1; yt <= 23; ++yt)
+		{
+			for (uint8_t it = 0; it < 40; it++)
+			{
+				if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
+				{
+					ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);
+				}
+			}
+		}
+		// this time we do not subtract any frames, there will be no more frames
+		ttext->page_buffer.hide_timestamp = ttext->last_timestamp;
+		process_page(ttext, &ttext->page_buffer, sub);
+	}
+
+	telxcc_dump_prev_page(ttext, sub);
+}
+
 // Close output
 void telxcc_close(void **ctx, struct cc_subtitle *sub)
 {
@@ -1712,24 +1997,25 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 	mprint("\nTeletext decoder: %" PRIu32 " packets processed \n", ttext->tlt_packet_counter);
 	if (tlt_config.write_format != CCX_OF_RCWT && sub)
 	{
-		// output any pending close caption
-		if (ttext->page_buffer.tainted == YES)
+		if (is_multi_page_mode())
 		{
-			// Convert telx to UCS-2 before processing
-			for (uint8_t yt = 1; yt <= 23; ++yt)
+			for (int i = 0; i < ttext->num_active_pages; i++)
 			{
-				for (uint8_t it = 0; it < 40; it++)
-				{
-					if (ttext->page_buffer.text[yt][it] != 0x00 && ttext->page_buffer.g2_char_present[yt][it] == 0)
-						ttext->page_buffer.text[yt][it] = telx_to_ucs2(ttext->page_buffer.text[yt][it]);
-				}
+				telx_switch_page(ttext, i);
+				telx_flush_pending_page(ttext, sub);
+				// Each page owns its buffers, release them here since only the
+				// current page's buffers are freed below.
+				freep(&ttext->page_buffer_prev);
+				freep(&ttext->ucs2_buffer_prev);
+				freep(&ttext->page_buffer_cur);
+				freep(&ttext->ucs2_buffer_cur);
+				telx_save_page_state(ttext);
 			}
-			// this time we do not subtract any frames, there will be no more frames
-			ttext->page_buffer.hide_timestamp = ttext->last_timestamp;
-			process_page(ttext, &ttext->page_buffer, sub);
 		}
-
-		telxcc_dump_prev_page(ttext, sub);
+		else
+		{
+			telx_flush_pending_page(ttext, sub);
+		}
 	}
 	freep(&ttext->ucs2_buffer_cur);
 	freep(&ttext->page_buffer_cur);

@@ -39,6 +39,12 @@ typedef struct
 	uint64_t prev_hide_timestamp;
 	uint64_t prev_show_timestamp;
 	uint8_t receiving_data;		// Currently receiving data for this page
+	// G0 character set in effect for this page (text is converted when the page is flushed)
+	uint8_t g0_default;
+	uint8_t g0_current;
+	uint8_t g0_m29;
+	uint8_t g0_x28;
+	uint8_t has_text;
 } teletext_page_state_t;
 
 // application states -- flags for notices that should be printed only once
