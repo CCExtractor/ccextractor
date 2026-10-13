@@ -1,4 +1,5 @@
 use clap::{Parser, ValueEnum};
+use lib_ccxr::time::units::Timestamp;
 use strum_macros::Display;
 
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
@@ -739,15 +740,15 @@ pub struct Args {
     /// Time can be seconds, MM:SS or HH:MM:SS.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub startat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startat: Option<Timestamp>,
     /// Stop processing after the given time (same format as
     /// --startat).
     /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub endat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endat: Option<Timestamp>,
     /// Write 'num' screenfuls and terminate processing.
     #[arg(long, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub screenfuls: Option<String>,
