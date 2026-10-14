@@ -429,6 +429,7 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block_additions(
 	struct block_addition *newBA = calloc(1, sizeof(struct block_addition));
 	if (newBA == NULL)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block_additions: Out of memory.");
+	newBA->message = message;
 	char *current = message;
 	int lastIndex = 0;
 	int item = 0;
@@ -1903,6 +1904,11 @@ void free_sub_track(struct matroska_sub_track *track)
 	for (int i = 0; i < track->sentence_count; i++)
 	{
 		struct matroska_sub_sentence *sentence = track->sentences[i];
+		if (sentence->blockaddition != NULL)
+		{
+			free(sentence->blockaddition->message);
+			free(sentence->blockaddition);
+		}
 		free(sentence->text);
 		free(sentence);
 	}
