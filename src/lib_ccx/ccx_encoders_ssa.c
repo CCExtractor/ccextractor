@@ -4,6 +4,39 @@
 #include "utility.h"
 #include "ccx_encoders_helpers.h"
 #include "ocr.h"
+#include <ctype.h>
+
+static int ccx_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	for (size_t i = 0; i < n; i++)
+	{
+		int c1 = tolower((unsigned char)s1[i]);
+		int c2 = tolower((unsigned char)s2[i]);
+		if (c1 != c2)
+			return c1 - c2;
+		if (c1 == 0)
+			return 0;
+	}
+	return 0;
+}
+
+typedef struct
+{
+	const char *from;
+	size_t from_len;
+	const char *to;
+	size_t to_len;
+} tag_map_t;
+
+static const tag_map_t html_to_ass[] = {
+    {"<i>", 3, "{\\i1}", 5},
+    {"</i>", 4, "{\\i0}", 5},
+    {"<u>", 3, "{\\u1}", 5},
+    {"</u>", 4, "{\\u0}", 5},
+    {"<b>", 3, "{\\b1}", 5},
+    {"</b>", 4, "{\\b0}", 5},
+};
+#define NUM_TAG_MAPS (sizeof(html_to_ass) / sizeof(html_to_ass[0]))
 
 static void ass_position_from_row_col(
     int row,
@@ -37,7 +70,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	millis_to_time(ms_start, &h1, &m1, &s1, &ms1);
 	millis_to_time(ms_end - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%u:%02u:%02u.%02u,%u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 		 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 	dbg_print(CCX_DMT_DECODER_608, "\n- - - ASS/SSA caption - - -\n");
@@ -45,7 +78,7 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 
 	write_wrapped(context->out->fh, context->buffer, used);
 	int len = strlen(string);
-	unsigned char *unescaped = (unsigned char *)malloc(len + 1);
+	unsigned char *unescaped = (unsigned char *)malloc(len * 2 + 1);
 	if (!unescaped)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_stringz_as_ssa() - not enough memory for unescaped buffer.\n");
 	unsigned char *el = (unsigned char *)malloc(len * 3 + 1); // Be generous
@@ -61,15 +94,67 @@ int write_stringz_as_ssa(char *string, struct encoder_ctx *context, LLONG ms_sta
 	{
 		if (string[pos_r] == '\\' && string[pos_r + 1] == 'n')
 		{
-			unescaped[pos_w] = 0;
+			unescaped[pos_w++] = 0;
 			pos_r += 2;
+			continue;
 		}
-		else
+
+		int matched = 0;
+		for (size_t i = 0; i < NUM_TAG_MAPS; i++)
 		{
-			unescaped[pos_w] = string[pos_r];
-			pos_r++;
+			const tag_map_t *m = &html_to_ass[i];
+			if (ccx_strncasecmp(string + pos_r, m->from, m->from_len) == 0)
+			{
+				memcpy(unescaped + pos_w, m->to, m->to_len);
+				pos_w += m->to_len;
+				pos_r += m->from_len;
+				matched = 1;
+				break;
+			}
 		}
-		pos_w++;
+		if (matched)
+			continue;
+
+		if (ccx_strncasecmp(string + pos_r, "<font color=\"#", 14) == 0)
+		{
+			if (pos_r + 21 < len && string[pos_r + 20] == '"' && string[pos_r + 21] == '>')
+			{
+				char r1 = string[pos_r + 14], r2 = string[pos_r + 15];
+				char g1 = string[pos_r + 16], g2 = string[pos_r + 17];
+				char b1 = string[pos_r + 18], b2 = string[pos_r + 19];
+				char ssa_col[14];
+				snprintf(ssa_col, sizeof(ssa_col), "{\\c&H%c%c%c%c%c%c&}", b1, b2, g1, g2, r1, r2);
+				memcpy(unescaped + pos_w, ssa_col, 13);
+				pos_w += 13;
+				pos_r += 22; // Skip up to and including '>'
+			}
+			else
+			{
+				while (pos_r < len && string[pos_r] != '>')
+					pos_r++;
+				if (pos_r < len)
+					pos_r++; // Skip '>'
+			}
+			continue;
+		}
+
+		if (ccx_strncasecmp(string + pos_r, "<font", 5) == 0)
+		{
+			while (pos_r < len && string[pos_r] != '>')
+				pos_r++;
+			if (pos_r < len)
+				pos_r++;
+			continue;
+		}
+		if (ccx_strncasecmp(string + pos_r, "</font>", 7) == 0)
+		{
+			memcpy(unescaped + pos_w, "{\\c}", 4);
+			pos_w += 4;
+			pos_r += 7;
+			continue;
+		}
+
+		unescaped[pos_w++] = string[pos_r++];
 	}
 	unescaped[pos_w] = 0;
 	// Now read the unescaped string (now several string'z and write them)
@@ -134,7 +219,7 @@ int write_cc_bitmap_as_ssa(struct cc_subtitle *sub, struct encoder_ctx *context)
 			millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
 			millis_to_time(sub->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 
-			snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+			snprintf(timeline, sizeof(timeline), "Dialogue: 0,%u:%02u:%02u.%02u,%u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 				 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 			used = encode_line(context, context->buffer, (unsigned char *)timeline);
 			write_wrapped(context->out->fh, context->buffer, used);
@@ -220,7 +305,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 	millis_to_time(data->start_time, &h1, &m1, &s1, &ms1);
 	millis_to_time(data->end_time - 1, &h2, &m2, &s2, &ms2); // -1 To prevent overlapping with next line.
 	char timeline[128];
-	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%02u:%02u:%02u.%01u,%02u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
+	snprintf(timeline, sizeof(timeline), "Dialogue: 0,%u:%02u:%02u.%02u,%u:%02u:%02u.%02u,Default,,0000,0000,0000,,",
 		 h1, m1, s1, ms1 / 10, h2, m2, s2, ms2 / 10);
 	used = encode_line(context, context->buffer, (unsigned char *)timeline);
 
