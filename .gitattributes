@@ -1,0 +1,8 @@
+# Keep line endings consistent across platforms. Git for Windows defaults to
+# core.autocrlf=true, which without this file turns shell script shebangs into
+# CRLF and breaks the documented Linux and Docker builds.
+* text=auto eol=lf
+
+# Windows scripts should keep CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
