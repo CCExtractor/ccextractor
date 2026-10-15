@@ -658,6 +658,8 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// - Single-letter short options (e.g., `-o`) are left unchanged
 /// - Non-option arguments (e.g., `file.ts`) are left unchanged
 /// - Numeric options `-1`, `-2`, `-12` are converted to `--output-field=N` for CEA-608 field selection
+/// - Legacy debug flags `-608`, `-708`, `-90090` are converted to `--608`, `--708`, `--90090`
+/// - Legacy case variants `-UCLA`, `-CC2`, `-LF`, `-DF`, `-parsepat`, `-parsepmt` are mapped to their canonical long options
 fn normalize_legacy_option(arg: String) -> String {
     // Handle legacy numeric options for CEA-608 field extraction
     // These map to --output-field which is the modern equivalent
@@ -665,6 +667,22 @@ fn normalize_legacy_option(arg: String) -> String {
         "-1" => return "--output-field=1".to_string(),
         "-2" => return "--output-field=2".to_string(),
         "-12" => return "--output-field=12".to_string(),
+
+        // Legacy options that predate the double-dash parser. The generic
+        // single-dash rule below only applies when the second character is
+        // alphabetic, so digit-leading flags need explicit mappings.
+        "-608" => return "--608".to_string(),
+        "-708" => return "--708".to_string(),
+        "-90090" => return "--90090".to_string(),
+
+        // Legacy uppercase (and lowercase for parsepat/parsepmt) spellings
+        // accepted by the C argument parser, mapped to canonical long options.
+        "-UCLA" => return "--ucla".to_string(),
+        "-CC2" => return "--cc2".to_string(),
+        "-LF" => return "--lf".to_string(),
+        "-DF" => return "--df".to_string(),
+        "-parsepat" => return "--parsePAT".to_string(),
+        "-parsepmt" => return "--parsePMT".to_string(),
         _ => {}
     }
 
@@ -904,6 +922,52 @@ mod test {
         // Single-letter short options should remain unchanged
         assert_eq!(normalize_legacy_option("-o".to_string()), "-o".to_string());
         assert_eq!(normalize_legacy_option("-s".to_string()), "-s".to_string());
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_digit_leading() {
+        // Legacy debug flags with a digit after the dash (accepted by the C parser)
+        assert_eq!(
+            normalize_legacy_option("-608".to_string()),
+            "--608".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-708".to_string()),
+            "--708".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-90090".to_string()),
+            "--90090".to_string()
+        );
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_case_variants() {
+        // The C parser accepted case variants; map them to the canonical long options
+        assert_eq!(
+            normalize_legacy_option("-UCLA".to_string()),
+            "--ucla".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-CC2".to_string()),
+            "--cc2".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-LF".to_string()),
+            "--lf".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-DF".to_string()),
+            "--df".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-parsepat".to_string()),
+            "--parsePAT".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-parsepmt".to_string()),
+            "--parsePMT".to_string()
+        );
     }
 
     #[test]
