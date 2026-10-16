@@ -4,7 +4,7 @@ pub const MAXBFRAMES: i32 = 50;
 
 #[derive(Debug, Clone)]
 pub struct AvcContextRust {
-    pub cc_count: u8,
+    pub cc_count: u16,
     pub cc_data: Vec<u8>,
     pub cc_databufsize: usize,
     pub cc_buffer_saved: bool,
