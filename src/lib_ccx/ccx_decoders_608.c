@@ -866,6 +866,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
+			// A row created by CR with no PAC has no explicit attributes, so it is white, not
+			// underlined, not italicized (CEA-608-E C.14).
+			context->current_color = context->settings->default_color;
+			context->font = FONT_REGULAR;
 			break;
 		case COM_ERASENONDISPLAYEDMEMORY:
 			erase_memory(context, false);
