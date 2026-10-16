@@ -150,6 +150,8 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_field = field;
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
+	data->last_valid_data_ms = -1;
+	data->data_loss_erased = 0;
 	data->rollup_from_popon = 0;
 	data->ts_first_char_rollup_transition = -1;
 	data->output_format = output_format;
