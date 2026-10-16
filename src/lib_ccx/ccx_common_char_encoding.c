@@ -115,7 +115,7 @@ void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 		case 0x95: // lowercase letter U with diaeresis
 			c1 = 0xfc;
 			break;
-		case 0x96: // apostrophe
+		case 0x96: // Opening single quote (not in Latin-1, the apostrophe is the closest)
 			c1 = 0x27;
 			break;
 		case 0x97: // inverted exclamation mark
@@ -236,8 +236,8 @@ void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 		case 0xbd: // Underscore
 			c1 = 0x5f;
 			break;
-		case 0xbe: // Pipe (broken bar)
-			c1 = 0xa6;
+		case 0xbe: // Pipe
+			c1 = 0x7c;
 			break;
 		case 0xbf: // Tilde
 			c1 = 0x7e;
@@ -305,6 +305,10 @@ void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 		case 0x87: // Music note
 			c2 = 0x26;
 			c1 = 0x6a;
+			break;
+		case 0x96: // Opening single quote
+			c2 = 0x20;
+			c1 = 0x18;
 			break;
 		case 0x9c: // Service Mark
 			c2 = 0x21;
@@ -482,9 +486,11 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number 
 			*buffer = 0xc3;
 			*(buffer + 1) = 0xbc;
 			return 2;
-		case 0x96: // apostrophe
-			*buffer = 0x27;
-			return 1;
+		case 0x96: // Opening single quote
+			*buffer = 0xe2;
+			*(buffer + 1) = 0x80;
+			*(buffer + 2) = 0x98;
+			return 3;
 		case 0x97: // inverted exclamation mark
 			*buffer = 0xc2;
 			*(buffer + 1) = 0xa1;
@@ -641,10 +647,9 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number 
 		case 0xbd: // Underscore
 			*buffer = 0x5f;
 			return 1;
-		case 0xbe: // Pipe (broken bar)
-			*buffer = 0xc2;
-			*(buffer + 1) = 0xa6;
-			return 2;
+		case 0xbe: // Pipe
+			*buffer = 0x7c;
+			return 1;
 		case 0xbf:		// Tilde
 			*buffer = 0x7e; // Not sure
 			return 1;

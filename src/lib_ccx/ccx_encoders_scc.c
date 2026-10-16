@@ -658,6 +658,8 @@ static unsigned char get_extended_scc_code(unsigned char c, unsigned char *hi, u
 		*lo = c - 0x90;
 	}
 
+	if (c == 0x96) // Opening single quote: the apostrophe is its fallback, as for the plain single quote
+		return 0x27;
 	unsigned char utf8[4];
 	int n = get_char_in_utf_8(utf8, c);
 	return (n == 1 && utf8[0] < 0x80) ? utf8[0] : ' ';
