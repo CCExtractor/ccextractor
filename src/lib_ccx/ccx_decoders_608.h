@@ -87,7 +87,8 @@ enum command_code
 	COM_RESUMEDIRECTCAPTIONING = 17,
 	// Non existing commands we insert to have the decoder
 	// special stuff for us.
-	COM_FAKE_RULLUP1 = 18
+	COM_FAKE_RULLUP1 = 18,
+	COM_FLASHON = 19
 };
 
 void ccx_decoder_608_dinit_library(void **ctx);

@@ -68,7 +68,8 @@ static const char *command_type[] =
 	"AON - Not Used (Alarm On)",
 	"DER - Delete to End of Row",
 	"RDC - Resume Direct Captioning",
-	"RU1 - Fake Roll up 1 rows"};
+	"RU1 - Fake Roll up 1 rows",
+	"FON - Flash On"};
 
 static const char *font_text[] =
     {
@@ -708,6 +709,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		command = COM_ROLLUP3;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x27)
 		command = COM_ROLLUP4;
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x28)
+		command = COM_FLASHON;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x29)
 		command = COM_RESUMEDIRECTCAPTIONING;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2D)
@@ -910,6 +913,11 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ALARMOFF:
 		case COM_ALARMON:
 			// These two are unused according to Robson's, and we wouldn't be able to do anything useful anyway
+			break;
+		case COM_FLASHON:
+			// FON is a spacing attribute like a mid-row code (CEA-608-E C.8): it occupies a cell, which
+			// we fill with a space. The flashing itself is not represented in the output.
+			write_char(0x20, context);
 			break;
 		case COM_RESUMEDIRECTCAPTIONING:
 			context->mode = MODE_PAINTON;
