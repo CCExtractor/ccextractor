@@ -314,21 +314,25 @@ void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 			c2 = 0x21;
 			c1 = 0x20;
 			break;
-		case 0xcc: // Upper left corner
-			c2 = 0x23;
-			c1 = 0x1c;
+		case 0xc7: // Vertical bar (box drawing, light vertical)
+			c2 = 0x25;
+			c1 = 0x02;
 			break;
-		case 0xcd: // Upper right corner
-			c2 = 0x23;
-			c1 = 0x1d;
+		case 0xcc: // Upper left corner (box drawing)
+			c2 = 0x25;
+			c1 = 0x0c;
 			break;
-		case 0xce: // Lower left corner
-			c2 = 0x23;
-			c1 = 0x1e;
+		case 0xcd: // Upper right corner (box drawing)
+			c2 = 0x25;
+			c1 = 0x10;
 			break;
-		case 0xcf: // Lower right corner
-			c2 = 0x23;
-			c1 = 0x1f;
+		case 0xce: // Lower left corner (box drawing)
+			c2 = 0x25;
+			c1 = 0x14;
+			break;
+		case 0xcf: // Lower right corner (box drawing)
+			c2 = 0x25;
+			c1 = 0x18;
 			break;
 		default: // Everything else, same as latin-1 followed by 00
 			get_char_in_latin_1(&c1, c);
@@ -681,9 +685,11 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number 
 			*buffer = 0xc2;
 			*(buffer + 1) = 0xa4;
 			return 2;
-		case 0xc7: // Vertical bar
-			*buffer = 0x7c;
-			return 1;
+		case 0xc7: // Vertical bar (box drawing, light vertical)
+			*buffer = 0xe2;
+			*(buffer + 1) = 0x94;
+			*(buffer + 2) = 0x82;
+			return 3;
 		case 0xc8: // Uppercase A, ring
 			*buffer = 0xc3;
 			*(buffer + 1) = 0x85;
@@ -700,25 +706,25 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number 
 			*buffer = 0xc3;
 			*(buffer + 1) = 0xb8;
 			return 2;
-		case 0xcc: // Top left corner
+		case 0xcc: // Top left corner (box drawing)
 			*buffer = 0xe2;
-			*(buffer + 1) = 0x8c;
-			*(buffer + 2) = 0x9c;
+			*(buffer + 1) = 0x94;
+			*(buffer + 2) = 0x8c;
 			return 3;
 		case 0xcd: // Top right corner
 			*buffer = 0xe2;
-			*(buffer + 1) = 0x8c;
-			*(buffer + 2) = 0x9d;
+			*(buffer + 1) = 0x94;
+			*(buffer + 2) = 0x90;
 			return 3;
 		case 0xce: // Bottom left corner
 			*buffer = 0xe2;
-			*(buffer + 1) = 0x8c;
-			*(buffer + 2) = 0x9e;
+			*(buffer + 1) = 0x94;
+			*(buffer + 2) = 0x94;
 			return 3;
 		case 0xcf: // Bottom right corner
 			*buffer = 0xe2;
-			*(buffer + 1) = 0x8c;
-			*(buffer + 2) = 0x9f;
+			*(buffer + 1) = 0x94;
+			*(buffer + 2) = 0x98;
 			return 3;
 		default:	       //
 			*buffer = '?'; // I'll do it eventually, I promise
