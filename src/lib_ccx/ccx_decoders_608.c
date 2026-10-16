@@ -1076,6 +1076,12 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
 	    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
 	{
+		// If the PAC's row is above the number of roll-up rows the caption cannot fit, and the
+		// depth takes precedence over the base row so no text is lost (CEA-608-E C.4)
+		int depth = context->mode == MODE_ROLLUP_2 ? 2 : (context->mode == MODE_ROLLUP_3 ? 3 : (context->mode == MODE_ROLLUP_4 ? 4 : 1));
+		if (row < depth)
+			row = depth;
+
 		// A PAC for another base row moves the displayed roll-up caption to it immediately
 		// (CEA-608-E C.7)
 		struct eia608_screen *rollup_buffer = get_writing_buffer(context);
