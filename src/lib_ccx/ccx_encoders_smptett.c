@@ -401,7 +401,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 							char color_code[8];
 							if (temp_pointer)
 							{
-								snprintf(color_code, sizeof(color_code), "%.6s", temp_pointer + 1); // obtained color code
+								snprintf(color_code, sizeof(color_code), "#%.6s", temp_pointer + 1); // obtained color code
 							}
 							else
 							{
