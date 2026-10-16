@@ -349,11 +349,11 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 						// adding appropriate style tag
 						remaining = buf_size - final_len;
 						if (style == 1)
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
+							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/></span>");
 						else if (style == 2)
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
+							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/></span>");
 						else
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
+							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/></span>");
 
 						if (written > 0 && (size_t)written < remaining)
 							final_len += written;
