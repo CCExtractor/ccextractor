@@ -1224,7 +1224,16 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		lo = data[i + 1] & 0x7F; // Get rid of parity bit
 
 		if (hi == 0 && lo == 0) // Just padding
+		{
+			// A control code is only a redundant copy when it comes in the very next frame
+			// (CEA-608-E D.2), so padding in between makes a repeat a new command.
+			if (context)
+			{
+				context->last_c1 = -1;
+				context->last_c2 = -1;
+			}
 			continue;
+		}
 
 		// printf ("\r[%02X:%02X]\n",hi,lo);
 

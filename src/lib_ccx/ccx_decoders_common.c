@@ -106,7 +106,20 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 	if (ctx->write_format != CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
 	    ctx->write_format != CCX_OF_DVDRAW &&
 	    (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD) && (cc_block[1] & 0x7F) == 0 && (cc_block[2] & 0x7F) == 0) // CFS: Skip non-data, makes debugging harder.
+	{
+		// 608 padding is skipped, but it still separates a control code from an identical one that
+		// follows: only a copy in the very next frame is redundant (CEA-608-E D.2).
+		if (cc_block[0] != 0xFA)
+		{
+			ccx_decoder_608_context *context = cc_block[0] == 0xFC ? ctx->context_cc608_field_1 : ctx->context_cc608_field_2;
+			if (context)
+			{
+				context->last_c1 = -1;
+				context->last_c2 = -1;
+			}
+		}
 		return 1;
+	}
 
 	// Print raw data with FTS.
 	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global), in_xds_mode,
