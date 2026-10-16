@@ -442,7 +442,7 @@ pub fn copy_ccdata_to_buffer(ctx: &mut AvcContextRust, source: &[u8], new_cc_cou
 
     if start_idx + copy_len <= ctx.cc_data.len() {
         ctx.cc_data[start_idx..start_idx + copy_len].copy_from_slice(&source[..copy_len]);
-        ctx.cc_count += new_cc_count as u8;
+        ctx.cc_count += new_cc_count as u16;
         ctx.cc_buffer_saved = false;
     }
 }
@@ -795,5 +795,19 @@ mod tests {
         // 0x00 0x00 but no 0x01 following
         let buf = [0x00, 0x00, 0x02, 0x00, 0x00, 0x01, 0x65];
         assert_eq!(find_nal_start_code(&buf), Some(5));
+    }
+
+    #[test]
+    fn test_copy_ccdata_to_buffer_beyond_u8_max() {
+        let mut ctx = AvcContextRust::default();
+        ctx.cc_data = vec![0u8; 1024];
+        ctx.cc_databufsize = 1024;
+        ctx.cc_count = 250;
+
+        let dummy_source = vec![0xFA; 64]; // 20 triplets = 60 + 1 = 61 bytes
+        copy_ccdata_to_buffer(&mut ctx, &dummy_source, 20);
+
+        // 250 + 20 = 270 triplets. If it were u8, it would wrap to 14.
+        assert_eq!(ctx.cc_count, 270);
     }
 }
