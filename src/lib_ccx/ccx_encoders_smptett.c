@@ -240,7 +240,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 				}
 
-				get_decoder_line_encoded(context, context->subline, row, data);
+				get_decoder_line_encoded_markup(context, context->subline, row, data, LINE_MARKUP_HTML_ESCAPED);
 
 				size_t subline_len = strlen((const char *)(context->subline));
 				size_t buf_size = subline_len + 1000; // Being overly generous? :P

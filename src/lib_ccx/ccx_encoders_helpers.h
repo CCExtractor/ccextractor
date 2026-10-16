@@ -33,6 +33,15 @@ struct ccx_encoders_helpers_settings_t
 int is_all_caps(struct encoder_ctx *context, int line_num, struct eia608_screen *data);
 void telx_correct_case(char *sub_line);
 unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, struct eia608_screen *data);
+
+// The markup get_decoder_line_encoded_markup() writes a row in
+enum line_markup
+{
+	LINE_MARKUP_HTML,	  // <font color="#rrggbb">, <u> and <i> around the text, which is written as it is
+	LINE_MARKUP_HTML_ESCAPED, // The same tags, and &, < and > of the text escaped (for XML based formats)
+};
+
+unsigned get_decoder_line_encoded_markup(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data, enum line_markup markup);
 unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data);
 void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data);
 

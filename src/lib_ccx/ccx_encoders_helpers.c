@@ -284,7 +284,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 	return buffer;
 }
 
-unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned get_decoder_line_encoded_markup(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data, enum line_markup markup)
 {
 	enum ccx_decoder_608_color_code color = COL_WHITE;
 	int underlined = 0;
@@ -355,6 +355,12 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		{
 			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
 		}
+		if (markup == LINE_MARKUP_HTML_ESCAPED && (line[i] == '&' || line[i] == '<' || line[i] == '>'))
+		{
+			const char *entity = line[i] == '&' ? "&amp;" : (line[i] == '<' ? "&lt;" : "&gt;");
+			buffer += encode_line(ctx, buffer, (unsigned char *)entity);
+			continue;
+		}
 		int bytes = 0;
 		switch (ctx->encoding)
 		{
@@ -379,6 +385,11 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
+}
+
+unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	return get_decoder_line_encoded_markup(ctx, buffer, line_num, data, LINE_MARKUP_HTML);
 }
 
 void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data)
