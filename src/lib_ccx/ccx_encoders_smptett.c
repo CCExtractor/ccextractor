@@ -428,7 +428,7 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 
 							// adding font color tag
 							remaining = buf_size - final_len;
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>", color_code);
+							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>", color_code);
 							if (written > 0 && (size_t)written < remaining)
 								final_len += written;
 
