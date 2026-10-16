@@ -5,7 +5,7 @@ use crate::bindings::{cc_subtitle, encoder_ctx, lib_cc_decode};
 use crate::ctorust::FromCType;
 use crate::ffi_alloc::realloc;
 use crate::libccxr_exports::time::ccxr_set_fts;
-use crate::{anchor_hdcc, current_fps, process_hdcc, store_hdcc, MPEG_CLOCK_FREQ};
+use crate::{anchor_hdcc, current_fps, process_hdcc, store_hdcc, MAX_CC_COUNT, MPEG_CLOCK_FREQ};
 use lib_ccxr::common::AvcNalType;
 use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
@@ -436,13 +436,24 @@ pub fn copy_ccdata_to_buffer(ctx: &mut AvcContextRust, source: &[u8], new_cc_cou
         ctx.ccblocks_in_avc_lost += 1;
     }
 
+    if ctx.cc_count as usize >= MAX_CC_COUNT {
+        return;
+    }
+
+    let to_copy = if (ctx.cc_count as usize) + new_cc_count > MAX_CC_COUNT {
+        MAX_CC_COUNT - ctx.cc_count as usize
+    } else {
+        new_cc_count
+    };
+
     // Copy the cc data
     let start_idx = ctx.cc_count as usize * 3;
-    let copy_len = new_cc_count * 3 + 1;
+    let copy_bytes = to_copy * 3;
 
-    if start_idx + copy_len <= ctx.cc_data.len() {
-        ctx.cc_data[start_idx..start_idx + copy_len].copy_from_slice(&source[..copy_len]);
-        ctx.cc_count += new_cc_count as u8;
+    if start_idx + copy_bytes < ctx.cc_data.len() {
+        ctx.cc_data[start_idx..start_idx + copy_bytes].copy_from_slice(&source[..copy_bytes]);
+        ctx.cc_count += to_copy as u16;
+        ctx.cc_data[ctx.cc_count as usize * 3] = 0xFF;
         ctx.cc_buffer_saved = false;
     }
 }
@@ -795,5 +806,35 @@ mod tests {
         // 0x00 0x00 but no 0x01 following
         let buf = [0x00, 0x00, 0x02, 0x00, 0x00, 0x01, 0x65];
         assert_eq!(find_nal_start_code(&buf), Some(5));
+    }
+
+    #[test]
+    fn test_copy_ccdata_to_buffer_beyond_u8_max() {
+        let mut ctx = AvcContextRust::default();
+        ctx.cc_data = vec![0u8; 1024];
+        ctx.cc_databufsize = 1024;
+        ctx.cc_count = 250;
+
+        let dummy_source = vec![0xFA; 64]; // 20 triplets = 60 + 1 = 61 bytes
+        copy_ccdata_to_buffer(&mut ctx, &dummy_source, 20);
+
+        // 250 + 20 = 270 triplets. If it were u8, it would wrap to 14.
+        assert_eq!(ctx.cc_count, 270);
+        assert_eq!(ctx.cc_data[270 * 3], 0xFF);
+    }
+
+    #[test]
+    fn test_copy_ccdata_to_buffer_caps_at_max_cc_count() {
+        let mut ctx = AvcContextRust::default();
+        ctx.cc_data = vec![0u8; 1024];
+        ctx.cc_databufsize = 1024;
+        ctx.cc_count = 300;
+
+        let dummy_source = vec![0xFA; 64]; // 20 triplets
+        copy_ccdata_to_buffer(&mut ctx, &dummy_source, 20);
+
+        // 300 + 20 = 320, but must be capped at MAX_CC_COUNT (310).
+        assert_eq!(ctx.cc_count, MAX_CC_COUNT as u16);
+        assert_eq!(ctx.cc_data[MAX_CC_COUNT * 3], 0xFF);
     }
 }

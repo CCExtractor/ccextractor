@@ -447,8 +447,13 @@ void copy_ccdata_to_buffer(struct avc_ctx *ctx, char *source, int new_cc_count)
 		mprint("Warning: Probably loss of CC data, unsaved buffer being rewritten, trailing end might get lost\n");
 		ctx->ccblocks_in_avc_lost++;
 	}
-	memcpy(ctx->cc_data + ctx->cc_count * 3, source, new_cc_count * 3 + 1);
+	if (ctx->cc_count >= HDCC_MAX_TRIPLETS_PER_SLOT)
+		return;
+	if (ctx->cc_count + new_cc_count > HDCC_MAX_TRIPLETS_PER_SLOT)
+		new_cc_count = HDCC_MAX_TRIPLETS_PER_SLOT - ctx->cc_count;
+	memcpy(ctx->cc_data + ctx->cc_count * 3, source, new_cc_count * 3);
 	ctx->cc_count += new_cc_count;
+	ctx->cc_data[ctx->cc_count * 3] = 0xFF;
 	ctx->cc_buffer_saved = CCX_FALSE;
 }
 

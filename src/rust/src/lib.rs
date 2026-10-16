@@ -395,7 +395,7 @@ pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active
 ///
 /// This is not the 5-bit cc_count wire field (max 31) of a single CEA-708
 /// cc_data header: buffered frames (e.g. MP4) can carry more triplets than that.
-const MAX_CC_COUNT: usize = 310;
+pub(crate) const MAX_CC_COUNT: usize = 310;
 
 /// Process cc_data
 ///
