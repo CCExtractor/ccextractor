@@ -1003,8 +1003,38 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 	return 1;
 }
 
+/* Move the rows of a displayed roll-up caption so that its base row (new_base_row, 0 based) is where
+ * it has been put by a PAC; rows that would end up off the screen are dropped. */
+static void move_rollup(ccx_decoder_608_context *context, struct eia608_screen *buffer, int old_base_row, int new_base_row)
+{
+	struct eia608_screen old = *buffer;
+	int delta = new_base_row - old_base_row;
+
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
+	{
+		memset(buffer->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
+		buffer->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+		for (int j = 0; j < CCX_DECODER_608_SCREEN_WIDTH + 1; j++)
+		{
+			buffer->colors[i][j] = context->settings->default_color;
+			buffer->fonts[i][j] = FONT_REGULAR;
+		}
+		buffer->row_used[i] = 0;
+	}
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
+	{
+		int to = i + delta;
+		if (!old.row_used[i] || to < 0 || to >= CCX_DECODER_608_SCREEN_ROWS)
+			continue;
+		memcpy(buffer->characters[to], old.characters[i], CCX_DECODER_608_SCREEN_WIDTH + 1);
+		memcpy(buffer->colors[to], old.colors[i], sizeof(buffer->colors[to]));
+		memcpy(buffer->fonts[to], old.fonts[i], sizeof(buffer->fonts[to]));
+		buffer->row_used[to] = 1;
+	}
+}
+
 /* Process PREAMBLE ACCESS CODES (PAC) */
-void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *context)
+void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	// Handle channel change
 	if (context->new_channel > 2)
@@ -1043,6 +1073,26 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 				     indent, color_text[context->current_color][0], font_text[context->font]);
 	if (context->settings->default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
 		context->current_color = COL_USERDEFINED;
+	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
+	    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
+	{
+		// A PAC for another base row moves the displayed roll-up caption to it immediately
+		// (CEA-608-E C.7)
+		struct eia608_screen *rollup_buffer = get_writing_buffer(context);
+		if (!rollup_buffer->empty && context->cursor_row != row - 1)
+		{
+			// Write the caption as it is on the old rows, the moved one is a new caption
+			if (context->output_format != CCX_OF_TRANSCRIPT)
+			{
+				if (write_cc_buffer(context, sub))
+					context->screenfuls_counter++;
+				if (context->settings->no_rollup)
+					erase_memory(context, true);
+			}
+			move_rollup(context, rollup_buffer, context->cursor_row, row - 1);
+			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+		}
+	}
 	if (context->mode != MODE_TEXT)
 	{
 		// According to Robson, row info is discarded in text mode
@@ -1147,7 +1197,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 	{
 		case 0x10:
 			if (lo >= 0x40 && lo <= 0x5f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x11:
 			if (lo >= 0x20 && lo <= 0x2f)
@@ -1158,7 +1208,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 				handle_double(hi, lo, context);
 			}
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x12:
 		case 0x13:
@@ -1167,18 +1217,18 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 				wrote_to_screen = handle_extended(hi, lo, context);
 			}
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x14:
 		case 0x15:
 			if (lo >= 0x20 && lo <= 0x2f)
 				handle_command(hi, lo, context, sub);
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x16:
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x17:
 			if (lo >= 0x21 && lo <= 0x23)
@@ -1186,7 +1236,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 			if (lo >= 0x2e && lo <= 0x2f)
 				handle_text_attr(hi, lo, context);
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 	}
 	return wrote_to_screen;
