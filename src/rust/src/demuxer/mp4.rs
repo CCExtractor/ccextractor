@@ -54,13 +54,11 @@ extern "C" {
         ctx: *mut lib_ccx_ctx,
         data: *mut u8,
         data_length: c_uint,
-        dts: i64,
-        cts_offset: c_int,
-        timescale: c_uint,
+        start_ms: i64,
         sub: *mut cc_subtitle,
     ) -> c_int;
 
-    fn ccx_mp4_flush_tx3g(ctx: *mut lib_ccx_ctx, sub: *mut cc_subtitle);
+    fn ccx_mp4_flush_tx3g(ctx: *mut lib_ccx_ctx, sub: *mut cc_subtitle, end_ms: i64);
 
     fn ccx_mp4_report_progress(ctx: *mut lib_ccx_ctx, cur: c_uint, total: c_uint);
 
@@ -313,6 +311,8 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
 
     let mut packet_count: u32 = 0;
     let mut has_tx3g = false;
+    let mut prev_tx3g_start_ms: i64 = -1;
+    let mut prev_tx3g_end_ms: i64 = -1;
     let mut prev_dvdsub_pts: i64 = -1;
     let mut prev_dvdsub_data: Vec<u8> = Vec::new();
 
@@ -397,20 +397,36 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 }
                 TrackType::Tx3g => {
                     if pkt.size > 0 && !pkt.data.is_null() {
+                        // Subtitle times are taken from the packet timestamps directly:
+                        // the global timing pointer may already be past this subtitle
+                        // because packets from every track are interleaved.
+                        let start_ms = pts * 1000 / timescale as i64;
+                        let end_ms = if pkt.duration > 0 {
+                            start_ms + pkt.duration * 1000 / timescale as i64
+                        } else {
+                            -1
+                        };
                         if has_tx3g {
-                            ccx_mp4_flush_tx3g(ctx, sub);
+                            // Fall back to the new subtitle's start when the previous
+                            // sample had no duration information.
+                            let flush_end_ms = if prev_tx3g_end_ms >= 0 {
+                                prev_tx3g_end_ms
+                            } else {
+                                start_ms
+                            };
+                            ccx_mp4_flush_tx3g(ctx, sub, flush_end_ms);
                         }
                         let r = ccx_mp4_process_tx3g_packet(
                             ctx,
                             pkt.data,
                             pkt.size as c_uint,
-                            dts,
-                            cts_offset,
-                            timescale,
+                            start_ms,
                             sub,
                         );
                         if r == 0 {
                             has_tx3g = true;
+                            prev_tx3g_start_ms = start_ms;
+                            prev_tx3g_end_ms = end_ms;
                             mp4_ret = 1;
                         }
                     }
@@ -459,7 +475,13 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
 
     // Flush last tx3g subtitle
     if has_tx3g {
-        ccx_mp4_flush_tx3g(ctx, sub);
+        let end_ms = if prev_tx3g_end_ms >= 0 {
+            prev_tx3g_end_ms
+        } else {
+            // Match the 5 second default used for the other subtitle paths.
+            prev_tx3g_start_ms + 5000
+        };
+        ccx_mp4_flush_tx3g(ctx, sub, end_ms);
     }
 
     // Flush last dvdsub packet (use 5s default duration)
