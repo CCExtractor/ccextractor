@@ -676,6 +676,7 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int changes = 0;
+	int rollup_displayed = 0;
 
 	// Handle channel change
 	context->channel = context->new_channel;
@@ -767,6 +768,9 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ROLLUP2:
 		case COM_ROLLUP3:
 		case COM_ROLLUP4:
+			rollup_displayed = (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
+					    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4) &&
+					   !get_current_visible_buffer(context)->empty;
 			if (context->mode == MODE_POPON || context->mode == MODE_PAINTON)
 			{
 				/* CEA-608 C.10 Style Switching (regulatory)
@@ -786,7 +790,9 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			// If the reception of data for a row is interrupted by data for the alternate
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (context->mode != MODE_TEXT && context->have_cursor_position == 0)
+			// The default applies when no roll-up caption is displayed (CEA-608-E C.15); while one is,
+			// a roll-up command keeps the base row.
+			if (context->mode != MODE_TEXT && (context->have_cursor_position == 0 || !rollup_displayed))
 			{
 				// If no Preamble Address Code  is received, the base row shall default to row 15
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
