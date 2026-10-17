@@ -1059,6 +1059,120 @@ mod test {
         assert!(parse("-parsepmt").parse_pmt);
     }
 
+    fn parse_with_input(args: &[&str]) -> Result<Args, clap::Error> {
+        let mut args = args.to_vec();
+        args.push("input.ts");
+        parse_normalized(&args)
+    }
+
+    #[test]
+    fn test_more_legacy_spellings_match_modern() {
+        // Each v0.94 spelling must parse to exactly the same Args as its
+        // modern equivalent, values included.
+        let cases: &[(&[&str], &[&str])] = &[
+            (&["-bi"], &["--bufferinput"]),
+            (&["-nobi"], &["--no-bufferinput"]),
+            (&["--nobufferinput"], &["--no-bufferinput"]),
+            (&["-ff"], &["--forceflush"]),
+            (&["-bs", "16M"], &["--buffersize", "16M"]),
+            (&["-nofc"], &["--no-fontcolor"]),
+            (&["--nofontcolor"], &["--no-fontcolor"]),
+            (&["--nohtmlescape"], &["--no-htmlescape"]),
+            (&["-nots"], &["--no-typesetting"]),
+            (&["--notypesetting"], &["--no-typesetting"]),
+            (&["-nocodec", "teletext"], &["--no-codec", "teletext"]),
+            (&["-nospupngocr"], &["--no-spupngocr"]),
+            (&["--transcript"], &["--txt"]),
+            (&["--timedtranscript"], &["--ttxt"]),
+            (&["-ve"], &["--videoedited"]),
+            (&["-gt"], &["--goptime"]),
+            (&["-nogt"], &["--no-goptime"]),
+            (&["--nogoptime"], &["--no-goptime"]),
+            (&["-fp"], &["--fixpadding"]),
+            (&["--norollup"], &["--no-rollup"]),
+            (&["-key"], &["--segmentonkeyonly"]),
+            (&["--gui_mode_reports"], &["--gui-mode-reports"]),
+            (&["--no_progress_bar"], &["--no-progress-bar"]),
+            (&["-sbs"], &["--splitbysentence"]),
+            (&["-caf", "caps.txt"], &["--capfile", "caps.txt"]),
+            (&["-pn", "5"], &["--program-number", "5"]),
+            (&["-dc", "#FF0000"], &["--defaultcolor", "#FF0000"]),
+            (&["-scr", "3"], &["--screenfuls", "3"]),
+            (&["-nolevdist"], &["--no-levdist"]),
+            (&["-anvid"], &["--analyzevideo"]),
+            (&["-investigate_packets"], &["--investigate-packets"]),
+            (&["-nosync"], &["--no-sync"]),
+            (&["-haup"], &["--hauppauge"]),
+            (&["-poc"], &["--usepicorder"]),
+            (&["-tcppassword", "secret"], &["--tcp-password", "secret"]),
+            (&["-tcpdesc", "desc"], &["--tcp-description", "desc"]),
+            (&["-tickertape"], &["--tickertext"]),
+            (&["-ocr_mode", "word"], &["--ocr-mode", "word"]),
+            (&["-sub_color", "yellow"], &["--subcolor", "yellow"]),
+            (
+                &["-min_sub_duration", "0.5"],
+                &["--min-sub-duration", "0.5"],
+            ),
+            (&["-detect_italics"], &["--detect-italics"]),
+            (&["-conf_thresh", "60"], &["--conf-thresh", "60"]),
+            (&["-whiteness_thresh", "90"], &["--whiteness-thresh", "90"]),
+            (&["-lum_thresh", "90"], &["--whiteness-thresh", "90"]),
+        ];
+
+        for (legacy, modern) in cases {
+            let legacy_args = parse_with_input(legacy)
+                .unwrap_or_else(|e| panic!("legacy {:?} rejected: {}", legacy, e));
+            let modern_args = parse_with_input(modern)
+                .unwrap_or_else(|e| panic!("modern {:?} rejected: {}", modern, e));
+            assert_eq!(
+                format!("{:?}", legacy_args),
+                format!("{:?}", modern_args),
+                "{:?} does not parse like {:?}",
+                legacy,
+                modern
+            );
+        }
+    }
+
+    #[test]
+    fn test_no_timestamp_map_is_accepted_and_inert() {
+        // The X-TIMESTAMP-MAP header is now off by default, so the old
+        // switch that turned it off parses but changes nothing.
+        for flag in ["-ntm", "--no-timestamp-map"] {
+            let args = parse_with_input(&[flag])
+                .unwrap_or_else(|e| panic!("legacy {} rejected: {}", flag, e));
+            assert!(args.no_timestamp_map);
+            assert!(!args.timestamp_map);
+        }
+        assert!(parse_with_input(&["-ntm", "--timestamp-map"]).is_err());
+    }
+
+    #[test]
+    fn test_removed_feature_spellings_still_rejected() {
+        // These belonged to the sharing/translation feature, which no
+        // longer exists; accepting them would silently do nothing.
+        for flag in [
+            "-enable-sharing",
+            "-sharing-debug",
+            "-sharing-url",
+            "-translate",
+            "-translate-auth",
+        ] {
+            let err = parse_with_input(&[flag]).expect_err(flag);
+            assert_eq!(err.kind(), ErrorKind::UnknownArgument, "{}", flag);
+        }
+    }
+
+    #[test]
+    fn test_legacy_spelling_kept_as_option_value() {
+        // A value that looks like a legacy option must not be rewritten.
+        let args: Vec<String> = ["ccextractor", "--capfile", "-nofc", "input.ts"]
+            .iter()
+            .map(|a| a.to_string())
+            .collect();
+        assert_eq!(normalize_legacy_args(args.clone()), args);
+    }
+
     #[test]
     fn test_normalize_legacy_option_non_options() {
         // Non-option arguments should remain unchanged
