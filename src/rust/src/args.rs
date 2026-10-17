@@ -214,7 +214,7 @@ pub struct Args {
     pub append: bool,
     /// When in srt/sami mode, process captions in channel 2
     /// instead of channel 1.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long, alias="CC2", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cc2: bool,
     /// Enable CEA-708 (DTVCC) captions processing for the listed
     /// services. The parameter is a comma delimited list
@@ -546,7 +546,7 @@ pub struct Args {
     /// free to play with it but be aware that this format
     /// is really live - don't rely on its output format
     /// not changing between versions.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="UCLA", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub ucla: bool,
     /// Map Latin symbols to Cyrillic ones in special cases
     /// of Russian Teletext files (issue #1086)
@@ -563,13 +563,13 @@ pub struct Args {
     pub xds: bool,
     /// Use LF (UNIX) instead of CRLF (DOS, Windows) as line
     /// terminator.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="LF", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub lf: bool,
     /// Use \0 instead of CRLF or LF for frame termination (see '--lf')
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub null_terminated: bool,
     /// For MCC Files, force dropframe frame count.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="DF", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub df: bool,
     /// Based on position on screen, attempt to determine
     /// the different speakers and a dash (-) when each
@@ -839,10 +839,10 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parsedebug: bool,
     /// Print Program Association Table dump.
-    #[arg(long="parsePAT", alias="pat", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePAT", aliases=["pat", "parsepat"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pat: bool,
     /// Print Program Map Table dump.
-    #[arg(long="parsePMT", alias="pmt", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePMT", aliases=["pmt", "parsepmt"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pmt: bool,
     /// Hex-dump defective TS packets.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
