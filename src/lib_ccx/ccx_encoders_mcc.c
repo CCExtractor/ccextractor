@@ -139,7 +139,9 @@ boolean mcc_encode_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *de
 	{
 		int chunk_count = cc_count - offset;
 		if (chunk_count > CDP_MAX_CC_COUNT)
+		{
 			chunk_count = CDP_MAX_CC_COUNT;
+		}
 
 		uint8 *w_boilerplate_buffer = add_boilerplate(enc_ctx, &cc_data[offset * 3], chunk_count, dec_ctx->current_frame_rate);
 		uint16 w_boilerplate_buff_size = ((chunk_count * 3) + 16);
