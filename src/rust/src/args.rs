@@ -738,6 +738,7 @@ pub struct Args {
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.
+    /// The hours component in HH:MM:SS is limited to 255.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
     #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
