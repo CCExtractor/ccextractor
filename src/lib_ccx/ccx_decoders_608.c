@@ -150,6 +150,7 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_field = field;
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
+	data->attributes_from_pac = 0;
 	data->last_valid_data_ms = -1;
 	data->data_loss_erased = 0;
 	data->rollup_from_popon = 0;
@@ -232,6 +233,16 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 		if (context->cursor_row >= CCX_DECODER_608_SCREEN_ROWS || context->cursor_column >= CCX_DECODER_608_SCREEN_WIDTH)
 			return;
 
+		// A character next to an existing one takes the attributes of that character and the attributes
+		// of the PAC that positioned the cursor are ignored (CEA-608-E C.7)
+		if (context->attributes_from_pac && context->cursor_column > 0 &&
+		    use_buffer->characters[context->cursor_row][context->cursor_column - 1] != ' ')
+		{
+			context->current_color = use_buffer->colors[context->cursor_row][context->cursor_column - 1];
+			context->font = use_buffer->fonts[context->cursor_row][context->cursor_column - 1];
+		}
+		context->attributes_from_pac = 0;
+
 		use_buffer->characters[context->cursor_row][context->cursor_column] = c;
 		use_buffer->colors[context->cursor_row][context->cursor_column] = context->current_color;
 		use_buffer->fonts[context->cursor_row][context->cursor_column] = context->font;
@@ -276,6 +287,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 	else
 	{
 		int i = c2 - 0x20;
+		context->attributes_from_pac = 0;
 		context->current_color = pac2_attribs[i][0];
 		context->font = pac2_attribs[i][1];
 		ccx_common_logging.debug_ftn(
@@ -1070,6 +1082,7 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	}
 	context->current_color = pac2_attribs[c2][0];
 	context->font = pac2_attribs[c2][1];
+	context->attributes_from_pac = 1;
 	int indent = pac2_attribs[c2][2];
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "  --  Position: %d:%d, color: %s,  font: %s\n", row,
 				     indent, color_text[context->current_color][0], font_text[context->font]);
