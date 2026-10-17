@@ -41,6 +41,14 @@ corrosion_import_crate(
     FEATURES ${FEATURES}
 )
 
+# Corrosion hard-codes the Command Line Tools SDK's usr/lib as a link
+# directory on macOS. When that SDK is newer than the Xcode toolchain doing
+# the link (e.g. macOS 27 SDK, Xcode 26 ld), ld rejects its .tbd stubs.
+# The system libraries rustc asks for resolve through the compiler's own SDK.
+if(APPLE)
+    set_property(TARGET ccx_rust-static PROPERTY INTERFACE_LINK_DIRECTORIES "")
+endif()
+
 add_test(
     NAME ccx_rust_test
     COMMAND $<TARGET_FILE:Rust::Cargo> test
