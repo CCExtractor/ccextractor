@@ -934,6 +934,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			}
 			erase_memory(context, true);
 			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+			// Nothing is on the screen any more, so the next row starts when its first character arrives
+			context->ts_start_of_current_line = -1;
 			break;
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
