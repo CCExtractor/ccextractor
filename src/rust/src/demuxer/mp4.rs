@@ -401,8 +401,11 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                         // the global timing pointer may already be past this subtitle
                         // because packets from every track are interleaved.
                         let start_ms = pts * 1000 / timescale as i64;
+                        // Convert the end point in one step, as the GPAC path does;
+                        // adding separately truncated start and duration can land
+                        // 1 ms early.
                         let end_ms = if pkt.duration > 0 {
-                            start_ms + pkt.duration * 1000 / timescale as i64
+                            (pts + pkt.duration) * 1000 / timescale as i64
                         } else {
                             -1
                         };
