@@ -40,11 +40,14 @@ pub const FILEBUFFERSIZE: usize = 1024 * 1024 * 16; // 16 Mbytes no less. Minimi
 pub fn init_file_buffer(ctx: &mut CcxDemuxer) -> i32 {
     ctx.filebuffer_start = 0;
     ctx.filebuffer_pos = 0;
+    // Called for every newly opened file. Whatever the buffer still holds
+    // belongs to the previous file and has been consumed; keeping its byte
+    // count while rewinding the position would replay it as new data.
+    ctx.bytesinbuffer = 0;
     if ctx.filebuffer.is_null() {
         let mut buf = vec![0u8; FILEBUFFERSIZE].into_boxed_slice();
         ctx.filebuffer = buf.as_mut_ptr();
         mem::forget(buf);
-        ctx.bytesinbuffer = 0;
     }
     if ctx.filebuffer.is_null() {
         return -1;
