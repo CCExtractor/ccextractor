@@ -799,7 +799,18 @@ void print_file_report(struct lib_ccx_ctx *ctx)
 	}
 
 cleanup:
-	freep(&ctx->freport.data_from_608);
-	memset(&ctx->freport, 0, sizeof(struct file_report));
+	// The 608 and 708 decoders keep pointers to these two reports and write to them
+	// for the next file, so clear them for the next file instead of freeing them
+	{
+		struct ccx_decoder_608_report *data_from_608 = ctx->freport.data_from_608;
+		struct ccx_decoder_dtvcc_report *data_from_708 = ctx->freport.data_from_708;
+		memset(&ctx->freport, 0, sizeof(struct file_report));
+		if (data_from_608)
+			memset(data_from_608, 0, sizeof(*data_from_608));
+		if (data_from_708)
+			memset(data_from_708, 0, sizeof(*data_from_708));
+		ctx->freport.data_from_608 = data_from_608;
+		ctx->freport.data_from_708 = data_from_708;
+	}
 #undef Y_N
 }
