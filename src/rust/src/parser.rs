@@ -974,11 +974,11 @@ impl OptionsExt for Options {
             self.settings_608.screens_to_process = get_atoi_hex(screenfuls.as_str());
         }
 
-        if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.clone().as_str()).unwrap());
+        if let Some(startat) = args.startat {
+            self.extraction_start = Some(startat);
         }
-        if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.clone().as_str()).unwrap());
+        if let Some(endat) = args.endat {
+            self.extraction_end = Some(endat);
         }
 
         if args.cc2 {
@@ -2201,6 +2201,46 @@ pub mod tests {
         let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
         assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
         assert_eq!(options.extraction_end.unwrap_or_default().seconds(), 7);
+    }
+
+    #[test]
+    fn test_extraction_time_rejects_invalid_values() {
+        for option in ["--startat", "--endat"] {
+            for value in ["", "invalid", "60", "00:60", "00:60:00", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid extraction time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_formats() {
+        for (value, seconds) in [("0", 0), ("59", 59), ("03:00", 180), ("01:30:45", 5445)] {
+            let (options, _) = parse_args(&["--startat", value, "--endat", value]);
+            let expected = Some(Timestamp::from_millis(seconds * 1000));
+            assert_eq!(options.extraction_start, expected);
+            assert_eq!(options.extraction_end, expected);
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_ffi_returns_error() {
+        for option in ["--startat", "--endat"] {
+            let arguments: Vec<_> = ["ccextractor", "input.scc", option, "invalid"]
+                .iter()
+                .map(|value| std::ffi::CString::new(*value).unwrap())
+                .collect();
+            let mut argv: Vec<_> = arguments
+                .iter()
+                .map(|arg| arg.as_ptr().cast_mut())
+                .collect();
+            // Each pointer refers to a live, NUL-terminated CString for the duration of the call.
+            let result =
+                unsafe { crate::ccxr_parse_parameters(argv.len() as _, argv.as_mut_ptr()) };
+            assert_eq!(result, ExitCause::Failure.exit_code());
+        }
     }
 
     #[test]

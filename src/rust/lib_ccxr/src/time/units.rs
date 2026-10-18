@@ -30,7 +30,7 @@ pub enum TimestampError {
     FormattingError(#[from] std::fmt::Error),
     #[error("error ocurred during formatting a date")]
     DateFormattingError(#[from] Format),
-    #[error("error ocurred during parsing")]
+    #[error("error occurred during parsing")]
     ParsingError,
 }
 
