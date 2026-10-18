@@ -987,12 +987,15 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
 		// Used by MXF and GXF demuxers
 
-		// Initialize timing if not set (use caption PTS as reference)
-		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+		// Use the first caption PTS as the timing reference. The caller has
+		// already passed it to set_current_pts() (in 90 kHz units), which sets
+		// pts_set to 1; with no video frames set_fts() never reaches MinPtsSet
+		// on its own, so check for that rather than for pts_set == 0.
+		if (dec_ctx->timing->pts_set != 2 && data_node->pts != CCX_NOPTS)
 		{
-			dec_ctx->timing->min_pts = data_node->pts;
+			dec_ctx->timing->min_pts = dec_ctx->timing->current_pts;
 			dec_ctx->timing->pts_set = 2; // MinPtsSet
-			dec_ctx->timing->sync_pts = data_node->pts;
+			dec_ctx->timing->sync_pts = dec_ctx->timing->current_pts;
 			set_fts(dec_ctx->timing);
 		}
 
