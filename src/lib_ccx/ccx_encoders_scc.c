@@ -911,6 +911,32 @@ static bool can_use_styled_pac(enum ccx_decoder_608_color_code color, enum font_
 	return true;
 }
 
+/**
+ * Write an indent PAC with the underline bit set (CEA-608-E Table 53: "Indent N Underline")
+ * An indenting PAC carries white and sets only the underline, so with a Tab Offset it addresses any column
+ * for white underlined text without a mid-row code (which would take a cell).
+ */
+static void write_underlined_indent_pac(const int fd, const unsigned char channel, const unsigned char row,
+					const unsigned char column, const bool disassemble, unsigned int *bytes_written)
+{
+	enum control_code code = get_preamble_code(row, column);
+	unsigned char byte1 = odd_parity(get_first_byte(channel, code));
+	unsigned char byte2 = odd_parity(get_second_byte(code) | 1);
+
+	check_padding(fd, disassemble, bytes_written);
+	if (disassemble)
+	{
+		fdprintf(fd, "{%02d%02dU}", row + 1, (column / 4) * 4);
+	}
+	else
+	{
+		if (*bytes_written % 2 == 0)
+			write_wrapped(fd, " ", 1);
+		fdprintf(fd, "%02x%02x", byte1, byte2);
+	}
+	*bytes_written += 2;
+}
+
 enum control_code get_tab_offset_code(const unsigned char column)
 {
 	int offset = column % 4;
@@ -1055,8 +1081,11 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			enum control_code tab_offset_code;
 			enum control_code font_code = 0;
 
-			bool switch_font = current_font != data->fonts[row][column];
-			bool switch_color = current_color != data->colors[row][column];
+			// A PAC puts the attributes back to white, not underlined, not italic (CEA-608-E C.14), so
+			// after a change of position they have to be set again whatever they were before
+			bool moved = current_row != row || current_column != column;
+			bool switch_font = (moved ? FONT_REGULAR : current_font) != data->fonts[row][column];
+			bool switch_color = (moved ? COL_WHITE : current_color) != data->colors[row][column];
 
 			if (current_row != row ||
 			    current_column != column ||
@@ -1079,6 +1108,21 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 						// Write the character and continue
 						write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
 						++current_column;
+						continue;
+					}
+
+					// White underlined text: an underlined indent PAC and a Tab Offset, no mid-row code
+					if (moved && data->colors[row][column] == COL_WHITE && data->fonts[row][column] == FONT_UNDERLINED)
+					{
+						write_underlined_indent_pac(context->out->fh, data->channel, row, column, disassemble, &bytes_written);
+						enum control_code underlined_tab_offset = get_tab_offset_code(column);
+						if (underlined_tab_offset)
+							write_control_code(context->out->fh, data->channel, underlined_tab_offset, disassemble, &bytes_written);
+						current_row = row;
+						current_font = FONT_UNDERLINED;
+						current_color = COL_WHITE;
+						write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
+						current_column = column + 1;
 						continue;
 					}
 
