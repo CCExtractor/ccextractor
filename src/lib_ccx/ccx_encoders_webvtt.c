@@ -420,7 +420,7 @@ void get_font_events(int *font_events, int line_num, struct eia608_screen *data)
 				font_events[i] |= data->fonts[line_num][i]; // Add this new font
 
 			if (last_font != FONT_REGULAR)
-				font_events[i] |= last_font << 16; // Remove old font (event in the second part of the integer)
+				font_events[i - 1] |= last_font << 16; // Remove old font after the previous character (event in the second part of the integer)
 
 			last_font = data->fonts[line_num][i];
 		}
