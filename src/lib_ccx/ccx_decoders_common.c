@@ -40,6 +40,54 @@ LLONG get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
+#ifdef DISABLE_RUST
+// C counterpart of ccxr_process_cc_data() and do_cb_dtvcc_rust(): give every CEA-708
+// block to the C decoder before do_cb() runs, with the same rules as the Rust build
+static int process_cc_data_dtvcc(struct lib_cc_decode *ctx, const unsigned char *cc_data, int cc_count)
+{
+	int ret = -1;
+
+	if (cc_count <= 0 || cc_count > HDCC_MAX_TRIPLETS_PER_SLOT)
+		return -1;
+
+	for (int j = 0; j < cc_count * 3; j += 3)
+	{
+		// validate_cc_data_pair() may change the block, and do_cb() still needs the original
+		unsigned char block[3] = {cc_data[j], cc_data[j + 1], cc_data[j + 2]};
+		if (validate_cc_data_pair(block))
+			continue;
+		ret = 0;
+
+		if (ctx->write_format != CCX_OF_DVDRAW && ctx->write_format != CCX_OF_RAW &&
+		    (block[0] == 0xFA || block[0] == 0xFC || block[0] == 0xFD) && (block[1] & 0x7F) == 0 && (block[2] & 0x7F) == 0)
+			continue;
+
+		unsigned char cc_valid = (block[0] & 4) >> 2;
+		unsigned char cc_type = block[0] & 3;
+		if (!(cc_valid || cc_type == 3) || cc_type < 2)
+			continue;
+
+		// Like do_cb_dtvcc_rust(), the time is taken before current_field is set to 3
+		LLONG current_time = ctx->timing ? get_fts(ctx->timing, ctx->current_field) : 0;
+		int timeok = 1;
+		ctx->current_field = 3;
+		if (ctx->extraction_start.set && current_time < ctx->extraction_start.time_in_ms)
+			timeok = 0;
+		if (ctx->extraction_end.set && current_time > ctx->extraction_end.time_in_ms)
+		{
+			timeok = 0;
+			ctx->processed_enough = 1;
+		}
+		if (timeok && ctx->write_format != CCX_OF_RAW)
+		{
+			unsigned char temp[4] = {cc_valid, cc_type, block[1], block[2]};
+			dtvcc_process_data(ctx->dtvcc, temp);
+		}
+	}
+	return ret;
+}
+#endif
+
 int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
 {
 	int ret = -1;
@@ -50,7 +98,11 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 		return 0;
 	}
 
+#ifndef DISABLE_RUST
 	ret = ccxr_process_cc_data(dec_ctx, cc_data, cc_count);
+#else
+	ret = process_cc_data_dtvcc(dec_ctx, cc_data, cc_count);
+#endif
 
 	for (int j = 0; j < cc_count * 3; j = j + 3)
 	{
