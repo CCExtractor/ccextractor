@@ -5,7 +5,6 @@ use lib_ccxr::time::units::{Timestamp, TimestampFormat};
 use lib_ccxr::util::encoders_helper::{add_builtin_capitalization, add_builtin_profane};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputTarget};
-use lib_ccxr::util::time::stringztoms;
 use num_integer::Integer;
 use std::cell::Cell;
 use std::convert::TryInto;
@@ -792,37 +791,31 @@ impl OptionsExt for Options {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
 
-        if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore =
-                stringztoms(startcreditsnotbefore.clone().as_str()).unwrap();
+        if let Some(startcreditsnotbefore) = args.startcreditsnotbefore {
+            self.enc_cfg.startcreditsnotbefore = startcreditsnotbefore;
         }
 
-        if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-            self.enc_cfg.startcreditsnotafter =
-                stringztoms(startcreditsnotafter.clone().as_str()).unwrap();
+        if let Some(startcreditsnotafter) = args.startcreditsnotafter {
+            self.enc_cfg.startcreditsnotafter = startcreditsnotafter;
         }
 
-        if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast =
-                stringztoms(startcreditsforatleast.clone().as_str()).unwrap();
+        if let Some(startcreditsforatleast) = args.startcreditsforatleast {
+            self.enc_cfg.startcreditsforatleast = startcreditsforatleast;
         }
-        if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost =
-                stringztoms(startcreditsforatmost.clone().as_str()).unwrap();
+        if let Some(startcreditsforatmost) = args.startcreditsforatmost {
+            self.enc_cfg.startcreditsforatmost = startcreditsforatmost;
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
             self.enc_cfg.end_credits_text.clone_from(endcreditstext);
         }
 
-        if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-            self.enc_cfg.endcreditsforatleast =
-                stringztoms(endcreditsforatleast.clone().as_str()).unwrap();
+        if let Some(endcreditsforatleast) = args.endcreditsforatleast {
+            self.enc_cfg.endcreditsforatleast = endcreditsforatleast;
         }
 
-        if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-            self.enc_cfg.endcreditsforatmost =
-                stringztoms(endcreditsforatmost.clone().as_str()).unwrap();
+        if let Some(endcreditsforatmost) = args.endcreditsforatmost {
+            self.enc_cfg.endcreditsforatmost = endcreditsforatmost;
         }
 
         /* More stuff */
@@ -2182,6 +2175,52 @@ pub mod tests {
     fn test_delay_sets_subtitle_delay_negative() {
         let (options, _) = parse_args(&["--delay=-200"]);
         assert_eq!(options.subs_delay, Timestamp::from_millis(-200));
+    }
+
+    const CREDITS_TIME_OPTIONS: [&str; 6] = [
+        "--startcreditsnotbefore",
+        "--startcreditsnotafter",
+        "--startcreditsforatleast",
+        "--startcreditsforatmost",
+        "--endcreditsforatleast",
+        "--endcreditsforatmost",
+    ];
+
+    #[test]
+    fn test_credits_time_rejects_invalid_values() {
+        for option in CREDITS_TIME_OPTIONS {
+            for value in ["", "invalid", "60", "00:60", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid credits time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
+        }
+    }
+
+    #[test]
+    fn test_credits_time_formats() {
+        let (options, _) = parse_args(&[
+            "--startcreditsnotbefore",
+            "1",
+            "--startcreditsnotafter",
+            "03:00",
+            "--startcreditsforatleast",
+            "2",
+            "--startcreditsforatmost",
+            "01:30:45",
+            "--endcreditsforatleast",
+            "3",
+            "--endcreditsforatmost",
+            "4:05",
+        ]);
+        let cfg = &options.enc_cfg;
+        assert_eq!(cfg.startcreditsnotbefore, Timestamp::from_millis(1_000));
+        assert_eq!(cfg.startcreditsnotafter, Timestamp::from_millis(180_000));
+        assert_eq!(cfg.startcreditsforatleast, Timestamp::from_millis(2_000));
+        assert_eq!(cfg.startcreditsforatmost, Timestamp::from_millis(5_445_000));
+        assert_eq!(cfg.endcreditsforatleast, Timestamp::from_millis(3_000));
+        assert_eq!(cfg.endcreditsforatmost, Timestamp::from_millis(245_000));
     }
 
     #[test]
