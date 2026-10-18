@@ -202,6 +202,9 @@ char *dvb_codec_id = "S_DVBSUB";
 
 struct block_addition
 {
+	/* Base allocation read from the BlockAdditions element; the three
+	 * fields below point into it, so only message is freed. */
+	char *message;
 	char *cue_settings_list;
 	ULLONG cue_settings_list_size;
 	char *cue_identifier;
