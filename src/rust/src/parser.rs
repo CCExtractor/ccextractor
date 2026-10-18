@@ -107,6 +107,28 @@ where
     }
 }
 
+/// Parse the value of a time option, which has the form SS, MM:SS or HH:MM:SS.
+fn parse_time_option(option: &str, value: &str) -> Result<Timestamp, String> {
+    stringztoms(value).ok_or_else(|| {
+        format!(
+            "--{} expects SS, MM:SS or HH:MM:SS, found \"{}\"",
+            option, value
+        )
+    })
+}
+
+fn get_time_option(option: &str, value: &str) -> Timestamp {
+    match parse_time_option(option, value) {
+        Ok(time) => time,
+        Err(message) => {
+            fatal!(
+                cause = ExitCause::MalformedParameter;
+                "Malformed parameter: {}", message
+            );
+        }
+    }
+}
+
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
@@ -794,21 +816,21 @@ impl OptionsExt for Options {
 
         if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
             self.enc_cfg.startcreditsnotbefore =
-                stringztoms(startcreditsnotbefore.clone().as_str()).unwrap();
+                get_time_option("startcreditsnotbefore", startcreditsnotbefore);
         }
 
         if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
             self.enc_cfg.startcreditsnotafter =
-                stringztoms(startcreditsnotafter.clone().as_str()).unwrap();
+                get_time_option("startcreditsnotafter", startcreditsnotafter);
         }
 
         if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
             self.enc_cfg.startcreditsforatleast =
-                stringztoms(startcreditsforatleast.clone().as_str()).unwrap();
+                get_time_option("startcreditsforatleast", startcreditsforatleast);
         }
         if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
             self.enc_cfg.startcreditsforatmost =
-                stringztoms(startcreditsforatmost.clone().as_str()).unwrap();
+                get_time_option("startcreditsforatmost", startcreditsforatmost);
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
@@ -817,12 +839,12 @@ impl OptionsExt for Options {
 
         if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
             self.enc_cfg.endcreditsforatleast =
-                stringztoms(endcreditsforatleast.clone().as_str()).unwrap();
+                get_time_option("endcreditsforatleast", endcreditsforatleast);
         }
 
         if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
             self.enc_cfg.endcreditsforatmost =
-                stringztoms(endcreditsforatmost.clone().as_str()).unwrap();
+                get_time_option("endcreditsforatmost", endcreditsforatmost);
         }
 
         /* More stuff */
@@ -975,10 +997,10 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.clone().as_str()).unwrap());
+            self.extraction_start = Some(get_time_option("startat", startat));
         }
         if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.clone().as_str()).unwrap());
+            self.extraction_end = Some(get_time_option("endat", endat));
         }
 
         if args.cc2 {
@@ -2182,6 +2204,21 @@ pub mod tests {
     fn test_delay_sets_subtitle_delay_negative() {
         let (options, _) = parse_args(&["--delay=-200"]);
         assert_eq!(options.subs_delay, Timestamp::from_millis(-200));
+    }
+
+    #[test]
+    fn test_parse_time_option() {
+        assert_eq!(
+            parse_time_option("startat", "1:30"),
+            Ok(Timestamp::from_millis(90_000))
+        );
+        for bad in ["abc", "1:xx", "", "99:99:99"] {
+            let message = parse_time_option("startat", bad).unwrap_err();
+            assert_eq!(
+                message,
+                format!("--startat expects SS, MM:SS or HH:MM:SS, found \"{}\"", bad)
+            );
+        }
     }
 
     #[test]
