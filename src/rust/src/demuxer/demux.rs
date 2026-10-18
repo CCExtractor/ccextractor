@@ -556,12 +556,16 @@ mod tests {
         let mut ctx = dummy_demuxer();
         let buf = vec![1u8; unsafe { FILEBUFFERSIZE } as usize].into_boxed_slice();
         ctx.filebuffer = Box::into_raw(buf) as *mut u8;
+        let original = ctx.filebuffer;
         ctx.bytesinbuffer = 123;
+        ctx.filebuffer_pos = 123;
         let res = init_file_buffer(&mut ctx);
         assert_eq!(res, 0);
-        assert!(!ctx.filebuffer.is_null());
-        // bytesinbuffer remains unchanged.
-        assert_eq!(ctx.bytesinbuffer, 123);
+        assert_eq!(ctx.filebuffer, original);
+        // The bytes belong to the previously opened file: they must not be
+        // replayed as data of the new one.
+        assert_eq!(ctx.filebuffer_pos, 0);
+        assert_eq!(ctx.bytesinbuffer, 0);
         // Clean up.
         unsafe {
             let _ = Box::from_raw(std::ptr::slice_from_raw_parts_mut(

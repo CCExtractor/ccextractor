@@ -224,10 +224,13 @@ int init_file_buffer(struct ccx_demuxer *ctx)
 {
 	ctx->filebuffer_start = 0;
 	ctx->filebuffer_pos = 0;
+	// Called for every newly opened file. Whatever the buffer still holds
+	// belongs to the previous file and has been consumed; keeping its byte
+	// count while rewinding the position would replay it as new data.
+	ctx->bytesinbuffer = 0;
 	if (ctx->filebuffer == NULL)
 	{
 		ctx->filebuffer = (unsigned char *)malloc(FILEBUFFERSIZE);
-		ctx->bytesinbuffer = 0;
 	}
 	if (ctx->filebuffer == NULL)
 	{
