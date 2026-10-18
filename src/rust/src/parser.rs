@@ -5,7 +5,6 @@ use lib_ccxr::time::units::{Timestamp, TimestampFormat};
 use lib_ccxr::util::encoders_helper::{add_builtin_capitalization, add_builtin_profane};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputTarget};
-use lib_ccxr::util::time::stringztoms;
 use num_integer::Integer;
 use std::cell::Cell;
 use std::convert::TryInto;
@@ -102,28 +101,6 @@ where
             fatal!(
                 cause = ExitCause::MalformedParameter;
                 "Malformed parameter: {}",s
-            );
-        }
-    }
-}
-
-/// Parse the value of a time option, which has the form SS, MM:SS or HH:MM:SS.
-fn parse_time_option(option: &str, value: &str) -> Result<Timestamp, String> {
-    stringztoms(value).ok_or_else(|| {
-        format!(
-            "--{} expects SS, MM:SS or HH:MM:SS, found \"{}\"",
-            option, value
-        )
-    })
-}
-
-fn get_time_option(option: &str, value: &str) -> Timestamp {
-    match parse_time_option(option, value) {
-        Ok(time) => time,
-        Err(message) => {
-            fatal!(
-                cause = ExitCause::MalformedParameter;
-                "Malformed parameter: {}", message
             );
         }
     }
@@ -814,37 +791,31 @@ impl OptionsExt for Options {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
 
-        if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore =
-                get_time_option("startcreditsnotbefore", startcreditsnotbefore);
+        if let Some(startcreditsnotbefore) = args.startcreditsnotbefore {
+            self.enc_cfg.startcreditsnotbefore = startcreditsnotbefore;
         }
 
-        if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-            self.enc_cfg.startcreditsnotafter =
-                get_time_option("startcreditsnotafter", startcreditsnotafter);
+        if let Some(startcreditsnotafter) = args.startcreditsnotafter {
+            self.enc_cfg.startcreditsnotafter = startcreditsnotafter;
         }
 
-        if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast =
-                get_time_option("startcreditsforatleast", startcreditsforatleast);
+        if let Some(startcreditsforatleast) = args.startcreditsforatleast {
+            self.enc_cfg.startcreditsforatleast = startcreditsforatleast;
         }
-        if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost =
-                get_time_option("startcreditsforatmost", startcreditsforatmost);
+        if let Some(startcreditsforatmost) = args.startcreditsforatmost {
+            self.enc_cfg.startcreditsforatmost = startcreditsforatmost;
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
             self.enc_cfg.end_credits_text.clone_from(endcreditstext);
         }
 
-        if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-            self.enc_cfg.endcreditsforatleast =
-                get_time_option("endcreditsforatleast", endcreditsforatleast);
+        if let Some(endcreditsforatleast) = args.endcreditsforatleast {
+            self.enc_cfg.endcreditsforatleast = endcreditsforatleast;
         }
 
-        if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-            self.enc_cfg.endcreditsforatmost =
-                get_time_option("endcreditsforatmost", endcreditsforatmost);
+        if let Some(endcreditsforatmost) = args.endcreditsforatmost {
+            self.enc_cfg.endcreditsforatmost = endcreditsforatmost;
         }
 
         /* More stuff */
@@ -996,11 +967,11 @@ impl OptionsExt for Options {
             self.settings_608.screens_to_process = get_atoi_hex(screenfuls.as_str());
         }
 
-        if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(get_time_option("startat", startat));
+        if let Some(startat) = args.startat {
+            self.extraction_start = Some(startat);
         }
-        if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(get_time_option("endat", endat));
+        if let Some(endat) = args.endat {
+            self.extraction_end = Some(endat);
         }
 
         if args.cc2 {
@@ -2206,19 +2177,50 @@ pub mod tests {
         assert_eq!(options.subs_delay, Timestamp::from_millis(-200));
     }
 
+    const CREDITS_TIME_OPTIONS: [&str; 6] = [
+        "--startcreditsnotbefore",
+        "--startcreditsnotafter",
+        "--startcreditsforatleast",
+        "--startcreditsforatmost",
+        "--endcreditsforatleast",
+        "--endcreditsforatmost",
+    ];
+
     #[test]
-    fn test_parse_time_option() {
-        assert_eq!(
-            parse_time_option("startat", "1:30"),
-            Ok(Timestamp::from_millis(90_000))
-        );
-        for bad in ["abc", "1:xx", "", "99:99:99"] {
-            let message = parse_time_option("startat", bad).unwrap_err();
-            assert_eq!(
-                message,
-                format!("--startat expects SS, MM:SS or HH:MM:SS, found \"{}\"", bad)
-            );
+    fn test_credits_time_rejects_invalid_values() {
+        for option in CREDITS_TIME_OPTIONS {
+            for value in ["", "invalid", "60", "00:60", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid credits time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
         }
+    }
+
+    #[test]
+    fn test_credits_time_formats() {
+        let (options, _) = parse_args(&[
+            "--startcreditsnotbefore",
+            "1",
+            "--startcreditsnotafter",
+            "03:00",
+            "--startcreditsforatleast",
+            "2",
+            "--startcreditsforatmost",
+            "01:30:45",
+            "--endcreditsforatleast",
+            "3",
+            "--endcreditsforatmost",
+            "4:05",
+        ]);
+        let cfg = &options.enc_cfg;
+        assert_eq!(cfg.startcreditsnotbefore, Timestamp::from_millis(1_000));
+        assert_eq!(cfg.startcreditsnotafter, Timestamp::from_millis(180_000));
+        assert_eq!(cfg.startcreditsforatleast, Timestamp::from_millis(2_000));
+        assert_eq!(cfg.startcreditsforatmost, Timestamp::from_millis(5_445_000));
+        assert_eq!(cfg.endcreditsforatleast, Timestamp::from_millis(3_000));
+        assert_eq!(cfg.endcreditsforatmost, Timestamp::from_millis(245_000));
     }
 
     #[test]
@@ -2238,6 +2240,46 @@ pub mod tests {
         let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
         assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
         assert_eq!(options.extraction_end.unwrap_or_default().seconds(), 7);
+    }
+
+    #[test]
+    fn test_extraction_time_rejects_invalid_values() {
+        for option in ["--startat", "--endat"] {
+            for value in ["", "invalid", "60", "00:60", "00:60:00", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid extraction time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_formats() {
+        for (value, seconds) in [("0", 0), ("59", 59), ("03:00", 180), ("01:30:45", 5445)] {
+            let (options, _) = parse_args(&["--startat", value, "--endat", value]);
+            let expected = Some(Timestamp::from_millis(seconds * 1000));
+            assert_eq!(options.extraction_start, expected);
+            assert_eq!(options.extraction_end, expected);
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_ffi_returns_error() {
+        for option in ["--startat", "--endat"] {
+            let arguments: Vec<_> = ["ccextractor", "input.scc", option, "invalid"]
+                .iter()
+                .map(|value| std::ffi::CString::new(*value).unwrap())
+                .collect();
+            let mut argv: Vec<_> = arguments
+                .iter()
+                .map(|arg| arg.as_ptr().cast_mut())
+                .collect();
+            // Each pointer refers to a live, NUL-terminated CString for the duration of the call.
+            let result =
+                unsafe { crate::ccxr_parse_parameters(argv.len() as _, argv.as_mut_ptr()) };
+            assert_eq!(result, ExitCause::Failure.exit_code());
+        }
     }
 
     #[test]

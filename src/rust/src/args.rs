@@ -1,4 +1,5 @@
 use clap::{Parser, ValueEnum};
+use lib_ccxr::time::units::Timestamp;
 use strum_macros::Display;
 
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
@@ -742,17 +743,18 @@ pub struct Args {
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.
+    /// The hours component in HH:MM:SS is limited to 255.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub startat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startat: Option<Timestamp>,
     /// Stop processing after the given time (same format as
     /// --startat).
     /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub endat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endat: Option<Timestamp>,
     /// Write 'num' screenfuls and terminate processing.
     #[arg(long, alias="scr", verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub screenfuls: Option<String>,
@@ -777,20 +779,20 @@ pub struct Args {
     pub startcreditstext: Option<String>,
     /// Don't display the start credits before this
     /// time (S, or MM:SS). Default: 0
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsnotbefore: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsnotbefore: Option<Timestamp>,
     /// Don't display the start credits after this
     /// time (S, or MM:SS). Default: 5:00
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsnotafter: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsnotafter: Option<Timestamp>,
     /// Start credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsforatleast: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsforatleast: Option<Timestamp>,
     /// Start credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsforatmost: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsforatmost: Option<Timestamp>,
     /// Write this text as end credits. If there are
     /// several lines, separate them with the
     /// characters \n, for example Line1\nLine 2.
@@ -798,12 +800,12 @@ pub struct Args {
     pub endcreditstext: Option<String>,
     /// End credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub endcreditsforatleast: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endcreditsforatleast: Option<Timestamp>,
     /// End credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub endcreditsforatmost: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endcreditsforatmost: Option<Timestamp>,
     /// Show lots of debugging output.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub debug: bool,
