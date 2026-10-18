@@ -789,20 +789,21 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     let mut opt = Options::default();
     let mut _tlt_config = TeletextConfig::default();
 
-    // Settings from ccextractor.cnf are applied first so command line options override them
+    // Settings from ccextractor.cnf are applied first so command line options override them.
+    // The messages are held back until the command line is parsed, because only then is it known
+    // whether messages go to stdout, stderr or nowhere (--stdout, --quiet).
+    let mut config_messages: Vec<String> = Vec::new();
     match std::fs::read_to_string(CONFIG_FILE_NAME) {
         Ok(contents) => {
             for warning in opt.apply_config(&contents) {
-                lib_ccxr::info!(
+                config_messages.push(format!(
                     "{}:{}: {}, ignoring this line\n",
-                    CONFIG_FILE_NAME,
-                    warning.line,
-                    warning.message
-                );
+                    CONFIG_FILE_NAME, warning.line, warning.message
+                ));
             }
         }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => lib_ccxr::info!("Could not read {}: {}\n", CONFIG_FILE_NAME, e),
+        Err(e) => config_messages.push(format!("Could not read {}: {}\n", CONFIG_FILE_NAME, e)),
     }
 
     opt.parse_parameters(
@@ -811,6 +812,13 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
         &mut _capitalization_list,
         &mut _profane,
     );
+
+    if let Some(mut logger) = lib_ccxr::util::log::logger_mut() {
+        logger.set_target(opt.messages_target);
+    }
+    for message in config_messages {
+        lib_ccxr::info!("{}", message);
+    }
 
     // Handle --list-tracks mode: list tracks and exit early
     if opt.list_tracks_only {
