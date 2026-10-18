@@ -22,7 +22,6 @@ void init_hdcc(struct lib_cc_decode *ctx)
 // Buffer caption blocks for later sorting/flushing.
 void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, int sequence_number, LLONG current_fts_now, struct cc_subtitle *sub)
 {
-	// stream_mode = dec_ctx->demux_ctx->get_stream_mode(dec_ctx->demux_ctx);
 	//  Uninitialized?
 	if (dec_ctx->anchor_seq_number < 0)
 	{
@@ -54,9 +53,6 @@ void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsi
 	{
 		if (cc_data)
 		{
-			// Changed by CFS to concat, i.e. don't assume there's no data already for this seq_index.
-			// Needed at least for MP4 samples. // TODO: make sure we don't overflow
-			// if (stream_mode!=CCX_SM_MP4) // CFS: Very ugly hack, but looks like overwriting is needed for at least some ES
 			if (dec_ctx->cc_data_count[seq_index] > 0)
 			{
 				// Flush buffered cc blocks before storing new ones if fts has changed
@@ -66,6 +62,9 @@ void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsi
 				}
 			}
 			dec_ctx->cc_fts[seq_index] = current_fts_now; // CFS: Maybe do even if there's no data?
+			// Overwrite, don't append: a picture can carry the same 608 data
+			// twice, e.g. as SCTE-20 followed by GA94 user data. Appending
+			// would duplicate every caption character.
 			dec_ctx->cc_data_count[seq_index] = 0;
 			memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
 		}
