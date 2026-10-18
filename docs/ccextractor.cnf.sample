@@ -3,6 +3,14 @@
 #
 # To enable required option please uncomment option
 #
+# Only these tags are read: INPUT_SOURCE, BUFFER_INPUT, NOFONT_COLOR,
+# NOTYPE_SETTING, OUTPUT_FORMAT, VIDEO_EDITED, GOP_TIME, FIX_PADDING,
+# GUI_MODE_REPORTS, NO_PROGRESS_BAR, CAP_FILE, PROFANITY_FILE, START_AT,
+# END_AT, INVESTIGATE_PACKET, FULL_BIN, NO_SYNC, HAUPPAUGE_MODE,
+# MP4_VIDEO_TRACK, USE_PIC_ORDER, AUTO_MYTH, WTV_MPEG2, DATE_FORMAT,
+# NO_ROLL_UP, FORCED_RU, DIRECT_ROLLUP and SCREEN_TO_PROCESS.
+# Any other tag below is not supported yet and is reported as unknown.
+#
 
 
 # The Input Source tag option gives ability to user
@@ -173,7 +181,7 @@ INPUT_SOURCE=0
 # 0 = no
 # 1 = yes
 
-#FIX_PADDINDG=0
+#FIX_PADDING=0
 
 # If you hate the repeated lines caused by the roll-up
 # emulation, you can have ccextractor write only one
@@ -203,7 +211,7 @@ INPUT_SOURCE=0
 # 2
 # 3
 
-#FORCED_RU
+#FORCED_RU=
 
 # This tag trim line
 # This tag take number in its input and there meaning
@@ -277,12 +285,12 @@ INPUT_SOURCE=0
 # start extraction from the time specified
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-#START_AT
+#START_AT=
 
 # End extraction at the time specified
 # this tag only accepts SS, MM:SS or HH:MM:SS
 
-#END_AT
+#END_AT=
 
 # If no CC packets are detected based on the PMT, try
 # to find data in all packets by scanning.
@@ -291,7 +299,7 @@ INPUT_SOURCE=0
 # 0 = no
 # 1 = yes
 
-#INVASTIGATE_PACKET=0
+#INVESTIGATE_PACKET=0
 
 # If the video was recorder using a Hauppauge card, it
 # might need special processing. This parameter will
@@ -309,7 +317,7 @@ INPUT_SOURCE=0
 # 0 = no
 # 1 = yes
 
-#MP4_VIDEO_TRACK
+#MP4_VIDEO_TRACK=
 
 # File need to be encoding in which format
 # This tag take number in its input and there meaning
