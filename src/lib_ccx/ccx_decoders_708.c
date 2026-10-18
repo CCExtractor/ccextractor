@@ -1837,7 +1837,8 @@ void dtvcc_process_current_packet(dtvcc_ctx *dtvcc, int len)
 			dtvcc->report->services[service_number] = 1;
 		}
 
-		if (service_number > 0 && dtvcc->services_active[service_number - 1])
+		// Without an encoder (e.g. --out=report) only record which services are present
+		if (service_number > 0 && dtvcc->services_active[service_number - 1] && dtvcc->encoder)
 			dtvcc_process_service_block(dtvcc, &dtvcc->decoders[service_number - 1], pos, block_length);
 
 		pos += block_length; // Skip data

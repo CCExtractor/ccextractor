@@ -136,15 +136,36 @@ void dtvcc_change_pen_attribs(dtvcc_tv_screen *tv, dtvcc_pen_attribs pen_attribs
 	}
 }
 
-size_t write_utf16_char(unsigned short utf16_char, char *out)
+// UTF-16 and UCS-2 are fixed-width: every character, ASCII included, takes 2 bytes
+static int is_utf16_charset(const char *charset)
 {
-	// Always write 2 bytes for consistent UTF-16BE encoding.
-	// Previously, this function wrote 1 byte for ASCII characters and 2 bytes
-	// for non-ASCII, creating an invalid mix that iconv couldn't handle properly.
-	// This caused garbled output with Japanese/Chinese characters (issue #1451).
-	out[0] = (unsigned char)(utf16_char >> 8);
-	out[1] = (unsigned char)(utf16_char & 0xff);
-	return 2;
+	const char *names[] = {"UTF-16", "UTF16", "UTF_16", "UCS-2", "UCS2", "UCS_2"};
+	char upper[64];
+	size_t i;
+
+	for (i = 0; charset[i] && i < sizeof(upper) - 1; i++)
+		upper[i] = (char)toupper((unsigned char)charset[i]);
+	upper[i] = '\0';
+
+	for (i = 0; i < sizeof(names) / sizeof(names[0]); i++)
+		if (strstr(upper, names[i]))
+			return 1;
+	return 0;
+}
+
+size_t write_utf16_char(unsigned short utf16_char, char *out, int use_utf16)
+{
+	// UTF-16/UCS-2 output needs 2 bytes for every character (issue #1451). Otherwise ASCII
+	// takes 1 byte, so the output is plain text without a charset and variable-width
+	// charsets such as EUC-KR work (issue #1065).
+	if (use_utf16 || (utf16_char >> 8))
+	{
+		out[0] = (unsigned char)(utf16_char >> 8);
+		out[1] = (unsigned char)(utf16_char & 0xff);
+		return 2;
+	}
+	out[0] = (unsigned char)(utf16_char & 0xff);
+	return 1;
 }
 
 void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, int row_index, struct encoder_ctx *encoder, int use_colors)
@@ -156,6 +177,7 @@ void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, i
 	int first, last;
 
 	int fd = encoder->dtvcc_writers[tv->service_number - 1].fd;
+	int use_utf16 = writer->charset && is_utf16_charset(writer->charset);
 
 	dtvcc_pen_color pen_color = dtvcc_default_pen_color;
 	dtvcc_pen_attribs pen_attribs = dtvcc_default_pen_attribs;
@@ -175,12 +197,12 @@ void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, i
 		pen_attribs = tv->pen_attribs[row_index][i];
 		if (i < first)
 		{
-			size_t size = write_utf16_char(' ', buf + buf_len);
+			size_t size = write_utf16_char(' ', buf + buf_len, use_utf16);
 			buf_len += size;
 		}
 		else
 		{
-			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len);
+			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len, use_utf16);
 			buf_len += size;
 		}
 	}
