@@ -55,27 +55,12 @@ fn set_mpeg_clock_freq(freq: i32) {
     }
 }
 
-fn atol(bufsize: &str) -> i32 {
-    let s = bufsize.trim();
-    if s.is_empty() {
-        return 0;
-    }
-
-    let last_char = s.chars().last().unwrap();
-    if last_char.is_ascii_digit() {
-        return s.parse::<i32>().unwrap_or(0);
-    }
-
-    let val_str = &s[..s.len() - 1];
-    let mut val = val_str.parse::<i32>().unwrap_or(0);
-
-    match last_char.to_ascii_uppercase() {
-        'M' => val *= 1024 * 1024,
-        'K' => val *= 1024,
-        'G' => val *= 1024 * 1024 * 1024,
-        _ => {}
-    }
-    val
+/// A CEA-708 service number from --service, if it is within 1..=DTVCC_MAX_SERVICES.
+fn parse_service_number(service: &str) -> Option<usize> {
+    service
+        .parse::<usize>()
+        .ok()
+        .filter(|svc| (1..=DTVCC_MAX_SERVICES).contains(svc))
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -360,13 +345,12 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().unwrap();
-            if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
+            let Some(svc) = parse_service_number(service) else {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
-                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, DTVCC_MAX_SERVICES
+                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", service, DTVCC_MAX_SERVICES
                 );
-            }
+            };
             self.settings_dtvcc.services_enabled[svc - 1] = true;
             self.enc_cfg.services_enabled[svc - 1] = true;
             self.settings_dtvcc.enabled = true;
@@ -628,8 +612,8 @@ impl OptionsExt for Options {
             self.append_mode = true;
         }
 
-        if let Some(ref buffersize) = args.buffersize {
-            set_file_buffer_size(atol(buffersize));
+        if let Some(buffersize) = args.buffersize {
+            set_file_buffer_size(buffersize);
 
             if get_file_buffer_size() < 8 {
                 set_file_buffer_size(8); // Otherwise crashes are guaranteed at least in MythTV
@@ -1380,32 +1364,10 @@ impl OptionsExt for Options {
 
             self.xmltv = 2;
             self.xmltvliveinterval = Timestamp::from_millis(2000);
-            let _addr: String = addr.to_string();
-
-            // Handle IPv6 addresses in [addr]:port format
-            if let Some(saddr) = addr.strip_prefix('[') {
-                if let Some(end_bracket) = saddr.find(']') {
-                    let addr_part = &saddr[..end_bracket];
-                    let port_part = &saddr[end_bracket + 1..];
-                    self.srv_addr = Some(addr_part.to_string());
-                    if let Some(port) = port_part.strip_prefix(':') {
-                        self.srv_port = Some(port.parse().unwrap());
-                    }
-                } else {
-                    fatal!(
-                        cause = ExitCause::IncompatibleParameters;
-                        "Wrong address format, for IPv6 use [address]:port\n"
-                    );
-                }
-            } else if let Some(colon) = _addr.rfind(':') {
-                // Handle IPv4 or hostname:port
-                let (host, port) = _addr.split_at(colon);
-                self.srv_addr = Some(host.to_string());
-                self.srv_port = Some(port[1..].parse().unwrap());
-            } else {
-                // No port specified, treat as address only
-                self.srv_addr = Some(_addr.clone());
-                self.srv_port = None;
+            // clap already validated the address (parse_sendto).
+            if let Ok((srv_addr, srv_port)) = args::split_sendto_address(addr) {
+                self.srv_addr = Some(srv_addr);
+                self.srv_port = srv_port;
             }
         }
         if let Some(ref tcp) = args.tcp {
@@ -2446,6 +2408,84 @@ pub mod tests {
     fn test_buffersize_with_numeric_value() {
         let (_, _) = parse_args(&["--buffersize", "8192"]);
         assert_eq!(get_file_buffer_size(), 8192);
+    }
+
+    #[test]
+    fn test_buffersize_rejects_invalid_values() {
+        for value in [
+            "",
+            "abc",
+            "12x",
+            "K",
+            "1.5M",
+            "64KB",
+            "-5",
+            "3G",
+            "99999999999",
+        ] {
+            let option = format!("--buffersize={value}");
+            let error = Args::try_parse_from(["ccextractor", "input.ts", option.as_str()])
+                .expect_err("invalid buffer size should be rejected by clap");
+            assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+            assert!(error.to_string().contains("--buffersize"));
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_buffersize_formats() {
+        for (value, bytes) in [
+            ("8192", 8192),
+            ("64K", 64 * 1024),
+            ("64k", 64 * 1024),
+            ("2M", 2 * 1024 * 1024),
+            ("1G", 1024 * 1024 * 1024),
+            (" 16M ", 16 * 1024 * 1024),
+            ("4", 8),
+        ] {
+            let (_, _) = parse_args(&["--buffersize", value]);
+            assert_eq!(get_file_buffer_size(), bytes, "--buffersize {value}");
+        }
+    }
+
+    #[test]
+    fn test_sendto_rejects_invalid_ports() {
+        for value in [
+            "127.0.0.1:abc",
+            "host:",
+            "host:99999",
+            "[::1]:abc",
+            "[::1]:",
+            "[::1",
+        ] {
+            let error = Args::try_parse_from(["ccextractor", "input.ts", "--sendto", value])
+                .expect_err("invalid --sendto address should be rejected by clap");
+            assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+            assert!(error.to_string().contains("--sendto"));
+        }
+    }
+
+    #[test]
+    fn test_sendto_addresses() {
+        for (value, addr, port) in [
+            ("127.0.0.1:2048", "127.0.0.1", Some(2048)),
+            ("example.com", "example.com", None),
+            ("[::1]:2048", "::1", Some(2048)),
+            ("[::1]", "::1", None),
+        ] {
+            let (options, _) = parse_args(&["--sendto", value]);
+            assert_eq!(options.srv_addr.as_deref(), Some(addr), "--sendto {value}");
+            assert_eq!(options.srv_port, port, "--sendto {value}");
+        }
+    }
+
+    #[test]
+    fn test_service_number_range() {
+        assert_eq!(parse_service_number("1"), Some(1));
+        assert_eq!(parse_service_number("63"), Some(63));
+        assert_eq!(parse_service_number("0"), None);
+        assert_eq!(parse_service_number("64"), None);
+        assert_eq!(parse_service_number("99999999999999999999999"), None);
     }
 
     #[test]

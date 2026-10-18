@@ -185,7 +185,7 @@ pub struct Args {
     /// Sends data in BIN format to the server
     /// according to the CCExtractor's protocol over
     /// TCP. For IPv6 use [address] instead
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT, value_parser=parse_sendto)]
     pub sendto: Option<String>,
     /// Specfies optional port for sendto
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
@@ -698,8 +698,8 @@ pub struct Args {
     pub no_bufferinput: bool,
     /// Specify a size for reading, in bytes (suffix with K or
     /// or M for kilobytes and megabytes). Default is 16M.
-    #[arg(long, alias="bs", verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING)]
-    pub buffersize: Option<String>,
+    #[arg(long, alias="bs", verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING, value_parser=parse_buffer_size)]
+    pub buffersize: Option<i32>,
     /// keep-output-close. If used then CCExtractor will close
     /// the output file after writing each subtitle frame and
     /// attempt to create it again when needed.
@@ -1068,4 +1068,60 @@ pub enum OutFormat {
     /// URL specified by --curlposturl. Don't produce
     /// any file output.
     Curl,
+}
+
+/// Parse a --buffersize value: a byte count, optionally suffixed with K, M
+/// or G (any case). E.g. "8192", "64K", "16M".
+pub(crate) fn parse_buffer_size(value: &str) -> Result<i32, String> {
+    let value = value.trim();
+    let (digits, multiplier) = match value.chars().last() {
+        Some('k' | 'K') => (&value[..value.len() - 1], 1024),
+        Some('m' | 'M') => (&value[..value.len() - 1], 1024 * 1024),
+        Some('g' | 'G') => (&value[..value.len() - 1], 1024 * 1024 * 1024),
+        _ => (value, 1),
+    };
+
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return Err("expected a size in bytes, optionally suffixed with K, M or G".to_string());
+    }
+
+    digits
+        .parse::<i32>()
+        .ok()
+        .and_then(|size| size.checked_mul(multiplier))
+        .ok_or_else(|| "size is too large".to_string())
+}
+
+/// Split a --sendto value into address and optional port.
+/// Accepts "host", "host:port", "[ipv6]" and "[ipv6]:port".
+pub(crate) fn split_sendto_address(value: &str) -> Result<(String, Option<u16>), String> {
+    let parse_port = |port: &str| {
+        port.parse::<u16>()
+            .map_err(|_| format!("invalid port '{port}'"))
+    };
+
+    if let Some(bracketed) = value.strip_prefix('[') {
+        let Some(end_bracket) = bracketed.find(']') else {
+            return Err("for IPv6 use [address]:port".to_string());
+        };
+        let addr = &bracketed[..end_bracket];
+        let port = match bracketed[end_bracket + 1..].strip_prefix(':') {
+            Some(port) => Some(parse_port(port)?),
+            None => None,
+        };
+        return Ok((addr.to_string(), port));
+    }
+
+    match value.rfind(':') {
+        Some(colon) => Ok((
+            value[..colon].to_string(),
+            Some(parse_port(&value[colon + 1..])?),
+        )),
+        None => Ok((value.to_string(), None)),
+    }
+}
+
+/// clap value parser for --sendto: validates the address, keeps the text.
+fn parse_sendto(value: &str) -> Result<String, String> {
+    split_sendto_address(value).map(|_| value.to_string())
 }
