@@ -19,6 +19,8 @@ use crate::{
     utils::{is_false, is_true},
 };
 
+use lib_ccxr::fatal;
+use lib_ccxr::util::log::ExitCause;
 use log::{debug, error, warn};
 
 const CCX_DTVCC_MUSICAL_NOTE_CHAR: u16 = 9836;
@@ -894,7 +896,14 @@ impl dtvcc_service_decoder {
                 encoder.no_bom,
                 end_frame,
             );
-            tv.writer_output(&mut writer).unwrap();
+            // As in the C writer: an output file that can't be created is a
+            // fatal error (e.g. -o /dev/null makes it /dev/null.p1.svc01.srt).
+            if let Err(err) = tv.writer_output(&mut writer) {
+                fatal!(
+                    cause = ExitCause::FileCreationFailed;
+                    "[CEA-708] Failed to open output file: {}\n", err
+                );
+            }
             tv.clear();
         }
     }
