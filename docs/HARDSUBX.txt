@@ -44,7 +44,7 @@ To build the program with hardsubx support,
 
 == from the Linux directory run:-
     ./configure --enable-hardsubx
-    make ENABLE_HARDSUBX=yes
+    make
 
 == using cmake from root directory
     mkdir build
