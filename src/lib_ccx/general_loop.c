@@ -18,6 +18,7 @@
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
 #include "ccx_dtvcc.h"
+#include "ccx_decoders_xds.h"
 
 int end_of_file = 0; // End of file?
 
@@ -1706,6 +1707,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct TeletextCtx *telctx;
+	int saved_binary_concat;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3 * 0xFFFF + 10))
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
@@ -1717,6 +1719,14 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
 	}
 
+	// Every RCWT file starts with its own header and its own time base, so a
+	// read must not run from one input file into the next: the next file's
+	// header would be parsed as caption data. Stop at the end of this file;
+	// start_ccx() then opens the next one, calls us again and offsets its
+	// timestamps after this file's (fts_global), as for other formats.
+	saved_binary_concat = ccx_options.binary_concat;
+	ccx_options.binary_concat = 0;
+
 	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;
 	bread += (int)result;
@@ -1725,6 +1735,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
 		free(parsebuf);
+		ccx_options.binary_concat = saved_binary_concat;
 		return -1;
 	}
 
@@ -1742,6 +1753,16 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+	// A previous RCWT input freed the XDS context at its end.
+	if (!dec_ctx->xds_ctx)
+	{
+		int xds_to_file = ccx_options.write_format == CCX_OF_TRANSCRIPT && ccx_options.transcript_settings.xds;
+		dec_ctx->xds_ctx = ccx_decoders_xds_init_library(dec_ctx->timing, xds_to_file);
+		if (!dec_ctx->xds_ctx)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory initializing xds_ctx.");
+		}
+	}
 #ifndef DISABLE_RUST
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
 #else
@@ -1856,8 +1877,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 	}
 
-	/* Free XDS context - similar to cleanup in general_loop */
-	free(dec_ctx->xds_ctx);
+	/* Free XDS context - similar to cleanup in general_loop. Clear the
+	   pointer: with several inputs we are called again for the next file. */
+	freep(&dec_ctx->xds_ctx);
 	free(parsebuf);
+	ccx_options.binary_concat = saved_binary_concat;
 	return caps;
 }
