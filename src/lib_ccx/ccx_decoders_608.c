@@ -687,6 +687,22 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 }
 
 /* Process GLOBAL CODES */
+/* The transcript writers (--out=txt and ttxt) write the rows of a roll-up caption one by one, when a CR
+ * completes them. When RCL or RDC leaves roll-up style the displayed caption stays on the screen until a
+ * pop-on caption replaces it (CEA-608-E C.10), and that screen is written whole when it goes; the same
+ * happens when an EOC arrives in roll-up style. For a transcript the row that is being typed is written
+ * now and the memory cleared, so that the rows already written are not written a second time. */
+static void flush_rollup_transcript(ccx_decoder_608_context *context, struct cc_subtitle *sub)
+{
+	if (context->output_format != CCX_OF_TRANSCRIPT)
+		return;
+	if (context->mode != MODE_FAKE_ROLLUP_1 && context->mode != MODE_ROLLUP_2 &&
+	    context->mode != MODE_ROLLUP_3 && context->mode != MODE_ROLLUP_4)
+		return;
+	write_cc_line(context, sub);
+	erase_memory(context, true);
+}
+
 void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int changes = 0;
@@ -773,6 +789,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				context->cursor_column = CCX_DECODER_608_SCREEN_WIDTH - 1;
 			break;
 		case COM_RESUMECAPTIONLOADING:
+			flush_rollup_transcript(context, sub);
 			context->mode = MODE_POPON;
 			break;
 		case COM_RESUMETEXTDISPLAY:
@@ -921,6 +938,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
+			flush_rollup_transcript(context, sub);
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
@@ -944,6 +962,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			write_char(0x20, context);
 			break;
 		case COM_RESUMEDIRECTCAPTIONING:
+			flush_rollup_transcript(context, sub);
 			context->mode = MODE_PAINTON;
 			// ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
 			// ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
