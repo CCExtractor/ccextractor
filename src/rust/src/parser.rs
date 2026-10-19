@@ -412,7 +412,9 @@ impl OptionsExt for Options {
 
         // Here: Significant digits go from filename[m] to filename[n]
         let num = &filename[(m as usize)..=(n as usize)];
-        let mut i = num.parse::<i32>().unwrap();
+        let Ok(mut i) = num.parse::<u64>() else {
+            return self.append_file_to_queue(filename, inputfile_capacity);
+        };
 
         let mut temp;
         let mut filename = filename.to_string();
@@ -422,7 +424,10 @@ impl OptionsExt for Options {
                 if self.append_file_to_queue(filename.as_str(), inputfile_capacity) != 0 {
                     return -1;
                 }
-                temp = format!("{}", i + 1);
+                let Some(next) = i.checked_add(1) else {
+                    break;
+                };
+                temp = format!("{next}");
                 let temp_len = temp.len();
                 let num_len = num.len();
                 if temp_len > num_len {
@@ -436,10 +441,10 @@ impl OptionsExt for Options {
                     (m as usize)..(m as usize + num_len - temp_len),
                     &"0".repeat(num_len - temp_len),
                 );
+                i = next;
             } else {
                 break;
             }
-            i += 1;
         }
 
         0
@@ -3357,5 +3362,46 @@ pub mod tests {
         let (options, _) = parse_args(&["--xmltv", "1", "--out", "null"]);
         assert_eq!(options.xmltv, 1);
         assert_eq!(options.write_format, OutputFormat::Null);
+    }
+
+    #[test]
+    fn test_file_sequence_expansion_large_number_does_not_panic() {
+        // Filenames ending in '+' with number exceeding i32::MAX (e.g. 14-digit timestamp)
+        // must not panic (#2402).
+        let _ = parse_args(&["capture_20261019120000.ts+"]);
+        // Numbers exceeding u64::MAX must fall back cleanly without panicking
+        let _ = parse_args(&["capture_99999999999999999999999999999.ts+"]);
+        // Filename ending in '+' without digits must also not panic
+        let _ = parse_args(&["capture+.ts"]);
+    }
+
+    #[test]
+    fn test_file_sequence_expansion_with_existing_files() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file1 = dir.path().join("seq_10000000000.ts");
+        let file2 = dir.path().join("seq_10000000001.ts");
+        std::fs::File::create(&file1).expect("create file1");
+        std::fs::File::create(&file2).expect("create file2");
+
+        let input_arg = format!("{}+", file1.to_str().unwrap());
+        let args = Args::try_parse_from(["./ccextractor", &input_arg]).expect("parse args");
+        let mut options = Options::default();
+        let mut tlt_config = TeletextConfig::default();
+        let mut capitalization_list: Vec<String> = vec![];
+        let mut profane: Vec<String> = vec![];
+        options.parse_parameters(
+            &args,
+            &mut tlt_config,
+            &mut capitalization_list,
+            &mut profane,
+        );
+
+        assert_eq!(
+            options.inputfile,
+            Some(vec![
+                file1.to_str().unwrap().to_string(),
+                file2.to_str().unwrap().to_string(),
+            ])
+        );
     }
 }
