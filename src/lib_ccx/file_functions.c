@@ -442,6 +442,14 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 								     (uint64_t)parent_inputsize <= (uint64_t)origin_buffer_size;
 					if (ccx_options.live_stream || input_fits_in_one_read || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
 						eof = 1;
+					else
+					{
+						// The next file is open. open() reset the buffer for it,
+						// and stream detection left the file's first bytes there
+						// (up to 16 MB with --bufferinput). Read on from the
+						// buffer as it is; resetting it below would drop them.
+						continue;
+					}
 				}
 				ctx->filebuffer_pos = keep;
 				ctx->bytesinbuffer = (int)i + keep;
