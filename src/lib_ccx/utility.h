@@ -10,7 +10,7 @@
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #endif
 
-/* Read a 16/24/32-bit big- or little-endian value out of a byte buffer.
+/* Read a 16/24/32/64-bit big- or little-endian value out of a byte buffer.
  *
  * These go byte by byte on purpose. Casting the pointer to a wider type and
  * dereferencing it is undefined behaviour twice over: the offset carries no
@@ -23,6 +23,8 @@
 #define RB32(x) (((uint32_t)((const unsigned char *)(x))[0] << 24) | ((uint32_t)((const unsigned char *)(x))[1] << 16) | ((uint32_t)((const unsigned char *)(x))[2] << 8) | (uint32_t)((const unsigned char *)(x))[3])
 #define RL16(x) ((uint16_t)(((uint16_t)((const unsigned char *)(x))[0]) | ((uint16_t)((const unsigned char *)(x))[1] << 8)))
 #define RB16(x) ((uint16_t)(((uint16_t)((const unsigned char *)(x))[0] << 8) | ((uint16_t)((const unsigned char *)(x))[1])))
+#define RL64(x) (((uint64_t)RL32(x)) | (((uint64_t)RL32((const unsigned char *)(x) + 4)) << 32))
+#define RB64(x) ((((uint64_t)RB32(x)) << 32) | ((uint64_t)RB32((const unsigned char *)(x) + 4)))
 
 #define RB24(x) (((const unsigned char *)(x))[0] << 16 | ((const unsigned char *)(x))[1] << 8 | ((const unsigned char *)(x))[2])
 

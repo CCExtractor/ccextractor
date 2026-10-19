@@ -1816,14 +1816,16 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		if (result != 10)
 		{
 			if (result != 0)
+			{
 				mprint("Premature end of file!\n");
+			}
 
 			// We are done
 			end_of_file = 1;
 			break;
 		}
-		currfts = *((LLONG *)(parsebuf));
-		cbcount = *((uint16_t *)(parsebuf + 8));
+		currfts = (LLONG)RL64(parsebuf);
+		cbcount = RL16(parsebuf + 8);
 
 		dbg_print(CCX_DMT_PARSE, "RCWT data header FTS: %s  blocks: %u\n",
 			  print_mstime_static(currfts), cbcount);
