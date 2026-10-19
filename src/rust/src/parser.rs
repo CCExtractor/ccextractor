@@ -63,6 +63,16 @@ fn parse_service_number(service: &str) -> Option<usize> {
         .filter(|svc| (1..=DTVCC_MAX_SERVICES).contains(svc))
 }
 
+/// The charset of a --service value that starts with "all": "" for "all",
+/// "X" for "all[X]". None if the value has any other form.
+fn all_services_charset(services: &str) -> Option<&str> {
+    let rest = services.strip_prefix("all")?;
+    if rest.is_empty() {
+        return Some("");
+    }
+    rest.strip_prefix('[')?.strip_suffix(']')
+}
+
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
 where
     T: Integer + std::str::FromStr,
@@ -289,7 +299,12 @@ impl OptionsExt for Options {
 
     fn parse_708_services(&mut self, s: &str) {
         if s.starts_with("all") {
-            let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
+            let Some(charset) = all_services_charset(s) else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                  "[CEA-708] Malformed parameter: Invalid service list ({}), use all or all[charset].\n", s
+                );
+            };
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
 
@@ -2486,6 +2501,19 @@ pub mod tests {
         assert_eq!(parse_service_number("0"), None);
         assert_eq!(parse_service_number("64"), None);
         assert_eq!(parse_service_number("99999999999999999999999"), None);
+    }
+
+    #[test]
+    fn test_all_services_charset() {
+        assert_eq!(all_services_charset("all"), Some(""));
+        assert_eq!(all_services_charset("all[EUC-KR]"), Some("EUC-KR"));
+        assert_eq!(all_services_charset("all[]"), Some(""));
+        // These used to panic slicing the value, or silently cut the charset.
+        assert_eq!(all_services_charset("all1"), None);
+        assert_eq!(all_services_charset("all["), None);
+        assert_eq!(all_services_charset("allé"), None);
+        assert_eq!(all_services_charset("all[EUC-KR"), None);
+        assert_eq!(all_services_charset("allEUC-KR]"), None);
     }
 
     #[test]
