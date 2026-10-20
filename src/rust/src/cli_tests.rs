@@ -132,3 +132,89 @@ fn test_unknown_option_is_rejected() {
     let (code, _, _) = parse_to_c(&["--no-such-option"]);
     assert_ne!(code, 0);
 }
+
+/// Options that no test uses yet. When you add a test for one, remove it from this list.
+const UNTESTED_OPTIONS: &[&str] = &[
+    // Input sources
+    "stdin",
+    "udp",
+    "src",
+    "sendto-port",
+    "tcp",
+    "stream",
+    // Input formats
+    "es",
+    "ts",
+    "ps",
+    "asf",
+    "wtv",
+    "mp4",
+    "mkv",
+    "dvr-ms",
+    // Output formats
+    "srt",
+    "sami",
+    "smi",
+    "dvdraw",
+    "mcc",
+    "null",
+    "null-terminated",
+    "report-format",
+    // Burned-in subtitles
+    "hardsubx",
+    "hcc",
+    // Only in builds with the with_libcurl feature
+    "curlposturl",
+];
+
+/// The test code searched for option names: the test modules of parser.rs and lib.rs, and this
+/// file. A test anywhere else is not counted.
+fn test_sources() -> [&'static str; 3] {
+    let parser = include_str!("parser.rs");
+    let lib = include_str!("lib.rs");
+    [
+        &parser[parser.find("mod tests {").unwrap()..],
+        &lib[lib.find("mod test {").unwrap()..],
+        include_str!("cli_tests.rs"),
+    ]
+}
+
+/// Whether a test passes `option` on the command line, as `--name` or `-name`, alone or with `=`.
+fn is_used_in_tests(option: &str) -> bool {
+    test_sources().iter().any(|source| {
+        ["--", "-"].iter().any(|dashes| {
+            source.contains(&format!("\"{}{}\"", dashes, option))
+                || source.contains(&format!("\"{}{}=", dashes, option))
+        })
+    })
+}
+
+#[test]
+fn test_every_option_has_a_test() {
+    use clap::CommandFactory;
+
+    let options: Vec<String> = crate::args::Args::command()
+        .get_arguments()
+        .filter_map(|arg| arg.get_long().map(String::from))
+        .collect();
+
+    let untested: Vec<&String> = options
+        .iter()
+        .filter(|option| !is_used_in_tests(option) && !UNTESTED_OPTIONS.contains(&option.as_str()))
+        .collect();
+    assert!(
+        untested.is_empty(),
+        "These options have no test, please add one: {:?}",
+        untested
+    );
+
+    let now_tested: Vec<&&str> = UNTESTED_OPTIONS
+        .iter()
+        .filter(|option| is_used_in_tests(option))
+        .collect();
+    assert!(
+        now_tested.is_empty(),
+        "These options have a test now, remove them from UNTESTED_OPTIONS: {:?}",
+        now_tested
+    );
+}
