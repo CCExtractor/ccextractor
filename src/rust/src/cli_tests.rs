@@ -88,6 +88,18 @@ fn case(
     }
 }
 
+/// A case for an input source that doesn't allow an input file.
+fn case_without_input_file(
+    spellings: &'static [&'static [&'static str]],
+    check: fn(&ccx_s_options, &ccx_s_teletext_config) -> bool,
+) -> Case {
+    Case {
+        spellings,
+        with_input_file: false,
+        check,
+    }
+}
+
 /// Every command line case. An option counts as tested only if a case here uses it (see
 /// `test_every_option_has_a_case`).
 fn cases() -> Vec<Case> {
@@ -178,6 +190,27 @@ fn cases() -> Vec<Case> {
         case(&[&["--null"], &["-null"]], |o, _| {
             output_format_is(o, ccx_output_format::CCX_OF_NULL)
         }),
+        // Like v0.94, stdin has no timeout: it is read until it closes
+        case_without_input_file(&[&["--stdin"], &["-stdin"]], |o, _| {
+            o.input_source == ccx_datasource_CCX_DS_STDIN as _ && o.live_stream == -1
+        }),
+        case_without_input_file(&[&["--udp", "1234"], &["-udp", "1234"]], |o, _| {
+            o.input_source == ccx_datasource_CCX_DS_NETWORK as _ && o.udpport == 1234
+        }),
+        case_without_input_file(&[&["--udp", "127.0.0.1:5000"]], |o, _| {
+            c_string(o.udpaddr).as_deref() == Some("127.0.0.1") && o.udpport == 5000
+        }),
+        case_without_input_file(&[&["--udp", "10.0.0.1@239.1.1.1:5001"]], |o, _| {
+            c_string(o.udpsrc).as_deref() == Some("10.0.0.1")
+                && c_string(o.udpaddr).as_deref() == Some("239.1.1.1")
+                && o.udpport == 5001
+        }),
+        // TCP input is always CCExtractor's binary format (RCWT)
+        case_without_input_file(&[&["--tcp", "7311"], &["-tcp", "7311"]], |o, _| {
+            o.input_source == ccx_datasource_CCX_DS_TCP as _
+                && c_string(o.tcpport).as_deref() == Some("7311")
+                && o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_RCWT as _
+        }),
     ]
 }
 
@@ -249,16 +282,13 @@ const UNTESTED_OPTIONS: &[&str] = &[
     "debugdvbsub",
     "ignoreptsjumps",
     "fixptsjumps",
-    "stdin",
     // Output File Segmentation
     "outinterval",
     "segmentonkeyonly",
     // Network support
-    "udp",
     "src",
     "sendto",
     "sendto-port",
-    "tcp",
     "tcp-password",
     "tcp-description",
     // Options that affect what will be processed
