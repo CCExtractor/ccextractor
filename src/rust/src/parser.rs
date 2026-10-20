@@ -927,9 +927,13 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref stream) = args.stream {
-            self.live_stream = Some(Timestamp::from_millis(
-                1000 * get_atoi_hex::<i64>(stream.as_str()),
-            ));
+            let seconds = get_atoi_hex::<i64>(stream.as_str());
+            // A negative value means no timeout
+            self.live_stream = if seconds < 0 {
+                None
+            } else {
+                Some(Timestamp::from_millis(1000 * seconds))
+            };
         }
 
         if let Some(ref defaultcolor) = args.defaultcolor {
@@ -1483,7 +1487,10 @@ impl OptionsExt for Options {
             );
         }
 
-        if !self.is_inputfile_empty() && self.live_stream.unwrap_or_default().millis() != 0 {
+        // A live stream is followed while it grows, which only works for a single file
+        let is_live_stream = self.live_stream.is_none_or(|t| t.millis() != 0);
+        let num_input_files = self.inputfile.as_ref().map_or(0, Vec::len);
+        if num_input_files > 1 && is_live_stream {
             fatal!(
                 cause = ExitCause::TooManyInputFiles;
                "Live stream mode only supports one input file"
@@ -2242,6 +2249,19 @@ pub mod tests {
                 unsafe { crate::ccxr_parse_parameters(argv.len() as _, argv.as_mut_ptr()) };
             assert_eq!(result, ExitCause::Failure.exit_code());
         }
+    }
+
+    #[test]
+    fn test_stream_with_one_input_file() {
+        // parse_args() adds one input file, which live stream mode allows
+        let (options, _) = parse_args(&["--stream", "5"]);
+        assert_eq!(options.live_stream, Some(Timestamp::from_millis(5000)));
+    }
+
+    #[test]
+    fn test_stream_without_timeout() {
+        let (options, _) = parse_args(&["--stream=-1"]);
+        assert_eq!(options.live_stream, None);
     }
 
     #[test]
