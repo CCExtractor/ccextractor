@@ -128,6 +128,58 @@ fn test_tpage_reaches_teletext_config() {
 }
 
 #[test]
+fn test_input_format_options_reach_c() {
+    for (long, legacy, mode) in [
+        (
+            "--es",
+            "-es",
+            ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND,
+        ),
+        ("--ts", "-ts", ccx_stream_mode_enum_CCX_SM_TRANSPORT),
+        ("--ps", "-ps", ccx_stream_mode_enum_CCX_SM_PROGRAM),
+        ("--asf", "-asf", ccx_stream_mode_enum_CCX_SM_ASF),
+        ("--dvr-ms", "-dvr-ms", ccx_stream_mode_enum_CCX_SM_ASF),
+        ("--wtv", "-wtv", ccx_stream_mode_enum_CCX_SM_WTV),
+        ("--mp4", "-mp4", ccx_stream_mode_enum_CCX_SM_MP4),
+        ("--mkv", "-mkv", ccx_stream_mode_enum_CCX_SM_MKV),
+    ] {
+        check_spellings(&[&[long], &[legacy]], |o| {
+            o.demux_cfg.auto_stream == mode as _
+        });
+    }
+}
+
+#[test]
+fn test_output_format_options_reach_c() {
+    for (long, legacy, format) in [
+        ("--srt", "-srt", ccx_output_format::CCX_OF_SRT),
+        ("--sami", "-sami", ccx_output_format::CCX_OF_SAMI),
+        ("--dvdraw", "-dvdraw", ccx_output_format::CCX_OF_DVDRAW),
+        ("--mcc", "-mcc", ccx_output_format::CCX_OF_MCC),
+        ("--null", "-null", ccx_output_format::CCX_OF_NULL),
+    ] {
+        check_spellings(&[&[long], &[legacy]], |o| {
+            o.write_format == format && o.enc_cfg.write_format == format
+        });
+    }
+}
+
+#[test]
+fn test_null_terminated_reaches_c() {
+    check_spellings(&[&["--null-terminated"]], |o| {
+        o.enc_cfg.frame_terminator_0 == 1
+    });
+}
+
+#[test]
+fn test_report_format_reaches_c() {
+    let (options, _) = parse_ok(&["--out=report", "--report-format", "JSON"]);
+    assert!(!options.report_format.is_null());
+    let format = unsafe { CStr::from_ptr(options.report_format) };
+    assert_eq!(format.to_str(), Ok("json"));
+}
+
+#[test]
 fn test_unknown_option_is_rejected() {
     let (code, _, _) = parse_to_c(&["--no-such-option"]);
     assert_ne!(code, 0);
@@ -142,24 +194,8 @@ const UNTESTED_OPTIONS: &[&str] = &[
     "sendto-port",
     "tcp",
     "stream",
-    // Input formats
-    "es",
-    "ts",
-    "ps",
-    "asf",
-    "wtv",
-    "mp4",
-    "mkv",
-    "dvr-ms",
     // Output formats
-    "srt",
-    "sami",
     "smi",
-    "dvdraw",
-    "mcc",
-    "null",
-    "null-terminated",
-    "report-format",
     // Burned-in subtitles
     "hardsubx",
     "hcc",
