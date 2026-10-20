@@ -1,6 +1,6 @@
 //! Utilty functions to get timing for captions
 
-use crate::{bindings::*, cb_708, cb_field1, cb_field2};
+use crate::{bindings::*, cb_708, cb_field1, cb_field2, current_fps};
 
 use log::{debug, error};
 
@@ -88,10 +88,11 @@ impl PartialEq for ccx_boundary_time {
 /// Returns a hh:mm:ss;frame string of time for SCC format
 pub fn get_scc_time_str(time: ccx_boundary_time) -> String {
     // Feel sorry for formatting:(
+    let fps = unsafe { current_fps };
     let frame: u8 = (((time.time_in_ms
         - 1000 * ((time.ss as i64) + 60 * ((time.mm as i64) + 60 * (time.hh as i64))))
         as f64)
-        * 29.97
+        * fps
         / 1000.0) as u8;
     format!("{:02}:{:02}:{:02};{:02}", time.hh, time.mm, time.ss, frame)
 }
@@ -243,6 +244,23 @@ mod test {
                 set: Default::default()
             }),
             "24:00:00;00"
+        );
+    }
+
+    #[test]
+    fn test_get_scc_time_str_frame_number() {
+        // In test builds current_fps is mocked to 30.0 (see crate::lib.rs),
+        // so 500 ms into a second is frame 15. The old hardcoded 29.97 would
+        // truncate to frame 14.
+        assert_eq!(
+            get_scc_time_str(ccx_boundary_time {
+                hh: 0,
+                mm: 0,
+                ss: 0,
+                time_in_ms: 500,
+                set: Default::default()
+            }),
+            "00:00:00;15"
         );
     }
 
