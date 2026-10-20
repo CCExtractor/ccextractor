@@ -117,7 +117,8 @@ void parse_ebml(FILE *file)
 
 	printf("\n");
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -183,7 +184,8 @@ void parse_segment_info(FILE *file)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -484,7 +486,8 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 	struct matroska_sub_sentence **sentence_list = NULL;
 	int sentence_count = 0;
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -614,7 +617,8 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 
 	ULLONG timecode = 0;
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -890,7 +894,8 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	char *codec_id_string = NULL;
 	enum matroska_track_subtitle_codec_id codec_id = MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8;
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -1224,7 +1229,8 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -1270,7 +1276,8 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
 		code <<= 8;
@@ -1959,7 +1966,8 @@ void matroska_free_all(struct matroska_ctx *mkv_ctx)
 
 void matroska_parse(struct matroska_ctx *mkv_ctx)
 {
-	int code = 0, code_len = 0;
+	unsigned int code = 0;
+	int code_len = 0;
 
 	mprint("\n");
 
