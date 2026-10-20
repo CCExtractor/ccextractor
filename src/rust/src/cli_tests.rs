@@ -88,7 +88,8 @@ fn case(
     }
 }
 
-/// Every command line case. `test_cases_reach_c` runs each one through `ccxr_parse_parameters`.
+/// Every command line case. An option counts as tested only if a case here uses it (see
+/// `test_every_option_has_a_case`).
 fn cases() -> Vec<Case> {
     vec![
         case(
@@ -125,6 +126,12 @@ fn cases() -> Vec<Case> {
         }),
         // The C config keeps the decimal page number; ccextractor.c converts it to BCD
         case(&[&["--tpage", "777"]], |_, t| t.page == 777),
+        // The C options keep the --stream timeout in seconds
+        case(&[&["--stream", "5"], &["-s", "5"]], |o, _| {
+            o.live_stream == 5
+        }),
+        // Without a number, as in C, there is no timeout
+        case(&[&["--stream"], &["-s"]], |o, _| o.live_stream == -1),
     ]
 }
 
@@ -158,4 +165,259 @@ fn test_each_parse_starts_fresh() {
 fn test_unknown_option_is_rejected() {
     let (code, _, _) = parse_to_c(&["input.ts", "--no-such-option"]);
     assert_ne!(code, 0);
+}
+
+/// Long names of the options that `args` sets, as clap sees them after the legacy spellings are
+/// converted.
+fn options_set_by(args: &[&str]) -> Vec<String> {
+    use clap::parser::ValueSource;
+    use clap::CommandFactory;
+
+    let command = crate::args::Args::command();
+    let argv = std::iter::once("ccextractor")
+        .chain(args.iter().copied())
+        .map(String::from)
+        .collect();
+    let matches = command
+        .clone()
+        .try_get_matches_from(crate::normalize_legacy_args(argv))
+        .unwrap_or_else(|e| panic!("{:?} was rejected: {}", args, e));
+    command
+        .get_arguments()
+        .filter(|arg| matches.value_source(arg.get_id().as_str()) == Some(ValueSource::CommandLine))
+        .filter_map(|arg| arg.get_long().map(String::from))
+        .collect()
+}
+
+/// Options that no case in `cases()` uses yet. When you add a case for one, remove it from this
+/// list.
+const UNTESTED_OPTIONS: &[&str] = &[
+    // File name related options
+    "stdout",
+    "pesheader",
+    "debugdvbsub",
+    "ignoreptsjumps",
+    "fixptsjumps",
+    "stdin",
+    // Output File Segmentation
+    "outinterval",
+    "segmentonkeyonly",
+    // Network support
+    "udp",
+    "src",
+    "sendto",
+    "sendto-port",
+    "tcp",
+    "tcp-password",
+    "tcp-description",
+    // Options that affect what will be processed
+    "output-field",
+    "append",
+    "cc2",
+    "service",
+    // Input Formats
+    "input",
+    // Output formats
+    "es",
+    "ts",
+    "ps",
+    "asf",
+    "wtv",
+    "mp4",
+    "mkv",
+    "dvr-ms",
+    // Output Formats
+    "report-format",
+    // Output formats
+    "srt",
+    "sami",
+    "smi",
+    "dvdraw",
+    "mcc",
+    "txt",
+    "ttxt",
+    "null",
+    // Options that affect how input files will be processed
+    "goptime",
+    "no-goptime",
+    "fixpadding",
+    "90090",
+    "scc-framerate",
+    "scc-accurate-timing",
+    "videoedited",
+    "usepicorder",
+    "myth",
+    "no-myth",
+    "wtvconvertfix",
+    "wtvmpeg2",
+    "program-number",
+    "autoprogram",
+    "multiprogram",
+    "list-tracks",
+    "datapid",
+    "datastreamtype",
+    "streamtype",
+    "hauppauge",
+    "mp4vidtrack",
+    "no-autotimeref",
+    "no-scte20",
+    "webvtt-create-css",
+    "deblev",
+    "analyzevideo",
+    "timestamp-map",
+    // Output formats
+    "no-timestamp-map",
+    // Levenshtein distance
+    "no-levdist",
+    "levdistmincnt",
+    "levdistmaxpct",
+    // Options that affect what kind of output will be produced
+    "chapters",
+    "bom",
+    "no-bom",
+    "unicode",
+    "utf8",
+    "latin1",
+    "no-htmlescape",
+    "no-typesetting",
+    "trim",
+    "defaultcolor",
+    "capfile",
+    "kf",
+    "profanity-file",
+    "splitbysentence",
+    "unixts",
+    "datets",
+    "sects",
+    "latrusmap",
+    "ttxtforcelatin",
+    "xds",
+    "lf",
+    "null-terminated",
+    "df",
+    "autodash",
+    "xmltv",
+    "xmltvliveinterval",
+    "xmltvoutputinterval",
+    "xmltvonlycurrent",
+    "sem",
+    "dvblang",
+    "ocrlang",
+    "quant",
+    "oem",
+    "psm",
+    "ocr-line-split",
+    "no-ocr-blacklist",
+    "no-spupngocr",
+    "font",
+    "italics",
+    // Options that affect how ccextractor reads and writes (buffering)
+    "bufferinput",
+    "no-bufferinput",
+    "buffersize",
+    "koc",
+    "forceflush",
+    "dru",
+    "no-rollup",
+    "ru1",
+    "ru2",
+    "ru3",
+    // Options that affect what segment of the input file(s) to process
+    "endat",
+    "screenfuls",
+    // Options that affect which codec is to be used have to be searched in input
+    "codec",
+    "no-codec",
+    // Adding start and end credits
+    "startcreditstext",
+    "startcreditsnotbefore",
+    "startcreditsnotafter",
+    "startcreditsforatleast",
+    "startcreditsforatmost",
+    "endcreditstext",
+    "endcreditsforatleast",
+    "endcreditsforatmost",
+    // Options that affect debug data
+    "debug",
+    "708",
+    "goppts",
+    "xdsdebug",
+    "vides",
+    "cbraw",
+    "no-sync",
+    "fullbin",
+    "parsedebug",
+    "parsePAT",
+    "parsePMT",
+    "dumpdef",
+    "investigate-packets",
+    // Teletext related options
+    "tpages-all",
+    "tverbose",
+    "teletext",
+    "no-teletext",
+    // Transcript customizing options
+    "customtxt",
+    // Communication with other programs and console output
+    "no-progress-bar",
+    "quiet",
+    // Burned-in subtitle extraction
+    "hardsubx",
+    "tickertext",
+    "ocr-mode",
+    "subcolor",
+    "min-sub-duration",
+    "detect-italics",
+    "conf-thresh",
+    "whiteness-thresh",
+    "hcc",
+    // Only in builds with the with_libcurl feature
+    #[cfg(feature = "with_libcurl")]
+    "curlposturl",
+];
+
+#[test]
+fn test_every_option_has_a_case() {
+    use clap::CommandFactory;
+
+    let options: Vec<String> = crate::args::Args::command()
+        .get_arguments()
+        .filter_map(|arg| arg.get_long().map(String::from))
+        .collect();
+    let mut tested = std::collections::HashSet::new();
+    for case in cases() {
+        for spelling in case.spellings {
+            tested.extend(options_set_by(&case.args(spelling)));
+        }
+    }
+
+    let untested: Vec<&String> = options
+        .iter()
+        .filter(|option| !tested.contains(*option) && !UNTESTED_OPTIONS.contains(&option.as_str()))
+        .collect();
+    assert!(
+        untested.is_empty(),
+        "These options have no case in cases(), please add one: {:?}",
+        untested
+    );
+
+    let now_tested: Vec<&&str> = UNTESTED_OPTIONS
+        .iter()
+        .filter(|option| tested.contains(**option))
+        .collect();
+    assert!(
+        now_tested.is_empty(),
+        "These options have a case now, remove them from UNTESTED_OPTIONS: {:?}",
+        now_tested
+    );
+
+    let not_options: Vec<&&str> = UNTESTED_OPTIONS
+        .iter()
+        .filter(|option| !options.iter().any(|known| known == *option))
+        .collect();
+    assert!(
+        not_options.is_empty(),
+        "These are not options, remove them from UNTESTED_OPTIONS: {:?}",
+        not_options
+    );
 }
