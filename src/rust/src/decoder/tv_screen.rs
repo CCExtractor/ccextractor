@@ -18,6 +18,7 @@ use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
     bindings::*,
+    current_fps,
     utils::{is_false, is_true},
 };
 use encoding_rs::Encoding;
@@ -492,12 +493,14 @@ impl dtvcc_tv_screen {
         let mut buf = String::new();
         let mut time_show = ccx_boundary_time::get_time(self.time_ms_show);
         let time_end = ccx_boundary_time::get_time(self.time_ms_hide);
+        // One frame duration in milliseconds (truncated like the C path)
+        let one_frame_ms = unsafe { (1000.0 / current_fps) as i64 };
 
         // Caption overlapping situation
         match writer.old_cc_time_end.cmp(&(time_show.time_in_ms as i32)) {
             Ordering::Greater => {
                 // Correct the frame delay
-                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                time_show.time_in_ms -= one_frame_ms;
                 buf.push_str(&(get_scc_time_str(time_show) + "\t942c 942c ").to_owned());
                 // Clear the buffer and start pop on caption
                 buf.push_str("94ae 94ae 9420 9420");
@@ -507,12 +510,12 @@ impl dtvcc_tv_screen {
                 let time_to_display = ccx_boundary_time::get_time(writer.old_cc_time_end as i64);
                 buf.push_str(&(get_scc_time_str(time_to_display) + "\t942c 942c \n\n").to_owned());
                 // Correct the frame delay
-                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                time_show.time_in_ms -= one_frame_ms;
                 // Clear the buffer and start pop on caption in new time
                 buf.push_str(&(get_scc_time_str(time_show) + "\t94ae 94ae 9420 9420").to_owned());
             }
             Ordering::Equal => {
-                time_show.time_in_ms -= 1000 / 29.97 as i64;
+                time_show.time_in_ms -= one_frame_ms;
                 buf.push_str(
                     &(get_scc_time_str(time_show) + "\t942c 942c 94ae 94ae 9420 9420").to_owned(),
                 );
@@ -779,6 +782,54 @@ mod test {
         screen.chars[0][0] = dtvcc_symbol::new(0x51);
         assert!(!screen.is_row_empty(0));
         assert!(screen.is_row_empty(1));
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_scc_timecode_uses_current_fps() {
+        // In test builds current_fps is mocked to 30.0 (see crate::lib.rs).
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::AsRawFd;
+        use tempfile::tempfile;
+
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_show = 500;
+        screen.time_ms_hide = 2000;
+        screen.chars[0][0] = dtvcc_symbol::new(0x41);
+
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let mut temp_file = tempfile().expect("Failed to create temp file");
+        writer_ctx.fd = temp_file.as_raw_fd();
+        writer_ctx.filename = std::ptr::null_mut();
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SCC,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+        );
+
+        screen
+            .write_scc(&mut writer)
+            .expect("write_scc should succeed");
+
+        temp_file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = String::new();
+        temp_file.read_to_string(&mut output).unwrap();
+
+        // 500 ms minus one frame (33 ms at 30 fps) leaves 467 ms => frame 14.
+        // The old hardcoded 29.97 math would produce frame 13 for both steps.
+        assert!(
+            output.starts_with("00:00:00;14"),
+            "unexpected SCC timecode: {:?}",
+            output
+        );
     }
 
     #[test]
