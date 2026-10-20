@@ -17,9 +17,16 @@ const CCX_DMT_DECODER_608: i64 = 0x10;
 /// Run `args` (without the program name and input file) the way `main()` does, and return the
 /// exit code and copies of the C options and teletext config it produced.
 fn parse_to_c(args: &[&str]) -> (i32, ccx_s_options, ccx_s_teletext_config) {
+    let with_input: Vec<&str> = std::iter::once("input.ts")
+        .chain(args.iter().copied())
+        .collect();
+    parse_args_to_c(&with_input)
+}
+
+/// Like `parse_to_c`, but `args` are passed exactly as given, without an input file.
+fn parse_args_to_c(args: &[&str]) -> (i32, ccx_s_options, ccx_s_teletext_config) {
     let _guard = PARSE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let arguments: Vec<CString> = ["ccextractor", "input.ts"]
-        .iter()
+    let arguments: Vec<CString> = std::iter::once(&"ccextractor")
         .chain(args.iter())
         .map(|arg| CString::new(*arg).unwrap())
         .collect();
@@ -43,6 +50,13 @@ fn parse_ok(args: &[&str]) -> (ccx_s_options, ccx_s_teletext_config) {
     let (code, options, teletext) = parse_to_c(args);
     assert_eq!(code, 0, "{:?} was rejected", args);
     (options, teletext)
+}
+
+/// Like `parse_ok`, but without an input file, for input sources that don't allow one.
+fn parse_ok_without_input(args: &[&str]) -> ccx_s_options {
+    let (code, options, _) = parse_args_to_c(args);
+    assert_eq!(code, 0, "{:?} was rejected", args);
+    options
 }
 
 /// Each spelling in `spellings` must be accepted and give the same C options per `check`.
@@ -179,6 +193,61 @@ fn test_report_format_reaches_c() {
     assert_eq!(format.to_str(), Ok("json"));
 }
 
+fn c_string(ptr: *const std::os::raw::c_char) -> Option<String> {
+    if ptr.is_null() {
+        return None;
+    }
+    Some(
+        unsafe { CStr::from_ptr(ptr) }
+            .to_string_lossy()
+            .into_owned(),
+    )
+}
+
+#[test]
+fn test_stdin_reaches_c() {
+    for args in [&["--stdin"], &["-stdin"]] {
+        let options = parse_ok_without_input(args);
+        assert_eq!(
+            options.input_source, ccx_datasource_CCX_DS_STDIN as _,
+            "{:?}",
+            args
+        );
+    }
+}
+
+#[test]
+fn test_udp_reaches_c() {
+    for args in [&["--udp", "1234"], &["-udp", "1234"]] {
+        let options = parse_ok_without_input(args);
+        assert_eq!(options.input_source, ccx_datasource_CCX_DS_NETWORK as _);
+        assert_eq!(options.udpport, 1234);
+    }
+
+    let options = parse_ok_without_input(&["--udp", "127.0.0.1:5000"]);
+    assert_eq!(c_string(options.udpaddr).as_deref(), Some("127.0.0.1"));
+    assert_eq!(options.udpport, 5000);
+
+    let options = parse_ok_without_input(&["--udp", "10.0.0.1@239.1.1.1:5001"]);
+    assert_eq!(c_string(options.udpsrc).as_deref(), Some("10.0.0.1"));
+    assert_eq!(c_string(options.udpaddr).as_deref(), Some("239.1.1.1"));
+    assert_eq!(options.udpport, 5001);
+}
+
+#[test]
+fn test_tcp_reaches_c() {
+    for args in [&["--tcp", "7311"], &["-tcp", "7311"]] {
+        let options = parse_ok_without_input(args);
+        assert_eq!(options.input_source, ccx_datasource_CCX_DS_TCP as _);
+        assert_eq!(c_string(options.tcpport).as_deref(), Some("7311"));
+        // TCP input is always CCExtractor's binary format (RCWT)
+        assert_eq!(
+            options.demux_cfg.auto_stream,
+            ccx_stream_mode_enum_CCX_SM_RCWT as _
+        );
+    }
+}
+
 #[test]
 fn test_unknown_option_is_rejected() {
     let (code, _, _) = parse_to_c(&["--no-such-option"]);
@@ -188,11 +257,8 @@ fn test_unknown_option_is_rejected() {
 /// Options that no test uses yet. When you add a test for one, remove it from this list.
 const UNTESTED_OPTIONS: &[&str] = &[
     // Input sources
-    "stdin",
-    "udp",
     "src",
     "sendto-port",
-    "tcp",
     "stream",
     // Output formats
     "smi",
