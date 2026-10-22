@@ -145,7 +145,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		// For now, just parse its length and remove it from the buffer
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
 		dbg_print(CCX_DMT_PMT, "Program information table length: %u", c0length);
+		if (c0length + 3 > (unsigned)len)
+		{
+			return 0;
+		}
 		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
+		len -= (int)(c0length + 3);
 		table_id = buf[0];
 		// return 0;
 	}
@@ -155,7 +160,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM NAME Table need implementation");
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
 		dbg_print(CCX_DMT_PMT, "Program name message length: %u", c0length);
+		if (c0length + 3 > (unsigned)len)
+		{
+			return 0;
+		}
 		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
+		len -= (int)(c0length + 3);
 		table_id = buf[0];
 		// return 0;
 	}
