@@ -2019,10 +2019,11 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 	if (cfg->n_language > MAX_LANGUAGE_PER_DESC)
 	{
 		mprint("not supported more then %d language", MAX_LANGUAGE_PER_DESC);
+		cfg->n_language = MAX_LANGUAGE_PER_DESC;
 	}
 
 	unsigned char *data_ptr = data;
-	for (int i = 0; i < cfg->n_language; i++, data_ptr += i * 8)
+	for (int i = 0; i < cfg->n_language; i++, data_ptr += 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];
