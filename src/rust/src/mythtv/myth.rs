@@ -1,4 +1,4 @@
-use crate::demuxer::common_structs::CcxDemuxer;
+use crate::demuxer::common_types::CcxDemuxer;
 use crate::file_functions::file::{
     buffered_get_be16, buffered_get_be32, buffered_get_byte, buffered_read, buffered_read_byte,
     buffered_seek, position_sanity_check,
@@ -433,7 +433,7 @@ pub unsafe fn mpegps_read_packet(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::demuxer::common_structs::CcxDemuxer;
+    use crate::demuxer::common_types::CcxDemuxer;
     use lib_ccxr::common::DataSource;
     use lib_ccxr::common::Options;
     use std::ptr;
@@ -451,14 +451,9 @@ mod tests {
             ptr
         };
 
-        CcxDemuxer {
-            filebuffer,
-            bytesinbuffer: 0,
-            filebuffer_pos: 0,
-            startbytes_pos: 0,
-            past: 0,
-            ..Default::default()
-        }
+        let mut ctx = CcxDemuxer::default();
+        ctx.filebuffer = filebuffer;
+        ctx
     }
 
     fn create_test_options() -> Options {
