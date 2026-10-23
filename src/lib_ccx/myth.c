@@ -19,11 +19,17 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include "ccx_gxf.h"
 
 #ifndef DISABLE_RUST
+extern void *ccxr_myth_reader_new(struct ccx_demuxer *ctx);
+extern void ccxr_myth_reader_free(void *reader);
 extern int ccxr_mpegps_read_packet(
+    void *reader,
     struct ccx_demuxer *ctx,
     unsigned int *header_state,
     unsigned char *psm_es_type,
     struct AVPacketMythTV *av);
+
+// Rust state for the current myth_loop() run.
+static void *rust_reader;
 #endif
 
 static unsigned int header_state;
@@ -278,6 +284,8 @@ enum CodecID
 
 static AVPacketMythTV av;
 
+#ifdef DISABLE_RUST
+// With Rust enabled, these are replaced by src/rust/src/mythtv/myth.rs.
 static LLONG get_pts(struct ccx_demuxer *ctx, int c)
 {
 	LLONG pts;
@@ -506,6 +514,7 @@ redo:
 	*pdts = dts;
 	return len;
 }
+#endif
 
 static int cc608_good_parity(const int *parity_table, unsigned int data)
 {
@@ -616,9 +625,10 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 static int mpegps_read_packet(struct ccx_demuxer *ctx)
 {
 #ifndef DISABLE_RUST
-	return ccxr_mpegps_read_packet(ctx, &header_state, psm_es_type, &av);
+	return ccxr_mpegps_read_packet(rust_reader, ctx, &header_state, psm_es_type, &av);
 #else
 	LLONG pts, dts;
+
 	int len, startcode, type, codec_id = 0, es_type;
 redo:
 	len = mpegps_read_pes_header(ctx, &startcode, &pts, &dts);
@@ -804,8 +814,12 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	unsigned long desp_length = 65536;
 	unsigned char *desp = (unsigned char *)malloc(desp_length);
+
 	av.data = NULL;
 	ccx_options.buffer_input = 1;
+#ifndef DISABLE_RUST
+	rust_reader = ccxr_myth_reader_new(ctx->demux_ctx);
+#endif
 	dec_ctx = update_decoder_list(ctx);
 	if (!desp)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory. Failed to allocate: %d bytes. \n", desp_length);
@@ -885,5 +899,9 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	if (desp)
 		free(desp);
 	free(av.data);
+#ifndef DISABLE_RUST
+	ccxr_myth_reader_free(rust_reader);
+	rust_reader = NULL;
+#endif
 	return caps;
 }
