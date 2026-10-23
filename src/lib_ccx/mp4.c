@@ -766,6 +766,12 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 			{
 				// Process each pair independently so we can adjust timing
 				ret = process608((unsigned char *)tdata, len > 2 ? 2 : len, dec_ctx, dec_sub);
+				// process608 returns -1 when no 608 decoder context applies, which is
+				// the case for a 708-only run (--service sets extract to 0). Without
+				// this guard len grows and tdata walks backwards out of the buffer,
+				// and the loop never ends. Same guard mp4_rust_bridge.c already uses.
+				if (ret <= 0)
+					break;
 				len -= ret;
 				tdata += ret;
 				cb_field1++;
