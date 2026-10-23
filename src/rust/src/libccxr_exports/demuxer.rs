@@ -238,6 +238,43 @@ pub unsafe fn copy_demuxer_from_rust_to_c(c_demuxer: *mut ccx_demuxer, rust_demu
     // Private data
     c.private_data = rust_demuxer.private_data;
 }
+/// Copies only the fields the buffered file readers use (the file descriptor,
+/// the file position and the file buffer) from Rust to C.
+///
+/// A full copy rebuilds the PID tables, which is far too slow to do for every
+/// packet.
+///
+/// # Safety
+///
+/// `c_demuxer` must point to a valid `ccx_demuxer`.
+pub unsafe fn copy_read_position_to_c(c_demuxer: *mut ccx_demuxer, rust_demuxer: &CcxDemuxer) {
+    let c = &mut *c_demuxer;
+    c.infd = rust_demuxer.infd;
+    c.past = rust_demuxer.past;
+    c.filebuffer = rust_demuxer.filebuffer as *mut c_uchar;
+    c.filebuffer_start = rust_demuxer.filebuffer_start;
+    c.filebuffer_pos = rust_demuxer.filebuffer_pos;
+    c.bytesinbuffer = rust_demuxer.bytesinbuffer;
+}
+
+/// Copies the fields written by [`copy_read_position_to_c`] from C to Rust.
+///
+/// # Safety
+///
+/// `c_demuxer` must point to a valid `ccx_demuxer`.
+pub unsafe fn copy_read_position_from_c(
+    c_demuxer: *const ccx_demuxer,
+    rust_demuxer: &mut CcxDemuxer,
+) {
+    let c = &*c_demuxer;
+    rust_demuxer.infd = c.infd;
+    rust_demuxer.past = c.past;
+    rust_demuxer.filebuffer = c.filebuffer;
+    rust_demuxer.filebuffer_start = c.filebuffer_start;
+    rust_demuxer.filebuffer_pos = c.filebuffer_pos;
+    rust_demuxer.bytesinbuffer = c.bytesinbuffer;
+}
+
 /// # Safety
 ///
 /// This function is unsafe because we are deferencing a raw pointer and calling unsafe functions to convert structs from C
