@@ -5,7 +5,6 @@ use crate::file_functions::file::{
 };
 use crate::mythtv::common_structs::*;
 use lib_ccxr::common::Options;
-use lib_ccxr::info;
 /// # Safety
 /// This function is unsafe because it calls file operations that read from
 /// raw file descriptors and manipulate raw pointers.
@@ -137,13 +136,13 @@ pub unsafe fn mpegps_read_pes_header(
     let mut len: i32;
     let mut size: i32;
     let mut startcode: i32;
-    let mut c: i32 = 0;
+    let mut c: i32;
     let mut flags: i32;
     let mut header_len: i32;
     let mut pts: i64;
     let mut dts: i64;
 
-    loop {
+    'redo: loop {
         // Next start code (should be immediately after)
         *header_state = 0xff;
         size = MAX_SYNC_SIZE as i32;
@@ -184,7 +183,7 @@ pub unsafe fn mpegps_read_pes_header(
         // Stuffing
         loop {
             if len < 1 {
-                break; // This will break inner loop and continue outer loop
+                continue 'redo;
             }
             c = buffered_get_byte(ctx, ccx_options) as i32;
             len -= 1;
@@ -192,9 +191,6 @@ pub unsafe fn mpegps_read_pes_header(
             if c != 0xff {
                 break;
             }
-        }
-        if len < 1 {
-            continue; // goto redo
         }
         position_sanity_check(ctx);
 
@@ -301,7 +297,6 @@ pub unsafe fn mpegps_read_packet(
     let mut len: i32;
     let mut startcode: i32 = 0;
     let mut codec_id: CodecIDMythTv;
-    let mut es_type: Option<StreamTypeMythTv>;
     let mut type_: CodecTypeMythTv;
 
     'redo: loop {
@@ -321,9 +316,15 @@ pub unsafe fn mpegps_read_packet(
         position_sanity_check(ctx);
 
         // 2. Determine stream type
-        es_type = StreamTypeMythTv::from_c(psm_es_type[(startcode & 0xff) as usize]);
-        if es_type.is_some() {
-            match es_type.unwrap() {
+        let raw_es_type = psm_es_type[(startcode & 0xff) as usize];
+        let es_type = StreamTypeMythTv::from_c(raw_es_type);
+        if raw_es_type > 0 {
+            // C skips the packet when the PSM gives a stream type it doesn't know.
+            let Some(es_type) = es_type else {
+                url_fskip(ctx, len, ccx_options);
+                continue 'redo;
+            };
+            match es_type {
                 x if x == StreamTypeMythTv::VideoMpeg1 || x == StreamTypeMythTv::VideoMpeg2 => {
                     codec_id = CodecIDMythTv::Mpeg2Video;
                     type_ = CodecTypeMythTv::Video;
@@ -401,23 +402,11 @@ pub unsafe fn mpegps_read_packet(
             len -= 3;
         }
 
-        // 4. Read payload into a growable Vec<u8> buffer
+        // 4. Read payload into av.data, reusing its allocation
         av.size = len as usize;
-        // Use Vec<u8> for data buffer
-        av.data
-            .try_reserve_exact(av.size)
-            .map_err(|_| {
-                info!(
-                    "MythTV: Failed to reserve {} bytes for AVPacketMythTv data",
-                    av.size
-                );
-            })
-            .expect("MythTV: Failed to reserve memory for AVPacketMythTv data");
-        unsafe {
-            av.data.set_len(av.size);
-        }
-        let buffer_slice = &mut av.data[..av.size];
-        buffered_read(ctx, Some(buffer_slice), av.size, ccx_options);
+        av.data.clear();
+        av.data.resize(av.size, 0);
+        buffered_read(ctx, Some(av.data.as_mut_slice()), av.size, ccx_options);
         ctx.past += av.size as i64;
 
         // 5. Finalize packet
