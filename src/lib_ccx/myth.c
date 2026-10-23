@@ -21,8 +21,8 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #ifndef DISABLE_RUST
 extern int ccxr_mpegps_read_packet(
     struct ccx_demuxer *ctx,
-    unsigned int header_state,
-    unsigned char psm_es_type[256],
+    unsigned int *header_state,
+    unsigned char *psm_es_type,
     struct AVPacketMythTV *av);
 #endif
 
@@ -616,7 +616,7 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 static int mpegps_read_packet(struct ccx_demuxer *ctx)
 {
 #ifndef DISABLE_RUST
-	return ccxr_mpegps_read_packet(ctx, header_state, psm_es_type, &av);
+	return ccxr_mpegps_read_packet(ctx, &header_state, psm_es_type, &av);
 #else
 	LLONG pts, dts;
 	int len, startcode, type, codec_id = 0, es_type;

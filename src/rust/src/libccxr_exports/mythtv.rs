@@ -88,15 +88,17 @@ pub unsafe fn copy_av_packet_from_rust_to_c(
 /// The caller must ensure that the memory pointed to by `ctx` is valid for the lifetime of the demuxer.
 /// It also assumes that `header_state` and `psm_es_type` are valid mutable references.
 #[no_mangle]
-pub unsafe fn ccxr_mpegps_read_packet(
+pub unsafe extern "C" fn ccxr_mpegps_read_packet(
     ctx: *mut ccx_demuxer,
-    header_state: &mut c_uint,
-    psm_es_type: &mut [c_uchar; 256],
+    header_state: *mut c_uint,
+    psm_es_type: *mut c_uchar,
     av: *mut AVPacketMythTV,
 ) -> c_int {
-    if ctx.is_null() {
+    if ctx.is_null() || header_state.is_null() || psm_es_type.is_null() || av.is_null() {
         return -1; // Error: null context
     }
+    let header_state = &mut *header_state;
+    let psm_es_type = &mut *(psm_es_type as *mut [c_uchar; 256]);
     let mut demux_ctx = copy_demuxer_from_c_to_rust(ctx);
     let mut CcxOptions: Options = copy_to_rust(&raw const ccx_options);
     let mut av_packet = copy_av_packet_from_c_to_rust(av);
