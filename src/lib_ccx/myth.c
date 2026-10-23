@@ -16,7 +16,7 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "file_buffer.h"
-#include "ccx_gxf.h"
+#include "myth.h"
 
 #ifndef DISABLE_RUST
 extern void *ccxr_myth_reader_new(struct ccx_demuxer *ctx);
