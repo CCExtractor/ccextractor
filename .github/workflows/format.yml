@@ -19,7 +19,7 @@ on:
     - 'src/rust/**'
 jobs:
   format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Format code
@@ -27,7 +27,7 @@ jobs:
           find src/ -type f -not -path "src/thirdparty/*" -not -path "src/lib_ccx/zvbi/*" -name '*.c' -not -path "src/GUI/icon_data.c" | xargs clang-format -i
           git diff-index --quiet HEAD -- || (git diff && exit 1)
   format_rust:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         workdir: ['./src/rust', './src/rust/lib_ccxr']
