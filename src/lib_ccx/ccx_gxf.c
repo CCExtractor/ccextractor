@@ -483,6 +483,7 @@ error:
 
 int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 {
+	unsigned char *cdp_start = cdp;
 	int ret = CCX_OK;
 	uint16_t cdp_length;
 	uint16_t cdp_framerate;
@@ -552,17 +553,32 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	else if (*cdp == 0x72)
 	{
 		uint16_t cc_count;
+		size_t cc_data_len;
+		size_t remaining_len;
 
 		cdp++;
 		cc_count = *cdp++ & 0x1f;
 		debug("cc_count: %d\n", cc_count);
+		cc_data_len = (size_t)cc_count * 3;
+		remaining_len = len - (size_t)(cdp - cdp_start);
+		/* Keep the four-byte footer available after the caption data. */
+		if (remaining_len < 4 || cc_data_len > remaining_len - 4)
+		{
+			log("cc_count %u exceeds remaining CDP length\n", cc_count);
+			return CCX_EINVAL;
+		}
+		if (data->len > BUFSIZE || cc_data_len > BUFSIZE - data->len)
+		{
+			log("CDP caption data exceeds demuxer buffer capacity\n");
+			return CCX_EINVAL;
+		}
 
-		for (int i = 0; i < cc_count * 3; i++)
+		for (size_t i = 0; i < cc_data_len; i++)
 		{
 			data->buffer[data->len + i] = cdp[i];
 		}
-		data->len += cc_count * 3;
-		cdp += cc_count * 3;
+		data->len += cc_data_len;
+		cdp += cc_data_len;
 	}
 	else if (*cdp == 0x73)
 	{
