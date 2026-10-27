@@ -5,6 +5,7 @@
 
 // TESTS:
 #include "ccx_encoders_splitbysentence_suite.h"
+#include "ccx_gxf_suite.h"
 
 struct ccx_s_options ccx_options;
 volatile int terminate_asap = 0;
@@ -17,6 +18,7 @@ int main(void)
 
 	s = ccx_encoders_splitbysentence_suite();
 	sr = srunner_create(s);
+	srunner_add_suite(sr, ccx_gxf_suite());
 	srunner_set_fork_status(sr, CK_NOFORK);
 
 	srunner_run_all(sr, CK_VERBOSE);
