@@ -808,8 +808,11 @@ page_is_empty:
 						}
 					}
 
-					// translate some chars into entities, if in colour mode
-					if (!tlt_config.nofontcolor && !tlt_config.nohtmlescape)
+					// translate some chars into entities, if in colour mode or xml-based format
+					if ((!tlt_config.nofontcolor ||
+					     tlt_config.write_format == CCX_OF_WEBVTT ||
+					     tlt_config.write_format == CCX_OF_SMPTETT) &&
+					    !tlt_config.nohtmlescape)
 					{
 						for (uint8_t i = 0; i < array_length(ENTITIES); i++)
 							if (v == ENTITIES[i].character)

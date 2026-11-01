@@ -7,6 +7,7 @@
 #include "lib_ccx.h"
 #include "utility.h"
 #include "ccx_encoders_common.h"
+#include "ccx_encoders_helpers.h"
 #include "ccx_encoders_mcc.h"
 #include "ccx_common_option.h"
 #include "ccx_mp4.h"
@@ -840,6 +841,17 @@ static int process_tx3g(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 	dec_sub->datatype = CC_DATATYPE_GENERIC;
 	memcpy(dec_sub->data, data, atom_length);
 	*((char *)dec_sub->data + atom_length) = '\0';
+
+	if (ccx_options.write_format == CCX_OF_WEBVTT || ccx_options.write_format == CCX_OF_SMPTETT)
+	{
+		char *escaped = escape_plain_text((char *)dec_sub->data);
+		if (!escaped)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In process_tx3g: Out of memory.\n");
+		}
+		free(dec_sub->data);
+		dec_sub->data = escaped;
+	}
 
 	*mp4_ret = 1;
 	has_previous_sub = 1;

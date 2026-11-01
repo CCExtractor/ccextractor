@@ -1,5 +1,6 @@
 
 #include "ccx_decoders_isdb.h"
+#include "ccx_encoders_helpers.h"
 #include "lib_ccx.h"
 #include "utility.h"
 #include "limits.h"
@@ -1319,9 +1320,24 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 
 	if (ret > 0)
 	{
-		add_cc_sub_text(sub, (char *)buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		if (ccx_options.write_format == CCX_OF_WEBVTT || ccx_options.write_format == CCX_OF_SMPTETT)
+		{
+			char *escaped = escape_plain_text((char *)buffer);
+			if (!escaped)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_caption_statement_data: Out of memory.\n");
+			}
+			add_cc_sub_text(sub, escaped, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+			free(escaped);
+		}
+		else
+		{
+			add_cc_sub_text(sub, (char *)buffer, ctx->prev_timestamp, ctx->timestamp, "NA", "ISDB", CCX_ENC_UTF_8);
+		}
 		if (sub->start_time == sub->end_time)
+		{
 			sub->end_time += 2;
+		}
 		ctx->prev_timestamp = ctx->timestamp;
 	}
 	return 0;
