@@ -489,6 +489,7 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	uint16_t cc_data_present;
 	uint16_t caption_service_active;
 	uint16_t cdp_header_sequence_counter;
+	unsigned char *cdp_start = cdp;
 
 	/* Do not accept packet whose length does not fit header and footer */
 	if (len < 11)
@@ -557,6 +558,18 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 		cc_count = *cdp++ & 0x1f;
 		debug("cc_count: %d\n", cc_count);
 
+		if ((size_t)(cc_count * 3) > len - (size_t)(cdp - cdp_start))
+		{
+			log("cc_count %d exceeds remaining CDP length\n", cc_count);
+			return CCX_EINVAL;
+		}
+
+		if (data->len + (size_t)(cc_count * 3) > BUFSIZE)
+		{
+			log("cc_data exceeds demuxer buffer capacity\n");
+			return CCX_ENOMEM;
+		}
+
 		for (int i = 0; i < cc_count * 3; i++)
 		{
 			data->buffer[data->len + i] = cdp[i];
@@ -580,10 +593,10 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 	}
 
 	/* check cdp footer */
-	if (*cdp == 0x74)
+	if ((size_t)(cdp - cdp_start) < len && *cdp == 0x74)
 	{
 		cdp++;
-		if (cdp_header_sequence_counter != RB16(cdp))
+		if ((size_t)(cdp - cdp_start) + 2 > len || cdp_header_sequence_counter != RB16(cdp))
 		{
 			log("Incomplete cdp packet\n");
 			return CCX_EINVAL;
