@@ -668,7 +668,7 @@ pub unsafe extern "C" fn ccxr_is_scc_file(buffer: *const c_uchar, len: c_uint) -
 ///
 /// # Arguments
 ///
-/// - `framerate`: 0=29.97 (default), 1=24, 2=25, 3=30
+/// - `framerate`: 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.976
 ///
 /// # Returns
 ///
