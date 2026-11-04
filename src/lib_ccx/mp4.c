@@ -79,7 +79,7 @@ static int process_avc_sample(struct lib_ccx_ctx *ctx, u32 timescale, GF_AVCConf
 		}
 		const u32 previous_index = i;
 		i += c->nal_unit_size;
-		if (i + nal_length <= previous_index || i + nal_length > s->dataLength)
+		if ((uint64_t)i + nal_length <= previous_index || (uint64_t)i + nal_length > s->dataLength)
 		{
 			mprint("Corrupted sample detected in process_avc_sample. dataLength %u "
 			       "is less than index %u + nal_unit_size %u + nal_length %u. Ignoring.\n",
