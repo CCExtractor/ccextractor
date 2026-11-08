@@ -40,8 +40,6 @@
 
 extern void ccxr_init_logger();
 
-static int inputfile_capacity = 0;
-
 void set_binary_mode()
 {
 #ifdef WIN32
