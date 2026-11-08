@@ -539,6 +539,69 @@ void telx_case_fix(struct TeletextCtx *context)
 	telx_correct_case(context->page_buffer_cur);
 }
 
+static int is_multi_page_mode(void);
+
+struct telx_held_cue
+{
+	char *text;
+	uint64_t show_timestamp;
+	uint64_t hide_timestamp;
+	char info[8];
+	uint16_t teletext_page;
+	struct telx_held_cue *next;
+};
+
+static void telx_add_sub_text(struct cc_subtitle *sub, char *text, uint64_t show_timestamp, uint64_t hide_timestamp,
+			      char *info, uint16_t teletext_page)
+{
+	add_cc_sub_text(sub, text, show_timestamp, hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
+
+	// Set teletext page number for multi-page extraction (issue #665)
+	// Find the last subtitle node and set its teletext_page (in decimal format)
+	struct cc_subtitle *last_sub = sub;
+	while (last_sub->next)
+	{
+		last_sub = last_sub->next;
+	}
+	last_sub->teletext_page = teletext_page;
+}
+
+static void telx_output_cue(struct TeletextCtx *ctx, struct cc_subtitle *sub, char *text, uint64_t show_timestamp,
+			    uint64_t hide_timestamp, char *info)
+{
+	uint16_t teletext_page = bcd_page_to_int(tlt_config.page);
+	struct telx_held_cue *cue;
+	struct telx_held_cue **pos;
+
+	if (!is_multi_page_mode())
+	{
+		telx_add_sub_text(sub, text, show_timestamp, hide_timestamp, info, teletext_page);
+		return;
+	}
+	if (text == NULL || text[0] == '\0')
+	{
+		return;
+	}
+
+	cue = malloc(sizeof(struct telx_held_cue));
+	if (cue == NULL || (cue->text = strdup(text)) == NULL)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "In telx_output_cue: Out of memory.\n");
+	}
+	cue->show_timestamp = show_timestamp;
+	cue->hide_timestamp = hide_timestamp;
+	snprintf(cue->info, sizeof(cue->info), "%s", info ? info : "");
+	cue->teletext_page = teletext_page;
+
+	pos = &ctx->held_cues;
+	while (*pos != NULL && (*pos)->show_timestamp <= show_timestamp)
+	{
+		pos = &(*pos)->next;
+	}
+	cue->next = *pos;
+	*pos = cue;
+}
+
 void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 {
 	char info[8]; // Enough for any page number + null terminator
@@ -546,15 +609,7 @@ void telxcc_dump_prev_page(struct TeletextCtx *ctx, struct cc_subtitle *sub)
 		return;
 
 	snprintf(info, sizeof(info), "%.3u", bcd_page_to_int(tlt_config.page));
-	add_cc_sub_text(sub, ctx->page_buffer_prev, ctx->prev_show_timestamp,
-			ctx->prev_hide_timestamp, info, "TLT", CCX_ENC_UTF_8);
-
-	// Set teletext page number for multi-page extraction (issue #665)
-	// Find the last subtitle node and set its teletext_page (in decimal format)
-	struct cc_subtitle *last_sub = sub;
-	while (last_sub->next)
-		last_sub = last_sub->next;
-	last_sub->teletext_page = bcd_page_to_int(tlt_config.page);
+	telx_output_cue(ctx, sub, ctx->page_buffer_prev, ctx->prev_show_timestamp, ctx->prev_hide_timestamp, info);
 
 	if (ctx->page_buffer_prev)
 		free(ctx->page_buffer_prev);
@@ -891,15 +946,7 @@ page_is_empty:
 			}
 			break;
 		default:
-			add_cc_sub_text(sub, ctx->page_buffer_cur, page->show_timestamp,
-					page->hide_timestamp + 1, NULL, "TLT", CCX_ENC_UTF_8);
-			// Set teletext page number for multi-page extraction (issue #665)
-			{
-				struct cc_subtitle *last_sub = sub;
-				while (last_sub->next)
-					last_sub = last_sub->next;
-				last_sub->teletext_page = bcd_page_to_int(tlt_config.page);
-			}
+			telx_output_cue(ctx, sub, ctx->page_buffer_cur, page->show_timestamp, page->hide_timestamp + 1, NULL);
 	}
 
 	// Also update GUI...
@@ -1054,6 +1101,55 @@ static void telx_switch_page(struct TeletextCtx *ctx, int idx)
 static int telx_slot_receiving(struct TeletextCtx *ctx, int idx)
 {
 	return (idx == ctx->current_page_idx) ? ctx->receiving_data : ctx->page_states[idx].receiving_data;
+}
+
+static uint64_t telx_slot_pending_start(struct TeletextCtx *ctx, int idx)
+{
+	int current = (idx == ctx->current_page_idx);
+	const teletext_page_t *page = current ? &ctx->page_buffer : &ctx->page_states[idx].page_buffer;
+	const char *prev = current ? ctx->page_buffer_prev : ctx->page_states[idx].page_buffer_prev;
+	uint64_t prev_show = current ? ctx->prev_show_timestamp : ctx->page_states[idx].prev_show_timestamp;
+	uint64_t start = UINT64_MAX;
+
+	if (prev != NULL)
+	{
+		start = prev_show;
+	}
+	if ((page->tainted == YES || telx_slot_receiving(ctx, idx) == YES) && page->show_timestamp < start)
+	{
+		start = page->show_timestamp;
+	}
+	return start;
+}
+
+static void telx_release_held_cues(struct TeletextCtx *ctx, struct cc_subtitle *sub, int all)
+{
+	uint64_t limit = UINT64_MAX;
+
+	if (!all)
+	{
+		for (int i = 0; i < ctx->num_active_pages; i++)
+		{
+			uint64_t start = telx_slot_pending_start(ctx, i);
+			if (start < limit)
+			{
+				limit = start;
+			}
+		}
+	}
+
+	while (ctx->held_cues != NULL && ctx->held_cues->show_timestamp <= limit)
+	{
+		struct telx_held_cue *cue = ctx->held_cues;
+		ctx->held_cues = cue->next;
+		if (sub)
+		{
+			telx_add_sub_text(sub, cue->text, cue->show_timestamp, cue->hide_timestamp,
+					  cue->info[0] ? cue->info : NULL, cue->teletext_page);
+		}
+		free(cue->text);
+		free(cue);
+	}
 }
 
 static int telx_reclaimable_slot(struct TeletextCtx *ctx)
@@ -1211,19 +1307,17 @@ static void telx_multi_page_header(struct TeletextCtx *ctx, uint8_t m, uint16_t 
 		}
 	}
 
-	if ((page_number & 0xff) == 0xff || !should_accept_page(page_number, flag_subtitle))
+	if ((page_number & 0xff) != 0xff && should_accept_page(page_number, flag_subtitle))
 	{
-		return;
+		int idx = telx_page_slot(ctx, page_number);
+		if (idx >= 0)
+		{
+			telx_switch_page(ctx, idx);
+			telx_begin_page(ctx, charset, timestamp, sub);
+		}
 	}
 
-	int idx = telx_page_slot(ctx, page_number);
-	if (idx < 0)
-	{
-		return;
-	}
-
-	telx_switch_page(ctx, idx);
-	telx_begin_page(ctx, charset, timestamp, sub);
+	telx_release_held_cues(ctx, sub, 0);
 }
 
 void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, teletext_packet_payload_t *packet, uint64_t timestamp, struct cc_subtitle *sub)
@@ -1938,6 +2032,7 @@ void *telxcc_init(void)
 	ctx->receiving_data = NO;
 	ctx->num_active_pages = 0;
 	ctx->current_page_idx = -1;
+	ctx->held_cues = NULL;
 
 	ctx->using_pts = UNDEFINED;
 	ctx->delta = 0;
@@ -2017,6 +2112,7 @@ void telxcc_close(void **ctx, struct cc_subtitle *sub)
 			telx_flush_pending_page(ttext, sub);
 		}
 	}
+	telx_release_held_cues(ttext, (tlt_config.write_format != CCX_OF_RCWT) ? sub : NULL, 1);
 	freep(&ttext->ucs2_buffer_cur);
 	freep(&ttext->page_buffer_cur);
 	freep(ctx);

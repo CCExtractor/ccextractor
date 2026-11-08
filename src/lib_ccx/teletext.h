@@ -69,6 +69,8 @@ typedef enum
 	DATA_UNIT_CLOSED_CAPTIONS = 0xc5
 } data_unit_t;
 
+struct telx_held_cue;
+
 struct TeletextCtx
 {
 	short int seen_sub_page[MAX_TLT_PAGES];
@@ -96,6 +98,7 @@ struct TeletextCtx
 	int num_active_pages;                                       // Number of pages being extracted
 	int current_page_idx;                                       // Index of page currently receiving data (-1 = none)
 	int multi_page_mode;                                        // 1 = multi-page mode active
+	struct telx_held_cue *held_cues;                            // Multi-page: finished cues not yet output, by start time
 
 	// Current and previous page buffers (legacy single-page mode)
 	// These are still used when multi_page_mode == 0 for backward compatibility
