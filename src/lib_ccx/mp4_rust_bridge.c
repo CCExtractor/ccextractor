@@ -63,7 +63,7 @@ int ccx_mp4_process_nal_sample(struct lib_ccx_ctx *ctx, unsigned int timescale,
 		}
 		unsigned int prev = i;
 		i += nal_unit_size;
-		if (i + nal_length <= prev || i + nal_length > data_length)
+		if ((uint64_t)i + nal_length <= prev || (uint64_t)i + nal_length > data_length)
 		{
 			mprint("Corrupted %s sample. Ignoring.\n", is_hevc ? "HEVC" : "AVC");
 			return 0;
