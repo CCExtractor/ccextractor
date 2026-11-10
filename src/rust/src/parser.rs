@@ -5,7 +5,6 @@ use lib_ccxr::time::units::{Timestamp, TimestampFormat};
 use lib_ccxr::util::encoders_helper::{add_builtin_capitalization, add_builtin_profane};
 use lib_ccxr::util::encoding::Encoding;
 use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputTarget};
-use lib_ccxr::util::time::stringztoms;
 use num_integer::Integer;
 use std::cell::Cell;
 use std::convert::TryInto;
@@ -56,27 +55,22 @@ fn set_mpeg_clock_freq(freq: i32) {
     }
 }
 
-fn atol(bufsize: &str) -> i32 {
-    let s = bufsize.trim();
-    if s.is_empty() {
-        return 0;
-    }
+/// A CEA-708 service number from --service, if it is within 1..=DTVCC_MAX_SERVICES.
+fn parse_service_number(service: &str) -> Option<usize> {
+    service
+        .parse::<usize>()
+        .ok()
+        .filter(|svc| (1..=DTVCC_MAX_SERVICES).contains(svc))
+}
 
-    let last_char = s.chars().last().unwrap();
-    if last_char.is_ascii_digit() {
-        return s.parse::<i32>().unwrap_or(0);
+/// The charset of a --service value that starts with "all": "" for "all",
+/// "X" for "all[X]". None if the value has any other form.
+fn all_services_charset(services: &str) -> Option<&str> {
+    let rest = services.strip_prefix("all")?;
+    if rest.is_empty() {
+        return Some("");
     }
-
-    let val_str = &s[..s.len() - 1];
-    let mut val = val_str.parse::<i32>().unwrap_or(0);
-
-    match last_char.to_ascii_uppercase() {
-        'M' => val *= 1024 * 1024,
-        'K' => val *= 1024,
-        'G' => val *= 1024 * 1024 * 1024,
-        _ => {}
-    }
-    val
+    rest.strip_prefix('[')?.strip_suffix(']')
 }
 
 fn atoi_hex<T>(s: &str) -> Result<T, &str>
@@ -105,6 +99,19 @@ where
             );
         }
     }
+}
+
+/// Compare two words the way C's `strcasecmp` does: byte by byte, with ASCII letters lowercased.
+fn strcasecmp_order(a: &str, b: &str) -> std::cmp::Ordering {
+    a.bytes()
+        .map(|c| c.to_ascii_lowercase())
+        .cmp(b.bytes().map(|c| c.to_ascii_lowercase()))
+}
+
+/// Sort a word list in the same order as C's `strcasecmp`. The C encoders look words up with
+/// `bsearch` (ccx_encoders_helpers.c), which only finds them in a list sorted this way.
+fn sort_word_list(list: &mut [String]) {
+    list.sort_by(|a, b| strcasecmp_order(a, b));
 }
 
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
@@ -305,7 +312,12 @@ impl OptionsExt for Options {
 
     fn parse_708_services(&mut self, s: &str) {
         if s.starts_with("all") {
-            let charset = if s.len() > 3 { &s[4..s.len() - 1] } else { "" };
+            let Some(charset) = all_services_charset(s) else {
+                fatal!(
+                    cause = ExitCause::MalformedParameter;
+                  "[CEA-708] Malformed parameter: Invalid service list ({}), use all or all[charset].\n", s
+                );
+            };
             self.settings_dtvcc.enabled = true;
             self.enc_cfg.dtvcc_extract = true;
 
@@ -361,13 +373,12 @@ impl OptionsExt for Options {
             DtvccServiceCharset::Unique(Box::new([ARRAY_REPEAT_VALUE; DTVCC_MAX_SERVICES]));
 
         for (i, service) in services.iter().enumerate() {
-            let svc = service.parse::<usize>().unwrap();
-            if !(1..=DTVCC_MAX_SERVICES).contains(&svc) {
+            let Some(svc) = parse_service_number(service) else {
                 fatal!(
                     cause = ExitCause::MalformedParameter;
-                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", svc, DTVCC_MAX_SERVICES
+                  "[CEA-708] Malformed parameter: Invalid service number ({}), valid range is 1-{}.\n", service, DTVCC_MAX_SERVICES
                 );
-            }
+            };
             self.settings_dtvcc.services_enabled[svc - 1] = true;
             self.enc_cfg.services_enabled[svc - 1] = true;
             self.settings_dtvcc.enabled = true;
@@ -629,8 +640,8 @@ impl OptionsExt for Options {
             self.append_mode = true;
         }
 
-        if let Some(ref buffersize) = args.buffersize {
-            set_file_buffer_size(atol(buffersize));
+        if let Some(buffersize) = args.buffersize {
+            set_file_buffer_size(buffersize);
 
             if get_file_buffer_size() < 8 {
                 set_file_buffer_size(8); // Otherwise crashes are guaranteed at least in MythTV
@@ -792,37 +803,31 @@ impl OptionsExt for Options {
             self.enc_cfg.start_credits_text.clone_from(startcreditstext);
         }
 
-        if let Some(ref startcreditsnotbefore) = args.startcreditsnotbefore {
-            self.enc_cfg.startcreditsnotbefore =
-                stringztoms(startcreditsnotbefore.clone().as_str()).unwrap();
+        if let Some(startcreditsnotbefore) = args.startcreditsnotbefore {
+            self.enc_cfg.startcreditsnotbefore = startcreditsnotbefore;
         }
 
-        if let Some(ref startcreditsnotafter) = args.startcreditsnotafter {
-            self.enc_cfg.startcreditsnotafter =
-                stringztoms(startcreditsnotafter.clone().as_str()).unwrap();
+        if let Some(startcreditsnotafter) = args.startcreditsnotafter {
+            self.enc_cfg.startcreditsnotafter = startcreditsnotafter;
         }
 
-        if let Some(ref startcreditsforatleast) = args.startcreditsforatleast {
-            self.enc_cfg.startcreditsforatleast =
-                stringztoms(startcreditsforatleast.clone().as_str()).unwrap();
+        if let Some(startcreditsforatleast) = args.startcreditsforatleast {
+            self.enc_cfg.startcreditsforatleast = startcreditsforatleast;
         }
-        if let Some(ref startcreditsforatmost) = args.startcreditsforatmost {
-            self.enc_cfg.startcreditsforatmost =
-                stringztoms(startcreditsforatmost.clone().as_str()).unwrap();
+        if let Some(startcreditsforatmost) = args.startcreditsforatmost {
+            self.enc_cfg.startcreditsforatmost = startcreditsforatmost;
         }
 
         if let Some(ref endcreditstext) = args.endcreditstext {
             self.enc_cfg.end_credits_text.clone_from(endcreditstext);
         }
 
-        if let Some(ref endcreditsforatleast) = args.endcreditsforatleast {
-            self.enc_cfg.endcreditsforatleast =
-                stringztoms(endcreditsforatleast.clone().as_str()).unwrap();
+        if let Some(endcreditsforatleast) = args.endcreditsforatleast {
+            self.enc_cfg.endcreditsforatleast = endcreditsforatleast;
         }
 
-        if let Some(ref endcreditsforatmost) = args.endcreditsforatmost {
-            self.enc_cfg.endcreditsforatmost =
-                stringztoms(endcreditsforatmost.clone().as_str()).unwrap();
+        if let Some(endcreditsforatmost) = args.endcreditsforatmost {
+            self.enc_cfg.endcreditsforatmost = endcreditsforatmost;
         }
 
         /* More stuff */
@@ -950,9 +955,13 @@ impl OptionsExt for Options {
         }
 
         if let Some(ref stream) = args.stream {
-            self.live_stream = Some(Timestamp::from_millis(
-                1000 * get_atoi_hex::<i64>(stream.as_str()),
-            ));
+            let seconds = get_atoi_hex::<i64>(stream.as_str());
+            // A negative value means no timeout
+            self.live_stream = if seconds < 0 {
+                None
+            } else {
+                Some(Timestamp::from_millis(1000 * seconds))
+            };
         }
 
         if let Some(ref defaultcolor) = args.defaultcolor {
@@ -974,11 +983,11 @@ impl OptionsExt for Options {
             self.settings_608.screens_to_process = get_atoi_hex(screenfuls.as_str());
         }
 
-        if let Some(ref startat) = args.startat {
-            self.extraction_start = Some(stringztoms(startat.clone().as_str()).unwrap());
+        if let Some(startat) = args.startat {
+            self.extraction_start = Some(startat);
         }
-        if let Some(ref endat) = args.endat {
-            self.extraction_end = Some(stringztoms(endat.clone().as_str()).unwrap());
+        if let Some(endat) = args.endat {
+            self.extraction_end = Some(endat);
         }
 
         if args.cc2 {
@@ -1387,32 +1396,10 @@ impl OptionsExt for Options {
 
             self.xmltv = 2;
             self.xmltvliveinterval = Timestamp::from_millis(2000);
-            let _addr: String = addr.to_string();
-
-            // Handle IPv6 addresses in [addr]:port format
-            if let Some(saddr) = addr.strip_prefix('[') {
-                if let Some(end_bracket) = saddr.find(']') {
-                    let addr_part = &saddr[..end_bracket];
-                    let port_part = &saddr[end_bracket + 1..];
-                    self.srv_addr = Some(addr_part.to_string());
-                    if let Some(port) = port_part.strip_prefix(':') {
-                        self.srv_port = Some(port.parse().unwrap());
-                    }
-                } else {
-                    fatal!(
-                        cause = ExitCause::IncompatibleParameters;
-                        "Wrong address format, for IPv6 use [address]:port\n"
-                    );
-                }
-            } else if let Some(colon) = _addr.rfind(':') {
-                // Handle IPv4 or hostname:port
-                let (host, port) = _addr.split_at(colon);
-                self.srv_addr = Some(host.to_string());
-                self.srv_port = Some(port[1..].parse().unwrap());
-            } else {
-                // No port specified, treat as address only
-                self.srv_addr = Some(_addr.clone());
-                self.srv_port = None;
+            // clap already validated the address (parse_sendto).
+            if let Ok((srv_addr, srv_port)) = args::split_sendto_address(addr) {
+                self.srv_addr = Some(srv_addr);
+                self.srv_port = srv_port;
             }
         }
         if let Some(ref tcp) = args.tcp {
@@ -1491,6 +1478,8 @@ impl OptionsExt for Options {
                 }
             }
         }
+        sort_word_list(capitalization_list);
+        sort_word_list(profane);
 
         // Init telexcc redundant options
         tlt_config.dolevdist = self.dolevdist;
@@ -1528,7 +1517,10 @@ impl OptionsExt for Options {
             );
         }
 
-        if !self.is_inputfile_empty() && self.live_stream.unwrap_or_default().millis() != 0 {
+        // A live stream is followed while it grows, which only works for a single file
+        let is_live_stream = self.live_stream.is_none_or(|t| t.millis() != 0);
+        let num_input_files = self.inputfile.as_ref().map_or(0, Vec::len);
+        if num_input_files > 1 && is_live_stream {
             fatal!(
                 cause = ExitCause::TooManyInputFiles;
                "Live stream mode only supports one input file"
@@ -2184,6 +2176,52 @@ pub mod tests {
         assert_eq!(options.subs_delay, Timestamp::from_millis(-200));
     }
 
+    const CREDITS_TIME_OPTIONS: [&str; 6] = [
+        "--startcreditsnotbefore",
+        "--startcreditsnotafter",
+        "--startcreditsforatleast",
+        "--startcreditsforatmost",
+        "--endcreditsforatleast",
+        "--endcreditsforatmost",
+    ];
+
+    #[test]
+    fn test_credits_time_rejects_invalid_values() {
+        for option in CREDITS_TIME_OPTIONS {
+            for value in ["", "invalid", "60", "00:60", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid credits time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
+        }
+    }
+
+    #[test]
+    fn test_credits_time_formats() {
+        let (options, _) = parse_args(&[
+            "--startcreditsnotbefore",
+            "1",
+            "--startcreditsnotafter",
+            "03:00",
+            "--startcreditsforatleast",
+            "2",
+            "--startcreditsforatmost",
+            "01:30:45",
+            "--endcreditsforatleast",
+            "3",
+            "--endcreditsforatmost",
+            "4:05",
+        ]);
+        let cfg = &options.enc_cfg;
+        assert_eq!(cfg.startcreditsnotbefore, Timestamp::from_millis(1_000));
+        assert_eq!(cfg.startcreditsnotafter, Timestamp::from_millis(180_000));
+        assert_eq!(cfg.startcreditsforatleast, Timestamp::from_millis(2_000));
+        assert_eq!(cfg.startcreditsforatmost, Timestamp::from_millis(5_445_000));
+        assert_eq!(cfg.endcreditsforatleast, Timestamp::from_millis(3_000));
+        assert_eq!(cfg.endcreditsforatmost, Timestamp::from_millis(245_000));
+    }
+
     #[test]
     fn test_startat_sets_extraction_start() {
         let (options, _) = parse_args(&["--startat", "4"]);
@@ -2201,6 +2239,59 @@ pub mod tests {
         let (options, _) = parse_args(&["--startat", "4", "--endat", "7"]);
         assert_eq!(options.extraction_start.unwrap_or_default().seconds(), 4);
         assert_eq!(options.extraction_end.unwrap_or_default().seconds(), 7);
+    }
+
+    #[test]
+    fn test_extraction_time_rejects_invalid_values() {
+        for option in ["--startat", "--endat"] {
+            for value in ["", "invalid", "60", "00:60", "00:60:00", "1::2", "1:2:3:4"] {
+                let error = Args::try_parse_from(["ccextractor", "input.scc", option, value])
+                    .expect_err("invalid extraction time should be rejected by clap");
+                assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+                assert!(error.to_string().contains(option));
+            }
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_formats() {
+        for (value, seconds) in [("0", 0), ("59", 59), ("03:00", 180), ("01:30:45", 5445)] {
+            let (options, _) = parse_args(&["--startat", value, "--endat", value]);
+            let expected = Some(Timestamp::from_millis(seconds * 1000));
+            assert_eq!(options.extraction_start, expected);
+            assert_eq!(options.extraction_end, expected);
+        }
+    }
+
+    #[test]
+    fn test_extraction_time_ffi_returns_error() {
+        for option in ["--startat", "--endat"] {
+            let arguments: Vec<_> = ["ccextractor", "input.scc", option, "invalid"]
+                .iter()
+                .map(|value| std::ffi::CString::new(*value).unwrap())
+                .collect();
+            let mut argv: Vec<_> = arguments
+                .iter()
+                .map(|arg| arg.as_ptr().cast_mut())
+                .collect();
+            // Each pointer refers to a live, NUL-terminated CString for the duration of the call.
+            let result =
+                unsafe { crate::ccxr_parse_parameters(argv.len() as _, argv.as_mut_ptr()) };
+            assert_eq!(result, ExitCause::Failure.exit_code());
+        }
+    }
+
+    #[test]
+    fn test_stream_with_one_input_file() {
+        // parse_args() adds one input file, which live stream mode allows
+        let (options, _) = parse_args(&["--stream", "5"]);
+        assert_eq!(options.live_stream, Some(Timestamp::from_millis(5000)));
+    }
+
+    #[test]
+    fn test_stream_without_timeout() {
+        let (options, _) = parse_args(&["--stream=-1"]);
+        assert_eq!(options.live_stream, None);
     }
 
     #[test]
@@ -2370,6 +2461,97 @@ pub mod tests {
     }
 
     #[test]
+    fn test_buffersize_rejects_invalid_values() {
+        for value in [
+            "",
+            "abc",
+            "12x",
+            "K",
+            "1.5M",
+            "64KB",
+            "-5",
+            "3G",
+            "99999999999",
+        ] {
+            let option = format!("--buffersize={value}");
+            let error = Args::try_parse_from(["ccextractor", "input.ts", option.as_str()])
+                .expect_err("invalid buffer size should be rejected by clap");
+            assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+            assert!(error.to_string().contains("--buffersize"));
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_buffersize_formats() {
+        for (value, bytes) in [
+            ("8192", 8192),
+            ("64K", 64 * 1024),
+            ("64k", 64 * 1024),
+            ("2M", 2 * 1024 * 1024),
+            ("1G", 1024 * 1024 * 1024),
+            (" 16M ", 16 * 1024 * 1024),
+            ("4", 8),
+        ] {
+            let (_, _) = parse_args(&["--buffersize", value]);
+            assert_eq!(get_file_buffer_size(), bytes, "--buffersize {value}");
+        }
+    }
+
+    #[test]
+    fn test_sendto_rejects_invalid_ports() {
+        for value in [
+            "127.0.0.1:abc",
+            "host:",
+            "host:99999",
+            "[::1]:abc",
+            "[::1]:",
+            "[::1",
+        ] {
+            let error = Args::try_parse_from(["ccextractor", "input.ts", "--sendto", value])
+                .expect_err("invalid --sendto address should be rejected by clap");
+            assert_eq!(error.kind(), clap::error::ErrorKind::ValueValidation);
+            assert!(error.to_string().contains("--sendto"));
+        }
+    }
+
+    #[test]
+    fn test_sendto_addresses() {
+        for (value, addr, port) in [
+            ("127.0.0.1:2048", "127.0.0.1", Some(2048)),
+            ("example.com", "example.com", None),
+            ("[::1]:2048", "::1", Some(2048)),
+            ("[::1]", "::1", None),
+        ] {
+            let (options, _) = parse_args(&["--sendto", value]);
+            assert_eq!(options.srv_addr.as_deref(), Some(addr), "--sendto {value}");
+            assert_eq!(options.srv_port, port, "--sendto {value}");
+        }
+    }
+
+    #[test]
+    fn test_service_number_range() {
+        assert_eq!(parse_service_number("1"), Some(1));
+        assert_eq!(parse_service_number("63"), Some(63));
+        assert_eq!(parse_service_number("0"), None);
+        assert_eq!(parse_service_number("64"), None);
+        assert_eq!(parse_service_number("99999999999999999999999"), None);
+    }
+
+    #[test]
+    fn test_all_services_charset() {
+        assert_eq!(all_services_charset("all"), Some(""));
+        assert_eq!(all_services_charset("all[EUC-KR]"), Some("EUC-KR"));
+        assert_eq!(all_services_charset("all[]"), Some(""));
+        // These used to panic slicing the value, or silently cut the charset.
+        assert_eq!(all_services_charset("all1"), None);
+        assert_eq!(all_services_charset("all["), None);
+        assert_eq!(all_services_charset("allé"), None);
+        assert_eq!(all_services_charset("all[EUC-KR"), None);
+        assert_eq!(all_services_charset("allEUC-KR]"), None);
+    }
+
+    #[test]
     fn test_koc_enables_keep_output_closed() {
         let (options, _) = parse_args(&["--koc"]);
         assert!(options.keep_output_closed);
@@ -2445,6 +2627,47 @@ pub mod tests {
     fn test_kf_enables_profanity_filter() {
         let (options, _) = parse_args(&["--kf"]);
         assert!(options.enc_cfg.filter_profanity);
+    }
+
+    #[test]
+    fn test_sort_word_list_uses_strcasecmp_order() {
+        let mut list: Vec<String> = ["june", "Zebra", "_x", "Apple", "banana"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        sort_word_list(&mut list);
+        // '_' (0x5f) sorts before the lowercase letters, as with strcasecmp
+        assert_eq!(list, ["_x", "Apple", "banana", "june", "Zebra"]);
+    }
+
+    #[test]
+    fn test_word_lists_are_sorted_for_bsearch() {
+        let args = Args::try_parse_from(["./ccextractor", "input_file", "--sentencecap", "--kf"])
+            .expect("Failed to parse arguments");
+        let mut options = Options::default();
+        let mut tlt_config = TeletextConfig::default();
+        let mut capitalization_list: Vec<String> = vec![];
+        let mut profane: Vec<String> = vec![];
+        options.parse_parameters(
+            &args,
+            &mut tlt_config,
+            &mut capitalization_list,
+            &mut profane,
+        );
+
+        for list in [&capitalization_list, &profane] {
+            assert!(!list.is_empty());
+            // Every word must be found by a binary search, as C's bsearch does
+            for word in list.iter() {
+                assert!(
+                    list.binary_search_by(|w| strcasecmp_order(w, word)).is_ok(),
+                    "{} not found",
+                    word
+                );
+            }
+        }
+        let june = capitalization_list.binary_search_by(|w| strcasecmp_order(w, "june"));
+        assert_eq!(june.map(|i| capitalization_list[i].as_str()), Ok("June"));
     }
 
     #[test]

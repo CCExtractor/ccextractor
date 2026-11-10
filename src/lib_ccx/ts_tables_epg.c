@@ -966,7 +966,9 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 
 	if (descriptor_number > 0)
 	{
-		if (offset[1] < 0x20)
+		// A continuation descriptor may repeat the character-table byte;
+		// only strip it when there is text, or text_length underflows.
+		if (text_length > 0 && offset[1] < 0x20)
 		{
 			offset++;
 			text_length--;

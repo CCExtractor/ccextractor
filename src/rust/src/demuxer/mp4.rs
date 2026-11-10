@@ -13,6 +13,8 @@
 //!
 //! - `dvdsub` (DVD bitmap subtitles) via OCR through vobsub_decoder
 
+use super::mprint::mprint_arguments;
+
 #[cfg(feature = "enable_mp4_ffmpeg")]
 use rsmpeg::avformat::AVFormatContextInput;
 #[cfg(feature = "enable_mp4_ffmpeg")]
@@ -52,13 +54,11 @@ extern "C" {
         ctx: *mut lib_ccx_ctx,
         data: *mut u8,
         data_length: c_uint,
-        dts: i64,
-        cts_offset: c_int,
-        timescale: c_uint,
+        start_ms: i64,
         sub: *mut cc_subtitle,
     ) -> c_int;
 
-    fn ccx_mp4_flush_tx3g(ctx: *mut lib_ccx_ctx, sub: *mut cc_subtitle);
+    fn ccx_mp4_flush_tx3g(ctx: *mut lib_ccx_ctx, sub: *mut cc_subtitle, end_ms: i64);
 
     fn ccx_mp4_report_progress(ctx: *mut lib_ccx_ctx, cur: c_uint, total: c_uint);
 
@@ -80,6 +80,12 @@ extern "C" {
     fn mprint(fmt: *const c_char, ...);
 
     fn encode_sub(enc_ctx: *mut encoder_ctx, sub: *mut cc_subtitle) -> c_int;
+}
+
+#[cfg(feature = "enable_mp4_ffmpeg")]
+unsafe fn mprint_text(message: *const c_char) {
+    let (format, message) = mprint_arguments(message);
+    mprint(format, message);
 }
 
 /// Track types we can extract captions from
@@ -143,20 +149,20 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
     let path_display = String::from_utf8_lossy(path_str);
 
     let open_msg = format!("Opening '{}' with FFmpeg: \0", path_display);
-    mprint(open_msg.as_ptr() as *const c_char);
+    mprint_text(open_msg.as_ptr() as *const c_char);
 
     // Open the file with FFmpeg
     let fmt_ctx = match AVFormatContextInput::open(path, None, &mut None) {
         Ok(ctx) => ctx,
         Err(e) => {
             let err_msg = format!("Failed to open input file with FFmpeg: {}\n\0", e);
-            mprint(err_msg.as_ptr() as *const c_char);
+            mprint_text(err_msg.as_ptr() as *const c_char);
             return -2;
         }
     };
 
     let ok_msg = b"ok\n\0";
-    mprint(ok_msg.as_ptr() as *const c_char);
+    mprint_text(ok_msg.as_ptr() as *const c_char);
 
     // Set up encoder/decoder
     let dec_ctx = update_decoder_list(ctx);
@@ -225,7 +231,7 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 "Track {}, type={} timescale={}\n\0",
                 i, type_name, timescale
             );
-            mprint(msg.as_ptr() as *const c_char);
+            mprint_text(msg.as_ptr() as *const c_char);
 
             tracks.push(TrackInfo {
                 stream_index: i,
@@ -261,11 +267,11 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
         hevc_count,
         cc_count
     );
-    mprint(summary.as_ptr() as *const c_char);
+    mprint_text(summary.as_ptr() as *const c_char);
 
     if tracks.is_empty() {
         let msg = b"No processable tracks found\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
         return 0;
     }
 
@@ -305,6 +311,8 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
 
     let mut packet_count: u32 = 0;
     let mut has_tx3g = false;
+    let mut prev_tx3g_start_ms: i64 = -1;
+    let mut prev_tx3g_end_ms: i64 = -1;
     let mut prev_dvdsub_pts: i64 = -1;
     let mut prev_dvdsub_data: Vec<u8> = Vec::new();
 
@@ -389,20 +397,39 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
                 }
                 TrackType::Tx3g => {
                     if pkt.size > 0 && !pkt.data.is_null() {
+                        // Subtitle times are taken from the packet timestamps directly:
+                        // the global timing pointer may already be past this subtitle
+                        // because packets from every track are interleaved.
+                        let start_ms = pts * 1000 / timescale as i64;
+                        // Convert the end point in one step, as the GPAC path does;
+                        // adding separately truncated start and duration can land
+                        // 1 ms early.
+                        let end_ms = if pkt.duration > 0 {
+                            (pts + pkt.duration) * 1000 / timescale as i64
+                        } else {
+                            -1
+                        };
                         if has_tx3g {
-                            ccx_mp4_flush_tx3g(ctx, sub);
+                            // Fall back to the new subtitle's start when the previous
+                            // sample had no duration information.
+                            let flush_end_ms = if prev_tx3g_end_ms >= 0 {
+                                prev_tx3g_end_ms
+                            } else {
+                                start_ms
+                            };
+                            ccx_mp4_flush_tx3g(ctx, sub, flush_end_ms);
                         }
                         let r = ccx_mp4_process_tx3g_packet(
                             ctx,
                             pkt.data,
                             pkt.size as c_uint,
-                            dts,
-                            cts_offset,
-                            timescale,
+                            start_ms,
                             sub,
                         );
                         if r == 0 {
                             has_tx3g = true;
+                            prev_tx3g_start_ms = start_ms;
+                            prev_tx3g_end_ms = end_ms;
                             mp4_ret = 1;
                         }
                     }
@@ -451,7 +478,13 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
 
     // Flush last tx3g subtitle
     if has_tx3g {
-        ccx_mp4_flush_tx3g(ctx, sub);
+        let end_ms = if prev_tx3g_end_ms >= 0 {
+            prev_tx3g_end_ms
+        } else {
+            // Match the 5 second default used for the other subtitle paths.
+            prev_tx3g_start_ms + 5000
+        };
+        ccx_mp4_flush_tx3g(ctx, sub, end_ms);
     }
 
     // Flush last dvdsub packet (use 5s default duration)
@@ -490,25 +523,25 @@ pub unsafe fn processmp4_rust(ctx: *mut lib_ccx_ctx, path: &CStr, sub: *mut cc_s
     ccx_mp4_report_progress(ctx, 100, 100);
 
     let close_msg = b"\nClosing media: ok\n\0";
-    mprint(close_msg.as_ptr() as *const c_char);
+    mprint_text(close_msg.as_ptr() as *const c_char);
 
     if avc_count > 0 {
         let msg = format!("Found {} AVC track(s). \0", avc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
     } else {
         let msg = b"Found no AVC track(s). \0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
     }
     if hevc_count > 0 {
         let msg = format!("Found {} HEVC track(s). \0", hevc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
     }
     if cc_count > 0 {
         let msg = format!("Found {} CC track(s).\n\0", cc_count);
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
     } else {
         let msg = b"Found no dedicated CC track(s).\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
     }
 
     (*ctx).freport.mp4_cc_track_cnt = cc_count as u32;
@@ -639,24 +672,24 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
     let path_display = String::from_utf8_lossy(path_str);
 
     let open_msg = format!("Opening '{}': \0", path_display);
-    mprint(open_msg.as_ptr() as *const c_char);
+    mprint_text(open_msg.as_ptr() as *const c_char);
 
     let fmt_ctx = match AVFormatContextInput::open(path, None, &mut None) {
         Ok(ctx) => ctx,
         Err(_) => {
             let msg = b"failed to open\n\0";
-            mprint(msg.as_ptr() as *const c_char);
+            mprint_text(msg.as_ptr() as *const c_char);
             return 5;
         }
     };
 
     let ok_msg = b"ok\n\0";
-    mprint(ok_msg.as_ptr() as *const c_char);
+    mprint_text(ok_msg.as_ptr() as *const c_char);
 
     let nb_chapters = (*fmt_ctx.as_ptr()).nb_chapters as usize;
     if nb_chapters == 0 {
         let msg = b"No chapters information found!\n\0";
-        mprint(msg.as_ptr() as *const c_char);
+        mprint_text(msg.as_ptr() as *const c_char);
         return 0;
     }
 
@@ -667,7 +700,7 @@ pub unsafe fn dumpchapters_rust(_ctx: *mut lib_ccx_ctx, path: &CStr) -> c_int {
     };
 
     let writing_msg = format!("Writing chapters into {}\n\0", out_name);
-    mprint(writing_msg.as_ptr() as *const c_char);
+    mprint_text(writing_msg.as_ptr() as *const c_char);
 
     use std::io::Write;
     for i in 0..nb_chapters {

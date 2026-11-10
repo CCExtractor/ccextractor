@@ -222,7 +222,7 @@ void write_webvtt_header(struct encoder_ctx *context)
 
 		// If the user has enabled X-TIMESTAMP-MAP
 		// LOCAL must come before MPEGTS for HLS compatibility (issue #1743)
-		snprintf(header_string, sizeof(header_string), "X-TIMESTAMP-MAP=LOCAL:%02u:%02u:%02u.%03u,MPEGTS:%ld%s",
+		snprintf(header_string, sizeof(header_string), "X-TIMESTAMP-MAP=LOCAL:%02u:%02u:%02u.%03u,MPEGTS:%" PRId64 "%s",
 			 h1, m1, s1, ms1, context->timing->sync_pts2fts_pts,
 			 ccx_options.enc_cfg.line_terminator_lf ? "\n\n" : "\r\n\r\n");
 
@@ -249,31 +249,37 @@ void write_webvtt_header(struct encoder_ctx *context)
 		char *css_file_name = (char *)malloc(css_file_name_size);
 		if (!css_file_name)
 		{
+			free(basefilename);
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating css_file_name.");
 		}
 		snprintf(css_file_name, css_file_name_size, "%s.css", basefilename);
+		free(basefilename);
 
 		FILE *f = fopen(css_file_name, "wb");
 		if (f == NULL)
 		{
+			// Carry on without the stylesheet. Returning here would leave
+			// wrote_webvtt_header unset, so the header block would be written
+			// again before every later cue.
 			mprint("Warning: Error creating the file %s\n", css_file_name);
-			free(css_file_name);
-			return;
 		}
-		fprintf(f, "%s", webvtt_inline_css);
-		fclose(f);
-
-		size_t outline_css_file_size = strlen(css_file_name) + strlen(webvtt_outline_css) + 1;
-		char *outline_css_file = (char *)malloc(outline_css_file_size);
-		if (!outline_css_file)
+		else
 		{
-			free(css_file_name);
-			fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating outline_css_file.");
+			fprintf(f, "%s", webvtt_inline_css);
+			fclose(f);
+
+			size_t outline_css_file_size = strlen(css_file_name) + strlen(webvtt_outline_css) + 1;
+			char *outline_css_file = (char *)malloc(outline_css_file_size);
+			if (!outline_css_file)
+			{
+				free(css_file_name);
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating outline_css_file.");
+			}
+			snprintf(outline_css_file, outline_css_file_size, webvtt_outline_css, css_file_name);
+			write_wrapped(context->out->fh, outline_css_file, strlen(outline_css_file));
+			free(outline_css_file);
 		}
-		snprintf(outline_css_file, outline_css_file_size, webvtt_outline_css, css_file_name);
-		write_wrapped(context->out->fh, outline_css_file, strlen(outline_css_file));
 		free(css_file_name);
-		free(outline_css_file);
 	}
 	else if (ccx_options.use_webvtt_styling)
 	{

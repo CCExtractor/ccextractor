@@ -1,6 +1,7 @@
 #ifndef CC_UTILITY_H
 #define CC_UTILITY_H
 #include <signal.h>
+#include <stdint.h>
 #ifndef _WIN32
 #include <arpa/inet.h>
 #endif
@@ -9,12 +10,21 @@
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #endif
 
-#define RL32(x) (*(unsigned int *)(x))
-#define RB32(x) (ntohl(*(unsigned int *)(x)))
-#define RL16(x) (*(unsigned short int *)(x))
-#define RB16(x) (ntohs(*(unsigned short int *)(x)))
+/* Read a 16/24/32-bit big- or little-endian value out of a byte buffer.
+ *
+ * These go byte by byte on purpose. Casting the pointer to a wider type and
+ * dereferencing it is undefined behaviour twice over: the offset carries no
+ * alignment guarantee (C11 6.3.2.3p7), and it reads a byte array through an
+ * incompatible lvalue type. Both are reachable here because every caller
+ * passes an arbitrary offset into a demuxed packet. RB24 was already written
+ * this way; the others now match it.
+ */
+#define RL32(x) ((uint32_t)((const unsigned char *)(x))[0] | ((uint32_t)((const unsigned char *)(x))[1] << 8) | ((uint32_t)((const unsigned char *)(x))[2] << 16) | ((uint32_t)((const unsigned char *)(x))[3] << 24))
+#define RB32(x) (((uint32_t)((const unsigned char *)(x))[0] << 24) | ((uint32_t)((const unsigned char *)(x))[1] << 16) | ((uint32_t)((const unsigned char *)(x))[2] << 8) | (uint32_t)((const unsigned char *)(x))[3])
+#define RL16(x) ((uint16_t)(((uint16_t)((const unsigned char *)(x))[0]) | ((uint16_t)((const unsigned char *)(x))[1] << 8)))
+#define RB16(x) ((uint16_t)(((uint16_t)((const unsigned char *)(x))[0] << 8) | ((uint16_t)((const unsigned char *)(x))[1])))
 
-#define RB24(x) (((unsigned char *)(x))[0] << 16 | ((unsigned char *)(x))[1] << 8 | ((unsigned char *)(x))[2])
+#define RB24(x) (((const unsigned char *)(x))[0] << 16 | ((const unsigned char *)(x))[1] << 8 | ((const unsigned char *)(x))[2])
 
 #define CCX_NOPTS ((int64_t)UINT64_C(0x8000000000000000))
 

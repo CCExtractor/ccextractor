@@ -75,7 +75,7 @@ impl dtvcc_tv_screen {
                     .map_err(|err| err.to_string())
             }?;
             debug!("dtvcc_writer_output: creating {filename}");
-            let file = File::create(filename).map_err(|err| err.to_string())?;
+            let file = File::create(filename).map_err(|err| format!("{}: {}", filename, err))?;
             writer.writer_ctx.fd = file.into_raw_fd();
 
             if is_false(writer.no_bom) {
@@ -110,7 +110,8 @@ impl dtvcc_tv_screen {
                         .map_err(|err| err.to_string())
                 }?;
                 debug!("dtvcc_writer_output: creating {}", filename);
-                let file = File::create(filename).map_err(|err| err.to_string())?;
+                let file =
+                    File::create(filename).map_err(|err| format!("{}: {}", filename, err))?;
                 writer.writer_ctx.fhandle = file.into_raw_handle();
 
                 if is_false(writer.no_bom) {
@@ -853,5 +854,42 @@ mod test {
             "writer_output should return error when filename and fd are invalid"
         );
         assert_eq!(result.unwrap_err(), "Filename missing");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_writer_output_create_error_names_file() {
+        // When the per-service file can't be created (e.g. -o /dev/null makes
+        // it /dev/null.p1.svc01.srt), the error must say which file it was.
+        use std::ffi::CString;
+
+        let screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+
+        // A directory can't be opened as a file.
+        let dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let path = dir.path().to_str().unwrap().to_owned();
+        let filename = CString::new(path.clone()).unwrap();
+        writer_ctx.fd = -1;
+        writer_ctx.filename = filename.as_ptr() as *mut _;
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+        );
+
+        let err = screen
+            .writer_output(&mut writer)
+            .expect_err("creating a file over a directory must fail");
+        assert!(err.contains(&path), "error should name the file: {}", err);
+        assert_eq!(writer_ctx.fd, -1);
     }
 }

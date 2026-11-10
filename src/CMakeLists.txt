@@ -175,6 +175,12 @@ if (NETWORKING_DEBUG)
 endif (NETWORKING_DEBUG)
 add_subdirectory (lib_ccx)
 
+# ccx is STATIC, so CMake propagates its PRIVATE link libraries to consumers as
+# $<LINK_ONLY:...>, pinning the FFmpeg libs before rust/libccx_rust.a. GNU ld
+# resolves left to right, so rsmpeg's FFmpeg symbols would already be discarded.
+# This file lists every dependency explicitly and owns the order (EXTRA_FFMPEG_LIBS).
+set_property (TARGET ccx PROPERTY INTERFACE_LINK_LIBRARIES "")
+
 aux_source_directory(${PROJECT_SOURCE_DIR} SOURCEFILE)
 set (EXTRA_LIBS ${EXTRA_LIBS} ccx)
 set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
@@ -219,6 +225,14 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   # can place them AFTER ccx_rust in the link order. GNU ld processes
   # left-to-right; ccx_rust (containing rsmpeg) references FFmpeg symbols
   # like swr_get_out_samples, so FFmpeg shared libs must come after it.
+  # pkg-config may resolve FFmpeg outside the default linker search path (e.g. a
+  # vendored prefix via PKG_CONFIG_PATH). Without these dirs the bare -l flags
+  # below silently resolve against whatever FFmpeg is installed system-wide,
+  # which can be a different major version than the headers we just found.
+  link_directories (${AVFORMAT_LIBRARY_DIRS} ${AVUTIL_LIBRARY_DIRS}
+                    ${AVCODEC_LIBRARY_DIRS} ${AVFILTER_LIBRARY_DIRS}
+                    ${SWSCALE_LIBRARY_DIRS} ${SWRESAMPLE_LIBRARY_DIRS})
+
   set (EXTRA_FFMPEG_LIBS ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES}
        ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES} ${SWSCALE_LIBRARIES}
        ${SWRESAMPLE_LIBRARIES})
@@ -271,11 +285,6 @@ if (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${TESSERACT_INCLUDE_DIRS})
   set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${LEPTONICA_INCLUDE_DIRS})
-
-  # Collect FFmpeg libs for placement after ccx_rust (same reason as WITH_FFMPEG)
-  set (EXTRA_FFMPEG_LIBS ${EXTRA_FFMPEG_LIBS} ${AVFORMAT_LIBRARIES}
-       ${AVUTIL_LIBRARIES} ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES}
-       ${SWSCALE_LIBRARIES})
 endif (PKG_CONFIG_FOUND AND WITH_HARDSUBX)
 
 add_executable (ccextractor ${SOURCEFILE} ${FREETYPE_SOURCE} ${UTF8PROC_SOURCE})

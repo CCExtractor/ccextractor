@@ -12,7 +12,6 @@
 
 #include <stdio.h>
 #include "lib_ccx/lib_ccx.h"
-#include "lib_ccx/configuration.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>

@@ -122,8 +122,8 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 	NAL_stop = remove_03emu(NAL_start + nal_header_size, NAL_stop);
 	payload_start = NAL_start + nal_header_size;
 
-	dvprint("BEGIN NAL unit type: %d length %d ref_idc: %d - Buffered captions before: %d (HEVC: %d)\n",
-		nal_unit_type, NAL_stop - NAL_start - nal_header_size, dec_ctx->avc_ctx->nal_ref_idc,
+	dvprint("BEGIN NAL unit type: %d length %lld ref_idc: %d - Buffered captions before: %d (HEVC: %d)\n",
+		nal_unit_type, (long long)(NAL_stop - NAL_start - nal_header_size), dec_ctx->avc_ctx->nal_ref_idc,
 		!dec_ctx->avc_ctx->cc_buffer_saved, dec_ctx->avc_ctx->is_hevc);
 
 	if (NAL_stop == NULL) // remove_03emu failed.
@@ -188,8 +188,8 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 		dump(CCX_DMT_VIDES, payload_start, len > 160 ? 160 : len, 0, 0);
 	}
 
-	dvprint("END   NAL unit type: %d length %d ref_idc: %d - Buffered captions after: %d\n",
-		nal_unit_type, NAL_stop - NAL_start - nal_header_size, dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
+	dvprint("END   NAL unit type: %d length %lld ref_idc: %d - Buffered captions after: %d\n",
+		nal_unit_type, (long long)(NAL_stop - NAL_start - nal_header_size), dec_ctx->avc_ctx->nal_ref_idc, !dec_ctx->avc_ctx->cc_buffer_saved);
 }
 
 // Process inbuf bytes in buffer holding and AVC (H.264) video stream.
@@ -775,7 +775,7 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		for (int i = 0; i < num_ref_frame_in_pic_order_cnt_cycle; i++)
 		{
 			tmp = read_exp_golomb(&q1);
-			dvprint("offset_for_ref_frame [%d / %d] =               % 4lld (%#llX)\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp, tmp);
+			dvprint("offset_for_ref_frame [%d / %" PRId64 "] =               % 4lld (%#llX)\n", i, num_ref_frame_in_pic_order_cnt_cycle, tmp, tmp);
 		}
 	}
 	else

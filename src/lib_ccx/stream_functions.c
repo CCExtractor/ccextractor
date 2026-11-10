@@ -295,6 +295,13 @@ int read_video_pes_header(struct ccx_demuxer *ctx, struct demuxer_data *data, un
 	// Read the next video PES
 	// ((nextheader[3]&0xf0)==0xe0)
 	long long result;
+
+	// A caller-supplied buffer must hold the PES length and nextheader[6]
+	// before either is read; a truncated packet can leave fewer bytes.
+	if (sbuflen > 0 && sbuflen < 7)
+	{
+		return -1;
+	}
 	unsigned peslen = nextheader[4] << 8 | nextheader[5];
 	unsigned payloadlength = 0;	 // Length of packet data bytes
 	static LLONG current_pts_33 = 0; // Last PTS from the header, without rollover bits

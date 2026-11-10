@@ -12,6 +12,11 @@
 #define CCX_DECODER_608_SCREEN_WIDTH 32
 #define MAXBFRAMES 50
 #define SORTBUF (2 * MAXBFRAMES + 1)
+// Max caption triplets one hdcc slot can hold. Matches src/rust/src/lib.rs's
+// MAX_CC_COUNT — keep both in sync, see the Rust-side unit test that checks this.
+// This is the internal storage capacity for one HDCC slot, not the
+// 31-triplet limit of an individual cc_data header.
+#define HDCC_MAX_TRIPLETS_PER_SLOT (10 * 31)
 
 /* flag raised when end of display marker arrives in Dvb Subtitle */
 #define SUB_EOD_MARKER (1 << 0)
@@ -217,7 +222,7 @@ struct lib_cc_decode
 	// Store fts;
 	LLONG cc_fts[SORTBUF];
 	// Store HD CC packets
-	unsigned char cc_data_pkts[SORTBUF][10 * 31 * 3 + 1]; // *10, because MP4 seems to have different limits
+	unsigned char cc_data_pkts[SORTBUF][HDCC_MAX_TRIPLETS_PER_SLOT * 3 + 1];
 
 	// The sequence number of the current anchor frame.  All currently read
 	// B-Frames belong to this I- or P-frame.

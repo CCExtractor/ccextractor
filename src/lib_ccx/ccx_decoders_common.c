@@ -3,7 +3,6 @@ made to reuse, not duplicate, as many functions as possible */
 
 #include "ccx_decoders_common.h"
 #include "ccx_common_structs.h"
-#include "ccx_common_char_encoding.h"
 #include "ccx_common_constants.h"
 #include "ccx_common_timing.h"
 #include "ccx_common_common.h"

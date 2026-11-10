@@ -38,7 +38,14 @@ Note:If you installed ffmpeg on non-standard location, please change/update your
 ## How to compile ccextractor
 
 ### On Linux:
-`make ENABLE_FFMPEG=yes`
+FFmpeg support is enabled through CMake:
+```bash
+mkdir build && cd build
+cmake -DWITH_FFMPEG=ON ../src
+make
+```
+The autoconf build in `linux/` accepts `--enable-ffmpeg`, but it does not
+currently enable FFmpeg support.
 
 ### On Windows:
 #### Set preprocessor flag `ENABLE_FFMPEG=1`

@@ -1,4 +1,5 @@
 use clap::{Parser, ValueEnum};
+use lib_ccxr::time::units::Timestamp;
 use strum_macros::Display;
 
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
@@ -170,7 +171,7 @@ pub struct Args {
     pub outinterval: Option<i32>,
     /// When segmenting files, do it only after a I frame
     /// trying to behave like FFmpeg
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_FILE_SEGMENTATION)]
+    #[arg(long, alias="key", verbatim_doc_comment, help_heading=OUTPUT_FILE_SEGMENTATION)]
     pub segmentonkeyonly: bool,
     /// Read the input via UDP (listening in the specified port)
     /// instead of reading a file.
@@ -184,7 +185,7 @@ pub struct Args {
     /// Sends data in BIN format to the server
     /// according to the CCExtractor's protocol over
     /// TCP. For IPv6 use [address] instead
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT, value_parser=parse_sendto)]
     pub sendto: Option<String>,
     /// Specfies optional port for sendto
     #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
@@ -196,11 +197,11 @@ pub struct Args {
     pub tcp: Option<u16>,
     /// Sets server password for new connections to
     /// tcp server
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    #[arg(long, alias="tcppassword", value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_password: Option<String>,
     /// Sends to the server short description about
     /// captions e.g. channel name or file name
-    #[arg(long, value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
+    #[arg(long, alias="tcpdesc", value_name="port", verbatim_doc_comment, help_heading=NETWORK_SUPPORT)]
     pub tcp_description: Option<String>,
     /// Values: 1 = Output Field 1
     ///         2 = Output Field 2
@@ -214,7 +215,7 @@ pub struct Args {
     pub append: bool,
     /// When in srt/sami mode, process captions in channel 2
     /// instead of channel 1.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
+    #[arg(long, alias="CC2", verbatim_doc_comment, help_heading=OPTION_AFFECT_PROCESSED)]
     pub cc2: bool,
     /// Enable CEA-708 (DTVCC) captions processing for the listed
     /// services. The parameter is a comma delimited list
@@ -270,9 +271,9 @@ pub struct Args {
     pub dvdraw: bool,
     #[arg(long, hide = true)]
     pub mcc: bool,
-    #[arg(long, hide = true)]
+    #[arg(long, alias = "transcript", hide = true)]
     pub txt: bool,
-    #[arg(long, hide = true)]
+    #[arg(long, alias = "timedtranscript", hide = true)]
     pub ttxt: bool,
     #[arg(long, hide = true)]
     pub null: bool,
@@ -280,16 +281,16 @@ pub struct Args {
     /// to Program or Transport Streams with MPEG2 data and
     /// overrides the default PTS timing.
     /// GOP timing is always used for Elementary Streams.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="gt", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub goptime: bool,
     /// Never use GOP timing (use PTS), even if ccextractor
     /// detects GOP timing is the reasonable choice.
-    #[arg(long, verbatim_doc_comment, conflicts_with="goptime", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, aliases=["nogt", "nogoptime"], verbatim_doc_comment, conflicts_with="goptime", help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub no_goptime: bool,
     /// Fix padding - some cards (or providers, or whatever)
     /// seem to send 0000 as CC padding instead of 8080. If you
     /// get bad timing, this might solve it.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="fp", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub fixpadding: bool,
     /// Use 90090 (instead of 90000) as MPEG clock frequency.
     /// (reported to be needed at least by Panasonic DMR-ES15
@@ -314,7 +315,7 @@ pub struct Args {
     /// are processing video that was split with a editing
     /// tool, use --videoedited so ccextractor doesn't try to rebuild
     /// the original timing.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="ve", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub videoedited: bool,
     /// Consider the file as a continuous stream that is
     /// growing as ccextractor processes it, so don't try
@@ -333,7 +334,7 @@ pub struct Args {
     /// to order the CC information.  The default way is to
     /// use the PTS information.  Use this switch only when
     /// needed.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="poc", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub usepicorder: bool,
     /// Force MythTV code branch.
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
@@ -362,7 +363,7 @@ pub struct Args {
     /// program in the input, it will list the programs found
     /// and terminate without doing anything, unless
     /// --autoprogram (see below) is used.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="pn", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub program_number: Option<String>,
     /// If there's more than one program in the stream, just use
     /// the first one we find that contains a suitable stream.
@@ -394,7 +395,7 @@ pub struct Args {
     /// If the video was recorder using a Hauppauge card, it
     /// might need special processing. This parameter will
     /// force the special treatment.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="haup", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub hauppauge: bool,
     /// In MP4 files the closed caption data can be embedded in
     /// the video track or in a dedicated CC track. If a
@@ -426,13 +427,18 @@ pub struct Args {
     pub deblev: bool,
     /// Analyze the video stream even if it's not used for
     /// subtitles. This allows to provide video information.
-    #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
+    #[arg(long, alias="anvid", verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub analyzevideo: bool,
     /// Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)
     #[arg(long, verbatim_doc_comment, help_heading=OPTIONS_AFFECTING_INPUT_FILES)]
     pub timestamp_map: bool,
+    /// Legacy spelling kept for old scripts. The header used to be on by
+    /// default and this turned it off; it is now off unless --timestamp-map
+    /// is given, so this flag has nothing left to do.
+    #[arg(long, alias = "ntm", hide = true, conflicts_with = "timestamp_map")]
+    pub no_timestamp_map: bool,
     /// Don't attempt to correct typos with Levenshtein distance.
-    #[arg(long, verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
+    #[arg(long, alias="nolevdist", verbatim_doc_comment, help_heading=LEVENSHTEIN_DISTANCE)]
     pub no_levdist: bool,
     /// Minimum distance we always allow regardless
     /// of the length of the strings.Default 2.
@@ -479,13 +485,13 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub latin1: bool,
     /// For .srt/.sami/.vtt, don't add font color tags.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, aliases=["nofc", "nofontcolor"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub no_fontcolor: bool,
     /// For .srt/.sami/.vtt, don't covert html unsafe character
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="nohtmlescape", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub no_htmlescape: bool,
     /// For .srt/.sami/.vtt, don't add typesetting tags.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, aliases=["nots", "notypesetting"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub no_typesetting: bool,
     /// Trim lines.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -495,7 +501,7 @@ pub struct Args {
     /// files to have a font tag, which makes the files
     /// larger. Add the color you want in RGB, such as
     /// --defaultcolor #FF0000 for red.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="dc", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub defaultcolor: Option<String>,
     /// Sentence capitalization. Use if you hate
     /// ALL CAPS in subtitles.
@@ -512,7 +518,7 @@ pub struct Args {
     /// exactly as they appear in the file.
     /// Use one line per word. Lines starting with # are
     /// considered comments and discarded.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="caf", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub capfile: Option<String>,
     /// Censors profane words from subtitles.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
@@ -525,7 +531,7 @@ pub struct Args {
     /// Split output text so each frame contains a complete
     /// sentence. Timings are adjusted based on number of
     /// characters
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="sbs", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub splitbysentence: bool,
     /// For timed transcripts that have an absolute date
     /// instead of a timestamp relative to the file start), use
@@ -546,7 +552,7 @@ pub struct Args {
     /// free to play with it but be aware that this format
     /// is really live - don't rely on its output format
     /// not changing between versions.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="UCLA", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub ucla: bool,
     /// Map Latin symbols to Cyrillic ones in special cases
     /// of Russian Teletext files (issue #1086)
@@ -563,13 +569,13 @@ pub struct Args {
     pub xds: bool,
     /// Use LF (UNIX) instead of CRLF (DOS, Windows) as line
     /// terminator.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="LF", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub lf: bool,
     /// Use \0 instead of CRLF or LF for frame termination (see '--lf')
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub null_terminated: bool,
     /// For MCC Files, force dropframe frame count.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="DF", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub df: bool,
     /// Based on position on screen, attempt to determine
     /// the different speakers and a dash (-) when each
@@ -668,7 +674,7 @@ pub struct Args {
     pub mkvlang: Option<String>,
     /// When processing DVB don't use the OCR to write the text as
     /// comments in the XML file.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
+    #[arg(long, alias="nospupngocr", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub no_spupngocr: bool,
     /// Specify the full path of the font that is to be used when
     /// generating SPUPNG files. If not specified, you need to
@@ -685,22 +691,22 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, value_name="path", help_heading=OUTPUT_AFFECTING_OUTPUT_FILES)]
     pub italics: Option<String>,
     /// Forces input buffering.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, alias="bi", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub bufferinput: bool,
     /// Disables input buffering.
-    #[arg(long, verbatim_doc_comment, conflicts_with="bufferinput", help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, aliases=["nobi", "nobufferinput"], verbatim_doc_comment, conflicts_with="bufferinput", help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub no_bufferinput: bool,
     /// Specify a size for reading, in bytes (suffix with K or
     /// or M for kilobytes and megabytes). Default is 16M.
-    #[arg(long, verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING)]
-    pub buffersize: Option<String>,
+    #[arg(long, alias="bs", verbatim_doc_comment, value_name="val", help_heading=OUTPUT_AFFECTING_BUFFERING, value_parser=parse_buffer_size)]
+    pub buffersize: Option<i32>,
     /// keep-output-close. If used then CCExtractor will close
     /// the output file after writing each subtitle frame and
     /// attempt to create it again when needed.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub koc: bool,
     /// Flush the file buffer whenever content is written.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, alias="ff", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub forceflush: bool,
     /// Direct Roll-Up. When in roll-up mode, write character by
     /// character instead of line by line. Note that this
@@ -710,7 +716,7 @@ pub struct Args {
     /// If you hate the repeated lines caused by the roll-up
     /// emulation, you can have ccextractor write only one
     /// line at a time, getting rid of these repeated lines.
-    #[arg(long, alias="noru", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
+    #[arg(long, aliases=["noru", "norollup"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_BUFFERING)]
     pub no_rollup: bool,
     /// roll-up captions can consist of 2, 3 or 4 visible
     /// lines at any time (the number of lines is part of
@@ -732,24 +738,25 @@ pub struct Args {
     /// all times. For example, --delay 400 makes subtitles
     /// appear 400ms late. You can also use negative numbers
     /// to make subs appear early.
-    #[arg(long, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
+    #[arg(long, allow_negative_numbers=true, verbatim_doc_comment, value_name="ms", help_heading=OUTPUT_AFFECTING_TIMING)]
     pub delay: Option<i64>,
     /// Only write caption information that starts after the
     /// given time.
     /// Time can be seconds, MM:SS or HH:MM:SS.
+    /// The hours component in HH:MM:SS is limited to 255.
     /// For example, --startat 3:00 means 'start writing from
     /// minute 3.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub startat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startat: Option<Timestamp>,
     /// Stop processing after the given time (same format as
     /// --startat).
     /// The --startat and --endat options are honored in all
     /// output formats.  In all formats with timing information
     /// the times are unchanged.
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT)]
-    pub endat: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=OUTPUT_AFFECTING_SEGMENT, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endat: Option<Timestamp>,
     /// Write 'num' screenfuls and terminate processing.
-    #[arg(long, verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
+    #[arg(long, alias="scr", verbatim_doc_comment, value_name="num", help_heading=OUTPUT_AFFECTING_SEGMENT)]
     pub screenfuls: Option<String>,
     /// --codec dvbsub
     ///     select the dvb subtitle from all elementary stream,
@@ -763,7 +770,7 @@ pub struct Args {
     ///     ignore dvb subtitle and follow default behaviour
     /// --no-codec teletext
     ///     ignore teletext subtitle
-    #[arg(long, verbatim_doc_comment, conflicts_with="codec", value_name="value", help_heading=OUTPUT_AFFECTING_CODEC)]
+    #[arg(long, alias="nocodec", verbatim_doc_comment, conflicts_with="codec", value_name="value", help_heading=OUTPUT_AFFECTING_CODEC)]
     pub no_codec: Option<CCXCodec>,
     /// Write this text as start credits. If there are
     /// several lines, separate them with the
@@ -772,20 +779,20 @@ pub struct Args {
     pub startcreditstext: Option<String>,
     /// Don't display the start credits before this
     /// time (S, or MM:SS). Default: 0
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsnotbefore: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsnotbefore: Option<Timestamp>,
     /// Don't display the start credits after this
     /// time (S, or MM:SS). Default: 5:00
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsnotafter: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsnotafter: Option<Timestamp>,
     /// Start credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsforatleast: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsforatleast: Option<Timestamp>,
     /// Start credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub startcreditsforatmost: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub startcreditsforatmost: Option<Timestamp>,
     /// Write this text as end credits. If there are
     /// several lines, separate them with the
     /// characters \n, for example Line1\nLine 2.
@@ -793,12 +800,12 @@ pub struct Args {
     pub endcreditstext: Option<String>,
     /// End credits need to be displayed for at least
     /// this time (S, or MM:SS). Default: 2
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub endcreditsforatleast: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endcreditsforatleast: Option<Timestamp>,
     /// End credits should be displayed for at most
     /// this time (S, or MM:SS). Default: 5
-    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS)]
-    pub endcreditsforatmost: Option<String>,
+    #[arg(long, verbatim_doc_comment, value_name="time", help_heading=ADDING_CREDITS, value_parser=Timestamp::parse_optional_hhmmss_from_str)]
+    pub endcreditsforatmost: Option<Timestamp>,
     /// Show lots of debugging output.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub debug: bool,
@@ -827,7 +834,7 @@ pub struct Args {
     pub cbraw: bool,
     /// Disable the syncing code.  Only useful for debugging
     /// purposes.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long, alias="nosync", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub no_sync: bool,
     /// Disable the removal of trailing padding blocks
     /// when exporting to bin format.  Only useful for
@@ -839,17 +846,17 @@ pub struct Args {
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parsedebug: bool,
     /// Print Program Association Table dump.
-    #[arg(long="parsePAT", alias="pat", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePAT", aliases=["pat", "parsepat"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pat: bool,
     /// Print Program Map Table dump.
-    #[arg(long="parsePMT", alias="pmt", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long="parsePMT", aliases=["pmt", "parsepmt"], verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub parse_pmt: bool,
     /// Hex-dump defective TS packets.
     #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub dumpdef: bool,
     /// If no CC packets are detected based on the PMT, try
     /// to find data in all packets by scanning.
-    #[arg(long, verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
+    #[arg(long, alias="investigate_packets", verbatim_doc_comment, help_heading=OUTPUT_AFFECTING_DEBUG_DATA)]
     pub investigate_packets: bool,
     /// Use this page for subtitles (if this parameter
     /// is not used, try to autodetect). In Spain the
@@ -904,10 +911,10 @@ pub struct Args {
     /// in a easy to parse format. This is intended to be
     /// used by other programs. See docs directory for.
     /// details.
-    #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
+    #[arg(long, alias="gui_mode_reports", verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
     pub gui_mode_reports: bool,
     /// Suppress the output of the progress bar
-    #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
+    #[arg(long, alias="no_progress_bar", verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
     pub no_progress_bar: bool,
     /// Don't write any message.
     #[arg(long, verbatim_doc_comment, help_heading=COMMUNICATION_PROTOCOL)]
@@ -920,13 +927,13 @@ pub struct Args {
     pub hardsubx: bool,
     /// Search for burned-in ticker text at the bottom of
     /// the screen.
-    #[arg(long, verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long, alias="tickertape", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub tickertext: bool,
     /// Set the OCR mode to either frame-wise, word-wise
     /// or letter wise.
     /// e.g. --ocr-mode frame (default), --ocr-mode word,
     /// --ocr-mode letter
-    #[arg(long = "ocr-mode", verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "ocr-mode", alias="ocr_mode", verbatim_doc_comment, value_name="mode", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub ocr_mode: Option<String>,
     /// Specify the color of the subtitles
     /// Possible values are in the set
@@ -935,7 +942,7 @@ pub struct Args {
     /// may also be specified.
     /// e.g. --subcolor white or --subcolor 270 (for violet).
     /// Refer to an HSV color chart for values.
-    #[arg(long, verbatim_doc_comment, value_name="color", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long, alias="sub_color", verbatim_doc_comment, value_name="color", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub subcolor: Option<String>,
     /// Specify the minimum duration that a subtitle line
     /// must exist on the screen.
@@ -944,20 +951,20 @@ pub struct Args {
     /// processing time.
     /// The recommended value is 0.5 (default).
     /// e.g. --min-sub-duration 1.0 (for a duration of 1 second)
-    #[arg(long = "min-sub-duration", verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "min-sub-duration", alias="min_sub_duration", verbatim_doc_comment, value_name="duration", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub min_sub_duration: Option<f32>,
     /// Specify whether italics are to be detected from the
     /// OCR text.
     /// Italic detection automatically enforces the OCR mode
     /// to be word-wise
-    #[arg(long = "detect-italics", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "detect-italics", alias="detect_italics", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub detect_italics: bool,
     /// Specify the classifier confidence threshold between
     /// 1 and 100.
     /// Try and use a threshold which works for you if you get
     /// a lot of garbage text.
     /// e.g. --conf-thresh 50
-    #[arg(long = "conf-thresh", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "conf-thresh", alias="conf_thresh", verbatim_doc_comment, help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub conf_thresh: Option<f32>,
     /// For white subtitles only, specify the luminance
     /// threshold between 1 and 100
@@ -965,7 +972,7 @@ pub struct Args {
     /// values may give you better results
     /// Recommended values are in the range 80 to 100.
     /// The default value is 95
-    #[arg(long = "whiteness-thresh", verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
+    #[arg(long = "whiteness-thresh", aliases=["whiteness_thresh", "lum_thresh"], verbatim_doc_comment, value_name="threshold", help_heading=BURNEDIN_SUBTITLE_EXTRACTION)]
     pub whiteness_thresh: Option<f32>,
     /// This option will be used if the file should have both
     /// closed captions and burned in subtitles
@@ -1061,4 +1068,60 @@ pub enum OutFormat {
     /// URL specified by --curlposturl. Don't produce
     /// any file output.
     Curl,
+}
+
+/// Parse a --buffersize value: a byte count, optionally suffixed with K, M
+/// or G (any case). E.g. "8192", "64K", "16M".
+pub(crate) fn parse_buffer_size(value: &str) -> Result<i32, String> {
+    let value = value.trim();
+    let (digits, multiplier) = match value.chars().last() {
+        Some('k' | 'K') => (&value[..value.len() - 1], 1024),
+        Some('m' | 'M') => (&value[..value.len() - 1], 1024 * 1024),
+        Some('g' | 'G') => (&value[..value.len() - 1], 1024 * 1024 * 1024),
+        _ => (value, 1),
+    };
+
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return Err("expected a size in bytes, optionally suffixed with K, M or G".to_string());
+    }
+
+    digits
+        .parse::<i32>()
+        .ok()
+        .and_then(|size| size.checked_mul(multiplier))
+        .ok_or_else(|| "size is too large".to_string())
+}
+
+/// Split a --sendto value into address and optional port.
+/// Accepts "host", "host:port", "[ipv6]" and "[ipv6]:port".
+pub(crate) fn split_sendto_address(value: &str) -> Result<(String, Option<u16>), String> {
+    let parse_port = |port: &str| {
+        port.parse::<u16>()
+            .map_err(|_| format!("invalid port '{port}'"))
+    };
+
+    if let Some(bracketed) = value.strip_prefix('[') {
+        let Some(end_bracket) = bracketed.find(']') else {
+            return Err("for IPv6 use [address]:port".to_string());
+        };
+        let addr = &bracketed[..end_bracket];
+        let port = match bracketed[end_bracket + 1..].strip_prefix(':') {
+            Some(port) => Some(parse_port(port)?),
+            None => None,
+        };
+        return Ok((addr.to_string(), port));
+    }
+
+    match value.rfind(':') {
+        Some(colon) => Ok((
+            value[..colon].to_string(),
+            Some(parse_port(&value[colon + 1..])?),
+        )),
+        None => Ok((value.to_string(), None)),
+    }
+}
+
+/// clap value parser for --sendto: validates the address, keeps the text.
+fn parse_sendto(value: &str) -> Result<String, String> {
+    split_sendto_address(value).map(|_| value.to_string())
 }

@@ -136,7 +136,7 @@ pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
 /// # Returns
 /// The two bytes, or None if parsing fails
 pub fn parse_hex_pair(s: &str) -> Option<[u8; 2]> {
-    if s.len() != 4 {
+    if s.len() != 4 || !s.as_bytes().iter().all(u8::is_ascii_hexdigit) {
         return None;
     }
     let b1 = u8::from_str_radix(&s[0..2], 16).ok()?;
@@ -326,6 +326,26 @@ mod tests {
         assert_eq!(parse_hex_pair("94"), None); // Too short
         assert_eq!(parse_hex_pair("942020"), None); // Too long
         assert_eq!(parse_hex_pair(""), None); // Empty
+    }
+
+    #[test]
+    fn test_parse_hex_pair_rejects_non_hex_tokens() {
+        for token in ["a€", "€a", "😀", "éé", "+120", "94+0", "zzzz"] {
+            assert_eq!(parse_hex_pair(token), None, "token: {token:?}");
+        }
+    }
+
+    #[test]
+    fn test_parse_scc_skips_unicode_tokens_and_keeps_valid_pairs() {
+        let content = "Scenarist_SCC V1.0\n\n00:00:01:00\t9420 a€ 4849 😀 942f\n";
+        let result = parse_scc(content, SccFrameRate::Fps30);
+        assert_eq!(result.bytes_consumed, content.len());
+        assert_eq!(result.lines.len(), 1);
+        assert_eq!(result.lines[0].time_ms, 1000);
+        assert_eq!(
+            result.lines[0].pairs,
+            [[0x94, 0x20], [0x48, 0x49], [0x94, 0x2f]]
+        );
     }
 
     #[test]

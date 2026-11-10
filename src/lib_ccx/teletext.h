@@ -39,6 +39,12 @@ typedef struct
 	uint64_t prev_hide_timestamp;
 	uint64_t prev_show_timestamp;
 	uint8_t receiving_data;		// Currently receiving data for this page
+	// G0 character set in effect for this page (text is converted when the page is flushed)
+	uint8_t g0_default;
+	uint8_t g0_current;
+	uint8_t g0_m29;
+	uint8_t g0_x28;
+	uint8_t has_text;
 } teletext_page_state_t;
 
 // application states -- flags for notices that should be printed only once
@@ -62,6 +68,8 @@ typedef enum
 	DATA_UNIT_VPS = 0xc3,
 	DATA_UNIT_CLOSED_CAPTIONS = 0xc5
 } data_unit_t;
+
+struct telx_held_cue;
 
 struct TeletextCtx
 {
@@ -90,6 +98,7 @@ struct TeletextCtx
 	int num_active_pages;                                       // Number of pages being extracted
 	int current_page_idx;                                       // Index of page currently receiving data (-1 = none)
 	int multi_page_mode;                                        // 1 = multi-page mode active
+	struct telx_held_cue *held_cues;                            // Multi-page: finished cues not yet output, by start time
 
 	// Current and previous page buffers (legacy single-page mode)
 	// These are still used when multi_page_mode == 0 for backward compatibility

@@ -60,9 +60,9 @@ endif (WITH_OCR)
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
-# PRIVATE prevents transitive propagation to consumers (ccextractor).
-# The parent CMakeLists.txt adds all needed libs explicitly, controlling
-# link order so FFmpeg libs appear after ccx_rust (required by GNU ld).
+# PRIVATE does not stop propagation here: ccx is STATIC, so CMake still records
+# these in INTERFACE_LINK_LIBRARIES as $<LINK_ONLY:...>. The parent clears that
+# and owns the link order (FFmpeg must follow ccx_rust for GNU ld).
 target_link_libraries (ccx PRIVATE ${EXTRA_LIBS})
 target_include_directories (ccx PUBLIC ${EXTRA_INCLUDES})
 

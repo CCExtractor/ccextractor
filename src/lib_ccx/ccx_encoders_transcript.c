@@ -236,7 +236,7 @@ int write_cc_subtitle_as_transcript(struct cc_subtitle *sub, struct encoder_ctx 
 }
 
 // TODO Convert CC line to TEXT format and remove this function
-void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
+int write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx *context, int line_number)
 {
 	int ret = 0;
 	int length = get_str_basic(context->subline, data->characters[line_number],
@@ -255,7 +255,7 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 			// is set for example by the write_char function, it possible that we don't have one in empty lines (unclear)
 			// For now, let's not consider this a bug as before and just return.
 			// fatal (EXIT_BUG_BUG, "Bug in timedtranscript (ts_start_of_current_line==-1). Please report.");
-			return;
+			return 0;
 		}
 
 		if (context->transcript_settings->showStartTime)
@@ -333,7 +333,9 @@ void write_cc_line_as_transcript2(struct eia608_screen *data, struct encoder_ctx
 		{
 			mprint("Warning:Loss of data\n");
 		}
+		return 1;
 	}
+	return 0;
 	// fprintf (wb->fh,encoded_crlf);
 }
 
@@ -356,8 +358,7 @@ int write_cc_buffer_as_transcript2(struct eia608_screen *data, struct encoder_ct
 				}
 			}
 
-			write_cc_line_as_transcript2(data, context, i);
-			wrote_something = 1;
+			wrote_something |= write_cc_line_as_transcript2(data, context, i);
 		}
 	}
 

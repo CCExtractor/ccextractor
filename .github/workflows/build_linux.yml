@@ -27,7 +27,7 @@ on:
     - 'src/rust/**'
 jobs:
   build_shell:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
@@ -50,7 +50,7 @@ jobs:
         name: CCExtractor Linux build
         path: ./linux/artifacts
   build_shell_migrations:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libavcodec-dev libavdevice-dev libx11-dev libxcb1-dev libxcb-shm0-dev
@@ -73,7 +73,7 @@ jobs:
         name: CCExtractor Linux build (with migrations)
         path: ./linux/artifacts
   build_autoconf:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
@@ -91,7 +91,7 @@ jobs:
       run: ./ccextractor --version
       working-directory: ./linux
   cmake:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
@@ -104,7 +104,7 @@ jobs:
     - name: Display version information
       run: ./build/ccextractor --version
   cmake_ffmpeg_mp4:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev libleptonica-dev libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev libavdevice-dev libswresample-dev libswscale-dev
@@ -124,7 +124,7 @@ jobs:
     - name: Display version information (FFmpeg MP4 build)
       run: ./build_ffmpeg/ccextractor --version
   cmake_ocr_hardsubx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v7
     - name: Install dependencies
@@ -140,7 +140,7 @@ jobs:
     - name: Display version information
       run: ./build/ccextractor --version
   build_rust:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Install dependencies
         run: sudo apt update && sudo apt-get install libgpac-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
@@ -154,10 +154,7 @@ jobs:
             src/rust/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - uses: dtolnay/rust-toolchain@stable
       - name: build
         run: cargo build 
         working-directory: ./src/rust

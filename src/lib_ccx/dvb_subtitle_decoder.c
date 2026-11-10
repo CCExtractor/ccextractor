@@ -1913,8 +1913,8 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 
 		if (p_end - p < segment_length)
 		{
-			mprint("dvbsub_decode: incomplete, broken or empty packet, remaining bytes=%d, segment_length=%d\n",
-			       p_end - p, segment_length);
+			mprint("dvbsub_decode: incomplete, broken or empty packet, remaining bytes=%lld, segment_length=%d\n",
+			       (long long)(p_end - p), segment_length);
 			return -1;
 		}
 
@@ -1922,7 +1922,7 @@ int dvbsub_decode(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, co
 		{
 			// debug traces
 			dbg_print(CCX_DMT_DVB, "DVBSUB - PTS: %" PRId64 ", ", dec_ctx->timing->current_pts);
-			dbg_print(CCX_DMT_DVB, "FTS: %d, ", dec_ctx->timing->fts_now);
+			dbg_print(CCX_DMT_DVB, "FTS: %" PRId64 ", ", dec_ctx->timing->fts_now);
 			dbg_print(CCX_DMT_DVB, "SEGMENT TYPE: %2X, ", segment_type);
 
 			switch (segment_type)
@@ -2019,10 +2019,11 @@ int parse_dvb_description(struct dvb_config *cfg, unsigned char *data,
 	if (cfg->n_language > MAX_LANGUAGE_PER_DESC)
 	{
 		mprint("not supported more then %d language", MAX_LANGUAGE_PER_DESC);
+		cfg->n_language = MAX_LANGUAGE_PER_DESC;
 	}
 
 	unsigned char *data_ptr = data;
-	for (int i = 0; i < cfg->n_language; i++, data_ptr += i * 8)
+	for (int i = 0; i < cfg->n_language; i++, data_ptr += 8)
 	{
 		/* setting language to undefined if not found in language lkup table */
 		char lang_name[4];

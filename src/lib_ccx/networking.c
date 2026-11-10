@@ -822,7 +822,7 @@ ssize_t read_block(int fd, char *command, char *buf, size_t *buf_len)
 		if (len > *buf_len)
 		{
 			ign_bytes = len - *buf_len;
-			mprint("read_block() warning: Buffer overflow, ignoring %d bytes\n",
+			mprint("read_block() warning: Buffer overflow, ignoring %zu bytes\n",
 			       ign_bytes);
 			len = *buf_len;
 		}

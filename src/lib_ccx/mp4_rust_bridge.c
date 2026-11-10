@@ -222,14 +222,14 @@ int ccx_mp4_process_cc_packet(struct lib_ccx_ctx *ctx, int sub_type_c608,
 
 int ccx_mp4_process_tx3g_packet(struct lib_ccx_ctx *ctx,
 				unsigned char *data, unsigned int data_length,
-				long long dts, int cts_offset,
-				unsigned int timescale,
+				long long start_ms,
 				struct cc_subtitle *sub)
 {
 	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
-	set_current_pts(dec_ctx->timing, (dts + cts_offset) * MPEG_CLOCK_FREQ / timescale);
+	/* Keep the global timing pointer roughly in sync with this track. */
+	set_current_pts(dec_ctx->timing, start_ms * MPEG_CLOCK_FREQ / 1000);
 	set_fts(dec_ctx->timing);
 
 	/* tx3g format: 16-bit text length + UTF-8 text */
@@ -242,7 +242,7 @@ int ccx_mp4_process_tx3g_packet(struct lib_ccx_ctx *ctx,
 
 	/* Set up subtitle for deferred encoding */
 	sub->type = CC_TEXT;
-	sub->start_time = dec_ctx->timing->fts_now;
+	sub->start_time = start_ms;
 	if (sub->data != NULL)
 		free(sub->data);
 	sub->data = malloc(text_length + 1);
@@ -255,14 +255,13 @@ int ccx_mp4_process_tx3g_packet(struct lib_ccx_ctx *ctx,
 	return 0;
 }
 
-void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
+void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, long long end_ms)
 {
-	struct lib_cc_decode *dec_ctx = update_decoder_list(ctx);
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 
 	if (sub->data != NULL)
 	{
-		sub->end_time = dec_ctx->timing->fts_now;
+		sub->end_time = end_ms;
 		encode_sub(enc_ctx, sub);
 	}
 }

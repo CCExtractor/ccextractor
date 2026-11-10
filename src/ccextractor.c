@@ -479,10 +479,6 @@ int main(int argc, char *argv[])
 
 	init_options(&ccx_options);
 
-	// If "ccextractor.cnf" is present, takes options from it.
-	// See docs/ccextractor.cnf.sample for more info.
-	parse_configuration(&ccx_options);
-
 	ccxr_init_basic_logger();
 
 	int compile_ret = ccxr_parse_parameters(argc, argv);

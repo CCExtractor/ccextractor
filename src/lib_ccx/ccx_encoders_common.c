@@ -762,7 +762,12 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 {
 	int ret;
 	int i;
-	struct encoder_ctx *ctx = malloc(sizeof(struct encoder_ctx));
+	// calloc, not malloc: 9 members of encoder_ctx are not assigned below
+	// (timing, list, dtvcc_writers, dvb_lang, cdp_hdr_seq, next_caption_time,
+	// force_dropframe, header_printed_flag, write_previous). timing is read
+	// through a "!= NULL" guard in write_webvtt_header(), which an
+	// indeterminate value passes, so it has to start out NULL.
+	struct encoder_ctx *ctx = calloc(1, sizeof(struct encoder_ctx));
 	if (!ctx)
 		return NULL;
 

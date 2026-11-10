@@ -39,10 +39,14 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 use args::Args;
 use bindings::*;
 use cfg_if::cfg_if;
-use clap::{error::ErrorKind, Parser};
+use clap::{error::ErrorKind, CommandFactory, Parser};
 use common::{copy_from_rust, CType, CType2};
 use decoder::{Dtvcc, DtvccRust};
-use lib_ccxr::{common::Options, teletext::TeletextConfig, util::log::ExitCause};
+use lib_ccxr::{
+    common::{Options, CONFIG_FILE_NAME},
+    teletext::TeletextConfig,
+    util::log::ExitCause,
+};
 use parser::OptionsExt;
 use utils::is_true;
 
@@ -52,6 +56,7 @@ use log::{warn, LevelFilter};
 use std::os::raw::c_ulong;
 use std::os::raw::{c_uchar, c_void};
 use std::{
+    collections::HashSet,
     ffi::CStr,
     io::Write,
     os::raw::{c_char, c_double, c_int, c_uint},
@@ -388,6 +393,15 @@ pub extern "C" fn ccxr_dtvcc_set_active(dtvcc_ptr: *mut std::ffi::c_void, active
     dtvcc.is_active = active != 0;
 }
 
+/// Largest cc_count accepted by [`ccxr_process_cc_data`]: the storage capacity
+/// of one `cc_data_pkts` slot, i.e. `HDCC_MAX_TRIPLETS_PER_SLOT` in
+/// src/lib_ccx/ccx_decoders_structs.h. Keep both in sync;
+/// `max_cc_count_matches_hdcc_slot` checks it against the generated bindings.
+///
+/// This is not the 5-bit cc_count wire field (max 31) of a single CEA-708
+/// cc_data header: buffered frames (e.g. MP4) can carry more triplets than that.
+const MAX_CC_COUNT: usize = 310;
+
 /// Process cc_data
 ///
 /// # Safety
@@ -406,9 +420,6 @@ extern "C" fn ccxr_process_cc_data(
     }
 
     // Cast to usize before any arithmetic to prevent i32 overflow.
-    // CEA-708/ATSC A/53 encodes cc_count in a 5-bit field (max 31); 31 is
-    // also the value used in es/userdata.rs. Reject anything beyond that.
-    const MAX_CC_COUNT: usize = 31;
     let cc_count_usize = cc_count as usize;
     if cc_count_usize > MAX_CC_COUNT {
         warn!(
@@ -652,6 +663,7 @@ extern "C" fn ccxr_close_handle(handle: RawHandle) {
 /// - Single-letter short options (e.g., `-o`) are left unchanged
 /// - Non-option arguments (e.g., `file.ts`) are left unchanged
 /// - Numeric options `-1`, `-2`, `-12` are converted to `--output-field=N` for CEA-608 field selection
+/// - Numeric long options `-608`, `-708`, `-90090` are converted to `--608`, `--708`, `--90090`
 fn normalize_legacy_option(arg: String) -> String {
     // Handle legacy numeric options for CEA-608 field extraction
     // These map to --output-field which is the modern equivalent
@@ -659,6 +671,10 @@ fn normalize_legacy_option(arg: String) -> String {
         "-1" => return "--output-field=1".to_string(),
         "-2" => return "--output-field=2".to_string(),
         "-12" => return "--output-field=12".to_string(),
+        // Legacy long options whose names are numeric. These are matched exactly
+        // rather than by a generic rule so negative numbers passed as option
+        // values are left untouched.
+        "-608" | "-708" | "-90090" => return format!("-{}", arg),
         _ => {}
     }
 
@@ -675,6 +691,49 @@ fn normalize_legacy_option(arg: String) -> String {
     } else {
         arg
     }
+}
+
+/// Apply [`normalize_legacy_option`] to every argument except option values.
+///
+/// A value such as the `-12` in `--delay -12` must reach clap unchanged,
+/// otherwise it would be rewritten to `--output-field=12`.
+fn normalize_legacy_args(args: Vec<String>) -> Vec<String> {
+    let mut value_options = HashSet::new();
+    for arg in Args::command().get_arguments() {
+        if !arg.get_action().takes_values() {
+            continue;
+        }
+        if let Some(short) = arg.get_short() {
+            value_options.insert(format!("-{}", short));
+        }
+        let longs = arg
+            .get_long()
+            .into_iter()
+            .chain(arg.get_all_aliases().unwrap_or_default());
+        for long in longs {
+            value_options.insert(format!("--{}", long));
+        }
+    }
+
+    let is_number = |s: &String| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let mut normalized = Vec::with_capacity(args.len());
+    let mut expects_value = false;
+    for (i, arg) in args.iter().enumerate() {
+        if std::mem::take(&mut expects_value) {
+            normalized.push(arg.clone());
+            continue;
+        }
+        let arg = normalize_legacy_option(arg.clone());
+        // `--stream` takes an optional number of seconds. As in the C parser, the next argument
+        // is only its value if it is a number; otherwise there is no timeout (-1).
+        if (arg == "-s" || arg == "--stream") && !args.get(i + 1).is_some_and(is_number) {
+            normalized.push("--stream=-1".to_string());
+            continue;
+        }
+        expects_value = value_options.contains(&arg);
+        normalized.push(arg);
+    }
+    normalized
 }
 
 /// # Safety
@@ -702,7 +761,7 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     // Backward compatibility: Convert single-dash long options to double-dash
     // Old versions of ccextractor accepted -quiet, -stdout, etc. but clap requires --quiet, --stdout
     // This allows scripts using the old syntax to continue working
-    let args: Vec<String> = args.into_iter().map(normalize_legacy_option).collect();
+    let args = normalize_legacy_args(args);
 
     let args: Args = match Args::try_parse_from(args) {
         Ok(args) => args,
@@ -738,12 +797,36 @@ pub unsafe extern "C" fn ccxr_parse_parameters(argc: c_int, argv: *mut *mut c_ch
     let mut opt = Options::default();
     let mut _tlt_config = TeletextConfig::default();
 
+    // Settings from ccextractor.cnf are applied first so command line options override them.
+    // The messages are held back until the command line is parsed, because only then is it known
+    // whether messages go to stdout, stderr or nowhere (--stdout, --quiet).
+    let mut config_messages: Vec<String> = Vec::new();
+    match std::fs::read_to_string(CONFIG_FILE_NAME) {
+        Ok(contents) => {
+            for warning in opt.apply_config(&contents) {
+                config_messages.push(format!(
+                    "{}:{}: {}, ignoring this line\n",
+                    CONFIG_FILE_NAME, warning.line, warning.message
+                ));
+            }
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => config_messages.push(format!("Could not read {}: {}\n", CONFIG_FILE_NAME, e)),
+    }
+
     opt.parse_parameters(
         &args,
         &mut _tlt_config,
         &mut _capitalization_list,
         &mut _profane,
     );
+
+    if let Some(mut logger) = lib_ccxr::util::log::logger_mut() {
+        logger.set_target(opt.messages_target);
+    }
+    for message in config_messages {
+        lib_ccxr::info!("{}", message);
+    }
 
     // Handle --list-tracks mode: list tracks and exit early
     if opt.list_tracks_only {
@@ -833,6 +916,15 @@ mod test {
     }
 
     #[test]
+    fn max_cc_count_matches_hdcc_slot() {
+        let ctx = lib_cc_decode::default();
+        assert_eq!(
+            std::mem::size_of_val(&ctx.cc_data_pkts[0]),
+            MAX_CC_COUNT * 3 + 1
+        );
+    }
+
+    #[test]
     fn test_do_cb() {
         let mut dtvcc_ctx = crate::decoder::test::initialize_dtvcc_ctx();
         let mut dtvcc = Dtvcc::new(&mut dtvcc_ctx);
@@ -906,6 +998,234 @@ mod test {
             normalize_legacy_option("-12".to_string()),
             "--output-field=12".to_string()
         );
+    }
+
+    fn parse_normalized(args: &[&str]) -> Result<Args, clap::Error> {
+        let args: Vec<String> = std::iter::once("ccextractor")
+            .chain(args.iter().copied())
+            .map(String::from)
+            .collect();
+        Args::try_parse_from(normalize_legacy_args(args))
+    }
+
+    #[test]
+    fn test_stream_timeout_is_optional() {
+        let input = Some(vec!["input.ts".to_string()]);
+
+        // As in the C parser, the next argument is only the timeout if it is a number
+        let args = parse_normalized(&["--stream", "input.ts"]).unwrap();
+        assert_eq!(args.stream.as_deref(), Some("-1"));
+        assert_eq!(args.inputfile, input);
+
+        let args = parse_normalized(&["input.ts", "-s"]).unwrap();
+        assert_eq!(args.stream.as_deref(), Some("-1"));
+
+        for spelling in ["--stream", "-s", "-stream"] {
+            let args = parse_normalized(&[spelling, "5", "input.ts"]).unwrap();
+            assert_eq!(args.stream.as_deref(), Some("5"), "{}", spelling);
+            assert_eq!(args.inputfile, input);
+        }
+    }
+
+    #[test]
+    fn test_negative_delay() {
+        // Negative delays must work as a separate argument, not only as --delay=-500
+        assert_eq!(
+            parse_normalized(&["--delay", "-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+        assert_eq!(
+            parse_normalized(&["--delay=-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+        assert_eq!(
+            parse_normalized(&["-delay", "-500", "input.ts"])
+                .unwrap()
+                .delay,
+            Some(-500)
+        );
+    }
+
+    #[test]
+    fn test_option_values_not_normalized() {
+        // "-12" after --delay is a value, not the legacy field selection option
+        let args = parse_normalized(&["--delay", "-12", "input.ts"]).unwrap();
+        assert_eq!(args.delay, Some(-12));
+        assert_eq!(args.output_field, None);
+
+        // A standalone -12 is still the legacy field selection option
+        let args = parse_normalized(&["-12", "input.ts"]).unwrap();
+        assert!(args.output_field.is_some());
+        assert_eq!(args.delay, None);
+    }
+
+    #[test]
+    fn test_normalize_legacy_option_numeric_long_options() {
+        // Legacy long options with numeric names get a second dash
+        assert_eq!(
+            normalize_legacy_option("-608".to_string()),
+            "--608".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-708".to_string()),
+            "--708".to_string()
+        );
+        assert_eq!(
+            normalize_legacy_option("-90090".to_string()),
+            "--90090".to_string()
+        );
+        // Other negative numbers (e.g. option values) are left unchanged
+        assert_eq!(
+            normalize_legacy_option("-500".to_string()),
+            "-500".to_string()
+        );
+    }
+
+    #[test]
+    fn test_legacy_spellings_parse() {
+        // Spellings accepted by the C parser (v0.94) must still parse after normalization
+        let parse = |flag: &str| {
+            let args: Vec<String> = ["ccextractor", flag, "input.ts"]
+                .iter()
+                .map(|a| normalize_legacy_option(a.to_string()))
+                .collect();
+            Args::try_parse_from(args)
+                .unwrap_or_else(|e| panic!("legacy option {} rejected: {}", flag, e))
+        };
+
+        assert!(parse("-608").eia608);
+        assert!(parse("-708").eia708);
+        assert!(parse("-90090").mpeg90090);
+        assert!(parse("-UCLA").ucla);
+        assert!(parse("-ucla").ucla);
+        assert!(parse("-CC2").cc2);
+        assert!(parse("-cc2").cc2);
+        assert!(parse("-LF").lf);
+        assert!(parse("-lf").lf);
+        assert!(parse("-DF").df);
+        assert!(parse("-df").df);
+        assert!(parse("-parsePAT").parse_pat);
+        assert!(parse("-parsepat").parse_pat);
+        assert!(parse("-parsePMT").parse_pmt);
+        assert!(parse("-parsepmt").parse_pmt);
+    }
+
+    fn parse_with_input(args: &[&str]) -> Result<Args, clap::Error> {
+        let mut args = args.to_vec();
+        args.push("input.ts");
+        parse_normalized(&args)
+    }
+
+    #[test]
+    fn test_more_legacy_spellings_match_modern() {
+        // Each v0.94 spelling must parse to exactly the same Args as its
+        // modern equivalent, values included.
+        let cases: &[(&[&str], &[&str])] = &[
+            (&["-bi"], &["--bufferinput"]),
+            (&["-nobi"], &["--no-bufferinput"]),
+            (&["--nobufferinput"], &["--no-bufferinput"]),
+            (&["-ff"], &["--forceflush"]),
+            (&["-bs", "16M"], &["--buffersize", "16M"]),
+            (&["-nofc"], &["--no-fontcolor"]),
+            (&["--nofontcolor"], &["--no-fontcolor"]),
+            (&["--nohtmlescape"], &["--no-htmlescape"]),
+            (&["-nots"], &["--no-typesetting"]),
+            (&["--notypesetting"], &["--no-typesetting"]),
+            (&["-nocodec", "teletext"], &["--no-codec", "teletext"]),
+            (&["-nospupngocr"], &["--no-spupngocr"]),
+            (&["--transcript"], &["--txt"]),
+            (&["--timedtranscript"], &["--ttxt"]),
+            (&["-ve"], &["--videoedited"]),
+            (&["-gt"], &["--goptime"]),
+            (&["-nogt"], &["--no-goptime"]),
+            (&["--nogoptime"], &["--no-goptime"]),
+            (&["-fp"], &["--fixpadding"]),
+            (&["--norollup"], &["--no-rollup"]),
+            (&["-key"], &["--segmentonkeyonly"]),
+            (&["--gui_mode_reports"], &["--gui-mode-reports"]),
+            (&["--no_progress_bar"], &["--no-progress-bar"]),
+            (&["-sbs"], &["--splitbysentence"]),
+            (&["-caf", "caps.txt"], &["--capfile", "caps.txt"]),
+            (&["-pn", "5"], &["--program-number", "5"]),
+            (&["-dc", "#FF0000"], &["--defaultcolor", "#FF0000"]),
+            (&["-scr", "3"], &["--screenfuls", "3"]),
+            (&["-nolevdist"], &["--no-levdist"]),
+            (&["-anvid"], &["--analyzevideo"]),
+            (&["-investigate_packets"], &["--investigate-packets"]),
+            (&["-nosync"], &["--no-sync"]),
+            (&["-haup"], &["--hauppauge"]),
+            (&["-poc"], &["--usepicorder"]),
+            (&["-tcppassword", "secret"], &["--tcp-password", "secret"]),
+            (&["-tcpdesc", "desc"], &["--tcp-description", "desc"]),
+            (&["-tickertape"], &["--tickertext"]),
+            (&["-ocr_mode", "word"], &["--ocr-mode", "word"]),
+            (&["-sub_color", "yellow"], &["--subcolor", "yellow"]),
+            (
+                &["-min_sub_duration", "0.5"],
+                &["--min-sub-duration", "0.5"],
+            ),
+            (&["-detect_italics"], &["--detect-italics"]),
+            (&["-conf_thresh", "60"], &["--conf-thresh", "60"]),
+            (&["-whiteness_thresh", "90"], &["--whiteness-thresh", "90"]),
+            (&["-lum_thresh", "90"], &["--whiteness-thresh", "90"]),
+        ];
+
+        for (legacy, modern) in cases {
+            let legacy_args = parse_with_input(legacy)
+                .unwrap_or_else(|e| panic!("legacy {:?} rejected: {}", legacy, e));
+            let modern_args = parse_with_input(modern)
+                .unwrap_or_else(|e| panic!("modern {:?} rejected: {}", modern, e));
+            assert_eq!(
+                format!("{:?}", legacy_args),
+                format!("{:?}", modern_args),
+                "{:?} does not parse like {:?}",
+                legacy,
+                modern
+            );
+        }
+    }
+
+    #[test]
+    fn test_no_timestamp_map_is_accepted_and_inert() {
+        // The X-TIMESTAMP-MAP header is now off by default, so the old
+        // switch that turned it off parses but changes nothing.
+        for flag in ["-ntm", "--no-timestamp-map"] {
+            let args = parse_with_input(&[flag])
+                .unwrap_or_else(|e| panic!("legacy {} rejected: {}", flag, e));
+            assert!(args.no_timestamp_map);
+            assert!(!args.timestamp_map);
+        }
+        assert!(parse_with_input(&["-ntm", "--timestamp-map"]).is_err());
+    }
+
+    #[test]
+    fn test_removed_feature_spellings_still_rejected() {
+        // These belonged to the sharing/translation feature, which no
+        // longer exists; accepting them would silently do nothing.
+        for flag in [
+            "-enable-sharing",
+            "-sharing-debug",
+            "-sharing-url",
+            "-translate",
+            "-translate-auth",
+        ] {
+            let err = parse_with_input(&[flag]).expect_err(flag);
+            assert_eq!(err.kind(), ErrorKind::UnknownArgument, "{}", flag);
+        }
+    }
+
+    #[test]
+    fn test_legacy_spelling_kept_as_option_value() {
+        // A value that looks like a legacy option must not be rewritten.
+        let args: Vec<String> = ["ccextractor", "--capfile", "-nofc", "input.ts"]
+            .iter()
+            .map(|a| a.to_string())
+            .collect();
+        assert_eq!(normalize_legacy_args(args.clone()), args);
     }
 
     #[test]

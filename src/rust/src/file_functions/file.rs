@@ -40,11 +40,14 @@ pub const FILEBUFFERSIZE: usize = 1024 * 1024 * 16; // 16 Mbytes no less. Minimi
 pub fn init_file_buffer(ctx: &mut CcxDemuxer) -> i32 {
     ctx.filebuffer_start = 0;
     ctx.filebuffer_pos = 0;
+    // Called for every newly opened file. Whatever the buffer still holds
+    // belongs to the previous file and has been consumed; keeping its byte
+    // count while rewinding the position would replay it as new data.
+    ctx.bytesinbuffer = 0;
     if ctx.filebuffer.is_null() {
         let mut buf = vec![0u8; FILEBUFFERSIZE].into_boxed_slice();
         ctx.filebuffer = buf.as_mut_ptr();
         mem::forget(buf);
-        ctx.bytesinbuffer = 0;
     }
     if ctx.filebuffer.is_null() {
         return -1;
@@ -131,7 +134,7 @@ pub fn sleepandchecktimeout(start: u64, ccx_options: &mut Options) {
 
     if let Some(live_stream) = ccx_options.live_stream {
         if live_stream.seconds() != 0 {
-            if current_time > start + live_stream.millis() as u64 {
+            if current_time > start + live_stream.seconds() as u64 {
                 // Timeout elapsed
                 ccx_options.live_stream = Option::from(Timestamp::from_millis(0));
             } else {
@@ -227,22 +230,22 @@ pub unsafe fn switch_to_next_file(
             CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
         );
 
+        // Own the name rather than re-indexing after open(). open() reaches
+        // buffered_read_opt(), which calls switch_to_next_file() again under
+        // binary_concat and advances current_file, so the index checked above no
+        // longer points at the file being opened -- and can be past the end.
         let filename =
             CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy();
+        let filename = filename.into_owned();
 
         ret = demux_ctx.open(&filename, ccx_options);
 
         if ret < 0 {
-            println!(
-                "\rWarning: Unable to open input file [{}]",
-                CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
-            );
+            println!("\rWarning: Unable to open input file [{}]", filename);
         } else {
             // Activity reporting
             let mut c = Options::default();
-            c.activity_input_file_open(
-                &CStr::from_ptr(*ctx.inputfile.add(ctx.current_file as usize)).to_string_lossy(),
-            );
+            c.activity_input_file_open(&filename);
 
             if ccx_options.live_stream.is_some() && ccx_options.live_stream.unwrap().millis() == 0 {
                 ctx.inputsize = demux_ctx.get_filesize();
@@ -881,6 +884,22 @@ mod tests {
             assert!((null_mut::<*mut u8>()).is_null());
         }
     }
+    #[test]
+    fn test_sleepandchecktimeout_timeout_elapsed() {
+        // --stream 2: the file stopped growing 10 seconds ago, so the timeout has passed
+        let mut ccx_options = Options::default();
+        ccx_options.input_source = DataSource::File;
+        ccx_options.live_stream = Some(Timestamp::from_millis(2000));
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        sleepandchecktimeout(now - 10, &mut ccx_options);
+
+        assert_eq!(ccx_options.live_stream.unwrap().millis(), 0);
+    }
+
     // #[test] // Uncomment to run, needs real file
     #[allow(unused)]
     fn test_switch_to_next_file_success() {

@@ -125,7 +125,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		return 0;
 	}
 
-	crc = (*(int32_t *)(sbuf + olen - 4));
+	crc = RB32(sbuf + olen - 4);
 	table_id = buf[0];
 
 	/* TO-DO: We're currently parsing the PMT making assumptions that there's only one section with table_id=2,
@@ -145,7 +145,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		// For now, just parse its length and remove it from the buffer
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
 		dbg_print(CCX_DMT_PMT, "Program information table length: %u", c0length);
+		if (c0length + 3 > (unsigned)len)
+		{
+			return 0;
+		}
 		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
+		len -= (int)(c0length + 3);
 		table_id = buf[0];
 		// return 0;
 	}
@@ -155,7 +160,12 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM NAME Table need implementation");
 		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
 		dbg_print(CCX_DMT_PMT, "Program name message length: %u", c0length);
+		if (c0length + 3 > (unsigned)len)
+		{
+			return 0;
+		}
 		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
+		len -= (int)(c0length + 3);
 		table_id = buf[0];
 		// return 0;
 	}
@@ -527,7 +537,7 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 	else
 		pinfo->valid_crc = CCX_TRUE;
 
-	pinfo->crc = (*(int32_t *)(sbuf + olen - 4));
+	pinfo->crc = RB32(sbuf + olen - 4);
 
 	return must_flush;
 }
@@ -644,6 +654,14 @@ int parse_PAT(struct ccx_demuxer *ctx)
 	unsigned int last_section_number = 0;
 
 	pointer_field = *(ctx->PID_buffers[0]->buffer);
+
+	// pointer_field comes straight from the stream. If it points at or past
+	// the end of the buffered section, the subtraction below underflows (buffer_length
+	// is uint32_t) and the resulting huge value slips through the length checks.
+	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0]->buffer_length)
+	{
+		return 0;
+	}
 
 	payload_start = ctx->PID_buffers[0]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0]->buffer_length - (pointer_field + 1);
@@ -949,8 +967,24 @@ void parse_SDT(struct ccx_demuxer *ctx)
 	// unsigned int last_section_number = 0;
 
 	pointer_field = *(ctx->PID_buffers[0x11]->buffer);
+
+	// pointer_field comes straight from the stream. If it points at or past
+	// the end of the buffered section, the subtraction below underflows (buffer_length
+	// is uint32_t) and the resulting huge value slips through the length checks.
+	if ((unsigned int)pointer_field + 1 >= ctx->PID_buffers[0x11]->buffer_length)
+	{
+		return;
+	}
 	payload_start = ctx->PID_buffers[0x11]->buffer + pointer_field + 1;
 	payload_length = ctx->PID_buffers[0x11]->buffer_length - (pointer_field + 1);
+
+	// Everything below reads payload_start[0..11]: table_id, section_length,
+	// current_next_indicator at [5], and the services loop based at [11]. Without
+	// this the "section_length > payload_length - 4" test underflows as well.
+	if (payload_length < 12)
+	{
+		return;
+	}
 
 	// section_number = payload_start[6];
 	// last_section_number = payload_start[7];
@@ -961,7 +995,9 @@ void parse_SDT(struct ccx_demuxer *ctx)
 	//		| payload_start[4]);
 	// unsigned version_number = (payload_start[5] & 0x3E) >> 1;
 
-	if (section_length > payload_length - 4)
+	// 12 is the smallest legal section: 8 bytes of fields plus the CRC.
+	// Anything shorter would make the services loop length below underflow.
+	if (section_length < 12 || section_length > payload_length - 4)
 	{
 		return;
 	}

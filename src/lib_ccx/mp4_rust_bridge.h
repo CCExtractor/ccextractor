@@ -59,28 +59,30 @@ extern "C"
 	/*
 	 * Process a tx3g (3GPP timed text) subtitle sample.
 	 *
+	 * Subtitle times are taken explicitly from the packet timestamps instead of
+	 * the global timing pointer, which can be far ahead of this track because
+	 * packets from every track are interleaved.
+	 *
 	 * @param ctx           CCExtractor library context
 	 * @param data          tx3g sample data
 	 * @param data_length   Length of the data
-	 * @param dts           Decoding timestamp
-	 * @param cts_offset    Composition time offset
-	 * @param timescale     Media timescale
+	 * @param start_ms      Subtitle start time in milliseconds
 	 * @param sub           Output subtitle structure
 	 * @return 0 on success, non-zero on error
 	 */
 	int ccx_mp4_process_tx3g_packet(struct lib_ccx_ctx *ctx,
 					unsigned char *data, unsigned int data_length,
-					long long dts, int cts_offset,
-					unsigned int timescale,
+					long long start_ms,
 					struct cc_subtitle *sub);
 
 	/*
 	 * Flush pending tx3g subtitle (encode the last one).
 	 *
-	 * @param ctx  CCExtractor library context
-	 * @param sub  Output subtitle structure
+	 * @param ctx     CCExtractor library context
+	 * @param sub     Output subtitle structure
+	 * @param end_ms  Subtitle end time in milliseconds
 	 */
-	void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub);
+	void ccx_mp4_flush_tx3g(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub, long long end_ms);
 
 	/*
 	 * Report progress for the MP4 demuxer.

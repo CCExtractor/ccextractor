@@ -17,8 +17,8 @@
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
 #include "dvd_subtitle_decoder.h"
-#include "ccx_demuxer_mxf.h"
 #include "ccx_dtvcc.h"
+#include "ccx_decoders_xds.h"
 
 int end_of_file = 0; // End of file?
 
@@ -279,7 +279,7 @@ int ps_get_more_data(struct lib_ccx_ctx *ctx, struct demuxer_data **ppdata)
 
 				if (want != peslen)
 				{
-					mprint("General LOOP: want(%d) != peslen(%d) \n", want, peslen);
+					mprint("General LOOP: want(%d) != peslen(%zu) \n", want, peslen);
 					continue;
 				}
 				if (want == 0) // Found package with header but without payload
@@ -988,12 +988,15 @@ int process_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, str
 		// CCX_RAW_TYPE contains cc_data triplets (cc_type + 2 data bytes each)
 		// Used by MXF and GXF demuxers
 
-		// Initialize timing if not set (use caption PTS as reference)
-		if (dec_ctx->timing->pts_set == 0 && data_node->pts != CCX_NOPTS)
+		// Use the first caption PTS as the timing reference. The caller has
+		// already passed it to set_current_pts() (in 90 kHz units), which sets
+		// pts_set to 1; with no video frames set_fts() never reaches MinPtsSet
+		// on its own, so check for that rather than for pts_set == 0.
+		if (dec_ctx->timing->pts_set != 2 && data_node->pts != CCX_NOPTS)
 		{
-			dec_ctx->timing->min_pts = data_node->pts;
+			dec_ctx->timing->min_pts = dec_ctx->timing->current_pts;
 			dec_ctx->timing->pts_set = 2; // MinPtsSet
-			dec_ctx->timing->sync_pts = data_node->pts;
+			dec_ctx->timing->sync_pts = dec_ctx->timing->current_pts;
 			set_fts(dec_ctx->timing);
 		}
 
@@ -1674,11 +1677,11 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		if (dec_ctx->has_ccdata_buffered)
 			process_hdcc(enc_ctx, dec_ctx, &dec_ctx->dec_sub);
 
-		mprint("\nNumber of NAL_type_7: %ld\n", dec_ctx->avc_ctx->num_nal_unit_type_7);
-		mprint("Number of VCL_HRD: %ld\n", dec_ctx->avc_ctx->num_vcl_hrd);
-		mprint("Number of NAL HRD: %ld\n", dec_ctx->avc_ctx->num_nal_hrd);
-		mprint("Number of jump-in-frames: %ld\n", dec_ctx->avc_ctx->num_jump_in_frames);
-		mprint("Number of num_unexpected_sei_length: %ld", dec_ctx->avc_ctx->num_unexpected_sei_length);
+		mprint("\nNumber of NAL_type_7: %" PRId64 "\n", dec_ctx->avc_ctx->num_nal_unit_type_7);
+		mprint("Number of VCL_HRD: %" PRId64 "\n", dec_ctx->avc_ctx->num_vcl_hrd);
+		mprint("Number of NAL HRD: %" PRId64 "\n", dec_ctx->avc_ctx->num_nal_hrd);
+		mprint("Number of jump-in-frames: %" PRId64 "\n", dec_ctx->avc_ctx->num_jump_in_frames);
+		mprint("Number of num_unexpected_sei_length: %" PRId64, dec_ctx->avc_ctx->num_unexpected_sei_length);
 		free(dec_ctx->xds_ctx);
 	}
 
@@ -1707,6 +1710,8 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	LLONG result;
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct TeletextCtx *telctx;
+	int saved_binary_concat;
+	int is_teletext;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3 * 0xFFFF + 10))
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
@@ -1718,6 +1723,14 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory allocating parsebuf.");
 	}
 
+	// Every RCWT file starts with its own header and its own time base, so a
+	// read must not run from one input file into the next: the next file's
+	// header would be parsed as caption data. Stop at the end of this file;
+	// start_ccx() then opens the next one, calls us again and offsets its
+	// timestamps after this file's (fts_global), as for other formats.
+	saved_binary_concat = ccx_options.binary_concat;
+	ccx_options.binary_concat = 0;
+
 	result = buffered_read(ctx->demux_ctx, parsebuf, 11);
 	ctx->demux_ctx->past += result;
 	bread += (int)result;
@@ -1726,6 +1739,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		mprint("Premature end of file!\n");
 		end_of_file = 1;
 		free(parsebuf);
+		ccx_options.binary_concat = saved_binary_concat;
 		return -1;
 	}
 
@@ -1743,12 +1757,26 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+	// A previous RCWT input freed the XDS context at its end.
+	if (!dec_ctx->xds_ctx)
+	{
+		int xds_to_file = ccx_options.write_format == CCX_OF_TRANSCRIPT && ccx_options.transcript_settings.xds;
+		dec_ctx->xds_ctx = ccx_decoders_xds_init_library(dec_ctx->timing, xds_to_file);
+		if (!dec_ctx->xds_ctx)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In rcwt_loop: Out of memory initializing xds_ctx.");
+		}
+	}
 #ifndef DISABLE_RUST
 	ccxr_dtvcc_set_encoder(dec_ctx->dtvcc_rust, enc_ctx);
 #else
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
 #endif
-	if (parsebuf[6] == 0 && parsebuf[7] == 2)
+	// The file header decides the mode once: parsebuf is reused for data
+	// headers and caption blocks below, so re-reading it per iteration could
+	// route 608 caption data into the teletext decoder (whose context is NULL).
+	is_teletext = (parsebuf[6] == 0 && parsebuf[7] == 2);
+	if (is_teletext)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;
 		dec_ctx->private_data = telxcc_init();
@@ -1766,7 +1794,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	// Loop until no more data is found
 	while (1)
 	{
-		if (parsebuf[6] == 0 && parsebuf[7] == 2)
+		if (is_teletext)
 		{
 			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
@@ -1857,8 +1885,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 		}
 	}
 
-	/* Free XDS context - similar to cleanup in general_loop */
-	free(dec_ctx->xds_ctx);
+	/* Free XDS context - similar to cleanup in general_loop. Clear the
+	   pointer: with several inputs we are called again for the next file. */
+	freep(&dec_ctx->xds_ctx);
 	free(parsebuf);
+	ccx_options.binary_concat = saved_binary_concat;
 	return caps;
 }

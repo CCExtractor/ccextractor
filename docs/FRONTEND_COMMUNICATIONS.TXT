@@ -10,7 +10,7 @@ implementation.
 
 Usage:
 
-Add --gui_mode_reports 
+Add --gui-mode-reports
 
 to the command line as the first parameter (this
 is not essential but because the mode is enabled
