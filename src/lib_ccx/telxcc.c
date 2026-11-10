@@ -49,7 +49,6 @@ int _CRT_fmode = _O_BINARY;
 #endif
 
 uint64_t last_pes_pts = 0; // PTS of last PES packet (debug purposes)
-static int de_ctr = 0;	   // a keeps count of packets with flag subtitle ON and data packets
 static const char *TTXT_COLOURS[8] = {
     // black,   red,       green,     yellow,    blue,      magenta,   cyan,      white
     "#000000", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"};
@@ -1010,8 +1009,10 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 		ctx->transmission_mode = (transmission_mode_t)(unham_8_4(packet->data[7]) & 0x01);
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
-		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE) && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
+		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE))
+		{
 			return;
+		}
 
 		// Check if this page should be accepted for extraction (issue #665)
 		int accept_this_page = should_accept_page(page_number, flag_subtitle);
@@ -1021,18 +1022,19 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 						     ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (PAGE(page_number) != PAGE(tlt_config.page)) && (m == MAGAZINE(tlt_config.page)))))
 		{
 			ctx->receiving_data = NO;
-			if (!(de_ctr && flag_subtitle))
+			// In multi-page mode, check if this new page should be accepted
+			if (!accept_this_page)
 			{
-				// In multi-page mode, check if this new page should be accepted
-				if (!accept_this_page)
-					return;
+				return;
 			}
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
 		// Modified for multi-page support (issue #665)
-		if (!accept_this_page && !(de_ctr && flag_subtitle && ctx->receiving_data == YES))
+		if (!accept_this_page)
+		{
 			return;
+		}
 
 		// Update tlt_config.page to track the current page being received (multi-page mode only)
 		// In single-page mode, tlt_config.page is set by auto-detect logic or user specification
@@ -1061,7 +1063,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			// the start time of the next), which makes rolling look continuous.
 			ctx->page_buffer.hide_timestamp = timestamp;
 			process_page(ctx, &ctx->page_buffer, sub);
-			de_ctr = 0;
 		}
 
 		ctx->page_buffer.show_timestamp = timestamp;
@@ -1098,7 +1099,6 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 				ctx->page_buffer.text[y][i] = packet->data[i];
 		}
 		ctx->page_buffer.tainted = YES;
-		--de_ctr;
 	}
 	else if ((m == MAGAZINE(tlt_config.page)) && (y == 26) && (ctx->receiving_data == YES))
 	{
