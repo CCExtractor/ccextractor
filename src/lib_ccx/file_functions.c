@@ -441,7 +441,9 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 					int input_fits_in_one_read = parent_inputsize >= 0 &&
 								     (uint64_t)parent_inputsize <= (uint64_t)origin_buffer_size;
 					if (ccx_options.live_stream || input_fits_in_one_read || !(ccx_options.binary_concat && switch_to_next_file(ctx->parent, copied)))
+					{
 						eof = 1;
+					}
 					else
 					{
 						// The next file is open. open() reset the buffer for it,
