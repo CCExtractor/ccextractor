@@ -771,7 +771,9 @@ static int process_clcp(struct lib_ccx_ctx *ctx, struct encoder_ctx *enc_ctx,
 				// this guard len grows and tdata walks backwards out of the buffer,
 				// and the loop never ends. Same guard mp4_rust_bridge.c already uses.
 				if (ret <= 0)
+				{
 					break;
+				}
 				len -= ret;
 				tdata += ret;
 				cb_field1++;
