@@ -1010,7 +1010,9 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 
 		// FIXME: Well, this is not ETS 300 706 kosher, however we are interested in DATA_UNIT_EBU_TELETEXT_SUBTITLE only
 		if ((ctx->transmission_mode == TRANSMISSION_MODE_PARALLEL) && (data_unit_id != DATA_UNIT_EBU_TELETEXT_SUBTITLE))
+		{
 			return;
+		}
 
 		// Check if this page should be accepted for extraction (issue #665)
 		int accept_this_page = should_accept_page(page_number, flag_subtitle);
@@ -1022,13 +1024,17 @@ void process_telx_packet(struct TeletextCtx *ctx, data_unit_t data_unit_id, tele
 			ctx->receiving_data = NO;
 			// In multi-page mode, check if this new page should be accepted
 			if (!accept_this_page)
+			{
 				return;
+			}
 		}
 
 		// Page transmission is terminated, however now we are waiting for our new page
 		// Modified for multi-page support (issue #665)
 		if (!accept_this_page)
+		{
 			return;
+		}
 
 		// Update tlt_config.page to track the current page being received (multi-page mode only)
 		// In single-page mode, tlt_config.page is set by auto-detect logic or user specification
