@@ -117,7 +117,7 @@ void parse_ebml(FILE *file)
 
 	printf("\n");
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -166,7 +166,7 @@ void parse_ebml(FILE *file)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -184,7 +184,7 @@ void parse_segment_info(FILE *file)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -266,7 +266,7 @@ void parse_segment_info(FILE *file)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -486,7 +486,7 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 	struct matroska_sub_sentence **sentence_list = NULL;
 	int sentence_count = 0;
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -549,7 +549,7 @@ void parse_segment_cluster_block_group(struct matroska_ctx *mkv_ctx, ULLONG clus
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -617,7 +617,7 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 
 	ULLONG timecode = 0;
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -663,7 +663,7 @@ void parse_segment_cluster(struct matroska_ctx *mkv_ctx)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -894,7 +894,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 	char *codec_id_string = NULL;
 	enum matroska_track_subtitle_codec_id codec_id = MATROSKA_TRACK_SUBTITLE_CODEC_ID_UTF8;
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -1012,12 +1012,12 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 
 				/* Deprecated IDs */
 			case MATROSKA_SEGMENT_TRACK_TRACK_TIMECODE_SCALE:
-				mprint(MATROSKA_WARNING "Deprecated element 0x%x at position " LLD "\n", code,
+				mprint(MATROSKA_WARNING "Deprecated element 0x%" PRIx32 " at position " LLD "\n", code,
 				       get_current_byte(file) - 3); // minus length of the ID
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACK_TRACK_OFFSET:
-				mprint(MATROSKA_WARNING "Deprecated element 0x%x at position " LLD "\n", code,
+				mprint(MATROSKA_WARNING "Deprecated element 0x%" PRIx32 " at position " LLD "\n", code,
 				       get_current_byte(file) - 2); // minus length of the ID
 				read_vint_block_skip(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
@@ -1052,7 +1052,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -1229,7 +1229,7 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -1257,7 +1257,7 @@ void parse_segment_tracks(struct matroska_ctx *mkv_ctx)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -1276,7 +1276,7 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 	ULLONG len = read_vint_length(file);
 	ULLONG pos = get_current_byte(file);
 
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 	while (pos + len > get_current_byte(file))
 	{
@@ -1324,7 +1324,7 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
@@ -1966,7 +1966,7 @@ void matroska_free_all(struct matroska_ctx *mkv_ctx)
 
 void matroska_parse(struct matroska_ctx *mkv_ctx)
 {
-	unsigned int code = 0;
+	uint32_t code = 0;
 	int code_len = 0;
 
 	mprint("\n");
@@ -2001,7 +2001,7 @@ void matroska_parse(struct matroska_ctx *mkv_ctx)
 			default:
 				if (code_len == MATROSKA_MAX_ID_LENGTH)
 				{
-					mprint(MATROSKA_WARNING "Unknown element 0x%x at position " LLD ", skipping this element\n", code,
+					mprint(MATROSKA_WARNING "Unknown element 0x%" PRIx32 " at position " LLD ", skipping this element\n", code,
 					       get_current_byte(file) - MATROSKA_MAX_ID_LENGTH);
 					// Skip just the unknown element, not the entire block
 					read_vint_block_skip(file);
