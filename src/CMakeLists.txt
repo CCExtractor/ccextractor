@@ -225,6 +225,14 @@ if (PKG_CONFIG_FOUND AND WITH_FFMPEG)
   # can place them AFTER ccx_rust in the link order. GNU ld processes
   # left-to-right; ccx_rust (containing rsmpeg) references FFmpeg symbols
   # like swr_get_out_samples, so FFmpeg shared libs must come after it.
+  # pkg-config may resolve FFmpeg outside the default linker search path (e.g. a
+  # vendored prefix via PKG_CONFIG_PATH). Without these dirs the bare -l flags
+  # below silently resolve against whatever FFmpeg is installed system-wide,
+  # which can be a different major version than the headers we just found.
+  link_directories (${AVFORMAT_LIBRARY_DIRS} ${AVUTIL_LIBRARY_DIRS}
+                    ${AVCODEC_LIBRARY_DIRS} ${AVFILTER_LIBRARY_DIRS}
+                    ${SWSCALE_LIBRARY_DIRS} ${SWRESAMPLE_LIBRARY_DIRS})
+
   set (EXTRA_FFMPEG_LIBS ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES}
        ${AVCODEC_LIBRARIES} ${AVFILTER_LIBRARIES} ${SWSCALE_LIBRARIES}
        ${SWRESAMPLE_LIBRARIES})
