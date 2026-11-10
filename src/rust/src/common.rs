@@ -373,8 +373,9 @@ pub unsafe fn copy_to_rust(ccx_s_options: *const ccx_s_options) -> Options {
     options.live_stream = if (*ccx_s_options).live_stream < 0 {
         None
     } else {
+        // C stores the timeout in seconds
         Some(Timestamp::from_millis(
-            ((*ccx_s_options).live_stream) as i64,
+            1000 * ((*ccx_s_options).live_stream) as i64,
         ))
     };
 
@@ -1203,6 +1204,28 @@ impl CType<avc_ctx> for AvcContextRust {
             currefpts: self.currefpts,
             last_pic_order_cnt_lsb: self.last_pic_order_cnt_lsb,
             last_slice_pts: self.last_slice_pts,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_live_stream_seconds_round_trip() {
+        // C keeps the --stream timeout in seconds; the Rust Options keep a Timestamp
+        let options = Options {
+            live_stream: Some(Timestamp::from_millis(2000)),
+            ..Default::default()
+        };
+        unsafe {
+            let mut c_options: ccx_s_options = std::mem::zeroed();
+            copy_from_rust(&mut c_options, options);
+            assert_eq!(c_options.live_stream, 2);
+
+            let back = copy_to_rust(&c_options);
+            assert_eq!(back.live_stream.map(|t| t.seconds()), Some(2));
         }
     }
 }

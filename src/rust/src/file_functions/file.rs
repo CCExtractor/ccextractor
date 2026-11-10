@@ -134,7 +134,7 @@ pub fn sleepandchecktimeout(start: u64, ccx_options: &mut Options) {
 
     if let Some(live_stream) = ccx_options.live_stream {
         if live_stream.seconds() != 0 {
-            if current_time > start + live_stream.millis() as u64 {
+            if current_time > start + live_stream.seconds() as u64 {
                 // Timeout elapsed
                 ccx_options.live_stream = Option::from(Timestamp::from_millis(0));
             } else {
@@ -884,6 +884,22 @@ mod tests {
             assert!((null_mut::<*mut u8>()).is_null());
         }
     }
+    #[test]
+    fn test_sleepandchecktimeout_timeout_elapsed() {
+        // --stream 2: the file stopped growing 10 seconds ago, so the timeout has passed
+        let mut ccx_options = Options::default();
+        ccx_options.input_source = DataSource::File;
+        ccx_options.live_stream = Some(Timestamp::from_millis(2000));
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        sleepandchecktimeout(now - 10, &mut ccx_options);
+
+        assert_eq!(ccx_options.live_stream.unwrap().millis(), 0);
+    }
+
     // #[test] // Uncomment to run, needs real file
     #[allow(unused)]
     fn test_switch_to_next_file_success() {
