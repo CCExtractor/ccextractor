@@ -273,6 +273,7 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 	else
 	{
 		mprint("\nMissing WTV header. Abort.\n");
+		free(parsebuf);
 		return CCX_EOF;
 	}
 
@@ -323,12 +324,22 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 			dbg_print(CCX_DMT_PARSE, "len: %x\n", len);
 			memcpy(&file_length, parsebuf + 24, 8);
 			dbg_print(CCX_DMT_PARSE, "file_length: %" PRIx64 "\n", file_length);
+			if (len < 32)
+			{
+				// len counts the 32 byte record as well, so anything
+				// shorter makes len - 32 wrap round in the size_t that
+				// buffered_read() takes for its count.
+				mprint("Metadata entry shorter than its own header!\n");
+				free(parsebuf);
+				return CCX_EOF;
+			}
 			if (len > 1024)
 			{
 				mprint("Too large for buffer!\n");
 				free(parsebuf);
 				return CCX_EOF;
 			}
+			uint32_t body_len = (uint32_t)len - 32;
 			result = buffered_read(ctx, parsebuf, len - 32);
 			if (result != len - 32)
 			{
@@ -341,6 +352,18 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 			uint32_t text_len;
 			memcpy(&text_len, parsebuf, 4); // text_len is number of unicode chars, not bytes.
 			dbg_print(CCX_DMT_PARSE, "text_len: %x\n", text_len);
+			// text_len is a character count taken from the file. The string
+			// it describes starts 8 bytes into the body and is two bytes per
+			// character, so it has to fit in what was actually read: the loop
+			// below otherwise walks off parsebuf, and malloc(text_len + 1)
+			// wraps to malloc(0) at UINT32_MAX while string[text_len] still
+			// writes 4 GB away.
+			if (body_len < 8 || text_len > (body_len - 8) / 2)
+			{
+				mprint("Metadata string longer than its entry!\n");
+				free(parsebuf);
+				return CCX_EOF;
+			}
 			char *string;
 			string = (char *)malloc(text_len + 1); // alloc for ascii
 			if (!string)
@@ -360,6 +383,15 @@ int read_header(struct ccx_demuxer *ctx, struct wtv_chunked_buffer *cb)
 			{
 				uint32_t value;
 				uint32_t flag;
+				// Both reads sit past the string, so they need eight more
+				// bytes of body than the string itself does.
+				if (text_len * 2 + 16 > body_len)
+				{
+					mprint("Metadata entry has no room for its value!\n");
+					free(string);
+					free(parsebuf);
+					return CCX_EOF;
+				}
 				memcpy(&value, parsebuf + (text_len * 2) + 8, 4);
 				memcpy(&flag, parsebuf + (text_len * 2) + 4 + 8, 4);
 				dbg_print(CCX_DMT_PARSE, "value: %x\n", value);
