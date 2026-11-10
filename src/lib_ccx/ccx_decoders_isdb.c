@@ -1177,7 +1177,9 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 	int i;
 
 	if (size < 1)
+	{
 		return -1;
+	}
 
 	ctx->tmd = (*buf >> 6);
 	isdb_log("CC MGMT DATA: TMD: %d\n", ctx->tmd);
@@ -1202,7 +1204,9 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * +-----------+-----------+---------+--------------+
 		 */
 		if (buf_end - buf < 5)
+		{
 			return -1;
+		}
 		ctx->offset_time.hour = ((*buf >> 4) * 10) + (*buf & 0xf);
 		buf++;
 		ctx->offset_time.min = ((*buf >> 4) * 10) + (*buf & 0xf);
@@ -1222,7 +1226,9 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 			 "given by PTS.\n");
 	}
 	if (buf_end - buf < 1)
+	{
 		return -1;
+	}
 	ctx->nb_lang = *buf;
 	isdb_log("CC MGMT DATA: nb languages: %d\n", ctx->nb_lang);
 	buf++;
@@ -1232,7 +1238,9 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 	for (i = 0; i < ctx->nb_lang; i++)
 	{
 		if (buf_end - buf < 5)
+		{
 			break;
+		}
 		isdb_log("CC MGMT DATA: %d\n", (*buf & 0x1F) >> 5);
 		ctx->dmf = *buf & 0x0F;
 		isdb_log("CC MGMT DATA: DMF 0x%X\n", ctx->dmf);
@@ -1303,7 +1311,9 @@ static int parse_data_unit(ISDBSubContext *ctx, const uint8_t *buf, int size)
 
 	/* separator, unit parameter and a 24 bit length */
 	if (size < 5)
+	{
 		return -1;
+	}
 
 	/* unit separator */
 	buf++;
@@ -1313,7 +1323,9 @@ static int parse_data_unit(ISDBSubContext *ctx, const uint8_t *buf, int size)
 	buf += 3;
 	/* The length comes from the stream; keep it inside what we were given. */
 	if (len > size - 5)
+	{
 		len = size - 5;
+	}
 	switch (unit_parameter)
 	{
 		/* statement body */
@@ -1331,7 +1343,9 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	unsigned char buffer[1024] = "";
 
 	if (size < 1)
+	{
 		return -1;
+	}
 
 	tmd = *buf >> 6;
 	buf++;
@@ -1340,19 +1354,25 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	if (tmd == 1 || tmd == 2)
 	{
 		if (size < 5)
+		{
 			return -1;
+		}
 		buf += 5;
 		size -= 5;
 	}
 
 	if (size < 3)
+	{
 		return -1;
+	}
 	len = RB24(buf);
 	buf += 3;
 	size -= 3;
 	/* The length comes from the stream; keep it inside what we were given. */
 	if (len > size)
+	{
 		len = size;
+	}
 	ret = parse_data_unit(ctx, buf, len);
 	if (ret < 0)
 		return -1;
@@ -1385,7 +1405,9 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, int size, struct 
 
 	/* data group id, link numbers and a 16 bit group size */
 	if (size < 5)
+	{
 		return -1;
+	}
 
 	id = (*buf >> 2);
 #ifdef DEBUG // Fix [-Wunused-variable] when no debug
@@ -1426,7 +1448,9 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, int size, struct 
 	/* group_size comes from the stream and the CRC takes the last two bytes,
 	   so it can claim far more than the PES payload actually holds. */
 	if (group_size > size - 5)
+	{
 		group_size = size - 5;
+	}
 
 	if (ctx->prev_timestamp > ctx->timestamp)
 	{
@@ -1466,7 +1490,9 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 
 	/* data identifier, private stream id and the header length nibble */
 	if (buf_size < 3)
+	{
 		return -1;
+	}
 
 	if (*buf++ != 0x80)
 	{
