@@ -715,17 +715,25 @@ fn normalize_legacy_args(args: Vec<String>) -> Vec<String> {
         }
     }
 
+    let is_number = |s: &String| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let mut normalized = Vec::with_capacity(args.len());
     let mut expects_value = false;
-    args.into_iter()
-        .map(|arg| {
-            if std::mem::take(&mut expects_value) {
-                return arg;
-            }
-            let arg = normalize_legacy_option(arg);
-            expects_value = value_options.contains(&arg);
-            arg
-        })
-        .collect()
+    for (i, arg) in args.iter().enumerate() {
+        if std::mem::take(&mut expects_value) {
+            normalized.push(arg.clone());
+            continue;
+        }
+        let arg = normalize_legacy_option(arg.clone());
+        // `--stream` takes an optional number of seconds. As in the C parser, the next argument
+        // is only its value if it is a number; otherwise there is no timeout (-1).
+        if (arg == "-s" || arg == "--stream") && !args.get(i + 1).is_some_and(is_number) {
+            normalized.push("--stream=-1".to_string());
+            continue;
+        }
+        expects_value = value_options.contains(&arg);
+        normalized.push(arg);
+    }
+    normalized
 }
 
 /// # Safety
@@ -998,6 +1006,25 @@ mod test {
             .map(String::from)
             .collect();
         Args::try_parse_from(normalize_legacy_args(args))
+    }
+
+    #[test]
+    fn test_stream_timeout_is_optional() {
+        let input = Some(vec!["input.ts".to_string()]);
+
+        // As in the C parser, the next argument is only the timeout if it is a number
+        let args = parse_normalized(&["--stream", "input.ts"]).unwrap();
+        assert_eq!(args.stream.as_deref(), Some("-1"));
+        assert_eq!(args.inputfile, input);
+
+        let args = parse_normalized(&["input.ts", "-s"]).unwrap();
+        assert_eq!(args.stream.as_deref(), Some("-1"));
+
+        for spelling in ["--stream", "-s", "-stream"] {
+            let args = parse_normalized(&[spelling, "5", "input.ts"]).unwrap();
+            assert_eq!(args.stream.as_deref(), Some("5"), "{}", spelling);
+            assert_eq!(args.inputfile, input);
+        }
     }
 
     #[test]
