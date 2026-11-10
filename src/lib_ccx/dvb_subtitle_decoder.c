@@ -1144,7 +1144,9 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 	int r, g, b, r_add, g_add, b_add;
 
 	if (buf_size < 2)
+	{
 		return -1;
+	}
 
 	clut_id = *buf++;
 	version = ((*buf) >> 4) & 15;
@@ -1226,33 +1228,18 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 				mprint("dvbsub_parse_clut_segment(): More than one bit level marked: %x\n", depth);
 			}
 
-			if (depth & 0x80)
+			if ((depth & 0x80) && entry_id < 4)
 			{
-				if (entry_id >= 4)
-				{
-					mprint("dvbsub_parse_clut_segment(): entry_id %d exceeds 2-bit CLUT bounds\n", entry_id);
-					return -1;
-				}
 				clut->clut4[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut4[entry_id] = y;
 			}
-			else if (depth & 0x40)
+			else if ((depth & 0x40) && entry_id < 16)
 			{
-				if (entry_id >= 16)
-				{
-					mprint("dvbsub_parse_clut_segment(): entry_id %d exceeds 4-bit CLUT bounds\n", entry_id);
-					return -1;
-				}
 				clut->clut16[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut16[entry_id] = y;
 			}
 			else if (depth & 0x20)
 			{
-				if (entry_id >= 256)
-				{
-					mprint("dvbsub_parse_clut_segment(): entry_id %d exceeds 8-bit CLUT bounds\n", entry_id);
-					return -1;
-				}
 				clut->clut256[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut256[entry_id] = y;
 			}
