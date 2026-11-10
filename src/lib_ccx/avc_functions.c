@@ -370,7 +370,9 @@ void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend)
 	{
 		tbuf = sei_message(ctx, tbuf, seiend - 1);
 		if (!tbuf)
-			break;
+        {
+            break;
+        }
 	}
 	if (tbuf == seiend - 1)
 	{
