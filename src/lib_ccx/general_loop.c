@@ -1711,6 +1711,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	struct encoder_ctx *enc_ctx = update_encoder_list(ctx);
 	struct TeletextCtx *telctx;
 	int saved_binary_concat;
+	int is_teletext;
 	// As BUFSIZE is a macro this is just a reminder
 	if (BUFSIZE < (3 * 0xFFFF + 10))
 		fatal(CCX_COMMON_EXIT_BUG_BUG, "In rcwt_loop: BUFSIZE too small for RCWT caption block.\n");
@@ -1771,7 +1772,11 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 #else
 	dec_ctx->dtvcc->encoder = (void *)enc_ctx; // WARN: otherwise cea-708 will not work
 #endif
-	if (parsebuf[6] == 0 && parsebuf[7] == 2)
+	// The file header decides the mode once: parsebuf is reused for data
+	// headers and caption blocks below, so re-reading it per iteration could
+	// route 608 caption data into the teletext decoder (whose context is NULL).
+	is_teletext = (parsebuf[6] == 0 && parsebuf[7] == 2);
+	if (is_teletext)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;
 		dec_ctx->private_data = telxcc_init();
@@ -1789,7 +1794,7 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	// Loop until no more data is found
 	while (1)
 	{
-		if (parsebuf[6] == 0 && parsebuf[7] == 2)
+		if (is_teletext)
 		{
 			result = buffered_read(ctx->demux_ctx, buf, TELETEXT_CHUNK_LEN);
 			ctx->demux_ctx->past += result;
