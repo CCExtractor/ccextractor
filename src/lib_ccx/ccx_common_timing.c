@@ -111,20 +111,27 @@ LLONG get_fts_max(struct ccx_common_timing_ctx *ctx)
 	return ccxr_get_fts_max(ctx);
 }
 
+double get_scc_frame_rate(double fps)
+{
+	// High-frame-rate streams use the corresponding SCC frame timebase.
+	return fps > 30.0 ? fps / 2.0 : fps;
+}
+
 /**
  * SCC Time formatting
  * Note: buf must have at least 32 bytes available from the write position
  */
 size_t print_scc_time(struct ccx_boundary_time time, char *buf)
 {
-	char *fmt = "%02u:%02u:%02u;%02u";
+	double fps = get_scc_frame_rate(current_fps);
+	char separator = (fps > 29.96 && fps < 29.98) ? ';' : ':';
 	double frame;
 	// Format produces "HH:MM:SS;FF" = 11 chars + null, use 32 for safety
 	const size_t max_time_len = 32;
 
-	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * current_fps / 1000);
+	frame = ((double)(time.time_in_ms - 1000 * (time.ss + 60 * (time.mm + 60 * time.hh))) * fps / 1000);
 
-	return (size_t)snprintf(buf + time.set, max_time_len, fmt, time.hh, time.mm, time.ss, (unsigned)frame);
+	return (size_t)snprintf(buf + time.set, max_time_len, "%02u:%02u:%02u%c%02u", time.hh, time.mm, time.ss, separator, (unsigned)frame);
 }
 
 struct ccx_boundary_time get_time(LLONG time)

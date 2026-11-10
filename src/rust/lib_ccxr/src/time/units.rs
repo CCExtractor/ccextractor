@@ -11,6 +11,15 @@ use time::{
     Duration,
 };
 
+/// Maps a stream frame rate to the SCC frame timebase.
+pub fn scc_frame_rate(fps: f64) -> f64 {
+    if fps > 30.0 {
+        fps / 2.0
+    } else {
+        fps
+    }
+}
+
 /// Represents a timestamp in milliseconds.
 ///
 /// The number can be negetive.
@@ -395,17 +404,23 @@ impl Timestamp {
     /// ```rust
     /// # use lib_ccxr::time::units::Timestamp;
     /// let timestamp = Timestamp::from_millis(500);
-    /// assert_eq!(timestamp.to_scc_time(25.0).unwrap(), "00:00:00;12");
+    /// assert_eq!(timestamp.to_scc_time(25.0).unwrap(), "00:00:00:12");
     /// ```
     pub fn to_scc_time(&self, fps: f64) -> Result<String, TimestampError> {
         let mut result = String::new();
+        let fps = scc_frame_rate(fps);
+        let separator = if (29.96..29.98).contains(&fps) {
+            ';'
+        } else {
+            ':'
+        };
 
         let (h, m, s, _) = self.as_hms_millis()?;
         let secs = s as i64 + 60 * (m as i64 + 60 * h as i64);
         let frame = (self.millis - 1000 * secs) as f64 * fps / 1000.0;
         let frame = frame as u32;
 
-        write!(result, "{h:02}:{m:02}:{s:02};{frame:02}")?;
+        write!(result, "{h:02}:{m:02}:{s:02}{separator}{frame:02}")?;
 
         Ok(result)
     }
@@ -758,12 +773,27 @@ mod tests {
 
         // The frame number follows the given fps.
         let ts = Timestamp::from_millis(960);
-        assert_eq!(ts.to_scc_time(25.0).unwrap(), "00:00:00;24");
+        assert_eq!(ts.to_scc_time(25.0).unwrap(), "00:00:00:24");
         assert_eq!(ts.to_scc_time(29.97).unwrap(), "00:00:00;28");
 
         // Frame numbers are truncated, never fractional.
         let ts = Timestamp::from_millis(500);
-        assert_eq!(ts.to_scc_time(25.0).unwrap(), "00:00:00;12");
+        assert_eq!(ts.to_scc_time(25.0).unwrap(), "00:00:00:12");
+
+        let ts = Timestamp::from_millis(999);
+        for (fps, expected) in [
+            (23.976, "00:00:00:23"),
+            (24.0, "00:00:00:23"),
+            (25.0, "00:00:00:24"),
+            (29.97, "00:00:00;29"),
+            (30.0, "00:00:00:29"),
+            (50.0, "00:00:00:24"),
+            (59.94, "00:00:00;29"),
+            (60000.0 / 1001.0, "00:00:00;29"),
+            (60.0, "00:00:00:29"),
+        ] {
+            assert_eq!(ts.to_scc_time(fps).unwrap(), expected, "fps={fps}");
+        }
 
         let ts = Timestamp::from_millis(-1);
         assert!(ts.to_scc_time(29.97).is_err());

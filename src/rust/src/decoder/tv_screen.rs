@@ -494,7 +494,8 @@ impl dtvcc_tv_screen {
         let mut time_show = ccx_boundary_time::get_time(self.time_ms_show);
         let time_end = ccx_boundary_time::get_time(self.time_ms_hide);
         // One frame duration in milliseconds (truncated like the C path)
-        let one_frame_ms = unsafe { (1000.0 / current_fps) as i64 };
+        let one_frame_ms =
+            unsafe { (1000.0 / lib_ccxr::time::units::scc_frame_rate(current_fps)) as i64 };
 
         // Caption overlapping situation
         match writer.old_cc_time_end.cmp(&(time_show.time_in_ms as i32)) {
@@ -826,7 +827,7 @@ mod test {
         // 500 ms minus one frame (33 ms at 30 fps) leaves 467 ms => frame 14.
         // The old hardcoded 29.97 math would produce frame 13 for both steps.
         assert!(
-            output.starts_with("00:00:00;14"),
+            output.starts_with("00:00:00:14"),
             "unexpected SCC timecode: {:?}",
             output
         );
