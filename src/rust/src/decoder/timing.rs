@@ -1,6 +1,6 @@
 //! Utilty functions to get timing for captions
 
-use crate::{bindings::*, cb_708, cb_field1, cb_field2};
+use crate::{bindings::*, cb_708, cb_field1, cb_field2, current_fps};
 
 use log::{debug, error};
 
@@ -87,13 +87,25 @@ impl PartialEq for ccx_boundary_time {
 
 /// Returns a hh:mm:ss;frame string of time for SCC format
 pub fn get_scc_time_str(time: ccx_boundary_time) -> String {
-    // Feel sorry for formatting:(
+    get_scc_time_str_at_rate(time, unsafe { current_fps })
+}
+
+fn get_scc_time_str_at_rate(time: ccx_boundary_time, fps: f64) -> String {
+    let fps = lib_ccxr::time::units::scc_frame_rate(fps);
+    let separator = if (29.96..29.98).contains(&fps) {
+        ';'
+    } else {
+        ':'
+    };
     let frame: u8 = (((time.time_in_ms
         - 1000 * ((time.ss as i64) + 60 * ((time.mm as i64) + 60 * (time.hh as i64))))
         as f64)
-        * 29.97
+        * fps
         / 1000.0) as u8;
-    format!("{:02}:{:02}:{:02};{:02}", time.hh, time.mm, time.ss, frame)
+    format!(
+        "{:02}:{:02}:{:02}{separator}{:02}",
+        time.hh, time.mm, time.ss, frame
+    )
 }
 
 #[cfg(test)]
@@ -202,7 +214,7 @@ mod test {
     fn test_get_scc_time_str() {
         assert_eq!(
             get_scc_time_str(ccx_boundary_time::default()),
-            "00:00:00;00"
+            "00:00:00:00"
         );
         assert_eq!(
             get_scc_time_str(ccx_boundary_time {
@@ -212,7 +224,7 @@ mod test {
                 time_in_ms: 1000,
                 set: Default::default()
             }),
-            "00:00:01;00"
+            "00:00:01:00"
         );
         assert_eq!(
             get_scc_time_str(ccx_boundary_time {
@@ -222,7 +234,7 @@ mod test {
                 time_in_ms: 60000,
                 set: Default::default()
             }),
-            "00:01:00;00"
+            "00:01:00:00"
         );
         assert_eq!(
             get_scc_time_str(ccx_boundary_time {
@@ -232,7 +244,7 @@ mod test {
                 time_in_ms: 3600000,
                 set: Default::default()
             }),
-            "01:00:00;00"
+            "01:00:00:00"
         );
         assert_eq!(
             get_scc_time_str(ccx_boundary_time {
@@ -242,7 +254,42 @@ mod test {
                 time_in_ms: 86400000,
                 set: Default::default()
             }),
-            "24:00:00;00"
+            "24:00:00:00"
+        );
+    }
+
+    #[test]
+    fn test_scc_stream_frame_rates() {
+        for (fps, expected) in [
+            (23.976, "00:00:00:23"),
+            (24.0, "00:00:00:23"),
+            (25.0, "00:00:00:24"),
+            (29.97, "00:00:00;29"),
+            (30.0, "00:00:00:29"),
+            (50.0, "00:00:00:24"),
+            (59.94, "00:00:00;29"),
+            (60000.0 / 1001.0, "00:00:00;29"),
+            (60.0, "00:00:00:29"),
+        ] {
+            let time = ccx_boundary_time::get_time(999);
+            assert_eq!(get_scc_time_str_at_rate(time, fps), expected, "fps={fps}");
+        }
+    }
+
+    #[test]
+    fn test_get_scc_time_str_frame_number() {
+        // In test builds current_fps is mocked to 30.0 (see crate::lib.rs),
+        // so 500 ms into a second is frame 15. The old hardcoded 29.97 would
+        // truncate to frame 14.
+        assert_eq!(
+            get_scc_time_str(ccx_boundary_time {
+                hh: 0,
+                mm: 0,
+                ss: 0,
+                time_in_ms: 500,
+                set: Default::default()
+            }),
+            "00:00:00:15"
         );
     }
 
