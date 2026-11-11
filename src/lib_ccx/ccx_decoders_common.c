@@ -459,6 +459,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			    ctx->write_format == CCX_OF_WEBVTT ||
 			    ctx->write_format == CCX_OF_SPUPNG ||
 			    ctx->write_format == CCX_OF_SSA ||
+			    ctx->write_format == CCX_OF_G608 ||
+			    ctx->write_format == CCX_OF_SIMPLE_XML ||
 			    ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_1, sub);
@@ -481,6 +483,8 @@ void flush_cc_decode(struct lib_cc_decode *ctx, struct cc_subtitle *sub)
 			    ctx->write_format == CCX_OF_WEBVTT ||
 			    ctx->write_format == CCX_OF_SPUPNG ||
 			    ctx->write_format == CCX_OF_SSA ||
+			    ctx->write_format == CCX_OF_G608 ||
+			    ctx->write_format == CCX_OF_SIMPLE_XML ||
 			    ctx->write_format == CCX_OF_MCC)
 			{
 				flush_608_context(ctx->context_cc608_field_2, sub);
