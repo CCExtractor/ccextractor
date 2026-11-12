@@ -101,19 +101,6 @@ where
     }
 }
 
-/// Compare two words the way C's `strcasecmp` does: byte by byte, with ASCII letters lowercased.
-fn strcasecmp_order(a: &str, b: &str) -> std::cmp::Ordering {
-    a.bytes()
-        .map(|c| c.to_ascii_lowercase())
-        .cmp(b.bytes().map(|c| c.to_ascii_lowercase()))
-}
-
-/// Sort a word list in the same order as C's `strcasecmp`. The C encoders look words up with
-/// `bsearch` (ccx_encoders_helpers.c), which only finds them in a list sorted this way.
-fn sort_word_list(list: &mut [String]) {
-    list.sort_by(|a, b| strcasecmp_order(a, b));
-}
-
 fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
@@ -1478,8 +1465,6 @@ impl OptionsExt for Options {
                 }
             }
         }
-        sort_word_list(capitalization_list);
-        sort_word_list(profane);
 
         // Init telexcc redundant options
         tlt_config.dolevdist = self.dolevdist;
@@ -2627,47 +2612,6 @@ pub mod tests {
     fn test_kf_enables_profanity_filter() {
         let (options, _) = parse_args(&["--kf"]);
         assert!(options.enc_cfg.filter_profanity);
-    }
-
-    #[test]
-    fn test_sort_word_list_uses_strcasecmp_order() {
-        let mut list: Vec<String> = ["june", "Zebra", "_x", "Apple", "banana"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
-        sort_word_list(&mut list);
-        // '_' (0x5f) sorts before the lowercase letters, as with strcasecmp
-        assert_eq!(list, ["_x", "Apple", "banana", "june", "Zebra"]);
-    }
-
-    #[test]
-    fn test_word_lists_are_sorted_for_bsearch() {
-        let args = Args::try_parse_from(["./ccextractor", "input_file", "--sentencecap", "--kf"])
-            .expect("Failed to parse arguments");
-        let mut options = Options::default();
-        let mut tlt_config = TeletextConfig::default();
-        let mut capitalization_list: Vec<String> = vec![];
-        let mut profane: Vec<String> = vec![];
-        options.parse_parameters(
-            &args,
-            &mut tlt_config,
-            &mut capitalization_list,
-            &mut profane,
-        );
-
-        for list in [&capitalization_list, &profane] {
-            assert!(!list.is_empty());
-            // Every word must be found by a binary search, as C's bsearch does
-            for word in list.iter() {
-                assert!(
-                    list.binary_search_by(|w| strcasecmp_order(w, word)).is_ok(),
-                    "{} not found",
-                    word
-                );
-            }
-        }
-        let june = capitalization_list.binary_search_by(|w| strcasecmp_order(w, "june"));
-        assert_eq!(june.map(|i| capitalization_list[i].as_str()), Ok("June"));
     }
 
     #[test]
