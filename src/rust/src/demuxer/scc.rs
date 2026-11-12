@@ -271,11 +271,25 @@ mod tests {
 
     #[test]
     fn test_parse_scc_uses_23_976_framerate_from_ffi() {
-        let content = "Scenarist_SCC V1.0\n\n00:00:01:12\t9420\n00:00:03:12\t942c\n";
+        // Real sample file, loaded at compile time (repo tests/samples/scc_23_976.scc)
+        let content = include_str!("../../../../tests/samples/scc_23_976.scc");
         let result = parse_scc(content, SccFrameRate::from_int(4));
         assert_eq!(result.lines.len(), 2);
         assert_eq!(result.lines[0].time_ms, 1500);
         assert_eq!(result.lines[1].time_ms, 3500);
+        assert_eq!(
+            result.lines[0].pairs,
+            vec![
+                [0x94, 0x20],
+                [0x94, 0x20],
+                [0x94, 0xe0],
+                [0x94, 0xe0],
+                [0xc8, 0x49],
+                [0x94, 0x2f],
+                [0x94, 0x2f],
+            ]
+        );
+        assert_eq!(result.lines[1].pairs, vec![[0x94, 0x2c], [0x94, 0x2c]]);
         assert!((SccFrameRate::from_int(4).ms_per_frame() - 1001.0 / 24.0).abs() < 0.001);
     }
 
