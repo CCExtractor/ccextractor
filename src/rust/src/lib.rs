@@ -15,6 +15,8 @@ pub mod bindings {
 
 pub mod args;
 pub mod avc;
+#[cfg(test)]
+mod cli_tests;
 pub mod common;
 pub mod ctorust;
 pub mod decoder;
