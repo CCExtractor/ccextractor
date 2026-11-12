@@ -6,6 +6,7 @@ License: GPL 2.0
 CI verification run: 2025-12-19T08:30 - Testing merged fixes from PRs #1847 and #1848
 */
 #include "ccextractor.h"
+#include "lib_ccx/ccx_encoders_helpers.h"
 #include <stdio.h>
 #include <locale.h>
 
@@ -499,6 +500,10 @@ int main(int argc, char *argv[])
 	{
 		exit(compile_ret);
 	}
+
+	// The capitalization and profanity lists are searched with bsearch() and strcasecmp(), whose
+	// order depends on the locale set above. Sort them here with the same comparator.
+	ccx_encoders_helpers_perform_shellsort_words();
 
 	int start_ret = start_ccx();
 	return start_ret;
