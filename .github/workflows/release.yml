@@ -38,6 +38,9 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v7
+    - name: Set CCExtractor version from tag
+      run: bash tools/set_release_version.sh "$GITHUB_REF_NAME"
+      shell: bash
     - name: Get the version
       id: get_version
       run: |
@@ -162,6 +165,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           path: ./ccextractor
+      - name: Set CCExtractor version from tag
+        run: bash tools/set_release_version.sh "$GITHUB_REF_NAME"
+        working-directory: ./ccextractor
       - name: Get the version
         id: get_version
         run: |

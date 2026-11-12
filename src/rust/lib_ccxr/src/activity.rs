@@ -5,7 +5,7 @@ use std::io::Write;
 use std::os::raw::c_ulong;
 
 pub trait ActivityExt {
-    fn activity_report_version(&mut self);
+    fn activity_report_version(&mut self, version: &str);
     fn activity_input_file_closed(&mut self);
     fn activity_input_file_open(&mut self, filename: &str);
     fn activity_report_data_read(&mut self, net_activity_gui: &mut c_ulong);
@@ -18,10 +18,9 @@ pub trait ActivityExt {
     );
 }
 impl ActivityExt for Options {
-    fn activity_report_version(&mut self) {
+    fn activity_report_version(&mut self, version: &str) {
         if self.gui_mode_reports {
             let mut stderr = io::stderr();
-            let version = env!("CARGO_PKG_VERSION");
             writeln!(stderr, "###VERSION#CCExtractor#{version}").unwrap();
             stderr.flush().unwrap();
         }

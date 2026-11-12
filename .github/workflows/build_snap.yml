@@ -14,6 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Set CCExtractor version from tag
+        if: github.event_name == 'release'
+        run: bash tools/set_release_version.sh "$GITHUB_REF_NAME"
+
       - name: Install snapd
         run: |
           sudo apt update

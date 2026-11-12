@@ -44,6 +44,10 @@ jobs:
         if: steps.should_build.outputs.should_build == 'true'
         uses: actions/checkout@v7
 
+      - name: Set CCExtractor version from tag
+        if: steps.should_build.outputs.should_build == 'true' && github.event_name == 'release'
+        run: bash tools/set_release_version.sh "$GITHUB_REF_NAME"
+
       - name: Install base dependencies
         if: steps.should_build.outputs.should_build == 'true'
         run: |

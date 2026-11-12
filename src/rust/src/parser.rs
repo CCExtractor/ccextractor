@@ -1448,7 +1448,7 @@ impl OptionsExt for Options {
         if self.gui_mode_reports {
             self.no_progress_bar = true;
             // Do it as soon as possible, because it something fails we might not have a chance
-            self.activity_report_version();
+            self.activity_report_version(args::CCEXTRACTOR_VERSION);
         }
 
         if self.enc_cfg.sentence_cap {

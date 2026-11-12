@@ -92,7 +92,8 @@ fn main() {
     let mut builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .header("wrapper.h");
+        .header("wrapper.h")
+        .allowlist_var("VERSION");
 
     // enable FFmpeg MP4 demuxer if feature is on
     #[cfg(feature = "enable_mp4_ffmpeg")]

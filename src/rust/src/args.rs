@@ -2,6 +2,16 @@ use clap::{Parser, ValueEnum};
 use lib_ccxr::time::units::Timestamp;
 use strum_macros::Display;
 
+pub(crate) const CCEXTRACTOR_VERSION: &str = {
+    let Ok(version) = std::ffi::CStr::from_bytes_with_nul(crate::bindings::VERSION) else {
+        panic!("VERSION must be a C string");
+    };
+    let Ok(version) = version.to_str() else {
+        panic!("VERSION must be UTF-8");
+    };
+    version
+};
+
 const FILE_NAME_RELATED_OPTIONS: &str = "File name related options";
 const OUTPUT_FILE_SEGMENTATION: &str = "Output File Segmentation";
 const NETWORK_SUPPORT: &str = "Network support";
@@ -29,7 +39,7 @@ const BURNEDIN_SUBTITLE_EXTRACTION: &str = "Burned-in subtitle extraction";
 #[derive(Debug, Parser)]
 #[command(name = "CCExtractor")]
 #[command(author = "Carlos Fernandez Sanz, Volker Quetschke.")]
-#[command(version = "0.96.5")]
+#[command(version = CCEXTRACTOR_VERSION)]
 #[command(about = "Teletext portions taken from Petr Kutalek's telxcc
 --------------------------------------------------------------------------
 Originally based on McPoodle's tools. Check his page for lots of information
