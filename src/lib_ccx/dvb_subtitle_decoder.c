@@ -1143,6 +1143,11 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 	int y, cr, cb, alpha;
 	int r, g, b, r_add, g_add, b_add;
 
+	if (buf_size < 2)
+	{
+		return -1;
+	}
+
 	clut_id = *buf++;
 	version = ((*buf) >> 4) & 15;
 	buf += 1;
@@ -1171,7 +1176,7 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 		clut->version = version;
 
-		while (buf + 4 < buf_end)
+		while (buf + 2 <= buf_end)
 		{
 			entry_id = *buf++;
 
@@ -1187,6 +1192,11 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 
 			if (full_range)
 			{
+				if (buf + 4 > buf_end)
+				{
+					mprint("dvbsub_parse_clut_segment(): Truncated full_range CLUT entry\n");
+					return -1;
+				}
 				y = *buf++;
 				cr = *buf++;
 				cb = *buf++;
@@ -1194,6 +1204,11 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 			}
 			else
 			{
+				if (buf + 2 > buf_end)
+				{
+					mprint("dvbsub_parse_clut_segment(): Truncated compact CLUT entry\n");
+					return -1;
+				}
 				y = buf[0] & 0xfc;
 				cr = (((buf[0] & 3) << 2) | ((buf[1] >> 6) & 3)) << 4;
 				cb = (buf[1] << 2) & 0xf0;
@@ -1213,12 +1228,12 @@ static int dvbsub_parse_clut_segment(void *dvb_ctx, const uint8_t *buf,
 				mprint("dvbsub_parse_clut_segment(): More than one bit level marked: %x\n", depth);
 			}
 
-			if (depth & 0x80)
+			if ((depth & 0x80) && entry_id < 4)
 			{
 				clut->clut4[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut4[entry_id] = y;
 			}
-			else if (depth & 0x40)
+			else if ((depth & 0x40) && entry_id < 16)
 			{
 				clut->clut16[entry_id] = RGBA(r, g, b, 255 - alpha);
 				clut->ilut16[entry_id] = y;
