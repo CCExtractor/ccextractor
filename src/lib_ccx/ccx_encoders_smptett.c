@@ -133,8 +133,14 @@ int write_cc_bitmap_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *cont
 				int written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "<p begin=\"%02u:%02u:%02u.%03u\" end=\"%02u:%02u:%02u.%03u\">\n", h1, m1, s1, ms1, h2, m2, s2, ms2);
 				if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
 					write_wrapped(context->out->fh, buf, written);
-				len = strlen(rect[i].ocr_text);
-				write_wrapped(context->out->fh, rect[i].ocr_text, len);
+				char *escaped = escape_plain_text(rect[i].ocr_text);
+				if (!escaped)
+				{
+					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_smptett: Out of memory.\n");
+				}
+				len = strlen(escaped);
+				write_wrapped(context->out->fh, escaped, len);
+				free(escaped);
 				write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 				written = snprintf(buf, INITIAL_ENC_BUFFER_CAPACITY, "</p>\n");
 				if (written > 0 && (size_t)written < INITIAL_ENC_BUFFER_CAPACITY)
