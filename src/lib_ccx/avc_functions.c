@@ -781,6 +781,10 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 	else
 	{
 		// Nothing needs to be parsed when pic_order_cnt_type == 2
+		if (ccx_options.usepicorder && ctx->pic_order_cnt_type == 2)
+		{
+			mprint("H.264: --usepicorder requested, but pic_order_cnt_type=2 has no pic_order_cnt_lsb; falling back to PTS ordering.\n");
+		}
 	}
 
 	tmp = read_exp_golomb_unsigned(&q1);
@@ -942,6 +946,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	LLONG slice_type, bottom_field_flag = 0, pic_order_cnt_lsb = -1;
 	int current_index;
 	int ird_pic_flag;
+	int use_pic_order = ccx_options.usepicorder && dec_ctx->avc_ctx->pic_order_cnt_type == 0;
 	LLONG field_pic_flag = 0; // Moved here because it's needed for ctx->avc_ctx->pic_order_cnt_type==2
 
 	if (init_bitstream(&q1, heabuf, heaend))
@@ -1011,7 +1016,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 	}
 
 	// Ignore slice with same pic order or pts
-	if (ccx_options.usepicorder)
+	if (use_pic_order)
 	{
 		if (dec_ctx->avc_ctx->last_pic_order_cnt_lsb == pic_order_cnt_lsb)
 			return;
@@ -1130,7 +1135,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 		dec_ctx->avc_ctx->lastminidx = dec_ctx->avc_ctx->minidx;
 		dec_ctx->avc_ctx->minidx = 10000;
 
-		if (ccx_options.usepicorder)
+		if (use_pic_order)
 		{
 			// Use pic_order_cnt_lsb
 
@@ -1157,7 +1162,7 @@ void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, un
 		anchor_hdcc(dec_ctx, dec_ctx->avc_ctx->currref);
 	}
 
-	if (ccx_options.usepicorder)
+	if (use_pic_order)
 	{
 		// Use pic_order_cnt_lsb
 		// Wrap (add max index value) current_index if needed.
