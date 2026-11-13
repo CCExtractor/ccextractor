@@ -5,26 +5,53 @@ use strum_macros::{EnumString, FromRepr};
 pub const DTVCC_MAX_SERVICES: usize = 63;
 
 /// An enum of all the available formats for the subtitle output.
-#[derive(Default, Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Copy, Clone, Debug, PartialEq, Eq, FromRepr)]
+#[repr(u32)]
 pub enum OutputFormat {
     #[default]
-    Raw,
-    Srt,
-    Sami,
-    Transcript,
-    Rcwt,
-    Null,
-    SmpteTt,
-    SpuPng,
-    DvdRaw, // See -d at http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
-    WebVtt,
-    SimpleXml,
-    G608,
-    Curl,
-    Ssa,
-    Mcc,
-    Scc,
-    Ccd,
+    Raw = 0,
+    Srt = 1,
+    Sami = 2,
+    Transcript = 3,
+    Rcwt = 4,
+    Null = 5,
+    SmpteTt = 6,
+    SpuPng = 7,
+    DvdRaw = 8, // See -d at http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_TOOLS.HTML#CCExtract
+    WebVtt = 9,
+    SimpleXml = 10,
+    G608 = 11,
+    Curl = 12,
+    Ssa = 13,
+    Mcc = 14,
+    Scc = 15,
+    Ccd = 16,
+}
+
+impl OutputFormat {
+    /// Returns the file extension for this output format, including the leading dot,
+    /// or `None` if the format does not produce a file extension (e.g. `Null`, `Curl`).
+    ///
+    /// Rust equivalent for `get_file_extension` function in C.
+    pub const fn extension(self) -> Option<&'static str> {
+        match self {
+            OutputFormat::Ccd => Some(".ccd"),
+            OutputFormat::Raw => Some(".raw"),
+            OutputFormat::Scc => Some(".scc"),
+            OutputFormat::Srt => Some(".srt"),
+            OutputFormat::Ssa => Some(".ass"),
+            OutputFormat::WebVtt => Some(".vtt"),
+            OutputFormat::Sami => Some(".smi"),
+            OutputFormat::SmpteTt => Some(".ttml"),
+            OutputFormat::Transcript => Some(".txt"),
+            OutputFormat::Rcwt => Some(".bin"),
+            OutputFormat::SpuPng | OutputFormat::SimpleXml => Some(".xml"),
+            OutputFormat::DvdRaw => Some(".dvdraw"),
+            OutputFormat::G608 => Some(".g608"),
+            OutputFormat::Mcc => Some(".mcc"),
+            OutputFormat::Null | OutputFormat::Curl => None,
+        }
+    }
 }
 // Provides common constant types throughout the codebase.
 // Rust equivalent for `ccx_common_constants.c` file in C.
@@ -33,6 +60,7 @@ pub enum OutputFormat {
 //
 // | From                           | To                                         |
 // |--------------------------------|--------------------------------------------|
+// | `get_file_extension`           | [`OutputFormat::extension`]                |
 // | `ccx_avc_nal_types`            | [`AvcNalType`]                             |
 // | `ccx_stream_type`              | [`StreamType`]                             |
 // | `ccx_mpeg_descriptor`          | [`MpegDescriptor`]                         |
@@ -647,5 +675,54 @@ impl Language {
 impl PartialEq for BufferdataType {
     fn eq(&self, other: &Self) -> bool {
         std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_output_format_extension() {
+        assert_eq!(OutputFormat::Raw.extension(), Some(".raw"));
+        assert_eq!(OutputFormat::Srt.extension(), Some(".srt"));
+        assert_eq!(OutputFormat::Sami.extension(), Some(".smi"));
+        assert_eq!(OutputFormat::Transcript.extension(), Some(".txt"));
+        assert_eq!(OutputFormat::Rcwt.extension(), Some(".bin"));
+        assert_eq!(OutputFormat::Null.extension(), None);
+        assert_eq!(OutputFormat::SmpteTt.extension(), Some(".ttml"));
+        assert_eq!(OutputFormat::SpuPng.extension(), Some(".xml"));
+        assert_eq!(OutputFormat::DvdRaw.extension(), Some(".dvdraw"));
+        assert_eq!(OutputFormat::WebVtt.extension(), Some(".vtt"));
+        assert_eq!(OutputFormat::SimpleXml.extension(), Some(".xml"));
+        assert_eq!(OutputFormat::G608.extension(), Some(".g608"));
+        assert_eq!(OutputFormat::Curl.extension(), None);
+        assert_eq!(OutputFormat::Ssa.extension(), Some(".ass"));
+        assert_eq!(OutputFormat::Mcc.extension(), Some(".mcc"));
+        assert_eq!(OutputFormat::Scc.extension(), Some(".scc"));
+        assert_eq!(OutputFormat::Ccd.extension(), Some(".ccd"));
+    }
+
+    #[test]
+    fn test_output_format_from_repr() {
+        assert_eq!(OutputFormat::from_repr(0), Some(OutputFormat::Raw));
+        assert_eq!(OutputFormat::from_repr(1), Some(OutputFormat::Srt));
+        assert_eq!(OutputFormat::from_repr(2), Some(OutputFormat::Sami));
+        assert_eq!(OutputFormat::from_repr(3), Some(OutputFormat::Transcript));
+        assert_eq!(OutputFormat::from_repr(4), Some(OutputFormat::Rcwt));
+        assert_eq!(OutputFormat::from_repr(5), Some(OutputFormat::Null));
+        assert_eq!(OutputFormat::from_repr(6), Some(OutputFormat::SmpteTt));
+        assert_eq!(OutputFormat::from_repr(7), Some(OutputFormat::SpuPng));
+        assert_eq!(OutputFormat::from_repr(8), Some(OutputFormat::DvdRaw));
+        assert_eq!(OutputFormat::from_repr(9), Some(OutputFormat::WebVtt));
+        assert_eq!(OutputFormat::from_repr(10), Some(OutputFormat::SimpleXml));
+        assert_eq!(OutputFormat::from_repr(11), Some(OutputFormat::G608));
+        assert_eq!(OutputFormat::from_repr(12), Some(OutputFormat::Curl));
+        assert_eq!(OutputFormat::from_repr(13), Some(OutputFormat::Ssa));
+        assert_eq!(OutputFormat::from_repr(14), Some(OutputFormat::Mcc));
+        assert_eq!(OutputFormat::from_repr(15), Some(OutputFormat::Scc));
+        assert_eq!(OutputFormat::from_repr(16), Some(OutputFormat::Ccd));
+        assert_eq!(OutputFormat::from_repr(17), None);
+        assert_eq!(OutputFormat::from_repr(999), None);
     }
 }

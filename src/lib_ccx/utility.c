@@ -416,6 +416,13 @@ struct encoder_ctx *change_filename(struct encoder_ctx *enc_ctx)
 /*
  * RETURN VALUE: the return value should be free(3)-ed
  */
+#ifndef DISABLE_RUST
+extern char *ccxr_get_basename(const char *filename);
+char *get_basename(char *filename)
+{
+	return ccxr_get_basename(filename);
+}
+#else
 char *get_basename(char *filename)
 {
 	char *c;
@@ -443,7 +450,15 @@ char *get_basename(char *filename)
 
 	return basefilename;
 }
+#endif
 
+#ifndef DISABLE_RUST
+extern const char *ccxr_get_file_extension(const enum ccx_output_format write_format);
+const char *get_file_extension(const enum ccx_output_format write_format)
+{
+	return ccxr_get_file_extension(write_format);
+}
+#else
 const char *get_file_extension(const enum ccx_output_format write_format)
 {
 	switch (write_format)
@@ -489,7 +504,15 @@ const char *get_file_extension(const enum ccx_output_format write_format)
 	}
 	return 0;
 }
+#endif
 
+#ifndef DISABLE_RUST
+extern char *ccxr_create_outfilename(const char *basename, const char *suffix, const char *extension);
+char *create_outfilename(const char *basename, const char *suffix, const char *extension)
+{
+	return ccxr_create_outfilename(basename, suffix, extension);
+}
+#else
 char *create_outfilename(const char *basename, const char *suffix, const char *extension)
 {
 	char *ptr = NULL;
@@ -523,6 +546,7 @@ char *create_outfilename(const char *basename, const char *suffix, const char *e
 		 extension ? extension : "");
 	return ptr;
 }
+#endif
 
 size_t utf16_to_utf8(unsigned short utf16_char, unsigned char *out)
 {
