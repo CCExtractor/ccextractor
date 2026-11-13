@@ -234,11 +234,28 @@ impl dtvcc_tv_screen {
             }
             pen_color = self.pen_colors[row_index][i];
             pen_attribs = self.pen_attribs[row_index][i];
+            let sym = if i < first { b' ' as u16 } else { self.chars[row_index][i].sym };
+
+        // Extract encoding from the C context safely
+        let encoding = unsafe { (*writer.writer_ctx.encoder).encoding as u32 };
+
+        if encoding == CCX_ENC_UTF_8 as u32 {
+            if sym < 128 {
+                buf.push(sym as u8);
+            } else {
+                buf.push((0xC0 | (sym >> 6)) as u8);
+                buf.push((0x80 | (sym & 0x3F)) as u8);
+            }
+        } else if encoding == CCX_ENC_LATIN_1 as u32 {
+            buf.push(sym as u8);
+        } else {
+            // Default behavior if neither is strictly matched
             if i < first {
                 buf.push(b' ');
             } else {
-                write_char(&self.chars[row_index][i], &mut buf, use_utf16)
+                write_char(&self.chars[row_index][i], &mut buf, use_utf16);
             }
+        }
         }
         // there can be unclosed tags or colors after the last symbol in a row
         if use_colors {
