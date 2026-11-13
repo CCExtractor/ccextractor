@@ -460,6 +460,12 @@ pub unsafe fn buffered_read_opt(
                             ) != 0)
                     {
                         eof = true;
+                    } else {
+                        // The next file is open. open() reset the buffer for it,
+                        // and stream detection left the file's first bytes there
+                        // (up to 16 MB with --bufferinput). Read on from the
+                        // buffer as it is; resetting it below would drop them.
+                        continue;
                     }
                 }
                 ctx.filebuffer_pos = keep;
