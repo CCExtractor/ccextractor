@@ -2,7 +2,10 @@
 use crate::bindings::_get_osfhandle;
 use crate::bindings::{lib_ccx_ctx, print_file_report};
 use crate::demuxer::common_types::*;
-use crate::libccxr_exports::demuxer::copy_demuxer_from_c_to_rust;
+use crate::libccxr_exports::demuxer::{
+    copy_demuxer_from_c_to_rust, copy_demuxer_from_rust_to_c, copy_read_position_from_c,
+    copy_read_position_to_c,
+};
 use cfg_if::cfg_if;
 use lib_ccxr::activity::ActivityExt;
 use lib_ccxr::common::{DataSource, Options};
@@ -166,6 +169,7 @@ pub unsafe fn switch_to_next_file(
         DataSource::Stdin | DataSource::Network | DataSource::Tcp => {
             // stdin/network/tcp don't use file-based switching.
             // Return success immediately — fd is configured in the main open() path.
+            copy_demuxer_from_rust_to_c(ctx.demux_ctx, &demux_ctx);
             return 1;
         }
         _ => {}
@@ -253,11 +257,44 @@ pub unsafe fn switch_to_next_file(
                     ctx.total_inputsize = ctx.inputsize;
                 }
             }
+            copy_demuxer_from_rust_to_c(ctx.demux_ctx, &demux_ctx);
             return 1;
         }
     }
 
+    // demux_ctx is a copy: without this, closing the file and resetting the
+    // position would be lost and C would keep reading from the closed descriptor.
+    copy_demuxer_from_rust_to_c(ctx.demux_ctx, &demux_ctx);
     0
+}
+
+/// Runs [`switch_to_next_file`] for the demuxer that `ctx` reads from.
+///
+/// `ctx` is a Rust copy of the C demuxer owned by `ctx.parent`, and
+/// `switch_to_next_file` works on that C demuxer. The read position is copied
+/// to C before the switch and back after it, so both sides agree on which file
+/// is open and where it is read from.
+///
+/// # Safety
+///
+/// `ctx.parent`, if set, must point to a valid `lib_ccx_ctx`.
+unsafe fn switch_to_next_file_from(
+    ctx: &mut CcxDemuxer,
+    bytes_in_buffer: i64,
+    ccx_options: &mut Options,
+) -> i32 {
+    let Some(parent) = ctx.parent.as_mut() else {
+        return 0;
+    };
+    let parent: *mut lib_ccx_ctx = &mut **parent;
+    let c_demuxer = (*parent).demux_ctx;
+    if c_demuxer.is_null() {
+        return switch_to_next_file(&mut *parent, bytes_in_buffer, ccx_options);
+    }
+    copy_read_position_to_c(c_demuxer, ctx);
+    let ret = switch_to_next_file(&mut *parent, bytes_in_buffer, ccx_options);
+    copy_read_position_from_c(c_demuxer, ctx);
+    ret
 }
 /// # Safety
 /// This function is unsafe because we are using raw file descriptors and variables imported from C like terminate_asap.
@@ -376,11 +413,7 @@ pub unsafe fn buffered_read_opt(
                                 && ccx_options.live_stream.unwrap().millis() != 0)
                             || (ccx_options.binary_concat
                                 && ctx.parent.is_some()
-                                && switch_to_next_file(
-                                    ctx.parent.as_mut().unwrap(),
-                                    copied as i64,
-                                    ccx_options,
-                                ) != 0))
+                                && switch_to_next_file_from(ctx, copied as i64, ccx_options) != 0))
                             && bytes > 0)
                         {
                             break;
@@ -453,11 +486,7 @@ pub unsafe fn buffered_read_opt(
                         || (ctx.parent.is_some()
                             && ctx.parent.as_ref().unwrap().inputsize <= origin_buffer_size as i64)
                         || !(ccx_options.binary_concat
-                            && switch_to_next_file(
-                                ctx.parent.as_mut().unwrap(),
-                                copied as i64,
-                                ccx_options,
-                            ) != 0)
+                            && switch_to_next_file_from(ctx, copied as i64, ccx_options) != 0)
                     {
                         eof = true;
                     }
@@ -501,11 +530,7 @@ pub unsafe fn buffered_read_opt(
                         && ccx_options.live_stream.unwrap().millis() != 0)
                     || (ccx_options.binary_concat
                         && ctx.parent.as_mut().is_some()
-                        && switch_to_next_file(
-                            ctx.parent.as_mut().unwrap(),
-                            copied as i64,
-                            ccx_options,
-                        ) != 0))
+                        && switch_to_next_file_from(ctx, copied as i64, ccx_options) != 0))
                     && bytes > 0)
                 {
                     break;
@@ -595,7 +620,7 @@ pub unsafe fn buffered_read_opt(
                 {
                     sleepandchecktimeout(seconds as u64, ccx_options);
                 } else if ccx_options.binary_concat && ctx.parent.is_some() {
-                    switch_to_next_file(ctx.parent.as_mut().unwrap(), 0, ccx_options);
+                    switch_to_next_file_from(ctx, 0, ccx_options);
                 } else {
                     break;
                 }
@@ -668,9 +693,7 @@ pub unsafe fn buffered_read(
         ctx.filebuffer_pos += bytes as u32;
         bytes
     } else {
-        let ptr = buffer
-            .map(|b| b.as_mut_ptr())
-            .unwrap_or(std::ptr::null_mut());
+        let ptr = buffer.map(|b| b.as_mut_ptr()).unwrap_or(ptr::null_mut());
 
         let result = buffered_read_opt(ctx, ptr, bytes, ccx_options);
 
@@ -773,6 +796,31 @@ pub unsafe fn buffered_skip(ctx: &mut CcxDemuxer, bytes: u32, ccx_options: &mut 
         buffered_read_opt(ctx, ptr::null_mut(), bytes as usize, ccx_options)
     }
 }
+/// # Safety
+/// This function is unsafe because it calls unsafe function `buffered_read_opt`
+pub unsafe fn buffered_seek(ctx: &mut CcxDemuxer, offset: i32, ccx_options: &mut Options) {
+    position_sanity_check(ctx);
+
+    if offset < 0 {
+        let signed_pos = ctx.filebuffer_pos as i32 + offset;
+        if signed_pos >= 0 {
+            ctx.filebuffer_pos = signed_pos as u32;
+        } else {
+            let new_start = ctx.startbytes_pos as i32 + signed_pos;
+            if new_start < 0 {
+                fatal!(cause = ExitCause::Bug;
+                    "PANIC: Attempt to seek before buffer start, this is a bug!");
+            }
+            ctx.startbytes_pos = new_start as u32;
+            ctx.filebuffer_pos = 0;
+        }
+    } else {
+        // Positive seek: skip forward in the buffer
+        buffered_read_opt(ctx, std::ptr::null_mut(), offset as usize, ccx_options);
+        position_sanity_check(ctx);
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::field_reassign_with_default)]
 mod tests {
