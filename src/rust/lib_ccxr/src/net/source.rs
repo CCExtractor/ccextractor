@@ -11,6 +11,8 @@ use std::net::{
     UdpSocket,
 };
 
+const PASSWORD_BUFFER_SIZE: usize = 50;
+
 /// An enum of configuration parameters to construct [`RecvSource`].
 #[derive(Copy, Clone, Debug)]
 pub enum RecvSourceConfig<'a> {
@@ -64,7 +66,7 @@ enum SourceSocket {
 /// let mut recv_source = RecvSource::new(config);
 ///
 /// // Once recv_source is constructed, we can use it to receive data.
-/// let block = recv_source.recv_header_or_cc().unwrap();
+/// let block = recv_source.recv_header_or_cc(1024).unwrap();
 /// ```
 pub struct RecvSource {
     socket: SourceSocket,
@@ -339,6 +341,8 @@ impl RecvSource {
 
     /// Receive a [`BinHeader`] or [`BinData`] [`Block`].
     ///
+    /// Blocks larger than `max_data_length` are rejected.
+    ///
     /// Note that this method will continously block until it receives a
     /// [`BinHeader`] or [`BinData`] [`Block`].
     ///
@@ -347,7 +351,10 @@ impl RecvSource {
     ///
     /// [`BinHeader`]: Command::BinHeader
     /// [`BinData`]: Command::BinData
-    pub fn recv_header_or_cc<'a>(&mut self) -> Result<Option<Block<'a>>, NetError> {
+    pub fn recv_header_or_cc<'a>(
+        &mut self,
+        max_data_length: usize,
+    ) -> Result<Option<Block<'a>>, NetError> {
         let now = Timestamp::now();
         if self.last_ping.millis() == 0 {
             self.last_ping = now;
@@ -361,7 +368,7 @@ impl RecvSource {
         }
 
         loop {
-            if let Some(block) = self.recv_block()? {
+            if let Some(block) = self.recv_block(max_data_length)? {
                 if block.command() == Command::BinHeader || block.command() == Command::BinData {
                     return Ok(Some(block));
                 }
@@ -388,7 +395,7 @@ impl RecvSource {
 ///
 /// If `password` is [`None`], then no checking is done and results in `true`.
 fn check_password(socket: &mut RecvSource, password: Option<&str>) -> bool {
-    let block = match socket.recv_block() {
+    let block = match socket.recv_block(password.map_or(PASSWORD_BUFFER_SIZE, str::len)) {
         Ok(Some(b)) => b,
         _ => return false,
     };
