@@ -300,8 +300,8 @@ impl dtvcc_tv_screen {
             return Ok(());
         }
 
-        let time_show = get_time_str(self.time_ms_show);
-        let time_hide = get_time_str(self.time_ms_hide);
+        let time_show = get_time_str(self.time_ms_show + writer.subs_delay);
+        let time_hide = get_time_str(self.time_ms_hide + writer.subs_delay);
 
         let counter = *writer.cea_708_counter;
         let line = format!(
@@ -329,8 +329,8 @@ impl dtvcc_tv_screen {
             return Ok(());
         }
 
-        let time_show = get_time_str(self.time_ms_show);
-        let time_hide = get_time_str(self.time_ms_hide);
+        let time_show = get_time_str(self.time_ms_show + writer.subs_delay);
+        let time_hide = get_time_str(self.time_ms_hide + writer.subs_delay);
 
         let mut wrote_something = false;
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
@@ -486,13 +486,17 @@ impl dtvcc_tv_screen {
             writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
         }
 
+        // Shift by --delay, like the other formats
+        let time_ms_show = self.time_ms_show + writer.subs_delay;
+        let time_ms_hide = self.time_ms_hide + writer.subs_delay;
+
         if writer.old_cc_time_end == 0 {
-            writer.old_cc_time_end = self.time_ms_show as i32;
+            writer.old_cc_time_end = time_ms_show as i32;
         }
 
         let mut buf = String::new();
-        let mut time_show = ccx_boundary_time::get_time(self.time_ms_show);
-        let time_end = ccx_boundary_time::get_time(self.time_ms_hide);
+        let mut time_show = ccx_boundary_time::get_time(time_ms_show);
+        let time_end = ccx_boundary_time::get_time(time_ms_hide);
         // One frame duration in milliseconds (truncated like the C path)
         let one_frame_ms =
             unsafe { (1000.0 / lib_ccxr::time::units::scc_frame_rate(current_fps)) as i64 };
@@ -783,6 +787,85 @@ mod test {
         screen.chars[0][0] = dtvcc_symbol::new(0x51);
         assert!(!screen.is_row_empty(0));
         assert!(screen.is_row_empty(1));
+    }
+
+    /// Writes one caption ("A", shown 1.5 s to 2.5 s) with the given
+    /// `--delay` and returns what ended up in the output file.
+    #[cfg(unix)]
+    fn write_screen_with_delay(format: ccx_output_format, subs_delay: LLONG) -> String {
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.chars[0][0] = dtvcc_symbol::new(0x41);
+        screen.time_ms_show = 1500;
+        screen.time_ms_hide = 2500;
+        screen.cc_count = 1;
+
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        writer_ctx.fd = tempfile()
+            .expect("Failed to create temp file")
+            .into_raw_fd();
+        writer_ctx.cd = (-1_isize) as iconv_t;
+        let mut transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        transcript_settings.showStartTime = 1;
+        transcript_settings.showEndTime = 1;
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            subs_delay,
+            format,
+            &mut writer_ctx,
+            1, // no font tags, the pen colors here are zeroed
+            &transcript_settings,
+            0,
+            b"\r\n",
+        );
+        screen.write(&mut writer);
+
+        let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+        let mut output = String::new();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        file.read_to_string(&mut output).unwrap();
+        output
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_srt_applies_subs_delay() {
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_SRT, 0);
+        assert_eq!(output, "1\r\n00:00:01,500 --> 00:00:02,500\r\nA\r\n\r\n");
+
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_SRT, 5000);
+        assert_eq!(output, "1\r\n00:00:06,500 --> 00:00:07,500\r\nA\r\n\r\n");
+
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_SRT, -500);
+        assert_eq!(output, "1\r\n00:00:01,000 --> 00:00:02,000\r\nA\r\n\r\n");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_transcript_applies_subs_delay() {
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_TRANSCRIPT, 0);
+        assert_eq!(output, "00:00:01,500|00:00:02,500|A\r\n");
+
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_TRANSCRIPT, 5000);
+        assert_eq!(output, "00:00:06,500|00:00:07,500|A\r\n");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_scc_applies_subs_delay() {
+        // current_fps is mocked to 30.0 in tests: 1500 ms minus one frame
+        // (33 ms) is 1467 ms => 00:00:01:14
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_SCC, 0);
+        assert!(output.starts_with("00:00:01:14\t"), "{}", output);
+
+        let output = write_screen_with_delay(ccx_output_format::CCX_OF_SCC, 5000);
+        assert!(output.starts_with("00:00:06:14\t"), "{}", output);
     }
 
     #[test]
