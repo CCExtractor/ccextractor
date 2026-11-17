@@ -5,7 +5,7 @@
 #include "utility.h"
 #include "ocr.h"
 
-static const char *webvtt_outline_css = "@import(%s)\n";
+static const char *webvtt_outline_css = "STYLE\n\n@import url(\"%s\");\n\n";
 
 static const char *webvtt_inline_css = "\r\nSTYLE\n\n"
 				       "/* default values */\n"
@@ -292,7 +292,6 @@ void write_webvtt_header(struct encoder_ctx *context)
 		{
 			write_wrapped(context->out->fh, "\r\n", 2);
 		}
-		write_wrapped(context->out->fh, "##\n", 3);
 		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
 
