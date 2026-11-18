@@ -51,7 +51,7 @@ impl<'a> BitStreamRust<'a> {
     /// Peek at next `bnum` bits without advancing. MSB first.
     pub fn next_bits(&mut self, bnum: u32) -> Result<u64, BitstreamError> {
         if bnum > 64 {
-            fatal!(cause = ExitCause::Bug; "In next_bits: Argument is greater than the maximum bit number i.e. 64: {}!", bnum);
+            return Err(BitstreamError::TooManyBits(bnum));
         }
 
         if self.pos > self.data.len() {
@@ -290,6 +290,9 @@ impl<'a> BitStreamRust<'a> {
         // Count leading zeros
         while self.read_bits(1)? == 0 && self.bits_left >= 0 {
             zeros += 1;
+            if zeros >= 64 {
+                return Err(BitstreamError::TooManyBits(zeros));
+            }
         }
 
         // Read the remaining bits
@@ -574,6 +577,22 @@ mod tests {
         // Another read should make it more negative
         assert_eq!(bs.next_bits(2).unwrap(), 0);
         assert_eq!(bs.bits_left, -6);
+    }
+
+    #[test]
+    fn test_read_exp_golomb_too_many_leading_zeros() {
+        let data = vec![0u8; 9];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.read_exp_golomb_unsigned().unwrap_err();
+        assert!(matches!(err, BitstreamError::TooManyBits(_)));
+    }
+
+    #[test]
+    fn test_next_bits_rejects_more_than_64() {
+        let data = [0xFF; 16];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.next_bits(65).unwrap_err();
+        assert!(matches!(err, BitstreamError::TooManyBits(65)));
     }
 
     #[test]
