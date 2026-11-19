@@ -101,6 +101,7 @@ int write_stringz_as_sami(char *string, struct encoder_ctx *context, LLONG ms_st
 	{
 		dbg_print(CCX_DMT_DECODER_608, "\r%s\n", str);
 	}
+	used = encode_line(context, context->buffer, (unsigned char *)str);
 	ret = write(context->out->fh, context->buffer, used);
 	if (ret != used)
 		goto end;
