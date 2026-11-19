@@ -238,7 +238,7 @@ impl OptionsExt for Options {
 
         if let Some(out_format) = args.out {
             self.set_output_format_type(out_format);
-        } else if args.sami {
+        } else if args.sami || args.smi {
             self.set_output_format_type(OutFormat::Sami);
         } else if args.webvtt {
             self.set_output_format_type(OutFormat::Webvtt);
@@ -1794,6 +1794,14 @@ pub mod tests {
     fn test_out_srt_sets_srt_format() {
         let (options, _) = parse_args(&["--out", "srt"]);
         assert_eq!(options.write_format, OutputFormat::Srt);
+    }
+
+    #[test]
+    fn test_smi_selects_sami_output() {
+        let (options, _) = parse_args(&["--smi"]);
+        assert_eq!(options.write_format, OutputFormat::Sami);
+        assert_eq!(options.enc_cfg.write_format, OutputFormat::Sami);
+        assert!(options.write_format_rewritten);
     }
 
     #[test]
