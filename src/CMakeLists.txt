@@ -334,4 +334,18 @@ if (NOT WIN32 AND NOT APPLE)
   endif()
 endif()
 
+if (BUILD_TESTING)
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+  if (Python3_Interpreter_FOUND)
+    file(GLOB CLI_OUTPUT_TESTS CONFIGURE_DEPENDS "${BASE_PROJ_DIR}/tests/test_cli_*.py")
+    foreach(test_script IN LISTS CLI_OUTPUT_TESTS)
+      get_filename_component(test_name "${test_script}" NAME_WE)
+      add_test(
+        NAME "${test_name}"
+        COMMAND "${Python3_EXECUTABLE}" "${test_script}" "$<TARGET_FILE:ccextractor>"
+      )
+    endforeach()
+  endif()
+endif()
+
 install (TARGETS ccextractor DESTINATION bin)
