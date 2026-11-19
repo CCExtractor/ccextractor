@@ -1585,7 +1585,9 @@ impl OptionsExt for Options {
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
             self.enc_cfg.encoding = Encoding::UTF8;
-            println!("Note: Output format is WebVTT, forcing UTF-8");
+            if self.messages_target != OutputTarget::Quiet {
+                eprintln!("Note: Output format is WebVTT, forcing UTF-8");
+            }
         }
 
         // Check WITH_LIBCURL
