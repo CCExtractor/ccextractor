@@ -461,6 +461,9 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	int user_data_len;
 	int local_cc_count = 0;
 	// int cc_count;
+	if (userend - userbuf < 3)
+		return;
+
 	int itu_t_t35_country_code = *((uint8_t *)tbuf);
 	tbuf++;
 	int itu_t_35_provider_code = *tbuf * 256 + *(tbuf + 1);
