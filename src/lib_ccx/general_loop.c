@@ -16,6 +16,7 @@
 #include "ccx_decoders_isdb.h"
 #include "ffmpeg_intgr.h"
 #include "ccx_gxf.h"
+#include "ccx_demuxer_mxf.h"
 #include "dvd_subtitle_decoder.h"
 #include "ccx_dtvcc.h"
 #include "ccx_decoders_xds.h"
@@ -1424,10 +1425,13 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		case CCX_SM_MXF:
 			get_more_data = ccx_mxf_getmoredata;
 			// The MXFContext might have already been initialized if the
-			// stream type was autodetected
+			// stream type was autodetected. When it was not (e.g. --input
+			// mxf), it has to be an MXFContext: the MXF code casts
+			// private_data to struct MXFContext *, so a ccx_gxf_init()
+			// buffer would be the wrong type and size.
 			if (ctx->demux_ctx->private_data == NULL)
 			{
-				ctx->demux_ctx->private_data = ccx_gxf_init(ctx->demux_ctx);
+				ctx->demux_ctx->private_data = ccx_mxf_init(ctx->demux_ctx);
 			}
 			break;
 		default:
