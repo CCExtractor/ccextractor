@@ -12,7 +12,7 @@ static unsigned char *remove_03emu(unsigned char *from, unsigned char *to);
 static void sei_rbsp(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
 static unsigned char *sei_message(struct avc_ctx *ctx, unsigned char *seibuf, unsigned char *seiend);
 static void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf, unsigned char *userend);
-static void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
+static int seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend);
 static void slice_header(struct encoder_ctx *enc_ctx, struct lib_cc_decode *ctx, unsigned char *heabuf, unsigned char *heaend, int nal_unit_type, struct cc_subtitle *sub);
 
 double roundportable(double x) { return floor(x + 0.5); }
@@ -160,8 +160,8 @@ void do_NAL(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned
 			// Found sequence parameter set
 			// We need this to parse NAL type 1 (CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1)
 			dec_ctx->avc_ctx->num_nal_unit_type_7++;
-			seq_parameter_set_rbsp(dec_ctx->avc_ctx, payload_start, NAL_stop);
-			dec_ctx->avc_ctx->got_seq_para = 1;
+			if (seq_parameter_set_rbsp(dec_ctx->avc_ctx, payload_start, NAL_stop) == 0)
+				dec_ctx->avc_ctx->got_seq_para = 1;
 		}
 		else if (dec_ctx->avc_ctx->got_seq_para && (nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_NON_IDR_PICTURE_1 ||
 							    nal_unit_type == CCX_NAL_TYPE_CODED_SLICE_IDR_PICTURE))
@@ -656,8 +656,8 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	}
 }
 
-// Process sequence parameters in AVC data.
-void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend)
+// Process sequence parameters in AVC data. Returns 0 on success, -1 if the RBSP is malformed.
+static int seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned char *seqend)
 {
 	LLONG tmp, tmp1;
 	struct bitstream q1;
@@ -684,6 +684,8 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 	tmp = read_int_unsigned(&q1, 8);
 	dvprint("level_idc=                                     % 4lld (%#llX)\n", tmp, tmp);
 	ctx->seq_parameter_set_id = read_exp_golomb_unsigned(&q1);
+	if (q1.error)
+		return -1;
 	dvprint("seq_parameter_set_id=                          % 4lld (%#llX)\n", ctx->seq_parameter_set_id, ctx->seq_parameter_set_id);
 	if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 || profile_idc == 244 || profile_idc == 44 || profile_idc == 83 || profile_idc == 86 || profile_idc == 118 || profile_idc == 128)
 	{
@@ -901,7 +903,7 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 			// printf("Boom nal_hrd\n");
 			//  exit(1);
 			ctx->num_nal_hrd++;
-			return;
+			return q1.error ? -1 : 0;
 		}
 		tmp1 = read_int_unsigned(&q1, 1);
 		dvprint("vcl_hrd_parameters_present_flag=               %llX\n", tmp1);
@@ -916,7 +918,7 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		{
 			tmp = read_int_unsigned(&q1, 1);
 			dvprint("low_delay_hrd_flag=                                % 4lld (%#llX)\n", tmp, tmp);
-			return;
+			return q1.error ? -1 : 0;
 		}
 		tmp = read_int_unsigned(&q1, 1);
 		dvprint("pic_struct_present_flag=                       % 4lld (%#llX)\n", tmp, tmp);
@@ -927,7 +929,9 @@ void seq_parameter_set_rbsp(struct avc_ctx *ctx, unsigned char *seqbuf, unsigned
 		// it was not set in the testfile.  Ignore the rest here, it's
 		// currently not needed.
 	}
-	// exit(1);
+	if (q1.error)
+		return -1;
+	return 0;
 }
 
 /**
