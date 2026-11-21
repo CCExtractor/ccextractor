@@ -46,6 +46,14 @@ impl SccFrameRate {
         }
     }
 
+    fn nominal_fps(&self) -> u32 {
+        match self {
+            SccFrameRate::Fps29_97 | SccFrameRate::Fps30 => 30,
+            SccFrameRate::Fps24 => 24,
+            SccFrameRate::Fps25 => 25,
+        }
+    }
+
     /// Get milliseconds per frame for this frame rate
     pub fn ms_per_frame(&self) -> f64 {
         match self {
@@ -111,21 +119,86 @@ pub fn is_scc_file(buffer: &[u8]) -> bool {
 /// # Returns
 /// The time in milliseconds, or None if parsing fails
 pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
-    let parts: Vec<&str> = timecode.split([':', ';']).collect();
-    if parts.len() != 4 {
+    let bytes = timecode.as_bytes();
+    if bytes.len() != 11
+        || bytes[2] != b':'
+        || bytes[5] != b':'
+        || (bytes[8] != b':' && bytes[8] != b';')
+    {
         return None;
     }
 
-    let h: u32 = parts[0].parse().ok()?;
-    let m: u32 = parts[1].parse().ok()?;
-    let s: u32 = parts[2].parse().ok()?;
-    let f: u32 = parts[3].parse().ok()?;
+    let mut separators = 0;
+    let mut separator_indices = [0usize; 3];
 
-    // Convert to milliseconds based on frame rate
-    let ms_per_frame = fps.ms_per_frame();
-    let total_ms = (h * 3600000 + m * 60000 + s * 1000) as f64 + (f as f64 * ms_per_frame);
+    for (index, byte) in bytes.iter().enumerate() {
+        match byte {
+            b':' | b';' => {
+                if separators == separator_indices.len() {
+                    return None;
+                }
+                separator_indices[separators] = index;
+                separators += 1;
+            }
+            b'0'..=b'9' => {}
+            _ => return None,
+        }
+    }
 
-    Some(total_ms as i64)
+    if separators != 3 || bytes[separator_indices[0]] != b':' || bytes[separator_indices[1]] != b':'
+    {
+        return None;
+    }
+
+    let frame_separator = bytes[separator_indices[2]];
+    if frame_separator != b':' && frame_separator != b';' {
+        return None;
+    }
+
+    let h = timecode[..separator_indices[0]].parse::<u32>().ok()?;
+    let m = timecode[separator_indices[0] + 1..separator_indices[1]]
+        .parse::<u32>()
+        .ok()?;
+    let s = timecode[separator_indices[1] + 1..separator_indices[2]]
+        .parse::<u32>()
+        .ok()?;
+    let f = timecode[separator_indices[2] + 1..].parse::<u32>().ok()?;
+
+    if h > 23 || m > 59 || s > 59 {
+        return None;
+    }
+
+    let nominal_fps = fps.nominal_fps();
+    if f >= nominal_fps {
+        return None;
+    }
+
+    let is_drop_frame = frame_separator == b';';
+    if is_drop_frame {
+        if fps != SccFrameRate::Fps29_97 {
+            return None;
+        }
+
+        let total_minutes = h * 60 + m;
+        if m % 10 != 0 && s == 0 && f < 2 {
+            return None;
+        }
+
+        let total_nominal_frames = ((h * 3600 + m * 60 + s) * nominal_fps + f) as i64;
+        let dropped_frames = 2 * (total_minutes - total_minutes / 10);
+        let frame_number = total_nominal_frames - dropped_frames as i64;
+
+        Some(frame_number * 1001 / 30)
+    } else {
+        let total_ms = h as i64 * 3600000 + m as i64 * 60000 + s as i64 * 1000;
+
+        match fps {
+            SccFrameRate::Fps29_97 => Some(total_ms + f as i64 * 1001 / 30),
+            SccFrameRate::Fps24 => Some(total_ms + f as i64 * 1000 / 24),
+            SccFrameRate::Fps25 => Some(total_ms + f as i64 * 40),
+            SccFrameRate::Fps30 => Some(total_ms + f as i64 * 1000 / 30),
+        }
+    }
 }
 
 /// Parse hex pair string (e.g., "9420") to bytes
@@ -283,25 +356,39 @@ mod tests {
             parse_smpte_timecode("01:00:00:00", SccFrameRate::Fps29_97),
             Some(3600000)
         );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:29", SccFrameRate::Fps29_97),
+            Some(967)
+        );
 
         // 25fps - 25 frames = 1 second
         assert_eq!(
             parse_smpte_timecode("00:00:00:25", SccFrameRate::Fps25),
-            Some(1000)
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps25),
+            Some(960)
         );
 
-        // 24fps - 24 frames = 1 second
-        let time_24 = parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24).unwrap();
-        assert!((999..=1001).contains(&time_24)); // Approximately 1 second
-
-        // 30fps - 30 frames = 1 second
-        let time_30 = parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30).unwrap();
-        assert!((999..=1001).contains(&time_30)); // Approximately 1 second
-
-        // Drop-frame separator (semicolon)
+        // 24fps
         assert_eq!(
-            parse_smpte_timecode("00:00:01;00", SccFrameRate::Fps29_97),
-            Some(1000)
+            parse_smpte_timecode("00:00:00:23", SccFrameRate::Fps24),
+            Some(958)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24),
+            None
+        );
+
+        // 30fps
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:29", SccFrameRate::Fps30),
+            Some(966)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30),
+            None
         );
 
         // Invalid timecodes
@@ -314,6 +401,162 @@ mod tests {
             None
         );
         assert_eq!(parse_smpte_timecode("", SccFrameRate::Fps29_97), None);
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_valid_drop_frame() {
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps29_97),
+            Some(0)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:01;00", SccFrameRate::Fps29_97),
+            Some(1001)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:59;29", SccFrameRate::Fps29_97),
+            Some(60026)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:01:00;02", SccFrameRate::Fps29_97),
+            Some(60060)
+        );
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_drop_frame_ten_minute_transition() {
+        assert_eq!(
+            parse_smpte_timecode("00:09:59;29", SccFrameRate::Fps29_97),
+            Some(599966)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:10:00;00", SccFrameRate::Fps29_97),
+            Some(599999)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:10:00;01", SccFrameRate::Fps29_97),
+            Some(600032)
+        );
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_drop_frame_hour_transition() {
+        assert_eq!(
+            parse_smpte_timecode("01:00:00;00", SccFrameRate::Fps29_97),
+            Some(3599996)
+        );
+        assert_eq!(
+            parse_smpte_timecode("01:00:00;02", SccFrameRate::Fps29_97),
+            Some(3600063)
+        );
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_rejects_invalid_components() {
+        for timecode in [
+            "24:00:00:00",
+            "99:00:00:00",
+            "00:60:00:00",
+            "00:99:00:00",
+            "00:00:60:00",
+            "00:00:99:00",
+        ] {
+            assert_eq!(
+                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97),
+                None,
+                "timecode: {timecode:?}"
+            );
+        }
+
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps29_97),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:25", SccFrameRate::Fps25),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30),
+            None
+        );
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_rejects_incorrect_formats() {
+        for timecode in [
+            "00:00:00",
+            "00:00:00:00:00",
+            "00;00:00:00",
+            "00:00;00:00",
+            "00:00:00;00;00",
+            "00:00:00-00",
+            "1:2:3:4",
+            "00:1:03;02",
+            "000:00:00:00",
+            "00:00:000:00",
+            "00:00:00:000",
+            "0:00:00:00",
+            "00:000:00:00",
+            "00:00:000;00",
+            "00:00:00:0",
+            "00:00:00:+",
+            "00:00:00",
+            "aa:00:00:00",
+            "00:+1:00:00",
+            "00:00:1.0:00",
+            " 00:00:00:00",
+            "00:00:00:00 ",
+        ] {
+            assert_eq!(
+                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97),
+                None,
+                "timecode: {timecode:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_rejects_invalid_drop_frame_labels() {
+        for timecode in [
+            "00:01:00;00",
+            "00:01:00;01",
+            "00:02:00;00",
+            "00:02:00;01",
+            "00:59:00;00",
+            "00:59:00;01",
+        ] {
+            assert_eq!(
+                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97),
+                None,
+                "timecode: {timecode:?}"
+            );
+        }
+
+        assert_eq!(
+            parse_smpte_timecode("00:01:00;02", SccFrameRate::Fps29_97),
+            Some(60060)
+        );
+    }
+
+    #[test]
+    fn test_parse_smpte_timecode_rejects_drop_frame_separator_for_other_rates() {
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps24),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps25),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps30),
+            None
+        );
     }
 
     #[test]
@@ -380,6 +623,16 @@ mod tests {
         assert_eq!(result.lines[0].pairs[0], [0x94, 0x20]);
         assert_eq!(result.lines[1].time_ms, 1000);
         assert_eq!(result.lines[1].pairs[0], [0x94, 0x2C]);
+    }
+
+    #[test]
+    fn test_parse_scc_minimal_drop_frame_sample() {
+        let content = "Scenarist_SCC V1.0\n00:01:00;02\t9420\n";
+        let result = parse_scc(content, SccFrameRate::Fps29_97);
+
+        assert_eq!(result.lines.len(), 1);
+        assert_eq!(result.lines[0].time_ms, 60060);
+        assert_eq!(result.lines[0].pairs, [[0x94, 0x20]]);
     }
 
     #[test]
