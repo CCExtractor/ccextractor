@@ -120,6 +120,14 @@ pub fn is_scc_file(buffer: &[u8]) -> bool {
 /// The time in milliseconds, or None if parsing fails
 pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
     let bytes = timecode.as_bytes();
+    if bytes.len() != 11
+        || bytes[2] != b':'
+        || bytes[5] != b':'
+        || (bytes[8] != b':' && bytes[8] != b';')
+    {
+        return None;
+    }
+
     let mut separators = 0;
     let mut separator_indices = [0usize; 3];
 
@@ -487,6 +495,17 @@ mod tests {
             "00:00;00:00",
             "00:00:00;00;00",
             "00:00:00-00",
+            "1:2:3:4",
+            "00:1:03;02",
+            "000:00:00:00",
+            "00:00:000:00",
+            "00:00:00:000",
+            "0:00:00:00",
+            "00:000:00:00",
+            "00:00:000;00",
+            "00:00:00:0",
+            "00:00:00:+",
+            "00:00:00",
             "aa:00:00:00",
             "00:+1:00:00",
             "00:00:1.0:00",
@@ -604,6 +623,16 @@ mod tests {
         assert_eq!(result.lines[0].pairs[0], [0x94, 0x20]);
         assert_eq!(result.lines[1].time_ms, 1000);
         assert_eq!(result.lines[1].pairs[0], [0x94, 0x2C]);
+    }
+
+    #[test]
+    fn test_parse_scc_minimal_drop_frame_sample() {
+        let content = "Scenarist_SCC V1.0\n00:01:00;02\t9420\n";
+        let result = parse_scc(content, SccFrameRate::Fps29_97);
+
+        assert_eq!(result.lines.len(), 1);
+        assert_eq!(result.lines[0].time_ms, 60060);
+        assert_eq!(result.lines[0].pairs, [[0x94, 0x20]]);
     }
 
     #[test]
