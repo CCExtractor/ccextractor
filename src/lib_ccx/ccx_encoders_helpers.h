@@ -39,6 +39,7 @@ enum line_markup
 {
 	LINE_MARKUP_HTML,	  // <font color="#rrggbb">, <u> and <i> around the text, which is written as it is
 	LINE_MARKUP_HTML_ESCAPED, // The same tags, and &, < and > of the text escaped (for XML based formats)
+	LINE_MARKUP_ASS,	  // ASS/SSA override tags ({\c&Hbbggrr&}, {\u1}, {\i1}), and { and } of the text escaped
 };
 
 unsigned get_decoder_line_encoded_markup(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data, enum line_markup markup);

@@ -360,7 +360,7 @@ int write_cc_buffer_as_ssa(struct eia608_screen *data, struct encoder_ctx *conte
 				prev_line_center1 = center1;
 				prev_line_center2 = center2;
 			}
-			int length = get_decoder_line_encoded(context, context->subline, i, data);
+			int length = get_decoder_line_encoded_markup(context, context->subline, i, data, LINE_MARKUP_ASS);
 			if (context->encoding != CCX_ENC_UNICODE)
 			{
 				dbg_print(CCX_DMT_DECODER_608, "\r");
