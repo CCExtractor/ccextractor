@@ -723,11 +723,12 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	int ret = 0;
 	unsigned int p1, p2;
 	const uint8_t *buf_pivot = buf;
+	const uint8_t *buf_end = buf + len;
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
-	// Copy buf in arg
-	for (i = 0; *buf != 0x20; i++)
+	// Copy buf in arg, without reading past the length we were given
+	for (i = 0; buf < buf_end && *buf != 0x20; i++)
 	{
 		if (i >= sizeof(arg) - 1)
 		{
@@ -738,7 +739,7 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		buf++;
 	}
 	/* ignore terminating 0x20 character */
-	if (i < sizeof(arg))
+	if (buf < buf_end && i < sizeof(arg))
 		arg[i] = *buf++;
 
 	switch (*buf)
@@ -966,6 +967,11 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 				 */
 			case 0xC:
 				isdb_command_log("Command: APS\n");
+				/* APS reads two operand bytes from the stream. */
+				if (len - (int)(buf - buf_pivot) < 2)
+				{
+					return -1;
+				}
 				set_position(ctx, *buf & 0x3F, *(buf + 1) & 0x3F);
 				buf += 2;
 				break;
@@ -1060,9 +1066,17 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		{
 			/* COL */
 			case 0x0:
-				/* Palette Col */
+				/* Palette Col: reads one operand byte, two in the CLUT case. */
+				if (len - (int)(buf - buf_pivot) < 1)
+				{
+					return -1;
+				}
 				if (*buf == 0x20)
 				{
+					if (len - (int)(buf - buf_pivot) < 2)
+					{
+						return -1;
+					}
 					isdb_command_log("Command: COL: Set Clut %d\n", (buf[0] & 0x0F));
 					buf++;
 					ctx->current_state.clut_high_idx = (buf[0] & 0x0F);
@@ -1149,7 +1163,7 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 				/* CSI Code for code system extension indicated*/
 			case 0xB:
-				ret = parse_csi(ctx, buf, len);
+				ret = parse_csi(ctx, buf, len - (int)(buf - buf_pivot));
 				buf += ret;
 				break;
 
@@ -1277,26 +1291,42 @@ static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 		   zero for ever. */
 		ret = 1;
 		if (code <= 0x1)
+		{
 			ret = parse_command(ctx, buf, size - (int)(buf - buf_pivot));
+		}
 		/* Special case *1(SP) */
 		else if (code == 0x2 && code_lo == 0x0)
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		/* Special case *3(DEL) */
 		else if (code == 0x7 && code_lo == 0xF)
+		{
 			/*TODO DEL should have block in fg color */
 			ret = append_char(ctx, buf[0]);
+		}
 		else if (code <= 0x7)
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		else if (code <= 0x9)
+		{
 			ret = parse_command(ctx, buf, size - (int)(buf - buf_pivot));
+		}
 		/* Special case *2(10/0) */
 		else if (code == 0xA && code_lo == 0x0)
+		{
 			/*TODO handle */;
+		}
 		/* Special case *4(15/15) */
 		else if (code == 0x0F && code_lo == 0XF)
+		{
 			/*TODO handle */;
+		}
 		else
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		if (ret < 0)
 			break;
 		buf += ret;
