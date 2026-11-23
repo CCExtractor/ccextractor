@@ -895,6 +895,7 @@ impl dtvcc_service_decoder {
                 transcript_settings,
                 encoder.no_bom,
                 end_frame,
+                encoder.encoding,
             );
             // As in the C writer: an output file that can't be created is a
             // fatal error (e.g. -o /dev/null makes it /dev/null.p1.svc01.srt).
@@ -1233,6 +1234,7 @@ impl dtvcc_service_decoder {
                 transcript_settings,
                 encoder.no_bom,
                 end_frame,
+                encoder.encoding,
             );
             writer.write_done();
         }

@@ -13,7 +13,7 @@ use std::{ffi::CStr, fs::File};
 #[cfg(windows)]
 use crate::bindings::_get_osfhandle;
 
-use super::output::{color_to_hex, is_utf16_charset, write_char, Writer};
+use super::output::{color_to_hex, is_utf16_charset, write_char, write_symbol, Writer};
 use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
@@ -80,8 +80,13 @@ impl dtvcc_tv_screen {
             writer.writer_ctx.fd = file.into_raw_fd();
 
             if is_false(writer.no_bom) {
-                let BOM = [0xef, 0xbb, 0xbf];
-                writer.write_to_file(&BOM)?;
+                if writer.encoding == ccx_encoding_type_CCX_ENC_UNICODE {
+                    let bom = [0xff, 0xfe];
+                    writer.write_to_file(&bom)?;
+                } else if writer.encoding == ccx_encoding_type_CCX_ENC_UTF_8 {
+                    let bom = [0xef, 0xbb, 0xbf];
+                    writer.write_to_file(&bom)?;
+                }
             }
         }
 
@@ -116,8 +121,13 @@ impl dtvcc_tv_screen {
                 writer.writer_ctx.fhandle = file.into_raw_handle();
 
                 if is_false(writer.no_bom) {
-                    let BOM = [0xef, 0xbb, 0xbf];
-                    writer.write_to_file(&BOM)?;
+                    if writer.encoding == ccx_encoding_type_CCX_ENC_UNICODE {
+                        let bom = [0xff, 0xfe];
+                        writer.write_to_file(&bom)?;
+                    } else if writer.encoding == ccx_encoding_type_CCX_ENC_UTF_8 {
+                        let bom = [0xef, 0xbb, 0xbf];
+                        writer.write_to_file(&bom)?;
+                    }
                 }
             }
         }
@@ -179,11 +189,14 @@ impl dtvcc_tv_screen {
         let (first, last) = self.get_write_interval(row_index);
         debug!("First: {first}, Last: {last}");
 
+        let has_service_charset =
+            writer.writer_ctx.cd != (-1_isize) as iconv_t && !writer.writer_ctx.charset.is_null();
+
         // Determine if we should use UTF-16 mode (2 bytes for all chars) or
         // variable-width mode (1 byte for ASCII, 2 bytes for extended chars).
         // UTF-16/UCS-2 encodings require 2 bytes even for ASCII.
         // Variable-width encodings (EUC-KR, CP949, Shift-JIS, etc.) use 1 byte for ASCII.
-        let use_utf16 = if !writer.writer_ctx.charset.is_null() {
+        let use_utf16 = if has_service_charset {
             let charset = unsafe {
                 CStr::from_ptr(writer.writer_ctx.charset)
                     .to_str()
@@ -237,8 +250,10 @@ impl dtvcc_tv_screen {
             pen_attribs = self.pen_attribs[row_index][i];
             if i < first {
                 buf.push(b' ');
+            } else if has_service_charset {
+                write_char(&self.chars[row_index][i], &mut buf, use_utf16);
             } else {
-                write_char(&self.chars[row_index][i], &mut buf, use_utf16)
+                write_symbol(&self.chars[row_index][i], &mut buf);
             }
         }
         // there can be unclosed tags or colors after the last symbol in a row
@@ -261,31 +276,31 @@ impl dtvcc_tv_screen {
             &mut buf,
         );
         // Tags can still be crossed e.g <f><i>text</f></i>, but testing HTML code has shown that they still are handled correctly.
-        if writer.writer_ctx.cd != (-1_isize) as iconv_t {
-            if writer.writer_ctx.charset.is_null() {
-                debug!("Charset: null");
-            } else {
-                let charset = unsafe {
-                    CStr::from_ptr(writer.writer_ctx.charset)
-                        .to_str()
-                        .map_err(|err| err.to_string())?
-                };
-                debug!("Charset: {charset}");
-
-                // Look up the encoding by label (name)
-                if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
-                    let (cow, _encoding_used, had_errors) = encoding.decode(&buf);
-                    if had_errors {
-                        println!("Warning: Had errors during encoding from {charset} to UTF-8");
-                    }
-                    if _encoding_used != encoding {
-                        println!("Warning: Encoding specified ({}) does not match encoding detected ({})",charset,_encoding_used.name());
-                    }
-                    writer.write_to_file(cow.as_bytes())?;
+        if has_service_charset {
+            let charset = unsafe {
+                CStr::from_ptr(writer.writer_ctx.charset)
+                    .to_str()
+                    .map_err(|err| err.to_string())?
+            };
+            debug!("Charset: {charset}");
+            if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
+                let (cow, _encoding_used, had_errors) = encoding.decode(&buf);
+                if had_errors {
+                    println!("Warning: Had errors during encoding from {charset} to UTF-8");
                 }
+                if _encoding_used != encoding {
+                    println!(
+                        "Warning: Encoding specified ({}) does not match encoding detected ({})",
+                        charset,
+                        _encoding_used.name()
+                    );
+                }
+                writer.write_encoded_str(&cow)?;
+            } else {
+                writer.write_encoded_bytes(&buf)?;
             }
         } else {
-            writer.write_to_file(&buf)?;
+            writer.write_encoded_bytes(&buf)?;
         }
 
         Ok(())
@@ -304,19 +319,17 @@ impl dtvcc_tv_screen {
         let time_hide = get_time_str(self.time_ms_hide);
 
         let counter = *writer.cea_708_counter;
-        let line = format!(
-            "{}{}{} --> {}{}",
-            counter, "\r\n", time_show, time_hide, "\r\n"
-        );
-        writer.write_to_file(line.as_bytes())?;
+        let line = format!("{}{}{} --> {}", counter, "\r\n", time_show, time_hide);
+        writer.write_encoded_str(&line)?;
+        writer.write_crlf()?;
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 self.write_row(writer, row_index, true)?;
-                writer.write_to_file(b"\r\n")?;
+                writer.write_crlf()?;
             }
         }
-        writer.write_to_file(b"\r\n")?;
+        writer.write_crlf()?;
         Ok(())
     }
 
@@ -336,7 +349,7 @@ impl dtvcc_tv_screen {
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 if wrote_something {
-                    writer.write_to_file(b"\r\n")?;
+                    writer.write_crlf()?;
                 }
 
                 let mut buf = String::new();
@@ -355,7 +368,7 @@ impl dtvcc_tv_screen {
                 if is_true(writer.transcript_settings.showMode) {
                     buf.push_str("POP|"); //TODO caption mode(pop, rollup, etc.)
                 }
-                writer.write_to_file(buf.as_bytes())?;
+                writer.write_encoded_str(&buf)?;
                 self.write_row(writer, row_index, false)?;
                 wrote_something = true;
             }
@@ -383,25 +396,25 @@ impl dtvcc_tv_screen {
             "<sync start={}><p class=\"unknowncc\">\r\n",
             self.time_ms_show + writer.subs_delay
         );
-        writer.write_to_file(buf.as_bytes())?;
+        writer.write_encoded_str(&buf)?;
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 self.write_row(writer, row_index, true)?;
-                writer.write_to_file("<br>\r\n".as_bytes())?;
+                writer.write_encoded_str("<br>\r\n")?;
             }
         }
         let buf = format!(
             "<sync start={}><p class=\"unknowncc\">&nbsp;</p></sync>\r\n\r\n",
             self.time_ms_hide + writer.subs_delay
         );
-        writer.write_to_file(buf.as_bytes())?;
+        writer.write_encoded_str(&buf)?;
         Ok(())
     }
 
     /// Writes the header according to the SAMI format
     pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
-        let buf = b"<sami>\r\n\
+        let buf = "<sami>\r\n\
                             <head>\r\n\
                             <style type=\"text/css\">\r\n\
                             <!--\r\n\
@@ -413,7 +426,7 @@ impl dtvcc_tv_screen {
                             </head>\r\n\r\n\
                             <body>\r\n";
 
-        writer.write_to_file(buf)?;
+        writer.write_encoded_str(buf)?;
         Ok(())
     }
 
@@ -814,6 +827,7 @@ mod test {
             &transcript_settings,
             0,
             b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
         );
 
         screen
@@ -861,6 +875,7 @@ mod test {
             &transcript_settings,
             0,
             b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
         );
 
         // This should succeed without error (fd is valid, not -1)
@@ -897,6 +912,7 @@ mod test {
             &transcript_settings,
             0,
             b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
         );
 
         // This should return an error, not panic
@@ -936,6 +952,7 @@ mod test {
             &transcript_settings,
             0,
             b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
         );
 
         let err = screen
@@ -943,5 +960,296 @@ mod test {
             .expect_err("creating a file over a directory must fail");
         assert!(err.contains(&path), "error should name the file: {}", err);
         assert_eq!(writer_ctx.fd, -1);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_srt_encodings() {
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_show = 1000;
+        screen.time_ms_hide = 2000;
+        screen.chars[0][0] = dtvcc_symbol::new(0x76);
+        screen.chars[0][1] = dtvcc_symbol::new(0x6f);
+        screen.chars[0][2] = dtvcc_symbol::new(0x63);
+        screen.chars[0][3] = dtvcc_symbol::new(0xea);
+
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().expect("Failed to create temp file");
+            writer_ctx.fd = temp_file.into_raw_fd();
+            writer_ctx.cd = -1 as _;
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UTF_8,
+            );
+            screen.write_srt(&mut writer).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert!(output
+                .windows(5)
+                .any(|w| w == [0x76, 0x6f, 0x63, 0xc3, 0xaa]));
+        }
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().expect("Failed to create temp file");
+            writer_ctx.fd = temp_file.into_raw_fd();
+            writer_ctx.cd = -1 as _;
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_LATIN_1,
+            );
+            screen.write_srt(&mut writer).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert!(output.windows(4).any(|w| w == [0x76, 0x6f, 0x63, 0xea]));
+            assert!(!output.contains(&0xc3));
+        }
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().expect("Failed to create temp file");
+            writer_ctx.fd = temp_file.into_raw_fd();
+            writer_ctx.cd = -1 as _;
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UNICODE,
+            );
+            screen.write_srt(&mut writer).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert!(output
+                .windows(8)
+                .any(|w| w == [0x76, 0x00, 0x6f, 0x00, 0x63, 0x00, 0xea, 0x00]));
+        }
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_writer_output_bom() {
+        use std::ffi::CString;
+        use std::fs::File;
+        use std::io::Read;
+        use std::os::unix::io::FromRawFd;
+
+        let screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        {
+            let file_path = temp_dir.path().join("utf8.srt");
+            let c_path = CString::new(file_path.to_str().unwrap()).unwrap();
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            writer_ctx.fd = -1;
+            writer_ctx.filename = c_path.into_raw();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UTF_8,
+            );
+            screen.writer_output(&mut writer).unwrap();
+            let mut file = File::open(&file_path).unwrap();
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
+            assert!(buf.starts_with(&[0xef, 0xbb, 0xbf]));
+            unsafe {
+                let _ = CString::from_raw(writer_ctx.filename);
+                let _ = File::from_raw_fd(writer_ctx.fd);
+            }
+        }
+
+        {
+            let file_path = temp_dir.path().join("unicode.srt");
+            let c_path = CString::new(file_path.to_str().unwrap()).unwrap();
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            writer_ctx.fd = -1;
+            writer_ctx.filename = c_path.into_raw();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UNICODE,
+            );
+            screen.writer_output(&mut writer).unwrap();
+            let mut file = File::open(&file_path).unwrap();
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
+            assert!(buf.starts_with(&[0xff, 0xfe]));
+            unsafe {
+                let _ = CString::from_raw(writer_ctx.filename);
+                let _ = File::from_raw_fd(writer_ctx.fd);
+            }
+        }
+
+        {
+            let file_path = temp_dir.path().join("latin1.srt");
+            let c_path = CString::new(file_path.to_str().unwrap()).unwrap();
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            writer_ctx.fd = -1;
+            writer_ctx.filename = c_path.into_raw();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_LATIN_1,
+            );
+            screen.writer_output(&mut writer).unwrap();
+            let mut file = File::open(&file_path).unwrap();
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf).unwrap();
+            assert!(!buf.starts_with(&[0xef, 0xbb, 0xbf]));
+            assert!(!buf.starts_with(&[0xff, 0xfe]));
+            unsafe {
+                let _ = CString::from_raw(writer_ctx.filename);
+                let _ = File::from_raw_fd(writer_ctx.fd);
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_row_service_charset_override() {
+        use std::ffi::CString;
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.chars[0][0] = dtvcc_symbol::new(0x76);
+        screen.chars[0][1] = dtvcc_symbol::new(0x6f);
+        screen.chars[0][2] = dtvcc_symbol::new(0x63);
+        screen.chars[0][3] = dtvcc_symbol::new(0xea);
+
+        let charset_c = CString::new("ISO-8859-1").unwrap();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let temp_file = tempfile().expect("Failed to create temp file");
+        writer_ctx.fd = temp_file.into_raw_fd();
+        writer_ctx.charset = charset_c.as_ptr() as *mut _;
+        writer_ctx.cd = 1 as _;
+
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
+        );
+
+        screen.write_row(&mut writer, 0, false).unwrap();
+
+        let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+        file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = Vec::new();
+        file.read_to_end(&mut output).unwrap();
+        assert_eq!(output, vec![0x76, 0x6f, 0x63, 0xc3, 0xaa]);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_srt_sparse_row_no_nul_bytes() {
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.time_ms_show = 1000;
+        screen.time_ms_hide = 2000;
+        screen.chars[0][0] = dtvcc_symbol::new(0x41);
+        screen.chars[0][1] = dtvcc_symbol { sym: 0, init: 0 };
+        screen.chars[0][2] = dtvcc_symbol::new(0xea);
+
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let temp_file = tempfile().unwrap();
+        writer_ctx.fd = temp_file.into_raw_fd();
+        writer_ctx.cd = -1 as _;
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+            ccx_encoding_type_CCX_ENC_UTF_8,
+        );
+
+        screen.write_srt(&mut writer).unwrap();
+
+        let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+        file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = Vec::new();
+        file.read_to_end(&mut output).unwrap();
+
+        assert!(!output.contains(&0x00));
+        assert!(output.windows(4).any(|w| w == [0x41, 0x20, 0xc3, 0xaa]));
     }
 }
