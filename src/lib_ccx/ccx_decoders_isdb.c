@@ -503,7 +503,11 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			{
 				sb_text = allocate_text_node(ls);
 				list_add_tail(&sb_text->list, &ctx->buffered_text);
-				reserve_buf(sb_text, text->used);
+				/* reserve_buf() reserves len bytes on top of used and
+				   the node is fresh, so ask for the terminator too:
+				   it rounds the allocation up to 128 bytes, which hid
+				   this until text->used landed on a multiple of 128. */
+				reserve_buf(sb_text, text->used + 1);
 				memcpy(sb_text->buf, text->buf, text->used);
 				sb_text->buf[text->used] = '\0';
 				sb_text->used = text->used;
@@ -534,7 +538,8 @@ static int get_text(ISDBSubContext *ctx, unsigned char *buffer, int len)
 			{
 				sb_text = allocate_text_node(ls);
 				list_add_tail(&sb_text->list, &ctx->buffered_text);
-				reserve_buf(sb_text, text->used);
+				/* Same terminator as above. */
+				reserve_buf(sb_text, text->used + 1);
 				memcpy(sb_text->buf, text->buf, text->used);
 				sb_text->buf[text->used] = '\0';
 				sb_text->used = text->used;
@@ -719,23 +724,39 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	int ret = 0;
 	unsigned int p1, p2;
 	const uint8_t *buf_pivot = buf;
+	const uint8_t *buf_end = buf + len;
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
-	// Copy buf in arg
-	for (i = 0; *buf != 0x20; i++)
+	// Copy buf into arg, without reading past the length we were given
+	for (i = 0; buf < buf_end && *buf != 0x20; i++)
 	{
 		if (i >= sizeof(arg) - 1)
 		{
+			/* A ten-digit argument would fill arg and leave no room for
+			   the NUL get_csi_params() relies on; give up instead. */
 			isdb_log("UnExpected CSI: too long");
-			break;
+			return -1;
 		}
 		arg[i] = *buf;
 		buf++;
 	}
-	/* ignore terminating 0x20 character */
-	if (i < sizeof(arg))
-		arg[i] = *buf++;
+	/* The terminating 0x20, and the command byte after it, have to be
+	   inside the data we were handed. */
+	if (buf >= buf_end)
+	{
+		return -1;
+	}
+	/* ignore the terminating 0x20, keeping the final arg slot as a NUL */
+	if (i < sizeof(arg) - 1)
+	{
+		arg[i] = *buf;
+	}
+	buf++;
+	if (buf >= buf_end)
+	{
+		return -1;
+	}
 
 	switch (*buf)
 	{
@@ -962,6 +983,11 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 				 */
 			case 0xC:
 				isdb_command_log("Command: APS\n");
+				/* APS reads two operand bytes from the stream. */
+				if (len - (int)(buf - buf_pivot) < 2)
+				{
+					return -1;
+				}
 				set_position(ctx, *buf & 0x3F, *(buf + 1) & 0x3F);
 				buf += 2;
 				break;
@@ -1056,9 +1082,17 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 		{
 			/* COL */
 			case 0x0:
-				/* Palette Col */
+				/* Palette Col: reads one operand byte, two in the CLUT case. */
+				if (len - (int)(buf - buf_pivot) < 1)
+				{
+					return -1;
+				}
 				if (*buf == 0x20)
 				{
+					if (len - (int)(buf - buf_pivot) < 2)
+					{
+						return -1;
+					}
 					isdb_command_log("Command: COL: Set Clut %d\n", (buf[0] & 0x0F));
 					buf++;
 					ctx->current_state.clut_high_idx = (buf[0] & 0x0F);
@@ -1145,7 +1179,11 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 
 				/* CSI Code for code system extension indicated*/
 			case 0xB:
-				ret = parse_csi(ctx, buf, len);
+				ret = parse_csi(ctx, buf, len - (int)(buf - buf_pivot));
+				if (ret < 0)
+				{
+					return -1;
+				}
 				buf += ret;
 				break;
 
@@ -1169,7 +1207,13 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf, int size)
 {
 	const uint8_t *buf_pivot = buf;
+	const uint8_t *buf_end = buf + size;
 	int i;
+
+	if (size < 1)
+	{
+		return -1;
+	}
 
 	ctx->tmd = (*buf >> 6);
 	isdb_log("CC MGMT DATA: TMD: %d\n", ctx->tmd);
@@ -1193,6 +1237,10 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 		 * |  2 (4bit) | 2 (4bit)  | 2 (4bit)|    3 (4bit)  |
 		 * +-----------+-----------+---------+--------------+
 		 */
+		if (buf_end - buf < 5)
+		{
+			return -1;
+		}
 		ctx->offset_time.hour = ((*buf >> 4) * 10) + (*buf & 0xf);
 		buf++;
 		ctx->offset_time.min = ((*buf >> 4) * 10) + (*buf & 0xf);
@@ -1211,12 +1259,22 @@ static int parse_caption_management_data(ISDBSubContext *ctx, const uint8_t *buf
 			 "which is calibrated by clock signal (TDT). Playback time is"
 			 "given by PTS.\n");
 	}
+	if (buf_end - buf < 1)
+	{
+		return -1;
+	}
 	ctx->nb_lang = *buf;
 	isdb_log("CC MGMT DATA: nb languages: %d\n", ctx->nb_lang);
 	buf++;
 
+	/* nb_lang is a byte from the stream, so it can claim up to 255 entries of
+	   five bytes each; stop when the buffer we were handed runs out. */
 	for (i = 0; i < ctx->nb_lang; i++)
 	{
+		if (buf_end - buf < 5)
+		{
+			break;
+		}
 		isdb_log("CC MGMT DATA: %d\n", (*buf & 0x1F) >> 5);
 		ctx->dmf = *buf & 0x0F;
 		isdb_log("CC MGMT DATA: DMF 0x%X\n", ctx->dmf);
@@ -1247,27 +1305,48 @@ static int parse_statement(ISDBSubContext *ctx, const uint8_t *buf, int size)
 	{
 		unsigned char code = (*buf & 0xf0) >> 4;
 		unsigned char code_lo = *buf & 0x0f;
+		/* The two TODO cases below consume their byte without assigning
+		   ret, so default to one byte every pass: otherwise the first
+		   pass reads ret uninitialised and a later one can advance by
+		   zero for ever. */
+		ret = 1;
 		if (code <= 0x1)
-			ret = parse_command(ctx, buf, size);
+		{
+			ret = parse_command(ctx, buf, size - (int)(buf - buf_pivot));
+		}
 		/* Special case *1(SP) */
 		else if (code == 0x2 && code_lo == 0x0)
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		/* Special case *3(DEL) */
 		else if (code == 0x7 && code_lo == 0xF)
+		{
 			/*TODO DEL should have block in fg color */
 			ret = append_char(ctx, buf[0]);
+		}
 		else if (code <= 0x7)
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		else if (code <= 0x9)
-			ret = parse_command(ctx, buf, size);
+		{
+			ret = parse_command(ctx, buf, size - (int)(buf - buf_pivot));
+		}
 		/* Special case *2(10/0) */
 		else if (code == 0xA && code_lo == 0x0)
+		{
 			/*TODO handle */;
+		}
 		/* Special case *4(15/15) */
 		else if (code == 0x0F && code_lo == 0XF)
+		{
 			/*TODO handle */;
+		}
 		else
+		{
 			ret = append_char(ctx, buf[0]);
+		}
 		if (ret < 0)
 			break;
 		buf += ret;
@@ -1279,12 +1358,24 @@ static int parse_data_unit(ISDBSubContext *ctx, const uint8_t *buf, int size)
 {
 	int unit_parameter;
 	int len;
+
+	/* separator, unit parameter and a 24 bit length */
+	if (size < 5)
+	{
+		return -1;
+	}
+
 	/* unit separator */
 	buf++;
 
 	unit_parameter = *buf++;
 	len = RB24(buf);
 	buf += 3;
+	/* The length comes from the stream; keep it inside what we were given. */
+	if (len > size - 5)
+	{
+		len = size - 5;
+	}
 	switch (unit_parameter)
 	{
 		/* statement body */
@@ -1301,14 +1392,37 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
 	int ret;
 	unsigned char buffer[1024] = "";
 
+	if (size < 1)
+	{
+		return -1;
+	}
+
 	tmd = *buf >> 6;
 	buf++;
+	size--;
 	/* skip timing data */
 	if (tmd == 1 || tmd == 2)
+	{
+		if (size < 5)
+		{
+			return -1;
+		}
 		buf += 5;
+		size -= 5;
+	}
 
+	if (size < 3)
+	{
+		return -1;
+	}
 	len = RB24(buf);
 	buf += 3;
+	size -= 3;
+	/* The length comes from the stream; keep it inside what we were given. */
+	if (len > size)
+	{
+		len = size;
+	}
 	ret = parse_data_unit(ctx, buf, len);
 	if (ret < 0)
 		return -1;
@@ -1348,11 +1462,19 @@ static int parse_caption_statement_data(ISDBSubContext *ctx, int lang_id, const 
  * instead of 8 bit character, just now we don't have any means to detect which country this video is
  * therefore we have hardcoded UTF-8 as encoding
  */
-int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitle *sub)
+int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, int size, struct cc_subtitle *sub)
 {
 	ISDBSubContext *ctx = codec_ctx;
 	const uint8_t *buf_pivot = buf;
-	int id = (*buf >> 2);
+	int id;
+
+	/* data group id, link numbers and a 16 bit group size */
+	if (size < 5)
+	{
+		return -1;
+	}
+
+	id = (*buf >> 2);
 #ifdef DEBUG // Fix [-Wunused-variable] when no debug
 	int version = (*buf & 2);
 	int link_number = 0;
@@ -1388,6 +1510,13 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 	buf += 2;
 	isdb_log("ISDB (Data group) group_size %d\n", group_size);
 
+	/* group_size comes from the stream and the CRC takes the last two bytes,
+	   so it can claim far more than the PES payload actually holds. */
+	if (group_size > size - 5)
+	{
+		group_size = size - 5;
+	}
+
 	if (ctx->prev_timestamp > ctx->timestamp)
 	{
 		ctx->prev_timestamp = ctx->timestamp;
@@ -1419,9 +1548,17 @@ int isdb_parse_data_group(void *codec_ctx, const uint8_t *buf, struct cc_subtitl
 
 int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf_size, struct cc_subtitle *sub)
 {
+	const uint8_t *buf_end = buf + buf_size;
 	const uint8_t *header_end = NULL;
 	int ret = 0;
 	ISDBSubContext *ctx = dec_ctx->private_data;
+
+	/* data identifier, private stream id and the header length nibble */
+	if (buf_size < 3)
+	{
+		return -1;
+	}
+
 	if (*buf++ != 0x80)
 	{
 		mprint("\nNot a Syncronised PES\n");
@@ -1431,6 +1568,11 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	buf++;
 	header_end = buf + (*buf & 0x0f);
 	buf++;
+	if (header_end > buf_end)
+	{
+		mprint("\nISDB PES header runs past the payload\n");
+		return -1;
+	}
 	while (buf < header_end)
 	{
 		/* TODO find in spec what is header */
@@ -1438,7 +1580,7 @@ int isdbsub_decode(struct lib_cc_decode *dec_ctx, const uint8_t *buf, size_t buf
 	}
 
 	ctx->cfg_no_rollup = dec_ctx->no_rollup;
-	ret = isdb_parse_data_group(ctx, buf, sub);
+	ret = isdb_parse_data_group(ctx, buf, (int)(buf_end - buf), sub);
 	if (ret < 0)
 		return -1;
 
