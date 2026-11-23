@@ -6,7 +6,7 @@ use std::os::unix::prelude::{FromRawFd, IntoRawFd};
 use std::os::windows::io::{FromRawHandle, IntoRawHandle};
 use std::{fs::File, io::Write};
 
-use crate::{bindings::*, utils::is_true};
+use crate::{bindings::*, ccx_options, utils::is_true};
 
 use log::{debug, warn};
 
@@ -21,6 +21,8 @@ pub struct Writer<'a> {
     pub transcript_settings: &'a ccx_encoders_transcript_format,
     pub no_bom: i32,
     pub old_cc_time_end: i32,
+    /// Line terminator: "\n" with --lf, "\r\n" otherwise
+    pub crlf: &'static str,
 }
 
 impl<'a> Writer<'a> {
@@ -46,6 +48,11 @@ impl<'a> Writer<'a> {
             transcript_settings,
             no_bom,
             old_cc_time_end: 0,
+            crlf: if unsafe { ccx_options.enc_cfg.line_terminator_lf } == 1 {
+                "\n"
+            } else {
+                "\r\n"
+            },
         }
     }
     /// Write subtitles to the file

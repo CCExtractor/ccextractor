@@ -304,19 +304,17 @@ impl dtvcc_tv_screen {
         let time_hide = get_time_str(self.time_ms_hide + writer.subs_delay);
 
         let counter = *writer.cea_708_counter;
-        let line = format!(
-            "{}{}{} --> {}{}",
-            counter, "\r\n", time_show, time_hide, "\r\n"
-        );
+        let crlf = writer.crlf;
+        let line = format!("{counter}{crlf}{time_show} --> {time_hide}{crlf}");
         writer.write_to_file(line.as_bytes())?;
 
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 self.write_row(writer, row_index, true)?;
-                writer.write_to_file(b"\r\n")?;
+                writer.write_to_file(crlf.as_bytes())?;
             }
         }
-        writer.write_to_file(b"\r\n")?;
+        writer.write_to_file(crlf.as_bytes())?;
         Ok(())
     }
 
@@ -336,7 +334,7 @@ impl dtvcc_tv_screen {
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 if wrote_something {
-                    writer.write_to_file(b"\r\n")?;
+                    writer.write_to_file(writer.crlf.as_bytes())?;
                 }
 
                 let mut buf = String::new();
@@ -379,8 +377,9 @@ impl dtvcc_tv_screen {
         if self.cc_count == 1 {
             self.write_sami_header(writer)?;
         }
+        let crlf = writer.crlf;
         let buf = format!(
-            "<sync start={}><p class=\"unknowncc\">\r\n",
+            "<sync start={}><p class=\"unknowncc\">{crlf}",
             self.time_ms_show + writer.subs_delay
         );
         writer.write_to_file(buf.as_bytes())?;
@@ -388,11 +387,11 @@ impl dtvcc_tv_screen {
         for row_index in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
             if !self.is_row_empty(row_index) {
                 self.write_row(writer, row_index, true)?;
-                writer.write_to_file("<br>\r\n".as_bytes())?;
+                writer.write_to_file(format!("<br>{crlf}").as_bytes())?;
             }
         }
         let buf = format!(
-            "<sync start={}><p class=\"unknowncc\">&nbsp;</p></sync>\r\n\r\n",
+            "<sync start={}><p class=\"unknowncc\">&nbsp;</p></sync>{crlf}{crlf}",
             self.time_ms_hide + writer.subs_delay
         );
         writer.write_to_file(buf.as_bytes())?;
@@ -401,19 +400,26 @@ impl dtvcc_tv_screen {
 
     /// Writes the header according to the SAMI format
     pub fn write_sami_header(&self, writer: &mut Writer) -> Result<(), String> {
-        let buf = b"<sami>\r\n\
-                            <head>\r\n\
-                            <style type=\"text/css\">\r\n\
-                            <!--\r\n\
-                            p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;\r\n\
-                            text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}\r\n\
-                            .unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}\r\n\
-                            -->\r\n\
-                            </style>\r\n\
-                            </head>\r\n\r\n\
-                            <body>\r\n";
-
-        writer.write_to_file(buf)?;
+        let header = [
+            "<sami>",
+            "<head>",
+            "<style type=\"text/css\">",
+            "<!--",
+            "p {margin-left: 16pt; margin-right: 16pt; margin-bottom: 16pt; margin-top: 16pt;",
+            "text-align: center; font-size: 18pt; font-family: arial; font-weight: bold; color: #f0f0f0;}",
+            ".unknowncc {Name:Unknown; lang:en-US; SAMIType:CC;}",
+            "-->",
+            "</style>",
+            "</head>",
+            "",
+            "<body>",
+        ];
+        let mut buf = String::new();
+        for line in header {
+            buf.push_str(line);
+            buf.push_str(writer.crlf);
+        }
+        writer.write_to_file(buf.as_bytes())?;
         Ok(())
     }
 
@@ -914,6 +920,87 @@ mod test {
             "unexpected SCC timecode: {:?}",
             output
         );
+    }
+
+    /// Writes `screen` as SRT, SAMI and transcript, with `--lf` on or off,
+    /// and returns the three outputs.
+    #[cfg(unix)]
+    fn write_708_text_formats(screen: &dtvcc_tv_screen, lf: bool) -> Vec<String> {
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::AsRawFd;
+        use tempfile::tempfile;
+
+        let mut transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        transcript_settings.showStartTime = 1;
+        let mut outputs = Vec::new();
+        for format in [
+            ccx_output_format::CCX_OF_SRT,
+            ccx_output_format::CCX_OF_SAMI,
+            ccx_output_format::CCX_OF_TRANSCRIPT,
+        ] {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let mut temp_file = tempfile().expect("Failed to create temp file");
+            writer_ctx.fd = temp_file.as_raw_fd();
+            writer_ctx.filename = std::ptr::null_mut();
+            writer_ctx.cd = -1_isize as iconv_t; // no --service charset
+
+            let mut counter = 0u32;
+            let end_frame: &[u8] = if lf { b"\n" } else { b"\r\n" };
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                format,
+                &mut writer_ctx,
+                1,
+                &transcript_settings,
+                0,
+                end_frame,
+            );
+            // Writer::new sets this from --lf (ccx_options.enc_cfg.line_terminator_lf).
+            // Set it here instead of changing the global option, which other
+            // tests running in parallel also read.
+            if lf {
+                writer.crlf = "\n";
+            }
+            screen.write(&mut writer);
+
+            temp_file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = String::new();
+            temp_file.read_to_string(&mut output).unwrap();
+            outputs.push(output);
+        }
+        outputs
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_708_text_formats_honor_lf() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.cc_count = 1; // first screen, so SAMI writes its header
+        screen.time_ms_show = 1000;
+        screen.time_ms_hide = 2500;
+        screen.chars[0][0] = dtvcc_symbol::new(b'H' as u16);
+        screen.chars[0][1] = dtvcc_symbol::new(b'i' as u16);
+        screen.chars[1][0] = dtvcc_symbol::new(b'Y' as u16);
+        screen.chars[1][1] = dtvcc_symbol::new(b'o' as u16);
+
+        // Without --lf the output is unchanged: CRLF everywhere
+        let crlf = write_708_text_formats(&screen, false);
+        assert_eq!(
+            crlf[0],
+            "1\r\n00:00:01,000 --> 00:00:02,500\r\nHi\r\nYo\r\n\r\n"
+        );
+        assert!(crlf[1].starts_with("<sami>\r\n<head>\r\n"));
+        assert!(
+            crlf[1].ends_with("<sync start=2500><p class=\"unknowncc\">&nbsp;</p></sync>\r\n\r\n")
+        );
+        assert_eq!(crlf[2], "00:00:01,000|Hi\r\n00:00:01,000|Yo\r\n");
+
+        // With --lf there must be no CR left in any of them
+        let lf = write_708_text_formats(&screen, true);
+        assert_eq!(lf[0], "1\n00:00:01,000 --> 00:00:02,500\nHi\nYo\n\n");
+        assert_eq!(lf[1], crlf[1].replace("\r\n", "\n"));
+        assert_eq!(lf[2], "00:00:01,000|Hi\n00:00:01,000|Yo\n");
     }
 
     #[test]
