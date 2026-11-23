@@ -3,6 +3,7 @@
 pub mod bitstream;
 pub mod demuxer;
 pub mod demuxerdata;
+pub mod mythtv;
 pub mod net;
 pub mod time;
 use crate::ccx_options;

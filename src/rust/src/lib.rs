@@ -29,6 +29,7 @@ pub mod hlist;
 pub mod libccxr_exports;
 #[cfg(feature = "enable_mp4_ffmpeg")]
 pub mod mp4_ffmpeg_exports;
+pub mod mythtv;
 pub mod parser;
 pub mod track_lister;
 pub mod utils;

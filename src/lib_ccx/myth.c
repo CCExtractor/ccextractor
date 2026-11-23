@@ -16,6 +16,21 @@ For now, integration with ccextractor is a quick hack. It could get better with 
 #include "ccx_encoders_common.h"
 #include "activity.h"
 #include "file_buffer.h"
+#include "myth.h"
+
+#ifndef DISABLE_RUST
+extern void *ccxr_myth_reader_new(struct ccx_demuxer *ctx);
+extern void ccxr_myth_reader_free(void *reader);
+extern int ccxr_mpegps_read_packet(
+    void *reader,
+    struct ccx_demuxer *ctx,
+    unsigned int *header_state,
+    unsigned char *psm_es_type,
+    struct AVPacketMythTV *av);
+
+// Rust state for the current myth_loop() run.
+static void *rust_reader;
+#endif
 
 static unsigned int header_state;
 static unsigned char psm_es_type[256];
@@ -267,24 +282,10 @@ enum CodecID
 					  stream (only used by libavformat) */
 };
 
-typedef struct AVPacket
-{
-	LLONG pts; ///< presentation time stamp in time_base units
-	LLONG dts; ///< decompression time stamp in time_base units
-	unsigned char *data;
-	int size;
-	int stream_index;
-	int flags;
-	int duration; ///< presentation duration in time_base units (0 if not available)
-	void (*destruct)(struct AVPacket *);
-	void *priv;
-	LLONG pos; ///< byte position in stream, -1 if unknown
-	int codec_id;
-	int type;
-} AVPacket;
+static AVPacketMythTV av;
 
-static AVPacket av;
-
+#ifdef DISABLE_RUST
+// With Rust enabled, these are replaced by src/rust/src/mythtv/myth.rs.
 static LLONG get_pts(struct ccx_demuxer *ctx, int c)
 {
 	LLONG pts;
@@ -513,6 +514,7 @@ redo:
 	*pdts = dts;
 	return len;
 }
+#endif
 
 static int cc608_good_parity(const int *parity_table, unsigned int data)
 {
@@ -622,6 +624,9 @@ void ProcessVBIDataPacket(struct lib_ccx_ctx *ctx, struct cc_subtitle *sub)
 
 static int mpegps_read_packet(struct ccx_demuxer *ctx)
 {
+#ifndef DISABLE_RUST
+	return ccxr_mpegps_read_packet(rust_reader, ctx, &header_state, psm_es_type, &av);
+#else
 	LLONG pts, dts;
 
 	int len, startcode, type, codec_id = 0, es_type;
@@ -795,6 +800,7 @@ goto skip; */
 #endif
 
 	return 0;
+#endif
 }
 
 int myth_loop(struct lib_ccx_ctx *ctx)
@@ -811,6 +817,9 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 
 	av.data = NULL;
 	ccx_options.buffer_input = 1;
+#ifndef DISABLE_RUST
+	rust_reader = ccxr_myth_reader_new(ctx->demux_ctx);
+#endif
 	dec_ctx = update_decoder_list(ctx);
 	if (!desp)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory. Failed to allocate: %d bytes. \n", desp_length);
@@ -890,5 +899,9 @@ int myth_loop(struct lib_ccx_ctx *ctx)
 	if (desp)
 		free(desp);
 	free(av.data);
+#ifndef DISABLE_RUST
+	ccxr_myth_reader_free(rust_reader);
+	rust_reader = NULL;
+#endif
 	return caps;
 }

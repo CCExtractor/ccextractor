@@ -125,6 +125,7 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/vobsub_decoder.h \
 				../src/lib_ccx/mp4.c \
 				../src/lib_ccx/myth.c \
+				../src/lib_ccx/myth.h \
 				../src/lib_ccx/networking.c \
 				../src/lib_ccx/networking.h \
 				../src/lib_ccx/ocr.c \
