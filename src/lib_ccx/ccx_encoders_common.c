@@ -475,14 +475,30 @@ static void try_to_add_end_credits(struct encoder_ctx *context, struct ccx_s_wri
 			write_stringz_as_ssa(context->end_credits_text, context, st, end);
 			break;
 		case CCX_OF_WEBVTT:
-			write_stringz_as_webvtt(context->end_credits_text, context, st, end);
+		{
+			char *escaped = escape_plain_text(context->end_credits_text);
+			if (!escaped)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In try_to_add_end_credits: Out of memory.\n");
+			}
+			write_stringz_as_webvtt(escaped, context, st, end);
+			free(escaped);
 			break;
+		}
 		case CCX_OF_SAMI:
 			write_stringz_as_sami(context->end_credits_text, context, st, end);
 			break;
 		case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(context->end_credits_text, context, st, end);
+		{
+			char *escaped = escape_plain_text(context->end_credits_text);
+			if (!escaped)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In try_to_add_end_credits: Out of memory.\n");
+			}
+			write_stringz_as_smptett(escaped, context, st, end);
+			free(escaped);
 			break;
+		}
 		default:
 			// Do nothing for the rest
 			break;
@@ -534,14 +550,30 @@ void try_to_add_start_credits(struct encoder_ctx *context, LLONG start_ms)
 			write_stringz_as_ssa(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_WEBVTT:
-			write_stringz_as_webvtt(context->start_credits_text, context, st, end);
+		{
+			char *escaped = escape_plain_text(context->start_credits_text);
+			if (!escaped)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In try_to_add_start_credits: Out of memory.\n");
+			}
+			write_stringz_as_webvtt(escaped, context, st, end);
+			free(escaped);
 			break;
+		}
 		case CCX_OF_SAMI:
 			write_stringz_as_sami(context->start_credits_text, context, st, end);
 			break;
 		case CCX_OF_SMPTETT:
-			write_stringz_as_smptett(context->start_credits_text, context, st, end);
+		{
+			char *escaped = escape_plain_text(context->start_credits_text);
+			if (!escaped)
+			{
+				fatal(EXIT_NOT_ENOUGH_MEMORY, "In try_to_add_start_credits: Out of memory.\n");
+			}
+			write_stringz_as_smptett(escaped, context, st, end);
+			free(escaped);
 			break;
+		}
 		default:
 			// Do nothing for the rest
 			mprint("Format doesn't support credits");

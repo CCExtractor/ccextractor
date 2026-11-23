@@ -323,6 +323,14 @@ int write_cc_bitmap_as_webvtt(struct cc_subtitle *sub, struct encoder_ctx *conte
 	str = paraof_ocrtext(sub, context);
 	if (str)
 	{
+		char *escaped = escape_plain_text(str);
+		freep(&str);
+		if (!escaped)
+		{
+			fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_bitmap_as_webvtt: Out of memory.\n");
+		}
+		str = escaped;
+
 		if (context->prev_start != -1 || !(sub->flags & SUB_EOD_MARKER))
 		{
 			millis_to_time(sub->start_time, &h1, &m1, &s1, &ms1);
@@ -527,10 +535,26 @@ int write_cc_buffer_as_webvtt(struct eia608_screen *data, struct encoder_ctx *co
 				// write current text symbol
 				if (line[j] != '\0')
 				{
-					unsigned char buf[5] = {0};
-					// Note: reference should be safe even when j == COLUMNS; characters is nul-terminated
-					int bytes = get_char_in_utf_8(buf, data->characters[i][j]);
-					write_wrapped(context->out->fh, buf, bytes);
+					unsigned char c = data->characters[i][j];
+					if (c == '&')
+					{
+						write_wrapped(context->out->fh, "&amp;", 5);
+					}
+					else if (c == '<')
+					{
+						write_wrapped(context->out->fh, "&lt;", 4);
+					}
+					else if (c == '>')
+					{
+						write_wrapped(context->out->fh, "&gt;", 4);
+					}
+					else
+					{
+						unsigned char buf[5] = {0};
+						// Note: reference should be safe even when j == COLUMNS; characters is nul-terminated
+						int bytes = get_char_in_utf_8(buf, c);
+						write_wrapped(context->out->fh, buf, bytes);
+					}
 				}
 
 				if (ccx_options.use_webvtt_styling)

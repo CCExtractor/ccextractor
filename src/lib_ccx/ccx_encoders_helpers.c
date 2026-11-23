@@ -5,6 +5,8 @@
 #include "ccx_decoders_common.h"
 
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -356,21 +358,41 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
 		}
 		int bytes = 0;
-		switch (ctx->encoding)
+		if (ctx->write_format == CCX_OF_SMPTETT && (line[i] == '&' || line[i] == '<' || line[i] == '>'))
 		{
-			case CCX_ENC_UTF_8:
-				bytes = get_char_in_utf_8(buffer, line[i]);
-				break;
-			case CCX_ENC_LATIN_1:
-				get_char_in_latin_1(buffer, line[i]);
-				bytes = 1;
-				break;
-			case CCX_ENC_UNICODE:
-				get_char_in_unicode(buffer, line[i]);
-				bytes = 2;
-				break;
-			case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
-				break;
+			const char *entity = NULL;
+			if (line[i] == '&')
+			{
+				entity = "&amp;";
+			}
+			else if (line[i] == '<')
+			{
+				entity = "&lt;";
+			}
+			else if (line[i] == '>')
+			{
+				entity = "&gt;";
+			}
+			bytes = encode_line(ctx, buffer, (unsigned char *)entity);
+		}
+		else
+		{
+			switch (ctx->encoding)
+			{
+				case CCX_ENC_UTF_8:
+					bytes = get_char_in_utf_8(buffer, line[i]);
+					break;
+				case CCX_ENC_LATIN_1:
+					get_char_in_latin_1(buffer, line[i]);
+					bytes = 1;
+					break;
+				case CCX_ENC_UNICODE:
+					get_char_in_unicode(buffer, line[i]);
+					bytes = 2;
+					break;
+				case CCX_ENC_ASCII: // Consider to remove ASCII encoding or write get_char_in_ascii(...)
+					break;
+			}
 		}
 		buffer += bytes;
 	}
@@ -504,4 +526,42 @@ void ccx_encoders_helpers_perform_shellsort_words(void)
 {
 	shell_sort(capitalization_list.words, capitalization_list.len, sizeof(*capitalization_list.words), string_cmp_function, NULL);
 	shell_sort(profane.words, profane.len, sizeof(*profane.words), string_cmp_function, NULL);
+}
+
+char *escape_plain_text(const char *s)
+{
+	char *out = (char *)malloc(strlen(s) * 5 + 1);
+	char *d = out;
+	if (!out)
+	{
+		return NULL;
+	}
+	for (; *s; s++)
+	{
+		const char *rep = NULL;
+		if (*s == '&')
+		{
+			rep = "&amp;";
+		}
+		else if (*s == '<')
+		{
+			rep = "&lt;";
+		}
+		else if (*s == '>')
+		{
+			rep = "&gt;";
+		}
+		if (rep)
+		{
+			size_t l = strlen(rep);
+			memcpy(d, rep, l);
+			d += l;
+		}
+		else
+		{
+			*d++ = *s;
+		}
+	}
+	*d = '\0';
+	return out;
 }
