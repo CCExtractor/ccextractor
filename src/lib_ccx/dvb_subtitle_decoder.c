@@ -1026,16 +1026,34 @@ static int dvbsub_parse_pixel_data_block(void *dvb_ctx,
 				break;
 
 			case 0x20:
+				/* reads two map bytes from the stream */
+				if (buf_end - buf < 2)
+				{
+					parseerror = 1;
+					break;
+				}
 				map2to4[0] = (*buf) >> 4;
 				map2to4[1] = (*buf++) & 0xf;
 				map2to4[2] = (*buf) >> 4;
 				map2to4[3] = (*buf++) & 0xf;
 				break;
 			case 0x21:
+				/* reads four map bytes from the stream */
+				if (buf_end - buf < 4)
+				{
+					parseerror = 1;
+					break;
+				}
 				for (i = 0; i < 4; i++)
 					map2to8[i] = *buf++;
 				break;
 			case 0x22:
+				/* reads sixteen map bytes from the stream */
+				if (buf_end - buf < 16)
+				{
+					parseerror = 1;
+					break;
+				}
 				for (i = 0; i < 16; i++)
 					map4to8[i] = *buf++;
 				break;
