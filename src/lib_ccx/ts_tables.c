@@ -134,42 +134,44 @@ int parse_PMT(struct ccx_demuxer *ctx, unsigned char *buf, int len, struct progr
 	table_id = 2, so we should process sections in any order.
 	Check https://github.com/CCExtractor/ccextractor/issues/385 for more info
 	*/
-	if (table_id == 0xC0)
+	/*
+	 * Acc to System Information for Satellite Distribution of Digital
+	 * Television for Cable and MMDS (ANSI/SCTE 57 2003), a PROGRAM
+	 * INFORMATION (0xC0) or PROGRAM NAME (0xC1) table can come before the
+	 * PMT, and there can be more than one. They aren't implemented: skip
+	 * each by moving buf past it. Don't move the bytes instead: the caller
+	 * keeps this buffer and appends the next packet to it when the PMT is
+	 * not complete yet.
+	 */
+	while (table_id == 0xC0 || table_id == 0xC1)
 	{
-		/*
-		 * Acc to System Information for Satellite Distribution
-		 * of Digital Television for Cable and MMDS (ANSI/SCTE 57 2003 )
-		 * PROGRAM INFORMATION Table found in PMT
-		 */
-		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM INFORMATION Table need implementation");
-		// For now, just parse its length and remove it from the buffer
-		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
-		dbg_print(CCX_DMT_PMT, "Program information table length: %u", c0length);
-		if (c0length + 3 > (unsigned)len)
+		unsigned table_length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bits
+		if (table_id == 0xC0)
+		{
+			dbg_print(CCX_DMT_PMT, "PMT: PROGRAM INFORMATION Table need implementation");
+			dbg_print(CCX_DMT_PMT, "Program information table length: %u", table_length);
+		}
+		else
+		{
+			dbg_print(CCX_DMT_PMT, "PMT: PROGRAM NAME Table need implementation");
+			dbg_print(CCX_DMT_PMT, "Program name message length: %u", table_length);
+		}
+		// table_id and the length are the 3 bytes not counted in table_length
+		if (table_length + 3 > (unsigned)len)
 		{
 			return 0;
 		}
-		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
-		len -= (int)(c0length + 3);
-		table_id = buf[0];
-		// return 0;
-	}
-	else if (table_id == 0xC1)
-	{
-		// SCTE 57 2003
-		dbg_print(CCX_DMT_PMT, "PMT: PROGRAM NAME Table need implementation");
-		unsigned c0length = (buf[1] << 8 | buf[2]) & 0xFFF; // 12 bytes
-		dbg_print(CCX_DMT_PMT, "Program name message length: %u", c0length);
-		if (c0length + 3 > (unsigned)len)
+		buf += table_length + 3;
+		len -= (int)(table_length + 3);
+		if (len < 16)
 		{
+			dbg_print(CCX_DMT_PMT, "PMT packet too short after SCTE 57 table (%d bytes), ignoring\n", len);
 			return 0;
 		}
-		memmove(buf, buf + c0length + 3, len - c0length - 3); // First 3 bytes are for the table_id and the length, don't count
-		len -= (int)(c0length + 3);
 		table_id = buf[0];
-		// return 0;
 	}
-	else if (table_id != 0x2)
+
+	if (table_id != 0x2)
 	{
 		mprint("Please Report: Unknown table id in PMT expected 0x02 found 0x%X\n", table_id);
 		return 0;
