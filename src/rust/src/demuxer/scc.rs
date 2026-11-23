@@ -15,7 +15,7 @@
 //! - **Header:** `Scenarist_SCC V1.0` (first line)
 //! - **Lines:** `HH:MM:SS:FF\t<hex pairs>` (SMPTE timecode + TAB + space-separated hex bytes)
 //! - **Hex pairs:** CEA-608 byte pairs with odd parity bits (e.g., `9420` = RCL command)
-//! - **Frame rate:** 29.97fps NTSC drop-frame (default), also supports 24/25/30fps
+//! - **Frame rate:** 29.97fps NTSC drop-frame (default), also supports 23.976/24/25/30fps
 
 /// SCC format header
 pub const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
@@ -32,16 +32,19 @@ pub enum SccFrameRate {
     Fps25,
     /// NTSC non-drop-frame - 30fps
     Fps30,
+    /// NTSC film - 23.976fps
+    Fps23_976,
 }
 
 impl SccFrameRate {
     /// Convert from integer value (used in FFI)
-    /// 0=29.97 (default), 1=24, 2=25, 3=30
+    /// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.976
     pub fn from_int(value: i32) -> Self {
         match value {
             1 => SccFrameRate::Fps24,
             2 => SccFrameRate::Fps25,
             3 => SccFrameRate::Fps30,
+            4 => SccFrameRate::Fps23_976,
             _ => SccFrameRate::Fps29_97,
         }
     }
@@ -49,10 +52,11 @@ impl SccFrameRate {
     /// Get milliseconds per frame for this frame rate
     pub fn ms_per_frame(&self) -> f64 {
         match self {
-            SccFrameRate::Fps29_97 => 1001.0 / 30.0, // ~33.37ms
-            SccFrameRate::Fps24 => 1000.0 / 24.0,    // ~41.67ms
-            SccFrameRate::Fps25 => 1000.0 / 25.0,    // 40ms
-            SccFrameRate::Fps30 => 1000.0 / 30.0,    // ~33.33ms
+            SccFrameRate::Fps29_97 => 1001.0 / 30.0,  // ~33.37ms
+            SccFrameRate::Fps24 => 1000.0 / 24.0,     // ~41.67ms
+            SccFrameRate::Fps25 => 1000.0 / 25.0,     // 40ms
+            SccFrameRate::Fps30 => 1000.0 / 30.0,     // ~33.33ms
+            SccFrameRate::Fps23_976 => 1001.0 / 24.0, // ~41.71ms
         }
     }
 }
@@ -261,7 +265,32 @@ mod tests {
         assert_eq!(SccFrameRate::from_int(1), SccFrameRate::Fps24);
         assert_eq!(SccFrameRate::from_int(2), SccFrameRate::Fps25);
         assert_eq!(SccFrameRate::from_int(3), SccFrameRate::Fps30);
+        assert_eq!(SccFrameRate::from_int(4), SccFrameRate::Fps23_976);
         assert_eq!(SccFrameRate::from_int(99), SccFrameRate::Fps29_97); // Invalid defaults
+    }
+
+    #[test]
+    fn test_parse_scc_uses_23_976_framerate_from_ffi() {
+        // Real sample file, loaded at compile time (repo tests/samples/scc_23_976.scc)
+        let content = include_str!("../../../../tests/samples/scc_23_976.scc");
+        let result = parse_scc(content, SccFrameRate::from_int(4));
+        assert_eq!(result.lines.len(), 2);
+        assert_eq!(result.lines[0].time_ms, 1500);
+        assert_eq!(result.lines[1].time_ms, 3500);
+        assert_eq!(
+            result.lines[0].pairs,
+            vec![
+                [0x94, 0x20],
+                [0x94, 0x20],
+                [0x94, 0xe0],
+                [0x94, 0xe0],
+                [0xc8, 0x49],
+                [0x94, 0x2f],
+                [0x94, 0x2f],
+            ]
+        );
+        assert_eq!(result.lines[1].pairs, vec![[0x94, 0x2c], [0x94, 0x2c]]);
+        assert!((SccFrameRate::from_int(4).ms_per_frame() - 1001.0 / 24.0).abs() < 0.001);
     }
 
     #[test]
