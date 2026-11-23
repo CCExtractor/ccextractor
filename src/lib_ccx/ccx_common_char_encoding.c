@@ -1,7 +1,11 @@
 #include <ctype.h>
+#include "ccx_common_char_encoding.h"
 
 void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 {
+#ifndef DISABLE_RUST
+	ccxr_get_char_in_latin_1(buffer, c);
+#else
 	unsigned char c1 = '?';
 	if (c < 0x80)
 	{
@@ -287,10 +291,14 @@ void get_char_in_latin_1(unsigned char *buffer, unsigned char c)
 			break;	       // This are weird chars anyway
 	}
 	*buffer = c1;
+#endif
 }
 
 void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 {
+#ifndef DISABLE_RUST
+	ccxr_get_char_in_unicode(buffer, c);
+#else
 	unsigned char c1, c2;
 	switch (c)
 	{
@@ -333,10 +341,14 @@ void get_char_in_unicode(unsigned char *buffer, unsigned char c)
 	}
 	*buffer = c1;
 	*(buffer + 1) = c2;
+#endif
 }
 
 int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number of bytes used
 {
+#ifndef DISABLE_RUST
+	return ccxr_get_char_in_utf_8(buffer, c);
+#else
 	if (c < 0x80) // Regular line-21 character set, mostly ASCII except these exceptions
 	{
 		switch (c)
@@ -719,10 +731,14 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c) // Returns number 
 			*buffer = '?'; // I'll do it eventually, I promise
 			return 1;      // This are weird chars anyway
 	}
+#endif
 }
 
 unsigned char cctolower(unsigned char c)
 {
+#ifndef DISABLE_RUST
+	return ccxr_cctolower(c);
+#else
 	if (c >= 'A' && c <= 'Z')
 		return tolower(c);
 	switch (c)
@@ -781,10 +797,14 @@ unsigned char cctolower(unsigned char c)
 			return 0xcb;
 	}
 	return c;
+#endif
 }
 
 unsigned char cctoupper(unsigned char c)
 {
+#ifndef DISABLE_RUST
+	return ccxr_cctoupper(c);
+#else
 	if (c >= 'a' && c <= 'z')
 		return toupper(c);
 	switch (c)
@@ -843,4 +863,5 @@ unsigned char cctoupper(unsigned char c)
 			return 0xca;
 	}
 	return c;
+#endif
 }
