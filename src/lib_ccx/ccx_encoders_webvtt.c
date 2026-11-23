@@ -5,10 +5,7 @@
 #include "utility.h"
 #include "ocr.h"
 
-static const char *webvtt_outline_css = "STYLE\n\n@import url(\"%s\");\n\n";
-
-static const char *webvtt_inline_css = "\r\nSTYLE\n\n"
-				       "/* default values */\n"
+static const char *webvtt_inline_css = "/* default values */\n"
 				       "::cue {\n"
 				       "  line-height: 5.33vh;\n"
 				       "  font-size: 4.1vh;\n"
@@ -267,30 +264,30 @@ void write_webvtt_header(struct encoder_ctx *context)
 		{
 			fprintf(f, "%s", webvtt_inline_css);
 			fclose(f);
-
-			size_t outline_css_file_size = strlen(css_file_name) + strlen(webvtt_outline_css) + 1;
-			char *outline_css_file = (char *)malloc(outline_css_file_size);
-			if (!outline_css_file)
-			{
-				free(css_file_name);
-				fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_webvtt_header: Out of memory allocating outline_css_file.");
-			}
-			snprintf(outline_css_file, outline_css_file_size, webvtt_outline_css, css_file_name);
-			write_wrapped(context->out->fh, outline_css_file, strlen(outline_css_file));
-			free(outline_css_file);
 		}
 		free(css_file_name);
 	}
 	else if (ccx_options.use_webvtt_styling)
 	{
-		write_wrapped(context->out->fh, webvtt_inline_css, strlen(webvtt_inline_css));
-		if (ccx_options.enc_cfg.line_terminator_lf == 1) // If -lf parameter is set.
+		write_wrapped(context->out->fh, "STYLE", 5);
+		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+
+		const char *line_start = webvtt_inline_css;
+		const char *line_end;
+		while ((line_end = strchr(line_start, '\n')) != NULL)
 		{
-			write_wrapped(context->out->fh, "\n", 1);
+			size_t line_len = (size_t)(line_end - line_start);
+			if (line_len > 0)
+			{
+				write_wrapped(context->out->fh, line_start, line_len);
+			}
+			write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
+			line_start = line_end + 1;
 		}
-		else
+		if (*line_start != '\0')
 		{
-			write_wrapped(context->out->fh, "\r\n", 2);
+			write_wrapped(context->out->fh, line_start, strlen(line_start));
+			write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 		}
 		write_wrapped(context->out->fh, context->encoded_crlf, context->encoded_crlf_length);
 	}
