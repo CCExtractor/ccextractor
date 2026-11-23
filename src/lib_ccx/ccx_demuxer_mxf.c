@@ -96,6 +96,15 @@ void update_tid_lut(struct MXFContext *ctx, uint32_t track_id, uint8_t *track_nu
 			return;
 		}
 	}
+	// tracks[] is a fixed table and nb_tracks is the field right behind it,
+	// so writing one entry too many overwrites the bound itself with the
+	// track id taken from the file.
+	if (ctx->nb_tracks >= (int)(sizeof(ctx->tracks) / sizeof(ctx->tracks[0])))
+	{
+		mprint("MXF: more than %d tracks, ignoring the rest\n",
+		       (int)(sizeof(ctx->tracks) / sizeof(ctx->tracks[0])));
+		return;
+	}
 	ctx->tracks[ctx->nb_tracks].track_id = track_id;
 	memcpy(ctx->tracks[ctx->nb_tracks].track_number, track_number, 4);
 	ctx->edit_rate = edit_rate;
