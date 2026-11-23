@@ -940,31 +940,49 @@ void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_leng
 // 6.2.9 Extended event descriptor
 void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_length, struct EPG_event *event)
 {
-	uint8_t descriptor_number = offset[0] >> 4;
-	uint8_t last_descriptor_number = (offset[0] & 0x0f);
+	uint8_t descriptor_number;
+	uint8_t last_descriptor_number;
 	uint32_t text_length;
 	uint32_t oldlen = 0;
-	uint8_t length_of_items = offset[4];
-	event->extended_ISO_639_language_code[0] = offset[1];
-	event->extended_ISO_639_language_code[1] = offset[2];
-	event->extended_ISO_639_language_code[2] = offset[3];
-	event->extended_ISO_639_language_code[3] = 0x00;
+	uint8_t length_of_items;
 
-	offset = offset + length_of_items + 5;
-	if (length_of_items > descriptor_length - 5)
+	/* descriptor_number/last (1) + ISO-639 language (3) + length_of_items (1)
+	   are the five fixed header bytes read below. descriptor_length comes
+	   from the stream, so anything shorter must be rejected before they are
+	   touched -- and the checks that follow subtract from it, which would
+	   wrap in this unsigned type. */
+	if (descriptor_length < 5)
 	{
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid extended_event_descriptor size detected.\n");
 		return;
 	}
 
+	descriptor_number = offset[0] >> 4;
+	last_descriptor_number = (offset[0] & 0x0f);
+	length_of_items = offset[4];
+	event->extended_ISO_639_language_code[0] = offset[1];
+	event->extended_ISO_639_language_code[1] = offset[2];
+	event->extended_ISO_639_language_code[2] = offset[3];
+	event->extended_ISO_639_language_code[3] = 0x00;
+
+	/* The items are followed by a one-byte text_length, so the descriptor
+	   has to hold the 5 header bytes, the items, and that byte. Written as
+	   an addition to avoid the unsigned underflow the subtraction form had. */
+	if ((uint32_t)length_of_items + 6 > descriptor_length)
+	{
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid extended_event_descriptor size detected.\n");
+		return;
+	}
+
+	offset = offset + length_of_items + 5;
 	text_length = offset[0];
-	if (text_length > descriptor_length - 5 - length_of_items - 1)
+	if ((uint32_t)text_length + length_of_items + 6 > descriptor_length)
 	{
 		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid extended_event_text_length size detected.\n");
 		return;
 	}
 
-	if (descriptor_number > 0)
+	if (descriptor_number > 0 && event->extended_text != NULL)
 	{
 		// A continuation descriptor may repeat the character-table byte;
 		// only strip it when there is text, or text_length underflows.
@@ -973,16 +991,19 @@ void EPG_decode_extended_event_descriptor(uint8_t *offset, uint32_t descriptor_l
 			offset++;
 			text_length--;
 		}
-		uint8_t *net = malloc(strlen(event->extended_text) + text_length + 1);
+		oldlen = strlen(event->extended_text);
+		uint8_t *net = malloc(oldlen + text_length + 1);
 		if (!net)
 		{
 			fatal(EXIT_NOT_ENOUGH_MEMORY, "In EPG_decode_extended_event_descriptor: Out of memory allocating net.");
 		}
-		oldlen = strlen(event->extended_text);
-		memcpy(net, event->extended_text, strlen(event->extended_text));
+		memcpy(net, event->extended_text, oldlen);
 		free(event->extended_text);
 		event->extended_text = net;
 	}
+	// descriptor_number 0, or a stray continuation with nothing to continue
+	// (extended_text still NULL): start a fresh string rather than
+	// dereferencing it.
 	else
 	{
 		event->extended_text = malloc(text_length + 1);
