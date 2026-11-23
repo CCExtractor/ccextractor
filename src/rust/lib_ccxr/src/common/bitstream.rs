@@ -51,7 +51,7 @@ impl<'a> BitStreamRust<'a> {
     /// Peek at next `bnum` bits without advancing. MSB first.
     pub fn next_bits(&mut self, bnum: u32) -> Result<u64, BitstreamError> {
         if bnum > 64 {
-            fatal!(cause = ExitCause::Bug; "In next_bits: Argument is greater than the maximum bit number i.e. 64: {}!", bnum);
+            return Err(BitstreamError::TooManyBits(bnum));
         }
 
         if self.pos > self.data.len() {
@@ -290,13 +290,33 @@ impl<'a> BitStreamRust<'a> {
         // Count leading zeros
         while self.read_bits(1)? == 0 && self.bits_left >= 0 {
             zeros += 1;
+            if zeros >= 64 {
+                return Err(BitstreamError::TooManyBits(zeros));
+            }
+        }
+
+        if self.bits_left < 0 {
+            return Err(BitstreamError::InsufficientData);
+        }
+
+        if zeros > 0 && self.bits_left < zeros as i64 {
+            return Err(BitstreamError::InsufficientData);
         }
 
         // Read the remaining bits
-        let remaining_bits = self.read_bits(zeros)?;
-        let res = ((1u64 << zeros) - 1) + remaining_bits;
+        let remaining_bits = if zeros > 0 {
+            self.read_bits(zeros)?
+        } else {
+            0
+        };
 
-        Ok(res)
+        let base = 1u64
+            .checked_shl(zeros)
+            .ok_or(BitstreamError::TooManyBits(zeros))?;
+        let prefix = base - 1;
+        prefix
+            .checked_add(remaining_bits)
+            .ok_or(BitstreamError::TooManyBits(zeros))
     }
 
     /// Read signed Exp-Golomb code from bitstream
@@ -574,6 +594,48 @@ mod tests {
         // Another read should make it more negative
         assert_eq!(bs.next_bits(2).unwrap(), 0);
         assert_eq!(bs.bits_left, -6);
+    }
+
+    #[test]
+    fn test_read_exp_golomb_too_many_leading_zeros() {
+        let data = vec![0u8; 9];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.read_exp_golomb_unsigned().unwrap_err();
+        assert!(matches!(err, BitstreamError::TooManyBits(_)));
+    }
+
+    #[test]
+    fn test_read_exp_golomb_62_leading_zeros_ok() {
+        // 62 zero bits, terminating 1, then 62 suffix bits (all zero) -> code 2^62 - 1
+        let mut data = vec![0u8; 16];
+        data[7] = 0x02;
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let val = bs.read_exp_golomb_unsigned().unwrap();
+        assert_eq!(val, (1u64 << 62) - 1);
+    }
+
+    #[test]
+    fn test_read_exp_golomb_64_leading_zeros_rejected() {
+        let data = vec![0u8; 8];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.read_exp_golomb_unsigned().unwrap_err();
+        assert!(matches!(err, BitstreamError::TooManyBits(64)));
+    }
+
+    #[test]
+    fn test_read_exp_golomb_truncated_no_terminator() {
+        let data = vec![0u8; 2];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.read_exp_golomb_unsigned().unwrap_err();
+        assert!(matches!(err, BitstreamError::InsufficientData));
+    }
+
+    #[test]
+    fn test_next_bits_rejects_more_than_64() {
+        let data = [0xFF; 16];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+        let err = bs.next_bits(65).unwrap_err();
+        assert!(matches!(err, BitstreamError::TooManyBits(65)));
     }
 
     #[test]

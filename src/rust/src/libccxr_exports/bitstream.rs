@@ -252,7 +252,14 @@ pub unsafe extern "C" fn ccxr_bitstream_get_num(
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
-    let result = rust_bs.read_exp_golomb_unsigned().unwrap_or(0);
+    let result = match rust_bs.read_exp_golomb_unsigned() {
+        Ok(v) => v,
+        Err(_) => {
+            rust_bs.error = true;
+            copy_bitstream_from_rust_to_c(bs, &rust_bs);
+            return 0;
+        }
+    };
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
     result
 }
@@ -264,7 +271,14 @@ pub unsafe extern "C" fn ccxr_read_exp_golomb_unsigned(bs: *mut bitstream) -> u6
 #[no_mangle]
 pub unsafe extern "C" fn ccxr_read_exp_golomb(bs: *mut bitstream) -> i64 {
     let mut rust_bs = copy_bitstream_c_to_rust(bs);
-    let result = rust_bs.read_exp_golomb().unwrap_or(0);
+    let result = match rust_bs.read_exp_golomb() {
+        Ok(v) => v,
+        Err(_) => {
+            rust_bs.error = true;
+            copy_bitstream_from_rust_to_c(bs, &rust_bs);
+            return 0;
+        }
+    };
     copy_bitstream_from_rust_to_c(bs, &rust_bs);
     result
 }
