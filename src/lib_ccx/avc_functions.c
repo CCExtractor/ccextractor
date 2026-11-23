@@ -462,7 +462,9 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	int local_cc_count = 0;
 	// int cc_count;
 	if (userend - userbuf < 3)
+	{
 		return;
+	}
 
 	int itu_t_t35_country_code = *((uint8_t *)tbuf);
 	tbuf++;
@@ -493,10 +495,15 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	{
 		case 0x0031: // ANSI/SCTE 128
 			dbg_print(CCX_DMT_VERBOSE, "Caption block in ANSI/SCTE 128...");
-			if (*tbuf == 0x47 && *(tbuf + 1) == 0x41 && *(tbuf + 2) == 0x39 && *(tbuf + 3) == 0x34) // ATSC1_data() - GA94
+			if (tbuf + 4 <= userend && *tbuf == 0x47 && *(tbuf + 1) == 0x41 && *(tbuf + 2) == 0x39
+			    && *(tbuf + 3) == 0x34) // ATSC1_data() - GA94
 			{
 				dbg_print(CCX_DMT_VERBOSE, "ATSC1_data()...\n");
 				tbuf += 4;
+				if (tbuf >= userend)
+				{
+					return;
+				}
 				unsigned char user_data_type_code = *tbuf;
 				tbuf++;
 				switch (user_data_type_code)
@@ -514,6 +521,10 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						   break;
 						   }
 						 */
+						if (tbuf >= userend)
+						{
+							return;
+						}
 						local_cc_count = *tbuf & 0x1F;
 						process_cc_data_flag = (*tbuf & 0x40) >> 6;
 
@@ -532,9 +543,13 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 							  if (*tbuf & 0x20) // Third bit must be 0
 							  {
 							  printf ("Fixed bit should be 0, but it's 1 - skipping this caption block.\n");
-							  break;
+						   break;
 							  } */
 						tbuf++;
+						if (tbuf >= userend)
+						{
+							return;
+						}
 						/*
 						   Another test that the samples ignore. They contain 00!
 						   if (*tbuf!=0xFF)
@@ -554,7 +569,8 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						if (cc_tmp_data + local_cc_count * 3 >= userend)
 							fatal(CCX_COMMON_EXIT_BUG_BUG,
 							      "Syntax problem: Too many caption blocks.");
-						if (cc_tmp_data[local_cc_count * 3] != 0xFF)
+						if (cc_tmp_data + local_cc_count * 3 < userend
+						    && cc_tmp_data[local_cc_count * 3] != 0xFF)
 						{
 							// See GitHub Issue #1001 for the related change
 							mprint("\rWarning! Syntax problem: Final 0xFF marker missing. Continuing...\n");
@@ -582,7 +598,8 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						dbg_print(CCX_DMT_VERBOSE, "SCTE/ATSC reserved.\n");
 				}
 			}
-			else if (*tbuf == 0x44 && *(tbuf + 1) == 0x54 && *(tbuf + 2) == 0x47 && *(tbuf + 3) == 0x31) // afd_data() - DTG1
+			else if (tbuf + 4 <= userend && *tbuf == 0x44 && *(tbuf + 1) == 0x54 && *(tbuf + 2) == 0x47
+				 && *(tbuf + 3) == 0x31) // afd_data() - DTG1
 			{
 				;
 				// Active Format Description Data. Actually unrelated to captions. Left
@@ -603,6 +620,10 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 		case 0x002F:
 			dbg_print(CCX_DMT_VERBOSE, "ATSC1_data() - provider_code = 0x002F\n");
 
+			if (tbuf >= userend)
+			{
+				return;
+			}
 			user_data_type_code = *((uint8_t *)tbuf);
 			if (user_data_type_code != 0x03)
 			{
@@ -611,8 +632,16 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 				return;
 			}
 			tbuf++;
+			if (tbuf >= userend)
+			{
+				return;
+			}
 			user_data_len = *((uint8_t *)tbuf);
 			tbuf++;
+			if (tbuf >= userend)
+			{
+				return;
+			}
 
 			local_cc_count = *tbuf & 0x1F;
 			process_cc_data_flag = (*tbuf & 0x40) >> 6;
@@ -631,7 +660,8 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 			if (cc_tmp_data + local_cc_count * 3 >= userend)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 				      "Syntax problem: Too many caption blocks.");
-			if (cc_tmp_data[local_cc_count * 3] != 0xFF)
+			if (cc_tmp_data + local_cc_count * 3 < userend
+			    && cc_tmp_data[local_cc_count * 3] != 0xFF)
 				fatal(CCX_COMMON_EXIT_BUG_BUG,
 				      "Syntax problem: Final 0xFF marker missing.");
 
