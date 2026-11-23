@@ -520,14 +520,18 @@ void dtvcc_write_scc(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, s
 {
 	dtvcc_tv_screen *tv = decoder->tv;
 
+	// The header must be the first line of the file: write it on the first
+	// screen printed for this service, before any early return.
+	if (tv->cc_count == 1)
+	{
+		dtvcc_write_scc_header(tv, encoder);
+	}
+
 	if (dtvcc_is_screen_empty(tv, encoder))
 		return;
 
 	if (tv->time_ms_show + encoder->subs_delay < 0)
 		return;
-
-	if (tv->cc_count == 2)
-		dtvcc_write_scc_header(tv, encoder);
 
 	char *buf = (char *)encoder->buffer;
 	size_t buf_len;

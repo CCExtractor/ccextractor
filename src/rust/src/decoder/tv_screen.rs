@@ -474,16 +474,19 @@ impl dtvcc_tv_screen {
                 }
             }
         }
+        // The header must be the first line of the file. cc_count is 1 on the
+        // first screen printed for this service, so write it then, before any
+        // early return for an empty screen.
+        if self.cc_count == 1 {
+            writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
+        }
+
         if self.is_screen_empty(writer) {
             return Ok(());
         }
 
         if self.time_ms_show + writer.subs_delay < 0 {
             return Ok(());
-        }
-
-        if self.cc_count == 2 {
-            writer.write_to_file(b"Scenarist_SCC V1.0\n\n")?;
         }
 
         // Shift by --delay, like the other formats
@@ -860,12 +863,21 @@ mod test {
     #[cfg(unix)]
     fn test_write_scc_applies_subs_delay() {
         // current_fps is mocked to 30.0 in tests: 1500 ms minus one frame
-        // (33 ms) is 1467 ms => 00:00:01:14
+        // (33 ms) is 1467 ms => 00:00:01:14. cc_count is 1, so the header
+        // comes first.
         let output = write_screen_with_delay(ccx_output_format::CCX_OF_SCC, 0);
-        assert!(output.starts_with("00:00:01:14\t"), "{}", output);
+        assert!(
+            output.starts_with("Scenarist_SCC V1.0\n\n00:00:01:14\t"),
+            "{}",
+            output
+        );
 
         let output = write_screen_with_delay(ccx_output_format::CCX_OF_SCC, 5000);
-        assert!(output.starts_with("00:00:06:14\t"), "{}", output);
+        assert!(
+            output.starts_with("Scenarist_SCC V1.0\n\n00:00:06:14\t"),
+            "{}",
+            output
+        );
     }
 
     #[test]
@@ -914,6 +926,84 @@ mod test {
             "unexpected SCC timecode: {:?}",
             output
         );
+    }
+
+    /// Runs write_scc on `screen` into a temp file and returns what was written.
+    #[cfg(unix)]
+    fn write_scc_output(screen: &dtvcc_tv_screen) -> String {
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::AsRawFd;
+        use tempfile::tempfile;
+
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let mut temp_file = tempfile().expect("Failed to create temp file");
+        writer_ctx.fd = temp_file.as_raw_fd();
+        writer_ctx.filename = std::ptr::null_mut();
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SCC,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+        );
+        screen
+            .write_scc(&mut writer)
+            .expect("write_scc should succeed");
+
+        temp_file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = String::new();
+        temp_file.read_to_string(&mut output).unwrap();
+        output
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_scc_header_before_first_caption() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.cc_count = 1; // first screen printed for this service
+        screen.time_ms_show = 500;
+        screen.time_ms_hide = 2000;
+        screen.chars[0][0] = dtvcc_symbol::new(0x41);
+
+        let output = write_scc_output(&screen);
+        assert!(
+            output.starts_with("Scenarist_SCC V1.0\n\n00:00:00:14\t"),
+            "header must come before the first caption: {:?}",
+            output
+        );
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_scc_header_only_once() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.cc_count = 2; // second screen: header was already written
+        screen.time_ms_show = 500;
+        screen.time_ms_hide = 2000;
+        screen.chars[0][0] = dtvcc_symbol::new(0x41);
+
+        let output = write_scc_output(&screen);
+        assert!(
+            !output.contains("Scenarist_SCC"),
+            "header must not be repeated: {:?}",
+            output
+        );
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_scc_header_when_first_screen_empty() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.cc_count = 1;
+
+        let output = write_scc_output(&screen);
+        assert_eq!(output, "Scenarist_SCC V1.0\n\n");
     }
 
     #[test]
