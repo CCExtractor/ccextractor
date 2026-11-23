@@ -15,7 +15,7 @@
 //! - **Header:** `Scenarist_SCC V1.0` (first line)
 //! - **Lines:** `HH:MM:SS:FF\t<hex pairs>` (SMPTE timecode + TAB + space-separated hex bytes)
 //! - **Hex pairs:** CEA-608 byte pairs with odd parity bits (e.g., `9420` = RCL command)
-//! - **Frame rate:** 29.97fps NTSC drop-frame (default), also supports 24/25/30fps
+//! - **Frame rate:** 29.97fps NTSC drop-frame (default), also supports 23.976/24/25/30fps
 
 /// SCC format header
 pub const SCC_HEADER: &[u8] = b"Scenarist_SCC V1.0";
@@ -32,16 +32,19 @@ pub enum SccFrameRate {
     Fps25,
     /// NTSC non-drop-frame - 30fps
     Fps30,
+    /// NTSC film - 23.976fps
+    Fps23_976,
 }
 
 impl SccFrameRate {
     /// Convert from integer value (used in FFI)
-    /// 0=29.97 (default), 1=24, 2=25, 3=30
+    /// 0=29.97 (default), 1=24, 2=25, 3=30, 4=23.976
     pub fn from_int(value: i32) -> Self {
         match value {
             1 => SccFrameRate::Fps24,
             2 => SccFrameRate::Fps25,
             3 => SccFrameRate::Fps30,
+            4 => SccFrameRate::Fps23_976,
             _ => SccFrameRate::Fps29_97,
         }
     }
@@ -49,7 +52,7 @@ impl SccFrameRate {
     fn nominal_fps(&self) -> u32 {
         match self {
             SccFrameRate::Fps29_97 | SccFrameRate::Fps30 => 30,
-            SccFrameRate::Fps24 => 24,
+            SccFrameRate::Fps24 | SccFrameRate::Fps23_976 => 24,
             SccFrameRate::Fps25 => 25,
         }
     }
@@ -57,10 +60,11 @@ impl SccFrameRate {
     /// Get milliseconds per frame for this frame rate
     pub fn ms_per_frame(&self) -> f64 {
         match self {
-            SccFrameRate::Fps29_97 => 1001.0 / 30.0, // ~33.37ms
-            SccFrameRate::Fps24 => 1000.0 / 24.0,    // ~41.67ms
-            SccFrameRate::Fps25 => 1000.0 / 25.0,    // 40ms
-            SccFrameRate::Fps30 => 1000.0 / 30.0,    // ~33.33ms
+            SccFrameRate::Fps29_97 => 1001.0 / 30.0,  // ~33.37ms
+            SccFrameRate::Fps24 => 1000.0 / 24.0,     // ~41.67ms
+            SccFrameRate::Fps25 => 1000.0 / 25.0,     // 40ms
+            SccFrameRate::Fps30 => 1000.0 / 30.0,     // ~33.33ms
+            SccFrameRate::Fps23_976 => 1001.0 / 24.0, // ~41.71ms
         }
     }
 }
@@ -180,11 +184,16 @@ pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
         }
 
         let total_minutes = h * 60 + m;
-        if m % 10 != 0 && s == 0 && f < 2 {
-            return None;
-        }
+        let frame = if m % 10 != 0 && s == 0 && f < 2 {
+            // Real SCC writers may emit labels from wall-clock milliseconds at
+            // skipped drop-frame positions (00 or 01).  Treat these unusual
+            // labels as the next valid frame (:02) while retaining the line.
+            2
+        } else {
+            f
+        };
 
-        let total_nominal_frames = ((h * 3600 + m * 60 + s) * nominal_fps + f) as i64;
+        let total_nominal_frames = ((h * 3600 + m * 60 + s) * nominal_fps + frame) as i64;
         let dropped_frames = 2 * (total_minutes - total_minutes / 10);
         let frame_number = total_nominal_frames - dropped_frames as i64;
 
@@ -197,6 +206,7 @@ pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
             SccFrameRate::Fps24 => Some(total_ms + f as i64 * 1000 / 24),
             SccFrameRate::Fps25 => Some(total_ms + f as i64 * 40),
             SccFrameRate::Fps30 => Some(total_ms + f as i64 * 1000 / 30),
+            SccFrameRate::Fps23_976 => Some(total_ms + f as i64 * 1001 / 24),
         }
     }
 }
@@ -251,10 +261,10 @@ pub fn parse_scc(content: &str, fps: SccFrameRate) -> SccParseResult {
         }
 
         // Parse timecode and hex data
-        // Format: "HH:MM:SS:FF\t<hex pairs>"
-        if let Some(tab_pos) = line.find('\t') {
-            let timecode = &line[..tab_pos];
-            let hex_data = &line[tab_pos + 1..];
+        // Format: "HH:MM:SS:FF\t<hex pairs>" (accept whitespace in real-world files)
+        if let Some(separator_pos) = line.find(|c: char| c.is_whitespace()) {
+            let timecode = &line[..separator_pos];
+            let hex_data = &line[separator_pos + 1..];
 
             if let Some(time_ms) = parse_smpte_timecode(timecode, fps) {
                 let pairs = parse_hex_pairs(hex_data);
@@ -334,6 +344,7 @@ mod tests {
         assert_eq!(SccFrameRate::from_int(1), SccFrameRate::Fps24);
         assert_eq!(SccFrameRate::from_int(2), SccFrameRate::Fps25);
         assert_eq!(SccFrameRate::from_int(3), SccFrameRate::Fps30);
+        assert_eq!(SccFrameRate::from_int(4), SccFrameRate::Fps23_976);
         assert_eq!(SccFrameRate::from_int(99), SccFrameRate::Fps29_97); // Invalid defaults
     }
 
@@ -521,19 +532,21 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_smpte_timecode_rejects_invalid_drop_frame_labels() {
-        for timecode in [
-            "00:01:00;00",
-            "00:01:00;01",
-            "00:02:00;00",
-            "00:02:00;01",
-            "00:59:00;00",
-            "00:59:00;01",
-        ] {
-            assert_eq!(
-                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97),
-                None,
-                "timecode: {timecode:?}"
+    fn test_parse_smpte_timecode_accepts_unusual_drop_frame_labels() {
+        assert_eq!(
+            parse_smpte_timecode("00:01:00;00", SccFrameRate::Fps29_97),
+            Some(60060)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:01:00;01", SccFrameRate::Fps29_97),
+            Some(60060)
+        );
+
+        for timecode in ["00:02:00;00", "00:02:00;01", "00:59:00;00", "00:59:00;01"] {
+            assert!(
+                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97).is_some(),
+                "timecode: {:?}",
+                timecode
             );
         }
 
@@ -555,6 +568,10 @@ mod tests {
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps30),
+            None
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps23_976),
             None
         );
     }
@@ -633,6 +650,72 @@ mod tests {
         assert_eq!(result.lines.len(), 1);
         assert_eq!(result.lines[0].time_ms, 60060);
         assert_eq!(result.lines[0].pairs, [[0x94, 0x20]]);
+    }
+
+    #[test]
+    fn test_parse_scc_accepts_tab_and_space_separators() {
+        for separator in ["\t", " ", "   "] {
+            let content = format!("Scenarist_SCC V1.0\n00:00:01;00{separator}9420 9420\n");
+            let result = parse_scc(&content, SccFrameRate::Fps29_97);
+
+            assert_eq!(result.lines.len(), 1, "separator: {separator:?}");
+            assert_eq!(result.lines[0].time_ms, 1001, "separator: {separator:?}");
+            assert_eq!(
+                result.lines[0].pairs,
+                [[0x94, 0x20], [0x94, 0x20]],
+                "separator: {separator:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_scc_preserves_reviewer_reproduction_sample() {
+        let content = "Scenarist_SCC V1.0\n\
+00:00:58;00 9420 9420 94ae 94ae 9470 9470 c1c1 942f 942f\n\
+00:01:00;00 942c 942c 9420 9420 94ae 94ae 9470 9470 c2c2 942f 942f\n\
+00:01:03;00 942c 942c\n";
+        let result = parse_scc(content, SccFrameRate::Fps29_97);
+
+        assert_eq!(result.lines.len(), 3);
+
+        // Caption AA starts at 58 seconds and remains intact.
+        assert_eq!(result.lines[0].time_ms, 58058);
+        assert_eq!(
+            result.lines[0].pairs,
+            [
+                [0x94, 0x20],
+                [0x94, 0x20],
+                [0x94, 0xae],
+                [0x94, 0xae],
+                [0x94, 0x70],
+                [0x94, 0x70],
+                [0xc1, 0xc1],
+                [0x94, 0x2f],
+                [0x94, 0x2f],
+            ]
+        );
+
+        // Caption BB at 1:00;00 is the unusual label that previously discarded the line.
+        assert_eq!(result.lines[1].time_ms, 60060);
+        assert_eq!(
+            result.lines[1].pairs,
+            [
+                [0x94, 0x2c],
+                [0x94, 0x2c],
+                [0x94, 0x20],
+                [0x94, 0x20],
+                [0x94, 0xae],
+                [0x94, 0xae],
+                [0x94, 0x70],
+                [0x94, 0x70],
+                [0xc2, 0xc2],
+                [0x94, 0x2f],
+                [0x94, 0x2f],
+            ]
+        );
+
+        assert_eq!(result.lines[2].time_ms, 62996);
+        assert_eq!(result.lines[2].pairs, [[0x94, 0x2c], [0x94, 0x2c]]);
     }
 
     #[test]
@@ -721,5 +804,9 @@ mod tests {
         // 30fps: ~33.33ms per frame
         let fps_30 = SccFrameRate::Fps30.ms_per_frame();
         assert!(fps_30 > 33.0 && fps_30 < 34.0);
+
+        // 23.976fps: ~41.71ms per frame
+        let fps_23_976 = SccFrameRate::Fps23_976.ms_per_frame();
+        assert!((fps_23_976 - 1001.0 / 24.0).abs() < 0.001);
     }
 }
