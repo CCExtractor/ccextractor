@@ -13,7 +13,7 @@ use std::{ffi::CStr, fs::File};
 #[cfg(windows)]
 use crate::bindings::_get_osfhandle;
 
-use super::output::{color_to_hex, is_utf16_charset, write_char, Writer};
+use super::output::{color_to_hex, find_charset_encoding, is_utf16_charset, write_char, Writer};
 use super::timing::{get_scc_time_str, get_time_str};
 use super::{CCX_DTVCC_SCREENGRID_COLUMNS, CCX_DTVCC_SCREENGRID_ROWS};
 use crate::{
@@ -21,7 +21,6 @@ use crate::{
     current_fps,
     utils::{is_false, is_true},
 };
-use encoding_rs::Encoding;
 
 use log::{debug, warn};
 
@@ -273,7 +272,7 @@ impl dtvcc_tv_screen {
                 debug!("Charset: {charset}");
 
                 // Look up the encoding by label (name)
-                if let Some(encoding) = Encoding::for_label(charset.as_bytes()) {
+                if let Some(encoding) = find_charset_encoding(charset) {
                     let (cow, _encoding_used, had_errors) = encoding.decode(&buf);
                     if had_errors {
                         println!("Warning: Had errors during encoding from {charset} to UTF-8");
@@ -282,6 +281,18 @@ impl dtvcc_tv_screen {
                         println!("Warning: Encoding specified ({}) does not match encoding detected ({})",charset,_encoding_used.name());
                     }
                     writer.write_to_file(cow.as_bytes())?;
+                } else {
+                    // iconv accepted the name but encoding_rs can't convert from it:
+                    // write the text unconverted instead of dropping it.
+                    static WARNED: std::sync::Once = std::sync::Once::new();
+                    WARNED.call_once(|| {
+                        if let Some(logger) = lib_ccxr::util::log::logger() {
+                            logger.log_info(&format_args!(
+                                "[CEA-708] Can't convert from charset \"{charset}\", writing the text unconverted\n"
+                            ));
+                        }
+                    });
+                    writer.write_to_file(&buf)?;
                 }
             }
         } else {
@@ -914,6 +925,78 @@ mod test {
             "unexpected SCC timecode: {:?}",
             output
         );
+    }
+
+    /// Runs write_row on row 0 of `screen` with a --service charset and
+    /// returns what was written.
+    #[cfg(unix)]
+    fn write_row_with_charset(screen: &dtvcc_tv_screen, charset: &str) -> Vec<u8> {
+        use std::ffi::CString;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::AsRawFd;
+        use tempfile::tempfile;
+
+        let charset = CString::new(charset).unwrap();
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let mut temp_file = tempfile().expect("Failed to create temp file");
+        writer_ctx.fd = temp_file.as_raw_fd();
+        writer_ctx.filename = std::ptr::null_mut();
+        writer_ctx.charset = charset.as_ptr() as *mut _;
+        // dtvcc_writer_init() opened an iconv descriptor for the charset
+        writer_ctx.cd = 1 as iconv_t;
+
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            1,
+            &transcript_settings,
+            0,
+            b"\r\n",
+        );
+        screen
+            .write_row(&mut writer, 0, false)
+            .expect("write_row should succeed");
+
+        temp_file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = Vec::new();
+        temp_file.read_to_end(&mut output).unwrap();
+        output
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_row_iconv_charset_name() {
+        // "Hi 가" in EUC-KR / CP949: 가 is 0xB0A1
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.chars[0][0] = dtvcc_symbol::new(b'H' as u16);
+        screen.chars[0][1] = dtvcc_symbol::new(b'i' as u16);
+        screen.chars[0][2] = dtvcc_symbol::new(b' ' as u16);
+        screen.chars[0][3] = dtvcc_symbol::new(0xB0A1);
+
+        for charset in ["EUC-KR", "CP949", "UHC", "EUCKR"] {
+            let output = write_row_with_charset(&screen, charset);
+            assert_eq!(
+                String::from_utf8_lossy(&output),
+                "Hi 가",
+                "charset {charset}"
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_row_unknown_charset_keeps_text() {
+        let mut screen = get_zero_allocated_obj::<dtvcc_tv_screen>();
+        screen.chars[0][0] = dtvcc_symbol::new(b'H' as u16);
+        screen.chars[0][1] = dtvcc_symbol::new(b'i' as u16);
+
+        // iconv knows JOHAB, encoding_rs doesn't
+        let output = write_row_with_charset(&screen, "JOHAB");
+        assert_eq!(output, b"Hi");
     }
 
     #[test]
