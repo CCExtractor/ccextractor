@@ -407,20 +407,31 @@ impl OptionsExt for Options {
     // Ex: filename: video1.mp4 will search for video2.mp4, video3.mp4, ...
     fn add_file_sequence(&mut self, filename: &mut String, inputfile_capacity: &mut i32) -> i32 {
         filename.pop();
-        let mut n: i32 = filename.len() as i32 - 1;
+
+        let file_start = filename
+            .rfind(std::path::is_separator)
+            .map_or(0, |idx| idx + 1);
+
+        let file_name = &filename[file_start..];
+        let stem_end = match file_name.rfind('.') {
+            Some(dot_idx) if dot_idx > 0 => file_start + dot_idx,
+            _ => filename.len(),
+        };
+
+        let mut n: i32 = stem_end as i32 - 1;
         let bytes = filename.as_bytes();
 
         // Look for the last digit in filename
-        while n >= 0 && !bytes[n as usize].is_ascii_digit() {
+        while n >= file_start as i32 && !bytes[n as usize].is_ascii_digit() {
             n -= 1;
         }
-        if n == -1 {
+        if n < file_start as i32 {
             // None. No expansion needed
             return self.append_file_to_queue(filename, inputfile_capacity);
         }
 
         let mut m: i32 = n;
-        while m >= 0 && bytes[m as usize].is_ascii_digit() {
+        while m >= file_start as i32 && bytes[m as usize].is_ascii_digit() {
             m -= 1;
         }
         m += 1;
@@ -3447,6 +3458,244 @@ pub mod tests {
             Some(vec![
                 file1.to_str().unwrap().to_string(),
                 file2.to_str().unwrap().to_string(),
+            ])
+        );
+    }
+
+    fn parse_sequence(file_arg: &str) -> Option<Vec<String>> {
+        let args = Args::try_parse_from(["./ccextractor", file_arg]).expect("parse args");
+        let mut options = Options::default();
+        let mut tlt_config = TeletextConfig::default();
+        let mut capitalization_list: Vec<String> = vec![];
+        let mut profane: Vec<String> = vec![];
+        options.parse_parameters(
+            &args,
+            &mut tlt_config,
+            &mut capitalization_list,
+            &mut profane,
+        );
+        options.inputfile
+    }
+
+    #[test]
+    fn test_file_sequence_extension_with_digits() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f1 = dir.path().join("clip001.mp4");
+        let f2 = dir.path().join("clip002.mp4");
+        let dummy = dir.path().join("clip001.mp5");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+        std::fs::File::create(&dummy).expect("create dummy");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
+            ])
+        );
+
+        let intro4 = dir.path().join("intro.mp4");
+        let intro5 = dir.path().join("intro.mp5");
+        std::fs::File::create(&intro4).expect("create intro4");
+        std::fs::File::create(&intro5).expect("create intro5");
+        let input_intro = format!("{}+", intro4.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_intro),
+            Some(vec![intro4.to_str().unwrap().to_string()])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_other_digit_extensions() {
+        let dir = tempfile::tempdir().expect("tempdir");
+
+        let audio1 = dir.path().join("audio01.mp3");
+        let audio2 = dir.path().join("audio02.mp3");
+        let audio_dummy = dir.path().join("audio01.mp4");
+        std::fs::File::create(&audio1).expect("create audio1");
+        std::fs::File::create(&audio2).expect("create audio2");
+        std::fs::File::create(&audio_dummy).expect("create audio_dummy");
+        assert_eq!(
+            parse_sequence(&format!("{}+", audio1.to_str().unwrap())),
+            Some(vec![
+                audio1.to_str().unwrap().to_string(),
+                audio2.to_str().unwrap().to_string(),
+            ])
+        );
+
+        let track9 = dir.path().join("track9.m4a");
+        let track_dummy = dir.path().join("track9.m5a");
+        std::fs::File::create(&track9).expect("create track9");
+        std::fs::File::create(&track_dummy).expect("create track_dummy");
+        assert_eq!(
+            parse_sequence(&format!("{}+", track9.to_str().unwrap())),
+            Some(vec![track9.to_str().unwrap().to_string()])
+        );
+
+        let video1 = dir.path().join("video001.mp2");
+        let video2 = dir.path().join("video002.mp2");
+        let video_dummy = dir.path().join("video001.mp3");
+        std::fs::File::create(&video1).expect("create video1");
+        std::fs::File::create(&video2).expect("create video2");
+        std::fs::File::create(&video_dummy).expect("create video_dummy");
+        assert_eq!(
+            parse_sequence(&format!("{}+", video1.to_str().unwrap())),
+            Some(vec![
+                video1.to_str().unwrap().to_string(),
+                video2.to_str().unwrap().to_string(),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_extension_without_digits() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f1 = dir.path().join("vid001.mov");
+        let f2 = dir.path().join("vid002.mov");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_directory_paths_containing_dots() {
+        let dir = tempfile::tempdir().expect("tempdir");
+
+        let dir_dots = dir.path().join("dir.2026");
+        std::fs::create_dir_all(&dir_dots).expect("create dir.2026");
+        let f1 = dir_dots.join("clip001.mp4");
+        let f2 = dir_dots.join("clip002.mp4");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
+            ])
+        );
+
+        let parent_dots = dir.path().join("v1.0");
+        let sub = dir.path().join("sub");
+        std::fs::create_dir_all(&parent_dots).expect("create v1.0");
+        std::fs::create_dir_all(&sub).expect("create sub");
+        let vf1 = parent_dots.join("clip001.mp4");
+        let vf2 = parent_dots.join("clip002.mp4");
+        std::fs::File::create(&vf1).expect("create vf1");
+        std::fs::File::create(&vf2).expect("create vf2");
+
+        let input_dotdot = format!("{}/../v1.0/clip001.mp4+", sub.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_dotdot),
+            Some(vec![
+                format!("{}/../v1.0/clip001.mp4", sub.to_str().unwrap()),
+                format!("{}/../v1.0/clip002.mp4", sub.to_str().unwrap()),
+            ])
+        );
+
+        let f_noext1 = dir_dots.join("clip001");
+        let f_noext2 = dir_dots.join("clip002");
+        std::fs::File::create(&f_noext1).expect("create f_noext1");
+        std::fs::File::create(&f_noext2).expect("create f_noext2");
+        let input_noext = format!("{}+", f_noext1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_noext),
+            Some(vec![
+                f_noext1.to_str().unwrap().to_string(),
+                f_noext2.to_str().unwrap().to_string(),
+            ])
+        );
+
+        let dir_digits1 = dir.path().join("dir001");
+        let dir_digits2 = dir.path().join("dir002");
+        std::fs::create_dir_all(&dir_digits1).expect("create dir001");
+        std::fs::create_dir_all(&dir_digits2).expect("create dir002");
+        let intro1 = dir_digits1.join("intro.mp4");
+        let intro2 = dir_digits2.join("intro.mp4");
+        std::fs::File::create(&intro1).expect("create intro1");
+        std::fs::File::create(&intro2).expect("create intro2");
+        let input_dir_digits = format!("{}+", intro1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_dir_digits),
+            Some(vec![intro1.to_str().unwrap().to_string()])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_files_without_extensions() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f1 = dir.path().join("clip001");
+        let f2 = dir.path().join("clip002");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
+            ])
+        );
+
+        let h1 = dir.path().join(".clip001");
+        let h2 = dir.path().join(".clip002");
+        std::fs::File::create(&h1).expect("create h1");
+        std::fs::File::create(&h2).expect("create h2");
+        let input_hidden = format!("{}+", h1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_hidden),
+            Some(vec![
+                h1.to_str().unwrap().to_string(),
+                h2.to_str().unwrap().to_string(),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_multi_dot_filenames() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f1 = dir.path().join("my.show.s01e01.mp4");
+        let f2 = dir.path().join("my.show.s01e02.mp4");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_file_sequence_rollover_with_zero_padding() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let f1 = dir.path().join("clip009.mp4");
+        let f2 = dir.path().join("clip010.mp4");
+        std::fs::File::create(&f1).expect("create f1");
+        std::fs::File::create(&f2).expect("create f2");
+
+        let input_arg = format!("{}+", f1.to_str().unwrap());
+        assert_eq!(
+            parse_sequence(&input_arg),
+            Some(vec![
+                f1.to_str().unwrap().to_string(),
+                f2.to_str().unwrap().to_string(),
             ])
         );
     }
