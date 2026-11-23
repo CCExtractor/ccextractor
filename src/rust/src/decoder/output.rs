@@ -21,6 +21,7 @@ pub struct Writer<'a> {
     pub transcript_settings: &'a ccx_encoders_transcript_format,
     pub no_bom: i32,
     pub old_cc_time_end: i32,
+    pub encoding: ccx_encoding_type,
 }
 
 impl<'a> Writer<'a> {
@@ -35,6 +36,7 @@ impl<'a> Writer<'a> {
         transcript_settings: &'a ccx_encoders_transcript_format,
         no_bom: i32,
         encoded_end_frame: &[u8],
+        encoding: ccx_encoding_type,
     ) -> Self {
         Self {
             cea_708_counter,
@@ -46,6 +48,7 @@ impl<'a> Writer<'a> {
             transcript_settings,
             no_bom,
             old_cc_time_end: 0,
+            encoding,
         }
     }
     /// Write subtitles to the file
@@ -78,10 +81,76 @@ impl<'a> Writer<'a> {
             debug!("dtvcc_write_done: no handling required");
         }
     }
+    pub fn write_crlf(&mut self) -> Result<(), String> {
+        if self.encoding == ccx_encoding_type_CCX_ENC_UNICODE {
+            self.write_to_file(&[0x0D, 0x00, 0x0A, 0x00])
+        } else {
+            self.write_to_file(b"\r\n")
+        }
+    }
+
+    pub fn write_encoded_str(&mut self, s: &str) -> Result<(), String> {
+        if self.encoding == ccx_encoding_type_CCX_ENC_UNICODE {
+            let mut buf = Vec::with_capacity(s.len() * 2);
+            for c in s.chars() {
+                let u = c as u32;
+                if u <= 0xFFFF {
+                    buf.extend_from_slice(&(u as u16).to_le_bytes());
+                } else {
+                    let mut utf16 = [0u16; 2];
+                    for unit in c.encode_utf16(&mut utf16) {
+                        buf.extend_from_slice(&unit.to_le_bytes());
+                    }
+                }
+            }
+            self.write_to_file(&buf)
+        } else if self.encoding == ccx_encoding_type_CCX_ENC_LATIN_1 {
+            let mut buf = Vec::with_capacity(s.len());
+            for c in s.chars() {
+                if (c as u32) <= 0xFF {
+                    buf.push(c as u8);
+                } else if c == '♬' {
+                    buf.push(b'#');
+                } else {
+                    buf.push(b'?');
+                }
+            }
+            self.write_to_file(&buf)
+        } else {
+            self.write_to_file(s.as_bytes())
+        }
+    }
+
+    pub fn write_encoded_bytes(&mut self, buf: &[u8]) -> Result<(), String> {
+        if let Ok(s) = std::str::from_utf8(buf) {
+            self.write_encoded_str(s)
+        } else {
+            self.write_to_file(buf)
+        }
+    }
+
     /// Writes the footer according to the SAMI format
     pub fn write_sami_footer(&mut self) -> Result<(), String> {
-        self.write_to_file(b"</body></sami>")?;
+        self.write_encoded_str("</body></sami>")?;
         Ok(())
+    }
+}
+
+pub fn write_symbol(sym: &dtvcc_symbol, buf: &mut Vec<u8>) {
+    if !sym.is_set() || sym.sym == 0 {
+        buf.push(b' ');
+    } else if sym.sym == 9836 || sym.sym == 0x7F {
+        buf.extend_from_slice(&[0xe2, 0x99, 0xac]);
+    } else if sym.sym < 0x80 {
+        buf.push(sym.sym as u8);
+    } else if sym.sym <= 0x7FF {
+        buf.push((0xC0 | (sym.sym >> 6)) as u8);
+        buf.push((0x80 | (sym.sym & 0x3F)) as u8);
+    } else if let Some(c) = char::from_u32(sym.sym as u32) {
+        let mut tmp = [0u8; 4];
+        buf.extend_from_slice(c.encode_utf8(&mut tmp).as_bytes());
+    } else {
+        buf.push(b'?');
     }
 }
 
@@ -95,6 +164,13 @@ impl<'a> Writer<'a> {
 /// Issue #1451: Japanese/Chinese with UTF-16BE need 2 bytes for all characters.
 /// Issue #1065: Korean with EUC-KR needs 1 byte for ASCII, 2 bytes for Korean.
 pub fn write_char(sym: &dtvcc_symbol, buf: &mut Vec<u8>, use_utf16: bool) {
+    if sym.sym == 0 {
+        if use_utf16 {
+            buf.push(0);
+        }
+        buf.push(b' ');
+        return;
+    }
     let high = (sym.sym >> 8) as u8;
     let low = (sym.sym & 0xff) as u8;
 
@@ -215,5 +291,192 @@ mod tests {
         assert_eq!(color_to_hex(0b10_01_00), (2, 1, 0)); // Red
         assert_eq!(color_to_hex(0b01_10_01), (1, 2, 1)); // Green
         assert_eq!(color_to_hex(0b00_11_10), (0, 3, 2)); // Blue
+    }
+
+    #[test]
+    fn test_write_char_empty_cell() {
+        let sym = dtvcc_symbol { sym: 0, init: 0 };
+        let mut buf_var = Vec::new();
+        write_char(&sym, &mut buf_var, false);
+        assert_eq!(buf_var, vec![0x20]);
+
+        let mut buf_utf16 = Vec::new();
+        write_char(&sym, &mut buf_utf16, true);
+        assert_eq!(buf_utf16, vec![0x00, 0x20]);
+    }
+
+    #[test]
+    fn test_write_symbol_voce() {
+        let chars = [0x76u16, 0x6Fu16, 0x63u16, 0xEAu16];
+        let mut buf = Vec::new();
+        for &c in &chars {
+            let sym = dtvcc_symbol::new(c);
+            write_symbol(&sym, &mut buf);
+        }
+        assert_eq!(buf, vec![0x76, 0x6f, 0x63, 0xc3, 0xaa]);
+    }
+
+    #[test]
+    fn test_write_symbol_empty_cell() {
+        let mut buf = Vec::new();
+        let sym_uninit = dtvcc_symbol { sym: 0, init: 0 };
+        write_symbol(&sym_uninit, &mut buf);
+        assert_eq!(buf, vec![0x20]);
+
+        buf.clear();
+        let sym_zero = dtvcc_symbol { sym: 0, init: 1 };
+        write_symbol(&sym_zero, &mut buf);
+        assert_eq!(buf, vec![0x20]);
+    }
+
+    #[test]
+    fn test_write_symbol_musical_note() {
+        for sym_val in [9836u16, 0x7Fu16] {
+            let sym = dtvcc_symbol::new(sym_val);
+            let mut buf = Vec::new();
+            write_symbol(&sym, &mut buf);
+            assert_eq!(buf, vec![0xe2, 0x99, 0xac]);
+        }
+    }
+
+    #[test]
+    fn test_write_symbol_16bit() {
+        let sym = dtvcc_symbol::new(0x4e00);
+        let mut buf = Vec::new();
+        write_symbol(&sym, &mut buf);
+        assert_eq!(buf, vec![0xe4, 0xb8, 0x80]);
+    }
+
+    #[test]
+    fn test_write_symbol_g2_g3() {
+        let sym_g2 = dtvcc_symbol::new(0x00A0);
+        let mut buf_utf8 = Vec::new();
+        write_symbol(&sym_g2, &mut buf_utf8);
+        assert_eq!(buf_utf8, vec![0xc2, 0xa0]);
+
+        let sym_special = dtvcc_symbol::new(0x2022);
+        let mut buf_bullet = Vec::new();
+        write_symbol(&sym_special, &mut buf_bullet);
+        assert_eq!(buf_bullet, vec![0xe2, 0x80, 0xa2]);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_encoded_bytes_encodings() {
+        use crate::utils::get_zero_allocated_obj;
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let voce_utf8 = "você".as_bytes();
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().unwrap();
+            writer_ctx.fd = temp_file.into_raw_fd();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UTF_8,
+            );
+            writer.write_encoded_bytes(voce_utf8).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert_eq!(output, vec![0x76, 0x6f, 0x63, 0xc3, 0xaa]);
+        }
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().unwrap();
+            writer_ctx.fd = temp_file.into_raw_fd();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_LATIN_1,
+            );
+            writer.write_encoded_bytes(voce_utf8).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert_eq!(output, vec![0x76, 0x6f, 0x63, 0xea]);
+        }
+
+        {
+            let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+            let temp_file = tempfile().unwrap();
+            writer_ctx.fd = temp_file.into_raw_fd();
+            let mut counter = 0u32;
+            let mut writer = Writer::new(
+                &mut counter,
+                0,
+                ccx_output_format::CCX_OF_SRT,
+                &mut writer_ctx,
+                0,
+                &transcript_settings,
+                0,
+                b"\r\n",
+                ccx_encoding_type_CCX_ENC_UNICODE,
+            );
+            writer.write_encoded_bytes(voce_utf8).unwrap();
+            let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+            file.seek(SeekFrom::Start(0)).unwrap();
+            let mut output = Vec::new();
+            file.read_to_end(&mut output).unwrap();
+            assert_eq!(output, vec![0x76, 0x00, 0x6f, 0x00, 0x63, 0x00, 0xea, 0x00]);
+        }
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_write_encoded_bytes_invalid_utf8_fallback() {
+        use crate::utils::get_zero_allocated_obj;
+        use std::fs::File;
+        use std::io::{Read, Seek, SeekFrom};
+        use std::os::unix::io::{FromRawFd, IntoRawFd};
+        use tempfile::tempfile;
+
+        let transcript_settings = get_zero_allocated_obj::<ccx_encoders_transcript_format>();
+        let invalid_bytes = [0xff, 0xfe, 0x80];
+
+        let mut writer_ctx = get_zero_allocated_obj::<dtvcc_writer_ctx>();
+        let temp_file = tempfile().unwrap();
+        writer_ctx.fd = temp_file.into_raw_fd();
+        let mut counter = 0u32;
+        let mut writer = Writer::new(
+            &mut counter,
+            0,
+            ccx_output_format::CCX_OF_SRT,
+            &mut writer_ctx,
+            0,
+            &transcript_settings,
+            0,
+            b"\r\n",
+            ccx_encoding_type_CCX_ENC_LATIN_1,
+        );
+        writer.write_encoded_bytes(&invalid_bytes).unwrap();
+        let mut file = unsafe { File::from_raw_fd(writer_ctx.fd) };
+        file.seek(SeekFrom::Start(0)).unwrap();
+        let mut output = Vec::new();
+        file.read_to_end(&mut output).unwrap();
+        assert_eq!(output, vec![0xff, 0xfe, 0x80]);
     }
 }
