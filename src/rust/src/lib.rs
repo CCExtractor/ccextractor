@@ -723,6 +723,11 @@ fn normalize_legacy_args(args: Vec<String>) -> Vec<String> {
             normalized.push(arg.clone());
             continue;
         }
+        // Everything after "--" is a file name, even if it looks like an option
+        if arg == "--" {
+            normalized.extend(args[i..].iter().cloned());
+            break;
+        }
         let arg = normalize_legacy_option(arg.clone());
         // `--stream` takes an optional number of seconds. As in the C parser, the next argument
         // is only its value if it is a number; otherwise there is no timeout (-1).
@@ -1025,6 +1030,21 @@ mod test {
             assert_eq!(args.stream.as_deref(), Some("5"), "{}", spelling);
             assert_eq!(args.inputfile, input);
         }
+    }
+
+    #[test]
+    fn test_args_after_double_dash_are_file_names() {
+        // Files named like options must not be rewritten after "--"
+        let args = parse_normalized(&["--", "--stream"]).unwrap();
+        assert_eq!(args.stream, None);
+        assert_eq!(args.inputfile, Some(vec!["--stream".to_string()]));
+
+        let args = parse_normalized(&["-s", "--", "-s", "-608"]).unwrap();
+        assert_eq!(args.stream.as_deref(), Some("-1"));
+        assert_eq!(
+            args.inputfile,
+            Some(vec!["-s".to_string(), "-608".to_string()])
+        );
     }
 
     #[test]
