@@ -132,7 +132,58 @@ fn cases() -> Vec<Case> {
         }),
         // Without a number, as in C, there is no timeout
         case(&[&["--stream"], &["-s"]], |o, _| o.live_stream == -1),
+        // Input formats set the C demuxer mode
+        case(&[&["--es"], &["-es"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_ELEMENTARY_OR_NOT_FOUND as _
+        }),
+        case(&[&["--ts"], &["-ts"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_TRANSPORT as _
+        }),
+        case(&[&["--ps"], &["-ps"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_PROGRAM as _
+        }),
+        case(
+            &[&["--asf"], &["-asf"], &["--dvr-ms"], &["-dvr-ms"]],
+            |o, _| o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_ASF as _,
+        ),
+        case(&[&["--wtv"], &["-wtv"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_WTV as _
+        }),
+        case(&[&["--mp4"], &["-mp4"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_MP4 as _
+        }),
+        case(&[&["--mkv"], &["-mkv"]], |o, _| {
+            o.demux_cfg.auto_stream == ccx_stream_mode_enum_CCX_SM_MKV as _
+        }),
+        case(&[&["--null-terminated"]], |o, _| {
+            o.enc_cfg.frame_terminator_0 == 1
+        }),
+        case(&[&["--out=report", "--report-format", "JSON"]], |o, _| {
+            c_string(o.report_format).as_deref() == Some("json")
+        }),
+        // Output formats. SRT is also the default, so write_format_rewritten shows that the
+        // option was used.
+        case(&[&["--srt"], &["-srt"]], |o, _| {
+            output_format_is(o, ccx_output_format::CCX_OF_SRT)
+        }),
+        case(&[&["--sami"], &["-sami"]], |o, _| {
+            output_format_is(o, ccx_output_format::CCX_OF_SAMI)
+        }),
+        case(&[&["--dvdraw"], &["-dvdraw"]], |o, _| {
+            output_format_is(o, ccx_output_format::CCX_OF_DVDRAW)
+        }),
+        case(&[&["--mcc"], &["-mcc"]], |o, _| {
+            output_format_is(o, ccx_output_format::CCX_OF_MCC)
+        }),
+        case(&[&["--null"], &["-null"]], |o, _| {
+            output_format_is(o, ccx_output_format::CCX_OF_NULL)
+        }),
     ]
+}
+
+/// Whether an output format option set `format` in both C places and marked it as chosen.
+fn output_format_is(o: &ccx_s_options, format: ccx_output_format) -> bool {
+    o.write_format == format && o.enc_cfg.write_format == format && o.write_format_rewritten == 1
 }
 
 #[test]
@@ -218,25 +269,9 @@ const UNTESTED_OPTIONS: &[&str] = &[
     // Input Formats
     "input",
     // Output formats
-    "es",
-    "ts",
-    "ps",
-    "asf",
-    "wtv",
-    "mp4",
-    "mkv",
-    "dvr-ms",
-    // Output Formats
-    "report-format",
-    // Output formats
-    "srt",
-    "sami",
     "smi",
-    "dvdraw",
-    "mcc",
     "txt",
     "ttxt",
-    "null",
     // Options that affect how input files will be processed
     "goptime",
     "no-goptime",
@@ -293,7 +328,6 @@ const UNTESTED_OPTIONS: &[&str] = &[
     "ttxtforcelatin",
     "xds",
     "lf",
-    "null-terminated",
     "df",
     "autodash",
     "xmltv",
