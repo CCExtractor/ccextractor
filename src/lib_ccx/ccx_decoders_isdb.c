@@ -727,20 +727,35 @@ static int parse_csi(ISDBSubContext *ctx, const uint8_t *buf, int len)
 	ISDBSubState *state = &ctx->current_state;
 	ISDBSubLayout *ls = &state->layout_state;
 
-	// Copy buf in arg, without reading past the length we were given
+	// Copy buf into arg, without reading past the length we were given
 	for (i = 0; buf < buf_end && *buf != 0x20; i++)
 	{
 		if (i >= sizeof(arg) - 1)
 		{
+			/* A ten-digit argument would fill arg and leave no room for
+			   the NUL get_csi_params() relies on; give up instead. */
 			isdb_log("UnExpected CSI: too long");
-			break;
+			return -1;
 		}
 		arg[i] = *buf;
 		buf++;
 	}
-	/* ignore terminating 0x20 character */
-	if (buf < buf_end && i < sizeof(arg))
-		arg[i] = *buf++;
+	/* The terminating 0x20, and the command byte after it, have to be
+	   inside the data we were handed. */
+	if (buf >= buf_end)
+	{
+		return -1;
+	}
+	/* ignore the terminating 0x20, keeping the final arg slot as a NUL */
+	if (i < sizeof(arg) - 1)
+	{
+		arg[i] = *buf;
+	}
+	buf++;
+	if (buf >= buf_end)
+	{
+		return -1;
+	}
 
 	switch (*buf)
 	{
@@ -1164,6 +1179,10 @@ static int parse_command(ISDBSubContext *ctx, const uint8_t *buf, int len)
 				/* CSI Code for code system extension indicated*/
 			case 0xB:
 				ret = parse_csi(ctx, buf, len - (int)(buf - buf_pivot));
+				if (ret < 0)
+				{
+					return -1;
+				}
 				buf += ret;
 				break;
 
