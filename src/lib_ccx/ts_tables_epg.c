@@ -1415,8 +1415,12 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 	uint8_t *offset;
 	uint32_t remaining;
 
-	if (size < 13)
+	// The section header is 14 bytes; the events-length check below
+	// computes size - 14.
+	if (size < 14)
+	{
 		return;
+	}
 
 	table_id = payload_start[0];
 	// section_syntax_indicator 	= (0xf1&0x80)>>7;
@@ -1450,6 +1454,16 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		uint8_t *descp;
 		uint32_t duration;
 		uint64_t start_time;
+
+		// An event needs its 12-byte header (offset[14..25]) plus the
+		// section's 4-byte CRC after it. Anything shorter is a broken
+		// tail: stop instead of reading past the section.
+		if (remaining < 16)
+		{
+			dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid EIT event length detected.\n");
+			break;
+		}
+
 		event.id = (offset[14] << 8) | offset[15];
 		event.has_simple = false;
 		event.extended_text = NULL;
