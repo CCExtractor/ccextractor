@@ -7,7 +7,7 @@ use std::os::windows::io::{FromRawHandle, IntoRawHandle};
 use std::{fs::File, io::Write};
 
 use crate::{bindings::*, utils::is_true};
-use encoding_rs::{Encoding, BIG5, EUC_JP, EUC_KR, GBK};
+use encoding_rs::{Encoding, BIG5, EUC_JP, EUC_KR, GBK, SHIFT_JIS, WINDOWS_874};
 
 use log::{debug, warn};
 
@@ -134,9 +134,12 @@ pub fn find_charset_encoding(charset: &str) -> Option<&'static Encoding> {
     Encoding::for_label(charset.as_bytes()).or_else(|| {
         match charset.to_ascii_uppercase().as_str() {
             "CP949" | "UHC" | "EUCKR" => Some(EUC_KR),
-            "CP936" => Some(GBK),
+            "CP936" | "WINDOWS-936" | "MS936" => Some(GBK),
             "CP950" => Some(BIG5),
             "EUCJP" => Some(EUC_JP),
+            // encoding_rs's Shift_JIS is the Windows variant (windows-31j)
+            "CP932" => Some(SHIFT_JIS),
+            "CP874" => Some(WINDOWS_874),
             _ => None,
         }
     })
@@ -168,14 +171,15 @@ mod tests {
         assert_eq!(find_charset_encoding("UHC"), Some(EUC_KR));
         assert_eq!(find_charset_encoding("EUCKR"), Some(EUC_KR));
         assert_eq!(find_charset_encoding("CP936"), Some(GBK));
+        assert_eq!(find_charset_encoding("WINDOWS-936"), Some(GBK));
+        assert_eq!(find_charset_encoding("MS936"), Some(GBK));
         assert_eq!(find_charset_encoding("CP950"), Some(BIG5));
         assert_eq!(find_charset_encoding("EUCJP"), Some(EUC_JP));
+        assert_eq!(find_charset_encoding("CP932"), Some(SHIFT_JIS));
+        assert_eq!(find_charset_encoding("CP874"), Some(WINDOWS_874));
         // Labels encoding_rs already knows are unchanged
         assert_eq!(find_charset_encoding("EUC-KR"), Some(EUC_KR));
-        assert_eq!(
-            find_charset_encoding("SHIFT_JIS"),
-            Some(encoding_rs::SHIFT_JIS)
-        );
+        assert_eq!(find_charset_encoding("SHIFT_JIS"), Some(SHIFT_JIS));
         // An encoding encoding_rs doesn't have
         assert_eq!(find_charset_encoding("JOHAB"), None);
     }
