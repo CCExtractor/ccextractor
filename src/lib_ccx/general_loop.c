@@ -1761,6 +1761,36 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	}
 
 	dec_ctx = update_decoder_list(ctx);
+
+	// A previous input may have left its last caption in the decoder: a
+	// held teletext page or a 608 screen. Write it now, as
+	// dinit_libraries() does at exit, so it is neither lost nor shown
+	// over this input's captions, before this input sets the mode.
+	if (ctx->current_file > 0)
+	{
+		if (dec_ctx->codec == CCX_CODEC_TELETEXT)
+		{
+			telxcc_close(&dec_ctx->private_data, &dec_ctx->dec_sub);
+		}
+		else
+		{
+			flush_cc_decode(dec_ctx, &dec_ctx->dec_sub);
+		}
+		if (dec_ctx->dec_sub.got_output == CCX_TRUE)
+		{
+			encode_sub(enc_ctx, &dec_ctx->dec_sub);
+			dec_ctx->dec_sub.got_output = CCX_FALSE;
+		}
+		if (dec_ctx->context_cc608_field_1)
+		{
+			ccx_decoder_608_reset(dec_ctx->context_cc608_field_1);
+		}
+		if (dec_ctx->context_cc608_field_2)
+		{
+			ccx_decoder_608_reset(dec_ctx->context_cc608_field_2);
+		}
+	}
+
 	// A previous RCWT input freed the XDS context at its end.
 	if (!dec_ctx->xds_ctx)
 	{
@@ -1784,6 +1814,10 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 	{
 		dec_ctx->codec = CCX_CODEC_TELETEXT;
 		dec_ctx->private_data = telxcc_init();
+	}
+	else
+	{
+		dec_ctx->codec = CCX_CODEC_ATSC_CC;
 	}
 	dec_sub = &dec_ctx->dec_sub;
 	telctx = dec_ctx->private_data;

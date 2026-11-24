@@ -99,6 +99,8 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 						      int cc_to_stdout,
 						      enum ccx_output_format output_format, struct ccx_common_timing_ctx *timing);
 
+void ccx_decoder_608_reset(ccx_decoder_608_context *context);
+
 /**
  * @param data raw cc608 data to be processed
  *
