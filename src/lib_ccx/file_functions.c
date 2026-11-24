@@ -484,7 +484,18 @@ size_t buffered_read_opt(struct ccx_demuxer *ctx, unsigned char *buffer, size_t 
 				if (i == -1)
 					fatal(EXIT_READ_ERROR, "Error reading input file!\n");
 				else if (i == 0)
+				{
+					// switch_to_next_file() opened the next file, and stream
+					// detection there returned its first bytes (up to 1 MB) to
+					// the file buffer. Read those first: the descriptor is past
+					// them, and for a file that detection read to the end it
+					// is at EOF, which ended the input with them unread.
+					if (buffered_bytes_left(ctx) > 0)
+					{
+						return copied + buffered_read_opt(ctx, buffer, bytes);
+					}
 					sleepandchecktimeout(seconds);
+				}
 				else
 				{
 					copied += i;
