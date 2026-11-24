@@ -465,6 +465,11 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	int user_data_len;
 	int local_cc_count = 0;
 	// int cc_count;
+	if (userend - userbuf < 3)
+	{
+		return;
+	}
+
 	int itu_t_t35_country_code = *((uint8_t *)tbuf);
 	tbuf++;
 	int itu_t_35_provider_code = *tbuf * 256 + *(tbuf + 1);
@@ -494,10 +499,14 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 	{
 		case 0x0031: // ANSI/SCTE 128
 			dbg_print(CCX_DMT_VERBOSE, "Caption block in ANSI/SCTE 128...");
-			if (*tbuf == 0x47 && *(tbuf + 1) == 0x41 && *(tbuf + 2) == 0x39 && *(tbuf + 3) == 0x34) // ATSC1_data() - GA94
+			if (tbuf + 4 <= userend && *tbuf == 0x47 && *(tbuf + 1) == 0x41 && *(tbuf + 2) == 0x39 && *(tbuf + 3) == 0x34) // ATSC1_data() - GA94
 			{
 				dbg_print(CCX_DMT_VERBOSE, "ATSC1_data()...\n");
 				tbuf += 4;
+				if (tbuf >= userend)
+				{
+					return;
+				}
 				unsigned char user_data_type_code = *tbuf;
 				tbuf++;
 				switch (user_data_type_code)
@@ -515,6 +524,10 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						   break;
 						   }
 						 */
+						if (tbuf >= userend)
+						{
+							return;
+						}
 						local_cc_count = *tbuf & 0x1F;
 						process_cc_data_flag = (*tbuf & 0x40) >> 6;
 
@@ -536,6 +549,10 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 							  break;
 							  } */
 						tbuf++;
+						if (tbuf >= userend)
+						{
+							return;
+						}
 						/*
 						   Another test that the samples ignore. They contain 00!
 						   if (*tbuf!=0xFF)
@@ -583,7 +600,7 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 						dbg_print(CCX_DMT_VERBOSE, "SCTE/ATSC reserved.\n");
 				}
 			}
-			else if (*tbuf == 0x44 && *(tbuf + 1) == 0x54 && *(tbuf + 2) == 0x47 && *(tbuf + 3) == 0x31) // afd_data() - DTG1
+			else if (tbuf + 4 <= userend && *tbuf == 0x44 && *(tbuf + 1) == 0x54 && *(tbuf + 2) == 0x47 && *(tbuf + 3) == 0x31) // afd_data() - DTG1
 			{
 				;
 				// Active Format Description Data. Actually unrelated to captions. Left
@@ -604,6 +621,10 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 		case 0x002F:
 			dbg_print(CCX_DMT_VERBOSE, "ATSC1_data() - provider_code = 0x002F\n");
 
+			if (tbuf >= userend)
+			{
+				return;
+			}
 			user_data_type_code = *((uint8_t *)tbuf);
 			if (user_data_type_code != 0x03)
 			{
@@ -612,8 +633,16 @@ void user_data_registered_itu_t_t35(struct avc_ctx *ctx, unsigned char *userbuf,
 				return;
 			}
 			tbuf++;
+			if (tbuf >= userend)
+			{
+				return;
+			}
 			user_data_len = *((uint8_t *)tbuf);
 			tbuf++;
+			if (tbuf >= userend)
+			{
+				return;
+			}
 
 			local_cc_count = *tbuf & 0x1F;
 			process_cc_data_flag = (*tbuf & 0x40) >> 6;
