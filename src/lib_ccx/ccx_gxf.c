@@ -483,6 +483,7 @@ error:
 
 int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 {
+	const unsigned char *cdp_start = cdp;
 	int ret = CCX_OK;
 	uint16_t cdp_length;
 	uint16_t cdp_framerate;
@@ -556,6 +557,16 @@ int parse_ad_cdp(unsigned char *cdp, size_t len, struct demuxer_data *data)
 		cdp++;
 		cc_count = *cdp++ & 0x1f;
 		debug("cc_count: %d\n", cc_count);
+
+		/* cc_count comes straight from the packet; make sure the
+		   cc_count * 3 bytes it claims are actually inside the buffer we
+		   were handed before reading them (and writing them out). Without
+		   this a crafted CDP packet reads past the end of cdp. */
+		if ((size_t)cc_count * 3 > len - (size_t)(cdp - cdp_start))
+		{
+			log("Invalid cc_count %d for cdp packet of length %zu\n", cc_count, len);
+			return CCX_EINVAL;
+		}
 
 		for (int i = 0; i < cc_count * 3; i++)
 		{
