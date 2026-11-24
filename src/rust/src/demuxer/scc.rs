@@ -132,57 +132,22 @@ pub fn parse_smpte_timecode(timecode: &str, fps: SccFrameRate) -> Option<i64> {
         return None;
     }
 
-    let mut separators = 0;
-    let mut separator_indices = [0usize; 3];
-
-    for (index, byte) in bytes.iter().enumerate() {
-        match byte {
-            b':' | b';' => {
-                if separators == separator_indices.len() {
-                    return None;
-                }
-                separator_indices[separators] = index;
-                separators += 1;
-            }
-            b'0'..=b'9' => {}
-            _ => return None,
-        }
-    }
-
-    if separators != 3 || bytes[separator_indices[0]] != b':' || bytes[separator_indices[1]] != b':'
+    let digit_positions = [0, 1, 3, 4, 6, 7, 9, 10];
+    if digit_positions
+        .iter()
+        .any(|&index| !bytes[index].is_ascii_digit())
     {
         return None;
     }
 
-    let frame_separator = bytes[separator_indices[2]];
-    if frame_separator != b':' && frame_separator != b';' {
-        return None;
-    }
-
-    let h = timecode[..separator_indices[0]].parse::<u32>().ok()?;
-    let m = timecode[separator_indices[0] + 1..separator_indices[1]]
-        .parse::<u32>()
-        .ok()?;
-    let s = timecode[separator_indices[1] + 1..separator_indices[2]]
-        .parse::<u32>()
-        .ok()?;
-    let f = timecode[separator_indices[2] + 1..].parse::<u32>().ok()?;
-
-    if h > 23 || m > 59 || s > 59 {
-        return None;
-    }
+    let h = ((bytes[0] - b'0') * 10 + (bytes[1] - b'0')) as u32;
+    let m = ((bytes[3] - b'0') * 10 + (bytes[4] - b'0')) as u32;
+    let s = ((bytes[6] - b'0') * 10 + (bytes[7] - b'0')) as u32;
+    let f = ((bytes[9] - b'0') * 10 + (bytes[10] - b'0')) as u32;
 
     let nominal_fps = fps.nominal_fps();
-    if f >= nominal_fps {
-        return None;
-    }
-
-    let is_drop_frame = frame_separator == b';';
+    let is_drop_frame = bytes[8] == b';' && fps == SccFrameRate::Fps29_97;
     if is_drop_frame {
-        if fps != SccFrameRate::Fps29_97 {
-            return None;
-        }
-
         let total_minutes = h * 60 + m;
         let frame = if m % 10 != 0 && s == 0 && f < 2 {
             // Real SCC writers may emit labels from wall-clock milliseconds at
@@ -375,7 +340,7 @@ mod tests {
         // 25fps - 25 frames = 1 second
         assert_eq!(
             parse_smpte_timecode("00:00:00:25", SccFrameRate::Fps25),
-            None
+            Some(1000)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps25),
@@ -389,7 +354,7 @@ mod tests {
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24),
-            None
+            Some(1000)
         );
 
         // 30fps
@@ -399,7 +364,7 @@ mod tests {
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30),
-            None
+            Some(1000)
         );
 
         // Invalid timecodes
@@ -463,37 +428,39 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_smpte_timecode_rejects_invalid_components() {
-        for timecode in [
-            "24:00:00:00",
-            "99:00:00:00",
-            "00:60:00:00",
-            "00:99:00:00",
-            "00:00:60:00",
-            "00:00:99:00",
-        ] {
-            assert_eq!(
-                parse_smpte_timecode(timecode, SccFrameRate::Fps29_97),
-                None,
-                "timecode: {timecode:?}"
-            );
-        }
+    fn test_parse_smpte_timecode_accepts_out_of_range_numeric_components() {
+        assert_eq!(
+            parse_smpte_timecode("24:00:00:00", SccFrameRate::Fps29_97),
+            Some(86400000)
+        );
+        assert_eq!(
+            parse_smpte_timecode("99:60:60:99", SccFrameRate::Fps30),
+            Some(360063300)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:60:00:29", SccFrameRate::Fps29_97),
+            Some(3600967)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:60:29", SccFrameRate::Fps29_97),
+            Some(60967)
+        );
 
         assert_eq!(
             parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps29_97),
-            None
+            Some(1001)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:24", SccFrameRate::Fps24),
-            None
+            Some(1000)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:25", SccFrameRate::Fps25),
-            None
+            Some(1000)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00:30", SccFrameRate::Fps30),
-            None
+            Some(1000)
         );
     }
 
@@ -557,22 +524,38 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_smpte_timecode_rejects_drop_frame_separator_for_other_rates() {
+    fn test_parse_smpte_timecode_treats_semicolon_as_non_drop_frame_for_other_rates() {
         assert_eq!(
             parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps24),
-            None
+            Some(0)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps25),
-            None
+            Some(0)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps30),
-            None
+            Some(0)
         );
         assert_eq!(
             parse_smpte_timecode("00:00:00;00", SccFrameRate::Fps23_976),
-            None
+            Some(0)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;23", SccFrameRate::Fps24),
+            Some(958)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;24", SccFrameRate::Fps25),
+            Some(960)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;29", SccFrameRate::Fps30),
+            Some(966)
+        );
+        assert_eq!(
+            parse_smpte_timecode("00:00:00;23", SccFrameRate::Fps23_976),
+            Some(959)
         );
     }
 
@@ -716,6 +699,32 @@ mod tests {
 
         assert_eq!(result.lines[2].time_ms, 62996);
         assert_eq!(result.lines[2].pairs, [[0x94, 0x2c], [0x94, 0x2c]]);
+    }
+
+    #[test]
+    fn test_parse_scc_preserves_cues_with_semicolon_labels_at_all_rates() {
+        let content = "Scenarist_SCC V1.0\n\n\
+00:00:01;00    9420 9420 94ae 94ae 9470 9470 c1c1 942f 942f\n\
+\n\
+00:00:03;00    942c 942c 9420 9420 94ae 94ae 9470 9470 c2c2 942f 942f\n\
+00:00:05;00    942c 942c\n";
+
+        for fps in [
+            SccFrameRate::Fps29_97,
+            SccFrameRate::Fps30,
+            SccFrameRate::Fps25,
+            SccFrameRate::Fps24,
+            SccFrameRate::Fps23_976,
+        ] {
+            let result = parse_scc(content, fps);
+
+            assert_eq!(result.lines.len(), 3, "frame rate: {fps:?}");
+            assert_eq!(result.lines[0].pairs.len(), 9, "frame rate: {fps:?}");
+            assert_eq!(result.lines[0].pairs[6], [0xc1, 0xc1]);
+            assert_eq!(result.lines[1].pairs.len(), 11, "frame rate: {fps:?}");
+            assert_eq!(result.lines[1].pairs[8], [0xc2, 0xc2]);
+            assert_eq!(result.lines[2].pairs, [[0x94, 0x2c], [0x94, 0x2c]]);
+        }
     }
 
     #[test]
