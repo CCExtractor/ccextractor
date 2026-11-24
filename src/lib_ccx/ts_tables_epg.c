@@ -910,30 +910,38 @@ void EPG_decode_short_event_descriptor(uint8_t *offset, uint32_t descriptor_leng
 {
 	uint8_t text_length;
 	uint8_t event_name_length;
-	event->has_simple = true;
+
+	// Layout: language (3), event_name_length (1), name, text_length (1), text.
+	// Check every length against descriptor_length before reading what it
+	// covers. Leave has_simple false on a bad descriptor: EPG_print_event()
+	// prints event_name whenever has_simple is set.
+	if (descriptor_length < 5)
+	{
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
+		return;
+	}
+
+	event_name_length = offset[3];
+	if (event_name_length + 5 > descriptor_length)
+	{
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
+		return;
+	}
+
+	text_length = offset[4 + event_name_length];
+	if (text_length + event_name_length + 5 > descriptor_length)
+	{
+		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
+		return;
+	}
+
 	event->ISO_639_language_code[0] = offset[0];
 	event->ISO_639_language_code[1] = offset[1];
 	event->ISO_639_language_code[2] = offset[2];
 	event->ISO_639_language_code[3] = 0x00;
-
-	event_name_length = offset[3];
-	if (event_name_length + 4 > descriptor_length)
-	{
-		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
-		return;
-	}
 	event->event_name = EPG_DVB_decode_string(&offset[4], event_name_length);
-
-	text_length = offset[4 + event_name_length];
-	if (text_length + event_name_length + 4 > descriptor_length)
-	{
-		dbg_print(CCX_DMT_GENERIC_NOTICES, "\rWarning: Invalid short_event_descriptor size detected.\n");
-		free(event->event_name);
-		event->event_name = NULL;
-		event->has_simple = false;
-		return;
-	}
 	event->text = EPG_DVB_decode_string(&offset[5 + event_name_length], text_length);
+	event->has_simple = true;
 }
 
 // EN 300 468 V1.3.1 (1998-02)
@@ -1452,6 +1460,8 @@ void EPG_DVB_decode_EIT(struct lib_ccx_ctx *ctx, uint8_t *payload_start, uint32_
 		uint64_t start_time;
 		event.id = (offset[14] << 8) | offset[15];
 		event.has_simple = false;
+		event.event_name = NULL;
+		event.text = NULL;
 		event.extended_text = NULL;
 		event.num_ratings = 0;
 		event.num_categories = 0;
