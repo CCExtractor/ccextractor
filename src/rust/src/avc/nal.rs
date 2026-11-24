@@ -337,7 +337,7 @@ pub fn seq_parameter_set_rbsp(
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers and calls C functions.
 pub unsafe fn slice_header(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     heabuf: &mut [u8],
     nal_unit_type: &AvcNalType,

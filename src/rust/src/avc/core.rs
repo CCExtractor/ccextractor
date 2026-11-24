@@ -69,7 +69,7 @@ fn is_hevc_vcl_nal(nal_type: u8) -> bool {
 /// # Safety
 /// This function is unsafe because it processes raw NAL data
 pub unsafe fn do_nal(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     nal_start: &mut [u8],
     nal_length: i64,
@@ -142,7 +142,7 @@ pub unsafe fn do_nal(
             HEVC_NAL_PREFIX_SEI | HEVC_NAL_SUFFIX_SEI if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
                 // Found HEVC SEI (used for subtitles)
                 // SEI payload format is similar to H.264
-                ccxr_set_fts(enc_ctx.timing);
+                ccxr_set_fts(dec_ctx.timing);
 
                 // Load current context to preserve SPS info needed by sei_rbsp
                 let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
@@ -282,7 +282,7 @@ pub unsafe fn do_nal(
 
             AvcNalType::Sei if (*dec_ctx.avc_ctx).got_seq_para != 0 => {
                 // Found SEI (used for subtitles)
-                ccxr_set_fts(enc_ctx.timing);
+                ccxr_set_fts(dec_ctx.timing);
 
                 let mut ctx_rust = AvcContextRust::from_ctype(*dec_ctx.avc_ctx).unwrap();
                 let old_cc_count = ctx_rust.cc_count;
@@ -573,7 +573,7 @@ fn find_nal_start_code(buf: &[u8]) -> Option<usize> {
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers and calls `dump` and `do_nal`.
 pub unsafe fn process_avc(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     avcbuf: &mut [u8],
     sub: &mut cc_subtitle,
