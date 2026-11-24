@@ -28,8 +28,12 @@ use log::{debug, warn};
 impl dtvcc_tv_screen {
     /// Clear all text from TV screen
     pub fn clear(&mut self) {
-        for row in 0..CCX_DTVCC_SCREENGRID_ROWS as usize {
-            self.chars[row].fill(dtvcc_symbol::default());
+        for row in self
+            .chars
+            .iter_mut()
+            .take(CCX_DTVCC_SCREENGRID_ROWS as usize)
+        {
+            row.fill(dtvcc_symbol::default());
         }
         self.time_ms_hide = -1;
         self.time_ms_show = -1;
@@ -130,8 +134,12 @@ impl dtvcc_tv_screen {
         let mut first = 0;
         let mut last = 0;
 
-        for col in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
-            if self.chars[row_index][col].is_set() {
+        for (col, sym) in self.chars[row_index]
+            .iter()
+            .enumerate()
+            .take(CCX_DTVCC_SCREENGRID_COLUMNS as usize)
+        {
+            if sym.is_set() {
                 first = col;
                 break;
             }
@@ -539,11 +547,11 @@ impl dtvcc_tv_screen {
                 debug!("First: {first}, Last: {last}");
 
                 let mut bytes_written = 0;
-                for i in 0..last + 1 {
+                for sym in self.chars[row_index].iter().take(last + 1) {
                     if bytes_written % 2 == 0 {
                         buf.push(' ');
                     }
-                    let adjusted_val = adjust_odd_parity(self.chars[row_index][i].sym as u8);
+                    let adjusted_val = adjust_odd_parity(sym.sym as u8);
                     buf = format!("{buf}{adjusted_val:x}");
                     bytes_written += 1;
                 }
@@ -600,8 +608,11 @@ impl dtvcc_tv_screen {
 
     /// Returns `true` if row has no text
     pub fn is_row_empty(&self, row_index: usize) -> bool {
-        for col_index in 0..CCX_DTVCC_SCREENGRID_COLUMNS as usize {
-            if self.chars[row_index][col_index].is_set() {
+        for sym in self.chars[row_index]
+            .iter()
+            .take(CCX_DTVCC_SCREENGRID_COLUMNS as usize)
+        {
+            if sym.is_set() {
                 return false;
             }
         }

@@ -15,7 +15,6 @@ num_enum = "0.7.3"
 socket2 = "0.5.7"
 strum = "0.26.3"
 strum_macros = "0.26.4"
-crc32fast = "1.4.2"
 
 [features]
 default = [

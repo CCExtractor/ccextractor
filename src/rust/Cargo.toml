@@ -13,7 +13,7 @@ crate-type = ["staticlib"]
 [dependencies]
 log = "0.4.26"
 env_logger = "0.8.4"
-palette = "0.7"
+palette = { version = "0.7", optional = true }
 tesseract-sys = { version = "0.5.15", optional = true, default-features = false }
 leptonica-sys = { version = "= 0.4.6", optional = true, default-features = false }
 clap = { version = "4.5.31", features = ["derive"] }
@@ -23,7 +23,6 @@ cfg-if = "1.0.0"
 num-integer = "0.1.46"
 lib_ccxr = { path = "lib_ccxr" }
 url = "2.5.4"
-serial_test = "3.2.0"
 encoding_rs = "0.8.35"
 
 # Use CCExtractor's forked rsmpeg with FFmpeg 7
@@ -44,6 +43,7 @@ pkg-config = "0.3.32"
 
 [dev-dependencies]
 tempfile = "3.20.0"
+serial_test = "3.2.0"
 
 
 [features]
@@ -53,7 +53,7 @@ enable_mp4_ffmpeg = ["rsmpeg"]
 with_libcurl = []
 
 # hardsubx_ocr enables OCR and the platform-appropriate rsmpeg
-hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys"]
+hardsubx_ocr = ["rsmpeg", "tesseract-sys", "leptonica-sys", "palette"]
 sanity_check = []
 
 [profile.release-with-debug]
