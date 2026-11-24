@@ -1686,7 +1686,7 @@ int general_loop(struct lib_ccx_ctx *ctx)
 		mprint("Number of NAL HRD: %" PRId64 "\n", dec_ctx->avc_ctx->num_nal_hrd);
 		mprint("Number of jump-in-frames: %" PRId64 "\n", dec_ctx->avc_ctx->num_jump_in_frames);
 		mprint("Number of num_unexpected_sei_length: %" PRId64, dec_ctx->avc_ctx->num_unexpected_sei_length);
-		free(dec_ctx->xds_ctx);
+		freep(&dec_ctx->xds_ctx);
 	}
 
 	delete_datalist(datalist);

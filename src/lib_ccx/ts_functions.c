@@ -665,6 +665,9 @@ void cinfo_cremation(struct ccx_demuxer *ctx, struct demuxer_data **data)
 	{
 		copy_capbuf_demux_data(ctx, data, iter);
 		freep(&iter->capbuf);
+		// With --videoedited the next input reuses this cap_info.
+		iter->capbufsize = 0;
+		iter->capbuflen = 0;
 	}
 }
 
