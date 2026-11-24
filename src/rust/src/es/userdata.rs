@@ -61,7 +61,7 @@ fn debug_608_to_asc(cc_data: &[u8], channel: i32) -> String {
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers and calls C functions like `do_cb`
 pub unsafe fn user_data(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     ustream: &mut BitStreamRust,
     udtype: i32,

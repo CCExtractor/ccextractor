@@ -9,8 +9,10 @@ use lib_ccxr::{debug, fatal, info};
 // If a bitstream syntax problem occurred the bitstream will
 // point to after the problem, in case we run out of data the bitstream
 // will point to where we want to restart after getting more.
-pub fn read_eau_info(
-    enc_ctx: &mut encoder_ctx,
+/// # Safety
+/// `enc_ctx` is passed on to C and may be NULL (report mode).
+pub unsafe fn read_eau_info(
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     esstream: &mut BitStreamRust,
     udtype: i32,
@@ -52,8 +54,10 @@ pub fn read_eau_info(
 // Return TRUE if the data parsing finished, FALSE otherwise.
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
-pub fn extension_and_user_data(
-    enc_ctx: &mut encoder_ctx,
+/// # Safety
+/// `enc_ctx` is passed on to C and may be NULL (report mode).
+pub unsafe fn extension_and_user_data(
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     esstream: &mut BitStreamRust,
     udtype: i32,

@@ -147,7 +147,7 @@ fn pic_coding_ext(
 /// # Safety
 /// This function is unsafe because it calls C functions like `process_hdcc` or `anchor_hdcc`
 pub unsafe fn read_pic_info(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     esstream: &mut BitStreamRust,
     sub: &mut cc_subtitle,

@@ -57,7 +57,7 @@ pub unsafe extern "C" fn ccxr_read_gop_info(
     sub: *mut cc_subtitle,
 ) -> i32 {
     let mut bs = copy_bitstream_c_to_rust(esstream);
-    let result = read_gop_info(&mut *enc_ctx, &mut *dec_ctx, &mut bs, &mut *sub).unwrap_or(false);
+    let result = read_gop_info(enc_ctx, &mut *dec_ctx, &mut bs, &mut *sub).unwrap_or(false);
     copy_bitstream_from_rust_to_c(esstream, &bs);
     i32::from(result)
 }
@@ -71,7 +71,7 @@ pub unsafe extern "C" fn ccxr_read_pic_info(
     sub: *mut cc_subtitle,
 ) -> i32 {
     let mut bs = copy_bitstream_c_to_rust(esstream);
-    let result = read_pic_info(&mut *enc_ctx, &mut *dec_ctx, &mut bs, &mut *sub).unwrap_or(false);
+    let result = read_pic_info(enc_ctx, &mut *dec_ctx, &mut bs, &mut *sub).unwrap_or(false);
     copy_bitstream_from_rust_to_c(esstream, &bs);
     i32::from(result)
 }
@@ -87,8 +87,7 @@ pub unsafe extern "C" fn ccxr_read_eau_info(
 ) -> i32 {
     let mut bs = copy_bitstream_c_to_rust(esstream);
 
-    let result =
-        read_eau_info(&mut *enc_ctx, &mut *dec_ctx, &mut bs, udtype, &mut *sub).unwrap_or(false);
+    let result = read_eau_info(enc_ctx, &mut *dec_ctx, &mut bs, udtype, &mut *sub).unwrap_or(false);
     copy_bitstream_from_rust_to_c(esstream, &bs);
     i32::from(result)
 }
@@ -100,4 +99,39 @@ pub unsafe extern "C" fn ccxr_read_pic_data(esstream: *mut bitstream) -> i32 {
     let result = read_pic_data(&mut bs).unwrap_or(false);
     copy_bitstream_from_rust_to_c(esstream, &bs);
     i32::from(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lib_ccxr::util::log::{
+        set_logger, CCExtractorLogger, DebugMessageFlag, DebugMessageMask, OutputTarget,
+    };
+    use std::ptr::null_mut;
+
+    // With --out=report no encoder exists, so C passes a NULL enc_ctx.
+    // The wrappers must accept it rather than build a reference from it.
+    #[test]
+    fn test_null_enc_ctx_is_accepted() {
+        // Fails if another test set it first, which is fine.
+        set_logger(CCExtractorLogger::new(
+            OutputTarget::Stdout,
+            DebugMessageMask::new(DebugMessageFlag::VERBOSE, DebugMessageFlag::VERBOSE),
+            false,
+        ))
+        .ok();
+
+        unsafe {
+            let mut dec_ctx: lib_cc_decode = std::mem::zeroed();
+            let mut esstream: bitstream = std::mem::zeroed();
+            esstream.bpos = 8; // Byte aligned, no data
+            let mut sub: cc_subtitle = std::mem::zeroed();
+
+            let gop = ccxr_read_gop_info(null_mut(), &mut dec_ctx, &mut esstream, &mut sub);
+            let pic = ccxr_read_pic_info(null_mut(), &mut dec_ctx, &mut esstream, &mut sub);
+            let eau = ccxr_read_eau_info(null_mut(), &mut dec_ctx, &mut esstream, 0, &mut sub);
+
+            assert_eq!((gop, pic, eau), (0, 0, 0));
+        }
+    }
 }

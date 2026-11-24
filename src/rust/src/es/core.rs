@@ -158,7 +158,8 @@ pub fn es_video_sequence(
         // or picture info before.
         // This check needs to be before the "dec_ctx->in_pic_data" part.
         else if dec_ctx.saw_seqgoppic > 0 && (startcode == 0xB2 || startcode == 0xB5) {
-            if !read_eau_info(enc_ctx, dec_ctx, esstream, dec_ctx.saw_seqgoppic - 1, sub)? {
+            let udtype = dec_ctx.saw_seqgoppic - 1;
+            if !unsafe { read_eau_info(enc_ctx, dec_ctx, esstream, udtype, sub)? } {
                 if esstream.error {
                     dec_ctx.no_bitstream_error = 0;
                 }
