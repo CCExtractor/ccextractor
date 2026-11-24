@@ -22,7 +22,7 @@ use lib_ccxr::{debug, fatal, info};
 /// # Safety
 /// This function is unsafe because it calls `gop_header`.
 pub unsafe fn read_gop_info(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     esstream: &mut BitStreamRust,
     sub: &mut cc_subtitle,
@@ -62,7 +62,7 @@ pub unsafe fn read_gop_info(
 // estream->pos is advanced. Data is only processed if esstream->error
 // is FALSE, parsing can set esstream->error to TRUE.
 unsafe fn gop_header(
-    enc_ctx: &mut encoder_ctx,
+    enc_ctx: *mut encoder_ctx,
     dec_ctx: &mut lib_cc_decode,
     esstream: &mut BitStreamRust,
     sub: &mut cc_subtitle,
