@@ -121,5 +121,6 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
+struct eia608_screen *get_current_visible_buffer(ccx_decoder_608_context *context);
 
 #endif

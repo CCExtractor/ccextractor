@@ -137,6 +137,11 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				    get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
+					if (ctx->context_cc608_field_1 &&
+					    !get_current_visible_buffer(ctx->context_cc608_field_1)->empty)
+					{
+						flush_608_context(ctx->context_cc608_field_1, sub);
+					}
 					ctx->processed_enough = 1;
 				}
 				if (timeok)
@@ -165,6 +170,11 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 				    get_fts(ctx->timing, ctx->current_field) > ctx->extraction_end.time_in_ms)
 				{
 					timeok = 0;
+					if (ctx->context_cc608_field_2 &&
+					    !get_current_visible_buffer(ctx->context_cc608_field_2)->empty)
+					{
+						flush_608_context(ctx->context_cc608_field_2, sub);
+					}
 					ctx->processed_enough = 1;
 				}
 				if (timeok)
