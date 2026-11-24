@@ -8,8 +8,9 @@ use lib_ccxr::util::log::{DebugMessageFlag, DebugMessageMask, ExitCause, OutputT
 use num_integer::Integer;
 use std::cell::Cell;
 use std::convert::TryInto;
+use std::fmt::Arguments;
 use std::fs::File;
-use std::io::{prelude::*, BufReader};
+use std::io::{self, prelude::*, BufReader};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::string::String;
@@ -101,7 +102,29 @@ where
     }
 }
 
-fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::io::Error> {
+fn print_notice(target: OutputTarget, message: Arguments<'_>) {
+    // The global logger gets its target after option parsing returns.
+    let _ = write_notice(target, message, &mut io::stdout(), &mut io::stderr());
+}
+
+fn write_notice(
+    target: OutputTarget,
+    message: Arguments<'_>,
+    stdout: &mut impl Write,
+    stderr: &mut impl Write,
+) -> io::Result<()> {
+    match target {
+        OutputTarget::Stdout => writeln!(stdout, "{message}"),
+        OutputTarget::Stderr => writeln!(stderr, "{message}"),
+        OutputTarget::Quiet => Ok(()),
+    }
+}
+
+fn process_word_file(
+    filename: &str,
+    list: &mut Vec<String>,
+    messages_target: OutputTarget,
+) -> io::Result<()> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
     let mut num = 0;
@@ -115,8 +138,11 @@ fn process_word_file(filename: &str, list: &mut Vec<String>) -> Result<(), std::
 
         let new_len = line.trim().len();
         if new_len > CCX_DECODER_608_SCREEN_WIDTH {
-            println!(
-                "Word in line {num} too long, max = {CCX_DECODER_608_SCREEN_WIDTH} characters."
+            print_notice(
+                messages_target,
+                format_args!(
+                    "Word in line {num} too long, max = {CCX_DECODER_608_SCREEN_WIDTH} characters."
+                ),
             );
             continue;
         }
@@ -218,7 +244,10 @@ impl OptionsExt for Options {
         self.write_format_rewritten = true;
 
         if self.send_to_srv && args.out.unwrap_or(OutFormat::Null) != OutFormat::Bin {
-            println!("Output format is changed to bin\n");
+            print_notice(
+                self.messages_target,
+                format_args!("Output format is changed to bin\n"),
+            );
             self.set_output_format_type(OutFormat::Bin);
             return;
         }
@@ -265,7 +294,10 @@ impl OptionsExt for Options {
 
     fn set_input_format(&mut self, args: &Args) {
         if self.input_source == DataSource::Tcp {
-            println!("Input format is changed to bin\n");
+            print_notice(
+                self.messages_target,
+                format_args!("Input format is changed to bin\n"),
+            );
             self.set_input_format_type(InFormat::Bin);
             return;
         }
@@ -473,6 +505,16 @@ impl OptionsExt for Options {
         capitalization_list: &mut Vec<String>,
         profane: &mut Vec<String>,
     ) {
+        if args.stdout {
+            self.cc_to_stdout = true;
+            if self.messages_target == OutputTarget::Stdout {
+                self.messages_target = OutputTarget::Stderr;
+            }
+        }
+        if args.quiet {
+            self.messages_target = OutputTarget::Quiet;
+        }
+
         if args.stdin {
             unsafe {
                 set_binary_mode();
@@ -672,19 +714,6 @@ impl OptionsExt for Options {
             self.timestamp_map = true;
         }
 
-        if args.es
-            || args.ts
-            || args.ps
-            || args.asf
-            || args.wtv
-            || args.mp4
-            || args.mkv
-            || args.dvr_ms
-            || args.input.is_some()
-        {
-            self.set_input_format(args);
-        }
-
         if let Some(ref codec) = args.codec {
             match codec {
                 CCXCodec::Teletext => {
@@ -785,6 +814,20 @@ impl OptionsExt for Options {
             || args.out.is_some()
         {
             self.set_output_format(args);
+        }
+
+        // Report output can make diagnostics quiet before input format selection.
+        if args.es
+            || args.ts
+            || args.ps
+            || args.asf
+            || args.wtv
+            || args.mp4
+            || args.mkv
+            || args.dvr_ms
+            || args.input.is_some()
+        {
+            self.set_input_format(args);
         }
 
         // --- report-format (used by -out=report) ---
@@ -1001,13 +1044,6 @@ impl OptionsExt for Options {
             self.is_608_enabled = true;
         }
 
-        if args.stdout {
-            if self.messages_target == OutputTarget::Stdout {
-                self.messages_target = OutputTarget::Stderr;
-            }
-            self.cc_to_stdout = true;
-        }
-
         if args.pesheader {
             self.pes_header_to_stdout = true;
         }
@@ -1023,10 +1059,6 @@ impl OptionsExt for Options {
 
         if args.fixptsjumps {
             self.ignore_pts_jumps = false;
-        }
-
-        if args.quiet {
-            self.messages_target = OutputTarget::Quiet;
         }
 
         if args.debug {
@@ -1433,9 +1465,14 @@ impl OptionsExt for Options {
         }
 
         if self.extract_chapters {
-            println!("Request to extract chapters recieved.");
-            println!("Note that this must only be used with MP4 files,");
-            println!("for other files it will simply generate subtitles file.\n");
+            print_notice(
+                self.messages_target,
+                format_args!(
+                    "Request to extract chapters recieved.\n\
+                     Note that this must only be used with MP4 files,\n\
+                     for other files it will simply generate subtitles file.\n"
+                ),
+            );
         }
 
         if self.gui_mode_reports {
@@ -1449,7 +1486,13 @@ impl OptionsExt for Options {
 
             if self.sentence_cap_file.exists() {
                 if let Some(sentence_cap_file) = self.sentence_cap_file.to_str() {
-                    if process_word_file(sentence_cap_file, capitalization_list).is_err() {
+                    if process_word_file(
+                        sentence_cap_file,
+                        capitalization_list,
+                        self.messages_target,
+                    )
+                    .is_err()
+                    {
                         fatal!(
                             cause = ExitCause::ErrorInCapitalizationFile;
                            "There was an error processing the capitalization file.\n"
@@ -1462,7 +1505,9 @@ impl OptionsExt for Options {
             add_builtin_profane(profane);
             if self.filter_profanity_file.exists() {
                 if let Some(filter_profanity_file) = self.filter_profanity_file.to_str() {
-                    if process_word_file(filter_profanity_file, profane).is_err() {
+                    if process_word_file(filter_profanity_file, profane, self.messages_target)
+                        .is_err()
+                    {
                         fatal!(
                             cause = ExitCause::ErrorInCapitalizationFile;
                            "There was an error processing the profanity file.\n"
@@ -1576,7 +1621,10 @@ impl OptionsExt for Options {
 
         if self.write_format == OutputFormat::WebVtt && self.enc_cfg.encoding != Encoding::UTF8 {
             self.enc_cfg.encoding = Encoding::UTF8;
-            println!("Note: Output format is WebVTT, forcing UTF-8");
+            print_notice(
+                self.messages_target,
+                format_args!("Note: Output format is WebVTT, forcing UTF-8"),
+            );
         }
 
         // Check WITH_LIBCURL
@@ -2563,6 +2611,27 @@ pub mod tests {
     // =========================================================================
     // OUTPUT OPTION TESTS
     // =========================================================================
+
+    #[test]
+    fn test_notice_follows_messages_target() {
+        for (target, expected_stdout, expected_stderr) in [
+            (OutputTarget::Stdout, "parser notice\n", ""),
+            (OutputTarget::Stderr, "", "parser notice\n"),
+            (OutputTarget::Quiet, "", ""),
+        ] {
+            let mut stdout = Vec::new();
+            let mut stderr = Vec::new();
+            write_notice(
+                target,
+                format_args!("parser notice"),
+                &mut stdout,
+                &mut stderr,
+            )
+            .unwrap();
+            assert_eq!(stdout, expected_stdout.as_bytes());
+            assert_eq!(stderr, expected_stderr.as_bytes());
+        }
+    }
 
     #[test]
     fn test_stdout_redirects_to_stdout() {
