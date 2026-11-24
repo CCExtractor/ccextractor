@@ -1804,7 +1804,16 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			ctx->demux_ctx->past += result;
 			if (result != TELETEXT_CHUNK_LEN)
 			{
+				// Write the last page now. Left in dec_sub, it is the
+				// next input's problem: a 608 file appends its screens
+				// to this text as if it were an eia608_screen array.
 				telxcc_dump_prev_page(telctx, dec_sub);
+				if (dec_sub->got_output == CCX_TRUE)
+				{
+					encode_sub(enc_ctx, dec_sub);
+					dec_sub->got_output = 0;
+					caps = 1;
+				}
 				break;
 			}
 			tlt_read_rcwt(dec_ctx->private_data, buf, dec_sub);
