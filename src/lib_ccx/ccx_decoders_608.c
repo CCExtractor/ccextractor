@@ -169,6 +169,26 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	return data;
 }
 
+// Return the decoder to its initial state, keeping its configuration and
+// the screen count (--screenfuls applies to the whole run). Used between
+// RCWT inputs, which are separate streams: input 2 must not continue
+// input 1's roll-up, or its first caption takes another start time.
+void ccx_decoder_608_reset(ccx_decoder_608_context *context)
+{
+	ccx_decoder_608_context *fresh = ccx_decoder_608_init_library(
+	    context->settings, context->my_channel, context->my_field, context->halt,
+	    context->cc_to_stdout, context->output_format, context->timing);
+	if (!fresh)
+	{
+		ccx_common_logging.fatal_ftn(EXIT_NOT_ENOUGH_MEMORY, "In ccx_decoder_608_reset: Out of memory.\n");
+	}
+
+	int screenfuls_counter = context->screenfuls_counter;
+	*context = *fresh;
+	context->screenfuls_counter = screenfuls_counter;
+	free(fresh);
+}
+
 struct eia608_screen *get_writing_buffer(ccx_decoder_608_context *context)
 {
 	struct eia608_screen *use_buffer = NULL;
