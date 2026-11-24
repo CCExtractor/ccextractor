@@ -815,6 +815,15 @@ cleanup:
 		}
 		ctx->freport.data_from_608 = data_from_608;
 		ctx->freport.data_from_708 = data_from_708;
+
+		// The EIA-608 / CEA-708 lines come from the decoders' cc_stats,
+		// which outlive the file: clear them too, or the next file's
+		// report repeats this file's Yes.
+		struct lib_cc_decode *report_dec_ctx;
+		list_for_each_entry(report_dec_ctx, &ctx->dec_ctx_head, list, struct lib_cc_decode)
+		{
+			memset(report_dec_ctx->cc_stats, 0, sizeof(report_dec_ctx->cc_stats));
+		}
 	}
 #undef Y_N
 }
