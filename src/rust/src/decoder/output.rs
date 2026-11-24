@@ -7,6 +7,7 @@ use std::os::windows::io::{FromRawHandle, IntoRawHandle};
 use std::{fs::File, io::Write};
 
 use crate::{bindings::*, utils::is_true};
+use encoding_rs::{Encoding, BIG5, EUC_JP, EUC_KR, GBK, SHIFT_JIS, WINDOWS_874};
 
 use log::{debug, warn};
 
@@ -124,6 +125,26 @@ pub fn is_utf16_charset(charset: &str) -> bool {
         || upper.contains("UCS_2")
 }
 
+/// Find the encoding for a CEA-708 service charset name (`--service "1[name]"`).
+///
+/// The name was already accepted by `iconv_open()` in `dtvcc_writer_init()`, so it
+/// can be an iconv name that encoding_rs does not know as a label. Map the iconv
+/// names of the encodings encoding_rs does support to that encoding.
+pub fn find_charset_encoding(charset: &str) -> Option<&'static Encoding> {
+    Encoding::for_label(charset.as_bytes()).or_else(|| {
+        match charset.to_ascii_uppercase().as_str() {
+            "CP949" | "UHC" | "EUCKR" => Some(EUC_KR),
+            "CP936" | "WINDOWS-936" | "MS936" => Some(GBK),
+            "CP950" => Some(BIG5),
+            "EUCJP" => Some(EUC_JP),
+            // encoding_rs's Shift_JIS is the Windows variant (windows-31j)
+            "CP932" => Some(SHIFT_JIS),
+            "CP874" => Some(WINDOWS_874),
+            _ => None,
+        }
+    })
+}
+
 /// Convert from CEA-708 color representation to hex code
 ///
 /// Two bits are specified for each red, green, and blue color value which defines the
@@ -141,6 +162,27 @@ pub fn color_to_hex(color: u8) -> (u8, u8, u8) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_find_charset_encoding_iconv_names() {
+        // Names iconv accepts that are not encoding_rs labels
+        assert_eq!(find_charset_encoding("CP949"), Some(EUC_KR));
+        assert_eq!(find_charset_encoding("cp949"), Some(EUC_KR));
+        assert_eq!(find_charset_encoding("UHC"), Some(EUC_KR));
+        assert_eq!(find_charset_encoding("EUCKR"), Some(EUC_KR));
+        assert_eq!(find_charset_encoding("CP936"), Some(GBK));
+        assert_eq!(find_charset_encoding("WINDOWS-936"), Some(GBK));
+        assert_eq!(find_charset_encoding("MS936"), Some(GBK));
+        assert_eq!(find_charset_encoding("CP950"), Some(BIG5));
+        assert_eq!(find_charset_encoding("EUCJP"), Some(EUC_JP));
+        assert_eq!(find_charset_encoding("CP932"), Some(SHIFT_JIS));
+        assert_eq!(find_charset_encoding("CP874"), Some(WINDOWS_874));
+        // Labels encoding_rs already knows are unchanged
+        assert_eq!(find_charset_encoding("EUC-KR"), Some(EUC_KR));
+        assert_eq!(find_charset_encoding("SHIFT_JIS"), Some(SHIFT_JIS));
+        // An encoding encoding_rs doesn't have
+        assert_eq!(find_charset_encoding("JOHAB"), None);
+    }
 
     #[test]
     fn test_write_char_utf16_mode() {
