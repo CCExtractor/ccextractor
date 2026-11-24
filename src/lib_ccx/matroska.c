@@ -49,6 +49,22 @@ UBYTE mkv_read_byte(FILE *file)
 	return (UBYTE)fgetc(file);
 }
 
+// A (Simple)Block's timestamp is a signed 16-bit offset from its Cluster's
+// timestamp. Muxers put subtitle blocks a few ms before the cluster (e.g.
+// -40 ms before a video keyframe), so the offset can be negative.
+static ULLONG read_block_timestamp(FILE *file, ULLONG cluster_timecode)
+{
+	UBYTE high = mkv_read_byte(file);
+	UBYTE low = mkv_read_byte(file);
+	int16_t offset = (int16_t)((high << 8) | low);
+
+	if (offset < 0 && (ULLONG)(-offset) > cluster_timecode)
+	{
+		return 0;
+	}
+	return (ULLONG)((LLONG)cluster_timecode + offset);
+}
+
 ULLONG read_vint_length(FILE *file)
 {
 	UBYTE ch = mkv_read_byte(file);
@@ -319,9 +335,7 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 	}
 	mkv_ctx->block_index = sub_track_index;
 
-	ULLONG timecode = mkv_read_byte(file);
-	timecode <<= 8;
-	timecode += mkv_read_byte(file);
+	ULLONG timestamp = read_block_timestamp(file, cluster_timecode);
 
 	mkv_read_byte(file); // skip one byte
 
@@ -335,7 +349,6 @@ struct matroska_sub_sentence *parse_segment_cluster_block_group_block(struct mat
 		free(message);
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "In parse_segment_cluster_block_group_block: Out of memory.");
 	}
-	ULLONG timestamp = timecode + cluster_timecode;
 	sentence->blockaddition = NULL;
 	sentence->time_end = 0; // Initialize time_end so that it is updated if it was not set
 
@@ -704,15 +717,13 @@ void parse_simple_block(struct matroska_ctx *mkv_ctx, ULLONG frame_timestamp)
 		return;
 	}
 
-	ULLONG timecode = mkv_read_byte(file);
-	timecode <<= 8;
-	timecode += mkv_read_byte(file);
+	ULLONG timestamp = read_block_timestamp(file, frame_timestamp);
 	mkv_read_byte(file); // skip flags byte
 
 	// Construct the frame
 	frame.len = pos + len - get_current_byte(file);
 	frame.data = read_byte_block(file, frame.len);
-	frame.FTS = frame_timestamp + timecode;
+	frame.FTS = timestamp;
 
 	if (is_hevc)
 		process_hevc_frame_mkv(mkv_ctx, frame);
