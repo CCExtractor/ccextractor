@@ -1063,11 +1063,9 @@ void segment_output_file(struct lib_ccx_ctx *ctx, struct lib_cc_decode *dec_ctx)
 	if (!t && ctx->demux_ctx->global_timestamp_inited)
 		t = ctx->demux_ctx->global_timestamp - ctx->demux_ctx->min_global_timestamp;
 
-#if SEGMENT_BY_FILE_TIME
+	// Segment by the time in the input, not by the wall clock, so the
+	// segments don't depend on how fast the input is read
 	cur_sec = t / 1000;
-#else
-	cur_sec = time(NULL);
-#endif
 
 	if (ctx->system_start_time == -1)
 		ctx->system_start_time = cur_sec;

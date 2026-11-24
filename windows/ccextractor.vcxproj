@@ -288,7 +288,7 @@
         ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
         "$(GpacDir)\sdk\include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
-        $(ExtraDefines);SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        $(ExtraDefines);ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
@@ -336,7 +336,7 @@
         ..\src\thirdparty\freetype\include;..\src;..\src\thirdparty\win_spec_incld;..\src\lib_ccx;..\src\thirdparty\lib_hash;..\src\lib_ccx\zvbi;..\src\thirdparty\win_iconv;..\src\thirdparty\;..\src;$(VCPKG_ROOT)\installed\$(VCPKG_DEFAULT_TRIPLET)\include;
         "$(GpacDir)\sdk\include";%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>
-        $(ExtraDefines);SEGMENT_BY_FILE_TIME;ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        $(ExtraDefines);ENABLE_HARDSUBX;FT2_BUILD_LIBRARY;GPAC_DISABLE_VTT;GPAC_DISABLE_OD_DUMP;ENABLE_OCR;WIN32;_DEBUG;_CONSOLE;_FILE_OFFSET_BITS=64;GPAC_DISABLE_REMOTERY;GPAC_DISABLE_ZLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
