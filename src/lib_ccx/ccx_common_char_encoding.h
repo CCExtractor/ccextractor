@@ -7,4 +7,12 @@ int get_char_in_utf_8(unsigned char *buffer, unsigned char c);
 unsigned char cctolower(unsigned char c);
 unsigned char cctoupper(unsigned char c);
 
+#ifndef DISABLE_RUST
+void ccxr_get_char_in_latin_1(unsigned char *buffer, unsigned char c);
+void ccxr_get_char_in_unicode(unsigned char *buffer, unsigned char c);
+int ccxr_get_char_in_utf_8(unsigned char *buffer, unsigned char c);
+unsigned char ccxr_cctolower(unsigned char c);
+unsigned char ccxr_cctoupper(unsigned char c);
+#endif
+
 #endif

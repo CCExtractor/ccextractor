@@ -124,22 +124,12 @@ impl Line21String {
 
     /// Converts the [`Line21String`] to lowercase, returning a new [`Line21String`].
     pub fn to_lowercase(&self) -> Line21String {
-        Line21String::from_vec(
-            self.as_vec()
-                .iter()
-                .map(|&c| cc_to_lowercase(c as char) as u8)
-                .collect(),
-        )
+        Line21String::from_vec(self.as_vec().iter().map(|&c| cctolower(c)).collect())
     }
 
     /// Converts the [`Line21String`] to uppercase, returning a new [`Line21String`].
     pub fn to_uppercase(&self) -> Line21String {
-        Line21String::from_vec(
-            self.as_vec()
-                .iter()
-                .map(|&c| cc_to_uppercase(c as char) as u8)
-                .collect(),
-        )
+        Line21String::from_vec(self.as_vec().iter().map(|&c| cctoupper(c)).collect())
     }
 }
 
@@ -181,22 +171,12 @@ impl Latin1String {
 
     /// Converts the [`Latin1String`] to lowercase, returning a new [`Latin1String`].
     pub fn to_lowercase(&self) -> Latin1String {
-        Latin1String::from_vec(
-            self.as_vec()
-                .iter()
-                .map(|&c| cc_to_lowercase(c as char) as u8)
-                .collect(),
-        )
+        Latin1String::from_vec(self.as_vec().iter().map(|&c| cctolower(c)).collect())
     }
 
     /// Converts the [`Latin1String`] to uppercase, returning a new [`Latin1String`].
     pub fn to_uppercase(&self) -> Latin1String {
-        Latin1String::from_vec(
-            self.as_vec()
-                .iter()
-                .map(|&c| cc_to_uppercase(c as char) as u8)
-                .collect(),
-        )
+        Latin1String::from_vec(self.as_vec().iter().map(|&c| cctoupper(c)).collect())
     }
 }
 
@@ -242,7 +222,11 @@ impl Ucs2String {
             self.as_vec()
                 .iter()
                 .map(|&c| {
-                    cc_to_lowercase(char::from_u32(c as u32).expect("Invalid u32 character")) as u16
+                    if c <= 0xff {
+                        cctolower(c as u8) as u16
+                    } else {
+                        c
+                    }
                 })
                 .collect(),
         )
@@ -254,7 +238,11 @@ impl Ucs2String {
             self.as_vec()
                 .iter()
                 .map(|&c| {
-                    cc_to_uppercase(char::from_u32(c as u32).expect("Invalid u32 character")) as u16
+                    if c <= 0xff {
+                        cctoupper(c as u8) as u16
+                    } else {
+                        c
+                    }
                 })
                 .collect(),
         )
@@ -584,7 +572,7 @@ fn latin1_to_line21(c: Latin1Char) -> Line21Char {
         0xbf => 0x83, // Inverted (open) question mark
         0xa2 => 0x85, // Cents symbol
         0xa3 => 0x86, // Pounds sterling
-        b'#' => 0x87, // Music note (# in Latin-1)
+        0xb6 => 0x87, // Music note (pilcrow in Latin-1)
         0xe0 => 0x88, // lowercase a, grave accent
         0x20 => 0x89, // transparent space
         0xe8 => 0x8a, // lowercase e, grave accent
@@ -682,7 +670,7 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
             0x84 => UNAVAILABLE_CHAR, // Trademark symbol (TM) - Does not exist in Latin 1
             0x85 => 0xa2,             // Cents symbol
             0x86 => 0xa3,             // Pounds sterling
-            0x87 => b'#',             // Music note - Not in latin 1, so we use '#'
+            0x87 => 0xb6,             // Music note - Not in latin 1, so we use 'pilcrow'
             0x88 => 0xe0,             // lowercase a, grave accent
             0x89 => 0x20,             // transparent space, we make it regular
             0x8a => 0xe8,             // lowercase e, grave accent
@@ -947,11 +935,12 @@ pub fn ucs2_to_latin1(c: Ucs2Char) -> Latin1Char {
     }
 }
 
-fn cc_to_lowercase(c: char) -> char {
+/// Converts a character code to lowercase following Line 21 / Latin-1 casing rules.
+pub fn cctolower(c: u8) -> u8 {
     if c.is_ascii_uppercase() {
-        (c as u8 - b'A' + b'a') as char
+        c.to_ascii_lowercase()
     } else {
-        let ret = match c as u8 {
+        match c {
             0x7d => 0x7e, // uppercase N tilde
             0x90 => 0x2a, // capital letter A with acute
             0x91 => 0x5c, // capital letter E with acute
@@ -979,16 +968,16 @@ fn cc_to_lowercase(c: char) -> char {
             0xc8 => 0xc9, // Uppercase A, ring
             0xca => 0xcb, // Uppercase O, slash
             x => x,
-        };
-        ret as char
+        }
     }
 }
 
-fn cc_to_uppercase(c: char) -> char {
+/// Converts a character code to uppercase following Line 21 / Latin-1 casing rules.
+pub fn cctoupper(c: u8) -> u8 {
     if c.is_ascii_lowercase() {
-        (c as u8 - b'a' + b'A') as char
+        c.to_ascii_uppercase()
     } else {
-        let ret = match c as u8 {
+        match c {
             0x7e => 0x7d, // lowercase n tilde
             0x2a => 0x90, // lowercase a, acute accent
             0x5c => 0x91, // lowercase e, acute accent
@@ -1016,9 +1005,25 @@ fn cc_to_uppercase(c: char) -> char {
             0xc9 => 0xc8, // Lowercase A, ring
             0xcb => 0xca, // Lowercase o, slash
             x => x,
-        };
+        }
+    }
+}
 
-        ret as char
+pub fn cc_to_lowercase(c: char) -> char {
+    let u = c as u32;
+    if u <= 0xff {
+        cctolower(u as u8) as char
+    } else {
+        c
+    }
+}
+
+pub fn cc_to_uppercase(c: char) -> char {
+    let u = c as u32;
+    if u <= 0xff {
+        cctoupper(u as u8) as char
+    } else {
+        c
     }
 }
 
@@ -1029,4 +1034,125 @@ fn ucs2_to_char(c: Ucs2Char) -> char {
 
 pub fn char_to_ucs2(c: char) -> Ucs2Char {
     (c as u32).try_into().unwrap_or(UNAVAILABLE_CHAR.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cctolower_ascii() {
+        assert_eq!(cctolower(b'A'), b'a');
+        assert_eq!(cctolower(b'Z'), b'z');
+        assert_eq!(cctolower(b'M'), b'm');
+        assert_eq!(cctolower(b'a'), b'a');
+        assert_eq!(cctolower(b'1'), b'1');
+        assert_eq!(cctolower(b' '), b' ');
+    }
+
+    #[test]
+    fn test_cctolower_extended() {
+        assert_eq!(cctolower(0x7d), 0x7e); // uppercase N tilde -> lowercase n tilde
+        assert_eq!(cctolower(0x90), 0x2a); // A with acute -> a with acute
+        assert_eq!(cctolower(0x91), 0x5c); // E with acute -> e with acute
+        assert_eq!(cctolower(0xa2), 0x7b); // C with cedilla -> c with cedilla
+        assert_eq!(cctolower(0xc0), 0xc1); // A umlaut -> a umlaut
+        assert_eq!(cctolower(0xca), 0xcb); // O slash -> o slash
+        assert_eq!(cctolower(0x55), b'u');
+    }
+
+    #[test]
+    fn test_cctoupper_ascii() {
+        assert_eq!(cctoupper(b'a'), b'A');
+        assert_eq!(cctoupper(b'z'), b'Z');
+        assert_eq!(cctoupper(b'm'), b'M');
+        assert_eq!(cctoupper(b'A'), b'A');
+        assert_eq!(cctoupper(b'1'), b'1');
+        assert_eq!(cctoupper(b' '), b' ');
+    }
+
+    #[test]
+    fn test_cctoupper_extended() {
+        assert_eq!(cctoupper(0x7e), 0x7d); // lowercase n tilde -> uppercase N tilde
+        assert_eq!(cctoupper(0x2a), 0x90); // a with acute -> A with acute
+        assert_eq!(cctoupper(0x5c), 0x91); // e with acute -> E with acute
+        assert_eq!(cctoupper(0x7b), 0xa2); // c with cedilla -> C with cedilla
+        assert_eq!(cctoupper(0xc1), 0xc0); // a umlaut -> A umlaut
+        assert_eq!(cctoupper(0xcb), 0xca); // o slash -> O slash
+    }
+
+    #[test]
+    fn test_line21_to_latin1() {
+        // Regular ASCII
+        assert_eq!(line21_to_latin1(b'A'), b'A');
+        assert_eq!(line21_to_latin1(b'9'), b'9');
+
+        // Line-21 special mappings under 0x80
+        assert_eq!(line21_to_latin1(0x2a), 0xe1); // a acute
+        assert_eq!(line21_to_latin1(0x5c), 0xe9); // e acute
+        assert_eq!(line21_to_latin1(0x7b), 0xe7); // c cedilla
+        assert_eq!(line21_to_latin1(0x7c), 0xf7); // division sign
+        assert_eq!(line21_to_latin1(0x7d), 0xd1); // N tilde
+        assert_eq!(line21_to_latin1(0x7e), 0xf1); // n tilde
+        assert_eq!(line21_to_latin1(0x7f), b'?'); // solid block unavailable in latin-1
+
+        // Extended characters >= 0x80
+        assert_eq!(line21_to_latin1(0x80), 0xae); // registered sign (R)
+        assert_eq!(line21_to_latin1(0x81), 0xb0); // degree sign
+        assert_eq!(line21_to_latin1(0x84), b'?'); // TM unavailable in latin-1
+        assert_eq!(line21_to_latin1(0x85), 0xa2); // cent sign
+        assert_eq!(line21_to_latin1(0x86), 0xa3); // pound sterling
+        assert_eq!(line21_to_latin1(0x87), 0xb6); // music note substituted with 'pilcrow' (0xB6)
+        assert_eq!(line21_to_latin1(0x89), 0x20); // transparent space -> space
+        assert_eq!(line21_to_latin1(0xc4), 0xdf); // eszett
+        assert_eq!(line21_to_latin1(0xcc), b'?'); // box corner unavailable
+    }
+
+    #[test]
+    fn test_line21_to_ucs2() {
+        // Direct ASCII / Latin-1 passthrough via line21_to_latin1
+        assert_eq!(line21_to_ucs2(b'A'), b'A' as u16);
+        assert_eq!(line21_to_ucs2(0x2a), 0xe1);
+
+        // Unicode special code points
+        assert_eq!(line21_to_ucs2(0x7f), 0x25a0); // Black Square
+        assert_eq!(line21_to_ucs2(0x84), 0x2122); // Trade Mark
+        assert_eq!(line21_to_ucs2(0x87), 0x266a); // Eighth Note
+        assert_eq!(line21_to_ucs2(0x9c), 0x2120); // Service Mark
+        assert_eq!(line21_to_ucs2(0xcc), 0x231c); // Top Left Corner
+        assert_eq!(line21_to_ucs2(0xcd), 0x231d); // Top Right Corner
+        assert_eq!(line21_to_ucs2(0xce), 0x231e); // Bottom Left Corner
+        assert_eq!(line21_to_ucs2(0xcf), 0x231f); // Bottom Right Corner
+    }
+
+    #[test]
+    fn test_line21_to_utf8() {
+        // 1-byte ASCII
+        assert_eq!(line21_to_utf8(b'A'), b'A' as u32);
+        assert_eq!(line21_to_utf8(0x89), 0x20); // transparent space
+
+        // 2-byte UTF-8
+        assert_eq!(line21_to_utf8(0x2a), 0xc3a1); // a acute: 0xC3 0xA1
+        assert_eq!(line21_to_utf8(0x7d), 0xc391); // N tilde: 0xC3 0x91
+        assert_eq!(line21_to_utf8(0x80), 0xc2ae); // registered sign: 0xC2 0xAE
+        assert_eq!(line21_to_utf8(0xc4), 0xc39f); // eszett: 0xC3 0x9F
+
+        // 3-byte UTF-8
+        assert_eq!(line21_to_utf8(0x7f), 0xe296a0); // Solid block: 0xE2 0x96 0xA0
+        assert_eq!(line21_to_utf8(0x84), 0xe284a2); // TM: 0xE2 0x84 0xA2
+        assert_eq!(line21_to_utf8(0x87), 0xe299aa); // Music note: 0xE2 0x99 0xAA
+        assert_eq!(line21_to_utf8(0x9a), 0xe28094); // em dash: 0xE2 0x80 0x94
+        assert_eq!(line21_to_utf8(0x9d), 0xe280a2); // bullet: 0xE2 0x80 0xA2
+    }
+
+    #[test]
+    fn test_all_bytes_no_panic() {
+        for b in 0..=255u8 {
+            let _ = cctolower(b);
+            let _ = cctoupper(b);
+            let _ = line21_to_latin1(b);
+            let _ = line21_to_ucs2(b);
+            let _ = line21_to_utf8(b);
+        }
+    }
 }
