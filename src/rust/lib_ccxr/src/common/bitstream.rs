@@ -13,6 +13,8 @@ pub enum BitstreamError {
     TooManyBits(u32),
     #[error("Data is insufficient for operation")]
     InsufficientData,
+    #[error("Value out of range for {0}: {1}")]
+    OutOfRange(&'static str, u64),
 }
 
 pub struct BitStreamRust<'a> {
@@ -287,9 +289,14 @@ impl<'a> BitStreamRust<'a> {
     pub fn read_exp_golomb_unsigned(&mut self) -> Result<u64, BitstreamError> {
         let mut zeros = 0;
 
-        // Count leading zeros
+        // Count leading zeros. A code with 64 or more is corrupt data (e.g. a
+        // run of zero bytes), and read_bits() can't read that many bits:
+        // report an error the caller can skip instead of exiting.
         while self.read_bits(1)? == 0 && self.bits_left >= 0 {
             zeros += 1;
+            if zeros >= 64 {
+                return Err(BitstreamError::TooManyBits(zeros));
+            }
         }
 
         // Read the remaining bits
@@ -472,6 +479,28 @@ mod tests {
         let data = vec![0xFF, 0x00];
         let bs = BitStreamRust::new(&data);
         assert!(bs.is_ok());
+    }
+
+    #[test]
+    fn test_read_exp_golomb_unsigned_valid() {
+        // 1 -> 0, 010 -> 1, 011 -> 2, 00100 -> 3
+        let data = vec![0b10100110, 0b01000000];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+
+        assert_eq!(bs.read_exp_golomb_unsigned().unwrap(), 0);
+        assert_eq!(bs.read_exp_golomb_unsigned().unwrap(), 1);
+        assert_eq!(bs.read_exp_golomb_unsigned().unwrap(), 2);
+        assert_eq!(bs.read_exp_golomb_unsigned().unwrap(), 3);
+    }
+
+    #[test]
+    fn test_read_exp_golomb_unsigned_too_many_zeros() {
+        // Corrupt data: a run of zero bytes is not a valid code. It must be
+        // an error the caller can skip, not a fatal exit.
+        let data = vec![0u8; 64];
+        let mut bs = BitStreamRust::new(&data).unwrap();
+
+        assert!(bs.read_exp_golomb_unsigned().is_err());
     }
 
     #[test]

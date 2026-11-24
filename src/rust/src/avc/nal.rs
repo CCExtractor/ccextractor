@@ -11,6 +11,10 @@ use lib_ccxr::util::log::DebugMessageFlag;
 use lib_ccxr::{debug, info};
 use std::os::raw::c_char;
 
+/// Largest log2_max_frame_num_minus4 and log2_max_pic_order_cnt_lsb_minus4
+/// allowed by H.264 7.4.2.1.1.
+const MAX_LOG2_MINUS4: u64 = 12;
+
 /// Process sequence parameter set RBSP
 pub fn seq_parameter_set_rbsp(
     ctx: &mut AvcContextRust,
@@ -129,17 +133,32 @@ pub fn seq_parameter_set_rbsp(
         }
     }
 
-    ctx.log2_max_frame_num = q1.read_exp_golomb_unsigned()? as i32;
-    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_frame_num4_minus4=                    {:4} ({:#X})", ctx.log2_max_frame_num, ctx.log2_max_frame_num);
-    ctx.log2_max_frame_num += 4; // 4 is added due to the formula.
+    let log2_max_frame_num_minus4 = q1.read_exp_golomb_unsigned()?;
+    debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_frame_num4_minus4=                    {:4} ({:#X})", log2_max_frame_num_minus4, log2_max_frame_num_minus4);
+    // slice_header() reads this many bits: reject a corrupt SPS rather than
+    // keep a bit count no read can satisfy.
+    if log2_max_frame_num_minus4 > MAX_LOG2_MINUS4 {
+        return Err(BitstreamError::OutOfRange(
+            "log2_max_frame_num_minus4",
+            log2_max_frame_num_minus4,
+        ));
+    }
+    ctx.log2_max_frame_num = log2_max_frame_num_minus4 as i32 + 4; // 4 is added due to the formula.
 
     ctx.pic_order_cnt_type = q1.read_exp_golomb_unsigned()? as i32;
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_order_cnt_type=                            {:4} ({:#X})", ctx.pic_order_cnt_type, ctx.pic_order_cnt_type);
 
     if ctx.pic_order_cnt_type == 0 {
-        ctx.log2_max_pic_order_cnt_lsb = q1.read_exp_golomb_unsigned()? as i32;
-        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_pic_order_cnt_lsb_minus4=             {:4} ({:#X})", ctx.log2_max_pic_order_cnt_lsb, ctx.log2_max_pic_order_cnt_lsb);
-        ctx.log2_max_pic_order_cnt_lsb += 4; // 4 is added due to formula.
+        let log2_max_pic_order_cnt_lsb_minus4 = q1.read_exp_golomb_unsigned()?;
+        debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "log2_max_pic_order_cnt_lsb_minus4=             {:4} ({:#X})", log2_max_pic_order_cnt_lsb_minus4, log2_max_pic_order_cnt_lsb_minus4);
+        if log2_max_pic_order_cnt_lsb_minus4 > MAX_LOG2_MINUS4 {
+            return Err(BitstreamError::OutOfRange(
+                "log2_max_pic_order_cnt_lsb_minus4",
+                log2_max_pic_order_cnt_lsb_minus4,
+            ));
+        }
+        ctx.log2_max_pic_order_cnt_lsb = log2_max_pic_order_cnt_lsb_minus4 as i32 + 4;
+    // 4 is added due to formula.
     } else if ctx.pic_order_cnt_type == 1 {
         // CFS: Untested, just copied from specs.
         let tmp = q1.read_bits(1)?;
@@ -372,6 +391,17 @@ pub unsafe fn slice_header(
 
     let slice_type: i64 = q1.read_exp_golomb_unsigned()? as i64;
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "slice_type=            {:4X}", slice_type);
+
+    // Valid slice_type values are 0-9 (H.264 Table 7-6), the indexes of
+    // SLICE_TYPES. A corrupt slice can carry anything: skip it, as the C
+    // slice_header() does, instead of indexing past SLICE_TYPES.
+    if slice_type as usize >= SLICE_TYPES.len() {
+        info!(
+            "Invalid slice_type {} in slice header, skipping.",
+            slice_type
+        );
+        return Ok(());
+    }
 
     tmp = q1.read_exp_golomb_unsigned()? as i64;
     debug!(msg_type = DebugMessageFlag::VIDEO_STREAM; "pic_parameter_set_id=  {:4} ({:#X})", tmp, tmp);
