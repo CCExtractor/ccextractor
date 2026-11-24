@@ -927,6 +927,19 @@ static int parse_mpeg_packet(struct ccx_demuxer *demux, int len, struct demuxer_
 	int ret = CCX_OK;
 	int result = 0;
 
+	/* len is the packet's mpeg_pic_size, taken straight from the file (a
+	   24-bit value). data->buffer is a fixed BUFSIZE allocation, so make
+	   sure the read fits before it writes past the end of the buffer. */
+	if (len < 0 || (size_t)data->len + (size_t)len > (size_t)BUFSIZE)
+	{
+		log("GXF: mpeg packet size %d does not fit the demuxer buffer; skipping\n", len);
+		result = buffered_skip(demux, len);
+		demux->past += result;
+		if (result != len)
+			ret = CCX_EOF;
+		return ret;
+	}
+
 	result = buffered_read(demux, data->buffer + data->len, len);
 	data->len += len;
 	demux->past += result;
