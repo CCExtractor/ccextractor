@@ -103,8 +103,8 @@ impl CcxDemuxer<'_> {
                 self.min_pts.resize(MAX_PSI_PID + 1, u64::MAX);
             } else {
                 // Set each min_pts[i] to u64::MAX for i in 0..=MAX_PSI_PID.
-                for i in 0..=MAX_PSI_PID {
-                    self.min_pts[i] = u64::MAX;
+                for pts in self.min_pts.iter_mut().take(MAX_PSI_PID + 1) {
+                    *pts = u64::MAX;
                 }
             }
             // Fill stream_id_of_each_pid with 0 for (MAX_PSI_PID+1) elements.

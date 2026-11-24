@@ -103,11 +103,11 @@ pub fn get_color_encoded(
     data: &eia608_screen,
 ) -> c_uint {
     let mut buffer_pos = 0;
-    for i in 0..32 {
+    for &color in data.colors[line_num].iter().take(32) {
         if buffer_pos >= buffer.len() {
             break;
         }
-        let color_val = data.colors[line_num][i] as u8;
+        let color_val = color as u8;
         buffer[buffer_pos] = if color_val < 10 {
             color_val + b'0'
         } else {
@@ -130,12 +130,11 @@ pub fn get_font_encoded(
 ) -> c_uint {
     let mut buffer_pos = 0;
 
-    for i in 0..32 {
+    for &font_val in data.fonts[line_num].iter().take(32) {
         if buffer_pos >= buffer.len() {
             break;
         }
 
-        let font_val = data.fonts[line_num][i];
         buffer[buffer_pos] = match font_val {
             font_bits_FONT_REGULAR => b'R',
             font_bits_FONT_UNDERLINED_ITALICS => b'B',

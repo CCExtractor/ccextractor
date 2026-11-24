@@ -978,20 +978,10 @@ impl<'a> TeletextContext<'a> {
             println!();
         }
 
-        // optimization: slicing column by column -- higher probability we could find boxed area start mark sooner
-        let mut page_is_empty = true;
-        for col in 0..40 {
-            for row in 1..25 {
-                if self.page_buffer.text[row][col] == 0x0b {
-                    page_is_empty = false;
-                    break;
-                }
-            }
-
-            if !page_is_empty {
-                break;
-            }
-        }
+        // The page is empty unless a row holds a boxed area start mark (0x0b)
+        let page_is_empty = !self.page_buffer.text[1..25]
+            .iter()
+            .any(|row| row.contains(&0x0b));
 
         if page_is_empty {
             return None;
@@ -1013,28 +1003,28 @@ impl<'a> TeletextContext<'a> {
             let col_stop: usize = 40;
 
             let mut box_open: bool = false;
-            for col in 0..40 {
+            for (col, ch) in self.page_buffer.text[row].iter_mut().enumerate() {
                 // replace all 0/B and 0/A characters with 0/20, as specified in ETS 300 706:
                 // Unless operating in "Hold Mosaics" mode, each character space occupied by a
                 // spacing attribute is displayed as a SPACE
-                if self.page_buffer.text[row][col] == 0x0b {
+                if *ch == 0x0b {
                     // open the box
                     if col_start == 40 {
                         col_start = col;
                         line_count += 1;
                     } else {
-                        self.page_buffer.text[row][col] = 0x20;
+                        *ch = 0x20;
                     }
                     box_open = true;
-                } else if self.page_buffer.text[row][col] == 0xa {
+                } else if *ch == 0xa {
                     // close the box
-                    self.page_buffer.text[row][col] = 0x20;
+                    *ch = 0x20;
                     box_open = false;
                 }
                 // characters between 0xA and 0xB shouldn't be displayed
                 // page->text[row][col] > 0x20 added to preserve color information
-                else if !box_open && col_start < 40 && self.page_buffer.text[row][col] > 0x20 {
-                    self.page_buffer.text[row][col] = 0x20;
+                else if !box_open && col_start < 40 && *ch > 0x20 {
+                    *ch = 0x20;
                 }
             }
             // line is empty
@@ -1535,8 +1525,8 @@ impl<'a> TeletextContext<'a> {
                 {
                     let mut t: u32 = 0;
                     info!("- Programme Identification Data = ");
-                    for i in 20..40 {
-                        let c = self.g0_charset.ucs2_char(packet.data[i]);
+                    for &byte in &packet.data[20..40] {
+                        let c = self.g0_charset.ucs2_char(byte);
                         if c < 0x20 {
                             continue;
                         }

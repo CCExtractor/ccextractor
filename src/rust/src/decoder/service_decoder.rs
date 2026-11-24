@@ -653,7 +653,7 @@ impl dtvcc_service_decoder {
             window.pen_column = 0;
             window.pen_row = 0;
             if is_false(window.memory_reserved) {
-                for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+                for row in window.rows.iter_mut().take(CCX_DTVCC_MAX_ROWS as usize) {
                     let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
                     if let Err(e) = layout {
                         error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {e}");
@@ -663,7 +663,7 @@ impl dtvcc_service_decoder {
                             error!("dtvcc_handle_DFx_DefineWindow: Not enough memory",);
                         }
                         // Exit here?
-                        window.rows[i] = ptr as *mut dtvcc_symbol;
+                        *row = ptr as *mut dtvcc_symbol;
                     }
                 }
                 window.memory_reserved = 1;
@@ -684,12 +684,12 @@ impl dtvcc_service_decoder {
             window.update_time_show(timing);
         }
         if is_false(window.memory_reserved) {
-            for i in 0..CCX_DTVCC_MAX_ROWS as usize {
+            for row in window.rows.iter().take(CCX_DTVCC_MAX_ROWS as usize) {
                 let layout = Layout::array::<dtvcc_symbol>(CCX_DTVCC_MAX_COLUMNS as usize);
                 if let Err(e) = layout {
                     error!("dtvcc_handle_DFx_DefineWindow: Incorrect Layout, {e}");
                 } else {
-                    unsafe { dealloc(window.rows[i] as *mut u8, layout.unwrap()) };
+                    unsafe { dealloc(*row as *mut u8, layout.unwrap()) };
                 }
             }
         }
@@ -859,8 +859,7 @@ impl dtvcc_service_decoder {
     ///
     /// Clear text from all windows and set all windows to undefined and hidden
     pub fn handle_reset(&mut self) {
-        for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
-            let window = &mut self.windows[id];
+        for window in self.windows.iter_mut().take(CCX_DTVCC_MAX_WINDOWS as usize) {
             window.clear_text();
             window.is_defined = 0;
             window.visible = 0;
@@ -1011,8 +1010,7 @@ impl dtvcc_service_decoder {
                 return false;
             }
         };
-        for id in 0..CCX_DTVCC_MAX_WINDOWS as usize {
-            let win_compare = &self.windows[id];
+        for win_compare in self.windows.iter().take(CCX_DTVCC_MAX_WINDOWS as usize) {
             let (b_x1, b_x2, b_y1, b_y2) = match win_compare.get_dimensions() {
                 Ok(val) => val,
                 Err(e) => {
