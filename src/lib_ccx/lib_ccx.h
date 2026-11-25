@@ -346,6 +346,8 @@ int decode_vbi(struct lib_cc_decode *dec_ctx, uint8_t field, unsigned char *buff
 #ifndef DISABLE_RUST
 // Rust FFI function to set encoder on persistent CEA-708 decoder
 void ccxr_dtvcc_set_encoder(void *dtvcc_rust, struct encoder_ctx *encoder);
+// Rust FFI function that passes cc_data triplets to the CEA-708 decoder
+int ccxr_process_cc_data(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count);
 #endif
 
 #endif
