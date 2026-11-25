@@ -1873,6 +1873,15 @@ int rcwt_loop(struct lib_ccx_ctx *ctx)
 			set_current_pts(dec_ctx->timing, currfts * (MPEG_CLOCK_FREQ / 1000));
 			set_fts(dec_ctx->timing); // Now set the FTS related variables
 
+#ifndef DISABLE_RUST
+			// The CEA-708 decoder only gets data through ccxr_process_cc_data(),
+			// which process_cc_data() calls for the other inputs. do_cb() below
+			// handles the 608 part only. Like process_cc_data(), skip it for MCC.
+			if (dec_ctx->write_format != CCX_OF_MCC)
+			{
+				ccxr_process_cc_data(dec_ctx, parsebuf, cbcount);
+			}
+#endif
 			for (int j = 0; j < cbcount * 3; j = j + 3)
 			{
 				do_cb(dec_ctx, parsebuf + j, dec_sub);
