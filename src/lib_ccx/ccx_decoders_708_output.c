@@ -173,16 +173,26 @@ void dtvcc_write_row(dtvcc_writer_ctx *writer, dtvcc_service_decoder *decoder, i
 
 		pen_color = tv->pen_colors[row_index][i];
 		pen_attribs = tv->pen_attribs[row_index][i];
-		if (i < first)
-		{
-			size_t size = write_utf16_char(' ', buf + buf_len);
-			buf_len += size;
-		}
-		else
-		{
-			size_t size = write_utf16_char(tv->chars[row_index][i].sym, buf + buf_len);
-			buf_len += size;
-		}
+		unsigned short sym = (i < first) ? ' ' : tv->chars[row_index][i].sym;
+
+        if (encoder->encoding == CCX_ENC_UTF_8)
+        {
+            if (sym < 128) {
+                buf[buf_len++] = (char)sym;
+            } else {
+                buf[buf_len++] = (char)(0xC0 | (sym >> 6));
+                buf[buf_len++] = (char)(0x80 | (sym & 0x3F));
+            }
+        }
+        else if (encoder->encoding == CCX_ENC_LATIN_1)
+        {
+            buf[buf_len++] = (char)sym;
+        }
+        else
+        {
+            size_t size = write_utf16_char(sym, buf + buf_len);
+            buf_len += size;
+        }
 	}
 
 	// there can be unclosed tags or colors after the last symbol in a row
