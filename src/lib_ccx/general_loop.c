@@ -687,6 +687,8 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 	int is_scc = 0;	       // Flag to track if this is SCC format
 	int is_cdp = 0;	       // Flag to track if this is raw CDP format
 	int is_mcc_output = 0; // Flag for MCC output format
+	LLONG raw_pairs = 0;   // CC pairs read so far in plain raw format
+	size_t i;
 
 	dec_ctx = update_decoder_list(ctx);
 	dec_sub = &dec_ctx->dec_sub;
@@ -766,15 +768,26 @@ int raw_loop(struct lib_ccx_ctx *ctx)
 		}
 		else
 		{
-			ret = process_raw(dec_ctx, dec_sub, data->buffer, data->len);
-			// For raw mode, cb_field1 is incremented by do_cb() for each CC pair.
-			// After processing each chunk, add the accumulated time to current_pts
-			// and call set_fts() to update fts_now. set_fts() resets cb_field1 to 0,
-			// so each chunk's timing is added incrementally.
-			// Note: Cast cb_field1 to LLONG to prevent 32-bit integer overflow
-			// when calculating ticks for large raw files (issue #1565).
-			add_current_pts(dec_ctx->timing, (LLONG)cb_field1 * 1001 / 30 * (MPEG_CLOCK_FREQ / 1000));
-			set_fts(dec_ctx->timing);
+			// Raw data has one CC pair per frame and no timestamps, so the time
+			// comes from counting pairs (do_cb() increments cb_field1). Update
+			// it after every pair, not once per chunk: the 608 decoder takes a
+			// caption's start and end from fts_now, so with one update per chunk
+			// every caption in the chunk got the same time.
+			// set_fts() resets cb_field1 to 0, so keep the total in raw_pairs.
+			for (i = 0; i < data->len; i += 2)
+			{
+				process_raw(dec_ctx, dec_sub, data->buffer + i, 2);
+				raw_pairs += cb_field1;
+				set_current_pts(dec_ctx->timing, raw_pairs * 1001 * (MPEG_CLOCK_FREQ / 1000) / 30);
+				set_fts(dec_ctx->timing);
+
+				if (dec_sub->got_output)
+				{
+					caps = 1;
+					encode_sub(enc_ctx, dec_sub);
+					dec_sub->got_output = 0;
+				}
+			}
 		}
 
 		if (!is_mcc_output && dec_sub->got_output)
