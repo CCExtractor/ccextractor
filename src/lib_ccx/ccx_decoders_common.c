@@ -40,6 +40,50 @@ LLONG get_visible_end(struct ccx_common_timing_ctx *ctx, int current_field)
 	return fts;
 }
 
+// Time without valid data after which a decoder disables the display and erases memory: 45 frames
+// of 1001/30 ms (CEA-608-E C.21)
+#define CCX_608_DATA_LOSS_MS 1501
+
+/* Erase the captions of a field when no valid data (data with both bytes of odd parity) has been
+ * received in it for 45 frames (CEA-608-E C.21). The time is used instead of a count of cc_data
+ * blocks, because a video frame is not always a line 21 frame (59.94 Hz video carries 30 pairs per
+ * second). */
+static void check_608_data_loss(struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
+{
+	int valid[2] = {0, 0};
+	ccx_decoder_608_context *contexts[2] = {dec_ctx->context_cc608_field_1, dec_ctx->context_cc608_field_2};
+
+	for (int j = 0; j < cc_count * 3; j = j + 3)
+	{
+		unsigned char cc_type = cc_data[j] & 3;
+		if (cc_type > 1)
+			continue;
+		if ((cc_data[j] & 4) && cc608_parity_table[cc_data[j + 1]] && cc608_parity_table[cc_data[j + 2]])
+			valid[cc_type] = 1;
+		else if (dec_ctx->fix_padding && !(cc_data[j] & 4) && cc_data[j + 1] == 0 && cc_data[j + 2] == 0)
+			valid[cc_type] = 1; // Padding of the kind do_cb() fixes
+	}
+	for (int field = 0; field < 2; field++)
+	{
+		ccx_decoder_608_context *context = contexts[field];
+		if (!context)
+			continue;
+		LLONG now = get_fts(dec_ctx->timing, field + 1);
+		if (valid[field] || now < context->last_valid_data_ms)
+		{
+			context->last_valid_data_ms = now;
+			context->data_loss_erased = 0;
+		}
+		else if (context->last_valid_data_ms >= 0 && !context->data_loss_erased &&
+			 now - context->last_valid_data_ms >= CCX_608_DATA_LOSS_MS &&
+			 (!context->buffer1.empty || !context->buffer2.empty) && !sub->got_output)
+		{
+			context->data_loss_erased = 1;
+			erase_both_memories(context, sub);
+		}
+	}
+}
+
 int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsigned char *cc_data, int cc_count, struct cc_subtitle *sub)
 {
 	int ret = -1;
@@ -60,6 +104,7 @@ int process_cc_data(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, 
 		if (ret == 1) // 1 means success here
 			ret = 0;
 	}
+	check_608_data_loss(dec_ctx, cc_data, cc_count, sub);
 	return ret;
 }
 int validate_cc_data_pair(unsigned char *cc_data_pair)
@@ -106,7 +151,20 @@ int do_cb(struct lib_cc_decode *ctx, unsigned char *cc_block, struct cc_subtitle
 	if (ctx->write_format != CCX_OF_RAW && // In raw we cannot skip padding because timing depends on it
 	    ctx->write_format != CCX_OF_DVDRAW &&
 	    (cc_block[0] == 0xFA || cc_block[0] == 0xFC || cc_block[0] == 0xFD) && (cc_block[1] & 0x7F) == 0 && (cc_block[2] & 0x7F) == 0) // CFS: Skip non-data, makes debugging harder.
+	{
+		// 608 padding is skipped, but it still separates a control code from an identical one that
+		// follows: only a copy in the very next frame is redundant (CEA-608-E D.2).
+		if (cc_block[0] != 0xFA)
+		{
+			ccx_decoder_608_context *context = cc_block[0] == 0xFC ? ctx->context_cc608_field_1 : ctx->context_cc608_field_2;
+			if (context)
+			{
+				context->last_c1 = -1;
+				context->last_c2 = -1;
+			}
+		}
 		return 1;
+	}
 
 	// Print raw data with FTS.
 	dbg_print(CCX_DMT_CBRAW, "%s   %d   %02X:%c%c:%02X", print_mstime_static(ctx->timing->fts_now + ctx->timing->fts_global), in_xds_mode,

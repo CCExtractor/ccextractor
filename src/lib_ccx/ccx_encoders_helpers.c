@@ -257,7 +257,17 @@ unsigned get_decoder_line_encoded_for_gui(unsigned char *buffer, int line_num, s
 	return (unsigned)(buffer - orig); // Return length
 }
 
-unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
+// Text of the tags that get_decoder_line_encoded_markup() writes. HTML-like tags are the default; with
+// LINE_MARKUP_ASS the override tags of ASS/SSA are written instead ({\c&Hbbggrr&}, {\u1}, {\i1}).
+static const char *ass_color_tag[MAX_COLOR] = {"", "{\\c&H00FF00&}", "{\\c&HFF0000&}", "{\\c&HFFFF00&}", "{\\c&H0000FF&}",
+					       "{\\c&H00FFFF&}", "{\\c&HFF00FF&}", "", "", ""};
+
+static const char *style_tag(enum line_markup markup, const char *html, const char *ass)
+{
+	return markup == LINE_MARKUP_ASS ? ass : html;
+}
+
+unsigned char *close_tag(struct encoder_ctx *ctx, enum line_markup markup, unsigned char *buffer, char *tagstack, char tagtype, int *punderlined, int *pitalics, int *pchanged_font)
 {
 	for (int l = strlen(tagstack) - 1; l >= 0; l--)
 	{
@@ -265,15 +275,15 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 		switch (cur)
 		{
 			case 'F':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</font>");
+				buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, "</font>", "{\\c&HFFFFFF&}"));
 				(*pchanged_font)--;
 				break;
 			case 'U':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</u>");
+				buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, "</u>", "{\\u0}"));
 				(*punderlined)--;
 				break;
 			case 'I':
-				buffer += encode_line(ctx, buffer, (unsigned char *)"</i>");
+				buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, "</i>", "{\\i0}"));
 				(*pitalics)--;
 				break;
 		}
@@ -286,7 +296,7 @@ unsigned char *close_tag(struct encoder_ctx *ctx, unsigned char *buffer, char *t
 	return buffer;
 }
 
-unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+unsigned get_decoder_line_encoded_markup(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data, enum line_markup markup)
 {
 	enum ccx_decoder_608_color_code color = COL_WHITE;
 	int underlined = 0;
@@ -308,25 +318,25 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		    !(color == COL_USERDEFINED && its_color == COL_WHITE)) // Don't replace user defined with white
 		{
 			if (changed_font)
-				buffer = close_tag(ctx, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
+				buffer = close_tag(ctx, markup, buffer, tagstack, 'F', &underlined, &italics, &changed_font);
 
 			// Add new font tag
 			if (MAX_COLOR > its_color)
-				buffer += encode_line(ctx, buffer, (unsigned char *)color_text[its_color][1]);
+				buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, color_text[its_color][1], ass_color_tag[its_color]));
 			else
 			{
 				ccx_common_logging.log_ftn("WARNING:get_decoder_line_encoded:Invalid Color index Selected %d\n", its_color);
 				its_color = COL_WHITE;
 			}
 
-			if (its_color == COL_USERDEFINED)
+			if (its_color == COL_USERDEFINED && markup != LINE_MARKUP_ASS)
 			{
 				// The previous sentence doesn't copy the whole
 				// <font> tag, just up to the quote before the color
 				buffer += encode_line(ctx, buffer, (unsigned char *)usercolor_rgb);
 				buffer += encode_line(ctx, buffer, (unsigned char *)"\">");
 			}
-			if (color_text[its_color][1][0]) // That means a <font> was added to the buffer
+			if (style_tag(markup, color_text[its_color][1], ass_color_tag[its_color])[0]) // That means a <font> was added to the buffer
 			{
 				strncat(tagstack, "F", sizeof(tagstack) - strlen(tagstack) - 1);
 				changed_font++;
@@ -337,25 +347,31 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 		int is_underlined = data->fonts[line_num][i] & FONT_UNDERLINED;
 		if (is_underlined && underlined == 0 && !ctx->no_type_setting) // Open underline
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *)"<u>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, "<u>", "{\\u1}"));
 			strncat(tagstack, "U", sizeof(tagstack) - strlen(tagstack) - 1);
 			underlined++;
 		}
 		if (is_underlined == 0 && underlined && !ctx->no_type_setting) // Close underline
 		{
-			buffer = close_tag(ctx, buffer, tagstack, 'U', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, markup, buffer, tagstack, 'U', &underlined, &italics, &changed_font);
 		}
 		// Handle italics
 		int has_ita = data->fonts[line_num][i] & FONT_ITALICS;
 		if (has_ita && italics == 0 && !ctx->no_type_setting) // Open italics
 		{
-			buffer += encode_line(ctx, buffer, (unsigned char *)"<i>");
+			buffer += encode_line(ctx, buffer, (unsigned char *)style_tag(markup, "<i>", "{\\i1}"));
 			strncat(tagstack, "I", sizeof(tagstack) - strlen(tagstack) - 1);
 			italics++;
 		}
 		if (has_ita == 0 && italics && !ctx->no_type_setting) // Close italics
 		{
-			buffer = close_tag(ctx, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
+			buffer = close_tag(ctx, markup, buffer, tagstack, 'I', &underlined, &italics, &changed_font);
+		}
+		if (markup == LINE_MARKUP_HTML_ESCAPED && (line[i] == '&' || line[i] == '<' || line[i] == '>'))
+		{
+			const char *entity = line[i] == '&' ? "&amp;" : (line[i] == '<' ? "&lt;" : "&gt;");
+			buffer += encode_line(ctx, buffer, (unsigned char *)entity);
+			continue;
 		}
 		int bytes = 0;
 		if (ctx->write_format == CCX_OF_SMPTETT && (line[i] == '&' || line[i] == '<' || line[i] == '>'))
@@ -394,13 +410,26 @@ unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer
 					break;
 			}
 		}
+		if (markup == LINE_MARKUP_ASS && bytes == 1 && (*buffer == '{' || *buffer == '}'))
+		{
+			// '{' opens an override block in ASS: a brace of the text has to be escaped. They are extended
+			// characters, so this is looked at in the encoded text.
+			buffer[1] = buffer[0];
+			buffer[0] = '\\';
+			bytes = 2;
+		}
 		buffer += bytes;
 	}
-	buffer = close_tag(ctx, buffer, tagstack, 'A', &underlined, &italics, &changed_font);
+	buffer = close_tag(ctx, markup, buffer, tagstack, 'A', &underlined, &italics, &changed_font);
 	if (underlined || italics || changed_font)
 		ccx_common_logging.fatal_ftn(CCX_COMMON_EXIT_BUG_BUG, "Not all tags closed in encoding, this is a bug, please report.\n");
 	*buffer = 0;
 	return (unsigned)(buffer - orig); // Return length
+}
+
+unsigned get_decoder_line_encoded(struct encoder_ctx *ctx, unsigned char *buffer, int line_num, struct eia608_screen *data)
+{
+	return get_decoder_line_encoded_markup(ctx, buffer, line_num, data, LINE_MARKUP_HTML);
 }
 
 void get_sentence_borders(int *first, int *last, int line_num, struct eia608_screen *data)

@@ -699,7 +699,7 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
             0x93 => 0xda,             // capital letter U with acute
             0x94 => 0xdc,             // capital letter U with diaeresis
             0x95 => 0xfc,             // lowercase letter U with diaeresis
-            0x96 => 0x27,             // apostrophe
+            0x96 => 0x27,             // Opening single quote (none in Latin-1)
             0x97 => 0xa1,             // inverted exclamation mark
             0x98 => 0x2a,             // asterisk
             0x99 => 0x27,             // apostrophe (yes, duped). See CCADI source code.
@@ -741,7 +741,7 @@ pub fn line21_to_latin1(c: Line21Char) -> Latin1Char {
             0xbb => 0x5c,             // Backslash
             0xbc => 0x5e,             // Caret
             0xbd => 0x5f,             // Underscore
-            0xbe => 0xa6,             // Pipe (broken bar)
+            0xbe => 0x7c,             // Pipe
             0xbf => 0x7e,             // Tilde
             0xc0 => 0xc4,             // Uppercase A, umlaut
             0xc1 => 0xe3,             // Lowercase A, umlaut
@@ -810,7 +810,7 @@ pub fn line21_to_utf8(c: Line21Char) -> Utf8Char {
             0x93 => 0xc39a,   // capital letter U with acute
             0x94 => 0xc39c,   // capital letter U with diaeresis
             0x95 => 0xc3bc,   // lowercase letter U with diaeresis
-            0x96 => 0x27,     // apostrophe
+            0x96 => 0xe28098, // Opening single quote
             0x97 => 0xc2a1,   // inverted exclamation mark
             0x98 => 0x2a,     // asterisk
             0x99 => 0x27,     // Plain single quote
@@ -853,7 +853,7 @@ pub fn line21_to_utf8(c: Line21Char) -> Utf8Char {
             0xbb => 0x5c,     // Backslash
             0xbc => 0x5e,     // Caret
             0xbd => 0x5f,     // Underscore
-            0xbe => 0xc2a6,   // Pipe (broken bar)
+            0xbe => 0x7c,     // Pipe
             0xbf => 0x7e,     // Tilde
             0xc0 => 0xc384,   // Uppercase A, umlaut
             0xc1 => 0xc3a4,   // Lowercase A, umlaut
@@ -862,15 +862,15 @@ pub fn line21_to_utf8(c: Line21Char) -> Utf8Char {
             0xc4 => 0xc39f,   // Esszett (sharp S)
             0xc5 => 0xc2a5,   // Yen symbol
             0xc6 => 0xc2a4,   // Currency symbol
-            0xc7 => 0x7c,     // Vertical bar
+            0xc7 => 0xe29482, // Vertical bar (box drawing)
             0xc8 => 0xc385,   // Uppercase A, ring
             0xc9 => 0xc3a5,   // Lowercase A, ring
             0xca => 0xc398,   // Uppercase O, slash
             0xcb => 0xc3b8,   // Lowercase o, slash
-            0xcc => 0xe28c9c, // Top left corner
-            0xcd => 0xe28c9d, // Top right corner
-            0xce => 0xe28c9e, // Bottom left corner
-            0xcf => 0xe28c9f, // Bottom right corner
+            0xcc => 0xe2948c, // Top left corner (box drawing)
+            0xcd => 0xe29490, // Top right corner (box drawing)
+            0xce => 0xe29494, // Bottom left corner (box drawing)
+            0xcf => 0xe29498, // Bottom right corner (box drawing)
             _ => b'?' as u32, // I'll do it eventually, I promise
                                // This are weird chars anyway
         }
@@ -903,11 +903,13 @@ pub fn line21_to_ucs2(c: Line21Char) -> Ucs2Char {
         0x7f => 0x25A0,                  // Solid block
         0x84 => 0x2122,                  // Trademark symbol (TM)
         0x87 => 0x266a,                  // Music note
+        0x96 => 0x2018,                  // Opening single quote
         0x9c => 0x2120,                  // Service Mark
-        0xcc => 0x231c,                  // Upper left corner
-        0xcd => 0x231d,                  // Upper right corner
-        0xce => 0x231e,                  // Lower left corner
-        0xcf => 0x231f,                  // Lower right corner
+        0xc7 => 0x2502,                  // Vertical bar (box drawing)
+        0xcc => 0x250c,                  // Upper left corner (box drawing)
+        0xcd => 0x2510,                  // Upper right corner (box drawing)
+        0xce => 0x2514,                  // Lower left corner (box drawing)
+        0xcf => 0x2518,                  // Lower right corner (box drawing)
         _ => line21_to_latin1(c).into(), // Everything else, same as latin-1 followed by 00
     }
 }
@@ -919,11 +921,13 @@ fn ucs2_to_line21(c: Ucs2Char) -> Line21Char {
         0x25A0 => 0x7f,
         0x2122 => 0x84,
         0x266a => 0x87,
+        0x2018 => 0x96,
         0x2120 => 0x9c,
-        0x231c => 0xcc,
-        0x231d => 0xcd,
-        0x231e => 0xce,
-        0x231f => 0xcf,
+        0x2502 => 0xc7,
+        0x250c => 0xcc,
+        0x2510 => 0xcd,
+        0x2514 => 0xce,
+        0x2518 => 0xcf,
         _ => latin1_to_line21(c as Latin1Char),
     }
 }
@@ -1029,4 +1033,61 @@ fn ucs2_to_char(c: Ucs2Char) -> char {
 
 pub fn char_to_ucs2(c: char) -> Ucs2Char {
     (c as u32).try_into().unwrap_or(UNAVAILABLE_CHAR.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // CTA-608-E 6.4.2 Tables 5, 8, 9 and 10: the extended characters 0x12 0x26 (opening single quote),
+    // 0x13 0x2E (pipe), 0x13 0x37 (vertical bar) and 0x13 0x3C-0x3F (box corners), as line 21 codes 0x96,
+    // 0xbe, 0xc7 and 0xcc-0xcf.
+
+    #[test]
+    fn opening_single_quote_and_pipe_in_utf8() {
+        assert_eq!(line21_to_utf8(0x96), 0xe28098); // U+2018
+        assert_eq!(line21_to_utf8(0xbe), 0x7c); // '|', not U+00A6
+    }
+
+    #[test]
+    fn box_characters_in_utf8() {
+        assert_eq!(line21_to_utf8(0xc7), 0xe29482); // U+2502
+        assert_eq!(line21_to_utf8(0xcc), 0xe2948c); // U+250C
+        assert_eq!(line21_to_utf8(0xcd), 0xe29490); // U+2510
+        assert_eq!(line21_to_utf8(0xce), 0xe29494); // U+2514
+        assert_eq!(line21_to_utf8(0xcf), 0xe29498); // U+2518
+    }
+
+    #[test]
+    fn extended_characters_in_ucs2() {
+        assert_eq!(line21_to_ucs2(0x96), 0x2018);
+        assert_eq!(line21_to_ucs2(0xbe), 0x7c);
+        assert_eq!(line21_to_ucs2(0xc7), 0x2502);
+        assert_eq!(line21_to_ucs2(0xcc), 0x250c);
+        assert_eq!(line21_to_ucs2(0xcd), 0x2510);
+        assert_eq!(line21_to_ucs2(0xce), 0x2514);
+        assert_eq!(line21_to_ucs2(0xcf), 0x2518);
+    }
+
+    #[test]
+    fn extended_characters_in_latin1() {
+        // Latin-1 has no opening single quote or box characters: the apostrophe and '|' stand in
+        assert_eq!(line21_to_latin1(0x96), 0x27);
+        assert_eq!(line21_to_latin1(0xbe), 0x7c);
+        assert_eq!(line21_to_latin1(0xc7), 0x7c);
+    }
+
+    #[test]
+    fn ucs2_maps_back_to_the_line21_codes() {
+        for (ucs2, code) in [
+            (0x2018, 0x96),
+            (0x2502, 0xc7),
+            (0x250c, 0xcc),
+            (0x2510, 0xcd),
+            (0x2514, 0xce),
+            (0x2518, 0xcf),
+        ] {
+            assert_eq!(ucs2_to_line21(ucs2), code);
+        }
+    }
 }

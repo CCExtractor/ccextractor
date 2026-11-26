@@ -422,7 +422,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0116] = {0x11, 0x19, 0x58, "{0116}"},
     [_0120] = {0x11, 0x19, 0x5a, "{0120}"},
     [_0124] = {0x11, 0x19, 0x5c, "{0124}"},
-    [_0128] = {0x11, 0x19, 0x5f, "{0128}"},
+    [_0128] = {0x11, 0x19, 0x5e, "{0128}"},
 
     [_0200] = {0x11, 0x19, 0x70, "{0200}"},
     [_0204] = {0x11, 0x19, 0x72, "{0204}"},
@@ -431,7 +431,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0216] = {0x11, 0x19, 0x78, "{0216}"},
     [_0220] = {0x11, 0x19, 0x7a, "{0220}"},
     [_0224] = {0x11, 0x19, 0x7c, "{0224}"},
-    [_0228] = {0x11, 0x19, 0x7f, "{0228}"},
+    [_0228] = {0x11, 0x19, 0x7e, "{0228}"},
 
     [_0300] = {0x12, 0x1a, 0x50, "{0300}"},
     [_0304] = {0x12, 0x1a, 0x52, "{0304}"},
@@ -440,7 +440,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0316] = {0x12, 0x1a, 0x58, "{0316}"},
     [_0320] = {0x12, 0x1a, 0x5a, "{0320}"},
     [_0324] = {0x12, 0x1a, 0x5c, "{0324}"},
-    [_0328] = {0x12, 0x1a, 0x5f, "{0328}"},
+    [_0328] = {0x12, 0x1a, 0x5e, "{0328}"},
 
     [_0400] = {0x12, 0x1a, 0x70, "{0400}"},
     [_0404] = {0x12, 0x1a, 0x72, "{0404}"},
@@ -449,7 +449,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0416] = {0x12, 0x1a, 0x78, "{0416}"},
     [_0420] = {0x12, 0x1a, 0x7a, "{0420}"},
     [_0424] = {0x12, 0x1a, 0x7c, "{0424}"},
-    [_0428] = {0x12, 0x1a, 0x7f, "{0428}"},
+    [_0428] = {0x12, 0x1a, 0x7e, "{0428}"},
 
     [_0500] = {0x15, 0x1d, 0x50, "{0500}"},
     [_0504] = {0x15, 0x1d, 0x52, "{0504}"},
@@ -458,7 +458,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0516] = {0x15, 0x1d, 0x58, "{0516}"},
     [_0520] = {0x15, 0x1d, 0x5a, "{0520}"},
     [_0524] = {0x15, 0x1d, 0x5c, "{0524}"},
-    [_0528] = {0x15, 0x1d, 0x5f, "{0528}"},
+    [_0528] = {0x15, 0x1d, 0x5e, "{0528}"},
 
     [_0600] = {0x15, 0x1d, 0x70, "{0600}"},
     [_0604] = {0x15, 0x1d, 0x72, "{0604}"},
@@ -467,7 +467,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0616] = {0x15, 0x1d, 0x78, "{0616}"},
     [_0620] = {0x15, 0x1d, 0x7a, "{0620}"},
     [_0624] = {0x15, 0x1d, 0x7c, "{0624}"},
-    [_0628] = {0x15, 0x1d, 0x7f, "{0628}"},
+    [_0628] = {0x15, 0x1d, 0x7e, "{0628}"},
 
     [_0700] = {0x16, 0x1e, 0x50, "{0700}"},
     [_0704] = {0x16, 0x1e, 0x52, "{0704}"},
@@ -476,7 +476,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0716] = {0x16, 0x1e, 0x58, "{0716}"},
     [_0720] = {0x16, 0x1e, 0x5a, "{0720}"},
     [_0724] = {0x16, 0x1e, 0x5c, "{0724}"},
-    [_0728] = {0x16, 0x1e, 0x5f, "{0728}"},
+    [_0728] = {0x16, 0x1e, 0x5e, "{0728}"},
 
     [_0800] = {0x16, 0x1e, 0x70, "{0800}"},
     [_0804] = {0x16, 0x1e, 0x72, "{0804}"},
@@ -485,7 +485,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0816] = {0x16, 0x1e, 0x78, "{0816}"},
     [_0820] = {0x16, 0x1e, 0x7a, "{0820}"},
     [_0824] = {0x16, 0x1e, 0x7c, "{0824}"},
-    [_0828] = {0x16, 0x1e, 0x7f, "{0828}"},
+    [_0828] = {0x16, 0x1e, 0x7e, "{0828}"},
 
     [_0900] = {0x17, 0x1f, 0x50, "{0900}"},
     [_0904] = {0x17, 0x1f, 0x52, "{0904}"},
@@ -494,7 +494,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_0916] = {0x17, 0x1f, 0x58, "{0916}"},
     [_0920] = {0x17, 0x1f, 0x5a, "{0920}"},
     [_0924] = {0x17, 0x1f, 0x5c, "{0924}"},
-    [_0928] = {0x17, 0x1f, 0x5f, "{0928}"},
+    [_0928] = {0x17, 0x1f, 0x5e, "{0928}"},
 
     [_1000] = {0x17, 0x1f, 0x70, "{1000}"},
     [_1004] = {0x17, 0x1f, 0x72, "{1004}"},
@@ -503,7 +503,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1016] = {0x17, 0x1f, 0x78, "{1016}"},
     [_1020] = {0x17, 0x1f, 0x7a, "{1020}"},
     [_1024] = {0x17, 0x1f, 0x7c, "{1024}"},
-    [_1028] = {0x17, 0x1f, 0x7f, "{1028}"},
+    [_1028] = {0x17, 0x1f, 0x7e, "{1028}"},
 
     [_1100] = {0x10, 0x18, 0x50, "{1100}"},
     [_1104] = {0x10, 0x18, 0x52, "{1104}"},
@@ -512,7 +512,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1116] = {0x10, 0x18, 0x58, "{1116}"},
     [_1120] = {0x10, 0x18, 0x5a, "{1120}"},
     [_1124] = {0x10, 0x18, 0x5c, "{1124}"},
-    [_1128] = {0x10, 0x18, 0x5f, "{1128}"},
+    [_1128] = {0x10, 0x18, 0x5e, "{1128}"},
 
     [_1200] = {0x13, 0x1b, 0x50, "{1200}"},
     [_1204] = {0x13, 0x1b, 0x52, "{1204}"},
@@ -521,7 +521,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1216] = {0x13, 0x1b, 0x58, "{1216}"},
     [_1220] = {0x13, 0x1b, 0x5a, "{1220}"},
     [_1224] = {0x13, 0x1b, 0x5c, "{1224}"},
-    [_1228] = {0x13, 0x1b, 0x5f, "{1228}"},
+    [_1228] = {0x13, 0x1b, 0x5e, "{1228}"},
 
     [_1300] = {0x13, 0x1b, 0x70, "{1300}"},
     [_1304] = {0x13, 0x1b, 0x72, "{1304}"},
@@ -530,7 +530,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1316] = {0x13, 0x1b, 0x78, "{1316}"},
     [_1320] = {0x13, 0x1b, 0x7a, "{1320}"},
     [_1324] = {0x13, 0x1b, 0x7c, "{1324}"},
-    [_1328] = {0x13, 0x1b, 0x7f, "{1328}"},
+    [_1328] = {0x13, 0x1b, 0x7e, "{1328}"},
 
     [_1400] = {0x14, 0x1c, 0x50, "{1400}"},
     [_1404] = {0x14, 0x1c, 0x52, "{1404}"},
@@ -539,7 +539,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1416] = {0x14, 0x1c, 0x58, "{1416}"},
     [_1420] = {0x14, 0x1c, 0x5a, "{1420}"},
     [_1424] = {0x14, 0x1c, 0x5c, "{1424}"},
-    [_1428] = {0x14, 0x1c, 0x5f, "{1428}"},
+    [_1428] = {0x14, 0x1c, 0x5e, "{1428}"},
 
     [_1500] = {0x14, 0x1c, 0x70, "{1500}"},
     [_1504] = {0x14, 0x1c, 0x72, "{1504}"},
@@ -548,7 +548,7 @@ const struct control_code_info control_codes[CONTROL_CODE_MAX] = {
     [_1516] = {0x14, 0x1c, 0x78, "{1516}"},
     [_1520] = {0x14, 0x1c, 0x7a, "{1520}"},
     [_1524] = {0x14, 0x1c, 0x7c, "{1524}"},
-    [_1528] = {0x14, 0x1c, 0x7f, "{1528}"},
+    [_1528] = {0x14, 0x1c, 0x7e, "{1528}"},
 };
 
 enum control_code color_codes[COL_MAX] = {
@@ -658,6 +658,8 @@ static unsigned char get_extended_scc_code(unsigned char c, unsigned char *hi, u
 		*lo = c - 0x90;
 	}
 
+	if (c == 0x96) // Opening single quote: the apostrophe is its fallback, as for the plain single quote
+		return 0x27;
 	unsigned char utf8[4];
 	int n = get_char_in_utf_8(utf8, c);
 	return (n == 1 && utf8[0] < 0x80) ? utf8[0] : ' ';
@@ -909,6 +911,32 @@ static bool can_use_styled_pac(enum ccx_decoder_608_color_code color, enum font_
 	return true;
 }
 
+/**
+ * Write an indent PAC with the underline bit set (CEA-608-E Table 53: "Indent N Underline")
+ * An indenting PAC carries white and sets only the underline, so with a Tab Offset it addresses any column
+ * for white underlined text without a mid-row code (which would take a cell).
+ */
+static void write_underlined_indent_pac(const int fd, const unsigned char channel, const unsigned char row,
+					const unsigned char column, const bool disassemble, unsigned int *bytes_written)
+{
+	enum control_code code = get_preamble_code(row, column);
+	unsigned char byte1 = odd_parity(get_first_byte(channel, code));
+	unsigned char byte2 = odd_parity(get_second_byte(code) | 1);
+
+	check_padding(fd, disassemble, bytes_written);
+	if (disassemble)
+	{
+		fdprintf(fd, "{%02d%02dU}", row + 1, (column / 4) * 4);
+	}
+	else
+	{
+		if (*bytes_written % 2 == 0)
+			write_wrapped(fd, " ", 1);
+		fdprintf(fd, "%02x%02x", byte1, byte2);
+	}
+	*bytes_written += 2;
+}
+
 enum control_code get_tab_offset_code(const unsigned char column)
 {
 	int offset = column % 4;
@@ -1053,8 +1081,11 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 			enum control_code tab_offset_code;
 			enum control_code font_code = 0;
 
-			bool switch_font = current_font != data->fonts[row][column];
-			bool switch_color = current_color != data->colors[row][column];
+			// A PAC puts the attributes back to white, not underlined, not italic (CEA-608-E C.14), so
+			// after a change of position they have to be set again whatever they were before
+			bool moved = current_row != row || current_column != column;
+			bool switch_font = (moved ? FONT_REGULAR : current_font) != data->fonts[row][column];
+			bool switch_color = (moved ? COL_WHITE : current_color) != data->colors[row][column];
 
 			if (current_row != row ||
 			    current_column != column ||
@@ -1077,6 +1108,21 @@ int write_cc_buffer_as_scenarist(const struct eia608_screen *data, struct encode
 						// Write the character and continue
 						write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
 						++current_column;
+						continue;
+					}
+
+					// White underlined text: an underlined indent PAC and a Tab Offset, no mid-row code
+					if (moved && data->colors[row][column] == COL_WHITE && data->fonts[row][column] == FONT_UNDERLINED)
+					{
+						write_underlined_indent_pac(context->out->fh, data->channel, row, column, disassemble, &bytes_written);
+						enum control_code underlined_tab_offset = get_tab_offset_code(column);
+						if (underlined_tab_offset)
+							write_control_code(context->out->fh, data->channel, underlined_tab_offset, disassemble, &bytes_written);
+						current_row = row;
+						current_font = FONT_UNDERLINED;
+						current_color = COL_WHITE;
+						write_character(context->out->fh, data->channel, data->characters[row][column], disassemble, &bytes_written);
+						current_column = column + 1;
 						continue;
 					}
 

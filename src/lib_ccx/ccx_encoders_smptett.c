@@ -186,6 +186,85 @@ int write_cc_subtitle_as_smptett(struct cc_subtitle *sub, struct encoder_ctx *co
 	return ret;
 }
 
+/*
+ * Convert the text of a row, as get_decoder_line_encoded() writes it (<u>, <i> and <font color="#rrggbb">
+ * tags, the characters of the text already escaped), into TTML: every run with a colour, underline or
+ * italics becomes <span>text<style .../></span>, as ccextractor writes it, and text without a style is
+ * written as it is. A row can have any number of runs.
+ */
+static void smptett_row_to_spans(const char *in, char *out, size_t size)
+{
+	char color[16] = "";
+	int underline = 0, italics = 0, bold = 0;
+	size_t len = 0;
+	const char *text = in;
+	const char *p = in;
+
+	out[0] = 0;
+	while (1)
+	{
+		if (*p == '<' || *p == 0)
+		{
+			size_t n = (size_t)(p - text);
+			if (n > 0 && len + n + 300 < size)
+			{
+				if (*color || underline || italics || bold)
+				{
+					len += snprintf(out + len, size - len, "<span>%.*s<style tts:backgroundColor=\"#000000FF\"", (int)n, text);
+					if (*color)
+						len += snprintf(out + len, size - len, " tts:color=\"%s\"", color);
+					len += snprintf(out + len, size - len, " tts:fontSize=\"18px\"");
+					if (italics)
+						len += snprintf(out + len, size - len, " tts:fontStyle=\"italic\"");
+					if (bold)
+						len += snprintf(out + len, size - len, " tts:fontWeight=\"bold\"");
+					if (underline)
+						len += snprintf(out + len, size - len, " tts:textDecoration=\"underline\"");
+					len += snprintf(out + len, size - len, "/></span>");
+				}
+				else
+				{
+					memcpy(out + len, text, n);
+					len += n;
+					out[len] = 0;
+				}
+			}
+			if (*p == 0)
+				break;
+			if (strncmp(p, "<u>", 3) == 0)
+				underline = 1, p += 3;
+			else if (strncmp(p, "</u>", 4) == 0)
+				underline = 0, p += 4;
+			else if (strncmp(p, "<i>", 3) == 0)
+				italics = 1, p += 3;
+			else if (strncmp(p, "</i>", 4) == 0)
+				italics = 0, p += 4;
+			else if (strncmp(p, "<b>", 3) == 0)
+				bold = 1, p += 3;
+			else if (strncmp(p, "</b>", 4) == 0)
+				bold = 0, p += 4;
+			else if (strncmp(p, "</font>", 7) == 0)
+				*color = 0, p += 7;
+			else if (strncmp(p, "<font color=\"#", 14) == 0)
+			{
+				snprintf(color, sizeof(color), "#%.6s", p + 14);
+				const char *end = strchr(p, '>');
+				p = end ? end + 1 : p + strlen(p);
+			}
+			else
+			{
+				// Not a tag of ours (the text is escaped, so this should not happen): keep it as text
+				text = p;
+				p++;
+				continue;
+			}
+			text = p;
+			continue;
+		}
+		p++;
+	}
+}
+
 int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *context)
 {
 	int used;
@@ -246,210 +325,21 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 					dbg_print(CCX_DMT_DECODER_608, "%s\n", context->subline);
 				}
 
-				get_decoder_line_encoded(context, context->subline, row, data);
+				get_decoder_line_encoded_markup(context, context->subline, row, data, LINE_MARKUP_HTML_ESCAPED);
 
 				size_t subline_len = strlen((const char *)(context->subline));
-				size_t buf_size = subline_len + 1000; // Being overly generous? :P
+				size_t buf_size = subline_len * 2 + 32 * 200 + 1000; // Room for the <span> and <style/> of every run
 				char *final = malloc(buf_size);
-				char *temp = malloc(buf_size);
-				if (!final || !temp)
+				if (!final)
 				{
-					freep(&final);
-					freep(&temp);
 					fatal(EXIT_NOT_ENOUGH_MEMORY, "In write_cc_buffer_as_smptett() - not enough memory.\n");
 				}
 				*final = 0;
-				*temp = 0;
-				/*
-					final	: stores formatted HTML sentence. This will be written in subtitle file.
-					temp	: stored temporary sentences required while formatting
-
-					+1000 because huge <span> and <style> tags are added. This will just prevent overflow (hopefully).
-				*/
-
-				int style = 0;
-
-				/*
-
-				0 = None or font colour
-				1 = italics
-				2 = bold
-				3 = underline
-
-				*/
-
-				// Now, searching for first occurrence of <i> OR <u> OR <b>
-
-				char *start = strstr((const char *)(context->subline), "<i>");
-				if (start == NULL)
-				{
-					start = strstr((const char *)(context->subline), "<b>");
-
-					if (start == NULL)
-					{
-						start = strstr((const char *)(context->subline), "<u>");
-						style = 3; // underline
-					}
-					else
-						style = 2; // bold
-				}
+				// final: the row as TTML, written below
+				if (context->encoding == CCX_ENC_UNICODE)
+					snprintf(final, buf_size, "%s", (const char *)(context->subline));
 				else
-					style = 1; // italics
-
-				if (start != NULL) // subtitle has style associated with it, will need formatting.
-				{
-					char *end_tag;
-					if (style == 1)
-					{
-						end_tag = "</i>";
-					}
-					else if (style == 2)
-					{
-						end_tag = "</b>";
-					}
-					else
-					{
-						end_tag = "</u>";
-					}
-
-					char *end = strstr((const char *)(context->subline), end_tag); // occurrence of closing tag (</i> OR </b> OR </u>)
-
-					if (end == NULL)
-					{
-						// Incorrect styling, writing as it is
-						snprintf(final, buf_size, "%s", (const char *)(context->subline));
-					}
-					else
-					{
-						size_t final_len = 0;
-						int start_index = start - (char *)(context->subline);
-						int end_index = end - (char *)(context->subline);
-
-						// copying content before opening tag e.g. <i>
-						if (start_index > 0 && (size_t)start_index < buf_size - 1)
-						{
-							memcpy(final, (const char *)(context->subline), start_index);
-							final[start_index] = '\0';
-							final_len = start_index;
-						}
-
-						// adding <span> : replacement of <i>
-						size_t remaining = buf_size - final_len;
-						int written = snprintf(final + final_len, remaining, "<span>");
-						if (written > 0 && (size_t)written < remaining)
-							final_len += written;
-
-						// The content in italics is between <i> and </i>, i.e. between (start_index + 3) and end_index.
-						int content_len = end_index - start_index - 3;
-						if (content_len > 0)
-						{
-							remaining = buf_size - final_len;
-							if ((size_t)content_len < remaining - 1)
-							{
-								memcpy(final + final_len, (const char *)(context->subline) + start_index + 3, content_len);
-								final_len += content_len;
-								final[final_len] = '\0';
-							}
-						}
-
-						// adding appropriate style tag
-						remaining = buf_size - final_len;
-						if (style == 1)
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontStyle=\"italic\"/> </span>");
-						else if (style == 2)
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:fontWeight=\"bold\"/> </span>");
-						else
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#000000FF\" tts:fontSize=\"18px\" tts:textDecoration=\"underline\"/> </span>");
-
-						if (written > 0 && (size_t)written < remaining)
-							final_len += written;
-
-						// finding remaining sentence and adding it
-						remaining = buf_size - final_len;
-						snprintf(final + final_len, remaining, "%s", (const char *)(context->subline) + end_index + 4);
-					}
-				}
-				else // No style or Font Color
-				{
-
-					start = strstr((const char *)(context->subline), "<font color"); // spec : <font color="#xxxxxx"> cc </font>
-					if (start != NULL)						 // font color attribute is present
-					{
-						char *end = strstr((const char *)(context->subline), "</font>");
-						if (end == NULL)
-						{
-							// Incorrect styling, writing as it is
-							snprintf(final, buf_size, "%s", (const char *)(context->subline));
-						}
-
-						else
-						{
-							size_t final_len = 0;
-							int start_index = start - (char *)(context->subline);
-							int end_index = end - (char *)(context->subline);
-
-							// copying content before opening tag e.g. <font ..>
-							if (start_index > 0 && (size_t)start_index < buf_size - 1)
-							{
-								memcpy(final, (const char *)(context->subline), start_index);
-								final[start_index] = '\0';
-								final_len = start_index;
-							}
-
-							// adding <span> : replacement of <font ..>
-							size_t remaining = buf_size - final_len;
-							int written = snprintf(final + final_len, remaining, "<span>");
-							if (written > 0 && (size_t)written < remaining)
-								final_len += written;
-
-							char *temp_pointer = strchr((const char *)(context->subline), '#'); // locating color code
-
-							char color_code[8];
-							if (temp_pointer)
-							{
-								snprintf(color_code, sizeof(color_code), "%.6s", temp_pointer + 1); // obtained color code
-							}
-							else
-							{
-								color_code[0] = '\0';
-							}
-
-							temp_pointer = strchr((const char *)(context->subline), '>'); // The content is in between <font ..> and </font>
-
-							if (temp_pointer)
-							{
-								// Copy the content between <font ..> and </font>
-								int content_len = end_index - (temp_pointer - (char *)(context->subline) + 1);
-								if (content_len > 0)
-								{
-									remaining = buf_size - final_len;
-									if ((size_t)content_len < remaining - 1)
-									{
-										memcpy(final + final_len, temp_pointer + 1, content_len);
-										final_len += content_len;
-										final[final_len] = '\0';
-									}
-								}
-							}
-
-							// adding font color tag
-							remaining = buf_size - final_len;
-							written = snprintf(final + final_len, remaining, "<style tts:backgroundColor=\"#FFFF00FF\" tts:color=\"%s\" tts:fontSize=\"18px\"/></span>", color_code);
-							if (written > 0 && (size_t)written < remaining)
-								final_len += written;
-
-							// finding remaining sentence and adding it
-							remaining = buf_size - final_len;
-							snprintf(final + final_len, remaining, "%s", (const char *)(context->subline) + end_index + 7);
-						}
-					}
-
-					else
-					{
-						// NO styling, writing as it is
-						snprintf(final, buf_size, "%s", (const char *)(context->subline));
-					}
-				}
+					smptett_row_to_spans((const char *)(context->subline), final, buf_size);
 
 				write_wrapped(context->out->fh, final, strlen(final));
 
@@ -472,7 +362,6 @@ int write_cc_buffer_as_smptett(struct eia608_screen *data, struct encoder_ctx *c
 				// write (wb->fh, enc_buffer,enc_buffer_used);
 
 				freep(&final);
-				freep(&temp);
 			}
 		}
 	}

@@ -1087,7 +1087,8 @@ int eia608_to_str(struct encoder_ctx *context, struct eia608_screen *data, char 
 					out[str_len++] = '\n';
 					out[str_len] = '\0';
 				}
-				str_len++; // Count the newline even if truncated (for return value)
+				else
+					str_len++; // Count the newline even if truncated (for return value)
 			}
 			first = 0;
 			// Copy at most what fits in remaining buffer

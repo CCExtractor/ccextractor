@@ -68,7 +68,8 @@ static const char *command_type[] =
 	"AON - Not Used (Alarm On)",
 	"DER - Delete to End of Row",
 	"RDC - Resume Direct Captioning",
-	"RU1 - Fake Roll up 1 rows"};
+	"RU1 - Fake Roll up 1 rows",
+	"FON - Flash On"};
 
 static const char *font_text[] =
     {
@@ -149,6 +150,9 @@ ccx_decoder_608_context *ccx_decoder_608_init_library(struct ccx_decoder_608_set
 	data->my_field = field;
 	data->my_channel = channel;
 	data->have_cursor_position = 0;
+	data->attributes_from_pac = 0;
+	data->last_valid_data_ms = -1;
+	data->data_loss_erased = 0;
 	data->rollup_from_popon = 0;
 	data->ts_first_char_rollup_transition = -1;
 	data->output_format = output_format;
@@ -229,6 +233,16 @@ void write_char(const unsigned char c, ccx_decoder_608_context *context)
 		if (context->cursor_row >= CCX_DECODER_608_SCREEN_ROWS || context->cursor_column >= CCX_DECODER_608_SCREEN_WIDTH)
 			return;
 
+		// A character next to an existing one takes the attributes of that character and the attributes
+		// of the PAC that positioned the cursor are ignored (CEA-608-E C.7)
+		if (context->attributes_from_pac && context->cursor_column > 0 &&
+		    use_buffer->characters[context->cursor_row][context->cursor_column - 1] != ' ')
+		{
+			context->current_color = use_buffer->colors[context->cursor_row][context->cursor_column - 1];
+			context->font = use_buffer->fonts[context->cursor_row][context->cursor_column - 1];
+		}
+		context->attributes_from_pac = 0;
+
 		use_buffer->characters[context->cursor_row][context->cursor_column] = c;
 		use_buffer->colors[context->cursor_row][context->cursor_column] = context->current_color;
 		use_buffer->fonts[context->cursor_row][context->cursor_column] = context->font;
@@ -273,6 +287,7 @@ void handle_text_attr(const unsigned char c1, const unsigned char c2, ccx_decode
 	else
 	{
 		int i = c2 - 0x20;
+		context->attributes_from_pac = 0;
 		context->current_color = pac2_attribs[i][0];
 		context->font = pac2_attribs[i][1];
 		ccx_common_logging.debug_ftn(
@@ -672,9 +687,26 @@ int is_current_row_empty(ccx_decoder_608_context *context)
 }
 
 /* Process GLOBAL CODES */
+/* The transcript writers (--out=txt and ttxt) write the rows of a roll-up caption one by one, when a CR
+ * completes them. When RCL or RDC leaves roll-up style the displayed caption stays on the screen until a
+ * pop-on caption replaces it (CEA-608-E C.10), and that screen is written whole when it goes; the same
+ * happens when an EOC arrives in roll-up style. For a transcript the row that is being typed is written
+ * now and the memory cleared, so that the rows already written are not written a second time. */
+static void flush_rollup_transcript(ccx_decoder_608_context *context, struct cc_subtitle *sub)
+{
+	if (context->output_format != CCX_OF_TRANSCRIPT)
+		return;
+	if (context->mode != MODE_FAKE_ROLLUP_1 && context->mode != MODE_ROLLUP_2 &&
+	    context->mode != MODE_ROLLUP_3 && context->mode != MODE_ROLLUP_4)
+		return;
+	write_cc_line(context, sub);
+	erase_memory(context, true);
+}
+
 void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	int changes = 0;
+	int rollup_displayed = 0;
 
 	// Handle channel change
 	context->channel = context->new_channel;
@@ -708,6 +740,8 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		command = COM_ROLLUP3;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x27)
 		command = COM_ROLLUP4;
+	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x28)
+		command = COM_FLASHON;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x29)
 		command = COM_RESUMEDIRECTCAPTIONING;
 	if ((c1 == 0x14 || c1 == 0x1C) && c2 == 0x2D)
@@ -755,6 +789,7 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 				context->cursor_column = CCX_DECODER_608_SCREEN_WIDTH - 1;
 			break;
 		case COM_RESUMECAPTIONLOADING:
+			flush_rollup_transcript(context, sub);
 			context->mode = MODE_POPON;
 			break;
 		case COM_RESUMETEXTDISPLAY:
@@ -764,6 +799,9 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ROLLUP2:
 		case COM_ROLLUP3:
 		case COM_ROLLUP4:
+			rollup_displayed = (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
+					    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4) &&
+					   !get_current_visible_buffer(context)->empty;
 			if (context->mode == MODE_POPON || context->mode == MODE_PAINTON)
 			{
 				/* CEA-608 C.10 Style Switching (regulatory)
@@ -783,7 +821,9 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			// If the reception of data for a row is interrupted by data for the alternate
 			// data channel or for text mode, the display of caption text will resume from the same
 			// cursor position if a roll-up caption command is received and no PAC is given [...]
-			if (context->mode != MODE_TEXT && context->have_cursor_position == 0)
+			// The default applies when no roll-up caption is displayed (CEA-608-E C.15); while one is,
+			// a roll-up command keeps the base row.
+			if (context->mode != MODE_TEXT && (context->have_cursor_position == 0 || !rollup_displayed))
 			{
 				// If no Preamble Address Code  is received, the base row shall default to row 15
 				context->cursor_row = 14; // Default if the previous mode wasn't roll up already.
@@ -863,6 +903,10 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			if (changes)
 				context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
 			context->cursor_column = 0;
+			// A row created by CR with no PAC has no explicit attributes, so it is white, not
+			// underlined, not italicized (CEA-608-E C.14).
+			context->current_color = context->settings->default_color;
+			context->font = FONT_REGULAR;
 			break;
 		case COM_ERASENONDISPLAYEDMEMORY:
 			erase_memory(context, false);
@@ -890,10 +934,13 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 			}
 			erase_memory(context, true);
 			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+			// Nothing is on the screen any more, so the next row starts when its first character arrives
+			context->ts_start_of_current_line = -1;
 			break;
 		case COM_ENDOFCAPTION: // Switch buffers
 			// The currently *visible* buffer is leaving, so now we know its ending
 			// time. Time to actually write it to file.
+			flush_rollup_transcript(context, sub);
 			if (write_cc_buffer(context, sub))
 				context->screenfuls_counter++;
 			context->visible_buffer = (context->visible_buffer == 1) ? 2 : 1;
@@ -911,7 +958,13 @@ void handle_command(unsigned char c1, const unsigned char c2, ccx_decoder_608_co
 		case COM_ALARMON:
 			// These two are unused according to Robson's, and we wouldn't be able to do anything useful anyway
 			break;
+		case COM_FLASHON:
+			// FON is a spacing attribute like a mid-row code (CEA-608-E C.8): it occupies a cell, which
+			// we fill with a space. The flashing itself is not represented in the output.
+			write_char(0x20, context);
+			break;
 		case COM_RESUMEDIRECTCAPTIONING:
+			flush_rollup_transcript(context, sub);
 			context->mode = MODE_PAINTON;
 			// ccx_common_logging.log_ftn ("\nWarning: Received ResumeDirectCaptioning, this mode is almost impossible.\n");
 			// ccx_common_logging.log_ftn ("to transcribe to a text file.\n");
@@ -985,8 +1038,38 @@ unsigned char handle_extended(unsigned char hi, unsigned char lo, ccx_decoder_60
 	return 1;
 }
 
+/* Move the rows of a displayed roll-up caption so that its base row (new_base_row, 0 based) is where
+ * it has been put by a PAC; rows that would end up off the screen are dropped. */
+static void move_rollup(ccx_decoder_608_context *context, struct eia608_screen *buffer, int old_base_row, int new_base_row)
+{
+	struct eia608_screen old = *buffer;
+	int delta = new_base_row - old_base_row;
+
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
+	{
+		memset(buffer->characters[i], ' ', CCX_DECODER_608_SCREEN_WIDTH);
+		buffer->characters[i][CCX_DECODER_608_SCREEN_WIDTH] = 0;
+		for (int j = 0; j < CCX_DECODER_608_SCREEN_WIDTH + 1; j++)
+		{
+			buffer->colors[i][j] = context->settings->default_color;
+			buffer->fonts[i][j] = FONT_REGULAR;
+		}
+		buffer->row_used[i] = 0;
+	}
+	for (int i = 0; i < CCX_DECODER_608_SCREEN_ROWS; i++)
+	{
+		int to = i + delta;
+		if (!old.row_used[i] || to < 0 || to >= CCX_DECODER_608_SCREEN_ROWS)
+			continue;
+		memcpy(buffer->characters[to], old.characters[i], CCX_DECODER_608_SCREEN_WIDTH + 1);
+		memcpy(buffer->colors[to], old.colors[i], sizeof(buffer->colors[to]));
+		memcpy(buffer->fonts[to], old.fonts[i], sizeof(buffer->fonts[to]));
+		buffer->row_used[to] = 1;
+	}
+}
+
 /* Process PREAMBLE ACCESS CODES (PAC) */
-void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *context)
+void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *context, struct cc_subtitle *sub)
 {
 	// Handle channel change
 	if (context->new_channel > 2)
@@ -1020,11 +1103,38 @@ void handle_pac(unsigned char c1, unsigned char c2, ccx_decoder_608_context *con
 	}
 	context->current_color = pac2_attribs[c2][0];
 	context->font = pac2_attribs[c2][1];
+	context->attributes_from_pac = 1;
 	int indent = pac2_attribs[c2][2];
 	ccx_common_logging.debug_ftn(CCX_DMT_DECODER_608, "  --  Position: %d:%d, color: %s,  font: %s\n", row,
 				     indent, color_text[context->current_color][0], font_text[context->font]);
 	if (context->settings->default_color == COL_USERDEFINED && (context->current_color == COL_WHITE || context->current_color == COL_TRANSPARENT))
 		context->current_color = COL_USERDEFINED;
+	if (context->mode == MODE_FAKE_ROLLUP_1 || context->mode == MODE_ROLLUP_2 ||
+	    context->mode == MODE_ROLLUP_3 || context->mode == MODE_ROLLUP_4)
+	{
+		// If the PAC's row is above the number of roll-up rows the caption cannot fit, and the
+		// depth takes precedence over the base row so no text is lost (CEA-608-E C.4)
+		int depth = context->mode == MODE_ROLLUP_2 ? 2 : (context->mode == MODE_ROLLUP_3 ? 3 : (context->mode == MODE_ROLLUP_4 ? 4 : 1));
+		if (row < depth)
+			row = depth;
+
+		// A PAC for another base row moves the displayed roll-up caption to it immediately
+		// (CEA-608-E C.7)
+		struct eia608_screen *rollup_buffer = get_writing_buffer(context);
+		if (!rollup_buffer->empty && context->cursor_row != row - 1)
+		{
+			// Write the caption as it is on the old rows, the moved one is a new caption
+			if (context->output_format != CCX_OF_TRANSCRIPT)
+			{
+				if (write_cc_buffer(context, sub))
+					context->screenfuls_counter++;
+				if (context->settings->no_rollup)
+					erase_memory(context, true);
+			}
+			move_rollup(context, rollup_buffer, context->cursor_row, row - 1);
+			context->current_visible_start_ms = get_visible_start(context->timing, context->my_field);
+		}
+	}
 	if (context->mode != MODE_TEXT)
 	{
 		// According to Robson, row info is discarded in text mode
@@ -1129,7 +1239,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 	{
 		case 0x10:
 			if (lo >= 0x40 && lo <= 0x5f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x11:
 			if (lo >= 0x20 && lo <= 0x2f)
@@ -1140,7 +1250,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 				handle_double(hi, lo, context);
 			}
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x12:
 		case 0x13:
@@ -1149,18 +1259,18 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 				wrote_to_screen = handle_extended(hi, lo, context);
 			}
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x14:
 		case 0x15:
 			if (lo >= 0x20 && lo <= 0x2f)
 				handle_command(hi, lo, context, sub);
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x16:
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 		case 0x17:
 			if (lo >= 0x21 && lo <= 0x23)
@@ -1168,7 +1278,7 @@ int disCommand(unsigned char hi, unsigned char lo, ccx_decoder_608_context *cont
 			if (lo >= 0x2e && lo <= 0x2f)
 				handle_text_attr(hi, lo, context);
 			if (lo >= 0x40 && lo <= 0x7f)
-				handle_pac(hi, lo, context);
+				handle_pac(hi, lo, context, sub);
 			break;
 	}
 	return wrote_to_screen;
@@ -1216,7 +1326,16 @@ int process608(const unsigned char *data, int length, void *private_data, struct
 		lo = data[i + 1] & 0x7F; // Get rid of parity bit
 
 		if (hi == 0 && lo == 0) // Just padding
+		{
+			// A control code is only a redundant copy when it comes in the very next frame
+			// (CEA-608-E D.2), so padding in between makes a repeat a new command.
+			if (context)
+			{
+				context->last_c1 = -1;
+				context->last_c2 = -1;
+			}
 			continue;
+		}
 
 		// printf ("\r[%02X:%02X]\n",hi,lo);
 

@@ -51,6 +51,9 @@ typedef struct ccx_decoder_608_context
 	LLONG ts_first_char_rollup_transition; // FTS of first char after pop-on -> roll-up (EOF fallback when no scrolling CR fires). -1 if unset.
 	int64_t bytes_processed_608;	// To be written ONLY by process_608
 	int have_cursor_position;
+	int attributes_from_pac; // The attributes in use come from a PAC and no character has been written since
+	LLONG last_valid_data_ms; // Time of the last frame with valid (odd parity) data, -1 if none yet
+	int data_loss_erased;	  // The captions were erased for lack of valid data and none has been received since
 
 	int *halt;	  // Can be used to halt the feeding of caption data. Set to 1 if screens_to_progress != -1 && screenfuls_counter >= screens_to_process
 	int cc_to_stdout; // If this is set to 1, the stdout will be flushed when data was written to the screen during a process_608 call.
@@ -87,7 +90,8 @@ enum command_code
 	COM_RESUMEDIRECTCAPTIONING = 17,
 	// Non existing commands we insert to have the decoder
 	// special stuff for us.
-	COM_FAKE_RULLUP1 = 18
+	COM_FAKE_RULLUP1 = 18,
+	COM_FLASHON = 19
 };
 
 void ccx_decoder_608_dinit_library(void **ctx);
@@ -119,6 +123,7 @@ int process608(const unsigned char *data, int length, void *private_data, struct
  * they get written to cc_subtitle
  */
 void flush_608_context(ccx_decoder_608_context *context, struct cc_subtitle *sub);
+void erase_both_memories(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
 int write_cc_buffer(ccx_decoder_608_context *context, struct cc_subtitle *sub);
 
