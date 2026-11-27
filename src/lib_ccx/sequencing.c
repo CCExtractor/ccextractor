@@ -66,7 +66,10 @@ void store_hdcc(struct encoder_ctx *enc_ctx, struct lib_cc_decode *dec_ctx, unsi
 			// twice, e.g. as SCTE-20 followed by GA94 user data. Appending
 			// would duplicate every caption character.
 			dec_ctx->cc_data_count[seq_index] = 0;
-			memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3 + 1);
+			if (cc_count > HDCC_MAX_TRIPLETS_PER_SLOT)
+				cc_count = HDCC_MAX_TRIPLETS_PER_SLOT;
+			memcpy(dec_ctx->cc_data_pkts[seq_index] + dec_ctx->cc_data_count[seq_index] * 3, cc_data, cc_count * 3);
+			dec_ctx->cc_data_pkts[seq_index][cc_count * 3] = 0xFF;
 		}
 		dec_ctx->cc_data_count[seq_index] += cc_count;
 	}

@@ -1,9 +1,11 @@
 #ifndef AVC_FUNCTION_H
 #define AVC_FUNCTION_H
 
+#include <stdint.h>
+
 struct avc_ctx
 {
-	unsigned char cc_count;
+	uint16_t cc_count;
 	// buffer to hold cc data
 	unsigned char *cc_data;
 	int64_t cc_databufsize;
